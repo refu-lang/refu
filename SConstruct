@@ -30,7 +30,9 @@ cld_sources = [os.path.join(dirpath, f)
 cld_sources = [
     'main.c',
     'messaging.c',
-    'argparser.c'
+    'argparser.c',
+    'parser.c',
+    'ast.c'
 ]
 
 
