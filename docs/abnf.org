@@ -1,0 +1,46 @@
+#+FILETAGS: REFULANG
+
+This file contains the [[http://tools.ietf.org/html/rfc5234][ABNF]] grammar for Refu
+
+* Grammar
+file = statements
+statements = *statement
+statement = block
+          / function_declaration
+          / module_declaration
+          / interface_declaration
+          / interface_implementation
+          / data_declaration
+           
+block = "{" statements "}"
+
+identifiers_list = identifier / identifiers_list "," identifier
+generic_attributes = "<" identifiers_list ">"
+generic_type = "type" / OTHERS
+generic_arguments_list = identifier ":" generic_type
+                       / generic_arguments_list "," identifier ":" generic_type
+generic_arguments = "<" generic_arguments_list ">"
+generic_declaration = "<" generic_arguments ">"
+
+array_attributes = numeric
+array_declaration = "[" array_attributes"]"
+
+memory_attributes = array_declaration
+                  / "*"
+                  / "&"
+                  / "ptr[~]"
+                  / "ptr[@]"
+
+type_declaration = identifier [generic_attributes]
+decorated_type_declaration = [memory_attributes] type_declaration 
+variable_declaration = identifier ":" decorated_type_declaration
+
+data_op = "," / "|" / "->"
+data_body = variable_declaration
+          / data_body data_op variable_declaration
+data_declaration = "data" identifier "{" data_body "}"
+
+variable_list = variable_declaration
+              / variable_list "," variable_declaration
+
+function_declaration = "fn" identifier "(" variable_list ")" ["->" decorated_type_declaration]
