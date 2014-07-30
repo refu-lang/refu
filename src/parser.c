@@ -49,7 +49,14 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
     struct ast_node *root;
-    printf("PARSED:\n"RF_STR_PF_FMT, RF_STR_PF_ARG(&file->buffer));
+    struct ast_node *stmt;
+    /* printf("PARSED:\n"RF_STR_PF_FMT, RF_STR_PF_ARG(&file->buffer)); */
+    root = ast_node_new(AST_ROOT, file, 0, 0, rf_string_data(file->buffer));
+
+    while (stmt = parser_accept_statement(parser)) {
+        rf_ilist_add(&ret->children, &stmt->lh);
+    }
+
     return true;
 }
 
@@ -67,6 +74,25 @@ bool parser_process_file(struct parser_ctx *parser, const struct RFstring *name)
     return parser_begin_parsing(parser, file);
 }
 
+static struct ast_node *parser_accept_statement(struct parser_ctx *parser,
+                                    unsigned int pi)
+{
+    struct ast_node *stmt;
+    unsigned int pi = parser->current_file->buffer.bIndex;
+
+    parser_accept_ws(parser);
+
+    if (stmt = parser_accept_block(parser)) {
+        return stmt;
+    } else if (stmt = parser_accept_expression(parser)) {
+        return stmt;
+    }
+
+    rf_stringx_move_to_index(&parser->current_file->buffer, pi);
+    return NULL;
+}
+
+
 /*
  * block = {
  */
@@ -74,7 +100,7 @@ static bool parser_accept_block(struct parser_ctx *parser)
 {
     struct ast_node *block;
     struct ast_node *stmt;
-    block = ast_node_new(AST_BLOCK, location);
+    block = ast_node_new(AST_BLOCK, );
     if (!block) {
         return NULL;
     }

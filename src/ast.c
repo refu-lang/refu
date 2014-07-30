@@ -13,14 +13,21 @@ static inline void ast_location_copy(struct ast_location *from,
 
 
 struct ast_node *ast_node_new(enum ast_type type,
-                              struct ast_location *location)
+                              struct parser_file *file,
+                              unsigned int start_line,
+                              unsigned int start_col,
+                              char *sp)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), NULL);
 
     ret->type = type;
     rf_ilist_head_init(&ret->children);
-    ast_location_copy(location, &ret->location);
+
+    ret->location.file = file;
+    ret->location.start_line = start_line;
+    ret->location.start_col = start_col;
+    ret->location.beg = sp;
 
     return ret;
 }

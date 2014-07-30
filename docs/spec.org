@@ -916,7 +916,7 @@ Those buffers will be freed when the containing struct gets freed.
 Thinking if the language should have arrays, maybe some form of
 lists e.t.c. A nice analysis can be seen [[http://pcwalton.github.io/blog/2012/12/28/a-tour-of-vectors/][here]]
 ** Generics
-*** COMMENT Specification
+*** Specification
 Refu supports generics, which allow a user to define a generic data type
 and then use it with different concrete types, just like in C++ templates.
 For example:

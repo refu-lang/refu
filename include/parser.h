@@ -7,6 +7,7 @@ struct parser_file {
     struct RFilist_node lh;
     unsigned int current_line;
     unsigned int current_col;
+    char *bp;
 };
 
 struct parser_ctx {
@@ -22,5 +23,16 @@ bool parser_process_file(struct parser_ctx *parser,
 
 static inline void parser_accept_ws(struct parser_ctx *parser)
 {
-    //TODO should move the current file by all white space
+    /* rf_stringx_move_afterv(&parser->current_file->file_name, */
+    /*                        NULL, //don't keep what's passed */
+    /*                        0, //no specific options */
+    /*                        3, */
+    /*                        " ", "\t", "\n"); */
+
+    /* char *sp = rf_string_data(&parser->current_file->buffer); */
+    /* unsigned int length = rf_string_length(&parser->current_file->buffer); */
+    /* char *end = sp + length; */
+    /* while (sp <= end && sp == ' ' || sp == '\t' || sp == '\n') { */
+    /*     sp ++; */
+    /* } */
 }

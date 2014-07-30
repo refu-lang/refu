@@ -15,6 +15,7 @@ struct ast_location {
 
 
 enum ast_type {
+    AST_ROOT,
     AST_BLOCK,
     AST_IDENTIFIER,
     AST_STRING_LITERAL
