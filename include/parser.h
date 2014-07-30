@@ -16,6 +16,9 @@ struct parser_ctx {
 };
 
 
+// Gets a parser's context stringx buffer
+#define PARSER_CBUFFP(p) &(p)->current_file->buffer
+
 struct parser_ctx *parser_new();
 bool parser_process_file(struct parser_ctx *parser,
                         const struct RFstring *name);
@@ -35,4 +38,14 @@ static inline void parser_accept_ws(struct parser_ctx *parser)
     /* while (sp <= end && sp == ' ' || sp == '\t' || sp == '\n') { */
     /*     sp ++; */
     /* } */
+
+    //TODO: implement this in Refulib
+    unsigned int bytes_moved;
+    unsigned int chars_moved;
+    rf_stringx_move_after_any(PARSER_CBUFF(parser),
+                              &bytes_moved,
+                              &chars_moved,
+                              3
+                              ' ', '\t', '\n');
+
 }
