@@ -18,3 +18,9 @@ struct parser_ctx {
 struct parser_ctx *parser_new();
 bool parser_process_file(struct parser_ctx *parser,
                         const struct RFstring *name);
+
+
+static inline void parser_accept_ws(struct parser_ctx *parser)
+{
+    //TODO should move the current file by all white space
+}

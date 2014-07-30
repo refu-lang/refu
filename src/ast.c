@@ -4,7 +4,7 @@
 static inline void ast_location_copy(struct ast_location *from,
                                      struct ast_location *to)
 {
-    to->file_name = from->file_name;
+    to->file = from->file;
     to->start_line = from->start_line;
     to->start_col = from->start_col;
     to->end_line = from->end_line;
@@ -17,12 +17,10 @@ struct ast_node *ast_node_new(enum ast_type type,
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), NULL);
-    
+
     ret->type = type;
+    rf_ilist_head_init(&ret->children);
     ast_location_copy(location, &ret->location);
 
     return ret;
 }
-
-
-

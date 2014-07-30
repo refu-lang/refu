@@ -1,17 +1,22 @@
 #include <RFintrusive_list.h>
 #include <RFstring.h>
 
+struct parser_file;
+
 struct ast_location {
-    struct RFstring *file_name;
+    struct parser_file *file;
     unsigned int start_line;
     unsigned int start_col;
     unsigned int end_line;
     unsigned int end_col;
+    char *beg;
+    char *end;
 };
 
 
 enum ast_type {
-    AST_IDENTIFIER = 1,
+    AST_BLOCK,
+    AST_IDENTIFIER,
     AST_STRING_LITERAL
 };
 

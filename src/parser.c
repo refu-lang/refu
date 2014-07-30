@@ -27,7 +27,7 @@ static struct parser_file *parser_file_new(const struct RFstring *name)
 
     ret->current_line = 0;
     ret->current_col = 0;
-    
+
     return ret;
 }
 
@@ -43,9 +43,12 @@ struct parser_ctx *parser_new()
 }
 
 
+
+
 static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
+    struct ast_node *root;
     printf("PARSED:\n"RF_STR_PF_FMT, RF_STR_PF_ARG(&file->buffer));
     return true;
 }
@@ -60,6 +63,29 @@ bool parser_process_file(struct parser_ctx *parser, const struct RFstring *name)
 
     rf_ilist_add(&parser->files, &file->lh);
     parser->current_file = file;
-    
+
     return parser_begin_parsing(parser, file);
+}
+
+/*
+ * block = {
+ */
+static bool parser_accept_block(struct parser_ctx *parser)
+{
+    struct ast_node *block;
+    struct ast_node *stmt;
+    block = ast_node_new(AST_BLOCK, location);
+    if (!block) {
+        return NULL;
+    }
+
+    while (eof() || block_closes()) {
+        stmt = parser_accept_statement(parser);
+        if (!stmt) {
+            //problem
+        }
+        rf_ilist_add(&block->children, &stmt->lh);
+    }
+
+    return true;
 }
