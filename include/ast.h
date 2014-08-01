@@ -18,7 +18,8 @@ enum ast_type {
     AST_ROOT,
     AST_BLOCK,
     AST_IDENTIFIER,
-    AST_STRING_LITERAL
+    AST_STRING_LITERAL,
+    AST_VARIABLE_DECLARATION
 };
 
 struct ast_node {
@@ -26,7 +27,7 @@ struct ast_node {
     struct ast_location location;
     struct RFilist_node lh;
     union {
-        int value;
+        struct RFstring value_identifier;
         struct {
             struct RFilist_head children;
             unsigned int children_num;
@@ -36,6 +37,10 @@ struct ast_node {
 
 
 struct ast_node *ast_node_new(enum ast_type type,
-                              struct ast_location *location);
+                              struct parser_file pfile,
+                              char *sp, char *ep);
+
+void ast_node_add_child(struct ast_node *parent,
+                        struct ast_node *child);
 
 

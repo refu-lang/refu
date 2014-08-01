@@ -13,10 +13,8 @@ static inline void ast_location_copy(struct ast_location *from,
 
 
 struct ast_node *ast_node_new(enum ast_type type,
-                              struct parser_file *file,
-                              unsigned int start_line,
-                              unsigned int start_col,
-                              char *sp)
+                              struct parser_file *pfile,
+                              char *sp, char *ep)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), NULL);
@@ -29,5 +27,18 @@ struct ast_node *ast_node_new(enum ast_type type,
     ret->location.start_col = start_col;
     ret->location.beg = sp;
 
+    ret->location.file = pfile;
+    ret->location.start_line = pfile->offset.lines_moved;
+    //TODO: column
+    ret->location.beg = sp;
+    ret->location.end = ep;
+
     return ret;
+}
+
+void ast_node_add_child(struct ast_node *parent,
+                        struct ast_node *child)
+{
+    rf_ilist_add(&parent->children, &child->lh);
+    parent->children_num ++;
 }

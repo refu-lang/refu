@@ -12,6 +12,7 @@ statement = block
           / interface_declaration
           / interface_implementation
           / data_declaration
+          / variable_declaration
 
 expression = identifier
            / string_literal

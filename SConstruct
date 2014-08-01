@@ -31,7 +31,8 @@ cld_sources = [
     'main.c',
     'messaging.c',
     'argparser.c',
-    'parser.c',
+    'parser/parser.c',
+    'parser/offset.c',
     'ast.c'
 ]
 
