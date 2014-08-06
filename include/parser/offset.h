@@ -1,5 +1,5 @@
-#ifndef RF_PARSER_OFFSET_H
-#define RF_PARSER_OFFSET_H
+#ifndef LFR_PARSER_OFFSET_H
+#define LFR_PARSER_OFFSET_H
 
 struct parser_offset {
     unsigned int bytes_moved;

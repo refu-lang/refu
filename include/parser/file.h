@@ -3,11 +3,13 @@
 
 #include <RFstring.h>
 
+#include <parser/string.h>
+
 struct ast_node;
 
 struct parser_file {
     struct RFstring file_name;
-    struct parser_string str;
+    struct parser_string pstr;
     struct RFilist_node lh;
     unsigned int current_line;
     unsigned int current_col;

@@ -9,10 +9,29 @@ struct ast_location {
     unsigned int start_col;
     unsigned int end_line;
     unsigned int end_col;
-    char *beg;
-    char *end;
+    char *sp;
+    char *ep;
 };
 
+#define AST_LOC_INIT(file_, sl_, scol_, el_, ecol_, sp_, ep_)           \
+    {.file = (file_), .start_line = (sl_), .start_col = (scol_),        \
+        .end_line = (el_), end_col = (ecol_), sp = (sp_), ep = (ep_) }
+
+#define AST_LOC_PARSER_INIT(file_)                      \
+    {.file = (file_), .start_line = 0, .start_col = 0,  \
+        .end_line = 0, end_col = 0, sp = 0, ep = 0}
+
+i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
+                                     struct ast_location *l2)
+{
+    l1->file = l2->file;
+    l1->start_line = l2->start_line;
+    l1->start_col = l2->start_col;
+    l1->end_line = l2->end_line;
+    l1->end_col = l2->end_col;
+    l1->sp = l2->sp;
+    l1->ep = l2->ep;
+}
 
 enum ast_type {
     AST_ROOT,
@@ -40,8 +59,7 @@ struct ast_node {
 
 
 struct ast_node *ast_node_create(enum ast_type type,
-                                 struct parser_file pfile,
-                                 char *sp, char *ep);
+                                 struct ast_location *loc);
 void ast_node_destroy(struct ast_node *n);
 
 void ast_node_add_child(struct ast_node *parent,

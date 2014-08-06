@@ -33,6 +33,8 @@ cld_sources = [
     'argparser.c',
     'parser/parser.c',
     'parser/offset.c',
+    'parser/string.c',
+    'parser/file.c',
     'ast.c'
 ]
 
