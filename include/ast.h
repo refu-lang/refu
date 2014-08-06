@@ -18,8 +18,11 @@ enum ast_type {
     AST_ROOT,
     AST_BLOCK,
     AST_IDENTIFIER,
+    AST_VARIABLE_DECLARATION,
+
+    /* from this value and up all types should have no children */
+    AST_LEAVES,
     AST_STRING_LITERAL,
-    AST_VARIABLE_DECLARATION
 };
 
 struct ast_node {
@@ -36,9 +39,10 @@ struct ast_node {
 };
 
 
-struct ast_node *ast_node_new(enum ast_type type,
-                              struct parser_file pfile,
-                              char *sp, char *ep);
+struct ast_node *ast_node_create(enum ast_type type,
+                                 struct parser_file pfile,
+                                 char *sp, char *ep);
+void ast_node_destroy(struct ast_node *n);
 
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);

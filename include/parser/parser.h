@@ -5,16 +5,9 @@
 #include <RFstring.h>
 
 #include <parser/offset.h>
+#include <parser/file.h>
 
-struct parser_file {
-    struct RFstring file_name;
-    struct RFstringx buffer;
-    struct RFilist_node lh;
-    unsigned int current_line;
-    unsigned int current_col;
-    char *bp;
-    struct parser_offset offset;
-};
+
 
 struct parser_ctx {
     struct RFilist_head files;
@@ -22,7 +15,7 @@ struct parser_ctx {
 };
 
 // Gets a parser's context current stringx buffer
-#define PARSER_CBUFF(p) &(p)->current_file->buffer
+#define PARSER_CBUFF(p) &(p)->current_file->str.str
 // Gets a parser's current file offset
 #define PARSER_COFF(p) &(p)->current_file->offset
 

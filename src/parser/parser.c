@@ -1,35 +1,6 @@
 #include <parser.h>
 
-#include <RFmemory.h>
-#include <RFtextfile.h>
-
 #include <messaging.h>
-
-static struct parser_file *parser_file_new(const struct RFstring *name)
-{
-    struct parser_file *ret;
-    struct RFtextfile file;
-
-    RF_MALLOC(ret, sizeof(struct parser_file), NULL);
-    if (!rf_string_copy_in(&ret->file_name, name)) {
-        return NULL;
-    }
-
-    if (!rf_textfile_init(&file, name,
-                          RF_FILE_READ, RF_ENDIANESS_UNKNOWN,
-                          RF_UTF8, RF_EOL_AUTO)) {
-        return NULL;
-    }
-    if (-1 == rf_textfile_read_lines(&file, 0, &ret->buffer)) {
-        return NULL;
-    }
-    rf_textfile_deinit(&file);
-
-    ret->current_line = 0;
-    ret->current_col = 0;
-
-    return ret;
-}
 
 
 struct parser_ctx *parser_new()
@@ -44,16 +15,15 @@ struct parser_ctx *parser_new()
 
 
 
-
 static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
-    struct ast_node *root;
     struct ast_node *stmt;
     struct parser_offset off = PARSER_OFFSET_INIT();
 
     /* printf("PARSED:\n"RF_STR_PF_FMT, RF_STR_PF_ARG(&file->buffer)); */
-    root = ast_node_new(AST_ROOT, file, 0, 0, rf_string_data(file->buffer));
+    file->root = ast_node_create(AST_ROOT, file, 0, 0,
+                                 parser_string_data(file->str));
 
     while (stmt = parser_accept_statement(parser, &off)) {
         ast_node_add_child(root, stmt);
@@ -125,9 +95,9 @@ static struct ast_node *parser_accept_variable_declaration(
     }
     end = PARSER_CBUFF(parser);
     
-    var_decl = ast_node_new(AST_VARIABLE_DECLARATION,
-                            parser->current_file,
-                            beg, end);
+    var_decl = ast_node_create(AST_VARIABLE_DECLARATION,
+                               parser->current_file,
+                               beg, end);
     if (!var_decl) {
         //TODO: memory error
         return NULL;
@@ -162,8 +132,8 @@ static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
     }
     end = p;
     
-    identifier = ast_node_new(AST_VARIABLE_DECLARATION, parser->current_file,
-                              beg, end);
+    identifier = ast_node_create(AST_VARIABLE_DECLARATION,
+                                 parser->current_file, beg, end);
     if (!identifier) {
         //TODO: memory error
         return NULL;
@@ -179,7 +149,7 @@ static bool parser_accept_block(struct parser_ctx *parser)
 {
     struct ast_node *block;
     struct ast_node *stmt;
-    block = ast_node_new(AST_BLOCK, );
+    block = ast_node_create(AST_BLOCK, );
     if (!block) {
         return NULL;
     }
