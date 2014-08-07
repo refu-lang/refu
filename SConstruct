@@ -35,7 +35,8 @@ cld_sources = [
     'parser/offset.c',
     'parser/string.c',
     'parser/file.c',
-    'ast.c'
+    'ast/ast.c',
+    'ast/location.c'
 ]
 
 

@@ -36,12 +36,36 @@ bool parser_string_init(struct parser_string *s,
 
 void parser_string_deinit(struct parser_string *s);
 
+/**
+ * Obtain a line and column position from a byte pointer
+ * of a parser string
+ *
+ * @param s             The parser string from which to obtain the position.
+ * @param p             The byte pointer inside the string whose line and
+ *                      column to retrieve
+ * @param line[out]     Returns the line pointed to by the byte pointer
+ * @param column[out    Returns the column pointed to by the byte pointer
+ *
+ * @return              True if the byte pointer represents a valid position
+ *                      and false if not
+ */
+bool parser_string_ptr_to_linecol(struct parser_string *s,
+                                  char *p, unsigned int *line,
+                                  unsigned int *col);
+
 
 i_INLINE_DECL char *parser_string_data(struct parser_string *s)
 {
     return rf_string_data(&s->str);
 }
 
+i_INLINE_DECL char *parser_string_beg(struct parser_string *s)
+{
+    return rf_string_data(&s->str) - s->str.bIndex;
+}
 
-
+i_INLINE_DECL uint32_t parser_string_len_from_beg(struct parser_string *s)
+{
+    return rf_string_length_bytes(&s->str) + s->str.bIndex;
+}
 #endif

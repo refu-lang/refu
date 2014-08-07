@@ -18,6 +18,11 @@ i_INLINE_DECL struct RFstringx *parser_curr_str(struct parser_ctx *p)
     return &p->current_file->pstr.str;
 }
 
+i_INLINE_DECL struct RFstringx *parser_curr_pstr(struct parser_ctx *p)
+{
+    return &p->current_file->pstr;
+}
+
 i_INLINE_DECL char *parser_curr_sp(struct parser_ctx *p)
 {
     return rf_string_data(&p->current_file->pstr.str);

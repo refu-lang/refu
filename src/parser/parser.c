@@ -19,11 +19,17 @@ struct parser_ctx *parser_new()
 static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
+    bool ok;
     struct ast_node *stmt;
+    struct root_loc loc;
     struct parser_offset off = PARSER_OFFSET_INIT();
-    //TODO: give proper end line, col, ep values
-    struct root_loc loc = AST_LOC_INIT(file, 0, 0, 0, 0, 0, 0);
+    char *beg = parser_string_beg(&file->pstr);
 
+    ok = ast_location_init(&loc, file,
+                           beg,
+                           beg + parser_string_len_from_beg(&file->pstr));
+                           
+    
     file->root = ast_node_create(AST_ROOT, &loc);
 
     while (stmt = parser_accept_statement(parser, &off)) {
@@ -71,12 +77,14 @@ static struct ast_node *parser_accept_variable_declaration(
     struct ast_node *id1;
     struct ast_node *id2;
     struct parser_offset proff;
-    struct ast_location loc = AST_LOC_PARSER_INIT(parser);
+    struct ast_location loc;
+    char *sp;
+    char *ep;
     static const struct RFstring colon = RF_STRING_STATIC_INIT(":");
     parser_offset_copy(&proff, parser_curr_off(parser));
 
     parser_accept_ws(parser);
-    loc.sp = parser_curr_sp(parser);
+    sp = parser_curr_sp(parser);
 
     id1 = parser_accept_identifier(parser);
     if (!id1) {
@@ -92,8 +100,11 @@ static struct ast_node *parser_accept_variable_declaration(
         parser_move_to_offset(parser, &proff);
         return NULL;
     }
-    loc.ep = parser_curr_sp(parser);
+    ep = parser_curr_sp(parser);
 
+    if (!ast_location_init(&loc, parser->current_file, sp, ep)) {
+        return NULL;
+    }
     var_decl = ast_node_create(AST_VARIABLE_DECLARATION, &loc);
     if (!var_decl) {
         //TODO: memory error
@@ -111,16 +122,18 @@ static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
     struct parser_offset proff;
     char *beg;
     char *end;
-    struct ast_loc loc = AST_LOC_PARSER_INIT(parser);
+    struct ast_loc loc;
     char *p;
+    char *sp;
+    char *ep;
 
     parser_offset_copy(&proff, parser_curr_off(parser));
 
     parser_accept_ws(parser);
-    loc.sp = p = parser_curr_sp(parser);
-    loc.ep = parser_curr_sp(parser) + rf_string_length_bytes(parser_curr_str(parser));
+    sp = p = parser_curr_sp(parser);
+    ep = parser_curr_sp(parser) + rf_string_length_bytes(parser_curr_str(parser));
 
-    while (p <= loc.ep) {
+    while (p <= ep) {
         if ((*p >= 'A' && *p <= 'Z') ||
             (*p >= 'a' && *p <= 'z')) {
             p ++;
@@ -128,15 +141,18 @@ static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
         }
         break;
     }
-    loc.ep = p;
+    ep = p;
 
+    if (!ast_location_init(&loc, parser->current_file, sp, ep)) {
+        return NULL;
+    }
     identifier = ast_node_create(AST_VARIABLE_DECLARATION, &loc);
     if (!identifier) {
         //TODO: memory error
         return NULL;
     }
     RF_STRING_SHALLOW_INIT(&identifier->value_identifier,
-                           loc.sp, loc.ep - loc.sp);
+                           sp, ep - sp);
     return identifier;
 }
 
@@ -145,6 +161,7 @@ static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
  */
 static bool parser_accept_block(struct parser_ctx *parser)
 {
+#if 0
     struct ast_node *block;
     struct ast_node *stmt;
     block = ast_node_create(AST_BLOCK, );
@@ -159,6 +176,7 @@ static bool parser_accept_block(struct parser_ctx *parser)
         }
         rf_ilist_add(&block->children, &stmt->lh);
     }
+#endif
 
     return true;
 }
@@ -166,5 +184,6 @@ static bool parser_accept_block(struct parser_ctx *parser)
 i_INLINE_INS void parser_move_to_offset(struct parser_ctx *parser,
                                          struct parser_offset *off);
 i_INLINE_INS struct RFstringx *parser_curr_str(struct parser_ctx *p);
+i_INLINE_INS struct RFstringx *parser_curr_pstr(struct parser_ctx *p);
 i_INLINE_INS char *parser_curr_sp(struct parser_ctx *p);
 i_INLINE_INS struct parser_offset *parser_curr_off(struct parser_ctx *p);

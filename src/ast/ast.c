@@ -1,4 +1,4 @@
-#include <ast.h>
+#include <ast/ast.h>
 #include <RFmemory.h>
 
 #define AST_NODE_NOT_LEAF(node_) ((node_)->type < AST_LEAVES)
@@ -38,30 +38,4 @@ void ast_node_add_child(struct ast_node *parent,
 {
     rf_ilist_add(&parent->children, &child->lh);
     parent->children_num ++;
-}
-
-
-
-i_INLINE_INS void ast_location_copy(struct ast_location *l1,
-                                    struct ast_location *l2);
-
-
-static bool ast_location_ptr_to_linecol(struct ast_location *loc,
-                                        struct parser_string *p,
-                                        unsigned int *line,
-                                        unsigned int *col)
-{
-    //TODO
-}
-
-bool ast_location_from_parserstr(struct ast_location *loc,
-                                 struct parser_string *p,
-                                 struct parser_file *f,
-                                 char *sp, char *ep)
-{
-    loc->file = f;
-    loc->sp = sp;
-    loc->ep = ep;
-
-    
 }

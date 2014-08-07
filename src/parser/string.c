@@ -19,4 +19,32 @@ void parser_string_deinit(struct parser_string *s)
     free(s->lines);
 }
 
+bool parser_string_ptr_to_linecol(struct parser_string *s,
+                                  char *p, unsigned int *line,
+                                  unsigned int *col)
+{
+    uint32_t i;
+    struct RFstring tmp;
+    bool found = false;
+    char *sbeg = parser_string_beg(s);
+    uint32_t off = p - sbeg;
+
+    for (i = 0; i < s->lines_num; i++) {
+        if (off >= s->lines[i]) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        return false;
+    }
+
+    *line = i + 1;
+    RF_STRING_SHALLOW_INIT(&tmp, sbeg + s->lines[i], p - s->lines[i]);
+    *col = rf_string_length(&tmp);
+
+    return true;
+}
+
 i_INLINE_INS char *parser_string_data(struct parser_string *s);
+i_INLINE_INS char *parser_string_beg(struct parser_string *s);
