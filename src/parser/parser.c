@@ -22,10 +22,9 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
     struct ast_node *stmt;
     struct parser_offset off = PARSER_OFFSET_INIT();
     //TODO: give proper end line, col, ep values
-    struct root_loc = AST_LOC_INIT(file, 0, 0, 0, 0, 0, 0);
+    struct root_loc loc = AST_LOC_INIT(file, 0, 0, 0, 0, 0, 0);
 
-    file->root = ast_node_create(AST_ROOT, file, 0, 0,
-                                 parser_curr_sp(parser));
+    file->root = ast_node_create(AST_ROOT, &loc);
 
     while (stmt = parser_accept_statement(parser, &off)) {
         ast_node_add_child(root, stmt);

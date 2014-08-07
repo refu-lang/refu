@@ -2,6 +2,7 @@
 #include <RFstring.h>
 
 struct parser_file;
+struct parser_string;
 
 struct ast_location {
     struct parser_file *file;
@@ -20,6 +21,22 @@ struct ast_location {
 #define AST_LOC_PARSER_INIT(file_)                      \
     {.file = (file_), .start_line = 0, .start_col = 0,  \
         .end_line = 0, end_col = 0, sp = 0, ep = 0}
+
+/**
+ * Initialize an ast_location from a parser string.
+ *
+ * @param loc       The location to initialize
+ * @param p         The parser string from which to initialize the location
+ * @param f         The parser file that contains the location
+ * @param sp        Pointer at location start
+ * @param eindex    Pointer at location end
+ *
+ * @return          True/false depending on success/failure
+ */
+bool ast_location_from_parserstr(struct ast_location *loc,
+                                 struct parser_string *p,
+                                 struct parser_file *f,
+                                 char *sp, char *ep);
 
 i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
                                      struct ast_location *l2)
