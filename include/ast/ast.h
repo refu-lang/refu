@@ -4,6 +4,7 @@
 #include <RFintrusive_list.h>
 #include <RFstring.h>
 
+#include <ast/location.h>
 
 enum ast_type {
     AST_ROOT,
@@ -29,9 +30,14 @@ struct ast_node {
     };
 };
 
-
 struct ast_node *ast_node_create(enum ast_type type,
-                                 struct ast_location *loc);
+                                         struct parser_file *f,
+                                         char *sp, char *ep);
+
+//will probably go away if not used
+struct ast_node *ast_node_create_fromloc(enum ast_type type,
+                                         struct ast_location *loc);
+
 void ast_node_destroy(struct ast_node *n);
 
 void ast_node_add_child(struct ast_node *parent,

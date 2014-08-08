@@ -1,6 +1,8 @@
 #ifndef LFR_PARSER_OFFSET_H
 #define LFR_PARSER_OFFSET_H
 
+#include <Definitions/inline.h>
+
 struct parser_offset {
     unsigned int bytes_moved;
     unsigned int chars_moved;

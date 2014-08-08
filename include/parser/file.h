@@ -2,8 +2,10 @@
 #define LFR_PARSER_FILE_H
 
 #include <RFstring.h>
+#include <RFintrusive_list.h>
 
 #include <parser/string.h>
+#include <parser/offset.h>
 
 struct ast_node;
 
