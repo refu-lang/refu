@@ -1,6 +1,9 @@
 #ifndef LFR_AST_LOCATION_H
 #define LFR_AST_LOCATION_H
 
+#include <Definitions/retcodes.h> //for bool
+#include <Definitions/inline.h> //for bool
+
 struct parser_file;
 struct parser_string;
 

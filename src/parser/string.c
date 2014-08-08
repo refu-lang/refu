@@ -25,6 +25,7 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
 {
     uint32_t i;
     struct RFstring tmp;
+    char *sp;
     bool found = false;
     char *sbeg = parser_string_beg(s);
     uint32_t off = p - sbeg;
@@ -40,7 +41,8 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
     }
 
     *line = i + 1;
-    RF_STRING_SHALLOW_INIT(&tmp, sbeg + s->lines[i], p - s->lines[i]);
+    sp = sbeg + s->lines[i];
+    RF_STRING_SHALLOW_INIT(&tmp, sp, p - sp);
     *col = rf_string_length(&tmp);
 
     return true;
@@ -48,3 +50,4 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
 
 i_INLINE_INS char *parser_string_data(struct parser_string *s);
 i_INLINE_INS char *parser_string_beg(struct parser_string *s);
+i_INLINE_INS uint32_t parser_string_len_from_beg(struct parser_string *s);

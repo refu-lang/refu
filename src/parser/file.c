@@ -4,7 +4,10 @@
 #include <RFtextfile.h>
 #include <Utils/array.h>
 
+#include <ast/ast.h>
+
 #define PARSER_STRING_STARTING_LINES 256 // TODO: move somewhere else?
+#define FILE_BUFFER_INITIAL_SIZE 1024
 
 struct parser_file *parser_file_new(const struct RFstring *name)
 {
@@ -15,7 +18,11 @@ struct parser_file *parser_file_new(const struct RFstring *name)
     int lines;
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, PARSER_STRING_STARTING_LINES);
 
-    RF_MALLOC(ret, sizeof(struct parser_file), NULL);
+    RF_MALLOC(ret, sizeof(*ret), NULL);
+
+    if (!rf_stringx_init_buff(&file_str, FILE_BUFFER_INITIAL_SIZE, "")) {
+        return NULL;
+    }
     if (!rf_string_copy_in(&ret->file_name, name)) {
         return NULL;
     }
@@ -32,7 +39,7 @@ struct parser_file *parser_file_new(const struct RFstring *name)
     }
     rf_textfile_deinit(&file);
 
-    if (!parser_string_init(&ret->str, &file_str, &lines_arr, lines)) {
+    if (!parser_string_init(&ret->pstr, &file_str, &lines_arr, lines)) {
         return NULL;
     }
 
@@ -45,8 +52,8 @@ struct parser_file *parser_file_new(const struct RFstring *name)
 
 void parser_file_deinit(struct parser_file *f)
 {
-    ast_node_destroy(&f->root);
+    ast_node_destroy(f->root);
     rf_string_deinit(&f->file_name);
-    rf_stringx_deinit(&f->str);
+    parser_string_deinit(&f->pstr);
 }
 

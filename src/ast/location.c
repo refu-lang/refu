@@ -1,5 +1,8 @@
 #include <ast/location.h>
 
+#include <parser/string.h>
+#include <parser/file.h>
+
 bool ast_location_init(struct ast_location *loc,
                        struct parser_file *f,
                        char *sp, char *ep)
@@ -8,11 +11,13 @@ bool ast_location_init(struct ast_location *loc,
     loc->sp = sp;
     loc->ep = ep;
 
-    if (!parser_string_ptr_to_linecol(&f->pstr, sp, &start_line, &start_col)) {
+    if (!parser_string_ptr_to_linecol(&f->pstr, sp,
+                                      &loc->start_line, &loc->start_col)) {
         return false;
     }
 
-    if (!parser_string_ptr_to_linecol(&f->pstr, ep, &end_line, &end_col)) {
+    if (!parser_string_ptr_to_linecol(&f->pstr, ep,
+                                      &loc->end_line, &loc->end_col)) {
         return false;
     }
 

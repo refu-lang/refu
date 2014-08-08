@@ -4,6 +4,7 @@
 
 #include <argparser.h>
 #include <parser/parser.h>
+#include <ast/ast.h>
 
 int main(int argc,char** argv)
 {
@@ -35,6 +36,8 @@ int main(int argc,char** argv)
         print_error("Failure at file parsing");
         return -1;
     }
+
+    ast_print(parser->current_file->root);
     
     return 0;
 }

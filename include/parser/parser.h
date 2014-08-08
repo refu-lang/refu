@@ -13,6 +13,10 @@ struct parser_ctx {
 };
 
 
+struct parser_ctx *parser_new();
+bool parser_process_file(struct parser_ctx *parser,
+                        const struct RFstring *name);
+
 i_INLINE_DECL struct RFstringx *parser_curr_str(struct parser_ctx *p)
 {
     return &p->current_file->pstr.str;
@@ -32,10 +36,6 @@ i_INLINE_DECL struct parser_offset *parser_curr_off(struct parser_ctx *p)
 {
     return &p->current_file->offset;
 }
-
-struct parser_ctx *parser_new();
-bool parser_process_file(struct parser_ctx *parser,
-                        const struct RFstring *name);
 
 i_INLINE_DECL void parser_move_to_offset(struct parser_ctx *parser,
                                          struct parser_offset *off)
@@ -59,7 +59,7 @@ i_INLINE_DECL void parser_move(struct parser_ctx *parser,
 }
 
 
-static inline void parser_accept_ws(struct parser_ctx *parser)
+i_INLINE_DECL void parser_accept_ws(struct parser_ctx *parser)
 {
     
     static const struct RFstring wsp = RF_STRING_STATIC_INIT(" \t\n\r");
@@ -71,7 +71,7 @@ static inline void parser_accept_ws(struct parser_ctx *parser)
     parser_offset_add(parser_curr_off(parser), &mov);
 }
 
-static inline bool parser_accept_string_ascii(struct parser_ctx *parser,
+i_INLINE_DECL bool parser_accept_string_ascii(struct parser_ctx *parser,
                                               const struct RFstring *str)
 {
     struct RFstringx *buff = parser_curr_str(parser);

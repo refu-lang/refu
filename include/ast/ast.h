@@ -7,14 +7,14 @@
 #include <ast/location.h>
 
 enum ast_type {
-    AST_ROOT,
+    AST_ROOT = 0,
     AST_BLOCK,
-    AST_IDENTIFIER,
     AST_VARIABLE_DECLARATION,
 
     /* from this value and up all types should have no children */
     AST_LEAVES,
     AST_STRING_LITERAL,
+    AST_IDENTIFIER,
 };
 
 struct ast_node {
@@ -22,7 +22,7 @@ struct ast_node {
     struct ast_location location;
     struct RFilist_node lh;
     union {
-        struct RFstring value_identifier;
+        struct RFstring identifier;
         struct {
             struct RFilist_head children;
             unsigned int children_num;
@@ -43,5 +43,9 @@ void ast_node_destroy(struct ast_node *n);
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);
 
+const struct RFstring *ast_node_str(struct ast_node *n);
+
+// temporary function, to visualize an ast tree
+void ast_print(struct ast_node *root);
 
 #endif

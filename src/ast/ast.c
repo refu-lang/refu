@@ -1,6 +1,16 @@
 #include <ast/ast.h>
 #include <RFmemory.h>
 
+
+static const struct RFstring ast_type_strings[] = {
+    RF_STRING_STATIC_INIT("root"),
+    RF_STRING_STATIC_INIT("block"),
+    RF_STRING_STATIC_INIT("variable declaration"),
+    RF_STRING_STATIC_INIT("leaves"), /*should not really be used */
+    RF_STRING_STATIC_INIT("string literal"),
+    RF_STRING_STATIC_INIT("identifier")
+};
+
 #define AST_NODE_NOT_LEAF(node_) ((node_)->type < AST_LEAVES)
 
 struct ast_node *ast_node_create(enum ast_type type,
@@ -55,4 +65,20 @@ void ast_node_add_child(struct ast_node *parent,
 {
     rf_ilist_add(&parent->children, &child->lh);
     parent->children_num ++;
+}
+
+const struct RFstring *ast_node_str(struct ast_node *n)
+{
+    return &ast_type_strings[n->type];
+}
+
+
+void ast_print(struct ast_node *n)
+{
+    struct ast_node *c;
+    printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
+    rf_ilist_for_each(&n->children, c, lh) {
+        ast_print(n);
+    }
+    
 }
