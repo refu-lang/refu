@@ -4,25 +4,24 @@
  * to windows
  */
 
-#ifndef ARGPARSER_H
-#define ARGPARSER_H
+#ifndef LFR_COMPILER_ARGS_H
+#define LFR_COMPILER_ARGS_H
 
 #include <RFstring.h>
 #include <stdbool.h>
 
-typedef struct compiler_arguments
-{
+struct compiler_args {
     int backend_connection;
     int verbose_level;
     bool repl;
     struct RFstring input;
-}compiler_arguments;
+};
 
-compiler_arguments* argparser_parse(int argc, char** argv);
+struct compiler_args *compiler_args_parse(int argc, char** argv);
 
-compiler_arguments* argparser_get_args();
+struct compiler_args *compiler_args_get();
 
 /** Initializes the compiler_arguments to their defaults */
-void argparser_modinit();
+void compiler_args_modinit();
 
 #endif//include guards end

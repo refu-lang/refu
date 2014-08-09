@@ -7,9 +7,11 @@
 #include <parser/offset.h>
 #include <parser/file.h>
 
+struct info_ctx;
 struct parser_ctx {
     struct RFilist_head files;
     struct parser_file *current_file;
+    struct info_ctx *info;
 };
 
 

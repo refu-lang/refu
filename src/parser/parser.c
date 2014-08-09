@@ -1,8 +1,8 @@
 #include <parser/parser.h>
 
-#include <messaging.h>
 #include <ast/ast.h>
 #include <ast/identifier.h>
+#include <info/info.h>
 
 static struct ast_node * parser_accept_block(struct parser_ctx *parser);
 static struct ast_node *parser_accept_statement(struct parser_ctx *parser);
@@ -16,6 +16,13 @@ struct parser_ctx *parser_new()
 
     rf_ilist_head_init(&ret->files);
     ret->current_file = NULL;
+    ret->info = info_ctx_create();
+
+    if (!ret->info) {
+        free(ret);
+        return NULL;
+    }
+
     return ret;
 }
 
@@ -83,7 +90,7 @@ bool parser_process_file(struct parser_ctx *parser, const struct RFstring *name)
 {
     struct parser_file *file = parser_file_new(name);
     if (!file) {
-        print_error("Could not open file %s", name);
+        ERROR("Could not open file \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(name));
         return false;
     }
 

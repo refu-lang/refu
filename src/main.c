@@ -1,39 +1,35 @@
 #include <stdio.h>
 #include <refu.h>
-#include <messaging.h>
 
-#include <argparser.h>
+#include <compiler_args.h>
 #include <parser/parser.h>
 #include <ast/ast.h>
+#include <info/info.h>
 
 int main(int argc,char** argv)
 {
-    compiler_arguments* args;
     struct parser_ctx *parser;
+    struct compiler_args *args;
     //initialize Refu library
     rf_init("refuclib.log", 0, LOG_DEBUG);
-    //initialize all modules
-    argparser_modinit();
-    if(!messaging_modinit(argc, argv))
-    {
+
+
+    //parse the arguments given to the compiler
+    compiler_args_modinit();
+    args = compiler_args_parse(argc, argv);
+    if(!args) {
+        ERROR("Failure at argument parsing");
         return -1;
     }
 
-    //parse the arguments given to the compiler
-    if(!(args = argparser_parse(argc, argv)))
-    {
-        print_error("Failure at argument parsing");
-        return -1;
-    }
-    
     parser = parser_new();
     if (!parser) {
-        print_error("Failure at parser initialization");
+        ERROR("Failure at parser initialization");
         return -1;
     }
 
     if (!parser_process_file(parser, &args->input)) {
-        print_error("Failure at file parsing");
+        ERROR("Failure at file parsing");
         return -1;
     }
 

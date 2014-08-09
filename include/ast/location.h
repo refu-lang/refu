@@ -43,4 +43,10 @@ i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
     l1->ep = l2->ep;
 }
 
+
+#define AST_LOCATION_FMT       \
+    RF_STR_PF_FMT":%u:%u"
+#define AST_LOCATION_ARG(loc_)                                          \
+    RF_STR_PF_ARG(&(loc_)->file->file_name), (loc_)->start_line, (loc_)->start_col
+
 #endif
