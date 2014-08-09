@@ -30,6 +30,7 @@ void compiler_args_modinit()
     _args.verbose_level = VERBOSE_LEVEL_DEFAULT;
     _args.repl = false;
     rf_string_init(&_args.input, "");
+    rf_stringx_init_buff(&_args.buff, 128, "");
 }
 
 static inline bool compare_backend_values(char* val)
@@ -74,62 +75,40 @@ static bool check_backend(int* i, int argc, char** argv, bool* consumed)
     return false;
 }
 
-
-/* verbose level must have already been checked by the initialization of the
-   compiler output module. Here simply pass it */
-#if 0  /* parse verbose level here!!! */
-#define VERBOSE_LEVEL_MIN 0
-#define VERBOSE_LEVEL_MAX 4
-static inline bool check_string_value(struct info_ctx *ctx, char* s)
+static inline bool check_string_value(struct compiler_args *args, char* s)
 {
-    if (!rf_stringx_assign_unsafe_nnt(&ctx->buff, s, strlen(s))) {
+    if (!rf_stringx_assign_unsafe_nnt(&args->buff, s, strlen(s))) {
         ERROR("Could not assign input argument to string");
         return false;
     }
 
-    if (!rf_string_to_int(&ctx->buff, &ctx->verbose_level)) {
-        ERROR("Verbose level argument is not a number");
+    if (!rf_string_to_int(&args->buff, &args->verbose_level)) {
+        ERROR("Verbose level argument is not a number: %s", s);
         return false;
     }
     return true;
 }
 
-static bool parse_args_verbose(struct info_ctx *ctx, int argc, char** argv)
+static bool check_verbose_level(struct compiler_args *args,
+                                int* i, int argc, char** argv,
+                                bool* consumed)
 {
-    int i;
-    ctx->verbose_level = VERBOSE_LEVEL_DEFAULT;
-    for(i = 1; i < argc; i++) {
-        if(strcmp(argv[i], "-v") == 0 ||
-           strcmp(argv[i], "--verbose-level") == 0) {
+    int len = strlen(argv[*i]);
+    if (strcmp(argv[*i], "-v") == 0 ||
+        strcmp(argv[*i], "--verbose-level") == 0) {
 
-            if(argc >= i) {
-                return check_string_value(ctx, argv[i+1]);
-            }
+        *i = *i + 1;
+        if (argc >= *i) {
+            *consumed = true;
+            return check_string_value(args, argv[*i]);
+        } else {
             ERROR("A number should follow the verbose argument");
             return false;
         }
-
-        if(strstr(argv[i], "--verbose-level=")) {
-            return check_string_value(ctx, argv[i]+16);
-        }
     }
-    return true;
-}
-#endif
-
-
-static void check_verbose_level(int* i, int argc, char** argv, bool* consumed)
-{
-    int len = strlen(argv[*i]);
-    if(strcmp(argv[*i], "-v") == 0 ||
-       strcmp(argv[*i], "--verbose-level") == 0)
-    {
-        *i = *i + 1;
+    if (strstr(argv[*i], "--verbose-level=")) {
         *consumed = true;
-    }
-    if(strstr(argv[*i], "--verbose-level="))
-    {
-        *consumed = true;
+        return check_string_value(args, argv[*i]+16);
     }
 }
 
@@ -148,9 +127,10 @@ static void check_repl(int* i, int argc, char** argv, bool* consumed)
 struct compiler_args *compiler_args_parse(int argc, char** argv)
 {
     bool consumed;
+    bool ok;
     int i;
-    for(i = 1; i < argc; i++)
-    {
+    for (i = 1; i < argc; i++) {
+
         consumed = false;
         if(!check_backend(&i, argc, argv, &consumed))
         {
@@ -159,22 +139,26 @@ struct compiler_args *compiler_args_parse(int argc, char** argv)
             printf(help_message);
             return NULL;
         }
-        check_verbose_level(&i, argc, argv, &consumed);
+
+        ok = check_verbose_level(&_args, &i, argc, argv, &consumed);
+        if (consumed) {
+            if (!ok) {
+                return NULL;
+            }
+            INFO(4, "Verbosity level set to %u", _args.verbose_level);
+        }
+
         check_repl(&i, argc, argv, &consumed);
-        if(consumed)
-        {
+        if (consumed) {
             continue;
         }
 
         /* if we get here the argument should be a file */
-        if(!rf_string_assign(&_args.input, RFS_(argv[i])))
-        {
-            ERROR("Internal error while consuming the input "
-                        "file argument");
+        if(!rf_string_assign(&_args.input, RFS_(argv[i]))) {
+            ERROR("Internal error while consuming the input file argument");
             return NULL;
         }
-        if(!rf_system_file_exists(&_args.input))
-        {
+        if(!rf_system_file_exists(&_args.input)) {
             ERROR("File \""RF_STR_PF_FMT"\" does not exist",
                   RF_STR_PF_ARG(&_args.input));
             return NULL;

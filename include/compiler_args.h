@@ -15,6 +15,7 @@ struct compiler_args {
     int verbose_level;
     bool repl;
     struct RFstring input;
+    struct RFstringx buff;
 };
 
 struct compiler_args *compiler_args_parse(int argc, char** argv);

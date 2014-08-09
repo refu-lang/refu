@@ -41,10 +41,13 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
         printf("\n");                           \
     } while(0)
 
-#define INFO(level_, ...)                                \
-    info_print_cond(level_, "refu: [info] "__VA_ARGS___)
+#define INFO(level_, ...)                                     \
+    do {                                                      \
+        info_print_cond(level_, "refu: [info] "__VA_ARGS__);  \
+        printf("\n");                                         \
+    } while(0)
 
-#define WARN(...)                              \
+#define WARN(...)                               \
     do {                                        \
         printf("refu: [warning] "__VA_ARGS__);  \
         printf("\n");                           \

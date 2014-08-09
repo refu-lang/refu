@@ -99,7 +99,7 @@ void info_print_cond(int vlevel, const char *fmt, ...)
     if (cargs->verbose_level >= vlevel) {
         va_list args;
         va_start(args, fmt);
-        printf(fmt, args);
+        vprintf(fmt, args);
         va_end(args);
     }
 }
