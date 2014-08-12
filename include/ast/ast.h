@@ -46,6 +46,6 @@ void ast_node_add_child(struct ast_node *parent,
 const struct RFstring *ast_node_str(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
-void ast_print(struct ast_node *root);
+void ast_print(struct ast_node *root, int depth);
 
 #endif

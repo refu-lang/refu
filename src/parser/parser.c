@@ -4,10 +4,10 @@
 #include <ast/identifier.h>
 #include <info/info.h>
 
-static struct ast_node * parser_accept_block(struct parser_ctx *parser);
-static struct ast_node *parser_accept_statement(struct parser_ctx *parser);
-static struct ast_node *parser_accept_vardecl(struct parser_ctx *parser);
-static struct ast_node *parser_accept_identifier(struct parser_ctx *parser);
+static struct ast_node * parser_file_acc_block(struct parser_file *f);
+static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
+static struct ast_node *parser_file_acc_vardecl(struct parser_file *f);
+static struct ast_node *parser_file_acc_identifier(struct parser_file *f);
 
 struct parser_ctx *parser_new()
 {
@@ -29,7 +29,7 @@ struct parser_ctx *parser_new()
 /*
  * block = {
  */
-static struct ast_node * parser_accept_block(struct parser_ctx *parser)
+static struct ast_node *parser_file_acc_block(struct parser_file *f)
 {
 #if 0
     struct ast_node *block;
@@ -51,24 +51,6 @@ static struct ast_node * parser_accept_block(struct parser_ctx *parser)
     return NULL;
 }
 
-static struct ast_node *parser_accept_statement(struct parser_ctx *parser)
-{
-    struct ast_node *stmt;
-    struct parser_offset proff;
-    parser_offset_copy(&proff, parser_curr_off(parser));
-
-
-    if (stmt = parser_accept_block(parser)) {
-        return stmt;
-    } else if (stmt = parser_accept_vardecl(parser)) {
-        return stmt;
-    }
-
-    parser_move_to_offset(parser, &proff);
-    return NULL;
-}
-
-
 static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
@@ -79,7 +61,7 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
     file->root = ast_node_create(AST_ROOT, file, beg,
                                  beg + parser_string_len_from_beg(&file->pstr));
 
-    while (stmt = parser_accept_statement(parser)) {
+    while (stmt = parser_file_acc_stmt(file)) {
         ast_node_add_child(file->root, stmt);
     }
 
@@ -100,7 +82,24 @@ bool parser_process_file(struct parser_ctx *parser, const struct RFstring *name)
     return parser_begin_parsing(parser, file);
 }
 
-static struct ast_node *parser_accept_vardecl(struct parser_ctx *parser)
+
+static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
+{
+    struct ast_node *stmt;
+    struct parser_offset proff;
+    parser_offset_copy(&proff, &f->offset);
+
+    if (stmt = parser_file_acc_block(f)) {
+        return stmt;
+    } else if (stmt = parser_file_acc_vardecl(f)) {
+        return stmt;
+    }
+
+    parser_file_move_to_offset(f, &proff);
+    return NULL;
+}
+
+static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
 {
     struct ast_node *var_decl;
     struct ast_node *id1;
@@ -109,29 +108,28 @@ static struct ast_node *parser_accept_vardecl(struct parser_ctx *parser)
     char *sp;
     char *ep;
     static const struct RFstring colon = RF_STRING_STATIC_INIT(":");
-    parser_offset_copy(&proff, parser_curr_off(parser));
+    parser_offset_copy(&proff, &f->offset);
 
-    parser_accept_ws(parser);
-    sp = parser_curr_sp(parser);
+    parser_file_acc_ws(f);
+    sp = parser_file_sp(f);
 
-    id1 = parser_accept_identifier(parser);
+    id1 = parser_file_acc_identifier(f);
     if (!id1) {
-        parser_move_to_offset(parser, &proff);
+        parser_file_move_to_offset(f, &proff);
         return NULL;
     }
-    if(!parser_accept_string_ascii(parser, &colon)) {
-        parser_move_to_offset(parser, &proff);
+    if(!parser_file_acc_string_ascii(f, &colon)) {
+        parser_file_move_to_offset(f, &proff);
         return NULL;
     }
-    id2 = parser_accept_identifier(parser);
+    id2 = parser_file_acc_identifier(f);
     if (!id2) {
-        parser_move_to_offset(parser, &proff);
+        parser_file_move_to_offset(f, &proff);
         return NULL;
     }
-    ep = parser_curr_sp(parser);
+    ep = parser_file_sp(f);
 
-    var_decl = ast_node_create(AST_VARIABLE_DECLARATION,
-                               parser->current_file, sp, ep);
+    var_decl = ast_node_create(AST_VARIABLE_DECLARATION, f, sp, ep);
     if (!var_decl) {
         //TODO: memory error
         return NULL;
@@ -142,18 +140,18 @@ static struct ast_node *parser_accept_vardecl(struct parser_ctx *parser)
     return var_decl;
 }
 
-static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
+static struct ast_node *parser_file_acc_identifier(struct parser_file *f)
 {
     struct parser_offset proff;
     char *p;
     char *sp;
     char *ep;
 
-    parser_offset_copy(&proff, parser_curr_off(parser));
+    parser_offset_copy(&proff, &f->offset);
 
-    parser_accept_ws(parser);
-    sp = p = parser_curr_sp(parser);
-    ep = parser_curr_sp(parser) + rf_string_length_bytes(parser_curr_str(parser));
+    parser_file_acc_ws(f);
+    sp = p = parser_file_sp(f);
+    ep = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f));
 
     while (p <= ep) {
         if ((*p >= 'A' && *p <= 'Z') ||
@@ -165,20 +163,6 @@ static struct ast_node *parser_accept_identifier(struct parser_ctx *parser)
     }
     ep = p;
 
-    return ast_identifier_create(parser->current_file, sp, ep);
+    parser_file_move(f, p - sp, p - sp);
+    return ast_identifier_create(f, sp, ep);
 }
-
-i_INLINE_INS void parser_move_to_offset(struct parser_ctx *parser,
-                                         struct parser_offset *off);
-i_INLINE_INS void parser_move(struct parser_ctx *parser,
-                               unsigned int bytes,
-                               unsigned int chars);
-i_INLINE_INS void parser_accept_ws(struct parser_ctx *parser);
-i_INLINE_INS bool parser_accept_string_ascii(struct parser_ctx *parser,
-                                              const struct RFstring *str);
-i_INLINE_INS struct RFstringx *parser_curr_str(struct parser_ctx *p);
-i_INLINE_INS struct parser_string *parser_curr_pstr(struct parser_ctx *p);
-i_INLINE_INS char *parser_curr_sp(struct parser_ctx *p);
-i_INLINE_INS struct parser_offset *parser_curr_off(struct parser_ctx *p);
-
-

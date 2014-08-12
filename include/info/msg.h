@@ -20,13 +20,10 @@ struct info_msg {
     struct ast_location loc;
 };
 
-
 struct info_msg *info_msg_create(enum info_msg_type type,
                                  struct ast_location *loc,
-                                 const char *fmt, ...);
-struct info_msg *info_msg_createv(enum info_msg_type type,
-                                  struct ast_location *loc,
-                                  const char *fmt, va_list va);
+                                 const char *fmt,
+                                 va_list args);
 void info_msg_destroy(struct info_msg *m);
 
 #endif

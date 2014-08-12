@@ -73,12 +73,20 @@ const struct RFstring *ast_node_str(struct ast_node *n)
 }
 
 
-void ast_print(struct ast_node *n)
+void ast_print(struct ast_node *n, int depth)
 {
     struct ast_node *c;
+    int i = 0;
+
+    for (i = 0; i < depth; i++) {
+        printf("\t");
+    }
     printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
-    rf_ilist_for_each(&n->children, c, lh) {
-        ast_print(n);
+
+    if (AST_NODE_NOT_LEAF(n)) {
+        rf_ilist_for_each(&n->children, c, lh) {
+            ast_print(c, depth + 1);
+        }
     }
     
 }

@@ -48,6 +48,7 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
     return true;
 }
 
+i_INLINE_INS struct RFstringx *parser_string_str(struct parser_string *s);
 i_INLINE_INS char *parser_string_data(struct parser_string *s);
 i_INLINE_INS char *parser_string_beg(struct parser_string *s);
 i_INLINE_INS uint32_t parser_string_len_from_beg(struct parser_string *s);

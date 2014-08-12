@@ -53,6 +53,10 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
                                   char *p, unsigned int *line,
                                   unsigned int *col);
 
+i_INLINE_DECL struct RFstringx *parser_string_str(struct parser_string *s)
+{
+    return &s->str;
+}
 
 i_INLINE_DECL char *parser_string_data(struct parser_string *s)
 {

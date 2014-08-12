@@ -33,7 +33,7 @@ int main(int argc,char** argv)
         return -1;
     }
 
-    ast_print(parser->current_file->root);
+    ast_print(parser->current_file->root, 0);
     
     return 0;
 }
