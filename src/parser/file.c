@@ -70,14 +70,10 @@ void parser_file_move(struct parser_file *f,
 {
     struct parser_offset *off = &f->offset;
     static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
-    struct RFstring tmp;
-    RF_STRING_SHALLOW_INIT(&tmp, parser_file_sp(f), bytes);
 
     off->bytes_moved += bytes;
     off->chars_moved += chars;
-    //TODO: maybe have an argument of bytes in which to count occurences
-    // for rf_string_count (?)
-    off->lines_moved += rf_string_count(&tmp, &nl, 0);
+    off->lines_moved += rf_string_count(parser_file_str(f), &nl, bytes, 0);
 
     rf_stringx_move_bytes(parser_file_str(f), bytes);
 }

@@ -79,7 +79,15 @@ void ast_print(struct ast_node *n, int depth)
     int i = 0;
 
     for (i = 0; i < depth; i++) {
-        printf("\t");
+        if (i == depth - 1) {
+            if (AST_NODE_NOT_LEAF(n)) {
+                printf("|---+>");
+            } else {
+                printf("|---->");
+            }
+        } else {
+            printf("    ", i);
+        }
     }
     printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
 

@@ -14,8 +14,7 @@ python_exec = sys.executable
 if not env.GetOption('clean'):
     dbg = "--debug=explain"
 
-    sconsCall = "{} scons.py static COMPILER=gcc {} {}".format(
-        python_exec, extra_opts, dbg)
+    sconsCall = "scons static COMPILER=gcc {} {}".format(extra_opts, dbg)
     p = subprocess.Popen(sconsCall, cwd=env['CLIB_DIRECTORY'],
                          shell=True)
     ret = p.poll()
@@ -27,6 +26,6 @@ if not env.GetOption('clean'):
               "the Refu compiler")
         Exit(1)
 
-else: #scons was called with -c  (so better clean the c library too
-    subprocess.call([python_exec, "scons.py",
-                     "-c", "static", "shared"], cwd=env['CLIB_DIRECTORY'])    
+else:  # scons was called with -c  (so better clean the c library too
+    subprocess.call(["scons", "-c", "static", "shared"],
+                    cwd=env['CLIB_DIRECTORY'])
