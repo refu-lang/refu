@@ -10,8 +10,9 @@ enum ast_type {
     AST_ROOT = 0,
     AST_BLOCK,
     AST_VARIABLE_DECLARATION,
+    AST_DATA_DECLARATION,
 
-    /* from this value and up all types should have no children */
+    /* from this value and under all types should have no children */
     AST_LEAVES,
     AST_STRING_LITERAL,
     AST_IDENTIFIER,

@@ -4,9 +4,12 @@
 #include <ast/identifier.h>
 #include <info/info.h>
 
+#include <parser/tokens.h>
+
 static struct ast_node * parser_file_acc_block(struct parser_file *f);
 static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
 static struct ast_node *parser_file_acc_vardecl(struct parser_file *f);
+static struct ast_node *parser_file_acc_datadecl(struct parser_file *f);
 static struct ast_node *parser_file_acc_identifier(struct parser_file *f);
 
 struct parser_ctx *parser_new()
@@ -93,8 +96,57 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
         return stmt;
     } else if (stmt = parser_file_acc_vardecl(f)) {
         return stmt;
+    } else if (stmt = parser_file_acc_datadecl(f)) {
+        return stmt;
     }
 
+    parser_file_move_to_offset(f, &proff);
+    return NULL;
+}
+
+static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
+{
+    struct ast_node *data_decl;
+    struct ast_node *data_name;
+    struct parser_offset proff;
+    char *sp;
+    char *ep;
+
+    parser_offset_copy(&proff, &f->offset);
+
+    parser_file_acc_ws(f);
+    sp = parser_file_sp(f);
+
+    if (!parser_file_acc_string_ascii(f, &parser_tok_data)) {
+        goto not_found;
+    }
+
+    data_name = parser_file_acc_identifier(f);
+    if (!data_name) {
+        goto not_found;
+    }
+
+    parser_file_acc_ws(f);
+    if (!parser_file_acc_string_ascii(f, &parser_tok_ocbrace)) {
+        goto not_found;
+    }
+
+    parser_file_acc_ws(f);
+    if (!parser_file_acc_string_ascii(f, &parser_tok_ccbrace)) {
+        goto not_found;
+    }
+
+    ep = parser_file_sp(f);
+    data_decl = ast_node_create(AST_DATA_DECLARATION, f, sp, ep);
+    if (!data_decl) {
+        //TODO: memory error
+        goto not_found;
+    }
+
+    ast_node_add_child(data_decl, data_name);
+    return data_decl;
+
+not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;
 }
@@ -107,7 +159,7 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
     struct parser_offset proff;
     char *sp;
     char *ep;
-    static const struct RFstring colon = RF_STRING_STATIC_INIT(":");
+
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
@@ -118,7 +170,7 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
         parser_file_move_to_offset(f, &proff);
         return NULL;
     }
-    if(!parser_file_acc_string_ascii(f, &colon)) {
+    if(!parser_file_acc_string_ascii(f, &parser_tok_colon)) {
         parser_file_move_to_offset(f, &proff);
         return NULL;
     }
