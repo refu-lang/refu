@@ -13,9 +13,24 @@ enum ast_type {
     AST_DATA_DECLARATION,
 
     /* from this value and under all types should have no children */
-    AST_LEAVES,
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
+    AST_TYPES_COUNT /* always last */
+};
+
+
+struct ast_vardecl {
+    //! identifier of the name
+    struct ast_node *name;
+    //! identifier of the type
+    struct ast_node *type;
+};
+
+struct ast_datadecl {
+    //! identifier of the name
+    struct ast_node *name;
+    //! List of ast nodes that are members of the declaration
+    struct RFilist_head members;
 };
 
 struct ast_node {
@@ -24,16 +39,16 @@ struct ast_node {
     struct RFilist_node lh;
     union {
         struct RFstring identifier;
-        struct {
-            struct RFilist_head children;
-            unsigned int children_num;
-        };
+        struct ast_vardecl vardecl;
+        struct ast_datadecl datadecl;
+
+        struct RFilist_head children;
     };
 };
 
 struct ast_node *ast_node_create(enum ast_type type,
-                                         struct parser_file *f,
-                                         char *sp, char *ep);
+                                 struct parser_file *f,
+                                 char *sp, char *ep);
 
 //will probably go away if not used
 struct ast_node *ast_node_create_fromloc(enum ast_type type,
@@ -49,4 +64,9 @@ const struct RFstring *ast_node_str(struct ast_node *n);
 // temporary function, to visualize an ast tree
 void ast_print(struct ast_node *root, int depth);
 
+void ast_vardecl_init(struct ast_node *n,
+                      struct ast_node *name,
+                      struct ast_node *type);
+void ast_datadecl_init(struct ast_node *n, struct ast_node *name);
+void ast_datadecl_add_child(struct ast_node *n, struct ast_node *c);
 #endif

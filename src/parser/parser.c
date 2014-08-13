@@ -142,8 +142,7 @@ static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         //TODO: memory error
         goto not_found;
     }
-
-    ast_node_add_child(data_decl, data_name);
+    ast_datadecl_init(data_decl, data_name);
     return data_decl;
 
 not_found:
@@ -186,8 +185,7 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
         //TODO: memory error
         return NULL;
     }
-    ast_node_add_child(var_decl, id1);
-    ast_node_add_child(var_decl, id2);
+    ast_vardecl_init(var_decl, id1, id2);
 
     return var_decl;
 }

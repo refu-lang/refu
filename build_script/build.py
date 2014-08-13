@@ -26,10 +26,11 @@ def setup_defines(env):
     env.Append(CPPDEFINES=cld_defs)
     if env['DEBUG']:
         env.Append(CPPDEFINES="IS_DEBUG")
-    
+        env.Append(CPPDEFINES="RF_OPTION_DEBUG")
+
     for b in env['BACKENDS']:
         env.Append(CPPDEFINES="HAVE_{}_BACKEND".format(b))
-    
+
     # temporary maybe,
     # define the load factor. Should be hardcoded into the generated .c file
     # by the template to source generator
