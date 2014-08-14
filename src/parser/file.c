@@ -20,6 +20,13 @@ struct parser_file *parser_file_new(const struct RFstring *name)
 
     RF_MALLOC(ret, sizeof(*ret), NULL);
 
+    ret->info = info_ctx_create();
+
+    if (!ret->info) {
+        free(ret);
+        return NULL;
+    }
+
     if (!rf_stringx_init_buff(&file_str, FILE_BUFFER_INITIAL_SIZE, "")) {
         return NULL;
     }

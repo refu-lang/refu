@@ -54,15 +54,15 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
                     case MESSAGE_SEMANTIC_WARNING:
                         fprintf(
                             f,
-                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT,
+                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT"\n",
                             AST_LOCATION_ARG(&m->loc), 
                             RF_STR_PF_ARG(&m->s));
                             
                         break;
-                    case MESSAGE_PARSING_WARNING:
+                    case MESSAGE_SYNTAX_WARNING:
                         fprintf(
                             f,
-                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT,
+                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT"\n",
                             AST_LOCATION_ARG(&m->loc), 
                             RF_STR_PF_ARG(&m->s));
 
@@ -70,14 +70,14 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
                     case MESSAGE_SEMANTIC_ERROR:
                         fprintf(
                             f,
-                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT,
+                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT"\n",
                             AST_LOCATION_ARG(&m->loc), 
                             RF_STR_PF_ARG(&m->s));
                         break;
-                    case MESSAGE_PARSING_ERROR:
+                    case MESSAGE_SYNTAX_ERROR:
                         fprintf(
                             f,
-                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT,
+                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT"\n",
                             AST_LOCATION_ARG(&m->loc), 
                             RF_STR_PF_ARG(&m->s));
 

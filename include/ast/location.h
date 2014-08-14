@@ -31,6 +31,9 @@ bool ast_location_init(struct ast_location *loc,
                        struct parser_file *f,
                        char *sp, char *ep);
 
+bool ast_location_from_file(struct ast_location *loc,
+                            struct parser_file *f);
+
 i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
                                      struct ast_location *l2)
 {

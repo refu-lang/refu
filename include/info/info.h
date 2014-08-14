@@ -7,9 +7,9 @@
 enum info_msg_type {
     MESSAGE_ANY = 0x1,
     MESSAGE_SEMANTIC_WARNING = 0x2,
-    MESSAGE_PARSING_WARNING = 0x4,
+    MESSAGE_SYNTAX_WARNING = 0x4,
     MESSAGE_SEMANTIC_ERROR = 0x8,
-    MESSAGE_PARSING_ERROR = 0x10
+    MESSAGE_SYNTAX_ERROR = 0x10
 };
 
 struct ast_location;

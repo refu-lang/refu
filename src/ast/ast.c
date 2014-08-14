@@ -106,15 +106,19 @@ void ast_print(struct ast_node *n, int depth)
         }
     }
 
-    printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
+
     switch(n->type) {
     case AST_ROOT:
     case AST_BLOCK:
+        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
         rf_ilist_for_each(&n->children, c, lh) {
             ast_print(c, depth + 1);
         }
         break;
     case AST_VARIABLE_DECLARATION:
+        //TODO: 
+        /* printf("variable declaration  name: "RF_STR_PF_FMT" type:" RF_STR_PF_FMT"\n", */
+        /* ); */
         ast_print(n->vardecl.name, depth + 1);
         ast_print(n->vardecl.type, depth + 1);
         break;

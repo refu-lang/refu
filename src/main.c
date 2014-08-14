@@ -29,10 +29,12 @@ int main(int argc,char** argv)
     }
 
     if (!parser_process_file(parser, &args->input)) {
+        parser_flush_messages(parser);
         ERROR("Failure at file parsing");
+        ast_print(parser->current_file->root, 0);
         return -1;
     }
-
+    parser_flush_messages(parser);
     ast_print(parser->current_file->root, 0);
     
     return 0;

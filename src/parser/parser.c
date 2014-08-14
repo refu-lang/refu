@@ -19,14 +19,16 @@ struct parser_ctx *parser_new()
 
     rf_ilist_head_init(&ret->files);
     ret->current_file = NULL;
-    ret->info = info_ctx_create();
-
-    if (!ret->info) {
-        free(ret);
-        return NULL;
-    }
 
     return ret;
+}
+
+void parser_flush_messages(struct parser_ctx *parser)
+{
+    struct parser_file *f;
+    rf_ilist_for_each(&parser->files, f, lh) {
+        info_ctx_flush(f->info, stdout, MESSAGE_ANY);
+    }
 }
 
 /*
@@ -66,6 +68,10 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
 
     while (stmt = parser_file_acc_stmt(file)) {
         ast_node_add_child(file->root, stmt);
+    }
+    if (!parser_file_eof(file)) {
+        parser_file_synerr(file, "Expected a statement");
+        return false;
     }
 
     return true;
@@ -169,8 +175,11 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
     if(!parser_file_acc_string_ascii(f, &parser_tok_colon)) {
         goto not_found;
     }
+
+    /* from here and on not having an identifier is an error */
     id2 = parser_file_acc_identifier(f);
     if (!id2) {
+        parser_file_synerr(f, "Expected an identifier");
         goto not_found;
     }
     ep = parser_file_sp(f);

@@ -7,16 +7,16 @@
 #include <parser/offset.h>
 #include <parser/file.h>
 
-struct info_ctx;
 struct parser_ctx {
     struct RFilist_head files;
     struct parser_file *current_file;
-    struct info_ctx *info;
 };
 
 
 struct parser_ctx *parser_new();
 bool parser_process_file(struct parser_ctx *parser,
                          const struct RFstring *name);
+
+void parser_flush_messages(struct parser_ctx *parser);
 
 #endif

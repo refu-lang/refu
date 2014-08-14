@@ -6,6 +6,7 @@
 
 #include <parser/string.h>
 #include <parser/offset.h>
+#include <info/info.h>
 
 struct ast_node;
 
@@ -17,6 +18,7 @@ struct parser_file {
     unsigned int current_col;
     char *bp;
     struct parser_offset offset;
+    struct info_ctx *info;
     struct ast_node *root;
 };
 
@@ -72,4 +74,16 @@ i_INLINE_DECL struct RFstringx *parser_file_str(struct parser_file *f)
 {
     return &f->pstr.str;
 }
+
+
+#define parser_file_synerr(file_, ...)            \
+    do {                                          \
+        struct ast_location i_loc_;               \
+        ast_location_from_file(&i_loc_, (file_)); \
+        i_info_ctx_add_msg((file_)->info,         \
+                           MESSAGE_SYNTAX_ERROR,  \
+                           &i_loc_,               \
+                           __VA_ARGS__);          \
+    } while(0)
+
 #endif
