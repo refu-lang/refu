@@ -5,6 +5,8 @@
 #include <RFstring.h>
 
 #include <ast/location.h>
+#include <ast/datadecl.h>
+#include <ast/vardecl.h>
 
 enum ast_type {
     AST_ROOT = 0,
@@ -16,21 +18,6 @@ enum ast_type {
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
     AST_TYPES_COUNT /* always last */
-};
-
-
-struct ast_vardecl {
-    //! identifier of the name
-    struct ast_node *name;
-    //! identifier of the type
-    struct ast_node *type;
-};
-
-struct ast_datadecl {
-    //! identifier of the name
-    struct ast_node *name;
-    //! List of ast nodes that are members of the declaration
-    struct RFilist_head members;
 };
 
 struct ast_node {
@@ -63,10 +50,4 @@ const struct RFstring *ast_node_str(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
 void ast_print(struct ast_node *root, int depth);
-
-void ast_vardecl_init(struct ast_node *n,
-                      struct ast_node *name,
-                      struct ast_node *type);
-void ast_datadecl_init(struct ast_node *n, struct ast_node *name);
-void ast_datadecl_add_child(struct ast_node *n, struct ast_node *c);
 #endif

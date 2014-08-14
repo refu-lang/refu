@@ -107,7 +107,8 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
 static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
 {
     struct ast_node *data_decl;
-    struct ast_node *data_name;
+    struct ast_node *name;
+    struct ast_node *member;
     struct parser_offset proff;
     char *sp;
     char *ep;
@@ -121,8 +122,8 @@ static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
 
-    data_name = parser_file_acc_identifier(f);
-    if (!data_name) {
+    name = parser_file_acc_identifier(f);
+    if (!name) {
         goto not_found;
     }
 
@@ -131,18 +132,15 @@ static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
 
+    member = parser_file_acc_vardecl(f);
+
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_ccbrace)) {
         goto not_found;
     }
 
     ep = parser_file_sp(f);
-    data_decl = ast_node_create(AST_DATA_DECLARATION, f, sp, ep);
-    if (!data_decl) {
-        //TODO: memory error
-        goto not_found;
-    }
-    ast_datadecl_init(data_decl, data_name);
+    data_decl = ast_datadecl_create(f, sp, ep, name);
     return data_decl;
 
 not_found:
@@ -166,28 +164,23 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
 
     id1 = parser_file_acc_identifier(f);
     if (!id1) {
-        parser_file_move_to_offset(f, &proff);
-        return NULL;
+        goto not_found;
     }
     if(!parser_file_acc_string_ascii(f, &parser_tok_colon)) {
-        parser_file_move_to_offset(f, &proff);
-        return NULL;
+        goto not_found;
     }
     id2 = parser_file_acc_identifier(f);
     if (!id2) {
-        parser_file_move_to_offset(f, &proff);
-        return NULL;
+        goto not_found;
     }
     ep = parser_file_sp(f);
 
-    var_decl = ast_node_create(AST_VARIABLE_DECLARATION, f, sp, ep);
-    if (!var_decl) {
-        //TODO: memory error
-        return NULL;
-    }
-    ast_vardecl_init(var_decl, id1, id2);
-
+    var_decl = ast_vardecl_create(f, sp, ep, id1, id2);
     return var_decl;
+
+not_found:
+    parser_file_move_to_offset(f, &proff);
+    return NULL;
 }
 
 static struct ast_node *parser_file_acc_identifier(struct parser_file *f)

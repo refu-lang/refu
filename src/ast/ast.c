@@ -122,33 +122,3 @@ void ast_print(struct ast_node *n, int depth)
         break;
     }
 }
-
-
-void ast_vardecl_init(struct ast_node *n,
-                      struct ast_node *name,
-                      struct ast_node *type)
-{
-    RF_ASSERT(n->type == AST_VARIABLE_DECLARATION);
-    RF_ASSERT(name->type == AST_IDENTIFIER);
-    RF_ASSERT(type->type == AST_IDENTIFIER);
-
-    n->vardecl.name = name;
-    n->vardecl.type = type;
-}
-
-void ast_datadecl_init(struct ast_node *n, struct ast_node *name)
-{
-    RF_ASSERT(n->type == AST_DATA_DECLARATION);
-    RF_ASSERT(name->type == AST_IDENTIFIER);
-
-    n->datadecl.name = name;
-    rf_ilist_head_init(&n->datadecl.members);
-}
-
-void ast_datadecl_add_child(struct ast_node *n, struct ast_node *c)
-{
-    RF_ASSERT(n->type == AST_DATA_DECLARATION);
-    RF_ASSERT(c->type == AST_VARIABLE_DECLARATION);
-
-    rf_ilist_add(&n->datadecl.members, &c->lh);
-}

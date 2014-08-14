@@ -39,7 +39,9 @@ cld_sources = [
     'parser/tokens.c',
     'ast/ast.c',
     'ast/location.c',
-    'ast/identifier.c'
+    'ast/identifier.c',
+    'ast/datadecl.c',
+    'ast/vardecl.c',
 ]
 
 
