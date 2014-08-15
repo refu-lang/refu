@@ -32,6 +32,7 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
 
 bool info_ctx_has(struct info_ctx *ctx);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
+void info_ctx_print(struct info_ctx *ctx, unsigned int index);
 
 /* simple printing related function wrappers */
 

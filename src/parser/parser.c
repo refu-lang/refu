@@ -215,6 +215,10 @@ static struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     }
     ep = p;
 
+    if (ep == sp) { /* no identifier was found */
+        return NULL;
+    }
+
     parser_file_move(f, p - sp, p - sp);
     return ast_identifier_create(f, sp, ep);
 }

@@ -1,6 +1,7 @@
 #include <ast/vardecl.h>
 
 #include <ast/ast.h>
+#include <ast/identifier.h>
 #include <Utils/sanity.h>
 
 struct ast_node *ast_vardecl_create(struct parser_file *f,
@@ -23,4 +24,18 @@ struct ast_node *ast_vardecl_create(struct parser_file *f,
     ret->vardecl.type = type;    
     
     return ret;
+}
+
+struct RFstring *ast_vardecl_name_str(struct ast_node *n)
+{
+    RF_ASSERT(n->type == AST_VARIABLE_DECLARATION);
+
+    return ast_identifier_str(n->vardecl.name);
+}
+
+struct RFstring *ast_vardecl_type_str(struct ast_node *n)
+{
+    RF_ASSERT(n->type == AST_VARIABLE_DECLARATION);
+
+    return ast_identifier_str(n->vardecl.type);
 }

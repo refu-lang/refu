@@ -13,6 +13,8 @@
 #define INFO_WARNING_STR "warning"
 #define INFO_ERROR_STR "error"
 
+
+
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
                         struct ast_location *loc,
@@ -50,48 +52,18 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
         if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
             RF_BITFLAG_ON(type, m->type)) {
 
-                switch(m->type) {
-                    case MESSAGE_SEMANTIC_WARNING:
-                        fprintf(
-                            f,
-                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT"\n",
-                            AST_LOCATION_ARG(&m->loc), 
-                            RF_STR_PF_ARG(&m->s));
-                            
-                        break;
-                    case MESSAGE_SYNTAX_WARNING:
-                        fprintf(
-                            f,
-                            AST_LOCATION_FMT" "INFO_WARNING_STR":"RF_STR_PF_FMT"\n",
-                            AST_LOCATION_ARG(&m->loc), 
-                            RF_STR_PF_ARG(&m->s));
-
-                        break;
-                    case MESSAGE_SEMANTIC_ERROR:
-                        fprintf(
-                            f,
-                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT"\n",
-                            AST_LOCATION_ARG(&m->loc), 
-                            RF_STR_PF_ARG(&m->s));
-                        break;
-                    case MESSAGE_SYNTAX_ERROR:
-                        fprintf(
-                            f,
-                            AST_LOCATION_FMT" "INFO_ERROR_STR":"RF_STR_PF_FMT"\n",
-                            AST_LOCATION_ARG(&m->loc), 
-                            RF_STR_PF_ARG(&m->s));
-
-                        break;
-                    default: /* should never get here */
-                        assert(0);
-                        break;
-                }
-
+            info_msg_print(m);
             rf_ilist_delete_from(&ctx->msg_list, &m->ln);
             info_msg_destroy(m);
         }
     }
 }
+
+
+
+
+
+
 
 void info_print_cond(int vlevel, const char *fmt, ...)
 {

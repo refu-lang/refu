@@ -81,16 +81,15 @@ void ast_node_add_child(struct ast_node *parent,
 const struct RFstring *ast_node_str(struct ast_node *n)
 {
     // assert that the array size is same as enum size
-    BUILD_ASSERT(sizeof(ast_type_strings)/sizeof(struct RFstring) == AST_TYPES_COUNT);
+    BUILD_ASSERT(
+        sizeof(ast_type_strings)/sizeof(struct RFstring) == AST_TYPES_COUNT
+    );
     return &ast_type_strings[n->type];
 }
 
 
-void ast_print(struct ast_node *n, int depth)
+static void ast_print_prelude(struct ast_node *n, int depth)
 {
-    struct ast_node *c;
-    struct RFilist_head *list = NULL;
-
     int i = 0;
 
     for (i = 0; i < depth; i++) {
@@ -105,7 +104,14 @@ void ast_print(struct ast_node *n, int depth)
             printf("    ", i);
         }
     }
+}
 
+void ast_print(struct ast_node *n, int depth)
+{
+    struct ast_node *c;
+    struct RFilist_head *list = NULL;
+
+    ast_print_prelude(n, depth);
 
     switch(n->type) {
     case AST_ROOT:
@@ -116,13 +122,15 @@ void ast_print(struct ast_node *n, int depth)
         }
         break;
     case AST_VARIABLE_DECLARATION:
-        //TODO: 
-        /* printf("variable declaration  name: "RF_STR_PF_FMT" type:" RF_STR_PF_FMT"\n", */
-        /* ); */
+        printf("variable declaration  name:\""RF_STR_PF_FMT"\""
+               ", type:\"" RF_STR_PF_FMT"\"\n",
+               RF_STR_PF_ARG(ast_vardecl_name_str(n)),
+               RF_STR_PF_ARG(ast_vardecl_type_str(n)));
         ast_print(n->vardecl.name, depth + 1);
         ast_print(n->vardecl.type, depth + 1);
         break;
     default:
+        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
         break;
     }
 }
