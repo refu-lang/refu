@@ -10,6 +10,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("block"),
     RF_STRING_STATIC_INIT("variable declaration"),
     RF_STRING_STATIC_INIT("data declaration"),
+    RF_STRING_STATIC_INIT("function declaration"),
     RF_STRING_STATIC_INIT("string literal"),
     RF_STRING_STATIC_INIT("identifier")
 };
@@ -116,6 +117,15 @@ void ast_print(struct ast_node *n, int depth)
         printf("data declaration  name:\""RF_STR_PF_FMT"\"\n",
                RF_STR_PF_ARG(ast_datadecl_name_str(n)));
          rf_ilist_for_each(&n->datadecl.members, c, lh) {
+            ast_print(c, depth + 1);
+         }
+        break;
+    case AST_FUNCTION_DECLARATION:
+        printf("function declaration  name:\""RF_STR_PF_FMT"\""
+               "return:\""RF_STR_PF_FMT"\" with arguments:\n",
+               RF_STR_PF_ARG(ast_fndecl_name_str(n)),
+               RF_STR_PF_ARG(ast_fndecl_ret_str(n)));
+         rf_ilist_for_each(&n->fndecl.args, c, lh) {
             ast_print(c, depth + 1);
          }
         break;

@@ -7,12 +7,14 @@
 #include <ast/location.h>
 #include <ast/datadecl.h>
 #include <ast/vardecl.h>
+#include <ast/fndecl.h>
 
 enum ast_type {
     AST_ROOT = 0,
     AST_BLOCK,
     AST_VARIABLE_DECLARATION,
     AST_DATA_DECLARATION,
+    AST_FUNCTION_DECLARATION,
 
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
@@ -28,6 +30,7 @@ struct ast_node {
         struct RFstring identifier;
         struct ast_vardecl vardecl;
         struct ast_datadecl datadecl;
+        struct ast_fndecl fndecl;
 
         struct RFilist_head children;
     };

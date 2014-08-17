@@ -42,6 +42,7 @@ cld_sources = [
     'ast/identifier.c',
     'ast/datadecl.c',
     'ast/vardecl.c',
+    'ast/fndecl.c',
 ]
 
 

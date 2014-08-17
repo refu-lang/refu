@@ -10,6 +10,7 @@ static struct ast_node * parser_file_acc_block(struct parser_file *f);
 static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
 static struct ast_node *parser_file_acc_vardecl(struct parser_file *f);
 static struct ast_node *parser_file_acc_datadecl(struct parser_file *f);
+static struct ast_node *parser_file_acc_fndecl(struct parser_file *f);
 static struct ast_node *parser_file_acc_identifier(struct parser_file *f);
 
 struct parser_ctx *parser_new()
@@ -103,6 +104,8 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
     } else if (stmt = parser_file_acc_vardecl(f)) {
         return stmt;
     } else if (stmt = parser_file_acc_datadecl(f)) {
+        return stmt;
+    } else if (stmt = parser_file_acc_fndecl(f)) {
         return stmt;
     }
 
@@ -209,6 +212,94 @@ static struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
 
 not_found:
     parser_file_move_to_offset(f, &proff);
+    return NULL;
+}
+
+static struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
+{
+    bool found_comma;
+    struct ast_node *fn;
+    struct ast_node *name;
+    struct ast_node *arg;
+    struct parser_offset proff;
+    char *sp;
+    char *ep;
+
+    parser_offset_copy(&proff, &f->offset);
+
+    parser_file_acc_ws(f);
+    sp = parser_file_sp(f);
+
+    if (!parser_file_acc_string_ascii(f, &parser_tok_fn)) {
+        goto not_found;
+    }
+
+    /* error from here and on */
+    parser_file_acc_ws(f);
+    name = parser_file_acc_identifier(f);
+    if (!name) {
+        goto not_found;
+    }
+
+    parser_file_acc_ws(f);
+    if (!parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
+        ast_node_destroy(name);
+        goto not_found;
+    }
+
+    fn = ast_fndecl_create(f, sp, NULL, name);
+
+    while ((arg = parser_file_acc_vardecl(f)) != NULL) {
+        ast_fndecl_add_arg(fn, arg);
+        found_comma = false;
+        parser_file_acc_ws(f);
+        if (!parser_file_acc_string_ascii(f, &parser_tok_comma)) {
+            found_comma = true;
+        }
+    }
+    if (parser_file_has_synerr(f)) {
+        parser_file_synerr(f,
+                           "Expected either a variable declaration or "
+                           "a closing parentheses ')' function "
+                           "declaration for '"RF_STR_PF_FMT"'",
+                           RF_STR_PF_ARG(ast_identifier_str(name)));
+        goto err_free;
+    }
+    
+    parser_file_acc_ws(f);
+    if (!parser_file_acc_string_ascii(f, &parser_tok_cparen)) {    
+        parser_file_synerr(f,
+                           "Expected either a variable declaration or "
+                           "a closing parentheses ')' function "
+                           "declaration for '"RF_STR_PF_FMT"'",
+                           RF_STR_PF_ARG(ast_identifier_str(name)));
+        goto err_free;
+    }
+
+    parser_file_acc_ws(f);
+    if (!parser_file_acc_string_ascii(f, &parser_tok_arrow)) {
+        /* no return value */
+        ast_node_set_end(fn, parser_file_sp(f));
+        return fn;
+    }
+
+    parser_file_acc_ws(f);
+    name = parser_file_acc_identifier(f);
+    if (!name) {
+        parser_file_synerr(f,
+                           "Expected a return type for function  "
+                           "declaration for '"RF_STR_PF_FMT"'",
+                           RF_STR_PF_ARG(ast_identifier_str(fn->fndecl.name)));
+        goto err_free;
+    }
+
+    ast_fndecl_set_ret(fn, name);
+    ast_node_set_end(fn, parser_file_sp(f));
+    return fn;
+
+err_free:
+    ast_node_destroy(fn);
+not_found:
     return NULL;
 }
 
