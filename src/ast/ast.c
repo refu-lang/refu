@@ -38,20 +38,6 @@ struct ast_node *ast_node_create(enum ast_type type,
     return ret;
 }
 
-//will probably go away if not used
-struct ast_node *ast_node_create_fromloc(enum ast_type type,
-                                         struct ast_location *loc)
-{
-    struct ast_node *ret;
-    RF_MALLOC(ret, sizeof(struct ast_node), NULL);
-
-    ret->type = type;
-    ast_location_copy(&ret->location, loc);
-    rf_ilist_head_init(&ret->children);
-
-    return ret;
-}
-
 void ast_node_destroy(struct ast_node *n)
 {
     struct ast_node *child;
@@ -70,6 +56,11 @@ void ast_node_destroy(struct ast_node *n)
      }
 
     free(n);
+}
+
+bool ast_node_set_end(struct ast_node *n, char *end)
+{
+    return ast_location_set_end(&n->location, end);
 }
 
 void ast_node_add_child(struct ast_node *parent,
@@ -120,6 +111,13 @@ void ast_print(struct ast_node *n, int depth)
         rf_ilist_for_each(&n->children, c, lh) {
             ast_print(c, depth + 1);
         }
+        break;
+    case AST_DATA_DECLARATION:
+        printf("data declaration  name:\""RF_STR_PF_FMT"\"\n",
+               RF_STR_PF_ARG(ast_datadecl_name_str(n)));
+         rf_ilist_for_each(&n->datadecl.members, c, lh) {
+            ast_print(c, depth + 1);
+         }
         break;
     case AST_VARIABLE_DECLARATION:
         printf("variable declaration  name:\""RF_STR_PF_FMT"\""

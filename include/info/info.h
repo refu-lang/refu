@@ -18,6 +18,7 @@ struct info_ctx {
     RFilist_head msg_list;
     int verbose_level;
     struct RFstringx buff;
+    bool syntax_error; /* maybe to avoid searching the whole list? */
 };
 
 
@@ -30,7 +31,7 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         const char *fmt,
                         ...);
 
-bool info_ctx_has(struct info_ctx *ctx);
+bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
 void info_ctx_print(struct info_ctx *ctx, unsigned int index);
 

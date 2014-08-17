@@ -71,6 +71,20 @@ bool parser_file_eof(struct parser_file *f)
     return rf_string_length(parser_file_str(f)) == 0;
 }
 
+char *parser_file_lookfor(struct parser_file *f,
+                          const struct RFstring *str,
+                          char *end)
+{
+    int32_t ret;
+    struct RFstringx *s = parser_file_str(f);
+    ret = rf_string_find_i(s, str, 0, end - rf_string_data(s), 0);
+    if (ret == RF_FAILURE) {
+        return NULL;
+    }
+
+    return parser_file_sp(f) + ret;
+}
+
 void parser_file_move(struct parser_file *f,
                       unsigned int bytes,
                       unsigned int chars)
@@ -99,8 +113,11 @@ void parser_file_acc_ws(struct parser_file *f)
     struct parser_offset mov;
     mov.chars_moved += rf_stringx_skip_chars(parser_file_str(f),
                                              &wsp,
+                                             0,
                                              &mov.bytes_moved,
                                              &mov.lines_moved);
+
+
     parser_offset_add(&f->offset, &mov);
 }
 
@@ -108,6 +125,10 @@ bool parser_file_acc_string_ascii(struct parser_file *f,
                                   const struct RFstring *str)
 {
     struct RFstringx *buff = parser_file_str(f);
+
+    /* if (end - rf_string_data(buff) < rf_string_length_bytes(str)) { */
+    /*     return false; */
+    /* } */
 
     if(!rf_string_begins_with(buff, str, 0)) {
         return false;
@@ -117,6 +138,21 @@ bool parser_file_acc_string_ascii(struct parser_file *f,
     return true;
 }
 
+bool parser_file_line(struct parser_file *f,
+                      uint32_t line,
+                      struct RFstring *str)
+{
+    struct parser_string *s = &f->pstr;
+    if (line >= s->lines_num) {
+        return false;
+    }
 
+    RF_STRING_SHALLOW_INIT(str,
+                           parser_string_beg(s) + s->lines[line],
+                           s->lines[line + 1] - s->lines[line]);
+    return true;
+}
+
+i_INLINE_INS bool parser_file_has_synerr(struct parser_file *f);
 i_INLINE_INS char *parser_file_sp(struct parser_file *f);
 i_INLINE_INS struct RFstringx *parser_file_str(struct parser_file *f);

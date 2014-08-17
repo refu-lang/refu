@@ -50,6 +50,18 @@ void parser_file_acc_ws(struct parser_file *f);
 bool parser_file_acc_string_ascii(struct parser_file *f,
                                   const struct RFstring *str);
 
+/**
+ * Looks ahead from the current position for a specific string
+ *
+ * @param f         The parser file to work with
+ * @param str       The string to look for
+ * @param end       If not NULL a pointer to @c str, to limit the search
+ * @return          Pointer to the position the string is found or NULL if not
+ *                  found
+ */
+char *parser_file_lookfor(struct parser_file *f,
+                          const struct RFstring *str,
+                          char *end);
 
 /**
  * Gets the current string pointer in the file
@@ -75,11 +87,36 @@ i_INLINE_DECL struct RFstringx *parser_file_str(struct parser_file *f)
     return &f->pstr.str;
 }
 
+/**
+ * Returns if there has been a syntax error during parsing the file
+ */
+i_INLINE_DECL bool parser_file_has_synerr(struct parser_file *f)
+{
+    //or:
+    // return f->info->syntax_error;
+    return info_ctx_has(f->info, MESSAGE_SYNTAX_ERROR);
+}
+
+/**
+ * Gets a line from a parser file and a char pointer.
+ *
+ * @param f          The parser file to work with
+ * @param p          The position pointer whose line to get
+ * @param str[out]   Initializes a string with the data of the line we
+ *                   need to return. Points to the file, no need to free
+ * @return           True for success and false for failure.
+ */
+bool parser_file_line(struct parser_file *f,
+                      uint32_t line,
+                      struct RFstring *str);
+
+
 
 #define parser_file_synerr(file_, ...)            \
     do {                                          \
         struct ast_location i_loc_;               \
         ast_location_from_file(&i_loc_, (file_)); \
+        (file_)->info->syntax_error = true;       \
         i_info_ctx_add_msg((file_)->info,         \
                            MESSAGE_SYNTAX_ERROR,  \
                            &i_loc_,               \

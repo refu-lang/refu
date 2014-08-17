@@ -138,17 +138,37 @@ static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
 
-    member = parser_file_acc_vardecl(f);
+    /* from here and on we throw syntax errors if something goes wrong */
+    data_decl = ast_datadecl_create(f, sp, NULL, name);
+
+    while ((member = parser_file_acc_vardecl(f)) != NULL) {
+        ast_datadecl_add_member(data_decl, member);
+    }
+    if (parser_file_has_synerr(f)) {
+        parser_file_synerr(f,
+                           "Expected either a variable declaration or "
+                           "a closing brace '}' in data "
+                           "declaration for '"RF_STR_PF_FMT"'",
+                           RF_STR_PF_ARG(ast_identifier_str(name)));
+        goto err_free;
+    }
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_ccbrace)) {
-        goto not_found;
+        parser_file_synerr(f,
+                           "Expected either a variable declaration or "
+                           "a closing brace '}' in data "
+                           "declaration for '"RF_STR_PF_FMT"'",
+                           RF_STR_PF_ARG(ast_identifier_str(name)));
+        goto err_free;
     }
 
-    ep = parser_file_sp(f);
-    data_decl = ast_datadecl_create(f, sp, ep, name);
+    ast_node_set_end(data_decl, parser_file_sp(f));
+
     return data_decl;
 
+err_free:
+    ast_datadecl_destroy(data_decl);
 not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;

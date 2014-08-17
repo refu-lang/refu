@@ -37,11 +37,9 @@ struct ast_node *ast_node_create(enum ast_type type,
                                  struct parser_file *f,
                                  char *sp, char *ep);
 
-//will probably go away if not used
-struct ast_node *ast_node_create_fromloc(enum ast_type type,
-                                         struct ast_location *loc);
-
 void ast_node_destroy(struct ast_node *n);
+
+bool ast_node_set_end(struct ast_node *n, char *end);
 
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);

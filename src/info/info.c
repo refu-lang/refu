@@ -10,11 +10,6 @@
 
 #define INFO_CTX_BUFF_SIZE 512 //TODO: move somewhere else
 
-#define INFO_WARNING_STR "warning"
-#define INFO_ERROR_STR "error"
-
-
-
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
                         struct ast_location *loc,
@@ -36,11 +31,20 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
     return true;
 }
 
-bool info_ctx_has(struct info_ctx *ctx)
+bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type)
 {
-    return !rf_ilist_is_empty(&ctx->msg_list);
-}
+    struct info_msg *m;
+    if (type == MESSAGE_ANY) {
+        return !rf_ilist_is_empty(&ctx->msg_list);
+    }
 
+    rf_ilist_for_each(&ctx->msg_list, m, ln) {
+        if (RF_BITFLAG_ON(type, m->type)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
 {
@@ -52,18 +56,12 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
         if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
             RF_BITFLAG_ON(type, m->type)) {
 
-            info_msg_print(m);
+            info_msg_print(m, f);
             rf_ilist_delete_from(&ctx->msg_list, &m->ln);
             info_msg_destroy(m);
         }
     }
 }
-
-
-
-
-
-
 
 void info_print_cond(int vlevel, const char *fmt, ...)
 {
@@ -87,6 +85,7 @@ struct info_ctx *info_ctx_create()
         free(ctx);
         return NULL;
     }
+    ctx->syntax_error = false;
 
     return ctx;
 }

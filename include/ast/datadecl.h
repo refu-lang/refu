@@ -17,6 +17,9 @@ struct ast_node *ast_datadecl_create(struct parser_file *f,
                                      char *ep, 
                                      struct ast_node *name);
 
+void ast_datadecl_destroy(struct ast_node *n);
+
 void ast_datadecl_add_member(struct ast_node *n, struct ast_node *c);
 
+struct RFstring *ast_datadecl_name_str(struct ast_node *n);
 #endif

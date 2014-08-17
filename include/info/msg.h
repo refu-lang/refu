@@ -25,6 +25,6 @@ struct info_msg *info_msg_create(enum info_msg_type type,
                                  const char *fmt,
                                  va_list args);
 void info_msg_destroy(struct info_msg *m);
-void info_msg_print(struct info_msg *m);
+void info_msg_print(struct info_msg *m, FILE *f);
 
 #endif

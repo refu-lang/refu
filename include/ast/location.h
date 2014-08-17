@@ -4,7 +4,9 @@
 #include <Definitions/retcodes.h> //for bool
 #include <Definitions/inline.h> //for bool
 
-struct parser_file;
+#include <parser/file.h>
+
+
 struct parser_string;
 
 struct ast_location {
@@ -31,8 +33,15 @@ bool ast_location_init(struct ast_location *loc,
                        struct parser_file *f,
                        char *sp, char *ep);
 
+bool ast_location_set_end(struct ast_location *loc, char *end);
+
 bool ast_location_from_file(struct ast_location *loc,
                             struct parser_file *f);
+
+i_INLINE_DECL struct RFstring *ast_location_filename(struct ast_location *loc)
+{
+    return &loc->file->file_name;
+}
 
 i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
                                      struct ast_location *l2)
