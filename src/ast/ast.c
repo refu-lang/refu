@@ -50,11 +50,24 @@ void ast_node_destroy(struct ast_node *n)
             ast_node_destroy(child);
         }
         break;
+    case AST_IDENTIFIER:
+        /* no need to free, is a shallow pointer to the parsed file's string */
+        break;
     case AST_VARIABLE_DECLARATION:
         ast_node_destroy(n->vardecl.name);
         ast_node_destroy(n->vardecl.type);
         break;
+    case AST_DATA_DECLARATION:
+        ast_datadecl_destroy(n);
+        break;
+    case AST_FUNCTION_DECLARATION:
+        ast_fndecl_destroy(n);
+        break;
+    default:
+        RF_ASSERT(0);
+        break;
      }
+
 
     free(n);
 }

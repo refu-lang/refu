@@ -27,12 +27,11 @@ void ast_datadecl_destroy(struct ast_node *n)
 {
     struct ast_node *m;
     struct ast_node *tmp;
-    RF_ASSERT(n->type == AST_DATA_DECLARATION);
+
     ast_node_destroy(n->datadecl.name);
     rf_ilist_for_each_safe(&n->datadecl.members, m, tmp, lh) {
         ast_node_destroy(m);
     }
-    ast_node_destroy(n);
 }
 
 void ast_datadecl_add_member(struct ast_node *n, struct ast_node *c)

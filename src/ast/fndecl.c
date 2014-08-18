@@ -24,6 +24,20 @@ struct ast_node *ast_fndecl_create(struct parser_file *f,
     return ret;
 }
 
+void ast_fndecl_destroy(struct ast_node *n)
+{
+    struct ast_node *arg;
+    struct ast_node *tmp;
+    ast_node_destroy(n->fndecl.name);
+    if (n->fndecl.ret) {
+        ast_node_destroy(n->fndecl.ret);
+    }
+
+    rf_ilist_for_each_safe(&n->fndecl.args, arg, tmp, lh) {
+        ast_node_destroy(arg);
+    }
+}
+
 void ast_fndecl_add_arg(struct ast_node *n, struct ast_node *c)
 {
     RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);

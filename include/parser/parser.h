@@ -19,4 +19,8 @@ bool parser_process_file(struct parser_ctx *parser,
 
 void parser_flush_messages(struct parser_ctx *parser);
 
+
+
+struct ast_node *parser_file_acc_identifier(struct parser_file *f);
+struct ast_node *parser_file_acc_vardecl(struct parser_file *f);
 #endif

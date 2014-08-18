@@ -10,4 +10,4 @@ const struct RFstring parser_tok_oparen = RF_STRING_STATIC_INIT("(");
 const struct RFstring parser_tok_cparen = RF_STRING_STATIC_INIT(")");
 const struct RFstring parser_tok_fn = RF_STRING_STATIC_INIT("fn");
 const struct RFstring parser_tok_arrow = RF_STRING_STATIC_INIT("->");
-const struct RFstring parser_tok_arrow = RF_STRING_STATIC_INIT(",");
+const struct RFstring parser_tok_comma = RF_STRING_STATIC_INIT(",");
