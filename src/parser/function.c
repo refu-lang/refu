@@ -5,6 +5,7 @@
 #include <info/info.h>
 #include <parser/tokens.h>
 #include <parser/parser.h>
+#include <parser/generics.h>
 
 bool parser_file_acc_commsep_args(struct parser_file *f,
                                   struct RFilist_head *args)
@@ -37,6 +38,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
 {
     struct ast_node *fn;
     struct ast_node *name;
+    struct ast_node *genr;
     struct ast_node *arg;
     struct parser_offset proff;
     char *sp;
@@ -57,15 +59,21 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     if (!name) {
         goto not_found;
     }
+    fn = ast_fndecl_create(f, sp, NULL, name);
+
+    /* optional: Generic declaration */
+    parser_file_acc_ws(f);
+    genr = parser_file_acc_genrdecl(f);
+    if (genr) {
+        ast_fndecl_set_genr(fn, genr);
+    } else if (!genr && parser_file_has_synerr(f)) { /* error */
+        goto err_free;
+    }
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
-        ast_node_destroy(name);
-        goto not_found;
+        goto err_free;
     }
-
-    fn = ast_fndecl_create(f, sp, NULL, name);
-
 
     if (!parser_file_acc_commsep_args(f, &fn->fndecl.args)) {
         goto err_free;

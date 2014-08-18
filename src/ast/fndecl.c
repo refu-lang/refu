@@ -20,6 +20,7 @@ struct ast_node *ast_fndecl_create(struct parser_file *f,
 
     ret->fndecl.name = name;
     ret->fndecl.ret = NULL;
+    ret->fndecl.genr = NULL;
     rf_ilist_head_init(&ret->fndecl.args);
     return ret;
 }
@@ -52,6 +53,13 @@ void ast_fndecl_set_ret(struct ast_node *n, struct ast_node *r)
     RF_ASSERT(r->type == AST_IDENTIFIER);
  
     n->fndecl.ret = r;
+}
+void ast_fndecl_set_genr(struct ast_node *n, struct ast_node *g)
+{
+    RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);
+    RF_ASSERT(g->type == AST_GENERIC_DECLARATION);
+
+    n->fndecl.genr = g;
 }
 
 struct RFstring *ast_fndecl_name_str(struct ast_node *n)

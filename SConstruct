@@ -37,6 +37,8 @@ cld_sources = [
     'parser/string.c',
     'parser/file.c',
     'parser/function.c',
+    'parser/generics.c',
+
     'parser/tokens.c',
     'ast/ast.c',
     'ast/location.c',
@@ -44,6 +46,7 @@ cld_sources = [
     'ast/datadecl.c',
     'ast/vardecl.c',
     'ast/fndecl.c',
+    'ast/genrdecl.c',
 ]
 
 

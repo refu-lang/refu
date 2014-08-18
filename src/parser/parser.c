@@ -126,7 +126,7 @@ static struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
     parser_file_acc_ws(f);
     sp = parser_file_sp(f);
 
-    if (!parser_file_acc_string_ascii(f, &parser_tok_data)) {
+    if (!parser_file_acc_string_ascii(f, &parser_kw_data)) {
         goto not_found;
     }
 
