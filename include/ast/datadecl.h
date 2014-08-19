@@ -22,4 +22,6 @@ void ast_datadecl_destroy(struct ast_node *n);
 void ast_datadecl_add_member(struct ast_node *n, struct ast_node *c);
 
 struct RFstring *ast_datadecl_name_str(struct ast_node *n);
+
+void ast_datadecl_print(struct ast_node *n, int depth, const char *description);
 #endif

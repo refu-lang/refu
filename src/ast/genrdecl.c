@@ -26,6 +26,12 @@ void ast_genrtype_destroy(struct ast_node *n)
     ast_node_destroy(n->genrtype.id);
 }
 
+void ast_genrtype_print(struct ast_node *n, int depth)
+{
+    ast_print(n->genrtype.id, depth + 1, 0);
+}
+
+
 struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep)
 {
     struct ast_node *ret;
@@ -58,4 +64,11 @@ void ast_genrdecl_add_member(struct ast_node *n,
     rf_ilist_add(&n->genrdecl.members, &c->lh);
 }
 
+void ast_genrdecl_print(struct ast_node *n, int depth)
+{
+    struct ast_node *c;
+    rf_ilist_for_each(&n->genrdecl.members, c, lh) {
+        ast_print(c, depth + 1, 0);
+    }
+}
 

@@ -31,4 +31,5 @@ void ast_fndecl_set_genr(struct ast_node *n, struct ast_node *g);
 struct RFstring *ast_fndecl_name_str(struct ast_node *n);
 struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
 
+void ast_fndecl_print(struct ast_node *n, int depth, const char *desc);
 #endif

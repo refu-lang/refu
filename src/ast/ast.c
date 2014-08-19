@@ -101,79 +101,64 @@ const struct RFstring *ast_node_str(struct ast_node *n)
 }
 
 
-static void ast_print_prelude(struct ast_node *n, int depth)
+static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
 {
     int i = 0;
+    static const char arrow[] = "|---->";
 
-    for (i = 0; i < depth; i++) {
-        if (i == depth - 1) {
-            if (AST_NODE_IS_LEAF(n)) {
-                printf("|---->");
-            } else {
-                printf("|---+>");
-
-            }
+    if (depth != 0) {
+        if (desc) {
+            printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
+            printf("|--%s->"RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
+                   desc,
+                   RF_STR_PF_ARG(ast_node_str(n)),
+                   AST_LOCATION_ARG2(&n->location));
         } else {
-            printf("    ", i);
+            printf("%*s"RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
+                   depth * AST_PRINT_DEPTHMUL, arrow,
+                   RF_STR_PF_ARG(ast_node_str(n)),
+                   AST_LOCATION_ARG2(&n->location));
         }
+    } else {
+        printf("%*.*s "AST_LOCATION_FMT2"\n",
+               depth * AST_PRINT_DEPTHMUL,
+               RF_STR_PF_ARG(ast_node_str(n)),
+               AST_LOCATION_ARG2(&n->location));
     }
 }
 
-void ast_print(struct ast_node *n, int depth)
+void ast_print(struct ast_node *n, int depth, const char *description)
 {
     struct ast_node *c;
     struct RFilist_head *list = NULL;
 
-    ast_print_prelude(n, depth);
+    ast_print_prelude(n, depth, description);
 
     switch(n->type) {
     case AST_ROOT:
     case AST_BLOCK:
         printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
         rf_ilist_for_each(&n->children, c, lh) {
-            ast_print(c, depth + 1);
+            ast_print(c, depth + 1, 0);
         }
         break;
     case AST_DATA_DECLARATION:
-        printf("data declaration  name:\""RF_STR_PF_FMT"\"\n",
-               RF_STR_PF_ARG(ast_datadecl_name_str(n)));
-         rf_ilist_for_each(&n->datadecl.members, c, lh) {
-            ast_print(c, depth + 1);
-         }
+        ast_datadecl_print(n, depth, 0);
         break;
     case AST_GENERIC_DECLARATION:
-        printf("generic declaration:\n");
-         rf_ilist_for_each(&n->genrdecl.members, c, lh) {
-             ast_print(c->genrtype.id, depth + 1);
-         }
+        ast_genrdecl_print(n, depth + 1);
+        break;
+    case AST_GENERIC_TYPE:
+        ast_genrtype_print(n, depth + 1);
         break;
     case AST_FUNCTION_DECLARATION:
-        printf("function declaration  name:\""RF_STR_PF_FMT"\" ",
-               RF_STR_PF_ARG(ast_fndecl_name_str(n)));
-        if (n->fndecl.ret) {
-            printf("return :\""RF_STR_PF_FMT"\" ",
-               RF_STR_PF_ARG(ast_fndecl_ret_str(n)));
-        }
-        if (n->fndecl.genr) {
-            printf("with generics:\n");
-            ast_print(n->fndecl.genr, depth + 1);
-        }
-        printf("with arguments: \n");
-
-         rf_ilist_for_each(&n->fndecl.args, c, lh) {
-            ast_print(c, depth + 1);
-         }
+        ast_fndecl_print(n, depth, 0);
         break;
     case AST_VARIABLE_DECLARATION:
-        printf("variable declaration  name:\""RF_STR_PF_FMT"\""
-               ", type:\"" RF_STR_PF_FMT"\"\n",
-               RF_STR_PF_ARG(ast_vardecl_name_str(n)),
-               RF_STR_PF_ARG(ast_vardecl_type_str(n)));
-        ast_print(n->vardecl.name, depth + 1);
-        ast_print(n->vardecl.type, depth + 1);
+        ast_vardecl_print(n, depth, 0);
         break;
     case AST_IDENTIFIER:
-        printf("identifier: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(&n->identifier));
+        ast_identifier_print(n, depth + 1);
         break;
     default:
         printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));

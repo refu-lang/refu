@@ -6,7 +6,7 @@
 
 struct ast_node *ast_fndecl_create(struct parser_file *f,
                                    char *sp,
-                                   char *ep, 
+                                   char *ep,
                                    struct ast_node *name)
 {
     struct ast_node *ret;
@@ -51,7 +51,7 @@ void ast_fndecl_set_ret(struct ast_node *n, struct ast_node *r)
 {
     RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);
     RF_ASSERT(r->type == AST_IDENTIFIER);
- 
+
     n->fndecl.ret = r;
 }
 void ast_fndecl_set_genr(struct ast_node *n, struct ast_node *g)
@@ -74,4 +74,20 @@ struct RFstring *ast_fndecl_ret_str(struct ast_node *n)
     RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);
 
     return ast_identifier_str(n->fndecl.ret);
+}
+
+void ast_fndecl_print(struct ast_node *n, int depth, const char *desc)
+{
+    struct ast_node *c;
+    ast_print(n->fndecl.name, depth + 1, "name");
+    if (n->fndecl.genr) {
+        ast_print(n->fndecl.genr, depth + 1, "generics");
+    }
+    if (n->fndecl.ret) {
+        ast_print(n->fndecl.ret, depth + 1, "return type");
+    }
+
+    rf_ilist_for_each(&n->fndecl.args, c, lh) {
+        ast_print(c, depth + 1, "argument");
+    }
 }

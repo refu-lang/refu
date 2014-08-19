@@ -49,3 +49,13 @@ struct RFstring *ast_datadecl_name_str(struct ast_node *n)
 
     return ast_identifier_str(n->datadecl.name);
 }
+
+void ast_datadecl_print(struct ast_node *n, int depth, const char *description)
+{
+    struct ast_node *c;
+    ast_print(n->datadecl.name, depth + 1, "name");
+
+    rf_ilist_for_each(&n->datadecl.members, c, lh) {
+        ast_print(c, depth + 1, "member");
+    }
+}
