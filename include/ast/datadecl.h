@@ -6,6 +6,7 @@ struct ast_node;
 struct parser_file;
 
 enum dataop_type {
+    DATAOP_INVALID,
     DATAOP_SUM,
     DATAOP_PRODUCT,
     DATAOP_IMPLICATION
@@ -18,9 +19,22 @@ struct ast_dataop {
 };
 
 struct ast_datadesc {
-    struct ast_node *id;
-    struct ast_node *desc;
+    union {
+        struct {
+            struct ast_node *id;
+            struct ast_node *desc;
+        };
+        struct ast_node *dataop;
+    };
 };
+
+struct ast_node *ast_datadesc_create(struct parser_file *f,
+                                     char *sp,
+                                     char *ep,
+                                     struct ast_node *id,
+                                     bool dataop);
+
+void ast_datadesc_set_desc(struct ast_node *n, struct ast_node *d);
 
 struct ast_datadecl {
     //! identifier of the name
@@ -31,7 +45,7 @@ struct ast_datadecl {
 
 struct ast_node *ast_datadecl_create(struct parser_file *f,
                                      char *sp,
-                                     char *ep, 
+                                     char *ep,
                                      struct ast_node *name);
 
 void ast_datadecl_destroy(struct ast_node *n);

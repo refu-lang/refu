@@ -13,6 +13,9 @@ const struct RFstring parser_tok_fn = RF_STRING_STATIC_INIT("fn");
 const struct RFstring parser_tok_arrow = RF_STRING_STATIC_INIT("->");
 const struct RFstring parser_tok_comma = RF_STRING_STATIC_INIT(",");
 
+const struct RFstring parser_tok_dsum = RF_STRING_STATIC_INIT("|");
+const struct RFstring parser_tok_dprod = RF_STRING_STATIC_INIT(",");
+const struct RFstring parser_tok_dimpl = RF_STRING_STATIC_INIT("->");
 const struct RFstring parser_tok_gt = RF_STRING_STATIC_INIT(">");
 const struct RFstring parser_tok_lt = RF_STRING_STATIC_INIT("<");
 

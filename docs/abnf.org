@@ -55,12 +55,13 @@ type_declaration = identifier [generic_attributes]
 decorated_type_declaration = [memory_attributes] type_declaration
 variable_declaration = identifier ":" decorated_type_declaration
 
-data_desc = identifier
-          / identifier : data_desc
-data_op = "," / "|" / "->"
-data_body = ["("] data_desc [")"]
-          / data_body data_op data_desc
-data_declaration = "data" identifier [generic_declaration] "{" data_body "}"
+data_op_token = "," / "|" / "->"
+data_op = data_desc data_op_token data_desc
+data_desc = data_op
+          / identifier ":" data_desc
+          / identifier
+
+data_declaration = "data" identifier [generic_declaration] "{" data_desc "}"
 
 variable_list = variable_declaration
               / variable_list "," variable_declaration

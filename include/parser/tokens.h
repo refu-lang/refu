@@ -10,8 +10,12 @@ extern const struct RFstring parser_tok_fn;
 extern const struct RFstring parser_tok_arrow;
 extern const struct RFstring parser_tok_comma;
 
+extern const struct RFstring parser_tok_dsum;
+extern const struct RFstring parser_tok_dprod;
+extern const struct RFstring parser_tok_dimpl;
 extern const struct RFstring parser_tok_gt;
 extern const struct RFstring parser_tok_lt;
+
 
 extern const struct RFstring parser_kw_data;
 extern const struct RFstring parser_kw_type;

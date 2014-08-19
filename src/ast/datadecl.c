@@ -4,6 +4,39 @@
 #include <ast/identifier.h>
 #include <Utils/sanity.h>
 
+struct ast_node *ast_datadesc_create(struct parser_file *f,
+                                     char *sp,
+                                     char *ep,
+                                     struct ast_node *id,
+                                     bool dataop)
+{
+    struct ast_node *ret;
+
+    ret = ast_node_create(AST_DATA_DESCRIPTION, f, sp, ep);
+    if (!ret) {
+        //TODO: memory error
+        return NULL;
+    }
+
+    if (dataop) {
+        RF_ASSERT(id->type == AST_DATA_OPERATOR);
+        ret->datadesc.dataop = id;
+    } else {
+        RF_ASSERT(id->type == AST_IDENTIFIER);
+        ret->datadesc.id = id;
+    }
+    return ret;
+}
+
+
+void ast_datadesc_set_desc(struct ast_node *n, struct ast_node *d)
+{
+    RF_ASSERT(n->type == AST_DATA_DESCRIPTION);
+    RF_ASSERT(d->type == AST_DATA_DESCRIPTION);
+    n->datadesc.desc = d;
+}
+
+
 struct ast_node *ast_datadecl_create(struct parser_file *f,
                                      char *sp,
                                      char *ep,
