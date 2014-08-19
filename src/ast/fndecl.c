@@ -44,7 +44,7 @@ void ast_fndecl_add_arg(struct ast_node *n, struct ast_node *c)
     RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);
     RF_ASSERT(c->type == AST_VARIABLE_DECLARATION);
 
-    rf_ilist_add(&n->fndecl.args, &c->lh);
+    rf_ilist_add_tail(&n->fndecl.args, &c->lh);
 }
 
 void ast_fndecl_set_ret(struct ast_node *n, struct ast_node *r)

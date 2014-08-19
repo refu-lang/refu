@@ -39,7 +39,7 @@ void ast_datadecl_add_member(struct ast_node *n, struct ast_node *c)
     RF_ASSERT(n->type == AST_DATA_DECLARATION);
     RF_ASSERT(c->type == AST_VARIABLE_DECLARATION);
 
-    rf_ilist_add(&n->datadecl.members, &c->lh);
+    rf_ilist_add_tail(&n->datadecl.members, &c->lh);
 }
 
 

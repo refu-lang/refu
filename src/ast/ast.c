@@ -88,7 +88,7 @@ bool ast_node_set_end(struct ast_node *n, char *end)
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child)
 {
-    rf_ilist_add(&parent->children, &child->lh);
+    rf_ilist_add_tail(&parent->children, &child->lh);
 }
 
 const struct RFstring *ast_node_str(struct ast_node *n)

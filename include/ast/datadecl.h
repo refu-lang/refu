@@ -5,6 +5,23 @@
 struct ast_node;
 struct parser_file;
 
+enum dataop_type {
+    DATAOP_SUM,
+    DATAOP_PRODUCT,
+    DATAOP_IMPLICATION
+};
+
+struct ast_dataop {
+    enum dataop_type type;
+    struct ast_node *left;
+    struct ast_node *right;
+};
+
+struct ast_datadesc {
+    struct ast_node *id;
+    struct ast_node *desc;
+};
+
 struct ast_datadecl {
     //! identifier of the name
     struct ast_node *name;

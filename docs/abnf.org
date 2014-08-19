@@ -29,7 +29,7 @@ binary_op_expression = expression binary_op expression
 
 unary_op = "&" "*" "!" "++" "--"
 unary_op_expression = unary_op expression
-           
+
 block = "{" statements "}"
 
 module_declaration = signature identifier block
@@ -52,12 +52,14 @@ memory_attributes = array_declaration
                   / "ptr[@]"
 
 type_declaration = identifier [generic_attributes]
-decorated_type_declaration = [memory_attributes] type_declaration 
+decorated_type_declaration = [memory_attributes] type_declaration
 variable_declaration = identifier ":" decorated_type_declaration
 
+data_desc = identifier
+          / identifier : data_desc
 data_op = "," / "|" / "->"
-data_body = variable_declaration
-          / data_body data_op variable_declaration
+data_body = ["("] data_desc [")"]
+          / data_body data_op data_desc
 data_declaration = "data" identifier [generic_declaration] "{" data_body "}"
 
 variable_list = variable_declaration

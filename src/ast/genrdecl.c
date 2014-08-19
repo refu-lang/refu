@@ -61,7 +61,7 @@ void ast_genrdecl_add_member(struct ast_node *n,
     RF_ASSERT(n->type == AST_GENERIC_DECLARATION);
     RF_ASSERT(c->type == AST_GENERIC_TYPE);
 
-    rf_ilist_add(&n->genrdecl.members, &c->lh);
+    rf_ilist_add_tail(&n->genrdecl.members, &c->lh);
 }
 
 void ast_genrdecl_print(struct ast_node *n, int depth)

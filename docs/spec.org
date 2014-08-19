@@ -421,6 +421,16 @@ data person {
 data list {
      nil | (load:int, tail:~list)
 }
+
+data foo {
+a:int,
+b:(string|float)
+}
+
+data foo {
+a:int,
+b:(string | (i:int, f:float))
+}
 #+END_SRC
 
 Above we have the definition of a person and a list. A person has a name
@@ -497,14 +507,14 @@ For example, a function's argument can be an anonymous ADT.
 
 #+NAME: Example 1
 #+BEGIN_SRC C++
-fn print_me(a:string | (b:int, c:int))
+fn print_me(a:(string|b:int, c:int))
 {
     //do some initialization stuff
     ...
     //and now do the pattern matching
-    match(fn) {
-        (_) => print("%s", a)
-        (_, _) => print("%d %d", b, c)
+    match(a) {
+        (string) => print("%s", a)
+        (int, int) => print("%d %d", a.b, a.c)
     }
 }
 #+END_SRC

@@ -22,7 +22,7 @@ bool parser_file_acc_commsep_args(struct parser_file *f,
             );
             return false;
         }
-        rf_ilist_add(args, &arg->lh);
+        rf_ilist_add_tail(args, &arg->lh);
 
         parser_file_acc_ws(f);
         found_comma = false;

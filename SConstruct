@@ -38,6 +38,7 @@ cld_sources = [
     'parser/file.c',
     'parser/function.c',
     'parser/generics.c',
+    'parser/data.c',
 
     'parser/tokens.c',
     'ast/ast.c',
