@@ -112,5 +112,6 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
 err_free:
     ast_node_destroy(fn);
 not_found:
+    parser_file_move_to_offset(f, &proff);
     return NULL;
 }

@@ -16,6 +16,7 @@ enum ast_type {
     AST_VARIABLE_DECLARATION,
     AST_DATA_DECLARATION,
     AST_GENERIC_DECLARATION,
+    AST_GENERIC_TYPE,
     AST_FUNCTION_DECLARATION,
 
     /* from this value and under all types should have no children */
@@ -33,6 +34,7 @@ struct ast_node {
         struct ast_vardecl vardecl;
         struct ast_datadecl datadecl;
         struct ast_genrdecl genrdecl;
+        struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
 
         struct RFilist_head children;

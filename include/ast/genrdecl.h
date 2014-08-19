@@ -13,19 +13,20 @@ enum genrtype {
 struct ast_genrtype {
     enum genrtype type;
     struct ast_node *id;
-    struct RFilist_node lh;
 };
 
 struct ast_genrdecl {
     struct RFilist_head members;
 };
 
+struct ast_node *ast_genrtype_create(struct parser_file *f, char *sp, char *ep,
+                                     enum genrtype type,
+                                     struct ast_node *identifier);
+void ast_genrtype_destroy(struct ast_node *n);
+
 struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep);
 void ast_genrdecl_destroy(struct ast_node *n);
-
-bool ast_genrdecl_add_member(struct ast_node *n,
-                             enum genrtype type,
-                             struct ast_node *c);
+void ast_genrdecl_add_member(struct ast_node *n, struct ast_node *c);
 
 
 #endif

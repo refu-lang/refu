@@ -6,10 +6,43 @@
 #include <parser/tokens.h>
 #include <parser/parser.h>
 
-struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
+
+static struct ast_node * parser_file_acc_genrtype(struct parser_file *f)
 {
     struct ast_node *n;
     struct ast_node *id;
+    struct parser_offset proff;
+    char *sp;
+
+    parser_offset_copy(&proff, &f->offset);
+
+    parser_file_acc_ws(f);
+    sp = parser_file_sp(f);
+    if (!parser_file_acc_string_ascii(f, &parser_kw_type)) {
+        parser_file_synerr(f, "Expected a generic type keyword after '<'");
+        goto err;
+    }
+
+    parser_file_acc_ws(f);
+    id = parser_file_acc_identifier(f);
+    if (!id) {
+        parser_file_synerr(f, "Expected an identifier for the generic type");
+        goto err;
+    }
+
+    n = ast_genrtype_create(f, sp, parser_file_sp(f), AST_GENR_TYPE, id);
+    /* if !n, then NULL will be returned anyway */
+
+    return n;
+err:
+    parser_file_move_to_offset(f, &proff);
+    return NULL;
+}
+
+struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
+{
+    struct ast_node *n;
+    struct ast_node *genrtype;
     struct ast_node *arg;
     struct parser_offset proff;
     bool found_comma;
@@ -29,19 +62,11 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
 
     do {
         found_comma = false;
-        parser_file_acc_ws(f);
-        if (!parser_file_acc_string_ascii(f, &parser_kw_type)) {
-            parser_file_synerr(f, "Expected a generic type keyword after '<'");
+        genrtype = parser_file_acc_genrtype(f);
+        if (!genrtype) {
             goto err_free;
         }
-
-        parser_file_acc_ws(f);
-        id = parser_file_acc_identifier(f);
-        if (!id) {
-            parser_file_synerr(f, "Expected an identifier for the generic type");
-            goto err_free;
-        }
-        ast_genrdecl_add_member(n, AST_GENR_TYPE, id);
+        ast_genrdecl_add_member(n, genrtype);
 
         if (parser_file_acc_string_ascii(f, &parser_tok_comma)) {
             found_comma = true;
@@ -62,5 +87,6 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
 err_free:
     ast_node_destroy(n);
 not_found:
+    parser_file_move_to_offset(f, &proff);
     return NULL;
 }

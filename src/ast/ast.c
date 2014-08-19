@@ -11,6 +11,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("variable declaration"),
     RF_STRING_STATIC_INIT("data declaration"),
     RF_STRING_STATIC_INIT("generic declaration"),
+    RF_STRING_STATIC_INIT("generic type"),
     RF_STRING_STATIC_INIT("function declaration"),
     RF_STRING_STATIC_INIT("string literal"),
     RF_STRING_STATIC_INIT("identifier")
@@ -63,6 +64,9 @@ void ast_node_destroy(struct ast_node *n)
         break;
     case AST_GENERIC_DECLARATION:
         ast_genrdecl_destroy(n);
+        break;
+    case AST_GENERIC_TYPE:
+        ast_genrtype_destroy(n);
         break;
     case AST_FUNCTION_DECLARATION:
         ast_fndecl_destroy(n);
@@ -118,7 +122,6 @@ static void ast_print_prelude(struct ast_node *n, int depth)
 void ast_print(struct ast_node *n, int depth)
 {
     struct ast_node *c;
-    struct ast_genrtype *cg;
     struct RFilist_head *list = NULL;
 
     ast_print_prelude(n, depth);
@@ -140,8 +143,8 @@ void ast_print(struct ast_node *n, int depth)
         break;
     case AST_GENERIC_DECLARATION:
         printf("generic declaration:\n");
-         rf_ilist_for_each(&n->genrdecl.members, cg, lh) {
-             ast_print(cg->id, depth + 1);
+         rf_ilist_for_each(&n->genrdecl.members, c, lh) {
+             ast_print(c->genrtype.id, depth + 1);
          }
         break;
     case AST_FUNCTION_DECLARATION:

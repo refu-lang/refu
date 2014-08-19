@@ -4,23 +4,27 @@
 #include <ast/identifier.h>
 #include <Utils/sanity.h>
 
-static struct ast_genrtype *ast_genrtype_create(enum genrtype type,
-                                                struct ast_node *c)
+struct ast_node *ast_genrtype_create(struct parser_file *f, char *sp, char *ep,
+                                     enum genrtype type,
+                                     struct ast_node *identifier)
 {
-    struct ast_genrtype *t;
-    RF_MALLOC(t, sizeof(*t), NULL);
-    t->type = type;
-    t->id = c;
-    return t;
+    struct ast_node *ret;
+
+    ret = ast_node_create(AST_GENERIC_TYPE, f, sp, ep);
+    if (!ret) {
+        //TODO: memory error
+        return NULL;
+    }
+
+    ret->genrtype.type = type;
+    ret->genrtype.id = identifier;
+    return ret;
 }
 
-static void ast_genrtype_destroy(struct ast_genrtype *t)
+void ast_genrtype_destroy(struct ast_node *n)
 {
-    ast_node_destroy(t->id);
-    free(t);
+    ast_node_destroy(n->genrtype.id);
 }
-
-
 
 struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep)
 {
@@ -38,28 +42,20 @@ struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep)
 
 void ast_genrdecl_destroy(struct ast_node *n)
 {
-    struct ast_genrtype *m;
-    struct ast_genrtype *tmp;
+    struct ast_node *m;
+    struct ast_node *tmp;
     rf_ilist_for_each_safe(&n->genrdecl.members, m, tmp, lh) {
-        ast_genrtype_destroy(m);
+        ast_node_destroy(m);
     }
 }
 
-bool ast_genrdecl_add_member(struct ast_node *n,
-                             enum genrtype type,
+void ast_genrdecl_add_member(struct ast_node *n,
                              struct ast_node *c)
 {
-    struct ast_genrtype *t;
     RF_ASSERT(n->type == AST_GENERIC_DECLARATION);
-    RF_ASSERT(c->type == AST_IDENTIFIER);
+    RF_ASSERT(c->type == AST_GENERIC_TYPE);
 
-    t = ast_genrtype_create(type, c);
-    if (!t) {
-        return false;
-    }
-
-    rf_ilist_add(&n->genrdecl.members, &t->lh);
-    return true;
+    rf_ilist_add(&n->genrdecl.members, &c->lh);
 }
 
 
