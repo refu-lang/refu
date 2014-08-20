@@ -10,6 +10,8 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("block"),
     RF_STRING_STATIC_INIT("variable declaration"),
     RF_STRING_STATIC_INIT("data declaration"),
+    RF_STRING_STATIC_INIT("data operator"),
+    RF_STRING_STATIC_INIT("data description"),
     RF_STRING_STATIC_INIT("generic declaration"),
     RF_STRING_STATIC_INIT("generic type"),
     RF_STRING_STATIC_INIT("function declaration"),
@@ -62,6 +64,12 @@ void ast_node_destroy(struct ast_node *n)
     case AST_DATA_DECLARATION:
         ast_datadecl_destroy(n);
         break;
+    case AST_DATA_OPERATOR:
+        ast_dataop_destroy(n);
+        break;
+    case AST_DATA_DESCRIPTION:
+        ast_datadesc_destroy(n);
+        break;
     case AST_GENERIC_DECLARATION:
         ast_genrdecl_destroy(n);
         break;
@@ -91,6 +99,9 @@ void ast_node_add_child(struct ast_node *parent,
     rf_ilist_add_tail(&parent->children, &child->lh);
 }
 
+
+i_INLINE_INS char *ast_node_startsp(struct ast_node *n);
+i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
 const struct RFstring *ast_node_str(struct ast_node *n)
 {
     // assert that the array size is same as enum size
@@ -99,7 +110,6 @@ const struct RFstring *ast_node_str(struct ast_node *n)
     );
     return &ast_type_strings[n->type];
 }
-
 
 static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
 {
@@ -144,6 +154,12 @@ void ast_print(struct ast_node *n, int depth, const char *description)
         break;
     case AST_DATA_DECLARATION:
         ast_datadecl_print(n, depth, 0);
+        break;
+    case AST_DATA_OPERATOR:
+        ast_dataop_print(n, depth, 0);
+        break;
+    case AST_DATA_DESCRIPTION:
+        ast_datadesc_print(n, depth, 0);
         break;
     case AST_GENERIC_DECLARATION:
         ast_genrdecl_print(n, depth + 1);

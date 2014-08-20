@@ -59,6 +59,17 @@ bool ast_node_set_end(struct ast_node *n, char *end);
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);
 
+
+i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)
+{
+    return n->location.sp;
+}
+
+i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
+{
+    return n->location.ep;
+}
+
 const struct RFstring *ast_node_str(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
