@@ -5,6 +5,6 @@ struct parser_file;
 
 struct ast_node *parser_file_acc_datadecl(struct parser_file *f);
 struct ast_node *parser_file_acc_datadesc(struct parser_file *f,
-                                          struct ast_node *left);
+                                          int *paren_count);
 
 #endif

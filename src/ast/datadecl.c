@@ -36,9 +36,9 @@ void ast_dataop_destroy(struct ast_node *n)
 
 void ast_dataop_print(struct ast_node *n, int depth, const char *description)
 {
-    printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-    printf("DATAOP: "RF_STR_PF_FMT"\n",
-           RF_STR_PF_ARG(dataop_type_str(n->dataop.type)));
+    /* printf("%*s", depth * AST_PRINT_DEPTHMUL, " "); */
+    /* printf("DATAOP: "RF_STR_PF_FMT"\n", */
+    /*        RF_STR_PF_ARG(dataop_type_str(n->dataop.type))); */
     ast_print(n->dataop.left, depth + 1, "left");
     ast_print(n->dataop.right, depth + 1, "right");
 }
@@ -101,7 +101,10 @@ void ast_datadesc_set_dop(struct ast_node *n, struct ast_node *dop)
 void ast_datadesc_print(struct ast_node *n, int depth, const char *description)
 {
     if (n->datadesc.is_dataop) {
-        ast_print(n->datadesc.dataop, depth + 1, NULL);
+        ast_print(
+            n->datadesc.dataop,
+            depth + 1,
+            rf_string_data(dataop_type_str(n->datadesc.dataop->dataop.type)));
     } else {
         ast_print(n->datadesc.left, depth + 1, NULL);
         if (n->datadesc.right) {

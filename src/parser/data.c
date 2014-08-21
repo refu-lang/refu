@@ -10,6 +10,7 @@
 static inline enum dataop_type
 parser_file_acc_dataop_token(struct parser_file *f)
 {
+    parser_file_acc_ws(f);
     if (parser_file_acc_string_ascii(f, &parser_tok_dsum)) {
         return DATAOP_SUM;
     } else if (parser_file_acc_string_ascii(f, &parser_tok_dprod)) {
@@ -21,39 +22,58 @@ parser_file_acc_dataop_token(struct parser_file *f)
     return DATAOP_INVALID;
 }
 
-static struct ast_node *parser_file_acc_dataop(struct parser_file *f,
-                                        struct ast_node *left,
-                                        enum dataop_type type)
+static struct ast_node *parser_file_acc_datadesc_parencolon(
+    struct parser_file *f,
+    struct ast_node *left,
+    struct ast_node *left_identifier,
+    enum dataop_type conn_type,
+    int *paren_count)
 {
-    struct ast_node *n;
-    struct ast_node *right;
+    struct ast_node *paren_desc;
+    struct ast_node *n = NULL;
     struct parser_offset proff;
-    char *sp;
-    char *ep;
-
     parser_offset_copy(&proff, &f->offset);
 
-
-    n = ast_datadesc_create(f, ast_node_startsp(left), NULL, left, true);
-    if (!n) { //TODO: error
-        goto not_found;
+    parser_file_acc_ws(f);
+    if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
+        *paren_count = *paren_count + 1;
+        paren_desc = parser_file_acc_datadesc(f, paren_count);
+        if (!paren_desc) {
+            parser_file_synerr(
+                f, "Expected a data description right of \"(\"");
+            goto not_found;
+        }
+        n = ast_datadesc_create(f, ast_node_startsp(left_identifier),
+                                parser_file_sp(f), left_identifier, false);
+        if (!n) { /* error */
+            ast_node_destroy(paren_desc);
+            goto not_found;
+        }
+        ast_datadesc_set_right(n, paren_desc);
+        if (left) {
+            return ast_datadesc_create(
+                f,
+                ast_node_startsp(left),
+                parser_file_sp(f),
+                ast_dataop_create(f, ast_node_startsp(left),
+                                  parser_file_sp(f),
+                                  conn_type, left, n),
+                true);
+        }
+        //else just return n
     }
 
-    right = parser_file_acc_datadesc(f, NULL);
-
-
     return n;
-
 
 not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;
 }
 
-
 static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
                                                         struct ast_node *left,
-                                                        enum dataop_type conn_type)
+                                                        enum dataop_type conn_type,
+                                                        int *paren_count)
 {
     enum dataop_type dtype;
     struct ast_node *n;
@@ -75,11 +95,31 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
 
     parser_file_acc_ws(f);
     if (parser_file_acc_string_ascii(f, &parser_tok_colon)) {
+        /* parentheses right after ':' */
+        if ((n = parser_file_acc_datadesc_parencolon(f,
+                                                     left,
+                                                     tmp,
+                                                     conn_type,
+                                                     paren_count))) {
+            if (left) {
+                return ast_datadesc_create(
+                f,
+                ast_node_startsp(left),
+                parser_file_sp(f),
+                ast_dataop_create(f, ast_node_startsp(left),
+                                  parser_file_sp(f),
+                                  conn_type, left, n),
+                true);
+            }
+            //else
+            return n;
+        }
         n = ast_datadesc_create(f, sp, NULL, tmp, false);
         if (!n) { /* error */
             goto not_found;
         }
-        tmp = parser_file_acc_datadesc_single(f, NULL, DATAOP_INVALID);
+        tmp = parser_file_acc_datadesc_single(f, NULL,
+                                              DATAOP_INVALID, paren_count);
 
         if (!tmp) {
             parser_file_synerr(
@@ -89,18 +129,16 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
         ast_datadesc_set_right(n, tmp);
         ast_node_set_end(n, parser_file_sp(f));
         if (left) {
-
-            return ast_datadesc_create(f,
-                                       ast_node_startsp(left),
-                                       parser_file_sp(f),
-                                       ast_dataop_create(f, ast_node_startsp(left),
-                                                         parser_file_sp(f),
-                                                         conn_type, left, n),
-                                       true);
-
-
+            return ast_datadesc_create(
+                f,
+                ast_node_startsp(left),
+                parser_file_sp(f),
+                ast_dataop_create(f, ast_node_startsp(left),
+                                  parser_file_sp(f),
+                                  conn_type, left, n),
+                true);
         }
-    } else if (!left) {
+    } else {
         // depending on context we can have a type description being only
         // an identifier
         n = ast_datadesc_create(f, sp, parser_file_sp(f), tmp, false);
@@ -108,30 +146,6 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
             ast_node_destroy(tmp);
             goto not_found;
         }
-    } else if ((dtype = parser_file_acc_dataop_token(f)) != DATAOP_INVALID) {
-        if (!left) {
-            parser_file_synerr(
-                f, "Expected a data description left of "RF_STR_PF_FMT,
-                RF_STR_PF_ARG(dataop_type_str(dtype)));
-            goto not_found;
-        }
-
-        dataop = parser_file_acc_dataop(f, left, dtype);
-        if (!dataop) {
-            //TODO: what error here?
-            goto not_found;
-        }
-        n = ast_datadesc_create(f, sp, parser_file_sp(f), dataop, true);
-        if (!n) {
-            ast_node_destroy(dataop);
-            goto not_found;
-        }
-    } else {
-        parser_file_synerr(f, "Expected either a data operator or \":\""
-                           "on the left of \""RF_STR_PF_FMT"\"",
-                           RF_STR_PF_ARG(ast_identifier_str(tmp)));
-        ast_node_destroy(tmp);
-        goto not_found;
     }
 
 
@@ -145,7 +159,7 @@ not_found:
 }
 
 struct ast_node *parser_file_acc_datadesc(struct parser_file *f,
-                                          struct ast_node *left)
+                                          int *paren_count)
 {
     enum dataop_type dtype = DATAOP_INVALID;
     struct ast_node *n = NULL;
@@ -156,8 +170,13 @@ struct ast_node *parser_file_acc_datadesc(struct parser_file *f,
 
     parser_offset_copy(&proff, &f->offset);
     do {
-        n = parser_file_acc_datadesc_single(f, last, dtype);
+        n = parser_file_acc_datadesc_single(f, last, dtype, paren_count);
         last = n;
+        parser_file_acc_ws(f);
+        if (parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
+            *paren_count = *paren_count - 1;
+            return n;
+        }
     } while(((dtype = parser_file_acc_dataop_token(f)) != DATAOP_INVALID));
 
     return n;
@@ -174,6 +193,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
     struct parser_offset proff;
     char *sp;
     char *ep;
+    int paren_count = 0;
 
     parser_offset_copy(&proff, &f->offset);
 
@@ -194,7 +214,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
 
-    desc = parser_file_acc_datadesc(f, NULL);
+    desc = parser_file_acc_datadesc(f, &paren_count);
     if (!desc) {
         parser_file_synerr(f, "Expected data description for data declaration "
                            "of \""RF_STR_PF_FMT"\"",

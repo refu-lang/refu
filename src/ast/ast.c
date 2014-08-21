@@ -114,18 +114,17 @@ const struct RFstring *ast_node_str(struct ast_node *n)
 static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
 {
     int i = 0;
-    static const char arrow[] = "|---->";
 
     if (depth != 0) {
         if (desc) {
-            printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-            printf("|--%s->"RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
-                   desc,
+            printf("%s", desc);
+            printf("%*s", (depth * AST_PRINT_DEPTHMUL) - strlen(desc), " ");
+            printf("|----> "RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
                    RF_STR_PF_ARG(ast_node_str(n)),
                    AST_LOCATION_ARG2(&n->location));
         } else {
-            printf("%*s"RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
-                   depth * AST_PRINT_DEPTHMUL, arrow,
+            printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
+            printf("|----> "RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
                    RF_STR_PF_ARG(ast_node_str(n)),
                    AST_LOCATION_ARG2(&n->location));
         }
