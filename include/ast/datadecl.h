@@ -28,18 +28,25 @@ i_INLINE_DECL const struct RFstring *dataop_type_str(enum dataop_type type)
 }
 
 struct ast_dataop {
+    //! Data Operator type
     enum dataop_type type;
+    //! Left side of the data operator
     struct ast_node *left;
+    //! Right side of the data operator
     struct ast_node *right;
 };
 
 struct ast_datadesc {
+    //! True if it's a data operator or not
     bool is_dataop;
     union {
         struct {
-            struct ast_node *id;
-            struct ast_node *desc;
+            //! ast node left of colon
+            struct ast_node *left;
+            //! ast node right of colon
+            struct ast_node *right;
         };
+        //! A dataop
         struct ast_node *dataop;
     };
 };
@@ -50,6 +57,8 @@ struct ast_node *ast_datadesc_create(struct parser_file *f,
                                      struct ast_node *id,
                                      bool dataop);
 void ast_datadesc_destroy(struct ast_node *n);
+void ast_datadesc_set_right(struct ast_node *n, struct ast_node *d);
+void ast_datadesc_set_dop(struct ast_node *n, struct ast_node *dop);
 void ast_datadesc_print(struct ast_node *n, int depth, const char *description);
 
 struct ast_node *ast_dataop_create(struct parser_file *f,
@@ -61,8 +70,6 @@ struct ast_node *ast_dataop_create(struct parser_file *f,
 void ast_dataop_destroy(struct ast_node *n);
 void ast_dataop_print(struct ast_node *n, int depth, const char *description);
 
-
-void ast_datadesc_set_desc(struct ast_node *n, struct ast_node *d);
 
 struct ast_datadecl {
     //! identifier of the name

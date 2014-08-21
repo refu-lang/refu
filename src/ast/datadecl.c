@@ -65,8 +65,8 @@ struct ast_node *ast_datadesc_create(struct parser_file *f,
     } else {
         RF_ASSERT(id->type == AST_IDENTIFIER);
         ret->datadesc.is_dataop = false;
-        ret->datadesc.id = id;
-        ret->datadesc.desc = NULL;
+        ret->datadesc.left = id;
+        ret->datadesc.right = NULL;
     }
     return ret;
 }
@@ -76,30 +76,36 @@ void ast_datadesc_destroy(struct ast_node *n)
     if (n->datadesc.is_dataop) {
         ast_dataop_destroy(n->datadesc.dataop);
     } else {
-        ast_node_destroy(n->datadesc.id);
-        if (n->datadesc.desc) {
-            ast_node_destroy(n->datadesc.desc);
+        ast_node_destroy(n->datadesc.left);
+        if (n->datadesc.right) {
+            ast_node_destroy(n->datadesc.right);
         }
     }
 }
 
 
-void ast_datadesc_set_desc(struct ast_node *n, struct ast_node *d)
+void ast_datadesc_set_right(struct ast_node *n, struct ast_node *r)
 {
     RF_ASSERT(n->type == AST_DATA_DESCRIPTION);
-    RF_ASSERT(d->type == AST_DATA_DESCRIPTION);
-    n->datadesc.desc = d;
+    RF_ASSERT(r->type == AST_DATA_DESCRIPTION);
+    n->datadesc.right = r;
 }
 
+void ast_datadesc_set_dop(struct ast_node *n, struct ast_node *dop)
+{
+    RF_ASSERT(n->type == AST_DATA_DESCRIPTION);
+    RF_ASSERT(dop->type == AST_DATA_OPERATOR);
+    n->datadesc.dataop = dop;
+}
 
 void ast_datadesc_print(struct ast_node *n, int depth, const char *description)
 {
     if (n->datadesc.is_dataop) {
         ast_print(n->datadesc.dataop, depth + 1, NULL);
     } else {
-        ast_print(n->datadesc.id, depth + 1, NULL);
-        if (n->datadesc.desc) {
-            ast_print(n->datadesc.desc, depth + 1, NULL);
+        ast_print(n->datadesc.left, depth + 1, NULL);
+        if (n->datadesc.right) {
+            ast_print(n->datadesc.right, depth + 1, NULL);
         }
     }
 }
