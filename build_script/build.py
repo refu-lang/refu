@@ -7,10 +7,7 @@ options_list = ['SYMBOL_TABLE_INITIAL_SIZE',
                 'PARSER_STACK_MAX_DEPTH',
                 'PARSER_BUFFER_SIZE']
 
-bool_options_list = ['DEBUG_BISON',
-                     'DEBUG_FLEX',
-                     'HAS_INTERPRETER',
-                     'BISON_PARSER']
+bool_options_list = ['HAS_INTERPRETER']
 
 def setup_includes(env):
     env['CLIB_DIRECTORY'] = os.path.join(os.getcwd(), env['CLIB_DIRECTORY'])
@@ -47,11 +44,6 @@ def setup_compiler_options(env):
     if env['DEBUG']:
         env.Append(CCFLAGS="-g")
     env.Append(CCFLAGS="-std=gnu99") # c99 + gnu extensions
-    if env['BISON_PARSER'] != []:
-        env.Append(YACCFLAGS='-d') # produces a bison header file
-        if env['BISON_REPORT']: #if on, then bison makes a .output report file
-            env.Append(YACCFLAGS='--report={}'.format(
-                ','.join(env['BISON_REPORT'])))
 
 def setup_build(env):
     """

@@ -1,8 +1,11 @@
 .sconsign.dblite
+.sconf_temp
 *.pyc
 *.o
 
-#the executable
+# the executable
 refu
-#refulib logs
+# unit test executable
+check
+# refulib logs
 *.log

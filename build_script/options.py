@@ -113,6 +113,34 @@ vars.Add(
                  'This denotes that the compiler has been compiled with '
                  'interpreting capabilities',
                  'yes'
-))    
+))
+
+
+# --------- Unit Testing variables --------
+# copied from clib's variable.py
+
+vars.Add(
+    EnumVariable(
+        'UNIT_TESTS_OUTPUT', 'This options determines the way that the '
+        'outputs of the tests shall be shown. Since we are using Check '
+        'as the unit testing framework here is an explanation of the possible '
+        'values: '
+        'http://check.sourceforge.net/doc/check_html/check_8.html#Index',
+        'CK_NORMAL',
+        allowed_values=(
+            'CK_SILENT',
+            'CK_MINIMAL',
+            'CK_NORMAL',
+            'CK_VERBOSE'
+        )))
+
+
+vars.Add(
+    BoolVariable(
+        'UNIT_TESTS_FORK', 'This options determines whether the tests will '
+        'run in their own address space. Change it to no only if you need to '
+        'debug them with GDB',
+        True)
+)
 
 Return('vars')
