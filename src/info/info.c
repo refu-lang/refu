@@ -89,3 +89,15 @@ struct info_ctx *info_ctx_create()
 
     return ctx;
 }
+
+void info_ctx_destroy(struct info_ctx *ctx)
+{
+    struct info_msg *m;
+    struct info_msg *tmp;
+
+    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
+        info_msg_destroy(m);
+    }
+    rf_stringx_deinit(&ctx->buff);
+    free(ctx);
+}

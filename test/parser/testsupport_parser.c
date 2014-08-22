@@ -1,65 +1,85 @@
 #include "testsupport_parser.h"
 
+#include <refu.h>
+#include <Definitions/threadspecific.h>
+
 #include <parser/file.h>
 
 
-struct parser_file testsupport_parser_file;
+i_THREAD__ struct parser_file testsupport_parser_file;
 
-static struct parser_file *parser_file_dummy_new()
+struct parser_file *parser_file_dummy_get()
 {
-    struct parser_file *ret;
+    return &testsupport_parser_file;
+}
+static bool parser_file_dummy_init(struct parser_file *f)
+{
     struct RFstringx file_str;
     struct RFarray lines_arr;
-    RF_MALLOC(ret, sizeof(*ret), NULL);
-    
-    ret->info = info_ctx_create();
-    if (!ret->info) {
-        return NULL;
-    }
 
-    if (!rf_string_init(&ret->file_name, "test_file")) {
-        return NULL;
-    }
-
-    if (!rf_stringx_init_buff(&file_str, 1024, "")) {
-        return NULL;
-    }
-
-    RF_STRINGX_SHALLOW_COPY(&ret->pstr.str, &file_str);
-    ret->pstr.lines_num = 0;
-    ret->pstr.lines = NULL;
-
-    ret->current_line = 0;
-    ret->current_col = 0;
-    return ret;
-}
-
-static void parser_file_dummy_free(struct parser_file *f)
-{
-    parser_file_deinit(f);
-    free(f);
-}
-
-
-bool parser_file_dummy_assign(struct parser_file *f, const struct RFstring *s)
-{
-    static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
-    int lines;
-    if (!rf_stringx_assign(&f->pstr.str, s)) {
+    f->info = info_ctx_create();
+    if (!f->info) {
         return false;
     }
 
-    lines = rf_string_count(&f->pstr.str, &nl, 0, 0);
-    //TODO: here figure out line byte positions
+    if (!rf_string_init(&f->file_name, "test_file")) {
+        return false;
+    }
+
+    if (!rf_stringx_init_buff(&f->pstr.str, 1024, "")) {
+        return false;
+    }
+
+    f->root = NULL;
+    f->current_line = 0;
+    f->current_col = 0;
     return true;
+}
+
+static void parser_file_dummy_deinit(struct parser_file *f)
+{
+    parser_file_deinit(f);
+}
+
+bool parser_file_dummy_assign(struct parser_file *f, const struct RFstring *s)
+{
+    bool ret = false;
+    struct RFarray arr;
+    RF_ARRAY_TEMP_INIT(&arr, uint32_t, 128);
+    static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
+    int lines;
+
+    if (!rf_stringx_assign(&f->pstr.str, s)) {
+        goto end;
+    }
+    lines = rf_string_count(&f->pstr.str, &nl, 0, &arr, 0);
+    if (lines == -1) {
+        goto end;
+    }
+
+    lines += 1;
+    RF_MALLOC_JMP(f->pstr.lines, sizeof(uint32_t) * lines, ;, end);
+    if (lines == 1) { //we got nothing to copy from, so don't
+        f->pstr.lines[0] = 0;
+    } else {
+        memcpy(f->pstr.lines, arr.buff, sizeof(uint32_t) * lines);
+    }
+    f->pstr.lines_num = lines;
+
+    ret = true;
+end:
+    rf_array_deinit(&arr);
+    return ret;
 }
 
 void setup_parser_tests()
 {
-    testsupport_parser_file = *parser_file_dummy_new();
+    rf_init("refuclib.log", 0, LOG_DEBUG);
+    parser_file_dummy_init(&testsupport_parser_file);
 }
 
 void teardown_parser_tests()
 {
-    parser_file_dummy_free(&testsupport_parser_file);
+    parser_file_dummy_deinit(&testsupport_parser_file);
+    rf_deinit();
 }

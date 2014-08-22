@@ -31,9 +31,10 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
     char *sbeg = parser_string_beg(s);
     uint32_t off = p - sbeg;
 
+    RF_ASSERT(s->lines_num > 0);
+
     for (i = 0; i < s->lines_num - 1; i++) {
         if (off >= s->lines[i] && off < s->lines[i + 1]) {
-        /* if (s->lines[i] >= off) { */
             found = true;
             break;
         }
@@ -48,7 +49,6 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
         }
     }
 
-    /* *line = i + 1; */
     *line = i;
     sp = sbeg + s->lines[*line];
     RF_ASSERT(p - sp >= 0);

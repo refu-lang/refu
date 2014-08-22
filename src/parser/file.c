@@ -59,9 +59,12 @@ struct parser_file *parser_file_new(const struct RFstring *name)
 
 void parser_file_deinit(struct parser_file *f)
 {
-    ast_node_destroy(f->root);
+    if (f->root) {
+        ast_node_destroy(f->root);
+    }
     rf_string_deinit(&f->file_name);
     parser_string_deinit(&f->pstr);
+    info_ctx_destroy(f->info);
 }
 
 
@@ -94,7 +97,7 @@ void parser_file_move(struct parser_file *f,
 
     off->bytes_moved += bytes;
     off->chars_moved += chars;
-    off->lines_moved += rf_string_count(parser_file_str(f), &nl, bytes, 0);
+    off->lines_moved += rf_string_count(parser_file_str(f), &nl, bytes, 0, 0);
 
     rf_stringx_move_bytes(parser_file_str(f), bytes);
 }

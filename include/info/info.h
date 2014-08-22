@@ -23,6 +23,8 @@ struct info_ctx {
 
 
 struct info_ctx *info_ctx_create();
+void info_ctx_destroy(struct info_ctx *ctx);
+
 void info_print_cond(int vlevel, const char *fmt, ...);
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,

@@ -1,8 +1,6 @@
 import os
 from build_script.build import setup_build
 from build_script.cleanup import cleanup
-from clib.build_script.compilers import setupCompiler
-
 
 vars = SConscript('build_script/options.py')
 env = Environment(variables=vars,
@@ -97,10 +95,11 @@ program = env.Program(
     'check',
     # Instead of just providing source files, give objects
     # to avoid "2 different environments for same target warning
+    # [env.Object(s, CPPPATH=env['CPPPATH'] + ['./']) for s in unit_tests_files],
     [env.Object(s) for s in unit_tests_files],
     LIBS=libs_check,
     CPPDEFINES=cppdefines_check,
-    CPPPATH=env['CPPPATH'] + ['test/'],
+    CPPPATH=env['CPPPATH'] + ['./'],
     LIBPATH=env['CLIB_DIRECTORY'])
 
 refulang_test_run = env.Command(
@@ -128,7 +127,7 @@ if env['has_valgrind']:
             valgrind_cmd,
             env['UNIT_TESTS_OUTPUT'],
             False))  # do not fork tests when running in valgrind
-    check_refulang_alias_val = Alias('check_val', [refulang_test_run])
+    check_refulang_alias_val = Alias('check_val', [refulang_test_run_val])
     # Simply required.  Without it, 'check' is never considered out of date.
     AlwaysBuild(check_refulang_alias_val)
 
