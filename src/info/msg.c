@@ -17,7 +17,7 @@ struct info_msg *info_msg_create(enum info_msg_type type,
                                  va_list args)
 {
     struct info_msg *ret;
-    RF_MALLOC(ret, sizeof(*ret), NULL);
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
 
     if (!rf_string_initvl(&ret->s, fmt, args)) {
         va_end(args);    

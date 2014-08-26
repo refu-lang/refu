@@ -79,7 +79,7 @@ struct info_ctx *info_ctx_create()
 {
     struct info_ctx *ctx;
 
-    RF_MALLOC(ctx, sizeof(*ctx), NULL);
+    RF_MALLOC(ctx, sizeof(*ctx), return NULL);
     rf_ilist_head_init(&ctx->msg_list);
     if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_SIZE, "")) {
         free(ctx);

@@ -14,7 +14,7 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
 struct parser_ctx *parser_new()
 {
     struct parser_ctx *ret;
-    RF_MALLOC(ret, sizeof(struct parser_ctx), NULL);
+    RF_MALLOC(ret, sizeof(struct parser_ctx), return NULL);
 
     rf_ilist_head_init(&ret->files);
     ret->current_file = NULL;

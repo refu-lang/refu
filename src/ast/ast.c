@@ -26,7 +26,7 @@ struct ast_node *ast_node_create(enum ast_type type,
                                  char *sp, char *ep)
 {
     struct ast_node *ret;
-    RF_MALLOC(ret, sizeof(struct ast_node), NULL);
+    RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
     ret->type = type;
     if (!ast_location_init(&ret->location, f, sp, ep)) {

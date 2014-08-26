@@ -58,7 +58,7 @@ bool parser_file_dummy_assign(struct parser_file *f, const struct RFstring *s)
     }
 
     lines += 1;
-    RF_MALLOC_JMP(f->pstr.lines, sizeof(uint32_t) * lines, ;, end);
+    RF_MALLOC(f->pstr.lines, sizeof(uint32_t) * lines, goto end);
     if (lines == 1) { //we got nothing to copy from, so don't
         f->pstr.lines[0] = 0;
     } else {

@@ -18,7 +18,7 @@ struct parser_file *parser_file_new(const struct RFstring *name)
     int lines;
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, PARSER_STRING_STARTING_LINES);
 
-    RF_MALLOC(ret, sizeof(*ret), NULL);
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
 
     ret->info = info_ctx_create();
 

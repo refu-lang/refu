@@ -9,7 +9,7 @@ bool parser_string_init(struct parser_string *s,
 {
     RF_STRINGX_SHALLOW_COPY(&s->str, input_str);
     s->lines_num = lines_num;
-    RF_MALLOC(s->lines, sizeof(uint32_t) * lines_num, false);
+    RF_MALLOC(s->lines, sizeof(uint32_t) * lines_num, return false);
     memcpy(s->lines, arr->buff, sizeof(uint32_t) * lines_num);
     return true;
 }
