@@ -7,6 +7,7 @@
 #include <ast/location.h>
 #include <ast/identifier.h>
 #include <ast/datadecl.h>
+#include <ast/typedesc.h>
 #include <ast/genrdecl.h>
 #include <ast/vardecl.h>
 #include <ast/fndecl.h>
@@ -18,8 +19,8 @@ enum ast_type {
     AST_BLOCK,
     AST_VARIABLE_DECLARATION,
     AST_DATA_DECLARATION,
-    AST_DATA_OPERATOR,
-    AST_DATA_DESCRIPTION,
+    AST_TYPE_OPERATOR,
+    AST_TYPE_DESCRIPTION,
     AST_GENERIC_DECLARATION,
     AST_GENERIC_TYPE,
     AST_FUNCTION_DECLARATION,
@@ -38,8 +39,8 @@ struct ast_node {
         struct RFstring identifier;
         struct ast_vardecl vardecl;
         struct ast_datadecl datadecl;
-        struct ast_dataop dataop;
-        struct ast_datadesc datadesc;
+        struct ast_typeop typeop;
+        struct ast_typedesc typedesc;
         struct ast_genrdecl genrdecl;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;

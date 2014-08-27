@@ -21,6 +21,7 @@ refu_src = [
     'ast/location.c',
     'ast/identifier.c',
     'ast/datadecl.c',
+    'ast/typedesc.c',
     'ast/vardecl.c',
     'ast/fndecl.c',
     'ast/genrdecl.c',

@@ -7,26 +7,26 @@
 #include <parser/parser.h>
 #include <parser/tokens.h>
 
-static inline enum dataop_type
-parser_file_acc_dataop_token(struct parser_file *f)
+static inline enum typeop_type
+parser_file_acc_typeop_token(struct parser_file *f)
 {
     parser_file_acc_ws(f);
     if (parser_file_acc_string_ascii(f, &parser_tok_dsum)) {
-        return DATAOP_SUM;
+        return TYPEOP_SUM;
     } else if (parser_file_acc_string_ascii(f, &parser_tok_dprod)) {
-        return DATAOP_PRODUCT;
+        return TYPEOP_PRODUCT;
     } else if (parser_file_acc_string_ascii(f, &parser_tok_dimpl)) {
-        return DATAOP_IMPLICATION;
+        return TYPEOP_IMPLICATION;
     }
 
-    return DATAOP_INVALID;
+    return TYPEOP_INVALID;
 }
 
-static struct ast_node *parser_file_acc_datadesc_parencolon(
+static struct ast_node *parser_file_acc_typedesc_parencolon(
     struct parser_file *f,
     struct ast_node *left,
     struct ast_node *left_identifier,
-    enum dataop_type conn_type,
+    enum typeop_type conn_type,
     int *paren_count)
 {
     struct ast_node *paren_desc;
@@ -37,25 +37,25 @@ static struct ast_node *parser_file_acc_datadesc_parencolon(
     parser_file_acc_ws(f);
     if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
         *paren_count = *paren_count + 1;
-        paren_desc = parser_file_acc_datadesc(f, paren_count);
+        paren_desc = parser_file_acc_typedesc(f, paren_count);
         if (!paren_desc) {
             parser_file_synerr(
                 f, "Expected a data description right of \"(\"");
             goto not_found;
         }
-        n = ast_datadesc_create(f, ast_node_startsp(left_identifier),
+        n = ast_typedesc_create(f, ast_node_startsp(left_identifier),
                                 parser_file_sp(f), left_identifier, false);
         if (!n) { /* error */
             ast_node_destroy(paren_desc);
             goto not_found;
         }
-        ast_datadesc_set_right(n, paren_desc);
+        ast_typedesc_set_right(n, paren_desc);
         if (left) {
-            return ast_datadesc_create(
+            return ast_typedesc_create(
                 f,
                 ast_node_startsp(left),
                 parser_file_sp(f),
-                ast_dataop_create(f, ast_node_startsp(left),
+                ast_typeop_create(f, ast_node_startsp(left),
                                   parser_file_sp(f),
                                   conn_type, left, n),
                 true);
@@ -70,15 +70,15 @@ not_found:
     return NULL;
 }
 
-static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
+static struct ast_node *parser_file_acc_typedesc_single(struct parser_file *f,
                                                         struct ast_node *left,
-                                                        enum dataop_type conn_type,
+                                                        enum typeop_type conn_type,
                                                         int *paren_count)
 {
-    enum dataop_type dtype;
+    enum typeop_type dtype;
     struct ast_node *n;
     struct ast_node *tmp;
-    struct ast_node *dataop;
+    struct ast_node *typeop;
     struct parser_offset proff;
     char *sp;
     char *ep;
@@ -96,17 +96,17 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
     parser_file_acc_ws(f);
     if (parser_file_acc_string_ascii(f, &parser_tok_colon)) {
         /* parentheses right after ':' */
-        if ((n = parser_file_acc_datadesc_parencolon(f,
+        if ((n = parser_file_acc_typedesc_parencolon(f,
                                                      left,
                                                      tmp,
                                                      conn_type,
                                                      paren_count))) {
             if (left) {
-                return ast_datadesc_create(
+                return ast_typedesc_create(
                 f,
                 ast_node_startsp(left),
                 parser_file_sp(f),
-                ast_dataop_create(f, ast_node_startsp(left),
+                ast_typeop_create(f, ast_node_startsp(left),
                                   parser_file_sp(f),
                                   conn_type, left, n),
                 true);
@@ -114,26 +114,26 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
             //else
             return n;
         }
-        n = ast_datadesc_create(f, sp, NULL, tmp, false);
+        n = ast_typedesc_create(f, sp, NULL, tmp, false);
         if (!n) { /* error */
             goto not_found;
         }
-        tmp = parser_file_acc_datadesc_single(f, NULL,
-                                              DATAOP_INVALID, paren_count);
+        tmp = parser_file_acc_typedesc_single(f, NULL,
+                                              TYPEOP_INVALID, paren_count);
 
         if (!tmp) {
             parser_file_synerr(
                 f, "Expected a data description right of \":\"");
             goto err_free_this; //TODO: fucked up order of freeing
         }
-        ast_datadesc_set_right(n, tmp);
+        ast_typedesc_set_right(n, tmp);
         ast_node_set_end(n, parser_file_sp(f));
         if (left) {
-            return ast_datadesc_create(
+            return ast_typedesc_create(
                 f,
                 ast_node_startsp(left),
                 parser_file_sp(f),
-                ast_dataop_create(f, ast_node_startsp(left),
+                ast_typeop_create(f, ast_node_startsp(left),
                                   parser_file_sp(f),
                                   conn_type, left, n),
                 true);
@@ -141,7 +141,7 @@ static struct ast_node *parser_file_acc_datadesc_single(struct parser_file *f,
     } else {
         // depending on context we can have a type description being only
         // an identifier
-        n = ast_datadesc_create(f, sp, parser_file_sp(f), tmp, false);
+        n = ast_typedesc_create(f, sp, parser_file_sp(f), tmp, false);
         if (!n) {
             ast_node_destroy(tmp);
             goto not_found;
@@ -158,10 +158,10 @@ not_found:
     return NULL;
 }
 
-struct ast_node *parser_file_acc_datadesc(struct parser_file *f,
+struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                                           int *paren_count)
 {
-    enum dataop_type dtype = DATAOP_INVALID;
+    enum typeop_type dtype = TYPEOP_INVALID;
     struct ast_node *n = NULL;
     struct ast_node *last = NULL;
     struct parser_offset proff;
@@ -170,14 +170,14 @@ struct ast_node *parser_file_acc_datadesc(struct parser_file *f,
 
     parser_offset_copy(&proff, &f->offset);
     do {
-        n = parser_file_acc_datadesc_single(f, last, dtype, paren_count);
+        n = parser_file_acc_typedesc_single(f, last, dtype, paren_count);
         last = n;
         parser_file_acc_ws(f);
         if (parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
             *paren_count = *paren_count - 1;
             return n;
         }
-    } while(((dtype = parser_file_acc_dataop_token(f)) != DATAOP_INVALID));
+    } while(((dtype = parser_file_acc_typeop_token(f)) != TYPEOP_INVALID));
 
     return n;
 not_found:
@@ -214,7 +214,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
 
-    desc = parser_file_acc_datadesc(f, &paren_count);
+    desc = parser_file_acc_typedesc(f, &paren_count);
     if (!desc) {
         parser_file_synerr(f, "Expected data description for data declaration "
                            "of \""RF_STR_PF_FMT"\"",
