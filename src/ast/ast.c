@@ -9,7 +9,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("root"),
     RF_STRING_STATIC_INIT("block"),
     RF_STRING_STATIC_INIT("variable declaration"),
-    RF_STRING_STATIC_INIT("data declaration"),
+    RF_STRING_STATIC_INIT("type declaration"),
     RF_STRING_STATIC_INIT("type operator"),
     RF_STRING_STATIC_INIT("type description"),
     RF_STRING_STATIC_INIT("generic declaration"),
@@ -61,8 +61,8 @@ void ast_node_destroy(struct ast_node *n)
         ast_node_destroy(n->vardecl.name);
         ast_node_destroy(n->vardecl.type);
         break;
-    case AST_DATA_DECLARATION:
-        ast_datadecl_destroy(n);
+    case AST_TYPE_DECLARATION:
+        ast_typedecl_destroy(n);
         break;
     case AST_TYPE_OPERATOR:
         ast_typeop_destroy(n);
@@ -151,8 +151,8 @@ void ast_print(struct ast_node *n, int depth, const char *description)
             ast_print(c, depth + 1, 0);
         }
         break;
-    case AST_DATA_DECLARATION:
-        ast_datadecl_print(n, depth, 0);
+    case AST_TYPE_DECLARATION:
+        ast_typedecl_print(n, depth, 0);
         break;
     case AST_TYPE_OPERATOR:
         ast_typeop_print(n, depth, 0);

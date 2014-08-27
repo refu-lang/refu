@@ -6,7 +6,7 @@
 
 #include <parser/tokens.h>
 #include <parser/function.h>
-#include <parser/data.h>
+#include <parser/type.h>
 
 static struct ast_node * parser_file_acc_block(struct parser_file *f);
 static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
@@ -101,7 +101,7 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
         return stmt;
     } else if (stmt = parser_file_acc_vardecl(f)) {
         return stmt;
-    } else if (stmt = parser_file_acc_datadecl(f)) {
+    } else if (stmt = parser_file_acc_typedecl(f)) {
         return stmt;
     } else if (stmt = parser_file_acc_fndecl(f)) {
         return stmt;

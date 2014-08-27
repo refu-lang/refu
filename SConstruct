@@ -14,13 +14,13 @@ refu_src = [
     'parser/file.c',
     'parser/function.c',
     'parser/generics.c',
-    'parser/data.c',
-
+    'parser/type.c',
     'parser/tokens.c',
+
     'ast/ast.c',
     'ast/location.c',
     'ast/identifier.c',
-    'ast/datadecl.c',
+    'ast/typedecl.c',
     'ast/typedesc.c',
     'ast/vardecl.c',
     'ast/fndecl.c',

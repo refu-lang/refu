@@ -1,4 +1,4 @@
-#include <parser/data.h>
+#include <parser/type.h>
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
@@ -185,7 +185,7 @@ not_found:
     return NULL;
 }
 
-struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
+struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
 {
     struct ast_node *data_decl;
     struct ast_node *name;
@@ -200,7 +200,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
     parser_file_acc_ws(f);
     sp = parser_file_sp(f);
 
-    if (!parser_file_acc_string_ascii(f, &parser_kw_data)) {
+    if (!parser_file_acc_string_ascii(f, &parser_kw_type)) {
         goto not_found;
     }
 
@@ -223,7 +223,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
         goto not_found;
     }
     /* from here and on we throw syntax errors if something goes wrong */
-    data_decl = ast_datadecl_create(f, sp, NULL, name, desc);
+    data_decl = ast_typedecl_create(f, sp, NULL, name, desc);
     if (!data_decl) {//memory error
         ast_node_destroy(name);
         ast_node_destroy(desc);
@@ -244,7 +244,7 @@ struct ast_node *parser_file_acc_datadecl(struct parser_file *f)
     return data_decl;
 
 err_free:
-    ast_datadecl_destroy(data_decl);
+    ast_typedecl_destroy(data_decl);
 not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;
