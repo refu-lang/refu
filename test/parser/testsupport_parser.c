@@ -3,14 +3,16 @@
 #include <refu.h>
 #include <Definitions/threadspecific.h>
 
-#include <parser/file.h>
+i_THREAD__ struct parser_testdriver __parser_testdriver;
 
-
-i_THREAD__ struct parser_file testsupport_parser_file;
-
-struct parser_file *parser_file_dummy_get()
+struct parser_testdriver *get_parser_testdriver()
 {
-    return &testsupport_parser_file;
+    return &__parser_testdriver;
+}
+
+struct parser_file *parser_testdriver_get_file(struct parser_testdriver *d)
+{
+    return &d->f;
 }
 static bool parser_file_dummy_init(struct parser_file *f)
 {
@@ -41,7 +43,8 @@ static void parser_file_dummy_deinit(struct parser_file *f)
     parser_file_deinit(f);
 }
 
-bool parser_file_dummy_assign(struct parser_file *f, const struct RFstring *s)
+static bool parser_file_dummy_assign(struct parser_file *f,
+                                     const struct RFstring *s)
 {
     bool ret = false;
     struct RFarray arr;
@@ -72,14 +75,30 @@ end:
     return ret;
 }
 
+bool parser_testdriver_init(struct parser_testdriver *d)
+{
+    return parser_file_dummy_init(&d->f);
+}
+void parser_testdriver_deinit(struct parser_testdriver *d)
+{
+    parser_file_dummy_deinit(&d->f)x;
+}
+
+struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,
+                                             const struct RFstring *s)
+{
+    return parser_file_dummy_assign(&d->f, s) ? &d->f : NULL;
+}
+
+
 void setup_parser_tests()
 {
     rf_init("refuclib.log", 0, LOG_DEBUG);
-    parser_file_dummy_init(&testsupport_parser_file);
+    parser_testdriver_init(&__parser_testdriver);
 }
 
 void teardown_parser_tests()
 {
-    parser_file_dummy_deinit(&testsupport_parser_file);
+    parser_testdriver_deinit(&__parser_testdriver);
     rf_deinit();
 }

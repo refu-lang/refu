@@ -3,11 +3,32 @@
 #include <stdbool.h>
 #include <check.h>
 
+#include <parser/file.h>
+
 struct parser_file;
 struct RFstring;
 
-struct parser_file *parser_file_dummy_get();
-bool parser_file_dummy_assign(struct parser_file *f, const struct RFstring *s);
+struct parser_testdriver {
+    struct parser_file f;
+};
+
+/**
+ * gets the global parser test driver
+ * (should be initialized by the setup_parser_tests() fixture)
+ */
+struct parser_testdriver *get_parser_testdriver();
+
+bool parser_testdriver_init(struct parser_testdriver *p);
+void parser_testdriver_deinit(struct parser_testdriver *p);
+
+struct parser_file *parser_testdriver_get_file(struct parser_testdriver *d);
+
+/**
+ * Assign a string to the first/only(for now?) file of the driver
+ * and return that file
+ */
+struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,
+                                             const struct RFstring *s);
 
 
 void setup_parser_tests();

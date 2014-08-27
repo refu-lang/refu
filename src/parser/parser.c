@@ -164,7 +164,7 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     sp = p = parser_file_sp(f);
     ep = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f));
 
-    while (p <= ep) {
+    while (p < ep) {
         if ((*p >= 'A' && *p <= 'Z') ||
             (*p >= 'a' && *p <= 'z')) {
             p ++;
