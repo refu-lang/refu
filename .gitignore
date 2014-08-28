@@ -1,11 +1,17 @@
+# scons related
 .sconsign.dblite
 .sconf_temp
+build_test
+# unit test executable
+check_exec
+
+# object files
 *.pyc
 *.o
 
+
 # the executable
 refu
-# unit test executable
-check
+
 # refulib logs
 *.log

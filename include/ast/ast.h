@@ -35,17 +35,15 @@ struct ast_node {
     enum ast_type type;
     struct ast_location location;
     struct RFilist_node lh;
+    struct RFilist_head children;
     union {
         struct RFstring identifier;
         struct ast_vardecl vardecl;
         struct ast_typedecl typedecl;
         struct ast_typeop typeop;
-        struct ast_typedesc typedesc;
         struct ast_genrdecl genrdecl;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
-
-        struct RFilist_head children;
     };
 };
 

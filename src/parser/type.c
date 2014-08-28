@@ -44,21 +44,16 @@ static struct ast_node *parser_file_acc_typedesc_parencolon(
             goto not_found;
         }
         n = ast_typedesc_create(f, ast_node_startsp(left_identifier),
-                                parser_file_sp(f), left_identifier, false);
+                                parser_file_sp(f), left_identifier);
         if (!n) { /* error */
             ast_node_destroy(paren_desc);
             goto not_found;
         }
         ast_typedesc_set_right(n, paren_desc);
         if (left) {
-            return ast_typedesc_create(
-                f,
-                ast_node_startsp(left),
-                parser_file_sp(f),
-                ast_typeop_create(f, ast_node_startsp(left),
-                                  parser_file_sp(f),
-                                  conn_type, left, n),
-                true);
+            return ast_typeop_create(f, ast_node_startsp(left),
+                                     parser_file_sp(f),
+                                     conn_type, left, n);
         }
         //else just return n
     }
@@ -102,19 +97,14 @@ static struct ast_node *parser_file_acc_typedesc_single(struct parser_file *f,
                                                      conn_type,
                                                      paren_count))) {
             if (left) {
-                return ast_typedesc_create(
-                f,
-                ast_node_startsp(left),
-                parser_file_sp(f),
-                ast_typeop_create(f, ast_node_startsp(left),
-                                  parser_file_sp(f),
-                                  conn_type, left, n),
-                true);
+                return ast_typeop_create(f, ast_node_startsp(left),
+                                         parser_file_sp(f),
+                                         conn_type, left, n);
             }
             //else
             return n;
         }
-        n = ast_typedesc_create(f, sp, NULL, tmp, false);
+        n = ast_typedesc_create(f, sp, NULL, tmp);
         if (!n) { /* error */
             goto not_found;
         }
@@ -129,19 +119,14 @@ static struct ast_node *parser_file_acc_typedesc_single(struct parser_file *f,
         ast_typedesc_set_right(n, tmp);
         ast_node_set_end(n, parser_file_sp(f));
         if (left) {
-            return ast_typedesc_create(
-                f,
-                ast_node_startsp(left),
-                parser_file_sp(f),
-                ast_typeop_create(f, ast_node_startsp(left),
-                                  parser_file_sp(f),
-                                  conn_type, left, n),
-                true);
+            return ast_typeop_create(f, ast_node_startsp(left),
+                                     parser_file_sp(f),
+                                     conn_type, left, n);
         }
     } else {
         // depending on context we can have a type description being only
         // an identifier
-        n = ast_typedesc_create(f, sp, parser_file_sp(f), tmp, false);
+        n = ast_typedesc_create(f, sp, parser_file_sp(f), tmp);
         if (!n) {
             ast_node_destroy(tmp);
             goto not_found;

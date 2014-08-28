@@ -46,5 +46,7 @@ void teardown_parser_tests();
     } while(0)
 
 
+bool check_ast_match(struct ast_node *got, struct ast_node *expect);
+
 
 #endif

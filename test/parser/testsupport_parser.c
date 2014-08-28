@@ -1,6 +1,7 @@
 #include "testsupport_parser.h"
 
 #include <refu.h>
+#include <ast/ast.h>
 #include <Definitions/threadspecific.h>
 
 i_THREAD__ struct parser_testdriver __parser_testdriver;
@@ -81,7 +82,7 @@ bool parser_testdriver_init(struct parser_testdriver *d)
 }
 void parser_testdriver_deinit(struct parser_testdriver *d)
 {
-    parser_file_dummy_deinit(&d->f)x;
+    parser_file_dummy_deinit(&d->f);
 }
 
 struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,
@@ -101,4 +102,54 @@ void teardown_parser_tests()
 {
     parser_testdriver_deinit(&__parser_testdriver);
     rf_deinit();
+}
+
+
+static bool check_nodes(struct ast_node *a, struct ast_node *b)
+{
+    struct ast_node *child;
+    int a_children = 0;
+    int b_children = 0;
+    if (a->type != b->type) {
+        return false;
+    }
+
+
+    rf_ilist_for_each(&a->children, child, lh) {
+        a_children ++;
+    }
+    rf_ilist_for_each(&b->children, child, lh) {
+        b_children ++;
+    }
+    if (a_children != b_children) {
+        return false;
+    }
+
+    return true;
+}
+
+bool check_ast_match(struct ast_node *got,
+                     struct ast_node *expect)
+{
+    struct ast_node *got_child;
+    struct ast_node *expect_child;
+    int i = 0;
+    int j = 0;
+
+    if (!check_nodes(got, expect)) {
+        return false;
+    }
+
+    rf_ilist_for_each(&got->children, got_child, lh) {
+
+        j = 0;
+        rf_ilist_for_each(&expect->children, expect_child, lh) {
+            if (i == j && !check_ast_match(got_child, expect_child)) {
+                return false;
+            }
+            j++;
+        }
+        i ++;
+    }
+    return true;
 }

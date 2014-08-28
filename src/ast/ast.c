@@ -32,14 +32,8 @@ struct ast_node *ast_node_create(enum ast_type type,
     if (!ast_location_init(&ret->location, f, sp, ep)) {
         return NULL;
     }
+    rf_ilist_head_init(&ret->children);
 
-    /* nodes that will only have children should initialize the list */
-    switch (ret->type) {
-    case AST_ROOT:
-    case AST_BLOCK:
-        rf_ilist_head_init(&ret->children);
-        break;
-    }
     return ret;
 }
 
@@ -50,10 +44,6 @@ void ast_node_destroy(struct ast_node *n)
     switch (n->type) {
     case AST_ROOT:
     case AST_BLOCK:
-        rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
-            ast_node_destroy(child);
-        }
-        break;
     case AST_IDENTIFIER:
         /* no need to free, is a shallow pointer to the parsed file's string */
         break;
@@ -63,12 +53,6 @@ void ast_node_destroy(struct ast_node *n)
         break;
     case AST_TYPE_DECLARATION:
         ast_typedecl_destroy(n);
-        break;
-    case AST_TYPE_OPERATOR:
-        ast_typeop_destroy(n);
-        break;
-    case AST_TYPE_DESCRIPTION:
-        ast_typedesc_destroy(n);
         break;
     case AST_GENERIC_DECLARATION:
         ast_genrdecl_destroy(n);
@@ -84,6 +68,9 @@ void ast_node_destroy(struct ast_node *n)
         break;
      }
 
+    rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
+        ast_node_destroy(child);
+    }
 
     free(n);
 }
