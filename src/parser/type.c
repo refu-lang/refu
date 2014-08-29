@@ -49,7 +49,7 @@ static struct ast_node *parser_file_acc_typedesc_parencolon(
             ast_node_destroy(paren_desc);
             goto not_found;
         }
-        ast_typedesc_set_right(n, paren_desc);
+        ast_typedesc_set_right(&n->typedesc, paren_desc);
         if (left) {
             return ast_typeop_create(f, ast_node_startsp(left),
                                      parser_file_sp(f),
@@ -116,7 +116,7 @@ static struct ast_node *parser_file_acc_typedesc_single(struct parser_file *f,
                 f, "Expected a data description right of \":\"");
             goto err_free_this; //TODO: fucked up order of freeing
         }
-        ast_typedesc_set_right(n, tmp);
+        ast_typedesc_set_right(&n->typedesc, tmp);
         ast_node_set_end(n, parser_file_sp(f));
         if (left) {
             return ast_typeop_create(f, ast_node_startsp(left),

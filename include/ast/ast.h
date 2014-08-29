@@ -41,6 +41,7 @@ struct ast_node {
         struct ast_vardecl vardecl;
         struct ast_typedecl typedecl;
         struct ast_typeop typeop;
+        struct ast_typedesc typedesc;
         struct ast_genrdecl genrdecl;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;

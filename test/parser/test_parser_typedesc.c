@@ -12,10 +12,6 @@
 #include CLIB_TEST_HELPERS
 
 START_TEST(test_acc_typedesc_simple1) {
-
-    /* struct ast_node result[2] = { */
-    /*     { */
-    /* }; */
     char *sp;
     struct ast_node *n;
     struct parser_file *f;
@@ -30,7 +26,7 @@ START_TEST(test_acc_typedesc_simple1) {
     struct ast_node *id_1 = ast_identifier_create(f, sp, sp + 1);
     struct ast_node *id_2 = ast_identifier_create(f, sp + 2, sp + 4);
     struct ast_node *type = ast_typedesc_create(f, sp, sp + 4, id_1);
-    ast_typedesc_set_right(type, id_2);
+    ast_typedesc_set_right(&type->typedesc, id_2);
     
 
     n = parser_file_acc_typedesc(f, &paren_count);
@@ -41,6 +37,7 @@ START_TEST(test_acc_typedesc_simple1) {
     
     
     ast_node_destroy(n);
+    ast_node_destroy(type);
 }END_TEST
 
 
