@@ -21,7 +21,6 @@ struct parser_file *parser_file_new(const struct RFstring *name)
     RF_MALLOC(ret, sizeof(*ret), return NULL);
 
     ret->info = info_ctx_create();
-
     if (!ret->info) {
         free(ret);
         return NULL;
@@ -52,6 +51,7 @@ struct parser_file *parser_file_new(const struct RFstring *name)
 
     ret->current_line = 0;
     ret->current_col = 0;
+    parser_offset_init(&ret->offset);
 
     rf_array_deinit(&lines_arr);
     return ret;
@@ -113,13 +113,12 @@ void parser_file_move_to_offset(struct parser_file *f,
 void parser_file_acc_ws(struct parser_file *f)
 {
     static const struct RFstring wsp = RF_STRING_STATIC_INIT(" \t\n\r");
-    struct parser_offset mov;
-    mov.chars_moved += rf_stringx_skip_chars(parser_file_str(f),
-                                             &wsp,
-                                             0,
-                                             &mov.bytes_moved,
-                                             &mov.lines_moved);
-
+    struct parser_offset mov = PARSER_OFFSET_STATIC_INIT();
+    mov.chars_moved = rf_stringx_skip_chars(parser_file_str(f),
+                                            &wsp,
+                                            0,
+                                            &mov.bytes_moved,
+                                            &mov.lines_moved);
 
     parser_offset_add(&f->offset, &mov);
 }
@@ -159,3 +158,4 @@ bool parser_file_line(struct parser_file *f,
 i_INLINE_INS bool parser_file_has_synerr(struct parser_file *f);
 i_INLINE_INS char *parser_file_sp(struct parser_file *f);
 i_INLINE_INS struct RFstringx *parser_file_str(struct parser_file *f);
+i_INLINE_INS struct parser_offset *parser_file_offset(struct parser_file *f);

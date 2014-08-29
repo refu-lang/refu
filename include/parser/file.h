@@ -87,6 +87,11 @@ i_INLINE_DECL struct RFstringx *parser_file_str(struct parser_file *f)
     return &f->pstr.str;
 }
 
+i_INLINE_DECL struct parser_offset *parser_file_offset(struct parser_file *f)
+{
+    return &f->offset;
+}
+
 /**
  * Returns if there has been a syntax error during parsing the file
  */

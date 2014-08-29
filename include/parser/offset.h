@@ -9,7 +9,14 @@ struct parser_offset {
     unsigned int lines_moved;
 };
 
-#define PARSER_OFFSET_INIT() {0, 0, 0}
+
+#define PARSER_OFFSET_STATIC_INIT() {0, 0, 0}
+i_INLINE_DECL void parser_offset_init(struct parser_offset *off)
+{
+    off->bytes_moved = 0;
+    off->chars_moved = 0;
+    off->lines_moved = 0;
+}
 
 i_INLINE_DECL void parser_offset_copy(struct parser_offset *dst,
                                       struct parser_offset *src)

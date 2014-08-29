@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-Suite *parser_identifier_suite_create(void);
+Suite *parser_base_suite_create(void);
 Suite *parser_typedesc_suite_create(void);
 
 static const char *SILENT = "CK_SILENT";
@@ -54,8 +54,8 @@ int main(int argc, char **argv)
         fork_type = choose_fork_status(argv[2]);
     }
 
-    printf("\n\n=== Running refulang  Tests ===\n");
-    SRunner *sr = srunner_create(parser_identifier_suite_create());
+    printf("\n\n=== Running refulang tests ===\n");
+    SRunner *sr = srunner_create(parser_base_suite_create());
     srunner_add_suite(sr, parser_typedesc_suite_create());
 
     srunner_set_fork_status (sr, fork_type);

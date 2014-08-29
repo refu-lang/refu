@@ -36,11 +36,20 @@ static bool parser_file_dummy_init(struct parser_file *f)
     f->root = NULL;
     f->current_line = 0;
     f->current_col = 0;
+    parser_offset_init(&f->offset);
     return true;
 }
 
 static void parser_file_dummy_deinit(struct parser_file *f)
 {
+    /*
+     * if in the test the parser_file_dummy_assign() function
+     * was not used then pstr.lines was never allocated so, to still
+     * test parser_file_deinit() let's quickly allocated it here
+     */
+    if (!f->pstr.lines) {
+        RF_MALLOC(f->pstr.lines, 1,;);
+    }
     parser_file_deinit(f);
 }
 
@@ -94,8 +103,10 @@ struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,
 
 void setup_parser_tests()
 {
-    rf_init("refuclib.log", 0, LOG_DEBUG);
-    parser_testdriver_init(&__parser_testdriver);
+    ck_assert_msg(rf_init("refuclib.log", 0, LOG_DEBUG),
+                  "Failed to initialize refu library");
+    ck_assert_msg(parser_testdriver_init(&__parser_testdriver),
+                  "Failed to initialize parser test driver");
 }
 
 void teardown_parser_tests()

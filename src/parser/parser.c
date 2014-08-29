@@ -59,7 +59,7 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
     struct ast_node *stmt;
-    struct parser_offset off = PARSER_OFFSET_INIT();
+    struct parser_offset off = PARSER_OFFSET_STATIC_INIT();
     char *beg = parser_string_beg(&file->pstr);
 
     file->root = ast_node_create(AST_ROOT, file, beg,
@@ -164,7 +164,11 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
 
     parser_file_acc_ws(f);
     sp = p = parser_file_sp(f);
-    lim = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f));
+    lim = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f)) - 1;
+
+    if (lim - p <= 0) { /* if already at the end do nothing */
+        goto end;
+    }
 
     if ((*p >= 'A' && *p <= 'Z') ||
         (*p >= 'a' && *p <= 'z')) {
@@ -177,8 +181,10 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
         if ((*p >= 'A' && *p <= 'Z') ||
             (*p >= 'a' && *p <= 'z') ||
             (*p >= '0' && *p <= '9')) {
-            if (p <= lim) { /* don't go over the limit */
+            if (p < lim) { /* don't go over the limit */
                 p ++;
+            } else {
+                break;
             }
             continue;
         }
@@ -188,11 +194,6 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     if (p == sp) { /* no identifier was found */
         goto end;
     }
-
-    if (p == lim) { /* end of file means we are off by one */
-        p --;
-    }
-
     ep = p;
 
     parser_file_move(f, p - sp, p - sp);
