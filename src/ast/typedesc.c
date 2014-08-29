@@ -30,23 +30,6 @@ struct ast_node *ast_typeop_create(struct parser_file *f,
     return ret;
 }
 
-void ast_typeop_print(struct ast_node *n, int depth, const char *description)
-{
-    struct ast_node *c;
-    int i = 0;
-    rf_ilist_for_each(&n->children, c, lh) {
-        if (i == 0) {
-            ast_print(c, depth + 1, "left");
-        } else if (i == 1) {
-            ast_print(c, depth + 1, "right");
-        } else {
-            RF_ASSERT(0);
-        }
-        i ++;
-    }
-}
-
-
 struct ast_node *ast_typedesc_create(struct parser_file *f,
                                      char *sp,
                                      char *ep,
@@ -75,20 +58,4 @@ void ast_typedesc_set_right(struct ast_typedesc *t, struct ast_node *r)
     RF_ASSERT(r->type == AST_TYPE_DESCRIPTION);
     ast_node_add_child(n, r);
     t->right = r;
-}
-
-void ast_typedesc_print(struct ast_node *n, int depth, const char *description)
-{
-    struct ast_node *c;
-    int i = 0;
-    rf_ilist_for_each(&n->children, c, lh) {
-        if (i == 0) {
-            ast_print(c, depth + 1, "left");
-        } else if (i == 1) {
-            ast_print(c, depth + 1, "right");
-        } else {
-            RF_ASSERT(0);
-        }
-        i ++;
-    }
 }

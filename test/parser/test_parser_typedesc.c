@@ -31,10 +31,8 @@ START_TEST(test_acc_typedesc_simple1) {
 
     n = parser_file_acc_typedesc(f, &paren_count);
     ck_assert_msg(n, "Could not parse type description");
-    //TODO: location fails, fix it
-    /* ck_assert_ast_node_loc(n, 0, 0, 0, 4); */
+    ck_assert_ast_node_loc(n, 0, 0, 0, 4);
     check_ast_match(n, type);
-    
     
     ast_node_destroy(n);
     ast_node_destroy(type);

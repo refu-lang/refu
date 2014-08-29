@@ -157,27 +157,48 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     char *p;
     char *sp;
     char *ep;
+    char *lim;
+    bool first_char = false;
 
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
     sp = p = parser_file_sp(f);
-    ep = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f));
+    lim = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f));
 
-    while (p < ep) {
+    if ((*p >= 'A' && *p <= 'Z') ||
+        (*p >= 'a' && *p <= 'z')) {
+        p ++;
+    } else {
+        goto end;
+    }
+
+    while (p <= lim) {
         if ((*p >= 'A' && *p <= 'Z') ||
-            (*p >= 'a' && *p <= 'z')) {
-            p ++;
+            (*p >= 'a' && *p <= 'z') ||
+            (*p >= '0' && *p <= '9')) {
+            if (p <= lim) { /* don't go over the limit */
+                p ++;
+            }
             continue;
         }
         break;
     }
-    ep = p;
 
-    if (ep == sp) { /* no identifier was found */
-        return NULL;
+    if (p == sp) { /* no identifier was found */
+        goto end;
     }
+
+    if (p == lim) { /* end of file means we are off by one */
+        p --;
+    }
+
+    ep = p;
 
     parser_file_move(f, p - sp, p - sp);
     return ast_identifier_create(f, sp, ep);
+
+end:
+    parser_file_move_to_offset(f, &proff);
+    return NULL;
 }

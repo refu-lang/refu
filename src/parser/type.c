@@ -229,7 +229,7 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
     return data_decl;
 
 err_free:
-    ast_typedecl_destroy(data_decl);
+    ast_node_destroy(data_decl);
 not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;

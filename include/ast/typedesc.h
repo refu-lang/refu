@@ -42,7 +42,6 @@ struct ast_node *ast_typeop_create(struct parser_file *f,
                                    enum typeop_type type,
                                    struct ast_node *left,
                                    struct ast_node *right);
-void ast_typeop_print(struct ast_node *n, int depth, const char *description);
 
 
 struct ast_typedesc {
@@ -57,6 +56,5 @@ struct ast_node *ast_typedesc_create(struct parser_file *f,
                                      char *ep,
                                      struct ast_node *id);
 void ast_typedesc_set_right(struct ast_typedesc *n, struct ast_node *d);
-void ast_typedesc_print(struct ast_node *n, int depth, const char *description);
 
 #endif

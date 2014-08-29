@@ -22,27 +22,14 @@ struct ast_node *ast_typedecl_create(struct parser_file *f,
         return NULL;
     }
 
+    ast_node_add_child(ret, name);
     ret->typedecl.name = name;
+    ast_node_add_child(ret, desc);
     ret->typedecl.desc = desc;
     return ret;
 }
 
-void ast_typedecl_destroy(struct ast_node *n)
+struct RFstring *ast_typedecl_name_str(struct ast_typedecl *t)
 {
-    ast_node_destroy(n->typedecl.name);
-    ast_node_destroy(n->typedecl.desc);
-}
-
-struct RFstring *ast_typedecl_name_str(struct ast_node *n)
-{
-    RF_ASSERT(n->type == AST_TYPE_DECLARATION);
-
-    return ast_identifier_str(n->typedecl.name);
-}
-
-void ast_typedecl_print(struct ast_node *n, int depth, const char *description)
-{
-    ast_print(n->typedecl.name, depth + 1, "name");
-    ast_print(n->typedecl.desc, depth + 1, NULL);
-
+    return ast_identifier_str(t->name);
 }

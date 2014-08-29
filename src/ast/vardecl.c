@@ -39,9 +39,3 @@ struct RFstring *ast_vardecl_type_str(struct ast_node *n)
 
     return ast_identifier_str(n->vardecl.type);
 }
-
-void ast_vardecl_print(struct ast_node *n, int depth, const char *description)
-{
-    ast_print(n->vardecl.name, depth + 1, "name");
-    ast_print(n->vardecl.type, depth + 1, "type");
-}

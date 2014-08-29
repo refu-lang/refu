@@ -73,5 +73,5 @@ i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
 const struct RFstring *ast_node_str(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
-void ast_print(struct ast_node *root, int depth, const char *description);
+void ast_print(struct ast_node *root, int depth);
 #endif

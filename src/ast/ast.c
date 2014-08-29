@@ -44,15 +44,16 @@ void ast_node_destroy(struct ast_node *n)
     switch (n->type) {
     case AST_ROOT:
     case AST_BLOCK:
+    case AST_TYPE_DECLARATION:
+    case AST_TYPE_OPERATOR:
+    case AST_TYPE_DESCRIPTION:
+        /* Only delete children list */
     case AST_IDENTIFIER:
         /* no need to free, is a shallow pointer to the parsed file's string */
         break;
     case AST_VARIABLE_DECLARATION:
         ast_node_destroy(n->vardecl.name);
         ast_node_destroy(n->vardecl.type);
-        break;
-    case AST_TYPE_DECLARATION:
-        ast_typedecl_destroy(n);
         break;
     case AST_GENERIC_DECLARATION:
         ast_genrdecl_destroy(n);
@@ -123,47 +124,22 @@ static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
     }
 }
 
-void ast_print(struct ast_node *n, int depth, const char *description)
+void ast_print(struct ast_node *n, int depth)
 {
     struct ast_node *c;
     struct RFilist_head *list = NULL;
 
-    ast_print_prelude(n, depth, description);
+    ast_print_prelude(n, depth, "");
 
     switch(n->type) {
-    case AST_ROOT:
-    case AST_BLOCK:
-        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
-        rf_ilist_for_each(&n->children, c, lh) {
-            ast_print(c, depth + 1, 0);
-        }
-        break;
-    case AST_TYPE_DECLARATION:
-        ast_typedecl_print(n, depth, 0);
-        break;
-    case AST_TYPE_OPERATOR:
-        ast_typeop_print(n, depth, 0);
-        break;
-    case AST_TYPE_DESCRIPTION:
-        ast_typedesc_print(n, depth, 0);
-        break;
-    case AST_GENERIC_DECLARATION:
-        ast_genrdecl_print(n, depth + 1);
-        break;
-    case AST_GENERIC_TYPE:
-        ast_genrtype_print(n, depth + 1);
-        break;
-    case AST_FUNCTION_DECLARATION:
-        ast_fndecl_print(n, depth, 0);
-        break;
-    case AST_VARIABLE_DECLARATION:
-        ast_vardecl_print(n, depth, 0);
-        break;
     case AST_IDENTIFIER:
         ast_identifier_print(n, depth + 1);
         break;
     default:
         printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
+        rf_ilist_for_each(&n->children, c, lh) {
+            ast_print(c, depth + 1);
+        }
         break;
     }
 }

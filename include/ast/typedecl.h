@@ -19,10 +19,6 @@ struct ast_node *ast_typedecl_create(struct parser_file *f,
                                      char *ep,
                                      struct ast_node *name,
                                      struct ast_node *desc);
-void ast_typedecl_destroy(struct ast_node *n);
 
-
-struct RFstring *ast_typedecl_name_str(struct ast_node *n);
-
-void ast_typedecl_print(struct ast_node *n, int depth, const char *description);
+struct RFstring *ast_typedecl_name_str(struct ast_typedecl *t);
 #endif

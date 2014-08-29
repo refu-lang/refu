@@ -34,7 +34,7 @@ int main(int argc,char** argv)
         return -1;
     }
     parser_flush_messages(parser);
-    ast_print(parser->current_file->root, 0, 0);
+    ast_print(parser->current_file->root, 0);
     
     return 0;
 }

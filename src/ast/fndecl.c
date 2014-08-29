@@ -75,19 +75,3 @@ struct RFstring *ast_fndecl_ret_str(struct ast_node *n)
 
     return ast_identifier_str(n->fndecl.ret);
 }
-
-void ast_fndecl_print(struct ast_node *n, int depth, const char *desc)
-{
-    struct ast_node *c;
-    ast_print(n->fndecl.name, depth + 1, "name");
-    if (n->fndecl.genr) {
-        ast_print(n->fndecl.genr, depth + 1, "generics");
-    }
-    if (n->fndecl.ret) {
-        ast_print(n->fndecl.ret, depth + 1, "return type");
-    }
-
-    rf_ilist_for_each(&n->fndecl.args, c, lh) {
-        ast_print(c, depth + 1, "argument");
-    }
-}

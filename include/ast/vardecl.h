@@ -18,6 +18,4 @@ struct ast_node *ast_vardecl_create(struct parser_file *f,
 
 struct RFstring *ast_vardecl_name_str(struct ast_node *n);
 struct RFstring *ast_vardecl_type_str(struct ast_node *n);
-
-void ast_vardecl_print(struct ast_node *n, int depth, const char *description);
 #endif
