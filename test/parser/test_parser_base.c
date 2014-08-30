@@ -27,6 +27,72 @@ START_TEST(test_acc_ws_simple) {
     ck_assert_rf_str_eq_cstr(str, "asd    ");
 } END_TEST
 
+START_TEST(test_acc_ws_simple_nl) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        " \n \r \t asd \n   ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    parser_file_acc_ws(f);
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 7, 7, 1);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "asd \n   ");
+} END_TEST
+
+START_TEST(test_acc_ws_full) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(" \n \r \t \n \n  ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    parser_file_acc_ws(f);
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 12, 12, 3);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "");
+} END_TEST
+
+START_TEST(test_acc_ws_none) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "identifier_before_space \n \r \t");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    parser_file_acc_ws(f);
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 0, 0, 0);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "identifier_before_space \n \r \t");
+} END_TEST
+
+START_TEST(test_acc_ws_none_empty) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    parser_file_acc_ws(f);
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 0, 0, 0);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "");
+} END_TEST
+
 
 
 
@@ -108,6 +174,10 @@ Suite *parser_base_suite_create(void)
                               setup_parser_tests,
                               teardown_parser_tests);
     tcase_add_test(whitespace, test_acc_ws_simple);
+    tcase_add_test(whitespace, test_acc_ws_simple_nl);
+    tcase_add_test(whitespace, test_acc_ws_full);
+    tcase_add_test(whitespace, test_acc_ws_none);
+    tcase_add_test(whitespace, test_acc_ws_none_empty);
 
 
 
