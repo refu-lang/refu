@@ -138,6 +138,7 @@ START_TEST(test_acc_identifier_fail1) {
 
     n = parser_file_acc_identifier(f);
     ck_assert_msg(n == NULL, "Accepting identifier should have failed");
+    ck_assert_driver_offset_eq(d, 0, 0, 0);
 } END_TEST
 
 START_TEST(test_acc_identifier_fail2) {
@@ -150,6 +151,7 @@ START_TEST(test_acc_identifier_fail2) {
 
     n = parser_file_acc_identifier(f);
     ck_assert_msg(!n, "Accepting identifier should have failed");
+    ck_assert_driver_offset_eq(d, 0, 0, 0);
 } END_TEST
 
 START_TEST(test_acc_identifier_fail3) {
@@ -162,6 +164,7 @@ START_TEST(test_acc_identifier_fail3) {
 
     n = parser_file_acc_identifier(f);
     ck_assert_msg(!n, "Accepting identifier should have failed");
+    ck_assert_driver_offset_eq(d, 0, 0, 0);
 } END_TEST
 
 

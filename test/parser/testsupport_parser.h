@@ -5,8 +5,6 @@
 
 #include <parser/file.h>
 
-struct parser_file;
-struct RFstring;
 
 struct parser_testdriver {
     struct parser_file f;
@@ -45,11 +43,20 @@ void teardown_parser_tests();
         ck_assert_uint_eq(loc->end_col, (i_ecol_));                     \
     } while(0)
 
+
 #define ck_assert_parser_offset_eq(i_off_, i_bytes_, i_chars_, i_lines_) \
     do {                                                                \
         ck_assert_uint_eq((i_off_)->bytes_moved, i_bytes_);             \
         ck_assert_uint_eq((i_off_)->chars_moved, i_chars_);             \
         ck_assert_uint_eq((i_off_)->lines_moved, i_lines_);             \
+    } while(0)
+
+#define ck_assert_driver_offset_eq(i_driver_, i_bytes_, i_chars_, i_lines_) \
+    do {                                                                \
+        struct parser_offset *off_ = parser_file_offset(&(i_driver_)->f); \
+        ck_assert_uint_eq(off_->bytes_moved, i_bytes_);                 \
+        ck_assert_uint_eq(off_->chars_moved, i_chars_);                 \
+        ck_assert_uint_eq(off_->lines_moved, i_lines_);                 \
     } while(0)
 
 
