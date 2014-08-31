@@ -55,6 +55,31 @@ i_INLINE_DECL void ast_location_copy(struct ast_location *l1,
     l1->ep = l2->ep;
 }
 
+/**
+ * Comparison function assuming that the 2 locations are from the same file
+ */
+i_INLINE_DECL bool ast_location_equal(struct ast_location *l1,
+                                      struct ast_location *l2)
+{
+    if (l1->start_line != l2->start_line) {
+        return false;
+    }
+    if (l1->start_col != l2->start_col) {
+        return false;
+    }
+
+    if (l1->end_line != l2->end_line) {
+        return false;
+    }
+    if (l1->end_col != l2->end_col) {
+        return false;
+    }
+    if (l1->sp != l2-> sp || l2->ep != l2->ep) {
+        return false;
+    }
+    return true;
+}
+
 
 #define AST_LOCATION_FMT       \
     RF_STR_PF_FMT":%u:%u"

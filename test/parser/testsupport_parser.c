@@ -116,38 +116,73 @@ void teardown_parser_tests()
 }
 
 
-static bool check_nodes(struct ast_node *a, struct ast_node *b)
+static bool check_nodes(struct ast_node *got, struct ast_node *expect,
+                        const char* filename,
+                        unsigned int line)
 {
     struct ast_node *child;
-    int a_children = 0;
-    int b_children = 0;
-    if (a->type != b->type) {
+    int got_children = 0;
+    int expect_children = 0;
+    if (got->type != expect->type) {
+        ck_astcheck_abort(
+            filename, line,
+            "2 ast nodes have different type: Got \""RF_STR_PF_FMT"\" != "
+            "expected \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(ast_node_str(got)),
+            RF_STR_PF_ARG(ast_node_str(expect)));
         return false;
     }
 
-
-    rf_ilist_for_each(&a->children, child, lh) {
-        a_children ++;
+    rf_ilist_for_each(&got->children, child, lh) {
+        got_children ++;
     }
-    rf_ilist_for_each(&b->children, child, lh) {
-        b_children ++;
+    rf_ilist_for_each(&expect->children, child, lh) {
+        expect_children ++;
     }
-    if (a_children != b_children) {
+    if (got_children != expect_children) {
+        ck_astcheck_abort(filename, line,
+                          "2 ast nodes have different number of children", 0);
         return false;
+    }
+
+    if(!ast_location_equal(&got->location, &expect->location)) {
+        ck_astcheck_abort(
+            filename, line,
+            "2 ast nodes have different location: Got "AST_LOCATION_FMT2 " but"
+            " expected "AST_LOCATION_FMT2, AST_LOCATION_ARG2(&got->location),
+            AST_LOCATION_ARG2(&expect->location)
+        );
+        return false;
+    }
+
+    switch(got->type) {
+    case AST_IDENTIFIER:
+        if (!rf_string_equal(&got->identifier, &expect->identifier)) {
+            ck_astcheck_abort(
+                filename, line,
+                "identifiers mismatch: Got \""RF_STR_PF_FMT"\" != expected "
+                "\""RF_STR_PF_FMT"\"",
+                RF_STR_PF_ARG(&got->identifier),
+                RF_STR_PF_ARG(&expect->identifier)
+            );
+            return false;
+        }
+        break;
     }
 
     return true;
 }
 
-bool check_ast_match(struct ast_node *got,
-                     struct ast_node *expect)
+bool check_ast_match_impl(struct ast_node *got,
+                          struct ast_node *expect,
+                          const char* file,
+                          unsigned int line)
 {
     struct ast_node *got_child;
     struct ast_node *expect_child;
     int i = 0;
     int j = 0;
 
-    if (!check_nodes(got, expect)) {
+    if (!check_nodes(got, expect, file, line)) {
         return false;
     }
 
@@ -155,7 +190,8 @@ bool check_ast_match(struct ast_node *got,
 
         j = 0;
         rf_ilist_for_each(&expect->children, expect_child, lh) {
-            if (i == j && !check_ast_match(got_child, expect_child)) {
+            if (i == j &&
+                !check_ast_match_impl(got_child, expect_child, file, line)) {
                 return false;
             }
             j++;

@@ -158,7 +158,7 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     char *sp;
     char *ep;
     char *lim;
-    bool first_char = false;
+    bool last_char_relevant = false;
 
     parser_offset_copy(&proff, &f->offset);
 
@@ -184,6 +184,7 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
             if (p < lim) { /* don't go over the limit */
                 p ++;
             } else {
+                last_char_relevant = true;
                 break;
             }
             continue;
@@ -193,6 +194,9 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
 
     if (p == sp) { /* no identifier was found */
         goto end;
+    }
+    if (p == lim && !last_char_relevant) {
+        p --;
     }
     ep = p;
 

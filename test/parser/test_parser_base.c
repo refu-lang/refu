@@ -107,7 +107,7 @@ START_TEST(test_acc_identifier_spaced) {
 
     n = parser_file_acc_identifier(f);
     ck_assert_msg(n, "Could not parse identifier");
-    ck_assert_ast_node_loc(n, 0, 2, 0, 5);
+    ck_assert_ast_node_loc(n, 0, 2, 0, 4);
     ck_assert_rf_str_eq_cstr(ast_identifier_str(n), "foo");
     ast_node_destroy(n);
 } END_TEST

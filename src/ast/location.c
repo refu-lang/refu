@@ -57,3 +57,5 @@ bool ast_location_from_file(struct ast_location *loc,
 i_INLINE_INS struct RFstring *ast_location_filename(struct ast_location *loc);
 i_INLINE_INS void ast_location_copy(struct ast_location *l1,
                                     struct ast_location *l2);
+i_INLINE_INS bool ast_location_equal(struct ast_location *l1,
+                                      struct ast_location *l2);

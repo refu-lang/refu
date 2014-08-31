@@ -33,6 +33,9 @@ void setup_parser_tests();
 void teardown_parser_tests();
 
 
+#define ck_astcheck_abort(file_, line_, msg_, ...)      \
+    ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_,  \
+                 file_, line_, __VA_ARGS__)
 
 #define ck_assert_ast_node_loc(i_node_, i_sline_, i_scol_, i_eline_, i_ecol_) \
     do {                                                                \
@@ -60,7 +63,14 @@ void teardown_parser_tests();
     } while(0)
 
 
-bool check_ast_match(struct ast_node *got, struct ast_node *expect);
+
+#define check_ast_match(got_, expect_)                      \
+    check_ast_match_impl(got_, expect_, __FILE__, __LINE__)
+
+bool check_ast_match_impl(struct ast_node *got,
+                          struct ast_node *expect,
+                          const char* filename,
+                          unsigned int line);
 
 
 #endif
