@@ -27,4 +27,5 @@ struct info_msg *info_msg_create(enum info_msg_type type,
 void info_msg_destroy(struct info_msg *m);
 void info_msg_print(struct info_msg *m, FILE *f);
 
+bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s);
 #endif

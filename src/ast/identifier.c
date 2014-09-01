@@ -13,7 +13,7 @@ struct ast_node *ast_identifier_create(struct parser_file *file,
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->identifier, sp, ep - sp);
+    RF_STRING_SHALLOW_INIT(&ret->identifier, sp, ep - sp + 1);
 
     return ret;
 }

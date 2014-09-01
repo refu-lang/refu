@@ -37,6 +37,18 @@ bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
 void info_ctx_print(struct info_ctx *ctx, unsigned int index);
 
+/**
+ * Gets all messages of a certain type, properly formatted and returns them
+ * in the given RFstringx
+ * @param ctx        The info context to work with
+ * @param type       The type of messages to retrieve
+ * @param str        The string in which to return
+ * @return           True/false for success/failure
+*/
+bool info_ctx_get(struct info_ctx *ctx,
+                  enum info_msg_type type,
+                  struct RFstringx *str);
+
 /* simple printing related function wrappers */
 
 #define ERROR(...)                              \

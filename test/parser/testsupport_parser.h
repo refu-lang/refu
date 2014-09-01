@@ -8,6 +8,7 @@
 
 struct parser_testdriver {
     struct parser_file f;
+    struct RFstringx buffstr;
 };
 
 /**
@@ -28,6 +29,12 @@ struct parser_file *parser_testdriver_get_file(struct parser_testdriver *d);
 struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,
                                              const struct RFstring *s);
 
+/**
+ * Returns a pointer to the buffer string after having populated it with
+ * any parsing errors that may have occured. If no errors occured then
+ * returns NULL.
+ */
+struct RFstringx *parser_testdriver_geterrors(struct parser_testdriver *d);
 
 void setup_parser_tests();
 void teardown_parser_tests();
@@ -63,6 +70,18 @@ void teardown_parser_tests();
     } while(0)
 
 
+#define ck_assert_parsed_node(n_, d_, msg_)                             \
+    do {                                                                \
+        if (!(n_)) {                                                    \
+            struct RFstringx *tmp_ = parser_testdriver_geterrors(d_);   \
+            if (tmp_) {                                                 \
+                ck_abort_msg(msg_" -- with parser errors\n"RF_STR_PF_FMT, \
+                             RF_STR_PF_ARG(tmp_));                      \
+            } else {                                                    \
+                ck_abort_msg(msg_" -- with no parser errors");          \
+            }                                                           \
+        }                                                               \
+    } while (0)
 
 #define check_ast_match(got_, expect_)                      \
     check_ast_match_impl(got_, expect_, __FILE__, __LINE__)

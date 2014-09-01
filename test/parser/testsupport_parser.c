@@ -85,13 +85,27 @@ end:
     return ret;
 }
 
+struct RFstringx *parser_testdriver_geterrors(struct parser_testdriver *d)
+{
+    if (!info_ctx_get(d->f.info, MESSAGE_ANY, &d->buffstr)) {
+        return NULL;
+    }
+    return &d->buffstr;
+}
+
 bool parser_testdriver_init(struct parser_testdriver *d)
 {
-    return parser_file_dummy_init(&d->f);
+    bool ret;
+    ret = parser_file_dummy_init(&d->f);
+    if (!ret) {
+        return false;
+    }
+    return rf_stringx_init_buff(&d->buffstr, 1024, "");
 }
 void parser_testdriver_deinit(struct parser_testdriver *d)
 {
     parser_file_dummy_deinit(&d->f);
+    rf_stringx_deinit(&d->buffstr);
 }
 
 struct parser_file *parser_testdriver_assign(struct parser_testdriver *d,

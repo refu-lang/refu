@@ -150,6 +150,13 @@ not_found:
 }
 
 
+#define COND_IDENTIFIER_BEGIN(p_)               \
+    (((p_) >= 'A' && (p_) <= 'Z') ||            \
+     ((p_) >= 'a' && (p_) <= 'z'))
+
+#define COND_IDENTIFIER(p_)                     \
+    (COND_IDENTIFIER_BEGIN(p_) ||               \
+     ((p_) >= '0' && (p_) <= '9'))
 
 struct ast_node *parser_file_acc_identifier(struct parser_file *f)
 {
@@ -167,22 +174,32 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     lim = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f)) - 1;
 
     if (lim - p <= 0) { /* if already at the end do nothing */
-        goto end;
+        goto not_found;
     }
 
-    if ((*p >= 'A' && *p <= 'Z') ||
-        (*p >= 'a' && *p <= 'z')) {
-        p ++;
+    if (COND_IDENTIFIER_BEGIN(*p)) {
+        if (p < lim) { /* don't go over the limit */
+            if (COND_IDENTIFIER((*(p+1)))) {
+                p ++;
+            } else {
+                goto end;
+            }
+        } else {
+            last_char_relevant = true;
+            goto end;
+        }
     } else {
-        goto end;
+        goto not_found;
     }
 
     while (p <= lim) {
-        if ((*p >= 'A' && *p <= 'Z') ||
-            (*p >= 'a' && *p <= 'z') ||
-            (*p >= '0' && *p <= '9')) {
+        if (COND_IDENTIFIER(*p)) {
             if (p < lim) { /* don't go over the limit */
-                p ++;
+                if (COND_IDENTIFIER((*(p+1)))) {
+                    p ++;
+                } else {
+                    break;
+                }
             } else {
                 last_char_relevant = true;
                 break;
@@ -193,17 +210,20 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     }
 
     if (p == sp) { /* no identifier was found */
-        goto end;
+        goto not_found;
     }
+
+end:
     if (p == lim && !last_char_relevant) {
         p --;
     }
     ep = p;
 
-    parser_file_move(f, p - sp, p - sp);
+    /* parser_file_move(f, p - sp, p - sp); */
+    parser_file_move(f, p - sp + 1, p - sp + 1);
     return ast_identifier_create(f, sp, ep);
 
-end:
+not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;
 }

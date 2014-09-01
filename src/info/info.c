@@ -51,8 +51,7 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
     struct info_msg *m;
     struct info_msg *tmp;
 
-    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln)
-    {
+    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
         if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
             RF_BITFLAG_ON(type, m->type)) {
 
@@ -72,6 +71,27 @@ void info_print_cond(int vlevel, const char *fmt, ...)
         vprintf(fmt, args);
         va_end(args);
     }
+}
+
+bool info_ctx_get(struct info_ctx *ctx,
+                  enum info_msg_type type,
+                  struct RFstringx *str)
+{
+    struct info_msg *m;
+    if (rf_ilist_is_empty(&ctx->msg_list)) {
+        return false;
+    }
+    rf_ilist_for_each(&ctx->msg_list, m, ln) {
+        if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
+            RF_BITFLAG_ON(type, m->type)) {
+            if (!info_msg_get_formatted(m, str)) {
+                return false;
+            }
+            rf_stringx_move_end(str);
+        }
+    }
+    rf_stringx_reset(str);
+    return true;
 }
 
 

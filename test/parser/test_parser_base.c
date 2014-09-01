@@ -109,6 +109,41 @@ START_TEST(test_acc_identifier_spaced) {
     ck_assert_msg(n, "Could not parse identifier");
     ck_assert_ast_node_loc(n, 0, 2, 0, 4);
     ck_assert_rf_str_eq_cstr(ast_identifier_str(n), "foo");
+    ck_assert_rf_str_eq_cstr(parser_file_str(f), " ");
+    ast_node_destroy(n);
+} END_TEST
+
+START_TEST(test_acc_identifier_comma) {
+    struct ast_node *n;
+    struct parser_file *f;
+    static const struct RFstring id_string = RF_STRING_STATIC_INIT("foo");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("  foo, ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    n = parser_file_acc_identifier(f);
+    ck_assert_msg(n, "Could not parse identifier");
+    ck_assert_ast_node_loc(n, 0, 2, 0, 4);
+    ck_assert_rf_str_eq_cstr(ast_identifier_str(n), "foo");
+    ck_assert_rf_str_eq_cstr(parser_file_str(f), ", ");
+    ast_node_destroy(n);
+} END_TEST
+
+START_TEST(test_acc_identifier_onechar) {
+    struct ast_node *n;
+    struct parser_file *f;
+    static const struct RFstring id_string = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("   a: ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    n = parser_file_acc_identifier(f);
+    ck_assert_msg(n, "Could not parse identifier");
+    ck_assert_ast_node_loc(n, 0, 3, 0, 3);
+    ck_assert_rf_str_eq_cstr(ast_identifier_str(n), "a");
+    ck_assert_rf_str_eq_cstr(parser_file_str(f), ": ");
     ast_node_destroy(n);
 } END_TEST
 
@@ -125,6 +160,7 @@ START_TEST(test_acc_identifier_narrow) {
     ck_assert_msg(n, "Could not parse identifier");
     ck_assert_rf_str_eq_cstr(ast_identifier_str(n), "narrow");
     ck_assert_ast_node_loc(n, 0, 0, 0, 5);
+    ck_assert_rf_str_eq_cstr(parser_file_str(f), "");
     ast_node_destroy(n);
 } END_TEST
 
@@ -189,7 +225,9 @@ Suite *parser_base_suite_create(void)
                               setup_parser_tests,
                               teardown_parser_tests);
     tcase_add_test(identifiers, test_acc_identifier_spaced);
+    tcase_add_test(identifiers, test_acc_identifier_comma);
     tcase_add_test(identifiers, test_acc_identifier_narrow);
+    tcase_add_test(identifiers, test_acc_identifier_onechar);
 
     tcase_add_test(identifiers, test_acc_identifier_fail1);
     tcase_add_test(identifiers, test_acc_identifier_fail2);

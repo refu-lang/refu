@@ -28,7 +28,7 @@ START_TEST(test_acc_typedesc_simple1) {
     struct ast_node *type = ast_typedesc_create(f, sp, sp + 4, id_1, id_2);
 
     n = parser_file_acc_typedesc(f, &paren_count);
-    ck_assert_msg(n, "Could not parse type description");
+    ck_assert_parsed_node(n, d, "Could not parse type description");
     ck_assert_ast_node_loc(n, 0, 0, 0, 4);
     check_ast_match(n, type);
 
@@ -54,7 +54,7 @@ START_TEST(test_acc_typedesc_simple2) {
 
 
     n = parser_file_acc_typedesc(f, &paren_count);
-    ck_assert_msg(n, "Could not parse type description");
+    ck_assert_parsed_node(n, d, "Could not parse type description");
     ck_assert_ast_node_loc(n, 0, 0, 0, 9);
     check_ast_match(n, type);
 
@@ -123,7 +123,7 @@ START_TEST(test_acc_typedesc_prod1) {
 
 
     n = parser_file_acc_typedesc(f, &paren_count);
-    ck_assert_msg(n, "Could not parse type description");
+    ck_assert_parsed_node(n, d, "Could not parse type description");
     ck_assert_ast_node_loc(n, 0, 0, 0, 11);
     check_ast_match(n, op);
 

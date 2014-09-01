@@ -41,6 +41,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
     struct ast_node *last_desc = NULL;
     struct ast_node *last_op = NULL;
     struct ast_node *last_id = NULL;
+    struct ast_node *ret = NULL;
     struct parser_offset proff;
     char *sp;
     char *ep;
@@ -72,7 +73,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                 state = TPAR_TYPEOP;
             } else if (last_id == NULL) {
                 //we are done
-                return last_op ? last_op : last_desc;
+                return ret;
             } else {
                 //error
                 parser_file_synerr(
@@ -91,14 +92,16 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                                                 ast_node_endsp(id),
                                                 last_id,
                                                 id);
+                ret = last_desc;
 
                 // if we had a dangling type operator
                 if (last_op) {
                     ast_typeop_set_right(&last_op->typeop, last_desc);
                     ast_node_set_end(last_op, ast_node_endsp(last_desc));
+                    last_desc = last_op;
+                    ret = last_op;
 
                     last_op = NULL;
-                    last_desc = last_op;
                 }
 
                 state = TPAR_IDENTIFIER;
