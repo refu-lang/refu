@@ -26,18 +26,64 @@ parser_file_acc_typeop_token(struct parser_file *f)
     return TYPEOP_INVALID;
 }
 
+/**
+ * Type description parsing state machine diagram.
+ * Attempt to explain the implementation of the following function
+ *
+ *                  +-----+
+ *                  |Start|
+ *                  +--+--+
+ *                     |
+ *                     |
+ *                     |
+ *           +---------+------------+
+ *           |                      |
+ *           |                      |
+ *      +----v-----+         +------v-------+
+ *      |          |         |              <------+
+ *  +--->TPAR_LEFT |    +--> |  TPAR_OPAREN |      |
+ *  |   +----+-----+    |    +---+----------+      |
+ *  |        |          |        |                 |
+ *  |        |          |        |                 |
+ *  |   +----v------+   |        |                 |
+ *  |   |           |   |    +---v--+              |
+ *  |   |TPAR_COLON +---+    |      |              |
+ *  |   +----+------+        | NEW  |              |
+ *  |        |               +--+---+              |
+ *  |        |                  |                  |
+ *  |   +----v------+           |    + ------------+-+
+ *  |   |           <-----------+    |               |
+ *  |   |TPAR_RIGHT +-----------+---->  TPAR TYPEOP  |
+ *  |   +----+------+                +------------+--+
+ *  |        |                                    |
+ *  |        |                                    |
+ *  |        |     +-------------+                |
+ *  |        |     |             |                |
+ *  |        +---> |TPAR CPAREN  |                |
+ *  |        |     +-----+-------+                |
+ *  |        |           |                        |
+ *  |        |           v                        |
+ *  |        |                                    |
+ *  |        |       +-----+                      |
+ *  |        +-----> |End  |                      |
+ *  |                +-----+                      |
+ *  |                                             |
+ *  +---------------------------------------------+
+*/
 enum tpar_state {
     TPAR_START = 0,
-    TPAR_IDENTIFIER,
+    TPAR_OPAREN,
+    TPAR_CPAREN,
+    TPAR_LEFT,
     TPAR_COLON,
-    TPAR_TYPEOP
+    TPAR_RIGHT,
+    TPAR_TYPEOP,
+    TPAR_END,
 };
-
 struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                                           int *paren_count)
 {
-
-    struct ast_node *id;
+    struct ast_node *n;
     struct ast_node *last_desc = NULL;
     struct ast_node *last_op = NULL;
     struct ast_node *last_id = NULL;
@@ -54,44 +100,55 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
         parser_file_acc_ws(f);
         switch (state) {
         case TPAR_START:
-            id = parser_file_acc_identifier(f);
-            if (id) {
-                //got an identifier
-                last_id = id;
-                state = TPAR_IDENTIFIER;
+            if ((n = parser_file_acc_identifier(f))) {
+                // got an identifier
+                last_id = n;
+                state = TPAR_LEFT;
+            } else if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
+                // opening parentheses right from the start
+                state = TPAR_OPAREN;
             } else {
                 //no type description found
                 goto end;
             }
             break;
-        case TPAR_IDENTIFIER:
+            case TPAR_OPAREN:
+                *paren_count += 1;
+                last_desc = parser_file_acc_typedesc(f, paren_count);
+                if (!last_desc) {
+                    goto end;
+                }
+                ret = last_desc;
+                state = TPAR_RIGHT;
+                break;
+        case TPAR_CPAREN:
+            *paren_count -= 1;
+            state = TPAR_END;
+            break;
+        case TPAR_END:
+            if (!ret) {
+                RF_ASSERT(0); // should not happen?
+            }
+            return ret;
+            break;
+        case TPAR_LEFT:
             if (parser_file_acc_string_ascii(f, &parser_tok_colon)) {
                 //got a colon
                 state = TPAR_COLON;
-            } else if ((optype = parser_file_acc_typeop_token(f)) != TYPEOP_INVALID) {
-                //got a type operator
-                state = TPAR_TYPEOP;
-            } else if (last_id == NULL) {
-                //we are done
-                return ret;
             } else {
                 //error
-                parser_file_synerr(
-                    f,
-                    "Expected either a ':' or a type operator"
-                );
+                parser_file_synerr(f, "Expected a ':'");
                 goto end;
             }
             break;
         case TPAR_COLON:
-            id = parser_file_acc_identifier(f);
-            if (id) {
-                // IDENTIFIER ':' IDENTIFIER -- > type description
+            if ((n = parser_file_acc_identifier(f))) {
+                // create the type description to send to TPAR_RIGHT
                 last_desc = ast_typedesc_create(f,
                                                 ast_node_startsp(last_id),
-                                                ast_node_endsp(id),
+                                                ast_node_endsp(n),
                                                 last_id,
-                                                id);
+                                                n);
                 ret = last_desc;
 
                 // if we had a dangling type operator
@@ -104,34 +161,45 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                     last_op = NULL;
                 }
 
-                state = TPAR_IDENTIFIER;
+                state = TPAR_RIGHT;
                 last_id = NULL;
+            } else if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
+                state = TPAR_OPAREN;
             } else {
                 //error
                 parser_file_synerr(
                     f,
-                    "Expected an identifier after ':'"
+                    "Expected an identifier or a '(' after ':'"
                 );
                 goto end;
             }
             break;
+            case TPAR_RIGHT:
+                if ((optype = parser_file_acc_typeop_token(f)) != TYPEOP_INVALID) {
+                    state = TPAR_TYPEOP;
+                } else if (parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
+                    state = TPAR_CPAREN;
+                } else {
+                    state = TPAR_END;
+                }
+                break;
         case TPAR_TYPEOP:
-            id = parser_file_acc_identifier(f);
-            if (id) {
                 last_op = ast_typeop_create(f,
                                             ast_node_startsp(last_desc),
                                             NULL, //end is not known yet
                                             optype,
                                             last_desc,
                                             NULL); //end is not known yet
-                last_id = id;
-                //got an identifier
-                state = TPAR_IDENTIFIER;
+            if ((n = parser_file_acc_identifier(f))) {
+                last_id = n;
+                state = TPAR_LEFT;
+            } else if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {
+                state = TPAR_OPAREN;
             } else {
                 //error
                 parser_file_synerr(
                     f,
-                    "Expected an identifier after a type operator"
+                    "Expected an identifier or '(' after a type operator"
                 );
                 goto end;
             }
