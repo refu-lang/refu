@@ -128,7 +128,7 @@ bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s)
             return false;
         } else {
             rf_stringx_move_end(s);
-            rf_stringx_assign(s, &line_str);
+            rf_stringx_assignv(s, RF_STR_PF_FMT"\n", RF_STR_PF_ARG(&line_str));
             rf_stringx_move_end(s);
             rf_stringx_assignv(s, LOCMARK_FMT, LOCMARK_ARG(m->loc.start_col));
         }

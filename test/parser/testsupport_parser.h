@@ -81,7 +81,21 @@ void teardown_parser_tests();
                 ck_abort_msg(msg_" -- with no parser errors");          \
             }                                                           \
         }                                                               \
-    } while (0)
+    } while(0)
+
+#define ck_assert_parser_error(d_, err_)                                \
+        do {                                                            \
+            static const struct RFstring i_tmps_ = RF_STRING_STATIC_INIT(err_); \
+            struct RFstringx *i_tmp_ = parser_testdriver_geterrors(d_); \
+            if (!i_tmp_) {                                              \
+                ck_abort_msg("Expected parsing error but none found");  \
+            }                                                           \
+            ck_assert_msg(                                              \
+                rf_string_equal(&i_tmps_, i_tmp_),                      \
+                "tExpected parsing error does not match. Expected:\n"   \
+                RF_STR_PF_FMT"\nGot:\n"RF_STR_PF_FMT,                   \
+                RF_STR_PF_ARG(&i_tmps_), RF_STR_PF_ARG(i_tmp_));        \
+        } while(0)
 
 #define check_ast_match(got_, expect_)                      \
     check_ast_match_impl(got_, expect_, __FILE__, __LINE__)

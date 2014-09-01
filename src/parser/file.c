@@ -128,10 +128,6 @@ bool parser_file_acc_string_ascii(struct parser_file *f,
 {
     struct RFstringx *buff = parser_file_str(f);
 
-    /* if (end - rf_string_data(buff) < rf_string_length_bytes(str)) { */
-    /*     return false; */
-    /* } */
-
     if(!rf_string_begins_with(buff, str, 0)) {
         return false;
     }
@@ -145,13 +141,19 @@ bool parser_file_line(struct parser_file *f,
                       struct RFstring *str)
 {
     struct parser_string *s = &f->pstr;
-    if (line >= s->lines_num) {
+    unsigned int end;
+    if (line + 1 > s->lines_num) {
         return false;
+    }
+    if (line + 1 == s->lines_num) {
+        end = parser_string_len_from_beg(s);
+    } else {
+        end = s->lines[line + 1];
     }
 
     RF_STRING_SHALLOW_INIT(str,
                            parser_string_beg(s) + s->lines[line],
-                           s->lines[line + 1] - s->lines[line]);
+                           end - s->lines[line]);
     return true;
 }
 

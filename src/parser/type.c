@@ -143,6 +143,15 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
     } while(1);
 
 end:
+    if (last_id) {
+        ast_node_destroy(last_id);
+    }
+    if (last_desc) {
+        ast_node_destroy(last_desc);
+    }
+    if (last_op) {
+        ast_node_destroy(last_op);
+    }
     parser_file_move_to_offset(f, &proff);
     return NULL;
 }
