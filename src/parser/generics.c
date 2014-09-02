@@ -5,6 +5,7 @@
 #include <info/info.h>
 #include <parser/tokens.h>
 #include <parser/parser.h>
+#include <parser/identifier.h>
 
 
 static struct ast_node * parser_file_acc_genrtype(struct parser_file *f)

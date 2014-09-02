@@ -6,6 +6,7 @@
 #include <parser/tokens.h>
 #include <parser/parser.h>
 #include <parser/generics.h>
+#include <parser/identifier.h>
 
 bool parser_file_acc_commsep_args(struct parser_file *f,
                                   struct RFilist_head *args)

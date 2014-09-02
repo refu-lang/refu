@@ -8,6 +8,7 @@
 
 #include <parser/parser.h>
 #include <parser/tokens.h>
+#include <parser/identifier.h>
 
 
 
@@ -35,7 +36,7 @@ parser_file_acc_typeop_token(struct parser_file *f)
  *                  +--+--+
  *                     |
  *                     |
- *                     |
+ *     got identifier  |   got open parentheses
  *           +---------+------------+
  *           |                      |
  *           |                      |
@@ -43,30 +44,30 @@ parser_file_acc_typeop_token(struct parser_file *f)
  *      |          |         |              <------+
  *  +--->TPAR_LEFT |    +--> |  TPAR_OPAREN |      |
  *  |   +----+-----+    |    +---+----------+      |
- *  |        |          |        |                 |
- *  |        |          |        |                 |
- *  |   +----v------+   |        |                 |
- *  |   |           |   |    +---v--+              |
+ *  |        |colon     |        |    make         |
+ *  |        |          |open    | new type desc   |
+ *  |   +----v------+   |paren   |                 |
+ *  |   |           |   |    +---v--+              | got open parentheses
  *  |   |TPAR_COLON +---+    |      |              |
  *  |   +----+------+        | NEW  |              |
  *  |        |               +--+---+              |
- *  |        |                  |                  |
+ *  |        |got xidentifier   |                  |
  *  |   +----v------+           |    + ------------+-+
  *  |   |           <-----------+    |               |
  *  |   |TPAR_RIGHT +-----------+---->  TPAR TYPEOP  |
- *  |   +----+------+                +------------+--+
+ *  |   +----+------+ got typeop     +------------+--+
  *  |        |                                    |
  *  |        |                                    |
- *  |        |     +-------------+                |
+ *  |        |     +-------------+                | got identifier
  *  |        |     |             |                |
  *  |        +---> |TPAR CPAREN  |                |
  *  |        |     +-----+-------+                |
- *  |        |           |                        |
+ *  |        |got ')'    | once ')' finish        |
+ *  |        |           | current typedesc       |
  *  |        |           v                        |
- *  |        |                                    |
  *  |        |       +-----+                      |
  *  |        +-----> |End  |                      |
- *  |                +-----+                      |
+ *  |   else finish  +-----+                      |
  *  |                                             |
  *  +---------------------------------------------+
 */
@@ -142,7 +143,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
             }
             break;
         case TPAR_COLON:
-            if ((n = parser_file_acc_identifier(f))) {
+            if ((n = parser_file_acc_xidentifier(f))) {
                 // create the type description to send to TPAR_RIGHT
                 last_desc = ast_typedesc_create(f,
                                                 ast_node_startsp(last_id),

@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <Utils/sanity.h>
 
+
 struct ast_node *ast_identifier_create(struct parser_file *file,
                                        char *sp, char *ep)
 {
@@ -13,19 +14,41 @@ struct ast_node *ast_identifier_create(struct parser_file *file,
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->identifier, sp, ep - sp + 1);
+    RF_STRING_SHALLOW_INIT(&ret->identifier.string, sp, ep - sp + 1);
 
     return ret;
+}
+
+void ast_identifier_print(struct ast_node *n, int depth)
+{
+    RF_ASSERT(n->type == AST_IDENTIFIER);
+    printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
+    printf("Value: \""RF_STR_PF_FMT"\"\n",
+               RF_STR_PF_ARG(&n->identifier.string));
 }
 
 struct RFstring *ast_identifier_str(struct ast_node *n)
 {
     RF_ASSERT(n->type == AST_IDENTIFIER);
-    return &n->identifier;
+    return &n->identifier.string;
 }
 
-void ast_identifier_print(struct ast_node *n, int depth)
+
+struct ast_node *ast_xidentifier_create(struct parser_file *f,
+                                        char *sp, char *ep,
+                                        struct ast_node *id,
+                                        bool constant, bool pointer)
 {
-    printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-    printf("Value: \""RF_STR_PF_FMT"\"\n", RF_STR_PF_ARG(&n->identifier));
+    struct ast_node *ret;
+    ret = ast_node_create(AST_XIDENTIFIER, f, sp, ep);
+    if (!ret) {
+        return NULL;
+    }
+
+    ast_node_add_child(ret, id);
+    ret->xidentifier.constant = constant;
+    ret->xidentifier.pointer = pointer;
+    ret->xidentifier.id = &id->identifier;
+
+    return ret;
 }

@@ -24,6 +24,7 @@ enum ast_type {
     AST_GENERIC_DECLARATION,
     AST_GENERIC_TYPE,
     AST_FUNCTION_DECLARATION,
+    AST_XIDENTIFIER,
 
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
@@ -37,7 +38,8 @@ struct ast_node {
     struct RFilist_node lh;
     struct RFilist_head children;
     union {
-        struct RFstring identifier;
+        struct ast_identifier identifier;
+        struct ast_xidentifier xidentifier;
         struct ast_vardecl vardecl;
         struct ast_typedecl typedecl;
         struct ast_typeop typeop;

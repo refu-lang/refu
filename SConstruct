@@ -8,6 +8,7 @@ refu_src = [
     'compiler_args.c',
     'info/info.c',
     'info/msg.c',
+    'parser/identifier.c',
     'parser/parser.c',
     'parser/offset.c',
     'parser/string.c',

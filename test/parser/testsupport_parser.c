@@ -170,13 +170,14 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
 
     switch(got->type) {
     case AST_IDENTIFIER:
-        if (!rf_string_equal(&got->identifier, &expect->identifier)) {
+        if (!rf_string_equal(ast_identifier_str(got),
+                             ast_identifier_str(expect))) {
             ck_astcheck_abort(
                 filename, line,
                 "identifiers mismatch: Got \""RF_STR_PF_FMT"\" != expected "
                 "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(&got->identifier),
-                RF_STR_PF_ARG(&expect->identifier)
+                RF_STR_PF_ARG(ast_identifier_str(got)),
+                RF_STR_PF_ARG(ast_identifier_str(expect))
             );
             return false;
         }

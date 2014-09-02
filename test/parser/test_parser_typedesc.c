@@ -22,9 +22,11 @@ START_TEST(test_acc_typedesc_simple1) {
     ck_assert_msg(f, "Failed to assign string to file ");
     sp = parser_file_sp(f);
 
-
     struct ast_node *id_1 = ast_identifier_create(f, sp, sp);
-    struct ast_node *id_2 = ast_identifier_create(f, sp + 2, sp + 4);
+    struct ast_node *id_2 = ast_xidentifier_create(
+        f, sp + 2, sp + 4, ast_identifier_create(f, sp + 2, sp + 4),
+        false, false
+    );
     struct ast_node *type = ast_typedesc_create(f, sp, sp + 4, id_1, id_2);
 
     n = parser_file_acc_typedesc(f, &paren_count);
@@ -49,7 +51,10 @@ START_TEST(test_acc_typedesc_simple2) {
 
 
     struct ast_node *id_1 = ast_identifier_create(f, sp, sp);
-    struct ast_node *id_2 = ast_identifier_create(f, sp + 7, sp + 9);
+    struct ast_node *id_2 = ast_xidentifier_create(
+        f, sp + 7, sp + 9, ast_identifier_create(f, sp + 7, sp + 9),
+        false, false
+    );
     struct ast_node *type = ast_typedesc_create(f, sp, sp + 9, id_1, id_2);
 
 
@@ -134,10 +139,16 @@ START_TEST(test_acc_typedesc_prod1) {
 
 
     struct ast_node *id1 = ast_identifier_create(f, sp, sp);
-    struct ast_node *id2 = ast_identifier_create(f, sp + 2, sp + 4);
+    struct ast_node *id2 = ast_xidentifier_create(
+        f, sp + 2, sp + 4, ast_identifier_create(f, sp + 2, sp + 4),
+        false, false
+    );
     struct ast_node *type1 = ast_typedesc_create(f, sp, sp + 4, id1, id2);
     struct ast_node *id3 = ast_identifier_create(f, sp + 7, sp + 7);
-    struct ast_node *id4 = ast_identifier_create(f, sp + 9, sp + 11);
+    struct ast_node *id4 = ast_xidentifier_create(
+        f, sp + 9, sp + 11, ast_identifier_create(f, sp + 9, sp + 11),
+        false, false
+    );
     struct ast_node *type2 = ast_typedesc_create(f, sp + 7, sp + 11, id3, id4);
     struct ast_node *op = ast_typeop_create(f, sp, sp + 11,
                                             TYPEOP_PRODUCT,

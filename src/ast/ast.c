@@ -15,6 +15,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("generic declaration"),
     RF_STRING_STATIC_INIT("generic type"),
     RF_STRING_STATIC_INIT("function declaration"),
+    RF_STRING_STATIC_INIT("annotated identifier"),
     RF_STRING_STATIC_INIT("string literal"),
     RF_STRING_STATIC_INIT("identifier")
 };
@@ -47,6 +48,7 @@ void ast_node_destroy(struct ast_node *n)
     case AST_TYPE_DECLARATION:
     case AST_TYPE_OPERATOR:
     case AST_TYPE_DESCRIPTION:
+    case AST_XIDENTIFIER:
         /* Only delete children list */
     case AST_IDENTIFIER:
         /* no need to free, is a shallow pointer to the parsed file's string */

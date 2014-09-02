@@ -5,6 +5,7 @@
 
 #include <String/rf_str_core.h>
 #include <parser/parser.h>
+#include <parser/identifier.h>
 #include <ast/ast.h>
 
 #include "testsupport_parser.h"
