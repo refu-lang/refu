@@ -8,7 +8,7 @@
 #include <ast/identifier.h>
 #include <ast/typedecl.h>
 #include <ast/typedesc.h>
-#include <ast/genrdecl.h>
+#include <ast/generics.h>
 #include <ast/vardecl.h>
 #include <ast/fndecl.h>
 
@@ -23,6 +23,7 @@ enum ast_type {
     AST_TYPE_DESCRIPTION,
     AST_GENERIC_DECLARATION,
     AST_GENERIC_TYPE,
+    AST_GENERIC_ATTRIBUTE,
     AST_FUNCTION_DECLARATION,
     AST_XIDENTIFIER,
 
@@ -44,7 +45,6 @@ struct ast_node {
         struct ast_typedecl typedecl;
         struct ast_typeop typeop;
         struct ast_typedesc typedesc;
-        struct ast_genrdecl genrdecl;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
     };

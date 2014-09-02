@@ -22,15 +22,15 @@ struct RFstring *ast_identifier_str(struct ast_node *n);
  * An identifier annotated with extra information
  */
 struct ast_xidentifier {
-    struct ast_identifier *id;
-    // TODO: determine what and how these annotations should be
-    bool constant;
-    bool pointer;
+    struct ast_node *id;
+    bool is_constant;
+    struct ast_node *genr;
 };
 
 
 struct ast_node *ast_xidentifier_create(struct parser_file *f,
                                         char *sp, char *ep,
                                         struct ast_node *id,
-                                        bool constant, bool pointer);
+                                        bool is_constant,
+                                        struct ast_node *genr);
 #endif

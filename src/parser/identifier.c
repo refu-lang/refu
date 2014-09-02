@@ -1,8 +1,8 @@
-
 #include <ast/ast.h>
 #include <ast/identifier.h>
 
 #include <parser/identifier.h>
+#include <parser/generics.h>
 
 #define COND_IDENTIFIER_BEGIN(p_)               \
     (((p_) >= 'A' && (p_) <= 'Z') ||            \
@@ -82,7 +82,6 @@ not_found:
     return NULL;
 }
 
-
 struct ast_node *parser_file_acc_xidentifier(struct parser_file *f)
 {
     struct parser_offset proff;
@@ -91,16 +90,27 @@ struct ast_node *parser_file_acc_xidentifier(struct parser_file *f)
     char *ep;
     struct ast_node *id;
     struct ast_node *xid;
+    struct ast_node *genr;
+    bool is_const = false;
     parser_offset_copy(&proff, &f->offset);
     parser_file_acc_ws(f);
-    //TODO: parsing logic for the annotations to the identifier here
+
     sp = parser_file_sp(f);
+    // parsing logic for the annotations to the identifier here
+    if (parser_file_acc_string_ascii(f, &parser_kw_const)) {
+        is_const = true;
+    }
     id = parser_file_acc_identifier(f);
     if (!id) {
         goto not_found;
     }
+    genr = parser_file_acc_genrattr(f);
+    if (parser_file_has_synerr(f)) {
+        ast_node_destroy(id);
+        goto not_found;
+    }
     
-    xid = ast_xidentifier_create(f, sp, ast_node_endsp(id), id, false, false);
+    xid = ast_xidentifier_create(f, sp, ast_node_endsp(id), id, is_const, genr);
     if (!xid) {
         //TODO: error
         goto not_found;

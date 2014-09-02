@@ -20,4 +20,5 @@ extern const struct RFstring parser_tok_lt;
 
 extern const struct RFstring parser_kw_data;
 extern const struct RFstring parser_kw_type;
+extern const struct RFstring parser_kw_const;
 #endif

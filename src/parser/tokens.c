@@ -21,3 +21,4 @@ const struct RFstring parser_tok_lt = RF_STRING_STATIC_INIT("<");
 
 const struct RFstring parser_kw_data = RF_STRING_STATIC_INIT("data");
 const struct RFstring parser_kw_type = RF_STRING_STATIC_INIT("type");
+const struct RFstring parser_kw_const = RF_STRING_STATIC_INIT("const");

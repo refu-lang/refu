@@ -25,7 +25,7 @@ refu_src = [
     'ast/typedesc.c',
     'ast/vardecl.c',
     'ast/fndecl.c',
-    'ast/genrdecl.c',
+    'ast/generics.c',
 ]
 
 # add specific environment variables

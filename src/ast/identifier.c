@@ -37,7 +37,8 @@ struct RFstring *ast_identifier_str(struct ast_node *n)
 struct ast_node *ast_xidentifier_create(struct parser_file *f,
                                         char *sp, char *ep,
                                         struct ast_node *id,
-                                        bool constant, bool pointer)
+                                        bool is_constant,
+                                        struct ast_node *genr)
 {
     struct ast_node *ret;
     ret = ast_node_create(AST_XIDENTIFIER, f, sp, ep);
@@ -46,9 +47,9 @@ struct ast_node *ast_xidentifier_create(struct parser_file *f,
     }
 
     ast_node_add_child(ret, id);
-    ret->xidentifier.constant = constant;
-    ret->xidentifier.pointer = pointer;
-    ret->xidentifier.id = &id->identifier;
+    ret->xidentifier.is_constant = is_constant;
+    ret->xidentifier.id = id;
+    ret->xidentifier.genr = genr;
 
     return ret;
 }
