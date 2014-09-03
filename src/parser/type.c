@@ -111,15 +111,15 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                 goto end;
             }
             break;
-            case TPAR_OPAREN:
-                *paren_count += 1;
-                last_desc = parser_file_acc_typedesc(f, paren_count);
-                if (!last_desc) {
-                    goto end;
-                }
-                ret = last_desc;
-                state = TPAR_RIGHT;
-                break;
+        case TPAR_OPAREN:
+            *paren_count += 1;
+            last_desc = parser_file_acc_typedesc(f, paren_count);
+            if (!last_desc) {
+                goto end;
+            }
+            ret = last_desc;
+            state = TPAR_RIGHT;
+            break;
         case TPAR_CPAREN:
             *paren_count -= 1;
             state = TPAR_END;
@@ -152,8 +152,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
 
                 // if we had a dangling type operator
                 if (last_op) {
-                    ast_typeop_set_right(&last_op->typeop, last_desc);
-                    ast_node_set_end(last_op, ast_node_endsp(last_desc));
+                    ast_typeop_set_right(last_op, last_desc);
                     last_desc = last_op;
                     ret = last_op;
 
@@ -173,24 +172,30 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                 goto end;
             }
             break;
-            case TPAR_RIGHT:
-                if ((optype = parser_file_acc_typeop_token(f)) != TYPEOP_INVALID) {
-                    state = TPAR_TYPEOP;
-                } else if (parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
-                    state = TPAR_CPAREN;
-                } else {
-                    state = TPAR_END;
-                }
-                break;
+        case TPAR_RIGHT:
+            if ((optype = parser_file_acc_typeop_token(f)) != TYPEOP_INVALID) {
+                state = TPAR_TYPEOP;
+            } else if (parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
+                state = TPAR_CPAREN;
+            } else {
+                state = TPAR_END;
+            }
+            break;
         case TPAR_TYPEOP:
-                last_op = ast_typeop_create(f,
-                                            ast_node_startsp(last_desc),
-                                            NULL, //end is not known yet
-                                            optype,
-                                            last_desc,
-                                            NULL); //end is not known yet
-                last_desc = NULL;
-            if ((n = parser_file_acc_identifier(f))) {
+            last_op = ast_typeop_create(f,
+                                        ast_node_startsp(last_desc),
+                                        NULL, //end is not known yet
+                                        optype,
+                                        last_desc,
+                                        NULL); //end is not known yet
+            last_desc = NULL;
+
+            if (optype == TYPEOP_SUM &&
+                (n = parser_file_acc_typedesc(f, paren_count))) {
+                ast_typeop_set_right(last_op, n);
+                ret = last_op;
+                state = TPAR_RIGHT;
+            } else if ((n = parser_file_acc_identifier(f))) {
                 last_id = n;
                 state = TPAR_LEFT;
             } else if (parser_file_acc_string_ascii(f, &parser_tok_oparen)) {

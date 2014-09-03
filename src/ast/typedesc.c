@@ -32,12 +32,12 @@ struct ast_node *ast_typeop_create(struct parser_file *f,
     return ret;
 }
 
-void ast_typeop_set_right(struct ast_typeop *o, struct ast_node *r)
+void ast_typeop_set_right(struct ast_node *op, struct ast_node *r)
 {
-    struct ast_node *n;
-    n = ast_typeop_to_node(o);
-    ast_node_add_child(n, r);
-    o->right = r;
+    RF_ASSERT(op->type == AST_TYPE_OPERATOR);
+    ast_node_add_child(op, r);
+    op->typeop.right = r;
+    ast_node_set_end(op, ast_node_endsp(r));
 }
 
 struct ast_node *ast_typedesc_create(struct parser_file *f,

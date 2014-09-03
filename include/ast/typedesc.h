@@ -44,7 +44,11 @@ struct ast_node *ast_typeop_create(struct parser_file *f,
                                    enum typeop_type type,
                                    struct ast_node *left,
                                    struct ast_node *right);
-void ast_typeop_set_right(struct ast_typeop *n, struct ast_node *r);
+/**
+ * If typeop was not initialized with a right node this function
+ * will set both the right child ast node and set typeop's end location
+ */
+void ast_typeop_set_right(struct ast_node *n, struct ast_node *r);
 
 struct ast_typedesc {
     struct ast_node *left;
