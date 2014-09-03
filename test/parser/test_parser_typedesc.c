@@ -118,7 +118,8 @@ START_TEST(test_acc_typedesc_fail3) {
         d,
         "test_file:0:9 error: Expected an identifier after a type operator\n"
         "foo:int ,\n"
-        "        ^\n");
+        "        ^\n"
+    );
     ck_assert_driver_offset_eq(d, 0, 0, 0);
     ck_assert_rf_str_eq_cstr(parser_file_str(f), "foo:int ,");
 }END_TEST

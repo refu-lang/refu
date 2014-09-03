@@ -8,7 +8,7 @@
 #define INFO_ERROR_STR "error"
 
 #define LOCMARK_FMT "%*c\n"
-#define LOCMARK_ARG(column_position_) column_position_, '^'
+#define LOCMARK_ARG(column_position_) column_position_ + 1, '^'
 
 inline static void print_location_marker(FILE *f, unsigned int col_pos)
 {

@@ -24,7 +24,7 @@ static struct ast_node * parser_file_acc_genrtype(struct parser_file *f)
     sp = parser_file_sp(f);
     type_id = parser_file_acc_identifier(f);
     if (!type_id) {
-        parser_file_synerr(f,
+        parser_file_synerr(f, 0,
                            "Expected an identifier for the generic type kind");
         goto err;
     }
@@ -32,12 +32,13 @@ static struct ast_node * parser_file_acc_genrtype(struct parser_file *f)
     parser_file_acc_ws(f);
     id_id = parser_file_acc_identifier(f);
     if (!id_id) {
-        parser_file_synerr(f,
+        ast_node_destroy(type_id);
+        parser_file_synerr(f, 0,
                            "Expected an identifier for the generic type name");
         goto err;
     }
 
-    n = ast_genrtype_create(f, sp, parser_file_sp(f), type_id, id_id);
+    n = ast_genrtype_create(f, sp, ast_node_endsp(id_id), type_id, id_id);
     /* if !n, then NULL will be returned anyway */
 
     return n;
@@ -82,12 +83,13 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_gt)) {
-        parser_file_synerr(f,
-                           "Expected a closing '>' at generic declaration");
+        parser_file_synerr(
+            f, 0,
+            "Expected either a ',' or a '>' at generic declaration");
         goto err_free;
     }
 
-    ast_node_set_end(n, parser_file_sp(f));
+    ast_node_set_end(n, parser_file_sp(f) - 1);
     return n;
 
 err_free:
@@ -125,7 +127,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
             child = parser_file_acc_typedesc(f, &paren_count);
             if (!child) {
                 parser_file_synerr(
-                    f,
+                    f, 0,
                     "Expected a type description after '('"
                 );
                 goto err_free;
@@ -134,7 +136,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
                 !parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
 
                 parser_file_synerr(
-                    f,
+                    f, 0,
                     "Expected a ')' after type description"
                 );
                 ast_node_destroy(child);
@@ -142,7 +144,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
             }
         } else if(!(child = parser_file_acc_xidentifier(f))) {
                 parser_file_synerr(
-                    f,
+                    f, 0,
                     "Expected an either an annotated identifier or a "
                     "parenthesized type description"
                 );
@@ -157,7 +159,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_gt)) {
-        parser_file_synerr(f,
+        parser_file_synerr(f, 0,
                            "Expected a closing '>' at generic declaration");
         goto err_free;
     }

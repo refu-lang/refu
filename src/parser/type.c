@@ -138,7 +138,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                 state = TPAR_COLON;
             } else {
                 //error
-                parser_file_synerr(f, "Expected a ':'");
+                parser_file_synerr(f, 0, "Expected a ':'");
                 goto end;
             }
             break;
@@ -169,7 +169,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
             } else {
                 //error
                 parser_file_synerr(
-                    f,
+                    f, 0,
                     "Expected an identifier or a '(' after ':'"
                 );
                 goto end;
@@ -199,7 +199,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
             } else {
                 //error
                 parser_file_synerr(
-                    f,
+                    f, 0,
                     "Expected an identifier or '(' after a type operator"
                 );
                 goto end;
@@ -257,7 +257,8 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
 
     desc = parser_file_acc_typedesc(f, &paren_count);
     if (!desc) {
-        parser_file_synerr(f, "Expected data description for data declaration "
+        parser_file_synerr(f, 0,
+                           "Expected data description for data declaration "
                            "of \""RF_STR_PF_FMT"\"",
                            RF_STR_PF_ARG(ast_identifier_str(name)));
         ast_node_destroy(name);
@@ -273,7 +274,7 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_ccbrace)) {
-        parser_file_synerr(f,
+        parser_file_synerr(f, 0,
                            "Expected either a variable declaration or "
                            "a closing brace '}' in data "
                            "declaration for '"RF_STR_PF_FMT"'",

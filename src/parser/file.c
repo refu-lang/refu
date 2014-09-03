@@ -70,8 +70,15 @@ void parser_file_deinit(struct parser_file *f)
 
 bool parser_file_eof(struct parser_file *f)
 {
+    struct parser_offset proff;
+    parser_offset_copy(&proff, &f->offset);
     parser_file_acc_ws(f);
-    return rf_string_length(parser_file_str(f)) == 0;
+    if (rf_string_length(parser_file_str(f)) == 0) {
+        return true;
+    }
+
+    parser_file_move_to_offset(f, &proff);
+    return false;
 }
 
 char *parser_file_lookfor(struct parser_file *f,
@@ -94,6 +101,12 @@ void parser_file_move(struct parser_file *f,
 {
     struct parser_offset *off = &f->offset;
     static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
+    uint32_t lim = parser_string_len_from_beg(&f->pstr);
+
+    // don't go over file limit
+    if (off->bytes_moved + bytes > lim) {
+        RF_ASSERT(0); //should never request such a big move
+    }
 
     off->bytes_moved += bytes;
     off->chars_moved += chars;
@@ -126,8 +139,9 @@ void parser_file_acc_ws(struct parser_file *f)
 bool parser_file_acc_string_ascii(struct parser_file *f,
                                   const struct RFstring *str)
 {
+    char *lim;
     struct RFstringx *buff = parser_file_str(f);
-
+    lim = parser_file_sp(f) + rf_string_length_bytes(buff) - 1;
     if(!rf_string_begins_with(buff, str, 0)) {
         return false;
     }

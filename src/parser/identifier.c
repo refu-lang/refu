@@ -73,7 +73,6 @@ end:
     }
     ep = p;
 
-    /* parser_file_move(f, p - sp, p - sp); */
     parser_file_move(f, p - sp + 1, p - sp + 1);
     return ast_identifier_create(f, sp, ep);
 
@@ -93,8 +92,8 @@ struct ast_node *parser_file_acc_xidentifier(struct parser_file *f)
     struct ast_node *genr;
     bool is_const = false;
     parser_offset_copy(&proff, &f->offset);
-    parser_file_acc_ws(f);
 
+    PARSER_CHECK_EOF(parser_file_acc_ws(f), f, goto not_found);
     sp = parser_file_sp(f);
     // parsing logic for the annotations to the identifier here
     if (parser_file_acc_string_ascii(f, &parser_kw_const)) {

@@ -19,7 +19,7 @@ bool parser_file_acc_commsep_args(struct parser_file *f,
         arg = parser_file_acc_vardecl(f);
         if (!arg && !rf_ilist_is_empty(args)) {
             parser_file_synerr(
-                f, "Expected a variable declaration after the comma"
+                f, 0, "Expected a variable declaration after the comma"
             );
             return false;
         }
@@ -82,7 +82,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
 
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_cparen)) {
-        parser_file_synerr(f,
+        parser_file_synerr(f, 0,
                            "Expected a closing parentheses ')' at function "
                            "declaration for '"RF_STR_PF_FMT"'",
                            RF_STR_PF_ARG(ast_identifier_str(name)));
@@ -99,7 +99,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     parser_file_acc_ws(f);
     name = parser_file_acc_identifier(f);
     if (!name) {
-        parser_file_synerr(f,
+        parser_file_synerr(f, 0,
                            "Expected a return type for function  "
                            "declaration for '"RF_STR_PF_FMT"'",
                            RF_STR_PF_ARG(ast_identifier_str(fn->fndecl.name)));

@@ -95,6 +95,79 @@ START_TEST(test_acc_ws_none_empty) {
 } END_TEST
 
 
+START_TEST(test_acc_string_ascii_1) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring target = RF_STRING_STATIC_INIT("target");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("target ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    ck_assert_msg(parser_file_acc_string_ascii(f, &target),
+                  "could not accept string");
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 6, 6, 0);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, " ");
+} END_TEST
+
+START_TEST(test_acc_string_ascii_2) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring target = RF_STRING_STATIC_INIT(",");
+    static const struct RFstring s = RF_STRING_STATIC_INIT(",foo ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    ck_assert_msg(parser_file_acc_string_ascii(f, &target),
+                  "could not accept string");
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 1, 1, 0);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "foo ");
+} END_TEST
+
+START_TEST(test_acc_string_ascii_3) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring target = RF_STRING_STATIC_INIT("foo");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("foo");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    ck_assert_msg(parser_file_acc_string_ascii(f, &target),
+                  "could not accept string");
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 3, 3, 0); //move after all 3 bytes to EOF
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "");
+} END_TEST
+
+START_TEST(test_acc_string_ascii_fail_1) {
+    struct parser_file *f;
+    struct parser_offset *off;
+    struct RFstringx *str;
+    static const struct RFstring target = RF_STRING_STATIC_INIT("target");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("  target ");
+    struct parser_testdriver *d = get_parser_testdriver();
+    f = parser_testdriver_assign(d, &s);
+    ck_assert_msg(f, "Failed to assign string to file ");
+
+    ck_assert_msg(!parser_file_acc_string_ascii(f, &target),
+                  "accepting string should have failed");
+    off = parser_file_offset(f);
+    ck_assert_parser_offset_eq(off, 0, 0, 0);
+    str = parser_file_str(f);
+    ck_assert_rf_str_eq_cstr(str, "  target ");
+} END_TEST
+
+
 
 
 START_TEST(test_acc_identifier_spaced) {
@@ -219,7 +292,14 @@ Suite *parser_base_suite_create(void)
     tcase_add_test(whitespace, test_acc_ws_none);
     tcase_add_test(whitespace, test_acc_ws_none_empty);
 
-
+    TCase *accept_string = tcase_create("parser_base_accept_string");
+    tcase_add_checked_fixture(accept_string,
+                              setup_parser_tests,
+                              teardown_parser_tests);
+    tcase_add_test(accept_string, test_acc_string_ascii_1);
+    tcase_add_test(accept_string, test_acc_string_ascii_2);
+    tcase_add_test(accept_string, test_acc_string_ascii_3);
+    tcase_add_test(accept_string, test_acc_string_ascii_fail_1);
 
     TCase *identifiers = tcase_create("parser_base_identifiers");
     tcase_add_checked_fixture(identifiers,
@@ -235,8 +315,9 @@ Suite *parser_base_suite_create(void)
     tcase_add_test(identifiers, test_acc_identifier_fail3);
 
 
-    suite_add_tcase(s, identifiers);
     suite_add_tcase(s, whitespace);
+    suite_add_tcase(s, accept_string);
+    suite_add_tcase(s, identifiers);
     return s;
 }
 

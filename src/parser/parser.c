@@ -70,7 +70,7 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
         ast_node_add_child(file->root, stmt);
     }
     if (!parser_file_eof(file)) {
-        parser_file_synerr(file, "Expected a statement");
+        parser_file_synerr(file, 0, "Expected a statement");
         return false;
     }
 
@@ -137,7 +137,7 @@ struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
     /* from here and on not having an identifier is an error */
     id2 = parser_file_acc_identifier(f);
     if (!id2) {
-        parser_file_synerr(f, "Expected an identifier");
+        parser_file_synerr(f, 0, "Expected an identifier");
         goto not_found;
     }
     ep = parser_file_sp(f);
