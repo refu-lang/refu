@@ -139,9 +139,7 @@ void parser_file_acc_ws(struct parser_file *f)
 bool parser_file_acc_string_ascii(struct parser_file *f,
                                   const struct RFstring *str)
 {
-    char *lim;
     struct RFstringx *buff = parser_file_str(f);
-    lim = parser_file_sp(f) + rf_string_length_bytes(buff) - 1;
     if(!rf_string_begins_with(buff, str, 0)) {
         return false;
     }

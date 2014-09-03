@@ -40,10 +40,8 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     struct ast_node *fn;
     struct ast_node *name;
     struct ast_node *genr;
-    struct ast_node *arg;
     struct parser_offset proff;
     char *sp;
-    char *ep;
 
     parser_offset_copy(&proff, &f->offset);
 

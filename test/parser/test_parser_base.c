@@ -173,7 +173,6 @@ START_TEST(test_acc_string_ascii_fail_1) {
 START_TEST(test_acc_identifier_spaced) {
     struct ast_node *n;
     struct parser_file *f;
-    static const struct RFstring id_string = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring s = RF_STRING_STATIC_INIT("  foo ");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -190,7 +189,6 @@ START_TEST(test_acc_identifier_spaced) {
 START_TEST(test_acc_identifier_comma) {
     struct ast_node *n;
     struct parser_file *f;
-    static const struct RFstring id_string = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring s = RF_STRING_STATIC_INIT("  foo, ");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -207,7 +205,6 @@ START_TEST(test_acc_identifier_comma) {
 START_TEST(test_acc_identifier_onechar) {
     struct ast_node *n;
     struct parser_file *f;
-    static const struct RFstring id_string = RF_STRING_STATIC_INIT("a");
     static const struct RFstring s = RF_STRING_STATIC_INIT("   a: ");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -224,7 +221,6 @@ START_TEST(test_acc_identifier_onechar) {
 START_TEST(test_acc_identifier_narrow) {
     struct ast_node *n;
     struct parser_file *f;
-    static const struct RFstring id_string = RF_STRING_STATIC_INIT("narrow");
     static const struct RFstring s = RF_STRING_STATIC_INIT("narrow");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);

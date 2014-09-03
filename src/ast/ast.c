@@ -49,7 +49,9 @@ void ast_node_destroy(struct ast_node *n)
     case AST_FUNCTION_DECLARATION:
         ast_fndecl_destroy(n);
         break;
-     }
+    default:
+        break;
+    }
 
     rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
         ast_node_destroy(child);
@@ -83,12 +85,12 @@ const struct RFstring *ast_node_str(struct ast_node *n)
 
 static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
 {
-    int i = 0;
-
     if (depth != 0) {
         if (desc) {
             printf("%s", desc);
-            printf("%*s", (depth * AST_PRINT_DEPTHMUL) - strlen(desc), " ");
+            printf("%*s",
+                   (int)((depth * AST_PRINT_DEPTHMUL) - strlen(desc)),
+                   " ");
             printf("|----> "RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
                    RF_STR_PF_ARG(ast_node_str(n)),
                    AST_LOCATION_ARG2(&n->location));
@@ -109,8 +111,6 @@ static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
 void ast_print(struct ast_node *n, int depth)
 {
     struct ast_node *c;
-    struct RFilist_head *list = NULL;
-
     ast_print_prelude(n, depth, "");
 
     switch(n->type) {

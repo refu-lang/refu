@@ -40,6 +40,7 @@ local_env.Append(CPPDEFINES={
 local_env.Append(CPPPATH=[os.path.abspath('include')])
 local_env.Append(LIBS=[clib_static, 'pthread'])
 local_env.Append(LIBPATH=local_env['CLIB_DIR'])
+local_env.Append(CCFLAGS=['-Wall'])
 
 # add path before the sources
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]

@@ -60,13 +60,12 @@ static bool parser_begin_parsing(struct parser_ctx *parser,
                                  struct parser_file *file)
 {
     struct ast_node *stmt;
-    struct parser_offset off = PARSER_OFFSET_STATIC_INIT();
     char *beg = parser_string_beg(&file->pstr);
 
     file->root = ast_node_create(AST_ROOT, file, beg,
                                  beg + parser_string_len_from_beg(&file->pstr));
 
-    while (stmt = parser_file_acc_stmt(file)) {
+    while ((stmt = parser_file_acc_stmt(file))) {
         ast_node_add_child(file->root, stmt);
     }
     if (!parser_file_eof(file)) {
@@ -98,13 +97,13 @@ static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
     struct parser_offset proff;
     parser_offset_copy(&proff, &f->offset);
 
-    if (stmt = parser_file_acc_block(f)) {
+    if ((stmt = parser_file_acc_block(f))) {
         return stmt;
-    } else if (stmt = parser_file_acc_vardecl(f)) {
+    } else if ((stmt = parser_file_acc_vardecl(f))) {
         return stmt;
-    } else if (stmt = parser_file_acc_typedecl(f)) {
+    } else if ((stmt = parser_file_acc_typedecl(f))) {
         return stmt;
-    } else if (stmt = parser_file_acc_fndecl(f)) {
+    } else if ((stmt = parser_file_acc_fndecl(f))) {
         return stmt;
     }
 

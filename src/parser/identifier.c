@@ -84,9 +84,7 @@ not_found:
 struct ast_node *parser_file_acc_xidentifier(struct parser_file *f)
 {
     struct parser_offset proff;
-    char *p;
     char *sp;
-    char *ep;
     struct ast_node *id;
     struct ast_node *xid;
     struct ast_node *genr;

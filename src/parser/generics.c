@@ -54,7 +54,6 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
     struct parser_offset proff;
     bool found_comma;
     char *sp;
-    char *ep;
 
     parser_offset_copy(&proff, &f->offset);
 
@@ -106,7 +105,6 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
     struct parser_offset proff;
     bool found_comma;
     char *sp;
-    char *ep;
     int paren_count;
 
     parser_offset_copy(&proff, &f->offset);

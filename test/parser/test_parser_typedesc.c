@@ -68,7 +68,6 @@ START_TEST(test_acc_typedesc_simple2) {
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail1) {
-    char *sp;
     struct ast_node *n;
     struct parser_file *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT("");
@@ -76,7 +75,6 @@ START_TEST(test_acc_typedesc_fail1) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
 
     n = parser_file_acc_typedesc(f, &paren_count);
     ck_assert_msg(n == NULL, "parsing type description should fail");
@@ -85,7 +83,6 @@ START_TEST(test_acc_typedesc_fail1) {
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail2) {
-    char *sp;
     struct ast_node *n;
     struct parser_file *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT(" : ,");
@@ -93,7 +90,6 @@ START_TEST(test_acc_typedesc_fail2) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
 
     n = parser_file_acc_typedesc(f, &paren_count);
     ck_assert_msg(n == NULL, "parsing type description should fail");
@@ -102,7 +98,6 @@ START_TEST(test_acc_typedesc_fail2) {
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
-    char *sp;
     struct ast_node *n;
     struct parser_file *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT("foo:int ,");
@@ -110,15 +105,15 @@ START_TEST(test_acc_typedesc_fail3) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
 
     n = parser_file_acc_typedesc(f, &paren_count);
     ck_assert_msg(n == NULL, "parsing type description should fail");
     ck_assert_parser_error(
         d,
-        "test_file:0:9 error: Expected an identifier after a type operator\n"
+        "test_file:0:9 error: Expected an identifier or '(' after a "
+        "type operator\n"
         "foo:int ,\n"
-        "        ^\n"
+        "         ^\n"
     );
     ck_assert_driver_offset_eq(d, 0, 0, 0);
     ck_assert_rf_str_eq_cstr(parser_file_str(f), "foo:int ,");

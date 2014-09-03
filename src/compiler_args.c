@@ -93,7 +93,6 @@ static bool check_verbose_level(struct compiler_args *args,
                                 int* i, int argc, char** argv,
                                 bool* consumed)
 {
-    int len = strlen(argv[*i]);
     if (strcmp(argv[*i], "-v") == 0 ||
         strcmp(argv[*i], "--verbose-level") == 0) {
 
@@ -110,11 +109,11 @@ static bool check_verbose_level(struct compiler_args *args,
         *consumed = true;
         return check_string_value(args, argv[*i]+16);
     }
+    return false;
 }
 
 static void check_repl(int* i, int argc, char** argv, bool* consumed)
 {
-    int len = strlen(argv[*i]);
     if(strcmp(argv[*i], "-r") == 0 ||
        strcmp(argv[*i], "--repl") == 0)
     {

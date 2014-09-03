@@ -17,8 +17,6 @@ START_TEST(test_acc_genrdecl_simple1) {
     char *sp;
     struct ast_node *n;
     struct parser_file *f;
-    struct parser_offset *off;
-    struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<type a>");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -42,8 +40,6 @@ START_TEST(test_acc_genrdecl_simple2) {
     char *sp;
     struct ast_node *n;
     struct parser_file *f;
-    struct parser_offset *off;
-    struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("  <  type a >  ");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -67,8 +63,6 @@ START_TEST(test_acc_genrdecl_simple3) {
     char *sp;
     struct ast_node *n;
     struct parser_file *f;
-    struct parser_offset *off;
-    struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<type a, type b>");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
@@ -98,16 +92,12 @@ START_TEST(test_acc_genrdecl_simple3) {
 
 
 START_TEST(test_acc_genrdecl_fail1) {
-    char *sp;
     struct ast_node *n;
     struct parser_file *f;
-    struct parser_offset *off;
-    struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<type ");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
 
     n = parser_file_acc_genrdecl(f);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
@@ -123,16 +113,12 @@ START_TEST(test_acc_genrdecl_fail1) {
 } END_TEST
 
 START_TEST(test_acc_genrdecl_fail2) {
-    char *sp;
     struct ast_node *n;
     struct parser_file *f;
-    struct parser_offset *off;
-    struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<type a bbb");
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
 
     n = parser_file_acc_genrdecl(f);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");

@@ -90,8 +90,6 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
     struct ast_node *last_id = NULL;
     struct ast_node *ret = NULL;
     struct parser_offset proff;
-    char *sp;
-    char *ep;
     enum typeop_type optype;
     enum tpar_state state = TPAR_START;
 
@@ -191,6 +189,7 @@ struct ast_node *parser_file_acc_typedesc(struct parser_file *f,
                                             optype,
                                             last_desc,
                                             NULL); //end is not known yet
+                last_desc = NULL;
             if ((n = parser_file_acc_identifier(f))) {
                 last_id = n;
                 state = TPAR_LEFT;
@@ -233,7 +232,6 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
     struct ast_node *desc;
     struct parser_offset proff;
     char *sp;
-    char *ep;
     int paren_count = 0;
 
     parser_offset_copy(&proff, &f->offset);

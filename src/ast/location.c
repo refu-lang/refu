@@ -38,7 +38,6 @@ bool ast_location_set_end(struct ast_location *loc, char *end)
 bool ast_location_from_file(struct ast_location *loc,
                             struct parser_file *f)
 {
-    struct parser_offset *off = &f->offset;
     struct parser_string *pstr = &f->pstr;
     loc->file = f;
 

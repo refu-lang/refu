@@ -92,7 +92,7 @@ void teardown_parser_tests();
             }                                                           \
             ck_assert_msg(                                              \
                 rf_string_equal(&i_tmps_, i_tmp_),                      \
-                "tExpected parsing error does not match. Expected:\n"   \
+                "Expected parsing error does not match. Expected:\n"   \
                 RF_STR_PF_FMT"\nGot:\n"RF_STR_PF_FMT,                   \
                 RF_STR_PF_ARG(&i_tmps_), RF_STR_PF_ARG(i_tmp_));        \
         } while(0)

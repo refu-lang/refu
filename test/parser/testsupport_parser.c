@@ -17,9 +17,6 @@ struct parser_file *parser_testdriver_get_file(struct parser_testdriver *d)
 }
 static bool parser_file_dummy_init(struct parser_file *f)
 {
-    struct RFstringx file_str;
-    struct RFarray lines_arr;
-
     f->info = info_ctx_create();
     if (!f->info) {
         return false;
@@ -181,6 +178,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
             );
             return false;
         }
+        break;
+    default:
         break;
     }
 
