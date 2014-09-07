@@ -1,0 +1,12 @@
+%compare-strncmp
+%readonly-tables
+%define lookup-function-name lexer_lexeme_is_token
+struct internal_token { const char *name; enum token_type type; };
+%%
+# keywords
+type, TOKEN_KW_TYPE
+#, special symbols
+{, TOKEN_SM_OCBRACE
+}, TOKEN_SM_CCBRACE
+#, operators
++, TOKEN_OP_ADDITION

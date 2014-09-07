@@ -4,6 +4,7 @@ Import('env clib_static')
 
 local_env = env.Clone()
 
+gperf_src = ['lexer/tokens_htable.gperf']
 refu_src = [
     'compiler_args.c',
     'info/info.c',
@@ -17,6 +18,9 @@ refu_src = [
     'parser/generics.c',
     'parser/type.c',
     'parser/tokens.c',
+
+    'lexer/lexer.c',
+
 
     'ast/ast.c',
     'ast/location.c',
@@ -45,8 +49,11 @@ local_env.Append(CCFLAGS=['-Wall'])
 # add path before the sources
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]
 refu_src_final = refu_src + ['src/main.c']
+gperf_src = [os.path.join(os.getcwd(), "src", x) for x in gperf_src]
+gperf_result = local_env.Gperf(gperf_src)
 
 refu_obj = local_env.Object(refu_src_final)
+Depends(refu_obj, gperf_result)
 refu = local_env.Program("refu", refu_obj,
                          LIBPATH=local_env['CLIB_DIR'])
 local_env.Alias('refu', refu)
@@ -54,6 +61,9 @@ local_env.Alias('refu', refu)
 # -- UNIT TESTS
 unit_tests_files = [
     'test_main.c',
+    'lexer/test_lexer.c',
+    'lexer/testsupport_lexer.c',
+
     'parser/testsupport_parser.c',
     'parser/test_parser_base.c',
     'parser/test_parser_typedesc.c',
@@ -71,4 +81,6 @@ test_env.Append(CHECK_EXTRA_DEFINES={
 lang_tests = test_env.Check(
     target="lang_tests",
     source=unit_tests_files)
+Depends(lang_tests, gperf_result)
+
 local_env.Alias('lang_tests', lang_tests)
