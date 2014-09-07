@@ -123,7 +123,7 @@ struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     id1 = parser_file_acc_identifier(f);
     if (!id1) {
@@ -139,7 +139,7 @@ struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
         parser_file_synerr(f, 0, "Expected an identifier");
         goto not_found;
     }
-    ep = parser_file_sp(f);
+    ep = parser_file_p(f);
 
     var_decl = ast_vardecl_create(f, sp, ep, id1, id2);
     return var_decl;

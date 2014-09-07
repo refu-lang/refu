@@ -21,7 +21,7 @@ static struct ast_node * parser_file_acc_genrtype(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
     type_id = parser_file_acc_identifier(f);
     if (!type_id) {
         parser_file_synerr(f, 0,
@@ -58,7 +58,7 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     if (!parser_file_acc_string_ascii(f, &parser_tok_lt)) {
         goto not_found;
@@ -88,7 +88,7 @@ struct ast_node *parser_file_acc_genrdecl(struct parser_file *f)
         goto err_free;
     }
 
-    ast_node_set_end(n, parser_file_sp(f) - 1);
+    ast_node_set_end(n, parser_file_p(f) - 1);
     return n;
 
 err_free:
@@ -110,7 +110,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     if (!parser_file_acc_string_ascii(f, &parser_tok_lt)) {
         goto not_found;
@@ -162,7 +162,7 @@ struct ast_node *parser_file_acc_genrattr(struct parser_file *f)
         goto err_free;
     }
 
-    ast_node_set_end(n, parser_file_sp(f));
+    ast_node_set_end(n, parser_file_p(f));
     return n;
 
 err_free:

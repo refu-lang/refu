@@ -81,20 +81,6 @@ bool parser_file_eof(struct parser_file *f)
     return false;
 }
 
-char *parser_file_lookfor(struct parser_file *f,
-                          const struct RFstring *str,
-                          char *end)
-{
-    int32_t ret;
-    struct RFstringx *s = parser_file_str(f);
-    ret = rf_string_find_i(s, str, 0, end - rf_string_data(s), 0);
-    if (ret == RF_FAILURE) {
-        return NULL;
-    }
-
-    return parser_file_sp(f) + ret;
-}
-
 void parser_file_move(struct parser_file *f,
                       unsigned int bytes,
                       unsigned int chars)
@@ -169,7 +155,22 @@ bool parser_file_line(struct parser_file *f,
     return true;
 }
 
+char *parser_file_line_p(struct parser_file *f, unsigned int line)
+{
+    struct parser_string *s = &f->pstr;
+    if (line == s->lines_num) {
+        return NULL;
+    }
+
+    if (line == 0) {
+        return parser_file_sp(f);
+    } else {
+        return parser_file_sp(f) + s->lines[line - 1] + 1;
+    }
+}
+
 i_INLINE_INS bool parser_file_has_synerr(struct parser_file *f);
 i_INLINE_INS char *parser_file_sp(struct parser_file *f);
+i_INLINE_INS char *parser_file_p(struct parser_file *f);
 i_INLINE_INS struct RFstringx *parser_file_str(struct parser_file *f);
 i_INLINE_INS struct parser_offset *parser_file_offset(struct parser_file *f);

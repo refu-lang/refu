@@ -72,7 +72,14 @@ static bool parser_file_dummy_assign(struct parser_file *f,
     if (lines == 1) { //we got nothing to copy from, so don't
         f->pstr.lines[0] = 0;
     } else {
-        memcpy(f->pstr.lines, arr.buff, sizeof(uint32_t) * lines);
+        f->pstr.lines[0] = 0;
+//TODO: figure the line positions thing out
+#if 0
+        for (i = 1; i < lines; i ++) {
+            f->pstr.lines[i] = rf_array_at_unsafe(&arr, i, uint32_t) + 1;
+        }
+#endif
+        memcpy(f->pstr.lines + 1, arr.buff, sizeof(uint32_t) * (lines - 1));
     }
     f->pstr.lines_num = lines;
 

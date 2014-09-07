@@ -71,28 +71,27 @@ bool parser_file_acc_string_ascii(struct parser_file *f,
                                   const struct RFstring *str);
 
 /**
- * Looks ahead from the current position for a specific string
- *
- * @param f         The parser file to work with
- * @param str       The string to look for
- * @param end       If not NULL a pointer to @c str, to limit the search
- * @return          Pointer to the position the string is found or NULL if not
- *                  found
- */
-char *parser_file_lookfor(struct parser_file *f,
-                          const struct RFstring *str,
-                          char *end);
-
-/**
  * Gets the current string pointer in the file
  *
  * @param f         The parser file to work with
  *
  * @return          A char* pointing to the current position in the file's str
  */
+i_INLINE_DECL char *parser_file_p(struct parser_file *f)
+{
+    return parser_string_data(&f->pstr);
+}
+
+/**
+ * Gets the a string pointer to the beginning of the file
+ *
+ * @param f         The parser file to work with
+ *
+ * @return          A char* pointing to the start position of the file's str
+ */
 i_INLINE_DECL char *parser_file_sp(struct parser_file *f)
 {
-    return rf_string_data(&f->pstr.str);
+    return parser_string_beg(&f->pstr);
 }
 
 /**
@@ -135,7 +134,15 @@ bool parser_file_line(struct parser_file *f,
                       uint32_t line,
                       struct RFstring *str);
 
-
+/**
+ * Gets the string pointer of the beginning of a specific line
+ *
+ * @param f        The parser file to work with
+ * @param line     The line whose beginning we need
+ * @return         A char* pointing to the beginning of @c line.
+ *                 If line does not exist return NULL.
+ */
+char *parser_file_line_p(struct parser_file *f, unsigned int line);
 
 /**
  * A macro to append a syntax error to the parser context

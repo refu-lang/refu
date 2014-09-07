@@ -46,7 +46,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     if (!parser_file_acc_string_ascii(f, &parser_tok_fn)) {
         goto not_found;
@@ -90,7 +90,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     parser_file_acc_ws(f);
     if (!parser_file_acc_string_ascii(f, &parser_tok_arrow)) {
         /* no return value */
-        ast_node_set_end(fn, parser_file_sp(f));
+        ast_node_set_end(fn, parser_file_p(f));
         return fn;
     }
 
@@ -105,7 +105,7 @@ struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
     }
 
     ast_fndecl_set_ret(fn, name);
-    ast_node_set_end(fn, parser_file_sp(f));
+    ast_node_set_end(fn, parser_file_p(f));
     return fn;
 
 err_free:

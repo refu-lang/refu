@@ -20,7 +20,7 @@ START_TEST(test_acc_typedesc_simple1) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     struct ast_node *id_1 = ast_identifier_create(f, sp, sp);
     struct ast_node *id_2 = ast_xidentifier_create(
@@ -47,7 +47,7 @@ START_TEST(test_acc_typedesc_simple2) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
 
     struct ast_node *id_1 = ast_identifier_create(f, sp, sp);
@@ -130,7 +130,7 @@ START_TEST(test_acc_typedesc_prod1) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
 
 
@@ -170,7 +170,7 @@ START_TEST(test_acc_typedesc_prod2) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
 
 
@@ -219,7 +219,7 @@ START_TEST(test_acc_typedesc_sum_associativity) {
     int paren_count = 0;
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
 
 

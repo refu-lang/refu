@@ -11,6 +11,7 @@ bool parser_string_init(struct parser_string *s,
     s->lines_num = lines_num;
     RF_MALLOC(s->lines, sizeof(uint32_t) * lines_num, return false);
     memcpy(s->lines, arr->buff, sizeof(uint32_t) * lines_num);
+    
     return true;
 }
 

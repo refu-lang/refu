@@ -21,7 +21,7 @@ START_TEST(test_acc_genrdecl_simple1) {
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     struct ast_node *id1 = ast_identifier_create(f, sp + 1, sp + 4);
     struct ast_node *id2 = ast_identifier_create(f, sp + 6, sp + 6);
@@ -44,7 +44,7 @@ START_TEST(test_acc_genrdecl_simple2) {
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     struct ast_node *id1 = ast_identifier_create(f, sp + 5, sp + 8);
     struct ast_node *id2 = ast_identifier_create(f, sp + 10, sp + 10);
@@ -67,7 +67,7 @@ START_TEST(test_acc_genrdecl_simple3) {
     struct parser_testdriver *d = get_parser_testdriver();
     f = parser_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     struct ast_node *id1 = ast_identifier_create(f, sp + 1, sp + 4);
     struct ast_node *id2 = ast_identifier_create(f, sp + 6, sp + 6);

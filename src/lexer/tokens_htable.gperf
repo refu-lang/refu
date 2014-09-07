@@ -1,12 +1,40 @@
 %compare-strncmp
 %readonly-tables
 %define lookup-function-name lexer_lexeme_is_token
+%delimiters=''
 struct internal_token { const char *name; enum token_type type; };
 %%
+# -- Keywords section --
+# attempted to have TAB as delimiter but could not make it work
+#
 # keywords
-type, TOKEN_KW_TYPE
-#, special symbols
-{, TOKEN_SM_OCBRACE
-}, TOKEN_SM_CCBRACE
-#, operators
-+, TOKEN_OP_ADDITION
+typeTOKEN_KW_TYPE
+fnTOKEN_KW_FUNCTION
+ifTOKEN_KW_IF
+elifTOKEN_KW_ELIF
+elseTOKEN_KW_ELSE
+# special symbols
+:TOKEN_SM_COLON
+{TOKEN_SM_OCBRACE
+}TOKEN_SM_CCBRACE
+(TOKEN_SM_OPAREN
+)TOKEN_SM_CPAREN
+# operators
++TOKEN_OP_PLUS
+-TOKEN_OP_MINUS
+*TOKEN_OP_MULTI
+/TOKEN_OP_DIV
+++TOKEN_OP_INC
+--TOKEN_OP_DEC
+=TOKEN_OP_ASSIGN
+==TOKEN_OP_EQ
+!=TOKEN_OP_NEQ
+>TOKEN_OP_GT
+>=TOKEN_OP_GTEQ
+<TOKEN_OP_LT
+<=TOKEN_OP_LTEQ
+|TOKEN_OP_TYPESUM
+,TOKEN_OP_COMMA
+->TOKEN_OP_IMPL
+&&TOKEN_OP_LOGICAND
+||TOKEN_OP_LOGICOR

@@ -20,6 +20,7 @@ refu_src = [
     'parser/tokens.c',
 
     'lexer/lexer.c',
+    'lexer/tokens.c',
 
 
     'ast/ast.c',

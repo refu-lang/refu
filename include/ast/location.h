@@ -19,6 +19,26 @@ struct ast_location {
     char *ep;
 };
 
+/* 2 macros for quick location initialization, mostly used in tests */
+// initialize a location using only start and end line and columns
+#define LOC_INIT(file_, sl_, sc_, el_, ec_)         \
+    {.file = file_,                                 \
+        .start_line = sl_,                          \
+        .start_col = sc_,                           \
+        .end_line = el_,                            \
+        .end_col= ec_,                              \
+        .sp = parser_file_line_p(file_, sl_) + sc_, \
+        .ep = parser_file_line_p(file_, el_) + ec_}
+// initialize a location using all attributes. Used if non-ascii chars in line
+#define LOC_INIT_FULL(file_, sl_, sc_, el_, ec_, sp_, ep_)  \
+    {.file = file_,                                         \
+        .start_line = sl_,                                  \
+        .start_col = sc_,                                   \
+        .end_line = el_,                                    \
+        .end_col= ec_,                                      \
+        .sp = sp,                                           \
+        .ep = ep_}
+
 /**
  * Initialize an ast_location from a parser string.
  *

@@ -1,4 +1,4 @@
-#include <lexer.h>
+#include <lexer/lexer.h>
 #include "tokens_htable.h" /* include the gperf generated hash table */
 
 #include <parser/file.h>
@@ -157,6 +157,9 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
     return true;
 }
 
+#define COND_TOKEN_AMBIG1(p_) \
+    ((p_) == '+' || (p_) == '-' || (p_) == '>' || (p_) == '<' || (p_) == '|')
+
 bool lexer_scan(struct lexer *l, struct parser_file *f)
 {
 
@@ -167,10 +170,14 @@ bool lexer_scan(struct lexer *l, struct parser_file *f)
 
     sp = p = parser_file_sp(f);
     lim = sp + rf_string_length_bytes(parser_file_str(f)) - 1;
-
+    unsigned int i = 0;
+    int z = 0;
     while (p < lim) {
+        if (i == 14) {
+            z = z + 1;
+        }
         parser_file_acc_ws(f);
-        p = parser_file_sp(f);
+        p = parser_file_p(f);
         sp = p;
 
         if (COND_IDENTIFIER_BEGIN(*p)) {
@@ -184,20 +191,27 @@ bool lexer_scan(struct lexer *l, struct parser_file *f)
         } else { // see if it's a token
             unsigned int len = 1;
             const struct internal_token *itoken;
-            char * toksp = p;
+            const struct internal_token *itoken2;
             bool got_token = false;
+            char * toksp = p;
             while (len <= MAX_WORD_LENGTH) {
-                /* unfortunately this includes keywords too
-                 * could be faster to have 2 different hash tables
-                 * one for keywords, and one for operators and symbols
-                 */
                 itoken = lexer_lexeme_is_token(p, len);
                 if (itoken) {
+                    /* if more than 1 tokens may start with that character */
+                    if (COND_TOKEN_AMBIG1(*toksp)) {
+                        len = 2;
+                        itoken2 = lexer_lexeme_is_token(p, len);
+                        if (itoken2) {
+                            itoken = itoken2;
+                        } else {
+                            len = 1;
+                        }
+                    }
                     if (!lexer_add_token(l, itoken->type, toksp, p + len - 1)) {
                         return false;
                     }
                     p += len;
-                    got_token = true;
+                    got_token=true;
                     break;
                 }
                 len ++;
@@ -206,10 +220,12 @@ bool lexer_scan(struct lexer *l, struct parser_file *f)
                 // error unknown token
                 parser_file_synerr(f, -len,
                                    "Unknown token encountered");
+                printf("err 4");
                 return false;
             }
         }
         parser_file_move(f, p - sp, p - sp);
+        i++;
     }
     return true;
 }

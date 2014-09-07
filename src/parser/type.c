@@ -242,7 +242,7 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
 
     if (!parser_file_acc_string_ascii(f, &parser_kw_type)) {
         goto not_found;
@@ -284,7 +284,7 @@ struct ast_node *parser_file_acc_typedecl(struct parser_file *f)
                            RF_STR_PF_ARG(ast_identifier_str(name)));
         goto err_free;
     }
-    ast_node_set_end(data_decl, parser_file_sp(f));
+    ast_node_set_end(data_decl, parser_file_p(f));
 
     return data_decl;
 

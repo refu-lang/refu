@@ -1,7 +1,7 @@
 #ifndef LFR_TESTSUPPORT_LEXER_H
 #define LFR_TESTSUPPORT_LEXER_H
 
-#include <lexer.h>
+#include <lexer/lexer.h>
 #include <stdbool.h>
 #include <check.h>
 
@@ -18,13 +18,5 @@ void check_lexer_tokens_impl(struct lexer *l,
                              const char *filename,
                              unsigned int line);
 
-#define LOC_TEST_STATIC_INIT(file_, sl_, sc_, el_, ec_, sp_, ep_) \
-    .loc = {.file = file_,                                        \
-            .start_line = sl_,                                    \
-            .start_col = sc_,                                     \
-            .end_line = el_,                                      \
-            .end_col= ec_,                                        \
-            .sp = sp_,                                            \
-            .ep = ep_}
 
 #endif

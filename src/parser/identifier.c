@@ -24,8 +24,8 @@ struct ast_node *parser_file_acc_identifier(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     parser_file_acc_ws(f);
-    sp = p = parser_file_sp(f);
-    lim = parser_file_sp(f) + rf_string_length_bytes(parser_file_str(f)) - 1;
+    sp = p = parser_file_p(f);
+    lim = parser_file_p(f) + rf_string_length_bytes(parser_file_str(f)) - 1;
 
     if (lim - p <= 0) { /* if already at the end do nothing */
         goto not_found;
@@ -92,7 +92,7 @@ struct ast_node *parser_file_acc_xidentifier(struct parser_file *f)
     parser_offset_copy(&proff, &f->offset);
 
     PARSER_CHECK_EOF(parser_file_acc_ws(f), f, goto not_found);
-    sp = parser_file_sp(f);
+    sp = parser_file_p(f);
     // parsing logic for the annotations to the identifier here
     if (parser_file_acc_string_ascii(f, &parser_kw_const)) {
         is_const = true;
