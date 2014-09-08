@@ -5,9 +5,10 @@
 #include <stdio.h>
 
 Suite *lexer_suite_create(void);
-Suite *parser_base_suite_create(void);
-Suite *parser_typedesc_suite_create(void);
-Suite *parser_generics_suite_create(void);
+Suite *frontend_input_suite_create(void);
+/* Suite *parser_base_suite_create(void); */
+/* Suite *parser_typedesc_suite_create(void); */
+/* Suite *parser_generics_suite_create(void); */
 
 static const char *SILENT = "CK_SILENT";
 static const char *MINIMAL = "CK_MINIMAL";
@@ -58,9 +59,10 @@ int main(int argc, char **argv)
 
     printf("\n\n=== Running refulang tests ===\n");
     SRunner *sr = srunner_create(lexer_suite_create());
-    srunner_add_suite(sr, parser_base_suite_create());
-    srunner_add_suite(sr, parser_typedesc_suite_create());
-    srunner_add_suite(sr, parser_generics_suite_create());
+    srunner_add_suite(sr, frontend_input_suite_create());
+    /* srunner_add_suite(sr, parser_base_suite_create()); */
+    /* srunner_add_suite(sr, parser_typedesc_suite_create()); */
+    /* srunner_add_suite(sr, parser_generics_suite_create()); */
 
     srunner_set_fork_status (sr, fork_type);
     srunner_run_all(sr, print_type);

@@ -5,10 +5,8 @@
 #include <Utils/sanity.h>
 
 
-
-struct ast_node *ast_typedecl_create(struct parser_file *f,
-                                     char *sp,
-                                     char *ep,
+struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
+                                     struct inplocation_mark *end,
                                      struct ast_node *name,
                                      struct ast_node *desc)
 {
@@ -16,7 +14,7 @@ struct ast_node *ast_typedecl_create(struct parser_file *f,
     RF_ASSERT(name->type == AST_IDENTIFIER);
     RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION);
 
-    ret = ast_node_create(AST_TYPE_DECLARATION, f, sp, ep);
+    ret = ast_node_create_marks(AST_TYPE_DECLARATION, start, end);
     if (!ret) {
         //TODO: memory error
         return NULL;

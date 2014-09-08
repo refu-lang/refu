@@ -1,42 +1,12 @@
-#include <parser/function.h>
+#include "function.h"
 
-#include <ast/ast.h>
-#include <ast/identifier.h>
-#include <info/info.h>
-#include <parser/tokens.h>
-#include <parser/parser.h>
-#include <parser/generics.h>
-#include <parser/identifier.h>
+#include <stdlib.h>
 
-bool parser_file_acc_commsep_args(struct parser_file *f,
-                                  struct RFilist_head *args)
+struct ast_node *parser_acc_fndecl(struct parser *p)
 {
-    bool found_comma;
-    struct ast_node *arg;
-
-    do {
-        parser_file_acc_ws(f);
-        arg = parser_file_acc_vardecl(f);
-        if (!arg && !rf_ilist_is_empty(args)) {
-            parser_file_synerr(
-                f, 0, "Expected a variable declaration after the comma"
-            );
-            return false;
-        }
-        rf_ilist_add_tail(args, &arg->lh);
-
-        parser_file_acc_ws(f);
-        found_comma = false;
-        if (parser_file_acc_string_ascii(f, &parser_tok_comma)) {
-            found_comma = true;
-        }
-    } while(found_comma);
-
-    return true;
-}
-
-struct ast_node *parser_file_acc_fndecl(struct parser_file *f)
-{
+    return NULL;
+//TODO
+#if 0
     struct ast_node *fn;
     struct ast_node *name;
     struct ast_node *genr;
@@ -113,4 +83,5 @@ err_free:
 not_found:
     parser_file_move_to_offset(f, &proff);
     return NULL;
+#endif
 }

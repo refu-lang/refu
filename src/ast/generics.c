@@ -4,12 +4,12 @@
 #include <ast/identifier.h>
 #include <Utils/sanity.h>
 
-struct ast_node *ast_genrtype_create(struct parser_file *f, char *sp, char *ep,
-                                     struct ast_node *type, struct ast_node *id)
+struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id)
 {
     struct ast_node *ret;
 
-    ret = ast_node_create(AST_GENERIC_TYPE, f, sp, ep);
+    ret = ast_node_create_marks(AST_GENERIC_TYPE, ast_node_startmark(type),
+                                ast_node_endmark(id));
     if (!ret) {
         //TODO: memory error
         return NULL;
@@ -22,11 +22,12 @@ struct ast_node *ast_genrtype_create(struct parser_file *f, char *sp, char *ep,
     return ret;
 }
 
-struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep)
+struct ast_node *ast_genrdecl_create(struct inplocation_mark *start,
+                                     struct inplocation_mark *end)
 {
     struct ast_node *ret;
 
-    ret = ast_node_create(AST_GENERIC_DECLARATION, f, sp, ep);
+    ret = ast_node_create_marks(AST_GENERIC_DECLARATION, start, end);
     if (!ret) {
         //TODO: memory error
         return NULL;
@@ -34,11 +35,12 @@ struct ast_node *ast_genrdecl_create(struct parser_file *f, char *sp, char *ep)
     return ret;
 }
 
-struct ast_node *ast_genrattr_create(struct parser_file *f, char *sp, char *ep)
+struct ast_node *ast_genrattr_create(struct inplocation_mark *start,
+                                     struct inplocation_mark *end)
 {
     struct ast_node *ret;
 
-    ret = ast_node_create(AST_GENERIC_ATTRIBUTE, f, sp, ep);
+    ret = ast_node_create_marks(AST_GENERIC_ATTRIBUTE, start, end);
     if (!ret) {
         //TODO: memory error
         return NULL;

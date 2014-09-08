@@ -4,17 +4,15 @@
 #include <Utils/sanity.h>
 
 
-struct ast_node *ast_identifier_create(struct parser_file *file,
-                                       char *sp, char *ep)
+struct ast_node *ast_identifier_create(struct inplocation *loc)
 {
     struct ast_node *ret;
-    ret = ast_node_create(AST_IDENTIFIER,
-                          file, sp, ep);
-
+    ret = ast_node_create_loc(AST_IDENTIFIER, loc);
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->identifier.string, sp, ep - sp + 1);
+    RF_STRING_SHALLOW_INIT(&ret->identifier.string, loc->start.p,
+                           loc->end.p - loc->start.p + 1);
 
     return ret;
 }
@@ -34,14 +32,14 @@ struct RFstring *ast_identifier_str(struct ast_node *n)
 }
 
 
-struct ast_node *ast_xidentifier_create(struct parser_file *f,
-                                        char *sp, char *ep,
+struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
+                                        struct inplocation_mark *end,
                                         struct ast_node *id,
                                         bool is_constant,
                                         struct ast_node *genr)
 {
     struct ast_node *ret;
-    ret = ast_node_create(AST_XIDENTIFIER, f, sp, ep);
+    ret = ast_node_create_marks(AST_XIDENTIFIER, start, end);
     if (!ret) {
         return NULL;
     }

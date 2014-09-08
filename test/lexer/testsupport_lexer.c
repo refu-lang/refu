@@ -3,6 +3,7 @@
 static bool tokens_cmp(struct token *expected,
                        struct token *got,
                        unsigned int index,
+                       struct inpfile *f,
                        const char *filename,
                        unsigned int line)
 {
@@ -15,25 +16,26 @@ static bool tokens_cmp(struct token *expected,
         return false;
     }
 
-    if (!ast_location_equal(&expected->loc, &got->loc)) {
+    if (!inplocation_equal(&expected->loc, &got->loc)) {
         ck_lexer_abort(filename, line,
                        "Expected token %d to have location:\n"
-                       AST_LOCATION_FMT2"\nbut it has location:\n"
-                       AST_LOCATION_FMT2, index,
-                       AST_LOCATION_ARG2(&expected->loc),
-                       AST_LOCATION_ARG2(&got->loc));
+                       INPLOCATION_FMT2"\nbut it has location:\n"
+                       INPLOCATION_FMT2, index,
+                       INPLOCATION_ARG2(f, &expected->loc),
+                       INPLOCATION_ARG2(f, &got->loc));
         return false;
     }
 
 
     if (expected->type == TOKEN_IDENTIFIER &&
-        !rf_string_equal(&expected->value.string, &got->value.string)) {
+        !rf_string_equal(ast_identifier_str(expected->value.identifier),
+                         ast_identifier_str(got->value.identifier))) {
         ck_lexer_abort(filename, line,
                        "Expected the %d token to have value:\n"
                        RF_STR_PF_FMT"\nbut it has value:\n"
                        RF_STR_PF_FMT, index,
-                       RF_STR_PF_ARG(&expected->value.string),
-                       RF_STR_PF_ARG(&got->value.string));
+                       RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier)),
+                       RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier)));
         return false;
     }
 
@@ -56,7 +58,7 @@ void check_lexer_tokens_impl(struct lexer *l,
 
 
     darray_foreach(t, l->tokens) {
-        tokens_cmp(&tokens[i], t, i, filename, line);
+        tokens_cmp(&tokens[i], t, i, l->file, filename, line);
         i ++;
     }
 }

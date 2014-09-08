@@ -8,6 +8,7 @@ struct internal_token { const char *name; enum token_type type; };
 # attempted to have TAB as delimiter but could not make it work
 #
 # keywords
+constTOKEN_KW_CONST
 typeTOKEN_KW_TYPE
 fnTOKEN_KW_FUNCTION
 ifTOKEN_KW_IF

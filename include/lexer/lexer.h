@@ -6,35 +6,62 @@
 #include <Data_Structures/darray.h>
 
 #include <lexer/tokens.h>
-#include <ast/location.h>
+#include <inplocation.h>
+#include <ast/identifier.h>
 
 
-struct parser_file;
+struct inpfile;
 
 struct token {
     enum token_type type;
-    struct ast_location loc;
+    struct inplocation location;
     union {
-        struct RFstring string;
+        struct ast_node *identifier;
         int numeric;
     }value;
 };
 
+i_INLINE_DECL struct inplocation *token_get_loc(struct token *tok)
+{
+    return &tok->location;
+}
+i_INLINE_DECL struct inplocation_mark *token_get_start(struct token *tok)
+{
+    return &tok->location.start;
+}
+i_INLINE_DECL struct inplocation_mark *token_get_end(struct token *tok)
+{
+    return &tok->location.end;
+}
+
+
 struct lexer {
     struct {darray(struct token);} tokens;
     struct {darray(int);} indices;
-    struct parser_file *file;
+    unsigned int tok_index;
+    struct inpfile *file;
+    struct info_ctx *info;
 };
 
 
-bool lexer_init(struct lexer *l);
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info);
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info);
 void lexer_deinit(struct lexer *l);
+void lexer_destroy(struct lexer *l);
 
-bool lexer_scan(struct lexer *l, struct parser_file *f);
+bool lexer_scan(struct lexer *l);
+
 struct token *lexer_next_token(struct lexer *l);
-void lexer_save_pos(struct lexer *l);
+struct token *lexer_lookeahead(struct lexer *l, unsigned int num);
+struct token *lexer_last_token_valid(struct lexer *l);
+i_INLINE_DECL struct inplocation *lexer_last_token_location(struct lexer *l)
+{
+    return &(lexer_last_token_valid(l))->location;
+}
+
+void lexer_push(struct lexer *l);
+void lexer_pop(struct lexer *l);
 void lexer_rollback(struct lexer *l);
-void lexer_okay(struct lexer *l);
 
 
 #endif

@@ -6,23 +6,23 @@
 #include <String/rf_str_core.h>
 #include <lexer/lexer.h>
 
-#include "../parser/testsupport_parser.h"
+#include "../testsupport_front.h"
 #include "testsupport_lexer.h"
 
 #include CLIB_TEST_HELPERS
 
 START_TEST(test_lexer_scan_tokens_1) {
-    struct parser_file *f;
+    struct inpfile *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "asd { }");
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
+    struct front_testdriver *d = get_front_testdriver();
+    f = front_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
     struct token expected[] = {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 0, 0, 2),
-            {.string = RF_STRING_STATIC_INIT("asd")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "asd")
         },
         {
             .type=TOKEN_SM_OCBRACE,
@@ -34,8 +34,8 @@ START_TEST(test_lexer_scan_tokens_1) {
         }
     };
     struct lexer lex;
-    ck_assert(lexer_init(&lex));
-    ck_assert(lexer_scan(&lex, f));
+    ck_assert(lexer_init(&lex, f, d->info));
+    ck_assert(lexer_scan(&lex));
     check_lexer_tokens(&lex, expected, 3);
 
 
@@ -43,7 +43,7 @@ START_TEST(test_lexer_scan_tokens_1) {
 } END_TEST
 
 START_TEST(test_lexer_scan_tokens_2) {
-    struct parser_file *f;
+    struct inpfile *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i32, b:string | c:f32 }\n"
         "fn foo(a:int) -> int\n"
@@ -60,8 +60,8 @@ START_TEST(test_lexer_scan_tokens_2) {
         "&&\n"
         "||\n"
     );
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
+    struct front_testdriver *d = get_front_testdriver();
+    f = front_testdriver_assign(d, &s);
     ck_assert_msg(f, "Failed to assign string to file ");
     struct token expected[] = {
         {
@@ -71,7 +71,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 5, 0, 7),
-            {.string = RF_STRING_STATIC_INIT("foo")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "foo")
         },
         {
             .type=TOKEN_SM_OCBRACE,
@@ -80,7 +80,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 11, 0, 11),
-            {.string = RF_STRING_STATIC_INIT("a")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
         },
         {
             .type=TOKEN_SM_COLON,
@@ -89,7 +89,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 13, 0, 15),
-            {.string = RF_STRING_STATIC_INIT("i32")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "i32")
         },
         {
             .type=TOKEN_OP_COMMA,
@@ -98,7 +98,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 18, 0, 18),
-            {.string = RF_STRING_STATIC_INIT("b")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "b")
         },
         {
             .type=TOKEN_SM_COLON,
@@ -107,7 +107,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 20, 0, 25),
-            {.string = RF_STRING_STATIC_INIT("string")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "string")
         },
         {
             .type=TOKEN_OP_TYPESUM,
@@ -116,7 +116,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 29, 0, 29),
-            {.string = RF_STRING_STATIC_INIT("c")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "c")
         },
         {
             .type=TOKEN_SM_COLON,
@@ -125,7 +125,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 0, 31, 0, 33),
-            {.string = RF_STRING_STATIC_INIT("f32")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "f32")
         },
         {
             .type=TOKEN_SM_CCBRACE,
@@ -139,7 +139,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 1, 3, 1, 5),
-            {.string = RF_STRING_STATIC_INIT("foo")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "foo")
         },
         {
             .type=TOKEN_SM_OPAREN,
@@ -148,7 +148,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 1, 7, 1, 7),
-            {.string = RF_STRING_STATIC_INIT("a")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
         },
         {
             .type=TOKEN_SM_COLON,
@@ -157,7 +157,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 1, 9, 1, 11),
-            {.string = RF_STRING_STATIC_INIT("int")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "int")
         },
         {
             .type=TOKEN_SM_CPAREN,
@@ -170,7 +170,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_IDENTIFIER,
             .loc=LOC_INIT(f, 1, 17, 1, 19),
-            {.string = RF_STRING_STATIC_INIT("int")}
+            TESTLEX_IDENTIFIER_INIT(d, 0, "int")
         },
         /* 3rd line */
         {
@@ -234,8 +234,8 @@ START_TEST(test_lexer_scan_tokens_2) {
         },
     };
     struct lexer lex;
-    ck_assert(lexer_init(&lex));
-    ck_assert(lexer_scan(&lex, f));
+    ck_assert(lexer_init(&lex, f, d->info));
+    ck_assert(lexer_scan(&lex));
     check_lexer_tokens(&lex, expected, sizeof(expected)/sizeof(struct token));
 
     lexer_deinit(&lex);
@@ -248,8 +248,8 @@ Suite *lexer_suite_create(void)
 
     TCase *scan = tcase_create("lexer_scan");
     tcase_add_checked_fixture(scan,
-                              setup_parser_tests,
-                              teardown_parser_tests);
+                              setup_front_tests,
+                              teardown_front_tests);
     tcase_add_test(scan, test_lexer_scan_tokens_1);
     tcase_add_test(scan, test_lexer_scan_tokens_2);
 

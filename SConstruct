@@ -7,24 +7,22 @@ local_env = env.Clone()
 gperf_src = ['lexer/tokens_htable.gperf']
 refu_src = [
     'compiler_args.c',
+
+    'inpfile.c',
+    'inpstr.c',
+    'inplocation.c',
+    'inpoffset.c',
+    'front_ctx.c',
+
+    'parser/parser.c',
+
     'info/info.c',
     'info/msg.c',
-    'parser/identifier.c',
-    'parser/parser.c',
-    'parser/offset.c',
-    'parser/string.c',
-    'parser/file.c',
-    'parser/function.c',
-    'parser/generics.c',
-    'parser/type.c',
-    'parser/tokens.c',
 
     'lexer/lexer.c',
     'lexer/tokens.c',
 
-
     'ast/ast.c',
-    'ast/location.c',
     'ast/identifier.c',
     'ast/typedecl.c',
     'ast/typedesc.c',
@@ -32,6 +30,15 @@ refu_src = [
     'ast/fndecl.c',
     'ast/generics.c',
 ]
+
+if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
+    refu_src += [
+        'parser/recursive_descent/core.c',
+        'parser/recursive_descent/identifier.c',
+        'parser/recursive_descent/function.c',
+        'parser/recursive_descent/generics.c',
+        'parser/recursive_descent/type.c',
+    ]
 
 # add specific environment variables
 local_env.Append(CPPDEFINES=[
@@ -62,13 +69,15 @@ local_env.Alias('refu', refu)
 # -- UNIT TESTS
 unit_tests_files = [
     'test_main.c',
+    'testsupport_front.c',
+    'test_input_base.c',
     'lexer/test_lexer.c',
     'lexer/testsupport_lexer.c',
 
-    'parser/testsupport_parser.c',
-    'parser/test_parser_base.c',
-    'parser/test_parser_typedesc.c',
-    'parser/test_parser_generics.c',
+    # 'parser/testsupport_parser.c',
+    # 'parser/test_parser_base.c',
+    # 'parser/test_parser_typedesc.c',
+    # 'parser/test_parser_generics.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

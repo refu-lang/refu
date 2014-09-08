@@ -2,10 +2,9 @@
 #define LFR_AST_TYPEDECL_H
 
 #include <RFintrusive_list.h>
-#include <parser/tokens.h>
 
 struct ast_node;
-struct parser_file;
+struct inplocation_mark;
 
 struct ast_typedecl {
     //! identifier of the name
@@ -14,9 +13,8 @@ struct ast_typedecl {
     struct ast_node *desc;
 };
 
-struct ast_node *ast_typedecl_create(struct parser_file *f,
-                                     char *sp,
-                                     char *ep,
+struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
+                                     struct inplocation_mark *end,
                                      struct ast_node *name,
                                      struct ast_node *desc);
 

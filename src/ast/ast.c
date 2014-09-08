@@ -23,21 +23,47 @@ static const struct RFstring ast_type_strings[] = {
 
 #define AST_NODE_IS_LEAF(node_) ((node_)->type >= AST_STRING_LITERAL)
 
-struct ast_node *ast_node_create(enum ast_type type,
-                                 struct parser_file *f,
-                                 char *sp, char *ep)
+struct ast_node *ast_node_create_loc(enum ast_type type,
+                                     struct inplocation *loc)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
     ret->type = type;
-    if (!ast_location_init(&ret->location, f, sp, ep)) {
+    inplocation_copy(&ret->location, loc);
+    rf_ilist_head_init(&ret->children);
+
+    return ret;
+}
+struct ast_node *ast_node_create_marks(enum ast_type type,
+                                       struct inplocation_mark *start,
+                                       struct inplocation_mark *end)
+{
+    struct ast_node *ret;
+    RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
+
+    ret->type = type;
+    inplocation_init_marks(&ret->location, start, end);
+    rf_ilist_head_init(&ret->children);
+
+    return ret;
+}
+struct ast_node *ast_node_create_ptrs(enum ast_type type,
+                                      struct inpfile *f,
+                                      char *sp, char *ep)
+{
+    struct ast_node *ret;
+    RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
+
+    ret->type = type;
+    if (!inplocation_init(&ret->location, f, sp, ep)) {
         return NULL;
     }
     rf_ilist_head_init(&ret->children);
 
     return ret;
 }
+
 
 void ast_node_destroy(struct ast_node *n)
 {
@@ -60,9 +86,9 @@ void ast_node_destroy(struct ast_node *n)
     free(n);
 }
 
-bool ast_node_set_end(struct ast_node *n, char *end)
+void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end)
 {
-    return ast_location_set_end(&n->location, end);
+    inplocation_set_end(&n->location, end);
 }
 
 void ast_node_add_child(struct ast_node *parent,
@@ -74,6 +100,9 @@ void ast_node_add_child(struct ast_node *parent,
 
 i_INLINE_INS char *ast_node_startsp(struct ast_node *n);
 i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
+i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
+i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
+
 const struct RFstring *ast_node_str(struct ast_node *n)
 {
     // assert that the array size is same as enum size
@@ -83,7 +112,8 @@ const struct RFstring *ast_node_str(struct ast_node *n)
     return &ast_type_strings[n->type];
 }
 
-static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
+static void ast_print_prelude(struct ast_node *n, struct inpfile *f,
+                              int depth, const char *desc)
 {
     if (depth != 0) {
         if (desc) {
@@ -91,27 +121,27 @@ static void ast_print_prelude(struct ast_node *n, int depth, const char *desc)
             printf("%*s",
                    (int)((depth * AST_PRINT_DEPTHMUL) - strlen(desc)),
                    " ");
-            printf("|----> "RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
+            printf("|----> "RF_STR_PF_FMT" "INPLOCATION_FMT2"\n",
                    RF_STR_PF_ARG(ast_node_str(n)),
-                   AST_LOCATION_ARG2(&n->location));
+                   INPLOCATION_ARG2(f, &n->location));
         } else {
             printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-            printf("|----> "RF_STR_PF_FMT" "AST_LOCATION_FMT2"\n",
+            printf("|----> "RF_STR_PF_FMT" "INPLOCATION_FMT2"\n",
                    RF_STR_PF_ARG(ast_node_str(n)),
-                   AST_LOCATION_ARG2(&n->location));
+                   INPLOCATION_ARG2(f, &n->location));
         }
     } else {
-        printf("%*.*s "AST_LOCATION_FMT2"\n",
+        printf("%*.*s "INPLOCATION_FMT2"\n",
                depth * AST_PRINT_DEPTHMUL,
                RF_STR_PF_ARG(ast_node_str(n)),
-               AST_LOCATION_ARG2(&n->location));
+               INPLOCATION_ARG2(f, &n->location));
     }
 }
 
-void ast_print(struct ast_node *n, int depth)
+void ast_print(struct ast_node *n, struct inpfile *f, int depth)
 {
     struct ast_node *c;
-    ast_print_prelude(n, depth, "");
+    ast_print_prelude(n, f, depth, "");
 
     switch(n->type) {
     case AST_IDENTIFIER:
@@ -120,7 +150,7 @@ void ast_print(struct ast_node *n, int depth)
     default:
         printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
         rf_ilist_for_each(&n->children, c, lh) {
-            ast_print(c, depth + 1);
+            ast_print(c, f, depth + 1);
         }
         break;
     }

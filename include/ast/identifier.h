@@ -5,16 +5,16 @@
 #include <String/rf_str_decl.h>
 #include <Utils/sanity.h>
 
-struct parser_file;
 struct ast_node;
+struct inplocation;
+struct inplocation_mark;
 
 struct ast_identifier {
     struct RFstring string;
 };
 
 
-struct ast_node *ast_identifier_create(struct parser_file *file,
-                                       char *sp, char *ep);
+struct ast_node *ast_identifier_create(struct inplocation *loc);
 void ast_identifier_print(struct ast_node *n, int depth);
 struct RFstring *ast_identifier_str(struct ast_node *n);
 
@@ -28,8 +28,8 @@ struct ast_xidentifier {
 };
 
 
-struct ast_node *ast_xidentifier_create(struct parser_file *f,
-                                        char *sp, char *ep,
+struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
+                                        struct inplocation_mark *end,
                                         struct ast_node *id,
                                         bool is_constant,
                                         struct ast_node *genr);

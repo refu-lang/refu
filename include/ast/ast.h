@@ -4,7 +4,7 @@
 #include <RFintrusive_list.h>
 #include <RFstring.h>
 
-#include <ast/location.h>
+#include <inplocation.h>
 #include <ast/identifier.h>
 #include <ast/typedecl.h>
 #include <ast/typedesc.h>
@@ -35,7 +35,7 @@ enum ast_type {
 
 struct ast_node {
     enum ast_type type;
-    struct ast_location location;
+    struct inplocation location;
     struct RFilist_node lh;
     struct RFilist_head children;
     union {
@@ -50,13 +50,19 @@ struct ast_node {
     };
 };
 
-struct ast_node *ast_node_create(enum ast_type type,
-                                 struct parser_file *f,
-                                 char *sp, char *ep);
+
+struct ast_node *ast_node_create_loc(enum ast_type type,
+                                     struct inplocation *loc);
+struct ast_node *ast_node_create_marks(enum ast_type type,
+                                       struct inplocation_mark *start,
+                                       struct inplocation_mark *end);
+struct ast_node *ast_node_create_ptrs(enum ast_type type,
+                                      struct inpfile *f,
+                                      char *sp, char *ep);
 
 void ast_node_destroy(struct ast_node *n);
 
-bool ast_node_set_end(struct ast_node *n, char *end);
+void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
 
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);
@@ -64,16 +70,24 @@ void ast_node_add_child(struct ast_node *parent,
 
 i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)
 {
-    return n->location.sp;
+    return n->location.start.p;
 }
 
 i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
 {
-    return n->location.ep;
+    return n->location.end.p;
+}
+i_INLINE_DECL struct inplocation_mark *ast_node_startmark(struct ast_node *n)
+{
+    return &n->location.start;
+}
+i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
+{
+    return &n->location.end;
 }
 
 const struct RFstring *ast_node_str(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
-void ast_print(struct ast_node *root, int depth);
+void ast_print(struct ast_node *root, struct inpfile *f, int depth);
 #endif

@@ -1,34 +1,43 @@
 #include <lexer/lexer.h>
+#include <inpfile.h>
+#include <ast/ast.h>
+
 #include "tokens_htable.h" /* include the gperf generated hash table */
+#include "common.h"
 
-#include <parser/file.h>
 
+i_INLINE_INS struct inplocation *token_get_loc(struct token *tok);
+i_INLINE_INS struct inplocation_mark *token_get_start(struct token *tok);
+i_INLINE_INS struct inplocation_mark *token_get_end(struct token *tok);
 
 static inline bool token_init(struct token *t,
                               enum token_type type,
-                              struct parser_file *f,
+                              struct inpfile *f,
                               char *sp, char *ep)
 {
     t->type = type;
-    if (!ast_location_init(&t->loc, f, sp, ep)) {
+    if (!inplocation_init(&t->location, f, sp, ep)) {
         return false;
     }
     return true;
 }
 
 static inline bool token_init_identifier(struct token *t,
-                                         struct parser_file *f,
+                                         struct inpfile *f,
                                          char *sp, char *ep)
 {
     if (!token_init(t, TOKEN_IDENTIFIER, f, sp, ep)) {
         return false;
     }
-    RF_STRING_SHALLOW_INIT(&t->value.string, sp, ep - sp + 1);
+    t->value.identifier = ast_identifier_create(&t->location);
+    if (!t->value.identifier) {
+        return false;
+    }
     return true;
 }
 
 static inline bool token_init_numeric(struct token *t,
-                                      struct parser_file *f,
+                                      struct inpfile *f,
                                       char *sp, char *ep)
 {
     struct RFstring temp;
@@ -42,18 +51,56 @@ static inline bool token_init_numeric(struct token *t,
     return true;
 }
 
-bool lexer_init(struct lexer *l)
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
 {
     darray_init(l->tokens);
     darray_init(l->indices);
+    l->tok_index = 0;
+    l->file = f;
+    l->info = info;
     return true;
 }
+
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info)
+{
+    struct lexer *ret;
+    RF_MALLOC(ret, sizeof(*ret), NULL);
+    if (!lexer_init(ret, f, info)) {
+        free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
 void lexer_deinit(struct lexer *l)
 {
+    struct token *tok;
+
+    // at least for now get free the identifiers in the tokens
+    // maybe later have an option to move memory ownership?
+    darray_foreach(tok, l->tokens) {
+        if (tok->type == TOKEN_IDENTIFIER) {
+            ast_node_destroy(tok->value.identifier);
+        }
+    }
+
     darray_free(l->tokens);
+
     darray_free(l->indices);
 }
 
+void lexer_destroy(struct lexer *l)
+{
+    lexer_deinit(l);
+    free(l);
+}
+
+// get the last token scanned by the lexer
+static struct token *lexer_get_top_token(struct lexer *l)
+{
+    RF_ASSERT(!darray_empty(l->tokens));
+    return &darray_top(l->tokens);
+}
 
 static bool lexer_add_token(struct lexer *l, enum token_type type,
                             char *sp, char* ep)
@@ -161,24 +208,22 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
     ((p_) == '+' || (p_) == '-' || (p_) == '>' || \
      (p_) == '<' || (p_) == '|' || (p_) == '=')
 
-bool lexer_scan(struct lexer *l, struct parser_file *f)
+bool lexer_scan(struct lexer *l)
 {
-
     char *lim;
     char *sp;
     char *p;
-    l->file = f;
 
-    sp = p = parser_file_sp(f);
-    lim = sp + rf_string_length_bytes(parser_file_str(f)) - 1;
+    sp = p = inpfile_sp(l->file);
+    lim = sp + rf_string_length_bytes(inpfile_str(l->file)) - 1;
     unsigned int i = 0;
     int z = 0;
     while (p < lim) {
         if (i == 14) {
             z = z + 1;
         }
-        parser_file_acc_ws(f);
-        p = parser_file_p(f);
+        inpfile_acc_ws(l->file);
+        p = inpfile_p(l->file);
         sp = p;
 
         if (COND_IDENTIFIER_BEGIN(*p)) {
@@ -219,14 +264,65 @@ bool lexer_scan(struct lexer *l, struct parser_file *f)
             }
             if (!got_token) {
                 // error unknown token
-                parser_file_synerr(f, -len,
-                                   "Unknown token encountered");
-                printf("err 4");
+                lexer_synerr(l, &lexer_get_top_token(l)->location,
+                               "Unknown token encountered");
                 return false;
             }
         }
-        parser_file_move(f, p - sp, p - sp);
+        inpfile_move(l->file, p - sp, p - sp);
         i++;
     }
     return true;
+}
+
+struct token *lexer_next_token(struct lexer *l)
+{
+    struct token *tok;
+    if (l->tok_index >= darray_size(l->tokens)) {
+        return NULL;
+    }
+    tok = &darray_item(l->tokens, l->tok_index);
+    l->tok_index ++;
+    return tok;
+}
+
+struct token *lexer_lookeahead(struct lexer *l, unsigned int num)
+{
+    struct token *tok;
+    unsigned int index = l->tok_index + num - 1;
+    if (index >= darray_size(l->tokens)) {
+        return NULL;
+    }
+    tok = &darray_item(l->tokens, index);
+    return tok;
+}
+
+struct token *lexer_last_token_valid(struct lexer *l)
+{
+    if (l->tok_index >= darray_size(l->tokens)) {
+        return &darray_item(l->tokens, l->tok_index - 1);
+    }
+    return &darray_item(l->tokens, l->tok_index);
+}
+
+i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);
+
+
+void lexer_push(struct lexer *l)
+{
+    darray_append(l->indices, l->tok_index);
+}
+
+void lexer_pop(struct lexer *l)
+{
+    RF_ASSERT(!darray_empty(l->indices));
+    (void)darray_pop(l->indices);
+}
+
+void lexer_rollback(struct lexer *l)
+{
+    unsigned int idx;
+    RF_ASSERT(!darray_empty(l->indices));
+    idx = darray_pop(l->indices);
+    l->tok_index = idx;
 }

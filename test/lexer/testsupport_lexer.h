@@ -5,6 +5,12 @@
 #include <stdbool.h>
 #include <check.h>
 
+#define TESTLEX_IDENTIFIER_INIT(driver_, loc_, str_)                  \
+    {.identifier =                                                \
+        front_testdriver_generate_identifier(driver_, loc_, str_) \
+        }
+
+
 #define ck_lexer_abort(file_, line_, msg_, ...)           \
     ck_abort_msg("Lexer test failed at : %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)

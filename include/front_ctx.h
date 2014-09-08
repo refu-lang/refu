@@ -1,0 +1,32 @@
+#ifndef LFR_FRONT_CTX_H
+#define LFR_FRONT_CTX_H
+
+#include <inpfile.h>
+
+struct lexer;
+struct parser;
+struct info_ctx;
+/**
+ * The front end context
+ * Defines and manages the front end pipeline an input file
+ * goes through until the intermediate representation.
+ */
+struct front_ctx {
+    /* Owned objects */
+    struct inpfile file;
+    struct lexer *lexer;
+    struct parser *parser;
+    struct info_ctx *info;
+};
+
+struct front_ctx *front_ctx_init(struct front_ctx *ctx,
+                                 const struct RFstring *filename);
+struct front_ctx *front_ctx_create(const struct RFstring *filename);
+
+void front_ctx_deinit(struct front_ctx *ctx);
+void front_ctx_destroy(struct front_ctx *ctx);
+
+
+bool front_ctx_process();
+
+#endif

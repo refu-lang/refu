@@ -4,7 +4,7 @@
 #include <RFintrusive_list.h>
 
 struct ast_node;
-struct parser_file;
+struct inplocation_mark;
 
 struct ast_fndecl {
     //! identifier of the name
@@ -17,9 +17,8 @@ struct ast_fndecl {
     struct ast_node *genr;
 };
 
-struct ast_node *ast_fndecl_create(struct parser_file *f,
-                                   char *sp,
-                                   char *ep, 
+struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
+                                   struct inplocation_mark *end,
                                    struct ast_node *name);
 
 void ast_fndecl_destroy(struct ast_node *n);

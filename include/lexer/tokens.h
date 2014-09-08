@@ -7,6 +7,7 @@ enum token_type {
     TOKEN_NUMERIC,
 
     /* keywords */
+    TOKEN_KW_CONST,
     TOKEN_KW_TYPE,
     TOKEN_KW_FUNCTION,
     TOKEN_KW_IF,

@@ -4,15 +4,14 @@
 #include <ast/identifier.h>
 #include <Utils/sanity.h>
 
-struct ast_node *ast_fndecl_create(struct parser_file *f,
-                                   char *sp,
-                                   char *ep,
+struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
+                                   struct inplocation_mark *end,
                                    struct ast_node *name)
 {
     struct ast_node *ret;
     RF_ASSERT(name->type == AST_IDENTIFIER);
 
-    ret = ast_node_create(AST_FUNCTION_DECLARATION, f, sp, ep);
+    ret = ast_node_create_marks(AST_FUNCTION_DECLARATION, start, end);
     if (!ret) {
         //TODO: memory error
         return NULL;

@@ -1,152 +1,44 @@
 #include <parser/parser.h>
 
-#include <ast/ast.h>
-#include <ast/identifier.h>
+#include <Utils/memory.h>
+
 #include <info/info.h>
 
-#include <parser/tokens.h>
-#include <parser/function.h>
-#include <parser/type.h>
-#include <parser/identifier.h>
-
-static struct ast_node * parser_file_acc_block(struct parser_file *f);
-static struct ast_node *parser_file_acc_stmt(struct parser_file *f);
-
-struct parser_ctx *parser_new()
+bool parser_init(struct parser *p,
+                 struct inpfile *file,
+                 struct lexer *lex,
+                 struct info_ctx *info)
 {
-    struct parser_ctx *ret;
-    RF_MALLOC(ret, sizeof(struct parser_ctx), return NULL);
 
-    rf_ilist_head_init(&ret->files);
-    ret->current_file = NULL;
-
-    return ret;
-}
-
-void parser_flush_messages(struct parser_ctx *parser)
-{
-    struct parser_file *f;
-    rf_ilist_for_each(&parser->files, f, lh) {
-        info_ctx_flush(f->info, stdout, MESSAGE_ANY);
-    }
-}
-
-/*
- * block = {
- */
-static struct ast_node *parser_file_acc_block(struct parser_file *f)
-{
-#if 0
-    struct ast_node *block;
-    struct ast_node *stmt;
-    block = ast_node_create(AST_BLOCK, );
-    if (!block) {
-        return NULL;
-    }
-
-    while (eof() || block_closes()) {
-        stmt = parser_accept_statement(parser);
-        if (!stmt) {
-            //problem
-        }
-        rf_ilist_add(&block->children, &stmt->lh);
-    }
-#endif
-
-    return NULL;
-}
-
-static bool parser_begin_parsing(struct parser_ctx *parser,
-                                 struct parser_file *file)
-{
-    struct ast_node *stmt;
-    char *beg = parser_string_beg(&file->pstr);
-
-    file->root = ast_node_create(AST_ROOT, file, beg,
-                                 beg + parser_string_len_from_beg(&file->pstr));
-
-    while ((stmt = parser_file_acc_stmt(file))) {
-        ast_node_add_child(file->root, stmt);
-    }
-    if (!parser_file_eof(file)) {
-        parser_file_synerr(file, 0, "Expected a statement");
-        return false;
-    }
-
+    p->file = file;
+    p->lexer = lex;
+    p->info = info;
     return true;
 }
-
-bool parser_process_file(struct parser_ctx *parser, const struct RFstring *name)
+struct parser *parser_create(struct inpfile *f,
+                             struct lexer *lex,
+                             struct info_ctx *info)
 {
-    struct parser_file *file = parser_file_new(name);
-    if (!file) {
-        ERROR("Could not open file \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(name));
-        return false;
+    struct parser *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    if (!parser_init(ret, f, lex, info)) {
+        free(ret);
+        return NULL;
     }
-
-    rf_ilist_add(&parser->files, &file->lh);
-    parser->current_file = file;
-
-    return parser_begin_parsing(parser, file);
+    return ret;
+}
+void parser_deinit(struct parser *p)
+{
+    p->lexer = NULL;
+    p->info = NULL;
+    p->file = NULL;
+}
+void parser_destroy(struct parser *p)
+{
+    free(p);
 }
 
-
-static struct ast_node *parser_file_acc_stmt(struct parser_file *f)
+void parser_flush_messages(struct parser *p)
 {
-    struct ast_node *stmt;
-    struct parser_offset proff;
-    parser_offset_copy(&proff, &f->offset);
-
-    if ((stmt = parser_file_acc_block(f))) {
-        return stmt;
-    } else if ((stmt = parser_file_acc_vardecl(f))) {
-        return stmt;
-    } else if ((stmt = parser_file_acc_typedecl(f))) {
-        return stmt;
-    } else if ((stmt = parser_file_acc_fndecl(f))) {
-        return stmt;
-    }
-
-    parser_file_move_to_offset(f, &proff);
-    return NULL;
+    info_ctx_flush(p->info, stdout, MESSAGE_ANY);
 }
-
-struct ast_node *parser_file_acc_vardecl(struct parser_file *f)
-{
-    struct ast_node *var_decl;
-    struct ast_node *id1;
-    struct ast_node *id2;
-    struct parser_offset proff;
-    char *sp;
-    char *ep;
-
-    parser_offset_copy(&proff, &f->offset);
-
-    parser_file_acc_ws(f);
-    sp = parser_file_p(f);
-
-    id1 = parser_file_acc_identifier(f);
-    if (!id1) {
-        goto not_found;
-    }
-    if(!parser_file_acc_string_ascii(f, &parser_tok_colon)) {
-        goto not_found;
-    }
-
-    /* from here and on not having an identifier is an error */
-    id2 = parser_file_acc_identifier(f);
-    if (!id2) {
-        parser_file_synerr(f, 0, "Expected an identifier");
-        goto not_found;
-    }
-    ep = parser_file_p(f);
-
-    var_decl = ast_vardecl_create(f, sp, ep, id1, id2);
-    return var_decl;
-
-not_found:
-    parser_file_move_to_offset(f, &proff);
-    return NULL;
-}
-
-

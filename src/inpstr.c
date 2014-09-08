@@ -1,35 +1,35 @@
-#include <parser/string.h>
+#include <inpstr.h>
 
 #include <Utils/sanity.h>
 
-bool parser_string_init(struct parser_string *s,
-                        struct RFstringx *input_str,
-                        struct RFarray *arr,
-                        unsigned int lines_num)
+bool inpstr_init(struct inpstr *s,
+                 struct RFstringx *input_str,
+                 struct RFarray *arr,
+                 unsigned int lines_num)
 {
     RF_STRINGX_SHALLOW_COPY(&s->str, input_str);
     s->lines_num = lines_num;
     RF_MALLOC(s->lines, sizeof(uint32_t) * lines_num, return false);
     memcpy(s->lines, arr->buff, sizeof(uint32_t) * lines_num);
-    
+
     return true;
 }
 
-void parser_string_deinit(struct parser_string *s)
+void inpstr_deinit(struct inpstr *s)
 {
     rf_stringx_deinit(&s->str);
     free(s->lines);
 }
 
-bool parser_string_ptr_to_linecol(struct parser_string *s,
-                                  char *p, unsigned int *line,
-                                  unsigned int *col)
+bool inpstr_ptr_to_linecol(struct inpstr *s,
+                           char *p, unsigned int *line,
+                           unsigned int *col)
 {
     uint32_t i;
     struct RFstring tmp;
     char *sp;
     bool found = false;
-    char *sbeg = parser_string_beg(s);
+    char *sbeg = inpstr_beg(s);
     uint32_t off = p - sbeg;
 
     RF_ASSERT(s->lines_num > 0);
@@ -42,7 +42,7 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
     }
     if (!found) {
         if (off >= s->lines[s->lines_num - 1] &&
-            off <= parser_string_len_from_beg(s)) {
+            off <= inpstr_len_from_beg(s)) {
             /* last line */
             i = s->lines_num - 1;
         } else {
@@ -60,7 +60,8 @@ bool parser_string_ptr_to_linecol(struct parser_string *s,
     return true;
 }
 
-i_INLINE_INS struct RFstringx *parser_string_str(struct parser_string *s);
-i_INLINE_INS char *parser_string_data(struct parser_string *s);
-i_INLINE_INS char *parser_string_beg(struct parser_string *s);
-i_INLINE_INS uint32_t parser_string_len_from_beg(struct parser_string *s);
+
+i_INLINE_INS struct RFstringx *inpstr_str(struct inpstr *s);
+i_INLINE_INS char *inpstr_data(struct inpstr *s);
+i_INLINE_INS char *inpstr_beg(struct inpstr *s);
+i_INLINE_INS uint32_t inpstr_len_from_beg(struct inpstr *s);

@@ -12,24 +12,27 @@ enum info_msg_type {
     MESSAGE_SYNTAX_ERROR = 0x10
 };
 
-struct ast_location;
+struct inplocation;
 
 struct info_ctx {
     RFilist_head msg_list;
     int verbose_level;
     struct RFstringx buff;
     bool syntax_error; /* maybe to avoid searching the whole list? */
+
+    // a pointer to the file all the info messages will refer to (not owned)
+    struct inpfile *file;
 };
 
 
-struct info_ctx *info_ctx_create();
+struct info_ctx *info_ctx_create(struct inpfile *file);
 void info_ctx_destroy(struct info_ctx *ctx);
 
 void info_print_cond(int vlevel, const char *fmt, ...);
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
-                        struct ast_location *loc,
+                        struct inplocation *loc,
                         const char *fmt,
                         ...);
 

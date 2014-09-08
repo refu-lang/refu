@@ -4,15 +4,55 @@
 
 #include <info/msg.h>
 #include <compiler_args.h>
-#include <ast/location.h>
-#include <parser/file.h>
+#include <inplocation.h>
+#include <inpfile.h>
 
 
 #define INFO_CTX_BUFF_SIZE 512 //TODO: move somewhere else
 
+struct info_ctx *info_ctx_create(struct inpfile *f)
+{
+    struct info_ctx *ctx;
+
+    RF_MALLOC(ctx, sizeof(*ctx), return NULL);
+    rf_ilist_head_init(&ctx->msg_list);
+    if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_SIZE, "")) {
+        free(ctx);
+        return NULL;
+    }
+    ctx->syntax_error = false;
+    ctx->file = f;
+
+    return ctx;
+}
+
+void info_ctx_destroy(struct info_ctx *ctx)
+{
+    struct info_msg *m;
+    struct info_msg *tmp;
+
+    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
+        info_msg_destroy(m);
+    }
+    rf_stringx_deinit(&ctx->buff);
+    free(ctx);
+}
+
+void info_print_cond(int vlevel, const char *fmt, ...)
+{
+    struct compiler_args *cargs = compiler_args_get();
+    if (cargs->verbose_level >= vlevel) {
+        va_list args;
+        va_start(args, fmt);
+        vprintf(fmt, args);
+        va_end(args);
+    }
+}
+
+
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
-                        struct ast_location *loc,
+                        struct inplocation *loc,
                         const char *fmt,
                         ...)
 {
@@ -55,21 +95,10 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
         if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
             RF_BITFLAG_ON(type, m->type)) {
 
-            info_msg_print(m, f);
+            info_msg_print(m, f, ctx->file);
             rf_ilist_delete_from(&ctx->msg_list, &m->ln);
             info_msg_destroy(m);
         }
-    }
-}
-
-void info_print_cond(int vlevel, const char *fmt, ...)
-{
-    struct compiler_args *cargs = compiler_args_get();
-    if (cargs->verbose_level >= vlevel) {
-        va_list args;
-        va_start(args, fmt);
-        vprintf(fmt, args);
-        va_end(args);
     }
 }
 
@@ -84,7 +113,7 @@ bool info_ctx_get(struct info_ctx *ctx,
     rf_ilist_for_each(&ctx->msg_list, m, ln) {
         if (RF_BITFLAG_ON(type, MESSAGE_ANY) ||
             RF_BITFLAG_ON(type, m->type)) {
-            if (!info_msg_get_formatted(m, str)) {
+            if (!info_msg_get_formatted(m, str, ctx->file)) {
                 return false;
             }
             rf_stringx_move_end(str);
@@ -92,32 +121,4 @@ bool info_ctx_get(struct info_ctx *ctx,
     }
     rf_stringx_reset(str);
     return true;
-}
-
-
-struct info_ctx *info_ctx_create()
-{
-    struct info_ctx *ctx;
-
-    RF_MALLOC(ctx, sizeof(*ctx), return NULL);
-    rf_ilist_head_init(&ctx->msg_list);
-    if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_SIZE, "")) {
-        free(ctx);
-        return NULL;
-    }
-    ctx->syntax_error = false;
-
-    return ctx;
-}
-
-void info_ctx_destroy(struct info_ctx *ctx)
-{
-    struct info_msg *m;
-    struct info_msg *tmp;
-
-    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
-        info_msg_destroy(m);
-    }
-    rf_stringx_deinit(&ctx->buff);
-    free(ctx);
 }
