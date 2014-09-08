@@ -162,11 +162,7 @@ char *parser_file_line_p(struct parser_file *f, unsigned int line)
         return NULL;
     }
 
-    if (line == 0) {
-        return parser_file_sp(f);
-    } else {
-        return parser_file_sp(f) + s->lines[line - 1] + 1;
-    }
+    return parser_file_sp(f) + s->lines[line];
 }
 
 i_INLINE_INS bool parser_file_has_synerr(struct parser_file *f);

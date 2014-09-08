@@ -157,8 +157,9 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
     return true;
 }
 
-#define COND_TOKEN_AMBIG1(p_) \
-    ((p_) == '+' || (p_) == '-' || (p_) == '>' || (p_) == '<' || (p_) == '|')
+#define COND_TOKEN_AMBIG1(p_)                     \
+    ((p_) == '+' || (p_) == '-' || (p_) == '>' || \
+     (p_) == '<' || (p_) == '|' || (p_) == '=')
 
 bool lexer_scan(struct lexer *l, struct parser_file *f)
 {
