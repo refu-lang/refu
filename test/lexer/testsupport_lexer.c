@@ -16,13 +16,13 @@ static bool tokens_cmp(struct token *expected,
         return false;
     }
 
-    if (!inplocation_equal(&expected->loc, &got->loc)) {
+    if (!inplocation_equal(token_get_loc(expected), token_get_loc(got))) {
         ck_lexer_abort(filename, line,
                        "Expected token %d to have location:\n"
                        INPLOCATION_FMT2"\nbut it has location:\n"
                        INPLOCATION_FMT2, index,
-                       INPLOCATION_ARG2(f, &expected->loc),
-                       INPLOCATION_ARG2(f, &got->loc));
+                       INPLOCATION_ARG2(f, token_get_loc(expected)),
+                       INPLOCATION_ARG2(f, token_get_loc(got)));
         return false;
     }
 

@@ -16,8 +16,12 @@ static struct ast_node *parser_acc_vardecl(struct parser *p);
 bool parser_process_file(struct parser *p)
 {
     struct ast_node *stmt;
-    char *beg = inpstr_beg(&p->file->str);
+    char *beg;
+    // as soon as parsing begin let's move ownership of
+    // identifier node freeing to whoever manages the AST
+    lexer_renounce_own_identifiers(p->lexer);
 
+    beg = inpstr_beg(&p->file->str);
     p->root = ast_node_create_ptrs(
         AST_ROOT, p->file, beg,
         beg + inpstr_len_from_beg(&p->file->str));

@@ -4,11 +4,10 @@
 #include <check.h>
 #include <Data_Structures/darray.h>
 #include <inpfile.h>
-
+#include <front_ctx.h>
 
 struct front_testdriver {
-    struct inpfile f;
-    struct info_ctx *info;
+    struct front_ctx front;
     struct RFstringx buffstr;
     //! A buffer of ast node pointers for quick identifier checks
     //! and easy freeing at test teardown
@@ -28,10 +27,10 @@ struct inpfile *front_testdriver_get_file(struct front_testdriver *d);
 
 /**
  * Assign a string to the first/only(for now?) file of the driver
- * and return that file
+ * and return the frontend context
  */
-struct inpfile *front_testdriver_assign(struct front_testdriver *d,
-                                        const struct RFstring *s);
+struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
+                                          const struct RFstring *s);
 
 /**
  * Returns a pointer to the buffer string after having populated it with

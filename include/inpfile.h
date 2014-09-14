@@ -117,6 +117,14 @@ i_INLINE_DECL struct inpoffset *inpfile_offset(struct inpfile *f)
 }
 
 /**
+ * Check if the file's string internal pointer is at the end of the file
+ */
+i_INLINE_DECL bool inpfile_at_eof(struct inpfile *f)
+{
+    return rf_string_length_bytes(&f->str.str) == 0;
+}
+
+/**
  * Returns if there has been a syntax error during parsing the file
  */
 i_INLINE_DECL bool inpfile_has_synerr(struct inpfile *f)

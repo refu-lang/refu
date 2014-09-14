@@ -12,6 +12,8 @@ struct parser;
  * generic_decls' = TOKEN_OP_COMMA generic_decl_single generic_decls'
  *                / EMPTY
  *
+ * @TODO: Think what the first identifier should be here
+ *        In the tests, "type" was making the test fail since it's a keyword
  * generic_decl_single = identifier identifier
  */
 struct ast_node *parser_acc_genrdecl(struct parser *p);

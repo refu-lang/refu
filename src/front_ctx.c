@@ -4,8 +4,8 @@
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 
-struct front_ctx *front_ctx_init(struct front_ctx *ctx,
-                                 const struct RFstring *filename)
+bool front_ctx_init(struct front_ctx *ctx,
+                    const struct RFstring *filename)
 {
     if (!inpfile_init(&ctx->file, filename)) {
         goto free_info;

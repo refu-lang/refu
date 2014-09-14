@@ -1,8 +1,11 @@
 #include "testsupport_front.h"
 
 #include <refu.h>
-#include <ast/ast.h>
 #include <Definitions/threadspecific.h>
+
+#include <ast/ast.h>
+#include <lexer/lexer.h>
+#include <parser/parser.h>
 
 i_THREAD__ struct front_testdriver __front_testdriver;
 
@@ -13,7 +16,7 @@ struct front_testdriver *get_front_testdriver()
 
 struct inpfile *front_testdriver_get_file(struct front_testdriver *d)
 {
-    return &d->f;
+    return &d->front.file;
 }
 static bool inpfile_dummy_init(struct inpfile *f, struct info_ctx *info)
 {
@@ -82,7 +85,7 @@ end:
 
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 {
-    if (!info_ctx_get(d->f.info, MESSAGE_ANY, &d->buffstr)) {
+    if (!info_ctx_get(d->front.info, MESSAGE_ANY, &d->buffstr)) {
         return NULL;
     }
     return &d->buffstr;
@@ -91,16 +94,45 @@ struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 bool front_testdriver_init(struct front_testdriver *d)
 {
     bool ret;
-    ret = inpfile_dummy_init(&d->f, d->info);
+    ret = inpfile_dummy_init(&d->front.file, d->front.info);
     if (!ret) {
         return false;
     }
-    d->info = info_ctx_create(&d->f);
-    if (!d->info) {
-        return false;
-    }
+
     darray_init(d->nodes);
-    return rf_stringx_init_buff(&d->buffstr, 1024, "");
+
+    if (!rf_stringx_init_buff(&d->buffstr, 1024, "")) {
+        goto free_nodes;
+    }
+
+    d->front.info = info_ctx_create(&d->front.file);
+    if (!d->front.info) {
+        goto free_buff;
+    }
+
+    d->front.lexer = lexer_create(&d->front.file, d->front.info);
+    if (!d->front.lexer) {
+        goto free_info;
+    }
+
+    d->front.parser = parser_create(&d->front.file,
+                                    d->front.lexer,
+                                    d->front.info);
+    if (!d->front.parser) {
+        goto free_lexer;
+    }
+
+    return true;
+free_lexer:
+    lexer_destroy(d->front.lexer);
+free_info:
+    info_ctx_destroy(d->front.info);
+free_buff:
+    rf_stringx_deinit(&d->buffstr);
+free_nodes:
+    darray_free(d->nodes);
+    inpfile_dummy_deinit(&d->front.file);
+    return false;
 }
 void front_testdriver_deinit(struct front_testdriver *d)
 {
@@ -110,14 +142,21 @@ void front_testdriver_deinit(struct front_testdriver *d)
         ast_node_destroy(*n);
     }
     darray_free(d->nodes);
-    info_ctx_destroy(d->info);
-    inpfile_dummy_deinit(&d->f);
+    inpfile_dummy_deinit(&d->front.file);
+
+    lexer_destroy(d->front.lexer);
+    parser_destroy(d->front.parser);
+    info_ctx_destroy(d->front.info);
 }
 
-struct inpfile *front_testdriver_assign(struct front_testdriver *d,
-                                        const struct RFstring *s)
+struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
+                                          const struct RFstring *s)
 {
-    return inpfile_dummy_assign(&d->f, s) ? &d->f : NULL;
+    if (!inpfile_dummy_assign(&d->front.file, s)) {
+        return NULL;
+    }
+
+    return &d->front;
 }
 
 struct ast_node *front_testdriver_generate_identifier(

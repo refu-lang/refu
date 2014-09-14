@@ -58,6 +58,7 @@ bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
     l->tok_index = 0;
     l->file = f;
     l->info = info;
+    l->own_identifier_ptrs = true;
     return true;
 }
 
@@ -76,16 +77,15 @@ void lexer_deinit(struct lexer *l)
 {
     struct token *tok;
 
-    // at least for now get free the identifiers in the tokens
-    // maybe later have an option to move memory ownership?
-    darray_foreach(tok, l->tokens) {
-        if (tok->type == TOKEN_IDENTIFIER) {
-            ast_node_destroy(tok->value.identifier);
+    if (l->own_identifier_ptrs) {
+        darray_foreach(tok, l->tokens) {
+            if (tok->type == TOKEN_IDENTIFIER) {
+                ast_node_destroy(tok->value.identifier);
+            }
         }
     }
 
     darray_free(l->tokens);
-
     darray_free(l->indices);
 }
 
@@ -217,12 +217,11 @@ bool lexer_scan(struct lexer *l)
     sp = p = inpfile_sp(l->file);
     lim = sp + rf_string_length_bytes(inpfile_str(l->file)) - 1;
     unsigned int i = 0;
-    int z = 0;
-    while (p < lim) {
-        if (i == 14) {
-            z = z + 1;
-        }
+    while (p <= lim) {
         inpfile_acc_ws(l->file);
+        if (inpfile_at_eof(l->file)) {
+            break;
+        }
         p = inpfile_p(l->file);
         sp = p;
 
@@ -240,11 +239,12 @@ bool lexer_scan(struct lexer *l)
             const struct internal_token *itoken2;
             bool got_token = false;
             char * toksp = p;
+
             while (len <= MAX_WORD_LENGTH) {
                 itoken = lexer_lexeme_is_token(p, len);
                 if (itoken) {
                     /* if more than 1 tokens may start with that character */
-                    if (COND_TOKEN_AMBIG1(*toksp)) {
+                    if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
                         len = 2;
                         itoken2 = lexer_lexeme_is_token(p, len);
                         if (itoken2) {
@@ -275,10 +275,14 @@ bool lexer_scan(struct lexer *l)
     return true;
 }
 
+// convenience macro to check if a token index is out of bounds for the lexer
+#define LEXER_IND_OOB(lex_, ind_)               \
+    (ind_ >= darray_size((lex_)->tokens))
+
 struct token *lexer_next_token(struct lexer *l)
 {
     struct token *tok;
-    if (l->tok_index >= darray_size(l->tokens)) {
+    if (LEXER_IND_OOB(l, l->tok_index)) {
         return NULL;
     }
     tok = &darray_item(l->tokens, l->tok_index);
@@ -290,7 +294,7 @@ struct token *lexer_lookeahead(struct lexer *l, unsigned int num)
 {
     struct token *tok;
     unsigned int index = l->tok_index + num - 1;
-    if (index >= darray_size(l->tokens)) {
+    if (LEXER_IND_OOB(l, index)) {
         return NULL;
     }
     tok = &darray_item(l->tokens, index);
@@ -299,7 +303,7 @@ struct token *lexer_lookeahead(struct lexer *l, unsigned int num)
 
 struct token *lexer_last_token_valid(struct lexer *l)
 {
-    if (l->tok_index >= darray_size(l->tokens)) {
+    if (LEXER_IND_OOB(l, l->tok_index)) {
         return &darray_item(l->tokens, l->tok_index - 1);
     }
     return &darray_item(l->tokens, l->tok_index);
@@ -326,3 +330,4 @@ void lexer_rollback(struct lexer *l)
     idx = darray_pop(l->indices);
     l->tok_index = idx;
 }
+i_INLINE_INS void lexer_renounce_own_identifiers(struct lexer *l);

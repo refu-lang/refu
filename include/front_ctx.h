@@ -19,14 +19,14 @@ struct front_ctx {
     struct info_ctx *info;
 };
 
-struct front_ctx *front_ctx_init(struct front_ctx *ctx,
-                                 const struct RFstring *filename);
+bool front_ctx_init(struct front_ctx *ctx,
+                    const struct RFstring *filename);
 struct front_ctx *front_ctx_create(const struct RFstring *filename);
 
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
 
 
-bool front_ctx_process();
+bool front_ctx_process(struct front_ctx *ctx);
 
 #endif

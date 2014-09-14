@@ -12,11 +12,13 @@
 
 START_TEST(test_acc_ws_simple) {
     struct inpfile *f;
+    struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("  asd    ");
     struct front_testdriver *d = get_front_testdriver();
-    f = front_testdriver_assign(d, &s);
+    front = front_testdriver_assign(d, &s);
+    f = &front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
     inpfile_acc_ws(f);
@@ -28,12 +30,14 @@ START_TEST(test_acc_ws_simple) {
 
 START_TEST(test_acc_ws_simple_nl) {
     struct inpfile *f;
+    struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         " \n \r \t asd \n   ");
     struct front_testdriver *d = get_front_testdriver();
-    f = front_testdriver_assign(d, &s);
+    front = front_testdriver_assign(d, &s);
+    f = &front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
     inpfile_acc_ws(f);
@@ -45,11 +49,13 @@ START_TEST(test_acc_ws_simple_nl) {
 
 START_TEST(test_acc_ws_full) {
     struct inpfile *f;
+    struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(" \n \r \t \n \n  ");
     struct front_testdriver *d = get_front_testdriver();
-    f = front_testdriver_assign(d, &s);
+    front = front_testdriver_assign(d, &s);
+    f = &front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
     inpfile_acc_ws(f);
@@ -61,12 +67,14 @@ START_TEST(test_acc_ws_full) {
 
 START_TEST(test_acc_ws_none) {
     struct inpfile *f;
+    struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "identifier_before_space \n \r \t");
     struct front_testdriver *d = get_front_testdriver();
-    f = front_testdriver_assign(d, &s);
+    front = front_testdriver_assign(d, &s);
+    f = &front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
     inpfile_acc_ws(f);
@@ -78,11 +86,13 @@ START_TEST(test_acc_ws_none) {
 
 START_TEST(test_acc_ws_none_empty) {
     struct inpfile *f;
+    struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("");
     struct front_testdriver *d = get_front_testdriver();
-    f = front_testdriver_assign(d, &s);
+    front = front_testdriver_assign(d, &s);
+    f = &front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
     inpfile_acc_ws(f);

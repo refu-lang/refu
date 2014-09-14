@@ -41,6 +41,9 @@ struct lexer {
     unsigned int tok_index;
     struct inpfile *file;
     struct info_ctx *info;
+    //! Denotes whether or not the lexer should free
+    //! the memory of identifier tokens at deinitialization
+    bool own_identifier_ptrs;
 };
 
 
@@ -63,5 +66,8 @@ void lexer_push(struct lexer *l);
 void lexer_pop(struct lexer *l);
 void lexer_rollback(struct lexer *l);
 
-
+i_INLINE_DECL void lexer_renounce_own_identifiers(struct lexer *l)
+{
+    l->own_identifier_ptrs = false;
+}
 #endif

@@ -138,5 +138,6 @@ i_INLINE_INS char *inpfile_sp(struct inpfile *f);
 i_INLINE_INS struct RFstringx *inpfile_str(struct inpfile *f);
 i_INLINE_INS struct RFstring *inpfile_name(struct inpfile *f);
 i_INLINE_INS struct inpoffset *inpfile_offset(struct inpfile *f);
+i_INLINE_INS bool inpfile_at_eof(struct inpfile *f);
 i_INLINE_INS bool inpfile_has_synerr(struct inpfile *f);
 
