@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <check.h>
 
-#define TESTLEX_IDENTIFIER_INIT(driver_, loc_, str_)                  \
+#define TESTLEX_IDENTIFIER_INIT(driver_, loc_, str_)              \
     {.identifier =                                                \
         front_testdriver_generate_identifier(driver_, loc_, str_) \
         }

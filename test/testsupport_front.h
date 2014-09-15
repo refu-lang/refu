@@ -1,5 +1,6 @@
 #ifndef LFR_TESTSUPPORT_FRONTEND_H
 #define LFR_TESTSUPPORT_FRONTEND_H
+
 #include <stdbool.h>
 #include <check.h>
 #include <Data_Structures/darray.h>
@@ -81,33 +82,6 @@ void teardown_front_tests();
         ck_assert_uint_eq(off_->lines_moved, i_lines_);                 \
     } while(0)
 
-
-#define ck_assert_parsed_node(n_, d_, msg_)                             \
-    do {                                                                \
-        if (!(n_)) {                                                    \
-            struct RFstringx *tmp_ = parser_testdriver_geterrors(d_);   \
-            if (tmp_) {                                                 \
-                ck_abort_msg(msg_" -- with parser errors\n"RF_STR_PF_FMT, \
-                             RF_STR_PF_ARG(tmp_));                      \
-            } else {                                                    \
-                ck_abort_msg(msg_" -- with no parser errors");          \
-            }                                                           \
-        }                                                               \
-    } while(0)
-
-#define ck_assert_parser_error(d_, err_)                                \
-        do {                                                            \
-            static const struct RFstring i_tmps_ = RF_STRING_STATIC_INIT(err_); \
-            struct RFstringx *i_tmp_ = parser_testdriver_geterrors(d_); \
-            if (!i_tmp_) {                                              \
-                ck_abort_msg("Expected parsing error but none found");  \
-            }                                                           \
-            ck_assert_msg(                                              \
-                rf_string_equal(&i_tmps_, i_tmp_),                      \
-                "Expected parsing error does not match. Expected:\n"   \
-                RF_STR_PF_FMT"\nGot:\n"RF_STR_PF_FMT,                   \
-                RF_STR_PF_ARG(&i_tmps_), RF_STR_PF_ARG(i_tmp_));        \
-        } while(0)
 
 #define check_ast_match(got_, expect_, inpfile_)            \
         check_ast_match_impl(got_, expect_, inpfile_, __FILE__, __LINE__)

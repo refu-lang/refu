@@ -10,102 +10,95 @@
 #include <lexer/lexer.h>
 
 #include "../testsupport_front.h"
+#include "testsupport_parser.h"
 
 #include CLIB_TEST_HELPERS
 
 START_TEST(test_acc_genrdecl_simple1) {
     struct ast_node *n;
     struct front_ctx *front;
-    struct lexer *lex;
-    struct parser *parser;
+    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a>");
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
-    lex = front->lexer;
-    parser = front->parser;
+    file = &front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
-#if 0
-    struct ast_node *id1 = ast_identifier_create(f, sp + 1, sp + 4);
-    struct ast_node *id2 = ast_identifier_create(f, sp + 6, sp + 6);
-    struct ast_node *genr = ast_genrdecl_create(f, sp, sp + 7);
-    ast_node_add_child(genr, ast_genrtype_create(f, sp + 1, sp + 6, id1, id2));
-#endif
-    ck_assert(lexer_scan(lex));
-    lexer_renounce_own_identifiers(lex);
-    n = parser_acc_genrdecl(parser);
-    /* ck_assert_parsed_node(n, d, "Could not parse generic type declaration"); */
-    /* check_ast_match(n, genr); */
+    testsupport_parser_identifier_create(id1, file, 0, 1, 0, 4);
+    testsupport_parser_identifier_create(id2, file, 0, 6, 0, 6);
+    struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
+    testsupport_parser_node_create(genr, genrdecl, file, 0, 0, 0, 7);
+    ast_node_add_child(genr, gtype1);
 
-    ast_node_destroy(n);
-    /* ast_node_destroy(genr); */
-} END_TEST
-
-#if 0
-START_TEST(test_acc_genrdecl_simple2) {
-    char *sp;
-    struct ast_node *n;
-    struct parser_file *f;
-    static const struct RFstring s = RF_STRING_STATIC_INIT("  <  Type a >  ");
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_p(f);
-
-    struct ast_node *id1 = ast_identifier_create(f, sp + 5, sp + 8);
-    struct ast_node *id2 = ast_identifier_create(f, sp + 10, sp + 10);
-    struct ast_node *genr = ast_genrdecl_create(f, sp + 2, sp + 12);
-    ast_node_add_child(genr, ast_genrtype_create(f, sp + 5 , sp + 10, id1, id2));
-
-    n = parser_file_acc_genrdecl(f);
-    ck_assert_parsed_node(n, d, "Could not parse generic type declaration");
-    check_ast_match(n, genr);
+    ck_test_parse_as(n, genrdecl, d, "generic type declaration", genr);
 
     ast_node_destroy(n);
     ast_node_destroy(genr);
 } END_TEST
+
+
+START_TEST(test_acc_genrdecl_simple2) {
+    struct ast_node *n;
+    struct front_ctx *front;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("  <  Type a >  ");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    file = &front->file;
+    ck_assert_msg(front, "Failed to assign string to file ");
+
+    testsupport_parser_identifier_create(id1, file, 0, 5, 0, 8);
+    testsupport_parser_identifier_create(id2, file, 0, 10, 0, 10);
+    struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
+    testsupport_parser_node_create(genr, genrdecl, file, 0, 2, 0, 12);
+    ast_node_add_child(genr, gtype1);
+
+    ck_test_parse_as(n, genrdecl, d, "generic type declaration", genr);
+
+    ast_node_destroy(n);
+    ast_node_destroy(genr);
+} END_TEST
+
 
 START_TEST(test_acc_genrdecl_simple3) {
-    char *sp;
     struct ast_node *n;
-    struct parser_file *f;
+    struct front_ctx *front;
+    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a, Type b>");
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
-    sp = parser_file_p(f);
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    file = &front->file;
+    ck_assert_msg(front, "Failed to assign string to file ");
 
-    struct ast_node *id1 = ast_identifier_create(f, sp + 1, sp + 4);
-    struct ast_node *id2 = ast_identifier_create(f, sp + 6, sp + 6);
-    struct ast_node *genrtype1 = ast_genrtype_create(f, sp + 1,
-                                                     sp + 6, id1, id2);
-    struct ast_node *id3 = ast_identifier_create(f, sp + 9, sp + 12);
-    struct ast_node *id4 = ast_identifier_create(f, sp + 14, sp + 14);
-    struct ast_node *genrtype2 = ast_genrtype_create(f, sp + 9,
-                                                     sp + 14, id3, id4);
-    struct ast_node *genr = ast_genrdecl_create(f, sp, sp + 15);
-    ast_node_add_child(genr, genrtype1);
-    ast_node_add_child(genr, genrtype2);
 
-    n = parser_file_acc_genrdecl(f);
-    ck_assert_parsed_node(n, d, "Could not parse generic type declaration");
-    check_ast_match(n, genr);
+    testsupport_parser_identifier_create(id1, file, 0, 1, 0, 4);
+    testsupport_parser_identifier_create(id2, file, 0, 6, 0, 6);
+    struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
+
+    testsupport_parser_identifier_create(id3, file, 0, 9, 0, 12);
+    testsupport_parser_identifier_create(id4, file, 0, 14, 0, 14);
+    struct ast_node *gtype2 = ast_genrtype_create(id3, id4);
+    testsupport_parser_node_create(genr, genrdecl, file, 0, 0, 0, 15);
+    ast_node_add_child(genr, gtype1);
+    ast_node_add_child(genr, gtype2);
+
+    ck_test_parse_as(n, genrdecl, d, "generic type declaration", genr);
 
     ast_node_destroy(n);
     ast_node_destroy(genr);
 } END_TEST
-
 
 
 START_TEST(test_acc_genrdecl_fail1) {
     struct ast_node *n;
-    struct parser_file *f;
+    struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type ");
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
 
-    n = parser_file_acc_genrdecl(f);
+    testsupport_parser_prepare(d);
+    n = parser_acc_genrdecl(front->parser);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
     ck_assert_parser_error(
         d,
@@ -113,20 +106,18 @@ START_TEST(test_acc_genrdecl_fail1) {
         "<type \n"
         "      ^\n"
     );
-
-    ck_assert_driver_offset_eq(d, 0, 0, 0);
-    ck_assert_rf_str_eq_cstr(parser_file_str(f), "<type ");
 } END_TEST
 
 START_TEST(test_acc_genrdecl_fail2) {
     struct ast_node *n;
-    struct parser_file *f;
+    struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a bbb");
-    struct parser_testdriver *d = get_parser_testdriver();
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
 
-    n = parser_file_acc_genrdecl(f);
+    testsupport_parser_prepare(d);
+    n = parser_acc_genrdecl(front->parser);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
     ck_assert_parser_error(
         d,
@@ -136,11 +127,8 @@ START_TEST(test_acc_genrdecl_fail2) {
         "        ^\n"
     );
 
-    ck_assert_driver_offset_eq(d, 0, 0, 0);
-    ck_assert_rf_str_eq_cstr(parser_file_str(f), "<type a bbb");
 } END_TEST
 
-#endif
 
 Suite *parser_generics_suite_create(void)
 {
@@ -151,13 +139,12 @@ Suite *parser_generics_suite_create(void)
                               setup_front_tests,
                               teardown_front_tests);
     tcase_add_test(genrdecl, test_acc_genrdecl_simple1);
-#if 0
     tcase_add_test(genrdecl, test_acc_genrdecl_simple2);
     tcase_add_test(genrdecl, test_acc_genrdecl_simple3);
 
     tcase_add_test(genrdecl, test_acc_genrdecl_fail1);
     tcase_add_test(genrdecl, test_acc_genrdecl_fail2);
-#endif
+
     suite_add_tcase(s, genrdecl);
 
     return s;

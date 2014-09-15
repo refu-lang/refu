@@ -15,6 +15,7 @@ struct ast_identifier {
 
 
 struct ast_node *ast_identifier_create(struct inplocation *loc);
+struct ast_node *ast_identifier_create(struct inplocation *loc);
 void ast_identifier_print(struct ast_node *n, int depth);
 struct RFstring *ast_identifier_str(struct ast_node *n);
 
