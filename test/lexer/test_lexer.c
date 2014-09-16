@@ -277,6 +277,42 @@ START_TEST(test_lexer_scan_tokens_crammed) {
 
 } END_TEST
 
+START_TEST(test_lexer_scan_identifier_at_end) {
+    struct front_ctx *front;
+    struct inpfile *f;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a bbb");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    f = &front->file;
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_OP_LT,
+            .location=LOC_INIT(f, 0, 0, 0, 0),
+        },
+        {
+            .type=TOKEN_IDENTIFIER,
+            .location=LOC_INIT(f, 0, 1, 0, 4),
+            TESTLEX_IDENTIFIER_INIT(d, 0, "Type")
+        },
+        {
+            .type=TOKEN_IDENTIFIER,
+            .location=LOC_INIT(f, 0, 6, 0, 6),
+            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
+        },
+        {
+            .type=TOKEN_IDENTIFIER,
+            .location=LOC_INIT(f, 0, 8, 0, 10),
+            TESTLEX_IDENTIFIER_INIT(d, 0, "bbb")
+        }
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected, 4);
+
+} END_TEST
+
 Suite *lexer_suite_create(void)
 {
     Suite *s = suite_create("lexer");
@@ -288,6 +324,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan, test_lexer_scan_tokens_1);
     tcase_add_test(scan, test_lexer_scan_tokens_2);
     tcase_add_test(scan, test_lexer_scan_tokens_crammed);
+    tcase_add_test(scan, test_lexer_scan_identifier_at_end);
 
     suite_add_tcase(s, scan);
     return s;

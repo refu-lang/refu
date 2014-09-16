@@ -74,6 +74,7 @@ unit_tests_files = [
     'lexer/test_lexer.c',
     'lexer/testsupport_lexer.c',
 
+    'parser/testsupport_parser.c',
     # 'parser/test_parser_typedesc.c',
     'parser/test_parser_generics.c',
 ]

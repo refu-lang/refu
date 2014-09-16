@@ -59,6 +59,7 @@ bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
     l->file = f;
     l->info = info;
     l->own_identifier_ptrs = true;
+    l->at_eof = false;
     return true;
 }
 
@@ -173,7 +174,9 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
         *ret_p = p + 1;
     } else {
         *ret_p = p;
+        l->at_eof = true;
     }
+
     return true;
 }
 
@@ -216,8 +219,9 @@ bool lexer_scan(struct lexer *l)
 
     sp = p = inpfile_sp(l->file);
     lim = sp + rf_string_length_bytes(inpfile_str(l->file)) - 1;
-    unsigned int i = 0;
-    while (p <= lim) {
+
+   /* TODO: combine inpfile_at_eof with lexer eof check */
+    while (!l->at_eof && p <= lim) {
         inpfile_acc_ws(l->file);
         if (inpfile_at_eof(l->file)) {
             break;
@@ -270,7 +274,6 @@ bool lexer_scan(struct lexer *l)
             }
         }
         inpfile_move(l->file, p - sp, p - sp);
-        i++;
     }
     return true;
 }

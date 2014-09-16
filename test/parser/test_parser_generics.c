@@ -8,6 +8,7 @@
 #include "../../src/parser/recursive_descent/generics.h"
 #include <ast/ast.h>
 #include <lexer/lexer.h>
+#include <info/msg.h>
 
 #include "../testsupport_front.h"
 #include "testsupport_parser.h"
@@ -97,15 +98,17 @@ START_TEST(test_acc_genrdecl_fail1) {
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
-    testsupport_parser_prepare(d);
+    ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_genrdecl(front->parser);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
-    ck_assert_parser_error(
-        d,
-        "test_file:0:6 error: Expected an identifier for the generic type name\n"
-        "<type \n"
-        "      ^\n"
-    );
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT(&front->file,
+                            "Expected an identifier for the generic type name",
+                            0, 6, 0, 0),
+    };
+
+    ck_assert_parser_errors(front->info, errors);
 } END_TEST
 
 START_TEST(test_acc_genrdecl_fail2) {
@@ -116,17 +119,17 @@ START_TEST(test_acc_genrdecl_fail2) {
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
-    testsupport_parser_prepare(d);
+    ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_genrdecl(front->parser);
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
-    ck_assert_parser_error(
-        d,
-        "test_file:0:8 error: "
-        "Expected either a ',' or a '>' at generic declaration\n"
-        "<type a bbb\n"
-        "        ^\n"
-    );
 
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT(
+            &front->file,
+            "Expected either a ',' or a '>' at generic declaration",
+            0, 8, 0, 0),
+    };
+    ck_assert_parser_errors(front->info, errors);
 } END_TEST
 
 

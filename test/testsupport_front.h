@@ -53,10 +53,6 @@ void setup_front_tests();
 void teardown_front_tests();
 
 
-#define ck_astcheck_abort(file_, line_, msg_, ...)      \
-    ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_,  \
-                 file_, line_, __VA_ARGS__)
-
 #define ck_assert_ast_node_loc(i_node_, i_sline_, i_scol_, i_eline_, i_ecol_) \
     do {                                                                \
         struct inplocation *loc = &(i_node_)->location;                 \

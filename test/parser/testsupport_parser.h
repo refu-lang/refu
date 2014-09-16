@@ -1,6 +1,8 @@
 #ifndef LFR_TESTSUPPORT_PARSER_H
 #define LFR_TESTSUPPORT_PARSER_H
 
+#include <stdbool.h>
+#include <check.h>
 #include <Preprocessor/rf_xmacro_argcount.h>
 
 /**
@@ -73,18 +75,26 @@
             }                                                           \
         } while(0)
 
-#define ck_assert_parser_error(d_, err_)                                \
-        do {                                                            \
-            static const struct RFstring i_tmps_ = RF_STRING_STATIC_INIT(err_); \
-            struct RFstringx *i_tmp_ = front_testdriver_geterrors(d_);  \
-            if (!i_tmp_) {                                              \
-                ck_abort_msg("Expected parsing error but none found");  \
-            }                                                           \
-            ck_assert_msg(                                              \
-                rf_string_equal(&i_tmps_, i_tmp_),                      \
-                "Expected parsing error does not match. Expected:\n"    \
-                RF_STR_PF_FMT"\nGot:\n"RF_STR_PF_FMT,                   \
-                RF_STR_PF_ARG(&i_tmps_), RF_STR_PF_ARG(i_tmp_));        \
-        } while(0)
 
+#define TESTPARSER_MSG_INIT(file_, msg_, sl_, sc_, el_, ec_)  \
+        {                                                     \
+            .s = RF_STRING_STATIC_INIT(msg_),                 \
+            .type = 0,                                        \
+            .loc = LOC_INIT(file_, sl_, sc_, el_, ec_)        \
+        }
+
+#define ck_assert_parser_errors(info_, expected_arr_)                   \
+        ck_assert_parser_errors_impl(                                   \
+            info_,                                                      \
+            expected_arr_,                                              \
+            sizeof(expected_arr_)/sizeof(struct info_msg),              \
+            __FILE__, __LINE__)
+
+struct info_msg;
+struct info_ctx;
+bool ck_assert_parser_errors_impl(struct info_ctx *info,
+                                  struct info_msg *errors,
+                                  unsigned num,
+                                  const char *filename,
+                                  unsigned int line);
 #endif

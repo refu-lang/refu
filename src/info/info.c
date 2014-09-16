@@ -102,9 +102,9 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
     }
 }
 
-bool info_ctx_get(struct info_ctx *ctx,
-                  enum info_msg_type type,
-                  struct RFstringx *str)
+bool info_ctx_get_messages_fmt(struct info_ctx *ctx,
+                               enum info_msg_type type,
+                               struct RFstringx *str)
 {
     struct info_msg *m;
     if (rf_ilist_is_empty(&ctx->msg_list)) {
@@ -121,4 +121,27 @@ bool info_ctx_get(struct info_ctx *ctx,
     }
     rf_stringx_reset(str);
     return true;
+}
+
+
+void info_ctx_get_iter(struct info_ctx *ctx,
+                       enum info_msg_type types,
+                       struct info_ctx_msg_iterator *iter)
+{
+    iter->msg_types = types;
+    iter->start = &ctx->msg_list.n;
+    iter->next = ctx->msg_list.n.next;
+}
+
+struct info_msg *info_ctx_msg_iterator_next(struct info_ctx_msg_iterator *it)
+{
+    struct info_msg *msg;
+    while (it->next != it->start) {
+        msg = rf_ilist_entry(it->next, struct info_msg, ln);
+        it->next = it->next->next;
+        if (msg->type & it->msg_types) {
+            return msg;
+        }
+    }
+    return NULL;
 }

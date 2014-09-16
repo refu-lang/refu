@@ -44,6 +44,8 @@ struct lexer {
     //! Denotes whether or not the lexer should free
     //! the memory of identifier tokens at deinitialization
     bool own_identifier_ptrs;
+    //! Denotes that the lexer has reached the end of its input
+    bool at_eof;
 };
 
 

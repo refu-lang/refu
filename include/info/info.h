@@ -48,9 +48,22 @@ void info_ctx_print(struct info_ctx *ctx, unsigned int index);
  * @param str        The string in which to return
  * @return           True/false for success/failure
 */
-bool info_ctx_get(struct info_ctx *ctx,
-                  enum info_msg_type type,
-                  struct RFstringx *str);
+bool info_ctx_get_messages_fmt(struct info_ctx *ctx,
+                               enum info_msg_type type,
+                               struct RFstringx *str);
+
+/**
+ * An iterator allowing iteration over the messages of an info_ctx
+ */
+struct info_ctx_msg_iterator {
+    enum info_msg_type msg_types;
+    struct RFilist_node *start;
+    struct RFilist_node *next;
+};
+void info_ctx_get_iter(struct info_ctx *ctx,
+                       enum info_msg_type types,
+                       struct info_ctx_msg_iterator *iter);
+struct info_msg *info_ctx_msg_iterator_next(struct info_ctx_msg_iterator *it);
 
 /* simple printing related function wrappers */
 

@@ -85,7 +85,7 @@ end:
 
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 {
-    if (!info_ctx_get(d->front.info, MESSAGE_ANY, &d->buffstr)) {
+    if (!info_ctx_get_messages_fmt(d->front.info, MESSAGE_ANY, &d->buffstr)) {
         return NULL;
     }
     return &d->buffstr;
@@ -192,6 +192,9 @@ void teardown_front_tests()
 }
 
 
+#define ck_astcheck_abort(file_, line_, msg_, ...)      \
+    ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_,  \
+                 file_, line_, __VA_ARGS__)
 static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                         struct inpfile *ifile,
                         const char* filename,
