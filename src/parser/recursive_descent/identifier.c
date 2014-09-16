@@ -29,18 +29,18 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
         start = token_get_start(tok);
         tok = lexer_next_token(p->lexer);
         if (!tok) {
-            parser_synerr(p, lexer_last_token_location(p->lexer),
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                           "Expected an identifier after const");
             goto not_found;
         }
     }
 
     if (tok->type != TOKEN_IDENTIFIER) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected an identifier after const");
         goto not_found;
     }
-    id = tok->value.identifier;
+    id = token_get_identifier(tok);
 
     genr = parser_acc_genrattr(p);
     if (!genr || parser_has_synerr(p)) {

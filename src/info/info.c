@@ -52,7 +52,8 @@ void info_print_cond(int vlevel, const char *fmt, ...)
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
-                        struct inplocation *loc,
+                        struct inplocation_mark *start,
+                        struct inplocation_mark *end,
                         const char *fmt,
                         ...)
 {
@@ -60,7 +61,7 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
     struct info_msg *msg;
 
     va_start(args, fmt);
-    msg = info_msg_create(type, loc, fmt, args);
+    msg = info_msg_create(type, start, end, fmt, args);
     va_end(args);
 
     if (!msg) {
@@ -130,18 +131,24 @@ void info_ctx_get_iter(struct info_ctx *ctx,
 {
     iter->msg_types = types;
     iter->start = &ctx->msg_list.n;
-    iter->next = ctx->msg_list.n.next;
+    iter->curr = &ctx->msg_list.n;
 }
 
-struct info_msg *info_ctx_msg_iterator_next(struct info_ctx_msg_iterator *it)
+struct info_msg *info_ctx_msg_iterator_next(struct info_ctx_msg_iterator *iter)
 {
     struct info_msg *msg;
-    while (it->next != it->start) {
-        msg = rf_ilist_entry(it->next, struct info_msg, ln);
-        it->next = it->next->next;
-        if (msg->type & it->msg_types) {
+
+    // if empty
+    if (iter->curr->next == iter->start) {
+        return NULL;
+    }
+
+    do {
+        iter->curr = iter->curr->next;
+        msg = rf_ilist_entry(iter->curr, struct info_msg, ln);
+        if (msg->type & iter->msg_types) {
             return msg;
         }
-    }
+    } while (iter->curr->next != iter->start);
     return NULL;
 }

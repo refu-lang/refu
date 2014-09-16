@@ -13,7 +13,7 @@ i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
     if (tok && tok->type != TOKEN_KW_TYPE) {
         return NULL;
     }
-    return tok->value.identifier;
+    return token_get_identifier(tok);
 }
 /**
  * annotated_identifier = ["const"] identifier [generic_attributes]

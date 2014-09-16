@@ -28,14 +28,16 @@ static bool tokens_cmp(struct token *expected,
 
 
     if (expected->type == TOKEN_IDENTIFIER &&
-        !rf_string_equal(ast_identifier_str(expected->value.identifier),
-                         ast_identifier_str(got->value.identifier))) {
-        ck_lexer_abort(filename, line,
-                       "Expected the %d token to have value:\n"
-                       RF_STR_PF_FMT"\nbut it has value:\n"
-                       RF_STR_PF_FMT, index,
-                       RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier)),
-                       RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier)));
+        !rf_string_equal(
+            ast_identifier_str(expected->value.identifier.id),
+            ast_identifier_str(got->value.identifier.id))) {
+        ck_lexer_abort(
+            filename, line,
+            "Expected the %d token to have value:\n"
+            RF_STR_PF_FMT"\nbut it has value:\n"
+            RF_STR_PF_FMT, index,
+            RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier.id)),
+            RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier.id)));
         return false;
     }
 

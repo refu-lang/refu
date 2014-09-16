@@ -46,7 +46,6 @@
 #define testsupport_parser_prepare(driver_)                     \
     do {                                                        \
         ck_assert(lexer_scan((driver_)->front.lexer));          \
-        lexer_renounce_own_identifiers((driver_)->front.lexer); \
     } while (0)
 
 /**
@@ -76,11 +75,19 @@
         } while(0)
 
 
-#define TESTPARSER_MSG_INIT(file_, msg_, sl_, sc_, el_, ec_)  \
-        {                                                     \
-            .s = RF_STRING_STATIC_INIT(msg_),                 \
-            .type = 0,                                        \
-            .loc = LOC_INIT(file_, sl_, sc_, el_, ec_)        \
+#define TESTPARSER_MSG_INIT_START(file_, msg_, sl_, sc_)  \
+    {                                                     \
+        .s = RF_STRING_STATIC_INIT(msg_),                 \
+        .type = 0,                                        \
+        .start_mark = LOCMARK_INIT(file_, sl_, sc_)       \
+    }
+
+#define TESTPARSER_MSG_INIT_BOTH(file_, msg_, sl_, sc_, el_, ec_) \
+        {                                                         \
+            .s = RF_STRING_STATIC_INIT(msg_),                     \
+            .type = 0,                                            \
+            .start_mark = LOCMARK_INIT(file_, sl_, sc_)           \
+            .end_mark = LOCMARK_INIT(file_, el_, ec_)             \
         }
 
 #define ck_assert_parser_errors(info_, expected_arr_)                   \

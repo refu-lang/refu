@@ -21,22 +21,23 @@ static struct ast_node * parser_acc_genrtype(struct parser *p)
 
     tok = lexer_next_token(p->lexer);
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
-        parser_synerr(p, lexer_last_token_location(p->lexer),
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected an identifier for the generic type kind");
         goto err;
     }
-    type_id = tok->value.identifier;
+    type_id = token_get_identifier(tok);
 
     tok = lexer_next_token(p->lexer);
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
-        parser_synerr(p, lexer_last_token_location(p->lexer),
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected an identifier for the generic type name");
+        ast_node_destroy(type_id);
         goto err;
     }
 
 
     lexer_pop(p->lexer);
-    n = ast_genrtype_create(type_id, tok->value.identifier);
+    n = ast_genrtype_create(type_id, token_get_identifier(tok));
     if (!n) {
         //TODO: bad error
         return NULL;
@@ -63,7 +64,7 @@ static bool parser_acc_generic_decls_prime(struct parser *p,
     lexer_next_token(p->lexer);
     single = parser_acc_genrtype(p);
     if (!single) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected a generic type after ','");
         return false;
     }
@@ -98,7 +99,7 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
 
     n = ast_genrdecl_create(token_get_start(tok), NULL);
     if (!parser_acc_generic_decls(p, n)) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected a generic declaration after '<'");
         ast_node_destroy(n);
         return NULL;
@@ -106,8 +107,9 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
 
     tok = lexer_next_token(p->lexer);
     if (!tok || tok->type != TOKEN_OP_GT) {
-        parser_synerr(p, token_get_loc(tok),
-                      "Expected a '>' after generic declaration");
+        parser_synerr(
+            p, token_get_start(tok), NULL,
+            "Expected either a ',' or a '>' after generic declaration");
         ast_node_destroy(n);
         return NULL;
     }
@@ -131,14 +133,14 @@ static struct ast_node *parser_acc_genrattr_single(struct parser *p)
 
             child = parser_acc_typedesc(p);
             if (!child) {
-                parser_synerr(p, &tok->location,
+                parser_synerr(p, token_get_end(tok), NULL,
                               "Expected a type description after '(' at generic"
                               " attribute");
                 goto not_found;
             }
             tok = lexer_next_token(p->lexer);
             if (!tok || tok->type != TOKEN_SM_CPAREN) {
-                parser_synerr(p, lexer_last_token_location(p->lexer),
+                parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                               "Expected a closing ')' at end of generic "
                               "attribute");
                 goto err_free;
@@ -146,10 +148,11 @@ static struct ast_node *parser_acc_genrattr_single(struct parser *p)
         } else { // check for annotated identifier
             child = parser_acc_xidentifier(p);
             if (!child) {
-            parser_synerr(p, &tok->location,
-                          "Expected either a parenthesized type description or "
-                          "an annotated identifier at generic attribute");
-            goto not_found;
+                parser_synerr(
+                    p, token_get_end(tok), NULL,
+                    "Expected either a parenthesized type description or "
+                    "an annotated identifier at generic attribute");
+                goto not_found;
             }
         }
     } else {
@@ -184,7 +187,7 @@ static bool parser_acc_generic_attribute_prime(struct parser *p,
     lexer_next_token(p->lexer);
     single = parser_acc_genrattr_single(p);
     if (!single) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected a generic attribute after ','");
         return false;
     }
@@ -223,7 +226,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p)
     }
 
     if (!parser_acc_generic_attribute(p, n)) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected generic attribute after '<'");
         ast_node_destroy(n);
         return NULL;
@@ -231,7 +234,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p)
 
     tok = lexer_next_token(p->lexer);
     if (!tok || tok->type != TOKEN_OP_GT) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected '>' after generic attribute");
         ast_node_destroy(n);
         return NULL;

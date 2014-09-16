@@ -10,13 +10,20 @@
 #define LOCMARK_FMT "%*c\n"
 #define LOCMARK_ARG(column_position_) column_position_ + 1, '^'
 
-inline static void print_location_marker(FILE *f, unsigned int col_pos)
+#define LOCMARK2_FMT "%*c%*c\n"
+#define LOCMARK2_ARG(colpos1_, colpos2_) colpos1_ + 1, '^', \
+        colpos2_ - colpos1_, '^'
+
+inline static void print_location_marker(FILE *f, int col_pos)
 {
     printf(LOCMARK_FMT, LOCMARK_ARG(col_pos));
 }
 
+i_INLINE_INS bool info_msg_has_end_mark(struct info_msg *msg);
+
 struct info_msg *info_msg_create(enum info_msg_type type,
-                                 struct inplocation *loc,
+                                 struct inplocation_mark *start,
+                                 struct inplocation_mark *end,
                                  const char *fmt,
                                  va_list args)
 {
@@ -29,7 +36,18 @@ struct info_msg *info_msg_create(enum info_msg_type type,
     }
 
     ret->type = type;
-    inplocation_copy(&ret->loc, loc);
+
+    if (start) {
+        ret->start_mark = *start;
+    } else {
+        LOCMARK_RESET(&ret->start_mark);
+    }
+
+    if (end) {
+        ret->end_mark = *end;
+    } else {
+        LOCMARK_RESET(&ret->end_mark);
+    }
 
     return ret;
 }
@@ -42,6 +60,8 @@ void info_msg_destroy(struct info_msg *m)
 
 void info_msg_print(struct info_msg *m, FILE *f, struct inpfile *input_file)
 {
+// TODO: combine with get_formatted
+#if 0
     struct RFstring line_str;
     switch(m->type) {
     case MESSAGE_SEMANTIC_WARNING:
@@ -86,6 +106,7 @@ void info_msg_print(struct info_msg *m, FILE *f, struct inpfile *input_file)
         assert(0);
         break;
     }
+#endif
 }
 
 bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
@@ -96,42 +117,53 @@ bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
     case MESSAGE_SEMANTIC_WARNING:
         rf_stringx_assignv(
             s,
-            INPLOCATION_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
-            INPLOCATION_ARG(input_file, &m->loc),
+            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
             RF_STR_PF_ARG(&m->s));
 
         break;
     case MESSAGE_SYNTAX_WARNING:
         rf_stringx_assignv(
             s,
-            INPLOCATION_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
-            INPLOCATION_ARG(input_file, &m->loc),
+            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
             RF_STR_PF_ARG(&m->s));
 
         break;
     case MESSAGE_SEMANTIC_ERROR:
         rf_stringx_assignv(
             s,
-            INPLOCATION_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
-            INPLOCATION_ARG(input_file, &m->loc),
+            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
             RF_STR_PF_ARG(&m->s));
         break;
     case MESSAGE_SYNTAX_ERROR:
         rf_stringx_assignv(
             s,
-            INPLOCATION_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
-            INPLOCATION_ARG(input_file, &m->loc),
+            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
             RF_STR_PF_ARG(&m->s));
-        if (!inpfile_line(input_file, m->loc.start.line, &line_str)) {
+        if (!inpfile_line(input_file, m->start_mark.line, &line_str)) {
             ERROR("Could not locate line %u at file "RF_STR_PF_FMT,
-                  m->loc.start.line,
+                  m->start_mark.line,
                   RF_STR_PF_ARG(inpfile_name(input_file)));
             return false;
         } else {
             rf_stringx_move_end(s);
             rf_stringx_assignv(s, RF_STR_PF_FMT"\n", RF_STR_PF_ARG(&line_str));
             rf_stringx_move_end(s);
-            rf_stringx_assignv(s, LOCMARK_FMT, LOCMARK_ARG(m->loc.start.col));
+
+            // set the markers
+            if (info_msg_has_end_mark(m)) {
+                rf_stringx_assignv(s,
+                                   LOCMARK2_FMT,
+                                   LOCMARK2_ARG(m->start_mark.col,
+                                                m->end_mark.col));
+            } else {
+                rf_stringx_assignv(s,
+                                   LOCMARK_FMT,
+                                   LOCMARK_ARG(m->start_mark.col));
+            }
         }
         break;
     default: /* should never get here */

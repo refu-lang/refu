@@ -9,6 +9,7 @@
 i_INLINE_INS struct inplocation *token_get_loc(struct token *tok);
 i_INLINE_INS struct inplocation_mark *token_get_start(struct token *tok);
 i_INLINE_INS struct inplocation_mark *token_get_end(struct token *tok);
+i_INLINE_INS struct ast_node *token_get_identifier(struct token *tok);
 
 static inline bool token_init(struct token *t,
                               enum token_type type,
@@ -29,8 +30,9 @@ static inline bool token_init_identifier(struct token *t,
     if (!token_init(t, TOKEN_IDENTIFIER, f, sp, ep)) {
         return false;
     }
-    t->value.identifier = ast_identifier_create(&t->location);
-    if (!t->value.identifier) {
+    t->value.identifier.id = ast_identifier_create(&t->location);
+    t->value.identifier.owned_by_lexer = true;
+    if (!t->value.identifier.id) {
         return false;
     }
     return true;
@@ -58,7 +60,6 @@ bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
     l->tok_index = 0;
     l->file = f;
     l->info = info;
-    l->own_identifier_ptrs = true;
     l->at_eof = false;
     return true;
 }
@@ -78,11 +79,11 @@ void lexer_deinit(struct lexer *l)
 {
     struct token *tok;
 
-    if (l->own_identifier_ptrs) {
-        darray_foreach(tok, l->tokens) {
-            if (tok->type == TOKEN_IDENTIFIER) {
-                ast_node_destroy(tok->value.identifier);
-            }
+    darray_foreach(tok, l->tokens) {
+        if (tok->type == TOKEN_IDENTIFIER &&
+            tok->value.identifier.owned_by_lexer) {
+
+            ast_node_destroy(tok->value.identifier.id);
         }
     }
 
@@ -268,7 +269,7 @@ bool lexer_scan(struct lexer *l)
             }
             if (!got_token) {
                 // error unknown token
-                lexer_synerr(l, &lexer_get_top_token(l)->location,
+                lexer_synerr(l, &lexer_get_top_token(l)->location.start, NULL,
                                "Unknown token encountered");
                 return false;
             }
@@ -313,7 +314,8 @@ struct token *lexer_last_token_valid(struct lexer *l)
 }
 
 i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);
-
+i_INLINE_INS struct inplocation_mark *lexer_last_token_start(struct lexer *l);
+i_INLINE_INS struct inplocation_mark *lexer_last_token_end(struct lexer *l);
 
 void lexer_push(struct lexer *l)
 {
@@ -333,4 +335,3 @@ void lexer_rollback(struct lexer *l)
     idx = darray_pop(l->indices);
     l->tok_index = idx;
 }
-i_INLINE_INS void lexer_renounce_own_identifiers(struct lexer *l);

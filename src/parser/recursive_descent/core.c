@@ -17,9 +17,6 @@ bool parser_process_file(struct parser *p)
 {
     struct ast_node *stmt;
     char *beg;
-    // as soon as parsing begin let's move ownership of
-    // identifier node freeing to whoever manages the AST
-    lexer_renounce_own_identifiers(p->lexer);
 
     beg = inpstr_beg(&p->file->str);
     p->root = ast_node_create_ptrs(
@@ -31,7 +28,7 @@ bool parser_process_file(struct parser *p)
     }
 
     if (NULL != lexer_next_token(p->lexer)) {
-        parser_synerr(p, lexer_last_token_location(p->lexer),
+        parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
                       "Expected a statement");
         return false;
     }

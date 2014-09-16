@@ -33,21 +33,27 @@ struct inplocation {
     struct inplocation_mark end;
 };
 
+
+#define LOCMARK_RESET(mark_)                    \
+    do {                                        \
+        (mark_)->line = 0;                      \
+        (mark_)->col = 0;                       \
+        (mark_)->p = 0;                         \
+    } while(0)
+
+#define LOCMARK_INIT(file_, line_, col_)          \
+    {                                             \
+        .line = line_,                            \
+        .col = col_,                              \
+        .p = inpfile_line_p(file_, line_) + col_  \
+    }
+
 /* 2 macros for quick location initialization, mostly used in tests */
 // initialize a location using only start and end line and columns
 #define LOC_INIT(file_, sl_, sc_, el_, ec_)       \
     {                                             \
-        .start = {                                \
-            .line = sl_,                          \
-            .col = sc_,                           \
-            .p = inpfile_line_p(file_, sl_) + sc_ \
-        },                                        \
-                                                  \
-        .end = {                                  \
-            .line = el_,                          \
-            .col = ec_,                           \
-            .p = inpfile_line_p(file_, el_) + ec_ \
-        }                                         \
+        .start = LOCMARK_INIT(file_, sl_, sc_),   \
+        .end = LOCMARK_INIT(file_, el_, ec_)      \
     }
 
 // initialize a location using all attributes. Used if non-ascii chars in line
@@ -133,5 +139,13 @@ i_INLINE_DECL bool inplocation_equal(struct inplocation *l1,
     RF_STR_PF_ARG(&(file_)->file_name),         \
         (loc_)->start.line, (loc_)->start.col,  \
         (loc_)->end.line, (loc_)->end.col
+
+#define INPLOCMARKS_FMT                         \
+    RF_STR_PF_FMT":(%u:%u|%u:%u)"
+#define INPLOCMARKS_ARG(file_, start_, end_)    \
+    RF_STR_PF_ARG(&(file_)->file_name),         \
+        (start_)->line, (start_)->col,          \
+        (end_)->line, (end_)->col
+
 
 #endif

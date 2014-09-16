@@ -16,12 +16,20 @@ struct info_msg {
     RFilist_node ln;
     //! The type of the message. Either warning or error for now.
     enum info_msg_type type;
-    //! The location where the message was generated
-    struct inplocation loc;
+    //! The start mark to put for the error
+    struct inplocation_mark start_mark;
+    //! The end mark to put for the error
+    struct inplocation_mark end_mark;
 };
 
+i_INLINE_DECL bool info_msg_has_end_mark(struct info_msg *msg)
+{
+    return msg->end_mark.p != NULL;
+}
+
 struct info_msg *info_msg_create(enum info_msg_type type,
-                                 struct inplocation *loc,
+                                 struct inplocation_mark *start,
+                                 struct inplocation_mark *end,
                                  const char *fmt,
                                  va_list args);
 void info_msg_destroy(struct info_msg *m);

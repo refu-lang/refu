@@ -32,13 +32,13 @@ static struct ast_node *parser_acc_typefactor(struct parser *p)
 
         tok = lexer_next_token(p->lexer);
         if (!tok || tok->type != TOKEN_SM_CPAREN) {
-            parser_synerr(p, lexer_last_token_location(p->lexer),
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                           "expected ')' after type description");
             goto err;
         }
     } else if (tok->type == TOKEN_IDENTIFIER){
         struct ast_node *right;
-        struct ast_node *left = tok->value.identifier;
+        struct ast_node *left = token_get_identifier(tok);
         //consume identifier
         lexer_next_token(p->lexer);
 
@@ -56,7 +56,7 @@ static struct ast_node *parser_acc_typefactor(struct parser *p)
 
         tok = lexer_lookeahead(p->lexer, 2);
         if (!TYPEDESC_START_COND(tok)) {
-            parser_synerr(p, lexer_last_token_location(p->lexer),
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                           "expected "TYPEDESC_START_STR" after ':'");
             goto err;
         }
@@ -209,7 +209,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
 
     desc = parser_acc_typedesc(p);
     if (!desc) {
-        parser_synerr(p, token_get_loc(tok),
+        parser_synerr(p, token_get_end(tok), NULL,
                       "Expected data description for data declaration "
                       "of \""RF_STR_PF_FMT"\"",
                       RF_STR_PF_ARG(ast_identifier_str(name)));
@@ -227,7 +227,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
 
     tok = lexer_next_token(p->lexer);
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-        parser_synerr(p, lexer_last_token_location(p->lexer),
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected a closing brace '}' in data "
                       "declaration for '"RF_STR_PF_FMT"'",
                       RF_STR_PF_ARG(ast_identifier_str(name)));

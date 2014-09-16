@@ -103,9 +103,12 @@ START_TEST(test_acc_genrdecl_fail1) {
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT(&front->file,
+        TESTPARSER_MSG_INIT_START(&front->file,
                             "Expected an identifier for the generic type name",
-                            0, 6, 0, 0),
+                            0, 4),
+        TESTPARSER_MSG_INIT_START(&front->file,
+                            "Expected a generic declaration after '<'",
+                            0, 0),
     };
 
     ck_assert_parser_errors(front->info, errors);
@@ -124,10 +127,10 @@ START_TEST(test_acc_genrdecl_fail2) {
     ck_assert_msg(n == NULL, "parsing generic declaration should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT(
+        TESTPARSER_MSG_INIT_START(
             &front->file,
-            "Expected either a ',' or a '>' at generic declaration",
-            0, 8, 0, 0),
+            "Expected either a ',' or a '>' after generic declaration",
+            0, 8),
     };
     ck_assert_parser_errors(front->info, errors);
 } END_TEST

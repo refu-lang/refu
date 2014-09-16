@@ -32,19 +32,34 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
         }
 
         // check for error message location
-        if(!inplocation_equal(&msg->loc, &exp_errors[i].loc)) {
+        if (!inplocation_mark_equal(&msg->start_mark, &exp_errors[i].start_mark)) {
             ck_parserr_check_abort(
                 filename, line,
-                "For parser error number %u got different locations. Got:\n"
-                INPLOCATION_FMT2 " but"
-                " expected:\n"INPLOCATION_FMT2,
+                "For parser error number %u got different start location marks. Got:\n"
+                INPLOCMARKS_FMT " but"
+                " expected:\n"INPLOCMARKS_FMT,
                 i,
-                INPLOCATION_ARG2(info->file, &msg->loc),
-                INPLOCATION_ARG2(info->file, &exp_errors[i].loc));
-        
-        return false;
+                INPLOCMARKS_ARG(info->file, &msg->start_mark, &msg->end_mark),
+                INPLOCMARKS_ARG(info->file, &exp_errors[i].start_mark,
+                                &exp_errors[i].end_mark));
+            return false;
         }
-        
+
+        if (info_msg_has_end_mark(msg) &&
+            !inplocation_mark_equal(&msg->end_mark, &exp_errors[i].end_mark)) {
+            ck_parserr_check_abort(
+                filename, line,
+                "For parser error number %u got different end location marks. Got:\n"
+                INPLOCMARKS_FMT " but"
+                " expected:\n"INPLOCMARKS_FMT,
+                i,
+                INPLOCMARKS_ARG(info->file, &msg->start_mark, &msg->end_mark),
+                INPLOCMARKS_ARG(info->file, &exp_errors[i].start_mark,
+                                &exp_errors[i].end_mark));
+            return false;
+        }
+
+
         i ++;
     }
     return true;

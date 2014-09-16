@@ -5,7 +5,7 @@
 #include <RFstring.h>
 
 enum info_msg_type {
-    MESSAGE_ANY = 0x1,
+    MESSAGE_ANY = 0xFF,
     MESSAGE_SEMANTIC_WARNING = 0x2,
     MESSAGE_SYNTAX_WARNING = 0x4,
     MESSAGE_SEMANTIC_ERROR = 0x8,
@@ -13,6 +13,7 @@ enum info_msg_type {
 };
 
 struct inplocation;
+struct inplocation_mark;
 
 struct info_ctx {
     RFilist_head msg_list;
@@ -32,7 +33,8 @@ void info_print_cond(int vlevel, const char *fmt, ...);
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
-                        struct inplocation *loc,
+                        struct inplocation_mark *start,
+                        struct inplocation_mark *end,
                         const char *fmt,
                         ...);
 
@@ -58,7 +60,7 @@ bool info_ctx_get_messages_fmt(struct info_ctx *ctx,
 struct info_ctx_msg_iterator {
     enum info_msg_type msg_types;
     struct RFilist_node *start;
-    struct RFilist_node *next;
+    struct RFilist_node *curr;
 };
 void info_ctx_get_iter(struct info_ctx *ctx,
                        enum info_msg_type types,
