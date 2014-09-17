@@ -20,7 +20,7 @@ struct parser;
  *
  * type_factor = TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
  *             / identifier TOKEN_SM_COLON type_description
- *             / identifier
+ *             / identifier TOKEN_SM_COLON annotated_identifier
  *
  *
  * Set of possible first tokens for a type description

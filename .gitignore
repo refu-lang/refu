@@ -8,7 +8,8 @@ check_exec
 # object files
 *.pyc
 *.o
-
+# malinka created files
+compile_commands.json
 
 # the executable
 refu

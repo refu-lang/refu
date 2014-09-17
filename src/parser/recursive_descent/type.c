@@ -43,7 +43,7 @@ static struct ast_node *parser_acc_typefactor(struct parser *p)
         lexer_next_token(p->lexer);
 
         tok = lexer_lookeahead(p->lexer, 1);
-        if (tok->type != TOKEN_SM_COLON) {
+        if (!tok || tok->type != TOKEN_SM_COLON) {
             n = ast_typedesc_create(ast_node_startmark(left),
                                     ast_node_endmark(left),
                                     left, NULL);

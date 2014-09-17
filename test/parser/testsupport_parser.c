@@ -64,3 +64,17 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
     }
     return true;
 }
+
+struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
+                                                      unsigned int sline,
+                                                      unsigned int scol,
+                                                      unsigned int eline,
+                                                      unsigned int ecol)
+{
+    struct inplocation temp_location_ = LOC_INIT(file,
+                                                 sline,
+                                                 scol,
+                                                 eline,
+                                                 ecol);
+    return ast_identifier_create(&temp_location_);
+}

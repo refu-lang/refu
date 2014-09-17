@@ -5,13 +5,15 @@
 #include <check.h>
 #include <Preprocessor/rf_xmacro_argcount.h>
 
+struct inpfile;
+
 /**
  * A utility testing macro to generate an ast_node whose _create() accepts
  * a start and end location mark
  */
 #define testsupport_parser_node_create(...)                             \
     RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_node_create, 7, __VA_ARGS__) \
-        
+
 #define i_testsupport_parser_node_create1(node_, type_,                 \
                                           file_, sl_, sc_, el_, ec_, ...) \
     struct ast_node *node_;                                             \
@@ -19,7 +21,7 @@
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,\
                                      &temp_location_.end, __VA_ARGS__);  \
-    } while(0)                                                         
+    } while(0)
 
 #define i_testsupport_parser_node_create0(node_, type_,                 \
                                           file_, sl_, sc_, el_, ec_)    \
@@ -28,20 +30,27 @@
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,             \
                                      &temp_location_.end);              \
-    } while(0)                                                         
+    } while(0)
 
 /**
- * A utility testing macro to generate an identifier at a location
- */    
-#define testsupport_parser_identifier_create(node_,                   \
-                                               file_, sl_, sc_, el_, ec_) \
-    struct ast_node *node_;                                             \
-    do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
-        node_ = ast_identifier_create(&temp_location_);                 \
-    } while(0)                                                             
-
-
+ * A utility testing function to generate an identifier at a location
+ */
+struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
+                                                      unsigned int sline,
+                                                      unsigned int scol,
+                                                      unsigned int eline,
+                                                      unsigned int ecol);
+/**
+ * A utility test macro to help create an xidentifier node wrapped over
+ * a simple identifier
+ */
+#define testsupport_parser_xidentifier_create_simple(node_, file_,             \
+                                              sl_, sc_, el_, ec_)       \
+    testsupport_parser_node_create(node_, xidentifier, file_,           \
+                                   sl_, sc_, el_, ec_,                  \
+                                   testsupport_parser_identifier_create( \
+                                       file_, sl_, sc_, el_, ec_),      \
+                                   false, NULL)
 
 #define testsupport_parser_prepare(driver_)                     \
     do {                                                        \

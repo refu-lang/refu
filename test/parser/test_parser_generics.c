@@ -25,8 +25,10 @@ START_TEST(test_acc_genrdecl_simple1) {
     file = &front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
-    testsupport_parser_identifier_create(id1, file, 0, 1, 0, 4);
-    testsupport_parser_identifier_create(id2, file, 0, 6, 0, 6);
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 1, 0, 4);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 6, 0, 6);
     struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
     testsupport_parser_node_create(genr, genrdecl, file, 0, 0, 0, 7);
     ast_node_add_child(genr, gtype1);
@@ -48,8 +50,10 @@ START_TEST(test_acc_genrdecl_simple2) {
     file = &front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
-    testsupport_parser_identifier_create(id1, file, 0, 5, 0, 8);
-    testsupport_parser_identifier_create(id2, file, 0, 10, 0, 10);
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 5, 0, 8);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 10, 0, 10);
     struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
     testsupport_parser_node_create(genr, genrdecl, file, 0, 2, 0, 12);
     ast_node_add_child(genr, gtype1);
@@ -72,12 +76,16 @@ START_TEST(test_acc_genrdecl_simple3) {
     ck_assert_msg(front, "Failed to assign string to file ");
 
 
-    testsupport_parser_identifier_create(id1, file, 0, 1, 0, 4);
-    testsupport_parser_identifier_create(id2, file, 0, 6, 0, 6);
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 1, 0, 4);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 6, 0, 6);
     struct ast_node *gtype1 = ast_genrtype_create(id1, id2);
 
-    testsupport_parser_identifier_create(id3, file, 0, 9, 0, 12);
-    testsupport_parser_identifier_create(id4, file, 0, 14, 0, 14);
+    struct ast_node *id3 = testsupport_parser_identifier_create(file,
+                                                                0, 9, 0, 12);
+    struct ast_node *id4 = testsupport_parser_identifier_create(file,
+                                                                0, 14, 0, 14);
     struct ast_node *gtype2 = ast_genrtype_create(id3, id4);
     testsupport_parser_node_create(genr, genrdecl, file, 0, 0, 0, 15);
     ast_node_add_child(genr, gtype1);

@@ -48,6 +48,9 @@ struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
     ret->xidentifier.is_constant = is_constant;
     ret->xidentifier.id = id;
     ret->xidentifier.genr = genr;
+    if (genr) {
+        ast_node_add_child(ret, genr);
+    }
 
     return ret;
 }
