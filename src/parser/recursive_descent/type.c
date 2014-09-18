@@ -10,10 +10,6 @@
 #include "common.h"
 #include "identifier.h"
 
-#define TYPEDESC_START_COND(tok_)                                       \
-    ((tok_) &&                                                          \
-     ((tok_)->type == TOKEN_SM_OPAREN || (tok_)->type == TOKEN_IDENTIFIER))
-
 static struct ast_node *parser_acc_typefactor(struct parser *p)
 {
     struct ast_node *n;
@@ -55,14 +51,14 @@ static struct ast_node *parser_acc_typefactor(struct parser *p)
         }
 
         tok = lexer_lookeahead(p->lexer, 2);
-        if (!TYPEDESC_START_COND(tok)) {
+        if (!XIDENTIFIER_START_COND(tok)) {
             parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                          "expected "TYPEDESC_START_STR" after ':'");
+                          "expected "XIDENTIFIER_START_STR" after ':'");
             goto err;
         }
         //consume ':'
         lexer_next_token(p->lexer);
-        right = parser_acc_typedesc(p);
+        right = parser_acc_xidentifier(p);
         if (!right) {
             //TODO: bad error
             goto err;
@@ -88,12 +84,15 @@ err:
 
 static struct ast_node *parser_acc_typeterm_prime(
     struct parser *p,
+    bool *syntax_error,
     struct ast_node *left_hand_side)
 {
     struct token *tok;
     struct ast_node *op;
     struct ast_node *right_hand_side;
     struct ast_node *ret;
+
+    *syntax_error = false;
     tok = lexer_lookeahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_TYPESUM) {
         return NULL;
@@ -107,16 +106,24 @@ static struct ast_node *parser_acc_typeterm_prime(
                            TYPEOP_SUM, left_hand_side, NULL);
     if (!op) {
         //TODO: bad error
-
     }
 
     right_hand_side = parser_acc_typefactor(p);
     if (!right_hand_side) {
+        parser_synerr(p, token_get_end(tok), NULL,
+                      "Expected a "TYPEFACTOR_START_STR" after '|'");
+        *syntax_error = true;
+        ast_node_destroy(op);
         return NULL;
     }
     ast_typeop_set_right(op, right_hand_side);
 
-    ret = parser_acc_typeterm_prime(p, op);
+    ret = parser_acc_typeterm_prime(p, syntax_error, op);
+    if (*syntax_error == true) {
+        // no need to free term, since it's freed inside typeterm' accepting
+        return NULL;
+    }
+
     return ret ? ret : op;
 }
 
@@ -124,23 +131,32 @@ static struct ast_node *parser_acc_typeterm(struct parser *p)
 {
     struct ast_node *factor;
     struct ast_node *prime;
+    bool syntax_error;
+
     factor = parser_acc_typefactor(p);
     if (!factor) {
         return NULL;
     }
-    prime = parser_acc_typeterm_prime(p, factor);
+    prime = parser_acc_typeterm_prime(p, &syntax_error, factor);
+    if (syntax_error) {
+        // no need to free factor, since it's freed inside typeterm' accepting
+        return NULL;
+    }
 
     return (prime) ? prime : factor;
 }
 
 static struct ast_node *parser_acc_typedesc_prime(
     struct parser *p,
+    bool *syntax_error,
     struct ast_node *left_hand_side)
 {
     struct token *tok;
     struct ast_node *op;
     struct ast_node *right_hand_side;
     struct ast_node *ret;
+
+    *syntax_error = false;
     tok = lexer_lookeahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_COMMA) {
         return NULL;
@@ -158,11 +174,20 @@ static struct ast_node *parser_acc_typedesc_prime(
     }
     right_hand_side = parser_acc_typeterm(p);
     if (!right_hand_side) {
+        parser_synerr(p, token_get_end(tok), NULL,
+                      "Expected a "TYPETERM_START_STR" after ','");
+        ast_node_destroy(op);
+        *syntax_error = true;
         return NULL;
     }
     ast_typeop_set_right(op, right_hand_side);
 
-    ret = parser_acc_typedesc_prime(p, op);
+    ret = parser_acc_typedesc_prime(p, syntax_error, op);
+    if (*syntax_error == true) {
+        // no need to free op, since it's freed inside typedesc' accepting
+        return NULL;
+    }
+
     return ret ? ret : op;
 }
 
@@ -170,13 +195,19 @@ struct ast_node *parser_acc_typedesc(struct parser *p)
 {
     struct ast_node *prime;
     struct ast_node *term;
+    bool syntax_error;
 
     term = parser_acc_typeterm(p);
     if (!term) {
         return NULL;
     }
 
-    prime = parser_acc_typedesc_prime(p, term);
+    prime = parser_acc_typedesc_prime(p, &syntax_error, term);
+    if (syntax_error) {
+        // no need to free term, since it's freed inside typedesc' accepting
+        return NULL;
+    }
+
     return prime ? prime : term;
 }
 

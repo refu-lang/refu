@@ -7,6 +7,10 @@ struct parser;
 #define TYPEFACTOR_START_STR   "'(' or identifier"
 #define TYPEDESC_START_STR   "'(' or identifier"
 
+#define TYPEDESC_START_COND(tok_)                                       \
+    ((tok_) &&                                                          \
+     ((tok_)->type == TOKEN_SM_OPAREN || (tok_)->type == TOKEN_IDENTIFIER))
+
 /**
  * type_description = type_term type_description'
  *
@@ -19,9 +23,7 @@ struct parser;
  *            / EMPTY
  *
  * type_factor = TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
- *             / identifier TOKEN_SM_COLON type_description
  *             / identifier TOKEN_SM_COLON annotated_identifier
- *
  *
  * Set of possible first tokens for a type description
  * FIRST(type_description) = { identifier, TOKEN_SM_OPAREN }

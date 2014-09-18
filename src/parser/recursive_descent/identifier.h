@@ -6,6 +6,11 @@ struct parser;
 #include <parser/parser.h>
 #include <lexer/lexer.h>
 
+#define XIDENTIFIER_START_STR "'const' or identifier"
+#define XIDENTIFIER_START_COND(tok_)            \
+    ((tok_) &&                                                          \
+     ((tok_)->type == TOKEN_KW_CONST || (tok_)->type == TOKEN_IDENTIFIER))
+
 i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
 {
     struct token *tok;

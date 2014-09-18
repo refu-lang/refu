@@ -16,47 +16,55 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     struct ast_node *genr;
     bool is_const = false;
     struct inplocation_mark *start;
+    struct inplocation_mark *end;
 
     lexer_push(p->lexer);
-
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_lookeahead(p->lexer, 1);
     if (!tok) {
-        goto not_found;
+        return NULL;
     }
+
     // parsing logic for the annotations to the identifier here
     if (tok->type == TOKEN_KW_CONST) {
+        //consume 'const'
+        lexer_next_token(p->lexer);
+
         is_const = true;
         start = token_get_start(tok);
-        tok = lexer_next_token(p->lexer);
+        tok = lexer_lookeahead(p->lexer, 1);
         if (!tok) {
             parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                           "Expected an identifier after const");
-            goto not_found;
+            return NULL;
         }
+    } else {
+        start = token_get_start(tok);
     }
 
     if (tok->type != TOKEN_IDENTIFIER) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected an identifier after const");
-        goto not_found;
+        return NULL;
     }
+    //consume identifier
+    lexer_next_token(p->lexer);
     id = token_get_identifier(tok);
+    end = ast_node_endmark(id);
 
-    genr = parser_acc_genrattr(p);
-    if (!genr || parser_has_synerr(p)) {
-        goto not_found;
+    tok = lexer_lookeahead(p->lexer, 1);
+    if (GENRATTR_START_COND(tok)) {
+        genr = parser_acc_genrattr(p);
+        end = token_get_end(tok);
+    } else {
+        genr = NULL;
     }
 
-    xid = ast_xidentifier_create(start, ast_node_endmark(id),
-                                 id, is_const, genr);
+    xid = ast_xidentifier_create(start, end, id, is_const, genr);
     if (!xid) {
-        //TODO: error
-        goto not_found;
+        //TODO: bad error
+        ast_node_destroy(id);
+        return NULL;
     }
 
-    lexer_pop(p->lexer);
     return xid;
-not_found:
-    lexer_rollback(p->lexer);
-return NULL;
 }

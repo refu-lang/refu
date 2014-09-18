@@ -4,6 +4,9 @@
 struct ast_node;
 struct parser;
 
+#define GENRATTR_START_COND(tok_)               \
+    ((tok_) && (tok_)->type == TOKEN_OP_LT)
+
 /**
  * generic_declaration = "<" generic_decls ">"
  *

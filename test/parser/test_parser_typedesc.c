@@ -68,54 +68,42 @@ START_TEST(test_acc_typedesc_fail1) {
     ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
-    struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
-            &front->file,
-            "Expected either a ',' or a '>' after generic declaration",
-            0, 8),
-    };
-    ck_assert_parser_errors(front->info, errors);
 }END_TEST
-#if 0
+
 START_TEST(test_acc_typedesc_fail2) {
     struct ast_node *n;
-    struct parser_file *f;
+    struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT(" : ,");
-    struct parser_testdriver *d = get_parser_testdriver();
-    int paren_count = 0;
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
 
-    n = parser_file_acc_typedesc(f, &paren_count);
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
-    ck_assert_driver_offset_eq(d, 0, 0, 0);
-    ck_assert_rf_str_eq_cstr(parser_file_str(f), " : ,");
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
     struct ast_node *n;
-    struct parser_file *f;
+    struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("foo:int ,");
-    struct parser_testdriver *d = get_parser_testdriver();
-    int paren_count = 0;
-    f = parser_testdriver_assign(d, &s);
-    ck_assert_msg(f, "Failed to assign string to file ");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
 
-    n = parser_file_acc_typedesc(f, &paren_count);
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
-    ck_assert_parser_error(
-        d,
-        "test_file:0:9 error: Expected an identifier or '(' after a "
-        "type operator\n"
-        "foo:int ,\n"
-        "         ^\n"
-    );
-    ck_assert_driver_offset_eq(d, 0, 0, 0);
-    ck_assert_rf_str_eq_cstr(parser_file_str(f), "foo:int ,");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(&front->file,
+                            "Expected a '(' or identifier after ','",
+                            0, 8)
+    };
+    ck_assert_parser_errors(front->info, errors);
 }END_TEST
 
-
-
+#if 0
 START_TEST(test_acc_typedesc_prod1) {
     char *sp;
     struct ast_node *n;
@@ -274,10 +262,10 @@ Suite *parser_typedesc_suite_create(void)
     tcase_add_test(simple, test_acc_typedesc_simple2);
 
     tcase_add_test(simple, test_acc_typedesc_fail1);
-#if 0
     tcase_add_test(simple, test_acc_typedesc_fail2);
     tcase_add_test(simple, test_acc_typedesc_fail3);
 
+#if 0
     tcase_add_test(simple, test_acc_typedesc_prod1);
     tcase_add_test(simple, test_acc_typedesc_prod2);
 
