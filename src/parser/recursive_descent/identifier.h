@@ -11,6 +11,11 @@ struct parser;
     ((tok_) &&                                                          \
      ((tok_)->type == TOKEN_KW_CONST || (tok_)->type == TOKEN_IDENTIFIER))
 
+// start of an annotated identifier that does have to start with some special
+// attributes
+#define XIDENTIFIER_START_SPECIAL_COND(tok_) \
+    (tok_ && (tok_)->type == TOKEN_KW_CONST)
+
 i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
 {
     struct token *tok;

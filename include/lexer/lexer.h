@@ -67,7 +67,7 @@ void lexer_destroy(struct lexer *l);
 bool lexer_scan(struct lexer *l);
 
 struct token *lexer_next_token(struct lexer *l);
-struct token *lexer_lookeahead(struct lexer *l, unsigned int num);
+struct token *lexer_lookahead(struct lexer *l, unsigned int num);
 struct token *lexer_last_token_valid(struct lexer *l);
 
 i_INLINE_DECL struct inplocation *lexer_last_token_location(struct lexer *l)

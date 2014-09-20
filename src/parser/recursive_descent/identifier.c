@@ -19,7 +19,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     struct inplocation_mark *end;
 
     lexer_push(p->lexer);
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {
         return NULL;
     }
@@ -31,7 +31,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
 
         is_const = true;
         start = token_get_start(tok);
-        tok = lexer_lookeahead(p->lexer, 1);
+        tok = lexer_lookahead(p->lexer, 1);
         if (!tok) {
             parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                           "Expected an identifier after const");
@@ -51,7 +51,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     id = token_get_identifier(tok);
     end = ast_node_endmark(id);
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (GENRATTR_START_COND(tok)) {
         genr = parser_acc_genrattr(p);
         end = token_get_end(tok);

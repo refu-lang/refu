@@ -10,12 +10,13 @@
 #include "common.h"
 #include "identifier.h"
 
-static struct ast_node *parser_acc_typefactor(struct parser *p)
+static struct ast_node *parser_acc_typeelement(struct parser *p)
 {
     struct ast_node *n;
     struct token *tok;
+    struct token *tok2;
     lexer_push(p->lexer);
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
 
     if (!tok) {
         return NULL;
@@ -32,43 +33,40 @@ static struct ast_node *parser_acc_typefactor(struct parser *p)
                           "expected ')' after type description");
             goto err;
         }
-    } else if (tok->type == TOKEN_IDENTIFIER){
+    } else if (XIDENTIFIER_START_COND(tok)){
         struct ast_node *right;
-        struct ast_node *left = token_get_identifier(tok);
-        //consume identifier
-        lexer_next_token(p->lexer);
+        struct ast_node *left;
+        tok2 = lexer_lookahead(p->lexer, 2);
+        if (tok->type == TOKEN_IDENTIFIER &&
+            tok2 && tok2->type == TOKEN_SM_COLON) {
+            left = token_get_identifier(tok);
+            //consume identifier and ':'
+            lexer_next_token(p->lexer);
+            lexer_next_token(p->lexer);
 
-        tok = lexer_lookeahead(p->lexer, 1);
-        if (!tok || tok->type != TOKEN_SM_COLON) {
+            tok = lexer_lookahead(p->lexer, 1);
+            if (!XIDENTIFIER_START_COND(tok)) {
+                parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                              "expected "XIDENTIFIER_START_STR" after ':'");
+                goto err;
+            }
+
+            right = parser_acc_xidentifier(p);
+            if (!right) {
+                parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                              "expected "XIDENTIFIER_START_STR" after ':'");
+                goto err;
+            }
+
             n = ast_typedesc_create(ast_node_startmark(left),
-                                    ast_node_endmark(left),
-                                    left, NULL);
+                                    ast_node_endmark(right),
+                                    left, right);
             if (!n) {
                 //TODO: bad error
                 goto err;
             }
-            return n;
-        }
-
-        tok = lexer_lookeahead(p->lexer, 2);
-        if (!XIDENTIFIER_START_COND(tok)) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                          "expected "XIDENTIFIER_START_STR" after ':'");
-            goto err;
-        }
-        //consume ':'
-        lexer_next_token(p->lexer);
-        right = parser_acc_xidentifier(p);
-        if (!right) {
-            //TODO: bad error
-            goto err;
-        }
-        n = ast_typedesc_create(ast_node_startmark(left),
-                                ast_node_endmark(right),
-                                left, right);
-        if (!n) {
-            //TODO: bad error
-            goto err;
+        } else { // last expansion of type_element rule, just an xidentifier
+            n = parser_acc_xidentifier(p);
         }
     } else {
         return NULL;
@@ -82,6 +80,70 @@ err:
     return NULL;
 }
 
+static struct ast_node *parser_acc_typefactor_prime(
+    struct parser *p,
+    bool *syntax_error,
+    struct ast_node *left_hand_side)
+{
+    struct token *tok;
+    struct ast_node *op;
+    struct ast_node *right_hand_side;
+    struct ast_node *ret;
+
+    *syntax_error = false;
+    tok = lexer_lookahead(p->lexer, 1);
+    if (!tok || tok->type != TOKEN_OP_IMPL) {
+        return NULL;
+    }
+    //consume 'IMPL'
+    lexer_next_token(p->lexer);
+
+    lexer_push(p->lexer);
+
+    op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
+                           TYPEOP_IMPLICATION, left_hand_side, NULL);
+    if (!op) {
+        //TODO: bad error
+    }
+
+    right_hand_side = parser_acc_typeelement(p);
+    if (!right_hand_side) {
+        parser_synerr(p, token_get_end(tok), NULL,
+                      "Expected a "TYPEELEMENT_START_STR" after '->'");
+        *syntax_error = true;
+        ast_node_destroy(op);
+        return NULL;
+    }
+    ast_typeop_set_right(op, right_hand_side);
+
+    ret = parser_acc_typefactor_prime(p, syntax_error, op);
+    if (*syntax_error == true) {
+        // no need to free element, since it's freed inside prime accepting
+        return NULL;
+    }
+
+    return ret ? ret : op;
+}
+
+static struct ast_node *parser_acc_typefactor(struct parser *p)
+{
+    struct ast_node *element;
+    struct ast_node *prime;
+    bool syntax_error;
+
+    element = parser_acc_typeelement(p);
+    if (!element) {
+        return NULL;
+    }
+    prime = parser_acc_typefactor_prime(p, &syntax_error, element);
+    if (syntax_error) {
+        // no need to free element, since it's freed inside prime accepting
+        return NULL;
+    }
+
+    return (prime) ? prime : element;
+}
+
 static struct ast_node *parser_acc_typeterm_prime(
     struct parser *p,
     bool *syntax_error,
@@ -93,7 +155,7 @@ static struct ast_node *parser_acc_typeterm_prime(
     struct ast_node *ret;
 
     *syntax_error = false;
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_TYPESUM) {
         return NULL;
     }
@@ -157,7 +219,7 @@ static struct ast_node *parser_acc_typedesc_prime(
     struct ast_node *ret;
 
     *syntax_error = false;
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_COMMA) {
         return NULL;
     }

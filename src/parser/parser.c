@@ -15,6 +15,7 @@ bool parser_init(struct parser *p,
     p->info = info;
     return true;
 }
+
 struct parser *parser_create(struct inpfile *f,
                              struct lexer *lex,
                              struct info_ctx *info)
@@ -27,12 +28,14 @@ struct parser *parser_create(struct inpfile *f,
     }
     return ret;
 }
+
 void parser_deinit(struct parser *p)
 {
     p->lexer = NULL;
     p->info = NULL;
     p->file = NULL;
 }
+
 void parser_destroy(struct parser *p)
 {
     free(p);

@@ -294,7 +294,7 @@ struct token *lexer_next_token(struct lexer *l)
     return tok;
 }
 
-struct token *lexer_lookeahead(struct lexer *l, unsigned int num)
+struct token *lexer_lookahead(struct lexer *l, unsigned int num)
 {
     struct token *tok;
     unsigned int index = l->tok_index + num - 1;

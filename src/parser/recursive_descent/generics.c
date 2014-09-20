@@ -55,7 +55,7 @@ static bool parser_acc_generic_decls_prime(struct parser *p,
     struct token *tok;
     struct ast_node *single;
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_COMMA) {
         return true;
     }
@@ -90,7 +90,7 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
     struct ast_node *n;
     struct token *tok;
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_LT) {
         return NULL;
     }
@@ -125,7 +125,7 @@ static struct ast_node *parser_acc_genrattr_single(struct parser *p)
     struct token *tok;
     lexer_push(p->lexer);
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
 
     if (tok) {
         if (tok->type == TOKEN_SM_OPAREN) {
@@ -178,7 +178,7 @@ static bool parser_acc_generic_attribute_prime(struct parser *p,
     struct token *tok;
     struct ast_node *single;
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_COMMA) {
         return true;
     }
@@ -213,7 +213,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p)
     struct ast_node *n;
     struct token *tok;
 
-    tok = lexer_lookeahead(p->lexer, 1);
+    tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_OP_LT) {
         return NULL;
     }
