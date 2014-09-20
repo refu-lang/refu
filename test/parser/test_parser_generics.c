@@ -7,6 +7,7 @@
 #include <parser/parser.h>
 #include "../../src/parser/recursive_descent/generics.h"
 #include <ast/ast.h>
+#include <ast/generics.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
 

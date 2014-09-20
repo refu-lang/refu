@@ -6,9 +6,8 @@
 
 #include <inplocation.h>
 #include <ast/identifier.h>
-#include <ast/typedecl.h>
-#include <ast/typedesc.h>
-#include <ast/generics.h>
+#include <ast/type_decls.h>
+#include <ast/generics_decls.h>
 #include <ast/vardecl.h>
 #include <ast/fndecl.h>
 

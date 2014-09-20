@@ -1,15 +1,9 @@
 #ifndef LFR_AST_GENERICS_H
 #define LFR_AST_GENERICS_H
 
-struct ast_node;
-struct parser_file;
+#include <ast/generics_decls.h>
+
 struct inplocation_mark;
-
-struct ast_genrtype {
-    struct ast_node *type;
-    struct ast_node *id;
-};
-
 struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id);
 
 struct ast_node *ast_genrdecl_create(struct inplocation_mark *start,

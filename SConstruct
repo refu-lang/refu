@@ -24,8 +24,7 @@ refu_src = [
 
     'ast/ast.c',
     'ast/identifier.c',
-    'ast/typedecl.c',
-    'ast/typedesc.c',
+    'ast/type.c',
     'ast/vardecl.c',
     'ast/fndecl.c',
     'ast/generics.c',

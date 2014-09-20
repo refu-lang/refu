@@ -2,7 +2,7 @@
 
 #include <Utils/sanity.h>
 
-#include <ast/ast.h>
+#include <ast/type.h>
 #include <ast/identifier.h>
 #include <info/info.h>
 
@@ -92,7 +92,7 @@ static struct ast_node *parser_acc_typefactor_prime(
 
     *syntax_error = false;
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_OP_IMPL) {
+    if (!tok || tok->type != TOKEN_OP_COMMA) {
         return NULL;
     }
     //consume 'IMPL'
@@ -101,7 +101,7 @@ static struct ast_node *parser_acc_typefactor_prime(
     lexer_push(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
-                           TYPEOP_IMPLICATION, left_hand_side, NULL);
+                           TYPEOP_PRODUCT, left_hand_side, NULL);
     if (!op) {
         //TODO: bad error
     }
@@ -109,7 +109,7 @@ static struct ast_node *parser_acc_typefactor_prime(
     right_hand_side = parser_acc_typeelement(p);
     if (!right_hand_side) {
         parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected a "TYPEELEMENT_START_STR" after '->'");
+                      "Expected a "TYPEELEMENT_START_STR" after ','");
         *syntax_error = true;
         ast_node_destroy(op);
         return NULL;
@@ -220,7 +220,7 @@ static struct ast_node *parser_acc_typedesc_prime(
 
     *syntax_error = false;
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_OP_COMMA) {
+    if (!tok || tok->type != TOKEN_OP_IMPL) {
         return NULL;
     }
     //consume comma
@@ -229,7 +229,7 @@ static struct ast_node *parser_acc_typedesc_prime(
     lexer_push(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
-                           TYPEOP_PRODUCT, left_hand_side, NULL);
+                           TYPEOP_IMPLICATION, left_hand_side, NULL);
     if (!op) {
         //TODO: bad error
         return NULL;
@@ -237,7 +237,7 @@ static struct ast_node *parser_acc_typedesc_prime(
     right_hand_side = parser_acc_typeterm(p);
     if (!right_hand_side) {
         parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected a "TYPETERM_START_STR" after ','");
+                      "Expected a "TYPETERM_START_STR" after '->'");
         ast_node_destroy(op);
         *syntax_error = true;
         return NULL;

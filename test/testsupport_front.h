@@ -27,8 +27,8 @@ void front_testdriver_deinit(struct front_testdriver *p);
 struct inpfile *front_testdriver_get_file(struct front_testdriver *d);
 
 /**
- * Assign a string to the first/only(for now?) file of the driver
- * and return the frontend context
+ * Assign a string to the  file of the driver
+ * and return the frontend context.
  */
 struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
                                           const struct RFstring *s);
@@ -87,6 +87,5 @@ bool check_ast_match_impl(struct ast_node *got,
                           struct inpfile *ifile,
                           const char* filename,
                           unsigned int line);
-
 
 #endif

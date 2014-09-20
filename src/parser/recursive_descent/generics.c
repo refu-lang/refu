@@ -2,6 +2,7 @@
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
+#include <ast/generics.h>
 #include <info/info.h>
 #include <parser/parser.h>
 

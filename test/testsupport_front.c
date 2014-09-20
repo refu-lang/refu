@@ -4,6 +4,7 @@
 #include <Definitions/threadspecific.h>
 
 #include <ast/ast.h>
+#include <ast/type.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 
@@ -153,7 +154,7 @@ struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
                                           const struct RFstring *s)
 {
     if (!inpfile_dummy_assign(&d->front.file, s)) {
-        return NULL;
+        ck_abort_msg("Assigning a string to a test driver failed");
     }
 
     return &d->front;
@@ -247,6 +248,16 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 RF_STR_PF_ARG(ast_identifier_str(expect))
             );
             return false;
+        }
+        break;
+    case AST_TYPE_OPERATOR:
+        if (ast_typeop_op(got) != ast_typeop_op(expect)) {
+            ck_astcheck_abort(
+                filename, line,
+                "type operator mismatch: Got \""RF_STR_PF_FMT"\" != expected "
+                "\""RF_STR_PF_FMT"\"",
+                RF_STR_PF_ARG(ast_typeop_opstr(got)),
+                RF_STR_PF_ARG(ast_typeop_opstr(expect)));
         }
         break;
     default:

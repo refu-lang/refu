@@ -15,7 +15,7 @@ struct parser;
 /**
  * type_description = type_term type_description'
  *
- * type_description' = TOKEN_OP_COMMA type_term type_description'
+ * type_description' = TOKEN_OP_IMPL type_term type_description'
  *                   / EMPTY
  *
  * type_term = type_factor type_term'
@@ -25,7 +25,7 @@ struct parser;
  *
  * type_factor = type_element type_factor'
  *
- * type_factor' = TOKEN_OP_IMPL type_element type_factor'
+ * type_factor' =  TOKEN_OP_IMPL type_element type_factor'
  *              / EMPTY
  * type_element = TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
  *              / identifier TOKEN_SM_COLON annotated_identifier
