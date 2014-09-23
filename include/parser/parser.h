@@ -13,6 +13,7 @@ struct parser {
     struct lexer *lexer;
     struct inpfile *file;
     struct ast_node *root;
+    bool have_syntax_err;
 };
 
 
@@ -28,4 +29,22 @@ void parser_destroy(struct parser *p);
 
 bool parser_process_file(struct parser *parser);
 void parser_flush_messages(struct parser *parser);
+
+i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)
+{
+    parser->have_syntax_err = true;
+}
+
+i_INLINE_DECL bool parser_has_syntax_error(struct parser *parser)
+{
+    return parser->have_syntax_err;
+}
+
+i_INLINE_DECL bool parser_has_syntax_error_reset(struct parser *parser)
+{
+    bool ret = parser->have_syntax_err;
+    parser->have_syntax_err = false;
+    return ret;
+}
+
 #endif

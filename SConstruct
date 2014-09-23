@@ -26,7 +26,7 @@ refu_src = [
     'ast/identifier.c',
     'ast/type.c',
     'ast/vardecl.c',
-    'ast/fndecl.c',
+    'ast/function.c',
     'ast/generics.c',
 ]
 
@@ -76,6 +76,7 @@ unit_tests_files = [
     'parser/testsupport_parser.c',
     'parser/test_parser_typedesc.c',
     'parser/test_parser_generics.c',
+    'parser/test_parser_function.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

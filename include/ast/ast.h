@@ -7,9 +7,10 @@
 #include <inplocation.h>
 #include <ast/identifier.h>
 #include <ast/type_decls.h>
+#include <ast/typeclass_decls.h>
 #include <ast/generics_decls.h>
 #include <ast/vardecl.h>
-#include <ast/fndecl.h>
+#include <ast/function_decls.h>
 
 #define AST_PRINT_DEPTHMUL 4
 
@@ -44,6 +45,7 @@ struct ast_node {
         struct ast_typedecl typedecl;
         struct ast_typeop typeop;
         struct ast_typedesc typedesc;
+        struct ast_typeclass typeclass;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
     };
@@ -65,6 +67,18 @@ void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
 
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);
+
+/*
+ * Registers a child if not NULL with a specific type
+ * of an ast_node
+ */
+#define ast_node_register_child(parent_, child_, position_) \
+    do {                                                    \
+        if (child_) {                                       \
+            ast_node_add_child(parent_, child_);            \
+        }                                                   \
+        (parent_)->position_ = child_;                      \
+    } while (0)
 
 
 i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)

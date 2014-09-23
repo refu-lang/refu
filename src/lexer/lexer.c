@@ -139,7 +139,8 @@ static bool lexer_add_token_numeric(struct lexer *l,
 
 #define COND_IDENTIFIER_BEGIN(p_)               \
     (((p_) >= 'A' && (p_) <= 'Z') ||            \
-     ((p_) >= 'a' && (p_) <= 'z'))
+     ((p_) >= 'a' && (p_) <= 'z') ||            \
+     (p_) == '_')
 
 #define COND_IDENTIFIER(p_)                     \
     (COND_IDENTIFIER_BEGIN(p_) ||               \

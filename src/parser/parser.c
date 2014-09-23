@@ -13,6 +13,7 @@ bool parser_init(struct parser *p,
     p->file = file;
     p->lexer = lex;
     p->info = info;
+    p->have_syntax_err = false;
     return true;
 }
 
@@ -45,3 +46,7 @@ void parser_flush_messages(struct parser *p)
 {
     info_ctx_flush(p->info, stdout, MESSAGE_ANY);
 }
+
+i_INLINE_INS void parser_set_syntax_error(struct parser *parser);
+i_INLINE_INS bool parser_has_syntax_error(struct parser *parser);
+i_INLINE_INS bool parser_has_syntax_error_reset(struct parser *parser);

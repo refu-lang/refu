@@ -83,6 +83,9 @@ START_TEST(test_acc_typedesc_fail1) {
     ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
+    ck_assert_msg(
+        !parser_has_syntax_error(d->front.parser,
+                                 "no syntax error should have been reported"));
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail2) {
@@ -94,6 +97,9 @@ START_TEST(test_acc_typedesc_fail2) {
     ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
+    ck_assert_msg(
+        !parser_has_syntax_error(d->front.parser,
+                                 "no syntax error should have been reported"));
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
@@ -105,6 +111,9 @@ START_TEST(test_acc_typedesc_fail3) {
     ck_assert(lexer_scan(d->front.lexer));
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser,
+                                "a syntax error should have been reported"));
 
     struct info_msg errors[] = {
         TESTPARSER_MSG_INIT_START(&d->front.file,

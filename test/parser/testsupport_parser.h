@@ -59,7 +59,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
 
 /**
  * A utility testing macro used to test if the parser succesfully does an
- * accept
+ * accept.
  */
 #define ck_test_parse_as(node_, type_, driver_,  node_name, target_)    \
         do {                                                            \

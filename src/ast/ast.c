@@ -35,6 +35,7 @@ struct ast_node *ast_node_create_loc(enum ast_type type,
 
     return ret;
 }
+
 struct ast_node *ast_node_create_marks(enum ast_type type,
                                        struct inplocation_mark *start,
                                        struct inplocation_mark *end)
@@ -48,6 +49,7 @@ struct ast_node *ast_node_create_marks(enum ast_type type,
 
     return ret;
 }
+
 struct ast_node *ast_node_create_ptrs(enum ast_type type,
                                       struct inpfile *f,
                                       char *sp, char *ep)
@@ -71,13 +73,8 @@ void ast_node_destroy(struct ast_node *n)
     struct ast_node *tmp;
 
     /* type specific destruction */
-    switch (n->type) {
-    case AST_FUNCTION_DECLARATION:
-        ast_fndecl_destroy(n);
-        break;
-    default:
-        break;
-    }
+    //TODO: if ever needing destruction specific to an ast type
+    //      perform it with a switch() here.
 
     rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
         ast_node_destroy(child);

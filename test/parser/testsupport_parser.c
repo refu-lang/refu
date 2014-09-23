@@ -3,6 +3,7 @@
 #include <info/info.h>
 #include <info/msg.h>
 
+#include <ast/identifier.h>
 
 #define ck_parserr_check_abort(file_, line_, msg_, ...)                 \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
