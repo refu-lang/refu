@@ -110,7 +110,7 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
     if (!tok || tok->type != TOKEN_OP_GT) {
         parser_synerr(
             p, token_get_start(tok), NULL,
-            "Expected either a ',' or a '>' after generic declaration");
+            "Expected either a ',' or a '>' at generic declaration");
         ast_node_destroy(n);
         return NULL;
     }

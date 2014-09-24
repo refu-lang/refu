@@ -1,8 +1,23 @@
-#ifndef LFR_AST_TYPECLASS_H
-#define LFR_AST_TYPECLASS_H
+#include <ast/typeclass.h>
 
-#include <ast/ast.h>
 struct ast_node *ast_typeclass_create(struct inplocation_mark *start,
-                                      struct inplocation_mark *end);
+                                      struct inplocation_mark *end,
+                                      struct ast_node *name,
+                                      struct ast_node *genr)
+{
+    struct ast_node *ret;
+    RF_ASSERT(name->type == AST_IDENTIFIER);
 
-#endif
+    ret = ast_node_create_marks(AST_TYPECLASS_DECLARATION, start, end);
+    if (!ret) {
+        //TODO: memory error
+        return NULL;
+    }
+
+
+    ast_node_register_child(ret, name, fndecl.name);
+    ast_node_register_child(ret, genr, fndecl.genr);
+
+    return ret;
+}
+

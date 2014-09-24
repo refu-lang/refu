@@ -25,6 +25,7 @@ refu_src = [
     'ast/ast.c',
     'ast/identifier.c',
     'ast/type.c',
+    'ast/typeclass.c',
     'ast/vardecl.c',
     'ast/function.c',
     'ast/generics.c',
@@ -37,6 +38,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/function.c',
         'parser/recursive_descent/generics.c',
         'parser/recursive_descent/type.c',
+        'parser/recursive_descent/typeclass.c',
     ]
 
 # add specific environment variables
@@ -77,6 +79,7 @@ unit_tests_files = [
     'parser/test_parser_typedesc.c',
     'parser/test_parser_generics.c',
     'parser/test_parser_function.c',
+    'parser/test_parser_typeclass.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

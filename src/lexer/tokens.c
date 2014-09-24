@@ -11,6 +11,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("const"),
     RF_STRING_STATIC_INIT("type"),
     RF_STRING_STATIC_INIT("fn"),
+    RF_STRING_STATIC_INIT("class"),
     RF_STRING_STATIC_INIT("if"),
     RF_STRING_STATIC_INIT("elif"),
     RF_STRING_STATIC_INIT("else"),

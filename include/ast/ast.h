@@ -21,6 +21,7 @@ enum ast_type {
     AST_TYPE_DECLARATION,
     AST_TYPE_OPERATOR,
     AST_TYPE_DESCRIPTION,
+    AST_TYPECLASS_DECLARATION,
     AST_GENERIC_DECLARATION,
     AST_GENERIC_TYPE,
     AST_GENERIC_ATTRIBUTE,
@@ -30,6 +31,7 @@ enum ast_type {
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
+
     AST_TYPES_COUNT /* always last */
 };
 

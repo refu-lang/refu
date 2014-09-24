@@ -10,6 +10,7 @@ enum token_type {
     TOKEN_KW_CONST,
     TOKEN_KW_TYPE,
     TOKEN_KW_FUNCTION,
+    TOKEN_KW_TYPECLASS,
     TOKEN_KW_IF,
     TOKEN_KW_ELIF,
     TOKEN_KW_ELSE,

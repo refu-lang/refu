@@ -19,10 +19,12 @@ struct parser;
 i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
 {
     struct token *tok;
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_lookahead(p->lexer, 1);
     if (tok && tok->type != TOKEN_IDENTIFIER) {
         return NULL;
     }
+    // consume the identifier token and return it
+    lexer_next_token(p->lexer);
     return token_get_identifier(tok);
 }
 /**

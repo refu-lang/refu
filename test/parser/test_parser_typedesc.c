@@ -5,6 +5,7 @@
 
 #include <String/rf_str_core.h>
 #include "../../src/parser/recursive_descent/type.h"
+#include <parser/parser.h>
 #include <ast/ast.h>
 #include <ast/type.h>
 #include <lexer/lexer.h>
@@ -84,8 +85,8 @@ START_TEST(test_acc_typedesc_fail1) {
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
     ck_assert_msg(
-        !parser_has_syntax_error(d->front.parser,
-                                 "no syntax error should have been reported"));
+        !parser_has_syntax_error(d->front.parser),
+        "no syntax error should have been reported");
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail2) {
@@ -98,8 +99,8 @@ START_TEST(test_acc_typedesc_fail2) {
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
     ck_assert_msg(
-        !parser_has_syntax_error(d->front.parser,
-                                 "no syntax error should have been reported"));
+        !parser_has_syntax_error(d->front.parser),
+        "no syntax error should have been reported");
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
@@ -112,8 +113,8 @@ START_TEST(test_acc_typedesc_fail3) {
     n = parser_acc_typedesc(d->front.parser);
     ck_assert_msg(n == NULL, "parsing type description should fail");
     ck_assert_msg(
-        parser_has_syntax_error(d->front.parser,
-                                "a syntax error should have been reported"));
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
 
     struct info_msg errors[] = {
         TESTPARSER_MSG_INIT_START(&d->front.file,

@@ -15,8 +15,10 @@
     ck_abort_msg("Lexer test failed at : %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
 
-#define check_lexer_tokens(l_, tokens_, num_)                           \
-    check_lexer_tokens_impl((l_), (tokens_), (num_), __FILE__, __LINE__)
+#define check_lexer_tokens(l_, tokens_)                           \
+    check_lexer_tokens_impl((l_), (tokens_),                      \
+                            sizeof(tokens_)/sizeof(struct token), \
+                            __FILE__, __LINE__)
 
 void check_lexer_tokens_impl(struct lexer *l,
                              struct token *tokens,

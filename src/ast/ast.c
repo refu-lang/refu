@@ -12,6 +12,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("type declaration"),
     RF_STRING_STATIC_INIT("type operator"),
     RF_STRING_STATIC_INIT("type description"),
+    RF_STRING_STATIC_INIT("typeclass declaration"),
     RF_STRING_STATIC_INIT("generic declaration"),
     RF_STRING_STATIC_INIT("generic type"),
     RF_STRING_STATIC_INIT("generic attribute"),

@@ -27,8 +27,8 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
         lexer_next_token(p->lexer);
         n = parser_acc_typedesc(p);
         if (!n) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                          "expected a type description after '('");
+            parser_synerr(p, token_get_end(tok), NULL,
+                          "Expected a type description after '('");
             goto err;
         }
 

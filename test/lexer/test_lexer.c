@@ -38,7 +38,7 @@ START_TEST(test_lexer_scan_tokens_1) {
         }
     };
     ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected, 3);
+    check_lexer_tokens(lex, expected);
 
 } END_TEST
 
@@ -238,7 +238,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         },
     };
     ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected, sizeof(expected)/sizeof(struct token));
+    check_lexer_tokens(lex, expected);
 
 } END_TEST
 
@@ -273,7 +273,7 @@ START_TEST(test_lexer_scan_tokens_crammed) {
         }
     };
     ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected, 4);
+    check_lexer_tokens(lex, expected);
 
 } END_TEST
 
@@ -309,7 +309,57 @@ START_TEST(test_lexer_scan_identifier_at_end) {
         }
     };
     ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected, 4);
+    check_lexer_tokens(lex, expected);
+
+} END_TEST
+
+START_TEST(test_lexer_scan_problematic_typeclass) {
+    struct front_ctx *front;
+    struct inpfile *f;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "class pointers {\n"
+        "fn dosth(\n"
+        "}");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    f = &front->file;
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_KW_TYPECLASS,
+            .location=LOC_INIT(f, 0, 0, 0, 4),
+        },
+        {
+            .type=TOKEN_IDENTIFIER,
+            .location=LOC_INIT(f, 0, 6, 0, 13),
+            TESTLEX_IDENTIFIER_INIT(d, 0, "pointers")
+        },
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(f, 0, 15, 0, 15),
+        },
+        {
+            .type=TOKEN_KW_FUNCTION,
+            .location=LOC_INIT(f, 1, 0, 1, 1),
+        },
+        {
+            .type=TOKEN_IDENTIFIER,
+            .location=LOC_INIT(f, 1, 3, 1, 7),
+            TESTLEX_IDENTIFIER_INIT(d, 0, "dosth")
+        },
+        {
+            .type=TOKEN_SM_OPAREN,
+            .location=LOC_INIT(f, 1, 8, 1, 8),
+        },
+        {
+            .type=TOKEN_SM_CCBRACE,
+            .location=LOC_INIT(f, 2, 0, 2, 0),
+        },
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
 
 } END_TEST
 
@@ -325,6 +375,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan, test_lexer_scan_tokens_2);
     tcase_add_test(scan, test_lexer_scan_tokens_crammed);
     tcase_add_test(scan, test_lexer_scan_identifier_at_end);
+    tcase_add_test(scan, test_lexer_scan_problematic_typeclass);
 
     suite_add_tcase(s, scan);
     return s;

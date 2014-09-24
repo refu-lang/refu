@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <String/rf_str_core.h>
+#include <parser/parser.h>
 #include "../../src/parser/recursive_descent/function.h"
 #include <ast/function.h>
 #include <ast/type.h>
@@ -172,6 +173,159 @@ START_TEST(test_acc_fndecl_with_generics) {
     ast_node_destroy(fn);
 }END_TEST
 
+START_TEST(test_acc_fndecl_err1) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn ()");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected an identifier for the function name after 'fn'",
+            0, 3)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fndecl_err2) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn dosth)");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected '(' at function declaration",
+            0, 8)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fndecl_err3) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn dosth(a:int");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected ')' at function declaration after type description",
+            0, 13)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fndecl_err4) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn dosth(a:int, )");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a '(' or identifier after ','",
+            0, 14),
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected either a type description for the function's arguments "
+            "or ')' after '('",
+            0, 8),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fndecl_err5) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn dosth(a:int) ->");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected type description for the function's return type after"
+            " '->'",
+            0, 17)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fndecl_err6) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn dosth(a:int) -> (a:int, ");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fndecl(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing function declaration should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a '(' or identifier after ','",
+            0, 25),
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a type description after '('",
+            0, 19),
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected type description for the function's return type after"
+            " '->'",
+            0, 17)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
 
 Suite *parser_function_suite_create(void)
 {
@@ -186,6 +340,12 @@ Suite *parser_function_suite_create(void)
 
     TCase *fpf = tcase_create("parser_functiondecl_parsing_failures");
     tcase_add_checked_fixture(fpf, setup_front_tests, teardown_front_tests);
+    tcase_add_test(fpf, test_acc_fndecl_err1);
+    tcase_add_test(fpf, test_acc_fndecl_err2);
+    tcase_add_test(fpf, test_acc_fndecl_err3);
+    tcase_add_test(fpf, test_acc_fndecl_err4);
+    tcase_add_test(fpf, test_acc_fndecl_err5);
+    tcase_add_test(fpf, test_acc_fndecl_err6);
 
     suite_add_tcase(s, fp);
     suite_add_tcase(s, fpf);

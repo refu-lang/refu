@@ -11,6 +11,7 @@ struct internal_token { const char *name; enum token_type type; };
 constTOKEN_KW_CONST
 typeTOKEN_KW_TYPE
 fnTOKEN_KW_FUNCTION
+classTOKEN_KW_TYPECLASS
 ifTOKEN_KW_IF
 elifTOKEN_KW_ELIF
 elseTOKEN_KW_ELSE

@@ -9,6 +9,7 @@ Suite *frontend_input_suite_create(void);
 Suite *parser_typedesc_suite_create(void);
 Suite *parser_generics_suite_create(void);
 Suite *parser_function_suite_create(void);
+Suite *parser_typeclass_suite_create(void);
 
 static const char *SILENT = "CK_SILENT";
 static const char *MINIMAL = "CK_MINIMAL";
@@ -63,6 +64,7 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, parser_typedesc_suite_create());
     srunner_add_suite(sr, parser_generics_suite_create());
     srunner_add_suite(sr, parser_function_suite_create());
+    srunner_add_suite(sr, parser_typeclass_suite_create());
 
     srunner_set_fork_status (sr, fork_type);
     srunner_run_all(sr, print_type);

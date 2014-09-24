@@ -138,7 +138,7 @@ START_TEST(test_acc_genrdecl_fail2) {
     struct info_msg errors[] = {
         TESTPARSER_MSG_INIT_START(
             &front->file,
-            "Expected either a ',' or a '>' after generic declaration",
+            "Expected either a ',' or a '>' at generic declaration",
             0, 8),
     };
     ck_assert_parser_errors(front->info, errors);
