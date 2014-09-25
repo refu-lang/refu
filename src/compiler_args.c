@@ -77,15 +77,17 @@ static bool check_backend(int* i, int argc, char** argv, bool* consumed)
 
 static inline bool check_string_value(struct compiler_args *args, char* s)
 {
+    uint64_t val;
     if (!rf_stringx_assign_unsafe_nnt(&args->buff, s, strlen(s))) {
         ERROR("Could not assign input argument to string");
         return false;
     }
 
-    if (!rf_string_to_int(&args->buff, &args->verbose_level)) {
+    if (!rf_string_to_uint_dec(&args->buff, &val, NULL)) {
         ERROR("Verbose level argument is not a number: %s", s);
         return false;
     }
+    args->verbose_level = val;
     return true;
 }
 

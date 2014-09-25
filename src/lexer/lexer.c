@@ -38,18 +38,27 @@ static inline bool token_init_identifier(struct token *t,
     return true;
 }
 
-static inline bool token_init_numeric(struct token *t,
-                                      struct inpfile *f,
-                                      char *sp, char *ep)
+static inline bool token_init_constant_int(struct token *t,
+                                           struct inpfile *f,
+                                           char *sp, char *ep,
+                                           uint64_t value)
 {
-    struct RFstring temp;
-    if (!token_init(t, TOKEN_NUMERIC, f, sp, ep)) {
+    if (!token_init(t, TOKEN_CONSTANT_INTEGER, f, sp, ep)) {
         return false;
     }
-    RF_STRING_SHALLOW_INIT(&temp, sp, ep - sp + 1);
-    if (!rf_string_to_int(&temp, &t->value.numeric)) {
+    t->value.int_constant = value;
+    return true;
+}
+
+static inline bool token_init_constant_float(struct token *t,
+                                             struct inpfile *f,
+                                             char *sp, char *ep,
+                                             double value)
+{
+    if (!token_init(t, TOKEN_CONSTANT_FLOAT, f, sp, ep)) {
         return false;
     }
+    t->value.float_constant = value;
     return true;
 }
 
@@ -126,11 +135,24 @@ static bool lexer_add_token_identifier(struct lexer *l,
     return true;
 }
 
-static bool lexer_add_token_numeric(struct lexer *l,
-                                    char *sp, char* ep)
+static bool lexer_add_token_constant_int(struct lexer *l,
+                                         char *sp, char* ep,
+                                         uint64_t v)
 {
     darray_resize(l->tokens, l->tokens.size + 1);
-    if (!token_init_numeric(&darray_top(l->tokens), l->file, sp, ep)) {
+    if (!token_init_constant_int(&darray_top(l->tokens), l->file, sp, ep, v)) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool lexer_add_token_constant_float(struct lexer *l,
+                                         char *sp, char* ep,
+                                         double v)
+{
+    darray_resize(l->tokens, l->tokens.size + 1);
+    if (!token_init_constant_float(&darray_top(l->tokens), l->file, sp, ep, v)) {
         return false;
     }
 
@@ -184,20 +206,47 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
 
 #define COND_NUMERIC(p_)                        \
     ((p_) >= '0' && (p_) <= '9')
-static bool lexer_get_numeric(struct lexer *l, char *p,
-                              char *lim, char **ret_p)
+
+#define COND_WS(p_)                                               \
+    ((p_) == ' ' || (p_) == '\t' || (p_) == '\n' || (p_) == '\r')
+static bool lexer_get_constant_intfloat(struct lexer *l, char *p,
+                                        char *lim, char **ret_p)
 {
     char *sp = p;
+    bool is_float = false;
+    struct RFstring tmps;
+    double float_val;
+    uint64_t int_val;
+    size_t len;
+
     while (p < lim) {
-        if (COND_NUMERIC(*(p+1))) {
+        if (*(p+1) == '.') {
+            is_float = true;
             p ++;
-        } else {
+        } else if (COND_WS(*(p+1))) {
             break;
+        } else {
+            p ++;
         }
     }
 
-    if (!lexer_add_token_numeric(l, sp, p)) {
-        return false;
+    RF_STRING_SHALLOW_INIT(&tmps, sp, p - sp + 1);
+    if (is_float) {
+        if (!rf_string_to_double(&tmps, &float_val, &len)) {
+            return false;
+        }
+        p = sp + len;
+        if (!lexer_add_token_constant_float(l, sp, p, float_val)) {
+            return false;
+        }
+    } else {
+        if (!rf_string_to_uint_dec(&tmps, &int_val, &len)) {
+            return false;
+        }
+        p = sp + len;
+        if (!lexer_add_token_constant_int(l, sp, p, int_val)) {
+            return false;
+        }
     }
 
     if (p != lim) {
@@ -209,9 +258,67 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
     return true;
 }
 
+static bool lexer_get_constant_uint(
+    struct lexer *l, char *p,
+    char *lim, char **ret_p,
+    bool (*conv_fun)(const void*, uint64_t*, size_t *))
+{
+    char *sp = p;
+    struct RFstring tmps;
+    uint64_t int_val;
+    size_t len;
+
+    while (p < lim) {
+        if (COND_WS(*(p+1))) {
+            break;
+        } else {
+            p ++;
+        }
+    }
+
+    RF_STRING_SHALLOW_INIT(&tmps, sp, p - sp + 1);
+    if (!conv_fun(&tmps, &int_val, &len)) {
+            return false;
+    }
+    p = sp + len;
+    if (!lexer_add_token_constant_int(l, sp, p, int_val)) {
+            return false;
+    }
+
+    if (p != lim) {
+        *ret_p = p + 1;
+    } else {
+        *ret_p = p;
+    }
+
+    return true;
+}
+
+static bool lexer_get_numeric(struct lexer *l, char *p,
+                              char *lim, char **ret_p)
+{
+    char *sp = p;
+    char *sp_1 = p + 1;
+    if (*sp == '0') {
+        if (*sp_1 == 'x') {
+            return lexer_get_constant_uint(l, p, lim, ret_p,
+                                           rf_string_to_uint_hex);
+        } else if (*sp_1 == 'b') {
+            return lexer_get_constant_uint(l, p, lim, ret_p,
+                                           rf_string_to_uint_bin);
+        }
+        // else oct
+        return lexer_get_constant_uint(l, p, lim, ret_p,
+                                       rf_string_to_uint_oct);
+    }
+
+    return lexer_get_constant_intfloat(l, p, lim, ret_p);
+}
+
 #define COND_TOKEN_AMBIG1(p_)                     \
     ((p_) == '+' || (p_) == '-' || (p_) == '>' || \
-     (p_) == '<' || (p_) == '|' || (p_) == '=')
+     (p_) == '<' || (p_) == '|' || (p_) == '=' || \
+     (p_) == '&')
 
 bool lexer_scan(struct lexer *l)
 {

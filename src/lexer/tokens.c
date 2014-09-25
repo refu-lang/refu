@@ -5,7 +5,8 @@
 
 static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("identifier"),
-    RF_STRING_STATIC_INIT("numeric"),
+    RF_STRING_STATIC_INIT("constant integer"),
+    RF_STRING_STATIC_INIT("constant float"),
 
     /* keywords */
     RF_STRING_STATIC_INIT("const"),
@@ -23,16 +24,13 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("("),
     RF_STRING_STATIC_INIT(")"),
 
-    /* operators */
+    /* binary operators */
     RF_STRING_STATIC_INIT("+"),
     RF_STRING_STATIC_INIT("-"),
     RF_STRING_STATIC_INIT("*"),
     RF_STRING_STATIC_INIT("/"),
 
-    RF_STRING_STATIC_INIT("++"),
-    RF_STRING_STATIC_INIT("--"),
-    RF_STRING_STATIC_INIT("="),
-
+    /* binary comparsison operators */
     RF_STRING_STATIC_INIT("=="),
     RF_STRING_STATIC_INIT("!="),
     RF_STRING_STATIC_INIT(">"),
@@ -40,10 +38,18 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("<"),
     RF_STRING_STATIC_INIT("<="),
 
+    /* unary operators*/
+    RF_STRING_STATIC_INIT("&"),
+    RF_STRING_STATIC_INIT("++"),
+    RF_STRING_STATIC_INIT("--"),
+    RF_STRING_STATIC_INIT("="),
+
+    /* type operators */
     RF_STRING_STATIC_INIT("|"),
     RF_STRING_STATIC_INIT(","),
     RF_STRING_STATIC_INIT("->"),
 
+    /* boolean operators */
     RF_STRING_STATIC_INIT("&&"),
     RF_STRING_STATIC_INIT("||"),
 };

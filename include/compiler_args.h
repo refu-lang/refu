@@ -12,7 +12,7 @@
 
 struct compiler_args {
     int backend_connection;
-    int verbose_level;
+    unsigned verbose_level;
     bool repl;
     struct RFstring input;
     struct RFstringx buff;

@@ -363,6 +363,66 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
 
 } END_TEST
 
+START_TEST(test_lexer_scan_constant_numbers) {
+    struct front_ctx *front;
+    struct inpfile *f;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "42\n"
+        "3.14\n"
+        "0b11100\n"
+        "0xFEFfE\n"
+        "03452623\n"
+        "1.0e-10\n"
+        "3.9265E+2\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    f = &front->file;
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_CONSTANT_INTEGER,
+            .location=LOC_INIT(f, 0, 0, 0, 1),
+            TESTLEX_INTEGER_INIT(42)
+        },
+        {
+            .type=TOKEN_CONSTANT_FLOAT,
+            .location=LOC_INIT(f, 1, 0, 1, 3),
+            TESTLEX_FLOAT_INIT(3.14)
+        },
+        {
+            .type=TOKEN_CONSTANT_INTEGER,
+            .location=LOC_INIT(f, 2, 0, 2, 6),
+            TESTLEX_INTEGER_INIT(28)
+        },
+        {
+            .type=TOKEN_CONSTANT_INTEGER,
+            .location=LOC_INIT(f, 3, 0, 3, 6),
+            TESTLEX_INTEGER_INIT(1044478)
+        },
+        {
+            .type=TOKEN_CONSTANT_INTEGER,
+            .location=LOC_INIT(f, 4, 0, 4, 7),
+            TESTLEX_INTEGER_INIT(939411)
+        },
+        {
+            .type=TOKEN_CONSTANT_FLOAT,
+            .location=LOC_INIT(f, 5, 0, 5, 6),
+            TESTLEX_FLOAT_INIT(1.0e-10)
+        },
+        {
+            .type=TOKEN_CONSTANT_FLOAT,
+            .location=LOC_INIT(f, 6, 0, 6, 8),
+            TESTLEX_FLOAT_INIT(3.9265e+2)
+        },
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
+
+} END_TEST
+
 Suite *lexer_suite_create(void)
 {
     Suite *s = suite_create("lexer");
@@ -376,6 +436,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan, test_lexer_scan_tokens_crammed);
     tcase_add_test(scan, test_lexer_scan_identifier_at_end);
     tcase_add_test(scan, test_lexer_scan_problematic_typeclass);
+    tcase_add_test(scan, test_lexer_scan_constant_numbers);
 
     suite_add_tcase(s, scan);
     return s;

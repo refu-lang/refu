@@ -23,7 +23,8 @@ struct token {
     struct inplocation location;
     union {
         struct tok_identifier identifier;
-        int numeric;
+        uint64_t int_constant;
+        double  float_constant;
     }value;
 };
 

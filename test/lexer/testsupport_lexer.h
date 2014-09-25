@@ -10,6 +10,12 @@
         front_testdriver_generate_identifier(driver_, loc_, str_)    \
         }
 
+#define TESTLEX_INTEGER_INIT(val_)              \
+    {.int_constant = val_}
+
+#define TESTLEX_FLOAT_INIT(val_)              \
+    {.float_constant = val_}
+
 
 #define ck_lexer_abort(file_, line_, msg_, ...)           \
     ck_abort_msg("Lexer test failed at : %s:%u\n\t"msg_,  \

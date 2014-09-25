@@ -26,7 +26,7 @@ struct parser;
  *
  * type_factor = type_element type_factor'
  *
- * type_factor' =  TOKEN_OP_IMPL type_element type_factor'
+ * type_factor' =  TOKEN_OP_PRODUCT type_element type_factor'
  *              / EMPTY
  * type_element = TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
  *              / identifier TOKEN_SM_COLON annotated_identifier
