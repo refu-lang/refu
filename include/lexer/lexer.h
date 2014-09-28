@@ -25,6 +25,7 @@ struct token {
         struct tok_identifier identifier;
         uint64_t int_constant;
         double  float_constant;
+        struct RFstring literal;
     }value;
 };
 

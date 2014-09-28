@@ -7,6 +7,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("identifier"),
     RF_STRING_STATIC_INIT("constant integer"),
     RF_STRING_STATIC_INIT("constant float"),
+    RF_STRING_STATIC_INIT("string literal"),
 
     /* keywords */
     RF_STRING_STATIC_INIT("const"),
@@ -23,6 +24,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("}"),
     RF_STRING_STATIC_INIT("("),
     RF_STRING_STATIC_INIT(")"),
+    RF_STRING_STATIC_INIT("\""),
 
     /* binary operators */
     RF_STRING_STATIC_INIT("+"),

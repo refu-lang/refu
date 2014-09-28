@@ -41,6 +41,13 @@ struct inplocation {
         (mark_)->p = 0;                         \
     } while(0)
 
+#define LOCMARK_INIT_ZERO()                     \
+    {                                           \
+        .line = 0,                              \
+        .col = 0,                               \
+        .p = 0                                  \
+    }
+
 #define LOCMARK_INIT(file_, line_, col_)          \
     {                                             \
         .line = line_,                            \

@@ -6,6 +6,7 @@ enum token_type {
     TOKEN_IDENTIFIER = 0,
     TOKEN_CONSTANT_INTEGER,
     TOKEN_CONSTANT_FLOAT,
+    TOKEN_STRING_LITERAL,
 
 
     /* keywords */
@@ -23,6 +24,7 @@ enum token_type {
     TOKEN_SM_CCBRACE,
     TOKEN_SM_OPAREN,
     TOKEN_SM_CPAREN,
+    TOKEN_SM_DBLQUOTE,
 
     /* binary operators */
     TOKEN_OP_PLUS,

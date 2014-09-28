@@ -423,6 +423,40 @@ START_TEST(test_lexer_scan_constant_numbers) {
 
 } END_TEST
 
+START_TEST(test_lexer_scan_string_literals) {
+    struct front_ctx *front;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "\"Celka\"\n"
+        "\"Containing escaped \\\"\\\" quotes\"\n"
+        "\"Eleos そう思いながらも\"\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file");
+    struct token expected[] = {
+        {
+            .type=TOKEN_STRING_LITERAL,
+            .location=LOC_INIT(&front->file, 0, 0, 0, 6),
+            TESTLEX_LITERAL_INIT("Celka")
+        },
+        {
+            .type=TOKEN_STRING_LITERAL,
+            .location=LOC_INIT(&front->file, 1, 0, 1, 31),
+            TESTLEX_LITERAL_INIT("Containing escaped \\\"\\\" quotes")
+        },
+        {
+            .type=TOKEN_STRING_LITERAL,
+            .location=LOC_INIT_FULL(2, 0, 2, 15,
+                                    inpfile_line_p(&front->file, 2) + 0,
+                                    inpfile_line_p(&front->file, 2) + 31),
+            TESTLEX_LITERAL_INIT("Eleos そう思いながらも")
+        }
+    };
+    ck_assert_lexer_scan(d, "Scanning failed");
+    check_lexer_tokens(d->front.lexer, expected);
+
+} END_TEST
+
 Suite *lexer_suite_create(void)
 {
     Suite *s = suite_create("lexer");
@@ -437,6 +471,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan, test_lexer_scan_identifier_at_end);
     tcase_add_test(scan, test_lexer_scan_problematic_typeclass);
     tcase_add_test(scan, test_lexer_scan_constant_numbers);
+    tcase_add_test(scan, test_lexer_scan_string_literals);
 
     suite_add_tcase(s, scan);
     return s;

@@ -5,6 +5,7 @@
 #include "tokens_htable.h" /* include the gperf generated hash table */
 #include "common.h"
 
+static struct inplocation_mark i_file_start_loc_ = LOCMARK_INIT_ZERO();
 
 i_INLINE_INS struct inplocation *token_get_loc(struct token *tok);
 i_INLINE_INS struct inplocation_mark *token_get_start(struct token *tok);
@@ -62,6 +63,18 @@ static inline bool token_init_constant_float(struct token *t,
     return true;
 }
 
+static inline bool token_init_string_literal(struct token *t,
+                                             struct inpfile *f,
+                                             char *sp, char *ep)
+{
+    if (!token_init(t, TOKEN_STRING_LITERAL, f, sp, ep)) {
+        return false;
+    }
+    // + 1 in the beginning and - 1 in the end, to take off the double quotes
+    RF_STRING_SHALLOW_INIT(&t->value.literal, sp + 1, ep - sp - 1);
+    return true;
+}
+
 bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
 {
     darray_init(l->tokens);
@@ -106,11 +119,12 @@ void lexer_destroy(struct lexer *l)
     free(l);
 }
 
-// get the last token scanned by the lexer
-static struct token *lexer_get_top_token(struct lexer *l)
+static struct inplocation_mark *lexer_get_last_token_loc_start(struct lexer *l)
 {
-    RF_ASSERT(!darray_empty(l->tokens));
-    return &darray_top(l->tokens);
+    if (darray_empty(l->tokens)) {
+        return &i_file_start_loc_;
+    }
+    return token_get_start(&darray_top(l->tokens));
 }
 
 static bool lexer_add_token(struct lexer *l, enum token_type type,
@@ -153,6 +167,17 @@ static bool lexer_add_token_constant_float(struct lexer *l,
 {
     darray_resize(l->tokens, l->tokens.size + 1);
     if (!token_init_constant_float(&darray_top(l->tokens), l->file, sp, ep, v)) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool lexer_add_token_string_literal(struct lexer *l,
+                                           char *sp, char* ep)
+{
+    darray_resize(l->tokens, l->tokens.size + 1);
+    if (!token_init_string_literal(&darray_top(l->tokens), l->file, sp, ep)) {
         return false;
     }
 
@@ -315,6 +340,52 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
     return lexer_get_constant_intfloat(l, p, lim, ret_p);
 }
 
+static bool lexer_get_string_literal(struct lexer *l, char *p,
+                                     char *lim, char **ret_p)
+{
+    char *sp = p;
+    struct RFstring tmps;
+    struct RFstring_iterator it;
+    uint32_t val;
+    uint32_t pr_val = 0;
+    bool end_found = false;
+    RF_STRING_SHALLOW_INIT(&tmps, sp, lim - sp + 1);
+
+    // iterate as an RFString since we may have Unicode characters inside
+    if (!rf_string_get_iter(&tmps, &it)) {
+        //TODO: bad error
+        return false;
+    }
+
+    while (rf_string_iterator_next(&it, &val)) {
+        if (val == '"' && it.character_pos != 0 && pr_val != '\\') {
+            end_found = true;
+            break;
+        }
+        pr_val = val;
+    }
+    if (!end_found) {
+        lexer_synerr(
+            l, lexer_get_last_token_loc_start(l),
+            NULL,
+            "Unterminated string literal detected");
+        return false;
+    }
+    p = it.p - 1;
+
+    if (!lexer_add_token_string_literal(l, sp, p)) {
+            return false;
+    }
+
+    if (p != lim) {
+        *ret_p = p + 1;
+    } else {
+        *ret_p = p;
+    }
+
+    return true;
+}
+
 #define COND_TOKEN_AMBIG1(p_)                     \
     ((p_) == '+' || (p_) == '-' || (p_) == '>' || \
      (p_) == '<' || (p_) == '|' || (p_) == '=' || \
@@ -356,6 +427,18 @@ bool lexer_scan(struct lexer *l)
             while (len <= MAX_WORD_LENGTH) {
                 itoken = lexer_lexeme_is_token(p, len);
                 if (itoken) {
+                    /* if it's the start of a string literal */
+                    if (itoken->type == TOKEN_SM_DBLQUOTE) {
+                        if (!lexer_get_string_literal(l, p, lim, &p)) {
+                            lexer_synerr(
+                                l, lexer_get_last_token_loc_start(l),
+                                NULL,
+                                "Failed to scan string literal");
+                            return false;
+                        }
+                        got_token=true;
+                        break;
+                    }
                     /* if more than 1 tokens may start with that character */
                     if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
                         len = 2;
@@ -377,7 +460,7 @@ bool lexer_scan(struct lexer *l)
             }
             if (!got_token) {
                 // error unknown token
-                lexer_synerr(l, &lexer_get_top_token(l)->location.start, NULL,
+                lexer_synerr(l, lexer_get_last_token_loc_start(l), NULL,
                                "Unknown token encountered");
                 return false;
             }

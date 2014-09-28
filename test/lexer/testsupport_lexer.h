@@ -16,6 +16,9 @@
 #define TESTLEX_FLOAT_INIT(val_)              \
     {.float_constant = val_}
 
+#define TESTLEX_LITERAL_INIT(val_)              \
+    {.literal = RF_STRING_STATIC_INIT(val_)}
+
 
 #define ck_lexer_abort(file_, line_, msg_, ...)           \
     ck_abort_msg("Lexer test failed at : %s:%u\n\t"msg_,  \
@@ -32,5 +35,17 @@ void check_lexer_tokens_impl(struct lexer *l,
                              const char *filename,
                              unsigned int line);
 
+#define ck_assert_lexer_scan(d_, msg_)                                  \
+    do {                                                                \
+        if (!lexer_scan(((d_)->front.lexer))) {                         \
+            struct RFstringx *tmp_ = front_testdriver_geterrors(d_);    \
+            if (tmp_) {                                                 \
+                ck_abort_msg(msg_" -- with scanning errors\n"RF_STR_PF_FMT, \
+                             RF_STR_PF_ARG(tmp_));                      \
+            } else {                                                    \
+                ck_abort_msg(msg_" -- with no scanning errors");        \
+            }                                                           \
+        }                                                               \
+    } while(0)
 
 #endif
