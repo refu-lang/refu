@@ -23,11 +23,7 @@ START_TEST(test_lexer_scan_tokens_1) {
     f = &front->file;
     lex = front->lexer;
     struct token expected[] = {
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 0, 0, 2),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "asd")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 2, "asd"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 4, 0, 4)
@@ -72,65 +68,37 @@ START_TEST(test_lexer_scan_tokens_2) {
             .type=TOKEN_KW_TYPE,
             .location=LOC_INIT(f, 0, 0, 0, 3)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 5, 0, 7),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "foo")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 5, 0, 7, "foo"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 9, 0, 9)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 11, 0, 11),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 11, 0, 11, "a"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 12, 0, 12)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 13, 0, 15),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "i32")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 13, 0, 15, "i32"),
         {
             .type=TOKEN_OP_COMMA,
             .location=LOC_INIT(f, 0, 16, 0, 16)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 18, 0, 18),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "b")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 18, 0, 18, "b"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 19, 0, 19)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 20, 0, 25),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "string")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 20, 0, 25,  "string"),
         {
             .type=TOKEN_OP_TYPESUM,
             .location=LOC_INIT(f, 0, 27, 0, 27)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 29, 0, 29),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "c")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 29, 0, 29, "c"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 30, 0, 30)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 31, 0, 33),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "f32")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 31, 0, 33, "f32"),
         {
             .type=TOKEN_SM_CCBRACE,
             .location=LOC_INIT(f, 0, 35, 0, 35)
@@ -140,29 +108,17 @@ START_TEST(test_lexer_scan_tokens_2) {
             .type=TOKEN_KW_FUNCTION,
             .location=LOC_INIT(f, 1, 0, 1, 1)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 1, 3, 1, 5),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "foo")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 1, 3, 1, 5, "foo"),
         {
             .type=TOKEN_SM_OPAREN,
             .location=LOC_INIT(f, 1, 6, 1, 6)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 1, 7, 1, 7),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 1, 7, 1, 7, "a"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 1, 8, 1, 8)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 1, 9, 1, 11),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "int")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 1, 9, 1, 11, "int"),
         {
             .type=TOKEN_SM_CPAREN,
             .location=LOC_INIT(f, 1, 12, 1, 12)
@@ -171,11 +127,7 @@ START_TEST(test_lexer_scan_tokens_2) {
             .type=TOKEN_OP_IMPL,
             .location=LOC_INIT(f, 1, 14, 1, 15)
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 1, 17, 1, 19),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "int")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 1, 17, 1, 19, "int"),
         /* 3rd line */
         {
             .type=TOKEN_OP_PLUS,
@@ -254,11 +206,7 @@ START_TEST(test_lexer_scan_tokens_crammed) {
     f = &front->file;
     lex = front->lexer;
     struct token expected[] = {
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 0, 0, 3),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "food")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 3, "food"),
         {
             .type=TOKEN_OP_LT,
             .location=LOC_INIT(f, 0, 4, 0, 4)
@@ -292,21 +240,9 @@ START_TEST(test_lexer_scan_identifier_at_end) {
             .type=TOKEN_OP_LT,
             .location=LOC_INIT(f, 0, 0, 0, 0),
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 1, 0, 4),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "Type")
-        },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 6, 0, 6),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "a")
-        },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 8, 0, 10),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "bbb")
-        }
+        TESTLEX_IDENTIFIER_INIT(d, 0, 1, 0, 4, "Type"),
+        TESTLEX_IDENTIFIER_INIT(d, 0, 6, 0, 6, "a"),
+        TESTLEX_IDENTIFIER_INIT(d, 0, 8, 0, 10, "bbb"),
     };
     ck_assert(lexer_scan(lex));
     check_lexer_tokens(lex, expected);
@@ -331,11 +267,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
             .type=TOKEN_KW_TYPECLASS,
             .location=LOC_INIT(f, 0, 0, 0, 4),
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 0, 6, 0, 13),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "pointers")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 6, 0, 13, "pointers"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 15, 0, 15),
@@ -344,11 +276,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
             .type=TOKEN_KW_FUNCTION,
             .location=LOC_INIT(f, 1, 0, 1, 1),
         },
-        {
-            .type=TOKEN_IDENTIFIER,
-            .location=LOC_INIT(f, 1, 3, 1, 7),
-            TESTLEX_IDENTIFIER_INIT(d, 0, "dosth")
-        },
+        TESTLEX_IDENTIFIER_INIT(d, 1, 3, 1, 7, "dosth"),
         {
             .type=TOKEN_SM_OPAREN,
             .location=LOC_INIT(f, 1, 8, 1, 8),
@@ -365,7 +293,6 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
 
 START_TEST(test_lexer_scan_constant_numbers) {
     struct front_ctx *front;
-    struct inpfile *f;
     struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "42\n"
@@ -379,44 +306,15 @@ START_TEST(test_lexer_scan_constant_numbers) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
     lex = front->lexer;
     struct token expected[] = {
-        {
-            .type=TOKEN_CONSTANT_INTEGER,
-            .location=LOC_INIT(f, 0, 0, 0, 1),
-            TESTLEX_INTEGER_INIT(42)
-        },
-        {
-            .type=TOKEN_CONSTANT_FLOAT,
-            .location=LOC_INIT(f, 1, 0, 1, 3),
-            TESTLEX_FLOAT_INIT(3.14)
-        },
-        {
-            .type=TOKEN_CONSTANT_INTEGER,
-            .location=LOC_INIT(f, 2, 0, 2, 6),
-            TESTLEX_INTEGER_INIT(28)
-        },
-        {
-            .type=TOKEN_CONSTANT_INTEGER,
-            .location=LOC_INIT(f, 3, 0, 3, 6),
-            TESTLEX_INTEGER_INIT(1044478)
-        },
-        {
-            .type=TOKEN_CONSTANT_INTEGER,
-            .location=LOC_INIT(f, 4, 0, 4, 7),
-            TESTLEX_INTEGER_INIT(939411)
-        },
-        {
-            .type=TOKEN_CONSTANT_FLOAT,
-            .location=LOC_INIT(f, 5, 0, 5, 6),
-            TESTLEX_FLOAT_INIT(1.0e-10)
-        },
-        {
-            .type=TOKEN_CONSTANT_FLOAT,
-            .location=LOC_INIT(f, 6, 0, 6, 8),
-            TESTLEX_FLOAT_INIT(3.9265e+2)
-        },
+        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 42),
+        TESTLEX_FLOAT_INIT(d, 1, 0, 1, 3, 3.14),
+        TESTLEX_INTEGER_INIT(d, 2, 0, 2, 6, 28),
+        TESTLEX_INTEGER_INIT(d, 3, 0, 3, 6, 1044478),
+        TESTLEX_INTEGER_INIT(d, 4, 0, 4, 7, 939411),
+        TESTLEX_FLOAT_INIT(d, 5, 0, 5, 6, 1.0e-10),
+        TESTLEX_FLOAT_INIT(d, 6, 0, 6, 8, 3.9265e+2),
     };
     ck_assert(lexer_scan(lex));
     check_lexer_tokens(lex, expected);
@@ -434,23 +332,10 @@ START_TEST(test_lexer_scan_string_literals) {
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file");
     struct token expected[] = {
-        {
-            .type=TOKEN_STRING_LITERAL,
-            .location=LOC_INIT(&front->file, 0, 0, 0, 6),
-            TESTLEX_LITERAL_INIT("Celka")
-        },
-        {
-            .type=TOKEN_STRING_LITERAL,
-            .location=LOC_INIT(&front->file, 1, 0, 1, 31),
-            TESTLEX_LITERAL_INIT("Containing escaped \\\"\\\" quotes")
-        },
-        {
-            .type=TOKEN_STRING_LITERAL,
-            .location=LOC_INIT_FULL(2, 0, 2, 15,
-                                    inpfile_line_p(&front->file, 2) + 0,
-                                    inpfile_line_p(&front->file, 2) + 31),
-            TESTLEX_LITERAL_INIT("Eleos そう思いながらも")
-        }
+        TESTLEX_LITERAL_INIT(d, 0, 0, 0, 6, 0, 6,  "Celka"),
+        TESTLEX_LITERAL_INIT(d, 1, 0, 1, 31, 0, 31,  
+                             "Containing escaped \\\"\\\" quotes"),
+        TESTLEX_LITERAL_INIT(d, 2, 0, 2, 15, 0, 31, "Eleos そう思いながらも")
     };
     ck_assert_lexer_scan(d, "Scanning failed");
     check_lexer_tokens(d->front.lexer, expected);

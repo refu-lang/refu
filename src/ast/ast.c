@@ -19,7 +19,8 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("function declaration"),
     RF_STRING_STATIC_INIT("annotated identifier"),
     RF_STRING_STATIC_INIT("string literal"),
-    RF_STRING_STATIC_INIT("identifier")
+    RF_STRING_STATIC_INIT("identifier"),
+    RF_STRING_STATIC_INIT("constant number"),
 };
 
 #define AST_NODE_IS_LEAF(node_) ((node_)->type >= AST_STRING_LITERAL)

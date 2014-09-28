@@ -59,6 +59,10 @@ enum token_type {
     TOKENS_MAX
 };
 
+#define TOKEN_IS_NUMERIC_CONSTANT(tok_)         \
+    ((tok)->type == TOKEN_CONSTANT_INTEGER ||   \
+     (tok)->type == TOKEN_CONSTANT_FLOAT)
+
 const struct RFstring *tokentype_to_str(enum token_type type);
 
 #endif

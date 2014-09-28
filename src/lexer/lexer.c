@@ -1,6 +1,8 @@
 #include <lexer/lexer.h>
 #include <inpfile.h>
-#include <ast/ast.h>
+
+#include <ast/constant_num.h>
+#include <ast/string_literal.h>
 
 #include "tokens_htable.h" /* include the gperf generated hash table */
 #include "common.h"
@@ -10,7 +12,7 @@ static struct inplocation_mark i_file_start_loc_ = LOCMARK_INIT_ZERO();
 i_INLINE_INS struct inplocation *token_get_loc(struct token *tok);
 i_INLINE_INS struct inplocation_mark *token_get_start(struct token *tok);
 i_INLINE_INS struct inplocation_mark *token_get_end(struct token *tok);
-i_INLINE_INS struct ast_node *token_get_identifier(struct token *tok);
+i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
 
 static inline bool token_init(struct token *t,
                               enum token_type type,
@@ -31,9 +33,9 @@ static inline bool token_init_identifier(struct token *t,
     if (!token_init(t, TOKEN_IDENTIFIER, f, sp, ep)) {
         return false;
     }
-    t->value.identifier.id = ast_identifier_create(&t->location);
-    t->value.identifier.owned_by_lexer = true;
-    if (!t->value.identifier.id) {
+    t->value.v = ast_identifier_create(&t->location);
+    t->value.owned_by_lexer = true;
+    if (!t->value.v) {
         return false;
     }
     return true;
@@ -47,7 +49,11 @@ static inline bool token_init_constant_int(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_INTEGER, f, sp, ep)) {
         return false;
     }
-    t->value.int_constant = value;
+    t->value.v = ast_constantnum_create_integer(&t->location, value);
+    t->value.owned_by_lexer = true;
+    if (!t->value.v) {
+        return false;
+    }
     return true;
 }
 
@@ -59,7 +65,11 @@ static inline bool token_init_constant_float(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_FLOAT, f, sp, ep)) {
         return false;
     }
-    t->value.float_constant = value;
+    t->value.v = ast_constantnum_create_float(&t->location, value);
+    t->value.owned_by_lexer = true;
+    if (!t->value.v) {
+        return false;
+    }
     return true;
 }
 
@@ -70,8 +80,11 @@ static inline bool token_init_string_literal(struct token *t,
     if (!token_init(t, TOKEN_STRING_LITERAL, f, sp, ep)) {
         return false;
     }
-    // + 1 in the beginning and - 1 in the end, to take off the double quotes
-    RF_STRING_SHALLOW_INIT(&t->value.literal, sp + 1, ep - sp - 1);
+    t->value.v = ast_string_literal_create(&t->location);
+    t->value.owned_by_lexer = true;
+    if (!t->value.v) {
+        return false;
+    }
     return true;
 }
 
@@ -102,10 +115,17 @@ void lexer_deinit(struct lexer *l)
     struct token *tok;
 
     darray_foreach(tok, l->tokens) {
-        if (tok->type == TOKEN_IDENTIFIER &&
-            tok->value.identifier.owned_by_lexer) {
-
-            ast_node_destroy(tok->value.identifier.id);
+        switch (tok->type) {
+        case TOKEN_IDENTIFIER:
+        case TOKEN_STRING_LITERAL:
+        case TOKEN_CONSTANT_INTEGER:
+        case TOKEN_CONSTANT_FLOAT:
+            if (tok->value.owned_by_lexer) {
+                ast_node_destroy(tok->value.v);
+            }
+            break;
+        default: //do nothing
+            break;
         }
     }
 

@@ -44,7 +44,7 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
         tok2 = lexer_lookahead(p->lexer, 2);
         if (tok->type == TOKEN_IDENTIFIER &&
             tok2 && tok2->type == TOKEN_SM_COLON) {
-            left = token_get_identifier(tok);
+            left = token_get_value(tok);
             //consume identifier and ':'
             lexer_next_token(p->lexer);
             lexer_next_token(p->lexer);

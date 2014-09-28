@@ -26,7 +26,7 @@ struct parser;
  *
  *
  * expr_element = string_literal
- *              / numeric_literal
+ *              / numeric_constant
  *              / identifier
  *              / function_call
  *              / array_reference

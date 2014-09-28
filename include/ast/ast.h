@@ -5,12 +5,14 @@
 #include <RFstring.h>
 
 #include <inplocation.h>
-#include <ast/identifier.h>
 #include <ast/type_decls.h>
 #include <ast/typeclass_decls.h>
 #include <ast/generics_decls.h>
 #include <ast/vardecl.h>
 #include <ast/function_decls.h>
+#include <ast/string_literal_decls.h>
+#include <ast/identifier.h>
+#include <ast/constant_num_decls.h>
 
 #define AST_PRINT_DEPTHMUL 4
 
@@ -31,6 +33,7 @@ enum ast_type {
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
+    AST_CONSTANT_NUMBER,
 
     AST_TYPES_COUNT /* always last */
 };
@@ -50,6 +53,8 @@ struct ast_node {
         struct ast_typeclass typeclass;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
+        struct ast_string_literal string_literal;
+        struct ast_constantnum constantnum;
     };
 };
 

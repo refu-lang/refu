@@ -1,0 +1,43 @@
+#ifndef LFR_AST_CONSTANT_NUMBER_H
+#define LFR_AST_CONSTANT_NUMBER_H
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <Definitions/inline.h>
+
+struct ast_node;
+struct inplocation;
+
+struct ast_node *ast_constantnum_create_integer(struct inplocation *loc,
+                                                uint64_t value);
+struct ast_node *ast_constantnum_create_float(struct inplocation *loc,
+                                              double value);
+
+
+#include <ast/ast.h>
+
+i_INLINE_DECL bool ast_constantnum_get_float(struct ast_node *n, double *v)
+{
+    RF_ASSERT(n->type == AST_CONSTANT_NUMBER);
+
+    if (n->constantnum.type != CONSTANT_NUMBER_FLOAT) {
+        return false;
+    }
+    *v = n->constantnum.value.floating;
+
+    return true;
+}
+
+i_INLINE_DECL bool ast_constantnum_get_integer(struct ast_node *n, uint64_t *v)
+{
+    RF_ASSERT(n->type == AST_CONSTANT_NUMBER);
+
+    if (n->constantnum.type != CONSTANT_NUMBER_INTEGER) {
+        return false;
+    }
+    *v = n->constantnum.value.integer;
+
+    return true;
+}
+
+#endif

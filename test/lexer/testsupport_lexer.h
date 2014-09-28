@@ -5,20 +5,48 @@
 #include <stdbool.h>
 #include <check.h>
 
-#define TESTLEX_IDENTIFIER_INIT(driver_, loc_, str_)                 \
-    {.identifier.id =                                                \
-        front_testdriver_generate_identifier(driver_, loc_, str_)    \
-        }
+#define TESTLEX_IDENTIFIER_INIT(driver_, sl_, sc_, el_, ec_,  val_)     \
+    {                                                                   \
+        .type=TOKEN_IDENTIFIER,                                         \
+        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .value.v=                                                       \
+        front_testdriver_generate_identifier(                           \
+            driver_,                                                    \
+            sl_, sc_, el_, ec_, val_)                                   \
+    }
 
-#define TESTLEX_INTEGER_INIT(val_)              \
-    {.int_constant = val_}
+#define TESTLEX_INTEGER_INIT(driver_, sl_, sc_, el_, ec_,  val_)     \
+    {                                                                   \
+        .type=TOKEN_CONSTANT_INTEGER,                                   \
+        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .value.v=                                                       \
+        front_testdriver_generate_constant_integer(                     \
+            driver_,                                                    \
+            sl_, sc_, el_, ec_, val_)                                   \
+    }
 
-#define TESTLEX_FLOAT_INIT(val_)              \
-    {.float_constant = val_}
+#define TESTLEX_FLOAT_INIT(driver_, sl_, sc_, el_, ec_,  val_)          \
+    {                                                                   \
+        .type=TOKEN_CONSTANT_FLOAT,                                     \
+        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .value.v=                                                       \
+        front_testdriver_generate_constant_float(                       \
+            driver_,                                                    \
+            sl_, sc_, el_, ec_, val_)                                   \
+    }
 
-#define TESTLEX_LITERAL_INIT(val_)              \
-    {.literal = RF_STRING_STATIC_INIT(val_)}
-
+#define TESTLEX_LITERAL_INIT(driver_, sl_, sc_, el_, ec_, sp_, ep_, val_) \
+    {                                                                   \
+        .type=TOKEN_STRING_LITERAL,                                     \
+        .location=LOC_INIT_FULL(                                        \
+            sl_, sc_, el_, ec_,                                         \
+            inpfile_line_p(&(driver_)->front.file, sl_) + sp_,          \
+            inpfile_line_p(&(driver_)->front.file, el_) + ep_),         \
+        .value.v=                                                       \
+        front_testdriver_generate_string_literal(                       \
+            driver_,                                                    \
+            sl_, sc_, el_, ec_, sp_, ep_, val_)                         \
+    }
 
 #define ck_lexer_abort(file_, line_, msg_, ...)           \
     ck_abort_msg("Lexer test failed at : %s:%u\n\t"msg_,  \

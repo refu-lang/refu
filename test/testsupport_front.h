@@ -41,13 +41,29 @@ struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d);
 
 /**
- * Generates an ast_identifier with the given string and location
- * and keeps its pointer indexed for freeing at test teardown
+ * Generate an ast_nodes with the given type, location and value
+ * and keep their pointer indexed for freeing at test teardown
  */
 struct ast_node *front_testdriver_generate_identifier(
     struct front_testdriver *d,
-    struct inplocation *loc,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     const char *s);
+
+struct ast_node *front_testdriver_generate_string_literal(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    unsigned int sl_byte_off, unsigned int el_byte_off,
+    const char *s);
+
+struct ast_node *front_testdriver_generate_constant_float(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    double val);
+
+struct ast_node *front_testdriver_generate_constant_integer(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    uint64_t val);
 
 void setup_front_tests();
 void teardown_front_tests();

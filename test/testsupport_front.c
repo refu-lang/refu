@@ -5,6 +5,8 @@
 
 #include <ast/ast.h>
 #include <ast/type.h>
+#include <ast/string_literal.h>
+#include <ast/constant_num.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 
@@ -160,19 +162,75 @@ struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
     return &d->front;
 }
 
+
+static inline struct ast_node *front_testdriver_node_from_loc(
+    struct front_testdriver *d, enum ast_type type,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
+{
+    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    return ast_node_create_loc(type, &temp_loc);
+}
+
 struct ast_node *front_testdriver_generate_identifier(
     struct front_testdriver *d,
-    struct inplocation *loc,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     const char *s)
 {
     struct ast_node *ret;
-    // Temporary, till I pass actual location values here
-    struct inplocation temp_loc = {{0}, {0}};
-    ret = ast_node_create_loc(AST_IDENTIFIER, &temp_loc);
+    ret = front_testdriver_node_from_loc(d, AST_IDENTIFIER, sl, sc, el, ec);
     if (!ret) {
         return NULL;
     }
     RF_STRING_SHALLOW_INIT(&ret->identifier.string, (char*)s, strlen(s));
+    darray_append(d->nodes, ret);
+    return ret;
+}
+
+struct ast_node *front_testdriver_generate_string_literal(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    unsigned int sl_byte_off, unsigned int el_byte_off,
+    const char *s)
+{
+    struct ast_node *ret;
+    struct inplocation temp_loc = LOC_INIT_FULL(
+        sl, sc, el, ec,
+        inpfile_line_p(&d->front.file, sl) + sl_byte_off,
+        inpfile_line_p(&d->front.file, el) + el_byte_off);
+    ret = ast_string_literal_create(&temp_loc);
+    if (!ret) {
+        return NULL;
+    }
+    darray_append(d->nodes, ret);
+    return ret;
+}
+
+struct ast_node *front_testdriver_generate_constant_float(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    double val)
+{
+    struct ast_node *ret;
+    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    ret = ast_constantnum_create_float(&temp_loc, val);
+    if (!ret) {
+        return NULL;
+    }
+    darray_append(d->nodes, ret);
+    return ret;
+}
+
+struct ast_node *front_testdriver_generate_constant_integer(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    uint64_t val)
+{
+    struct ast_node *ret;
+    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    ret = ast_constantnum_create_integer(&temp_loc, val);
+    if (!ret) {
+        return NULL;
+    }
     darray_append(d->nodes, ret);
     return ret;
 }

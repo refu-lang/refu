@@ -2,6 +2,9 @@
 
 #include <Utils/constcmp.h>
 
+#include <ast/constant_num.h>
+#include <ast/string_literal.h>
+
 static bool tokens_cmp(struct token *expected,
                        struct token *got,
                        unsigned int index,
@@ -31,45 +34,54 @@ static bool tokens_cmp(struct token *expected,
 
     if (expected->type == TOKEN_IDENTIFIER &&
         !rf_string_equal(
-            ast_identifier_str(expected->value.identifier.id),
-            ast_identifier_str(got->value.identifier.id))) {
+            ast_identifier_str(expected->value.v),
+            ast_identifier_str(got->value.v))) {
         ck_lexer_abort(
             filename, line,
             "Expected the %d token to have value:\n"
             RF_STR_PF_FMT"\nbut it has value:\n"
             RF_STR_PF_FMT, index,
-            RF_STR_PF_ARG(ast_identifier_str(expected->value.identifier.id)),
-            RF_STR_PF_ARG(ast_identifier_str(got->value.identifier.id)));
+            RF_STR_PF_ARG(ast_identifier_str(expected->value.v)),
+            RF_STR_PF_ARG(ast_identifier_str(got->value.v)));
         return false;
-    } else if (expected->type == TOKEN_CONSTANT_INTEGER &&
-               expected->value.int_constant != got->value.int_constant) {
-
+    } else if (expected->type == TOKEN_CONSTANT_INTEGER) {
+        uint64_t expect_v;
+        uint64_t got_v;
+        ck_assert(ast_constantnum_get_integer(expected->value.v, &expect_v));
+        ck_assert(ast_constantnum_get_integer(got->value.v, &got_v));
+        if (expect_v != got_v) {
                 ck_lexer_abort(
                     filename, line,
                     "Expected the %d token to have value:\n"
                     PRIu64"\nbut it has value:\n"
                     PRIu64, index,
-                    expected->value.int_constant, got->value.int_constant);
-    } else if (
-        expected->type == TOKEN_CONSTANT_FLOAT &&
-        !DBLCMP_EQ(expected->value.float_constant, got->value.float_constant)) {
-
+                    expect_v, got_v);
+        }
+    } else if (expected->type == TOKEN_CONSTANT_FLOAT) {
+        double expect_v;
+        double got_v;
+        ck_assert(ast_constantnum_get_float(expected->value.v, &expect_v));
+        ck_assert(ast_constantnum_get_float(got->value.v, &got_v));
+        if (!DBLCMP_EQ(expect_v, got_v)) {
                 ck_lexer_abort(
                     filename, line,
                     "Expected the %d token to have value:\n"
                     "%f\nbut it has value:\n%f",
                     index,
-                    expected->value.float_constant, got->value.float_constant);
+                    expect_v, got_v);
+        }
     } else if (expected->type == TOKEN_STRING_LITERAL &&
-               !rf_string_equal(&expected->value.literal, &got->value.literal)) {
+               !rf_string_equal(
+                   ast_string_literal_get_str(expected->value.v),
+                   ast_string_literal_get_str(got->value.v))) {
 
         ck_lexer_abort(
             filename, line,
             "Expected the %d string literal token to have value:\n"
             "\""RF_STR_PF_FMT"\"\nbut it has value:\n"
             "\""RF_STR_PF_FMT"\"", index,
-            RF_STR_PF_ARG(&expected->value.literal),
-            RF_STR_PF_ARG(&got->value.literal));
+            RF_STR_PF_ARG(ast_string_literal_get_str(expected->value.v)),
+            RF_STR_PF_ARG(ast_string_literal_get_str(got->value.v)));
     }
 
 
