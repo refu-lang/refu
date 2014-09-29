@@ -259,6 +259,7 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                         const char* filename,
                         unsigned int line)
 {
+    enum constant_type ctype;
     struct ast_node *child;
     int got_children = 0;
     int expect_children = 0;
@@ -310,12 +311,63 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         break;
     case AST_TYPE_OPERATOR:
         if (ast_typeop_op(got) != ast_typeop_op(expect)) {
+
             ck_astcheck_abort(
                 filename, line,
                 "type operator mismatch: Got \""RF_STR_PF_FMT"\" != expected "
                 "\""RF_STR_PF_FMT"\"",
                 RF_STR_PF_ARG(ast_typeop_opstr(got)),
                 RF_STR_PF_ARG(ast_typeop_opstr(expect)));
+        }
+        break;
+    case AST_STRING_LITERAL:
+        if (!rf_string_equal(ast_string_literal_get_str(expect),
+                             ast_string_literal_get_str(got))) {
+
+            ck_astcheck_abort(
+                filename, line,
+                "string literal mismatch: Got \""RF_STR_PF_FMT"\" != expected "
+                "\""RF_STR_PF_FMT"\"",
+                RF_STR_PF_ARG(ast_string_literal_get_str(got)),
+                RF_STR_PF_ARG(ast_string_literal_get_str(expect)));
+        }
+        break;
+    case AST_CONSTANT_NUMBER:
+        ctype = ast_constantnum_get_type(got);
+        if (ctype != ast_constantnum_get_type(expect)) {
+            ck_astcheck_abort(filename, line,
+                              "constant number type mismatch for token at "
+                              INPLOCATION_FMT2,
+                              INPLOCATION_ARG2(ifile, &got->location));
+        }
+
+        if (ctype == CONSTANT_NUMBER_INTEGER) {
+            uint64_t expect_v;
+            uint64_t got_v;
+            ck_assert(ast_constantnum_get_integer(expect, &expect_v));
+            ck_assert(ast_constantnum_get_integer(got, &got_v));
+            if (expect_v != got_v) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "constant integer mismatch: Got \""PRIu64"\" != expected \""
+                    PRIu64"\"",
+                    got_v, expect_v);
+            }
+        } else if (ctype == CONSTANT_NUMBER_FLOAT) {
+            double expect_v;
+            double got_v;
+            ck_assert(ast_constantnum_get_float(expect, &expect_v));
+            ck_assert(ast_constantnum_get_float(got, &got_v));
+            if (!DBLCMP_EQ(expect_v, got_v)) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "constant float mismatch: Got \"%f\" != expected \"%f\"",
+                    got_v, expect_v);
+            }
+        } else {
+            ck_astcheck_abort(filename, line, "unexpected constant number "
+                              "type for token at "INPLOCATION_FMT2,
+                              INPLOCATION_ARG2(ifile, &got->location));
         }
         break;
     default:

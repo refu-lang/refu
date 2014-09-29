@@ -33,6 +33,30 @@ struct inpfile;
     } while(0)
 
 /**
+ * A utility testing macro to generate a constant number at a location
+ */
+#define testsupport_parser_constant_create(node_, file_,                \
+                                           sl_, sc_, el_,               \
+                                           ec_, type_, value_)          \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        node_ = ast_constantnum_create_##type_(&temp_location_, value_); \
+    } while (0)
+
+/**
+ * A utility testing macro to generate a string literal at a location
+ */
+#define testsupport_parser_string_literal_create(node_, file_,          \
+                                                 sl_, sc_, el_,         \
+                                                 ec_)                   \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        node_ = ast_string_literal_create(&temp_location_);             \
+    } while (0)
+
+/**
  * A utility testing function to generate an identifier at a location
  */
 struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
@@ -40,6 +64,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
                                                       unsigned int scol,
                                                       unsigned int eline,
                                                       unsigned int ecol);
+
 /**
  * A utility test macro to help create an xidentifier node wrapped over
  * a simple identifier

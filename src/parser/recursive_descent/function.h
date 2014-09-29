@@ -5,7 +5,7 @@
 
 struct parser;
 struct ast_node;
-\
+
 /**
  * function_return = TOKEN_OP_IMPL type_description
  *
@@ -37,4 +37,10 @@ enum parser_fndecl_list_err {
  */
 enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
                                                    struct ast_node *parent);
+/**
+ * expressions_list,
+ * identifier [genrattr] TOKEN_SM_OPAREN TOKEN_SM_CPAREN
+ */
+struct ast_node *parser_acc_fncall(struct parser *p);
+
 #endif

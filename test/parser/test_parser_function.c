@@ -8,6 +8,8 @@
 #include "../../src/parser/recursive_descent/function.h"
 #include <ast/function.h>
 #include <ast/type.h>
+#include <ast/string_literal.h>
+#include <ast/constant_num.h>
 #include <ast/generics.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
@@ -326,6 +328,67 @@ START_TEST(test_acc_fndecl_err6) {
     ck_assert_parser_errors(d->front.info, errors);
 }END_TEST
 
+START_TEST(test_acc_fncall_1) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "foo(a, b)");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    struct ast_node *name = testsupport_parser_identifier_create(file,
+                                                                0, 0, 0, 2);
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 4, 0, 4);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 7, 0, 7);
+    testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 8,
+                                   name,
+                                   NULL
+    );
+    ast_node_add_child(fc, id1);
+    ast_node_add_child(fc, id2);
+
+    ck_test_parse_as(n, fncall, d, "function_call", fc);
+
+    ast_node_destroy(n);
+    ast_node_destroy(fc);
+}END_TEST
+
+START_TEST(test_acc_fncall_2) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "do_something (a, b, 31, \"celka\")");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    struct ast_node *name = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 11);
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 14, 0, 14);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 17, 0, 17);
+    testsupport_parser_constant_create(cnum, file,
+                                       0, 20, 0, 21, integer, 31);
+    testsupport_parser_string_literal_create(sliteral,file,
+                                             0, 24, 0, 30);
+    testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 31,
+                                   name,
+                                   NULL
+    );
+    ast_node_add_child(fc, id1);
+    ast_node_add_child(fc, id2);
+    ast_node_add_child(fc, cnum);
+    ast_node_add_child(fc, sliteral);
+
+    ck_test_parse_as(n, fncall, d, "function_call", fc);
+
+    ast_node_destroy(n);
+    ast_node_destroy(fc);
+}END_TEST
 
 Suite *parser_function_suite_create(void)
 {
@@ -347,7 +410,14 @@ Suite *parser_function_suite_create(void)
     tcase_add_test(fpf, test_acc_fndecl_err5);
     tcase_add_test(fpf, test_acc_fndecl_err6);
 
+    TCase *fcall = tcase_create("parser_functioncall");
+    tcase_add_checked_fixture(fcall, setup_front_tests, teardown_front_tests);
+    tcase_add_test(fcall, test_acc_fncall_1);
+    tcase_add_test(fcall, test_acc_fncall_2);
+
+
     suite_add_tcase(s, fp);
     suite_add_tcase(s, fpf);
+    suite_add_tcase(s, fcall);
     return s;
 }

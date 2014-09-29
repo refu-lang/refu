@@ -37,5 +37,4 @@ struct ast_node *parser_acc_genrdecl(struct parser *p);
  *
  */
 struct ast_node *parser_acc_genrattr(struct parser *p);
-
 #endif

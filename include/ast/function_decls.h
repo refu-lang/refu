@@ -14,4 +14,12 @@ struct ast_fndecl {
     //! Optional: type description of the return value
     struct ast_node *ret;
 };
+
+
+struct ast_fncall {
+    //! identifier of the name
+    struct ast_node *name;
+    //! Optional: generic attribute
+    struct ast_node *genr;
+};
 #endif

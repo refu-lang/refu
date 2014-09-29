@@ -29,5 +29,6 @@ struct ast_node *ast_constantnum_create_float(struct inplocation *loc,
     return ret;
 }
 
+i_INLINE_INS enum constant_type ast_constantnum_get_type(struct ast_node *n);
 i_INLINE_INS bool ast_constantnum_get_float(struct ast_node *n, double *v);
 i_INLINE_INS bool ast_constantnum_get_integer(struct ast_node *n, uint64_t *v);

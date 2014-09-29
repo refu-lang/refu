@@ -41,6 +41,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/generics.c',
         'parser/recursive_descent/type.c',
         'parser/recursive_descent/typeclass.c',
+        'parser/recursive_descent/expression.c',
     ]
 
 # add specific environment variables

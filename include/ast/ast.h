@@ -28,6 +28,7 @@ enum ast_type {
     AST_GENERIC_TYPE,
     AST_GENERIC_ATTRIBUTE,
     AST_FUNCTION_DECLARATION,
+    AST_FUNCTION_CALL,
     AST_XIDENTIFIER,
 
     /* from this value and under all types should have no children */
@@ -53,6 +54,7 @@ struct ast_node {
         struct ast_typeclass typeclass;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
+        struct ast_fncall fncall;
         struct ast_string_literal string_literal;
         struct ast_constantnum constantnum;
     };

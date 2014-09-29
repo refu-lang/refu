@@ -1,6 +1,8 @@
 #ifndef LFR_PARSER_EXPRESSION_H
 #define LFR_PARSER_EXPRESSION_H
 
+#include <stdbool.h>
+
 struct ast_node;
 struct parser;
 
@@ -32,5 +34,14 @@ struct parser;
  *              / array_reference
  */
 struct ast_node *parser_acc_expression(struct parser *p);
+
+/**
+ * expressions_list = expression expressions_list'
+ *                  / EMPTY
+ * expressions_list' = TOKEN_OP_COMMA expression expressions_list'
+ *                   / EMPTY
+ */
+bool parser_acc_expressions_list(struct parser *p,
+                                 struct ast_node *parent);
 
 #endif

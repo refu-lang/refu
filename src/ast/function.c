@@ -17,7 +17,6 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
         return NULL;
     }
 
-
     ast_node_register_child(ret, name, fndecl.name);
     ast_node_register_child(ret, genr, fndecl.genr);
     ast_node_register_child(ret, args, fndecl.args);
@@ -27,3 +26,24 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS struct RFstring *ast_fndecl_name_str(struct ast_node *n);
+
+
+struct ast_node *ast_fncall_create(struct inplocation_mark *start,
+                                   struct inplocation_mark *end,
+                                   struct ast_node *name,
+                                   struct ast_node *genr)
+{
+    struct ast_node *ret;
+    RF_ASSERT(name->type == AST_IDENTIFIER);
+
+    ret = ast_node_create_marks(AST_FUNCTION_CALL, start, end);
+    if (!ret) {
+        //TODO: memory error
+        return NULL;
+    }
+
+    ast_node_register_child(ret, name, fncall.name);
+    ast_node_register_child(ret, genr, fncall.genr);
+
+    return ret;
+}

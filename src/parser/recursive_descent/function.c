@@ -7,7 +7,8 @@
 #include "identifier.h"
 #include "generics.h"
 #include "type.h"
-#include <check.h>
+#include "expression.h"
+
 struct ast_node *parser_acc_fndecl(struct parser *p)
 {
     struct ast_node *n;
@@ -136,5 +137,63 @@ enum parser_fndecl_list_err  parser_acc_fndecl_list(struct parser *p,
     }
 
     return PARSER_FNDECL_LIST_SUCCESS;
+}
 
+struct ast_node *parser_acc_fncall(struct parser *p)
+{
+    struct ast_node *n;
+    struct token *tok;
+    struct ast_node *name;
+    struct ast_node *genr = NULL;
+
+    name = parser_acc_identifier(p);
+    if (!name) {
+        return NULL;
+    }
+
+    genr = parser_acc_genrattr(p);
+    if (!genr && parser_has_syntax_error(p)) {
+        goto err_free_name;
+    }
+
+    tok = lexer_lookahead(p->lexer, 1);
+    if (!tok || tok->type != TOKEN_SM_OPAREN) {
+        parser_synerr(p, token_get_start(tok), NULL,
+                      "Expected '('");
+        goto err_free_genr;
+    }
+    //consume '('
+    lexer_next_token(p->lexer);
+
+    n = ast_fncall_create(ast_node_startmark(name), NULL, name, genr);
+    if (!n) {
+        //TODO: bad error
+        goto err_free_genr;
+    }
+
+    if (!parser_acc_expressions_list(p, n)) {
+        ast_node_destroy(n);
+        return NULL;
+    }
+
+    tok = lexer_lookahead(p->lexer, 1);
+    if (!tok || tok->type != TOKEN_SM_CPAREN) {
+        parser_synerr(p, token_get_start(tok), NULL,
+                      "Expected ')' at end of "RF_STR_PF_FMT" function call",
+                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        goto err_free_genr;
+    }
+    //consume ')'
+    lexer_next_token(p->lexer);
+    ast_node_set_end(n, token_get_end(tok));
+
+    return n;
+
+err_free_genr:
+    if (genr) {
+        ast_node_destroy(genr);
+    }
+err_free_name:
+    ast_node_destroy(name);
+    return NULL;
 }
