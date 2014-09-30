@@ -26,13 +26,13 @@ enum token_type {
     TOKEN_SM_CPAREN,
     TOKEN_SM_DBLQUOTE,
 
-    /* binary operators */
+    /* binary operators (keep grouped with all binary operators)*/
     TOKEN_OP_PLUS,
     TOKEN_OP_MINUS,
     TOKEN_OP_MULTI,
     TOKEN_OP_DIV,
 
-    /* binary comparsison operators */
+    /* binary comparsison operators (keep grouped with all binary operators)*/
     TOKEN_OP_EQ,
     TOKEN_OP_NEQ,
     TOKEN_OP_GT,
@@ -59,9 +59,17 @@ enum token_type {
     TOKENS_MAX
 };
 
+#define TOKEN_IS_BINARY_OP(tok_)                \
+    ((tok_)->type >= TOKEN_OP_PLUS &&           \
+     (tok_)->type <= TOKEN_OP_LTEQ)
+
+#define TOKEN_IS_UNARY_OP(tok_)                \
+    ((tok_)->type >= TOKEN_OP_AMPERSAND &&     \
+     (tok_)->type <= TOKEN_OP_DEC)
+
 #define TOKEN_IS_NUMERIC_CONSTANT(tok_)         \
-    ((tok)->type == TOKEN_CONSTANT_INTEGER ||   \
-     (tok)->type == TOKEN_CONSTANT_FLOAT)
+    ((tok_)->type == TOKEN_CONSTANT_INTEGER ||   \
+     (tok_)->type == TOKEN_CONSTANT_FLOAT)
 
 const struct RFstring *tokentype_to_str(enum token_type type);
 

@@ -390,6 +390,48 @@ START_TEST(test_acc_fncall_2) {
     ast_node_destroy(fc);
 }END_TEST
 
+START_TEST(test_acc_fncall_3) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "do_something <a, b> (a, b, 31, \"celka\")");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    struct ast_node *name = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 11);
+    testsupport_parser_xidentifier_create_simple(id1, file,
+                                                 0, 14, 0, 14);
+    testsupport_parser_xidentifier_create_simple(id2, file,
+                                                 0, 17, 0, 17);
+
+    testsupport_parser_node_create(gnattr, genrattr, file, 0, 13, 0, 18);
+    ast_node_add_child(gnattr, id1);
+    ast_node_add_child(gnattr, id2);
+
+    struct ast_node *id3 = testsupport_parser_identifier_create(file,
+                                                                0, 21, 0, 21);
+    struct ast_node *id4 = testsupport_parser_identifier_create(file,
+                                                                0, 24, 0, 24);
+    testsupport_parser_constant_create(cnum, file,
+                                       0, 27, 0, 28, integer, 31);
+    testsupport_parser_string_literal_create(sliteral,file,
+                                             0, 31, 0, 37);
+    testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 38,
+                                   name,
+                                   gnattr);
+    ast_node_add_child(fc, id3);
+    ast_node_add_child(fc, id4);
+    ast_node_add_child(fc, cnum);
+    ast_node_add_child(fc, sliteral);
+
+    ck_test_parse_as(n, fncall, d, "function_call", fc);
+
+    ast_node_destroy(n);
+    ast_node_destroy(fc);
+}END_TEST
+
 Suite *parser_function_suite_create(void)
 {
     Suite *s = suite_create("parser_function");
@@ -414,6 +456,7 @@ Suite *parser_function_suite_create(void)
     tcase_add_checked_fixture(fcall, setup_front_tests, teardown_front_tests);
     tcase_add_test(fcall, test_acc_fncall_1);
     tcase_add_test(fcall, test_acc_fncall_2);
+    tcase_add_test(fcall, test_acc_fncall_3);
 
 
     suite_add_tcase(s, fp);

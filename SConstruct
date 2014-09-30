@@ -31,6 +31,7 @@ refu_src = [
     'ast/vardecl.c',
     'ast/function.c',
     'ast/generics.c',
+    'ast/operators.c',
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

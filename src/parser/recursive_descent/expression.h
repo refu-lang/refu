@@ -6,6 +6,8 @@
 struct ast_node;
 struct parser;
 
+#define EXPR_ELEMENT_START "a string literal, a numeric constant or an identifier"
+
 /**
  * expression = expr_term expression'
  *
@@ -19,19 +21,23 @@ struct parser;
  *            / TOKEN_OP_DIV   expr_factor expr_term'
  *            / EMPTY
  *
- * expr_factor = expr_element expr_factor'
+ * expr_prefix_unary_ops = TOKEN_OP_AMPERSAND
+ *                       / TOKEN_OP_INC
+ *                       / TOKEN_OP_DEC
  *
- * expr_factor' = TOKEN_OP_AMPERSAND expr_element expr_factor'
- *              / TOKEN_OP_INC expr_element expr_factor'
- *              / TOKEN_OP_DEC expr_element expr_factor'
- *              / EMPTY
+ * expr_postfix_unary_ops = TOKEN_OP_INC
+ *                        / TOKEN_OP_DEC
  *
+ * expr_factor = expr_prefix_unary_ops expr_element
+ *             / expr_element expr_postfix_unary_ops
+ *             / expr_element
  *
  * expr_element = string_literal
  *              / numeric_constant
  *              / identifier
  *              / function_call
  *              / array_reference
+ *              / TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */
 struct ast_node *parser_acc_expression(struct parser *p);
 

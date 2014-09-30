@@ -13,6 +13,7 @@
 #include <ast/string_literal_decls.h>
 #include <ast/identifier.h>
 #include <ast/constant_num_decls.h>
+#include <ast/operators_decls.h>
 
 #define AST_PRINT_DEPTHMUL 4
 
@@ -30,6 +31,8 @@ enum ast_type {
     AST_FUNCTION_DECLARATION,
     AST_FUNCTION_CALL,
     AST_XIDENTIFIER,
+    AST_BINARY_OPERATOR,
+    AST_UNARY_OPERATOR,
 
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
@@ -55,6 +58,8 @@ struct ast_node {
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
         struct ast_fncall fncall;
+        struct ast_binaryop binaryop;
+        struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;
         struct ast_constantnum constantnum;
     };
