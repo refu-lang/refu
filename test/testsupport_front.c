@@ -7,6 +7,7 @@
 #include <ast/type.h>
 #include <ast/string_literal.h>
 #include <ast/constant_num.h>
+#include <ast/operators.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 
@@ -318,6 +319,17 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 "\""RF_STR_PF_FMT"\"",
                 RF_STR_PF_ARG(ast_typeop_opstr(got)),
                 RF_STR_PF_ARG(ast_typeop_opstr(expect)));
+        }
+        break;
+    case AST_BINARY_OPERATOR:
+        if (ast_binaryop_op(got) != ast_binaryop_op(expect)) {
+
+            ck_astcheck_abort(
+                filename, line,
+                "binary operator mismatch: Got \""RF_STR_PF_FMT"\" != expected "
+                "\""RF_STR_PF_FMT"\"",
+                RF_STR_PF_ARG(ast_binaryop_opstr(got)),
+                RF_STR_PF_ARG(ast_binaryop_opstr(expect)));
         }
         break;
     case AST_STRING_LITERAL:

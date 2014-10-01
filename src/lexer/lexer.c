@@ -298,6 +298,7 @@ static bool lexer_get_constant_intfloat(struct lexer *l, char *p,
         *ret_p = p + 1;
     } else {
         *ret_p = p;
+        l->at_eof = true;
     }
 
     return true;
@@ -334,6 +335,7 @@ static bool lexer_get_constant_uint(
         *ret_p = p + 1;
     } else {
         *ret_p = p;
+        l->at_eof = true;
     }
 
     return true;
@@ -344,7 +346,7 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
 {
     char *sp = p;
     char *sp_1 = p + 1;
-    if (*sp == '0') {
+    if (*sp == '0' && *sp_1 != '.') {
         if (*sp_1 == 'x') {
             return lexer_get_constant_uint(l, p, lim, ret_p,
                                            rf_string_to_uint_hex);
@@ -401,6 +403,7 @@ static bool lexer_get_string_literal(struct lexer *l, char *p,
         *ret_p = p + 1;
     } else {
         *ret_p = p;
+        l->at_eof = true;
     }
 
     return true;

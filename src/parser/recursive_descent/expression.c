@@ -132,7 +132,7 @@ static struct ast_node *parser_acc_exprterm_prime(
     struct ast_node *ret;
 
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_OP_MULTI || tok->type != TOKEN_OP_DIV) {
+    if (!tok || (tok->type != TOKEN_OP_MULTI && tok->type != TOKEN_OP_DIV)) {
         return NULL;
     }
     //consume operator
@@ -194,7 +194,7 @@ static struct ast_node *parser_acc_expression_prime(
     struct ast_node *ret;
 
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_OP_PLUS || tok->type != TOKEN_OP_MINUS) {
+    if (!tok || (tok->type != TOKEN_OP_PLUS && tok->type != TOKEN_OP_MINUS)) {
         return NULL;
     }
     //consume operator

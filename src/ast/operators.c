@@ -24,6 +24,7 @@ struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r);
+i_INLINE_INS enum binaryop_type ast_binaryop_op(struct ast_node *op);
 
 static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_PLUS]     =   BINARYOP_ADD,
@@ -38,8 +39,21 @@ enum binaryop_type binaryop_type_from_token(struct token *tok)
     return bop_type_lookup[tok->type];
 }
 
+static const enum token_type  token_type_lookup[] = {
+    [BINARYOP_ADD]     =   TOKEN_OP_PLUS,
+    [BINARYOP_SUB]     =   TOKEN_OP_MINUS,
+    [BINARYOP_MUL]     =   TOKEN_OP_MULTI,
+    [BINARYOP_DIV]     =   TOKEN_OP_DIV
+};
+
+const struct RFstring * ast_binaryop_opstr(struct ast_node *op)
+{
+    RF_ASSERT(TOKEN_IS_BINARY_OP(tok));
+    return tokentype_to_str(token_type_lookup[op->binaryop.type]);
+}
 
 /* -- unary operator related functions -- */
+
 struct ast_node *ast_unaryop_create(struct inplocation_mark *start,
                                     struct inplocation_mark *end,
                                     enum unaryop_type type,

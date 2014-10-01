@@ -35,6 +35,19 @@
             sl_, sc_, el_, ec_, val_)                                   \
     }
 
+/**
+ * Utility macro to initialize string literal token for testing
+ * @param driver_     The test_driver
+ * @param sl_         The starting line of the token
+ * @param sc_         The starting column of the token
+ * @param el_         The ending line of the token
+ * @param ec_         The ending column of the token
+ * @param sp_         Number of bytes from the start of sl_ till
+ *                    the start of the token
+ * @param ep_         Number of bytes from the start of el_ till
+ *                    the start of the token
+ * @param val_        Token's expected value
+ */
 #define TESTLEX_LITERAL_INIT(driver_, sl_, sc_, el_, ec_, sp_, ep_, val_) \
     {                                                                   \
         .type=TOKEN_STRING_LITERAL,                                     \
