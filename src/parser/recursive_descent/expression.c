@@ -9,17 +9,20 @@
 #include "common.h"
 #include "identifier.h"
 #include "type.h"
+#include "function.h"
 
 
 static struct ast_node *parser_acc_expr_element(struct parser *p)
 {
     struct ast_node *n;
     struct token *tok;
+    struct token *tok2;
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {
         return NULL;
     }
+    tok2 = lexer_lookahead(p->lexer, 2);
 
     // check for a parenthesized expression
     if (tok->type == TOKEN_SM_OPAREN) {
@@ -41,9 +44,17 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
 
         return n;
-    }
+    } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2)) {
+        // function call
+        n = parser_acc_fncall(p);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected function call");
+            return NULL;
+        }
+        return n;
 
-    if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
+    } else if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {
         n = token_get_value(tok);
@@ -52,6 +63,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
                       "expected "EXPR_ELEMENT_START);
         return NULL;
     }
+
     //consume the token and return
     lexer_next_token(p->lexer);
     return n;
