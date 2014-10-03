@@ -11,6 +11,7 @@
 #include <ast/operators.h>
 #include <ast/generics.h>
 #include <ast/function.h>
+#include <ast/arrayref.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
 
@@ -254,6 +255,52 @@ START_TEST(test_acc_complex_3) {
     ast_node_destroy(bop);
 }END_TEST
 
+START_TEST(test_acc_complex_4) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "(table[56] + foo(3, b)) + 4 * 321");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 1, 0, 5);
+    testsupport_parser_constant_create(cnum1, file,
+                                       0, 7, 0, 8, integer, 56);
+    testsupport_parser_node_create(arr, arrayref, file, 0, 1, 0, 9,
+                                   id1, cnum1);
+
+    struct ast_node *fn_name = testsupport_parser_identifier_create(file,
+                                                                    0, 13, 0, 15);
+    testsupport_parser_constant_create(cnum2, file,
+                                       0, 17, 0, 17, integer, 3);
+    struct ast_node *id2 = testsupport_parser_identifier_create(file,
+                                                                0, 20, 0, 20);
+    testsupport_parser_node_create(fn, fncall, file, 0, 13, 0, 21,
+                                   fn_name, NULL);
+    ast_node_add_child(fn, cnum2);
+    ast_node_add_child(fn, id2);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 1, 0, 21,
+                                   BINARYOP_ADD, arr, fn);
+
+    testsupport_parser_constant_create(cnum3, file,
+                                       0, 26, 0, 26, integer, 4);
+    testsupport_parser_constant_create(cnum4, file,
+                                       0, 30, 0, 32, integer, 321);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 26, 0, 32,
+                                   BINARYOP_MUL, cnum3, cnum4);
+
+    testsupport_parser_node_create(bop, binaryop, file, 0, 1, 0, 32,
+                                   BINARYOP_ADD, bop1, bop2);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop);
+}END_TEST
+
 Suite *parser_operators_suite_create(void)
 {
     Suite *s = suite_create("parser_operators");
@@ -267,6 +314,7 @@ Suite *parser_operators_suite_create(void)
     tcase_add_test(bop, test_acc_complex_1);
     tcase_add_test(bop, test_acc_complex_2);
     tcase_add_test(bop, test_acc_complex_3);
+    tcase_add_test(bop, test_acc_complex_4);
 
     suite_add_tcase(s, bop);
     return s;

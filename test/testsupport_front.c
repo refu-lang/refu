@@ -361,8 +361,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
             if (expect_v != got_v) {
                 ck_astcheck_abort(
                     filename, line,
-                    "constant integer mismatch: Got \""PRIu64"\" != expected \""
-                    PRIu64"\"",
+                    "constant integer mismatch: Got \"%"PRIu64"\" != expected \""
+                    "%"PRIu64"\"",
                     got_v, expect_v);
             }
         } else if (ctype == CONSTANT_NUMBER_FLOAT) {

@@ -53,8 +53,8 @@ static bool tokens_cmp(struct token *expected,
                 ck_lexer_abort(
                     filename, line,
                     "Expected the %d token to have value:\n"
-                    PRIu64"\nbut it has value:\n"
-                    PRIu64, index,
+                    "%"PRIu64"\nbut it has value:\n"
+                    "%"PRIu64, index,
                     expect_v, got_v);
         }
     } else if (expected->type == TOKEN_CONSTANT_FLOAT) {
