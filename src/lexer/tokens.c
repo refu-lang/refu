@@ -22,6 +22,8 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT(":"),
     RF_STRING_STATIC_INIT("{"),
     RF_STRING_STATIC_INIT("}"),
+    RF_STRING_STATIC_INIT("["),
+    RF_STRING_STATIC_INIT("]"),
     RF_STRING_STATIC_INIT("("),
     RF_STRING_STATIC_INIT(")"),
     RF_STRING_STATIC_INIT("\""),

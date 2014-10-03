@@ -10,6 +10,7 @@
 #include "identifier.h"
 #include "type.h"
 #include "function.h"
+#include "arrayref.h"
 
 
 static struct ast_node *parser_acc_expr_element(struct parser *p)
@@ -43,6 +44,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
 
+        return n;
+    } else if (TOKENS_ARE_POSSIBLE_ARRAYREF(tok, tok2)) {
+        n = parser_acc_arrayref(p);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected array reference");
+            return NULL;
+        }
         return n;
     } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2)) {
         // function call

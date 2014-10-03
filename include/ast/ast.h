@@ -14,6 +14,7 @@
 #include <ast/identifier.h>
 #include <ast/constant_num_decls.h>
 #include <ast/operators_decls.h>
+#include <ast/arrayref_decls.h>
 
 #define AST_PRINT_DEPTHMUL 4
 
@@ -30,6 +31,7 @@ enum ast_type {
     AST_GENERIC_ATTRIBUTE,
     AST_FUNCTION_DECLARATION,
     AST_FUNCTION_CALL,
+    AST_ARRAY_REFERENCE,
     AST_XIDENTIFIER,
     AST_BINARY_OPERATOR,
     AST_UNARY_OPERATOR,
@@ -58,6 +60,7 @@ struct ast_node {
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
         struct ast_fncall fncall;
+        struct ast_arrayref arrayref;
         struct ast_binaryop binaryop;
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;

@@ -158,7 +158,7 @@ struct ast_node *parser_acc_fncall(struct parser *p)
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_SM_OPAREN) {
-        parser_synerr(p, token_get_start(tok), NULL,
+        parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
                       "Expected '('");
         goto err_free_genr;
     }
@@ -178,7 +178,7 @@ struct ast_node *parser_acc_fncall(struct parser *p)
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_SM_CPAREN) {
-        parser_synerr(p, token_get_start(tok), NULL,
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected ')' at end of "RF_STR_PF_FMT" function call",
                       RF_STR_PF_ARG(ast_identifier_str(name)));
         goto err_free_genr;

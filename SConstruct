@@ -30,6 +30,7 @@ refu_src = [
     'ast/typeclass.c',
     'ast/vardecl.c',
     'ast/function.c',
+    'ast/arrayref.c',
     'ast/generics.c',
     'ast/operators.c',
 ]
@@ -43,6 +44,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/type.c',
         'parser/recursive_descent/typeclass.c',
         'parser/recursive_descent/expression.c',
+        'parser/recursive_descent/arrayref.c',
     ]
 
 # add specific environment variables
