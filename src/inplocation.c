@@ -27,6 +27,11 @@ i_INLINE_INS void inplocation_init_marks(struct inplocation *loc,
                                           struct inplocation_mark *start,
                                           struct inplocation_mark *end);
 
+void inplocation_set_start(struct inplocation *loc,
+                           struct inplocation_mark *start)
+{
+    loc->start = *start;
+}
 void inplocation_set_end(struct inplocation *loc, struct inplocation_mark *end)
 {
     loc->end = *end;

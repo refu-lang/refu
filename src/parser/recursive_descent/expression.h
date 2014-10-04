@@ -9,17 +9,17 @@ struct parser;
 #define EXPR_ELEMENT_START "a string literal, a numeric constant or an identifier"
 
 /**
- * expression = expr_term expression'
+ * expression = expr_level1 expression'
  *
- * expression' = TOKEN_OP_PLUS   expr_term expression'
- *             / TOKEN_OP_MINUS  expr_term expression'
+ * expression' = TOKEN_OP_PLUS   expr_level1 expression'
+ *             / TOKEN_OP_MINUS  expr_level1 expression'
  *             / EMPTY
  *
- * expr_term = expr_factor expr_term'
+ * expr_level1 = expr_factor expr_level1'
  *
- * expr_term' = TOKEN_OP_MULTI expr_factor expr_term'
- *            / TOKEN_OP_DIV   expr_factor expr_term'
- *            / EMPTY
+ * expr_level1' = TOKEN_OP_MULTI expr_factor expr_term'
+ *              / TOKEN_OP_DIV   expr_factor expr_term'
+ *              / EMPTY
  *
  * expr_prefix_unary_ops = TOKEN_OP_AMPERSAND
  *                       / TOKEN_OP_INC

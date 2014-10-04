@@ -8,6 +8,8 @@ enum binaryop_type {
     BINARYOP_SUB,
     BINARYOP_MUL,
     BINARYOP_DIV,
+
+    BINARYOP_ASSIGN
 };
 
 struct ast_binaryop {

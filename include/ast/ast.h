@@ -68,6 +68,8 @@ struct ast_node {
     };
 };
 
+void ast_node_init(struct ast_node * n, enum ast_type type);
+struct ast_node *ast_node_create(enum ast_type type);
 
 struct ast_node *ast_node_create_loc(enum ast_type type,
                                      struct inplocation *loc);
@@ -80,6 +82,7 @@ struct ast_node *ast_node_create_ptrs(enum ast_type type,
 
 void ast_node_destroy(struct ast_node *n);
 
+void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start);
 void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
 
 void ast_node_add_child(struct ast_node *parent,

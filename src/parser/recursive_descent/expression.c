@@ -143,7 +143,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     return element;
 }
 
-static struct ast_node *parser_acc_exprterm_prime(
+static struct ast_node *parser_acc_exprlevel1_prime(
     struct parser *p,
     struct ast_node *left_hand_side)
 {
@@ -179,16 +179,16 @@ static struct ast_node *parser_acc_exprterm_prime(
     }
     ast_binaryop_set_right(op, right_hand_side);
 
-    ret = parser_acc_exprterm_prime(p, op);
+    ret = parser_acc_exprlevel1_prime(p, op);
     if (parser_has_syntax_error(p)) {
-        // no need to free term, since it's freed inside exprterm' accepting
+        // no need to free term, since it's freed inside prime accepting
         return NULL;
     }
 
     return ret ? ret : op;
 }
 
-static struct ast_node *parser_acc_exprterm(struct parser *p)
+static struct ast_node *parser_acc_exprlevel1(struct parser *p)
 {
     struct ast_node *factor;
     struct ast_node *prime;
@@ -197,9 +197,9 @@ static struct ast_node *parser_acc_exprterm(struct parser *p)
     if (!factor) {
         return NULL;
     }
-    prime = parser_acc_exprterm_prime(p, factor);
+    prime = parser_acc_exprlevel1_prime(p, factor);
     if (parser_has_syntax_error(p)) {
-        // no need to free factor, since it's freed inside exprterm' accepting
+        // no need to free factor, since it's freed inside prime accepting
         return NULL;
     }
 
@@ -231,7 +231,7 @@ static struct ast_node *parser_acc_expression_prime(
         RF_ERRNOMEM();
         return NULL;
     }
-    right_hand_side = parser_acc_exprterm(p);
+    right_hand_side = parser_acc_exprlevel1(p);
     if (!right_hand_side) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected "EXPR_ELEMENT_START" after "
@@ -256,7 +256,7 @@ struct ast_node *parser_acc_expression(struct parser *p)
     struct ast_node *prime;
     struct ast_node *term;
 
-    term = parser_acc_exprterm(p);
+    term = parser_acc_exprlevel1(p);
     if (!term) {
         return NULL;
     }

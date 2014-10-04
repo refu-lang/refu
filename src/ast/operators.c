@@ -30,7 +30,9 @@ static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_PLUS]     =   BINARYOP_ADD,
     [TOKEN_OP_MINUS]    =   BINARYOP_SUB,
     [TOKEN_OP_MULTI]    =   BINARYOP_MUL,
-    [TOKEN_OP_DIV]      =   BINARYOP_DIV
+    [TOKEN_OP_DIV]      =   BINARYOP_DIV,
+
+    [TOKEN_OP_ASSIGN]   =   BINARYOP_ASSIGN
 };
 
 enum binaryop_type binaryop_type_from_token(struct token *tok)
@@ -43,7 +45,9 @@ static const enum token_type  token_type_lookup[] = {
     [BINARYOP_ADD]     =   TOKEN_OP_PLUS,
     [BINARYOP_SUB]     =   TOKEN_OP_MINUS,
     [BINARYOP_MUL]     =   TOKEN_OP_MULTI,
-    [BINARYOP_DIV]     =   TOKEN_OP_DIV
+    [BINARYOP_DIV]     =   TOKEN_OP_DIV,
+
+    [BINARYOP_ASSIGN]  =   TOKEN_OP_ASSIGN
 };
 
 const struct RFstring * ast_binaryop_opstr(struct ast_node *op)

@@ -33,8 +33,9 @@ enum token_type {
     TOKEN_OP_MINUS,
     TOKEN_OP_MULTI,
     TOKEN_OP_DIV,
+    TOKEN_OP_ASSIGN,
 
-    /* binary comparsison operators (keep grouped with all binary operators)*/
+    /* binary comparison operators (keep grouped with all binary operators)*/
     TOKEN_OP_EQ,
     TOKEN_OP_NEQ,
     TOKEN_OP_GT,
@@ -46,7 +47,6 @@ enum token_type {
     TOKEN_OP_AMPERSAND,
     TOKEN_OP_INC,
     TOKEN_OP_DEC,
-    TOKEN_OP_ASSIGN,
 
     /* type operators */
     TOKEN_OP_TYPESUM,

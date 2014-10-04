@@ -29,15 +29,28 @@ static const struct RFstring ast_type_strings[] = {
 
 #define AST_NODE_IS_LEAF(node_) ((node_)->type >= AST_STRING_LITERAL)
 
+void ast_node_init(struct ast_node * n, enum ast_type type)
+{
+    n->type = type;
+    rf_ilist_head_init(&n->children);
+}
+
+struct ast_node *ast_node_create(enum ast_type type)
+{
+   struct ast_node *ret;
+   RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
+   ast_node_init(ret, type);
+   return ret;
+}
+
 struct ast_node *ast_node_create_loc(enum ast_type type,
                                      struct inplocation *loc)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
-    ret->type = type;
+    ast_node_init(ret, type);
     inplocation_copy(&ret->location, loc);
-    rf_ilist_head_init(&ret->children);
 
     return ret;
 }
@@ -49,9 +62,8 @@ struct ast_node *ast_node_create_marks(enum ast_type type,
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
-    ret->type = type;
+    ast_node_init(ret, type);
     inplocation_init_marks(&ret->location, start, end);
-    rf_ilist_head_init(&ret->children);
 
     return ret;
 }
@@ -63,11 +75,10 @@ struct ast_node *ast_node_create_ptrs(enum ast_type type,
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
-    ret->type = type;
+    ast_node_init(ret, type);
     if (!inplocation_init(&ret->location, f, sp, ep)) {
         return NULL;
     }
-    rf_ilist_head_init(&ret->children);
 
     return ret;
 }
@@ -87,6 +98,11 @@ void ast_node_destroy(struct ast_node *n)
     }
 
     free(n);
+}
+
+void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start)
+{
+    inplocation_set_start(&n->location, start);
 }
 
 void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end)

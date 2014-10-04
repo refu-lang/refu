@@ -110,7 +110,10 @@ i_INLINE_DECL void inplocation_init_marks(struct inplocation *loc,
     }
 }
 
-void inplocation_set_end(struct inplocation *loc, struct inplocation_mark *end);
+void inplocation_set_start(struct inplocation *loc,
+                           struct inplocation_mark *start);
+void inplocation_set_end(struct inplocation *loc,
+                         struct inplocation_mark *end);
 
 bool inplocation_from_file(struct inplocation *loc,
                            struct inpfile *f);
