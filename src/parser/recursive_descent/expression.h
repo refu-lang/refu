@@ -11,14 +11,18 @@ struct parser;
 /**
  * expression = expr_level1 expression'
  *
- * expression' = TOKEN_OP_PLUS   expr_level1 expression'
- *             / TOKEN_OP_MINUS  expr_level1 expression'
- *             / EMPTY
+ * expression' = TOKEN_OP_ASSIGN expr_level1 expression'
  *
- * expr_level1 = expr_factor expr_level1'
+ * expr_level1 = expr_level2 expr_level1'
  *
- * expr_level1' = TOKEN_OP_MULTI expr_factor expr_term'
- *              / TOKEN_OP_DIV   expr_factor expr_term'
+ * expr_level1' = TOKEN_OP_PLUS   expr_level2 expr_level1'
+ *              / TOKEN_OP_MINUS  expr_level2 expr_level1'
+ *              / EMPTY
+ *
+ * expr_level2 = expr_level3 expr_level2'
+ *
+ * expr_level2' = TOKEN_OP_MULTI expr_level3 expr_level2'
+ *              / TOKEN_OP_DIV   expr_level3 expr_level2'
  *              / EMPTY
  *
  * expr_prefix_unary_ops = TOKEN_OP_AMPERSAND
@@ -27,6 +31,8 @@ struct parser;
  *
  * expr_postfix_unary_ops = TOKEN_OP_INC
  *                        / TOKEN_OP_DEC
+ *
+ * expr_level3 = expr_factor
  *
  * expr_factor = expr_prefix_unary_ops expr_element
  *             / expr_element expr_postfix_unary_ops

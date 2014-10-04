@@ -112,6 +112,35 @@ START_TEST(test_acc_div) {
     ast_node_destroy(bop);
 }END_TEST
 
+START_TEST(test_acc_assignment) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a = 5 + 2.149");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 0, 0, 0);
+    testsupport_parser_constant_create(cnum1, file,
+                                       0, 4, 0, 4, integer, 5);
+    testsupport_parser_constant_create(cnum2, file,
+                                       0, 8, 0, 12, float, 2.149);
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 4, 0, 12,
+                                   BINARYOP_ADD,
+                                   cnum1, cnum2);
+
+    testsupport_parser_node_create(bop, binaryop, file, 0, 0, 0, 12,
+                                   BINARYOP_ASSIGN,
+                                   id1, bop1);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop);
+}END_TEST
+
 START_TEST(test_acc_complex_1) {
     struct ast_node *n;
     struct inpfile *file;
@@ -311,6 +340,8 @@ Suite *parser_operators_suite_create(void)
     tcase_add_test(bop, test_acc_multi);
     tcase_add_test(bop, test_acc_sub);
     tcase_add_test(bop, test_acc_div);
+    tcase_add_test(bop, test_acc_assignment);
+
     tcase_add_test(bop, test_acc_complex_1);
     tcase_add_test(bop, test_acc_complex_2);
     tcase_add_test(bop, test_acc_complex_3);

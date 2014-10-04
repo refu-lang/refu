@@ -12,6 +12,10 @@
 #include "function.h"
 #include "arrayref.h"
 
+static struct ast_node *parser_acc_expression_prime(
+    struct parser *p,
+    struct ast_node *left_hand_side,
+    int level);
 
 static struct ast_node *parser_acc_expr_element(struct parser *p)
 {
@@ -143,86 +147,64 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     return element;
 }
 
-static struct ast_node *parser_acc_exprlevel1_prime(
-    struct parser *p,
-    struct ast_node *left_hand_side)
+static inline bool check_operator_type(struct token *tok, int level)
 {
-    struct token *tok;
-    struct ast_node *op;
-    struct ast_node *right_hand_side;
-    struct ast_node *ret;
-
-    tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || (tok->type != TOKEN_OP_MULTI && tok->type != TOKEN_OP_DIV)) {
-        return NULL;
-    }
-    //consume operator
-    lexer_next_token(p->lexer);
-
-    lexer_push(p->lexer);
-
-    op = ast_binaryop_create(ast_node_startmark(left_hand_side), NULL,
-                             binaryop_type_from_token(tok),
-                             left_hand_side, NULL);
-    if (!op) {
-        RF_ERRNOMEM();
-        return NULL;
+    if (!tok) {
+        return false;
     }
 
-    right_hand_side = parser_acc_exprfactor(p);
-    if (!right_hand_side) {
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected "EXPR_ELEMENT_START" after \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(tokentype_to_str(tok->type)));
-        ast_node_destroy(op);
-        return NULL;
-    }
-    ast_binaryop_set_right(op, right_hand_side);
-
-    ret = parser_acc_exprlevel1_prime(p, op);
-    if (parser_has_syntax_error(p)) {
-        // no need to free term, since it's freed inside prime accepting
-        return NULL;
+    switch(level) {
+    case 1:
+        return (tok->type == TOKEN_OP_ASSIGN);
+    case 2:
+        return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
+    case 3:
+        return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
     }
 
-    return ret ? ret : op;
+    RF_ASSERT(0); //unknown level
+    return false;
 }
 
-static struct ast_node *parser_acc_exprlevel1(struct parser *p)
+static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)
 {
-    struct ast_node *factor;
     struct ast_node *prime;
+    struct ast_node *term;
 
-    factor = parser_acc_exprfactor(p);
-    if (!factor) {
+    if (level == 4) { // end, we got to the factor level
+        term = parser_acc_exprfactor(p);
+    } else {
+        term = parser_acc_exprlevel(p, level + 1);
+    }
+    if (!term) {
         return NULL;
     }
-    prime = parser_acc_exprlevel1_prime(p, factor);
+
+    prime = parser_acc_expression_prime(p, term, level);
     if (parser_has_syntax_error(p)) {
-        // no need to free factor, since it's freed inside prime accepting
         return NULL;
     }
 
-    return (prime) ? prime : factor;
+    return prime ? prime : term;
 }
 
 static struct ast_node *parser_acc_expression_prime(
     struct parser *p,
-    struct ast_node *left_hand_side)
+    struct ast_node *left_hand_side,
+    int level)
 {
     struct token *tok;
     struct ast_node *op;
     struct ast_node *right_hand_side;
     struct ast_node *ret;
 
+
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || (tok->type != TOKEN_OP_PLUS && tok->type != TOKEN_OP_MINUS)) {
+    if (!check_operator_type(tok, level)) {
         return NULL;
     }
     //consume operator
     lexer_next_token(p->lexer);
-
-    lexer_push(p->lexer);
 
     op = ast_binaryop_create(ast_node_startmark(left_hand_side), NULL,
                              binaryop_type_from_token(tok),
@@ -231,7 +213,7 @@ static struct ast_node *parser_acc_expression_prime(
         RF_ERRNOMEM();
         return NULL;
     }
-    right_hand_side = parser_acc_exprlevel1(p);
+    right_hand_side = parser_acc_exprlevel(p, level + 1);
     if (!right_hand_side) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected "EXPR_ELEMENT_START" after "
@@ -242,7 +224,7 @@ static struct ast_node *parser_acc_expression_prime(
     }
     ast_binaryop_set_right(op, right_hand_side);
 
-    ret = parser_acc_expression_prime(p, op);
+    ret = parser_acc_expression_prime(p, op, level);
     if (parser_has_syntax_error(p)) {
         // no need to free op, since it's freed inside expression' accepting
         return NULL;
@@ -253,22 +235,8 @@ static struct ast_node *parser_acc_expression_prime(
 
 struct ast_node *parser_acc_expression(struct parser *p)
 {
-    struct ast_node *prime;
-    struct ast_node *term;
-
-    term = parser_acc_exprlevel1(p);
-    if (!term) {
-        return NULL;
-    }
-
-    prime = parser_acc_expression_prime(p, term);
-    if (parser_has_syntax_error(p)) {
-        return NULL;
-    }
-
-    return prime ? prime : term;
+    return parser_acc_exprlevel(p, 1);
 }
-
 
 bool parser_acc_expressions_list(struct parser *p,
                                  struct ast_node *parent)
