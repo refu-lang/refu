@@ -12,7 +12,7 @@ struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
     struct ast_node *ret;
     ret = ast_node_create_marks(AST_BINARY_OPERATOR, start, end);
     if (!ret) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         return NULL;
     }
 
@@ -48,7 +48,7 @@ static const enum token_type  token_type_lookup[] = {
 
 const struct RFstring * ast_binaryop_opstr(struct ast_node *op)
 {
-    RF_ASSERT(TOKEN_IS_BINARY_OP(tok));
+    RF_ASSERT(op->type == AST_BINARY_OPERATOR);
     return tokentype_to_str(token_type_lookup[op->binaryop.type]);
 }
 
@@ -62,7 +62,7 @@ struct ast_node *ast_unaryop_create(struct inplocation_mark *start,
     struct ast_node *ret;
     ret = ast_node_create_marks(AST_UNARY_OPERATOR, start, end);
     if (!ret) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         return NULL;
     }
 

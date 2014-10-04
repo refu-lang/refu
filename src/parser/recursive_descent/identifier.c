@@ -61,7 +61,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
 
     xid = ast_xidentifier_create(start, end, id, is_const, genr);
     if (!xid) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         ast_node_destroy(id);
         return NULL;
     }

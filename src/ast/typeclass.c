@@ -10,7 +10,7 @@ struct ast_node *ast_typeclass_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_TYPECLASS_DECLARATION, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 

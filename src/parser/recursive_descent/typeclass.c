@@ -55,7 +55,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
     }
     n = ast_typeclass_create(start, NULL, name, genr);
     if (!n) {
-        // TODO: bad error
+        RF_ERRNOMEM();
         goto err_free_genr;
     }
 

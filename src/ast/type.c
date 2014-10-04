@@ -21,7 +21,7 @@ struct ast_node *ast_typeop_create(struct inplocation_mark *start,
     RF_ASSERT(right->type == AST_TYPE_DESCRIPTION);
     ret = ast_node_create_marks(AST_TYPE_OPERATOR, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 
@@ -70,7 +70,7 @@ struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_TYPE_DESCRIPTION, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 
@@ -110,7 +110,7 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_TYPE_DECLARATION, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 

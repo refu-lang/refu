@@ -117,7 +117,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
                                 ast_node_endmark(element),
                                 unaryop_type_from_token(prefix), element);
         if (!op) {
-            //TODO: bad error
+            RF_ERRNOMEM();
             return NULL;
         }
         return op;
@@ -133,7 +133,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
                                 token_get_end(tok),
                                 unaryop_type_from_token(tok), element);
         if (!op) {
-            //TODO: bad error
+            RF_ERRNOMEM();
             return NULL;
         }
         return op;
@@ -165,7 +165,8 @@ static struct ast_node *parser_acc_exprterm_prime(
                              binaryop_type_from_token(tok),
                              left_hand_side, NULL);
     if (!op) {
-        //TODO: bad error
+        RF_ERRNOMEM();
+        return NULL;
     }
 
     right_hand_side = parser_acc_exprfactor(p);
@@ -227,7 +228,7 @@ static struct ast_node *parser_acc_expression_prime(
                              binaryop_type_from_token(tok),
                              left_hand_side, NULL);
     if (!op) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         return NULL;
     }
     right_hand_side = parser_acc_exprterm(p);

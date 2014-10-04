@@ -13,7 +13,7 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_FUNCTION_DECLARATION, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 
@@ -38,7 +38,7 @@ struct ast_node *ast_fncall_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_FUNCTION_CALL, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 

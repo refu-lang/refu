@@ -374,10 +374,7 @@ static bool lexer_get_string_literal(struct lexer *l, char *p,
     RF_STRING_SHALLOW_INIT(&tmps, sp, lim - sp + 1);
 
     // iterate as an RFString since we may have Unicode characters inside
-    if (!rf_string_get_iter(&tmps, &it)) {
-        //TODO: bad error
-        return false;
-    }
+    rf_string_get_iter(&tmps, &it);
 
     while (rf_string_iterator_next(&it, &val)) {
         if (val == '"' && it.character_pos != 0 && pr_val != '\\') {

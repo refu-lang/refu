@@ -15,7 +15,7 @@ struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_VARIABLE_DECLARATION, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 

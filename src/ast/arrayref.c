@@ -10,7 +10,7 @@ struct ast_node *ast_arrayref_create(struct inplocation_mark *start,
 
     ret = ast_node_create_marks(AST_ARRAY_REFERENCE, start, end);
     if (!ret) {
-        //TODO: memory error
+        RF_ERRNOMEM();
         return NULL;
     }
 

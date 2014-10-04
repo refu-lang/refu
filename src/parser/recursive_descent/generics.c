@@ -40,7 +40,8 @@ static struct ast_node * parser_acc_genrtype(struct parser *p)
     lexer_pop(p->lexer);
     n = ast_genrtype_create(type_id, token_get_value(tok));
     if (!n) {
-        //TODO: bad error
+        RF_ERRNOMEM();
+        ast_node_destroy(type_id);
         return NULL;
     }
     return n;
@@ -222,7 +223,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p)
     lexer_next_token(p->lexer);
     n = ast_genrattr_create(token_get_start(tok), NULL);
     if (!n) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         return NULL;
     }
 

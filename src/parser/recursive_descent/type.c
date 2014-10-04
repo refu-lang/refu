@@ -67,7 +67,7 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
                                     ast_node_endmark(right),
                                     left, right);
             if (!n) {
-                //TODO: bad error
+                RF_ERRNOMEM();
                 goto err;
             }
         } else { // last expansion of type_element rule, just an xidentifier
@@ -106,7 +106,8 @@ static struct ast_node *parser_acc_typefactor_prime(
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_PRODUCT, left_hand_side, NULL);
     if (!op) {
-        //TODO: bad error
+        RF_ERRNOMEM();
+        return NULL;
     }
 
     right_hand_side = parser_acc_typeelement(p);
@@ -166,7 +167,8 @@ static struct ast_node *parser_acc_typeterm_prime(
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_SUM, left_hand_side, NULL);
     if (!op) {
-        //TODO: bad error
+        RF_ERRNOMEM();
+        return NULL;
     }
 
     right_hand_side = parser_acc_typefactor(p);
@@ -226,7 +228,7 @@ static struct ast_node *parser_acc_typedesc_prime(
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_IMPLICATION, left_hand_side, NULL);
     if (!op) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         return NULL;
     }
     right_hand_side = parser_acc_typeterm(p);

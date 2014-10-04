@@ -92,7 +92,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p)
 
     n = ast_fndecl_create(start, end, name, genr, args, ret_type);
     if (!n) {
-        //TODO: Bad error
+        RF_ERRNOMEM();
         goto err_free_rettype;
     }
     return n;
@@ -167,7 +167,7 @@ struct ast_node *parser_acc_fncall(struct parser *p)
 
     n = ast_fncall_create(ast_node_startmark(name), NULL, name, genr);
     if (!n) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         goto err_free_genr;
     }
 

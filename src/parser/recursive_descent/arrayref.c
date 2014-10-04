@@ -49,9 +49,8 @@ struct ast_node *parser_acc_arrayref(struct parser *p)
                             name, expr);
 
     if (!n) {
-        //TODO: bad error
+        RF_ERRNOMEM();
         goto err_free_expr;
-        return NULL;
     }
     return n;
 
