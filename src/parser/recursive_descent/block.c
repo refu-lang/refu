@@ -53,7 +53,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
         lexer_next_token(p->lexer);
 
         ast_node_set_start(n, start);
-        ast_node_set_start(n, token_get_end(tok));
+        ast_node_set_end(n, token_get_end(tok));
         return n; //empty block
     }
 

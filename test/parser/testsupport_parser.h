@@ -57,6 +57,20 @@ struct inpfile;
     } while (0)
 
 /**
+ * A utility testing macro to generate a block at a location
+ */
+#define testsupport_parser_block_create(node_, file_,                   \
+                                        sl_, sc_, el_,                  \
+                                        ec_)                            \
+        struct ast_node *node_;                                         \
+        do {                                                            \
+            struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+            node_ = ast_block_create();                                 \
+            ast_node_set_start(node_, &temp_location_.start);           \
+            ast_node_set_end(node_, &temp_location_.end);               \
+        } while (0)
+
+/**
  * A utility testing function to generate an identifier at a location
  */
 struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
@@ -82,17 +96,30 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
         ck_assert(lexer_scan((driver_)->front.lexer));          \
     } while (0)
 
+
 /**
  * A utility testing macro used to test if the parser succesfully does an
  * accept.
  */
-#define ck_test_parse_as(node_, type_, driver_,  node_name, target_)    \
+#define ck_test_parse_as(...) \
+    RF_SELECT_FUNC_IF_NARGGT(i_ck_test_parse_as, 5, __VA_ARGS__)
+
+#define i_ck_test_parse_as1(node_, type_, driver_,  node_name, target_, ...) \
+    do {                                                                \
+            testsupport_parser_prepare(driver_);                        \
+            node_ = parser_acc_##type_((driver_)->front.parser, __VA_ARGS__); \
+            ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
+            check_ast_match(n, target_, &(driver_)->front.file);        \
+        } while (0)
+
+#define i_ck_test_parse_as0(node_, type_, driver_,  node_name, target_)    \
         do {                                                            \
             testsupport_parser_prepare(driver_);                        \
             node_ = parser_acc_##type_((driver_)->front.parser);        \
             ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
             check_ast_match(n, target_, &(driver_)->front.file);        \
         } while (0)
+
 
 
 #define ck_assert_parsed_node(n_, d_, msg_)                             \

@@ -1,6 +1,8 @@
 #ifndef LFR_PARSER_TYPE_H
 #define LFR_PARSER_TYPE_H
 
+#include <stdbool.h>
+
 struct ast_node;
 struct parser;
 

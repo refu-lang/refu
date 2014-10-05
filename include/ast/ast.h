@@ -8,7 +8,7 @@
 #include <ast/type_decls.h>
 #include <ast/typeclass_decls.h>
 #include <ast/generics_decls.h>
-#include <ast/vardecl.h>
+#include <ast/vardecl_decls.h>
 #include <ast/function_decls.h>
 #include <ast/string_literal_decls.h>
 #include <ast/identifier.h>

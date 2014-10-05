@@ -27,6 +27,7 @@ i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
     lexer_next_token(p->lexer);
     return token_get_value(tok);
 }
+
 /**
  * annotated_identifier = ["const"] identifier [generic_attributes]
  */

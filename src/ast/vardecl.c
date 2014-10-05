@@ -11,7 +11,7 @@ struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
 {
     struct ast_node *ret;
     RF_ASSERT(name->type == AST_IDENTIFIER);
-    RF_ASSERT(type->type == AST_IDENTIFIER);
+    RF_ASSERT(type->type == AST_TYPE_DESCRIPTION || type->type == AST_TYPE_OPERATOR);
 
     ret = ast_node_create_marks(AST_VARIABLE_DECLARATION, start, end);
     if (!ret) {
@@ -19,22 +19,7 @@ struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
         return NULL;
     }
 
-    ret->vardecl.name = name;
-    ret->vardecl.type = type;    
-    
+    ast_node_register_child(ret, name, vardecl.name);
+    ast_node_register_child(ret, type, vardecl.type);
     return ret;
-}
-
-struct RFstring *ast_vardecl_name_str(struct ast_node *n)
-{
-    RF_ASSERT(n->type == AST_VARIABLE_DECLARATION);
-
-    return ast_identifier_str(n->vardecl.name);
-}
-
-struct RFstring *ast_vardecl_type_str(struct ast_node *n)
-{
-    RF_ASSERT(n->type == AST_VARIABLE_DECLARATION);
-
-    return ast_identifier_str(n->vardecl.type);
 }

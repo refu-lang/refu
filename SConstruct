@@ -47,6 +47,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/expression.c',
         'parser/recursive_descent/arrayref.c',
         'parser/recursive_descent/block.c',
+        'parser/recursive_descent/vardecl.c',
     ]
 
 # add specific environment variables
@@ -89,6 +90,7 @@ unit_tests_files = [
     'parser/test_parser_function.c',
     'parser/test_parser_typeclass.c',
     'parser/test_parser_operators.c',
+    'parser/test_parser_block.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)
