@@ -5,6 +5,5 @@ struct inplocation_mark;
 
 struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
                                     struct inplocation_mark *end,
-                                    struct ast_node *name,
-                                    struct ast_node *type);
+                                    struct ast_node *desc);
 #endif

@@ -4,10 +4,8 @@
 struct ast_node;
 
 struct ast_vardecl {
-    //! identifier of the name
-    struct ast_node *name;
-    //! identifier of the type
-    struct ast_node *type;
+    //! Type description of the variable declaration
+    struct ast_node *desc;
 };
 
 #endif

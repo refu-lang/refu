@@ -279,6 +279,7 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     rf_ilist_for_each(&expect->children, child, lh) {
         expect_children ++;
     }
+
     if (got_children != expect_children) {
         ck_astcheck_abort(filename, line,
                           "2 ast nodes have different number of children", 0);

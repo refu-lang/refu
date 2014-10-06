@@ -9,6 +9,7 @@
 #include "common.h"
 #include "identifier.h"
 #include "type.h"
+#include "vardecl.h"
 #include "function.h"
 #include "arrayref.h"
 
@@ -48,6 +49,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
 
+        return n;
+    } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {
+        n = parser_acc_vardecl(p);
+        if (!n) {
+            parser_synerr(p, token_get_end(tok), NULL,
+                          "expected a variable declaration");
+            return NULL;
+        }
         return n;
     } else if (TOKENS_ARE_POSSIBLE_ARRAYREF(tok, tok2)) {
         n = parser_acc_arrayref(p);

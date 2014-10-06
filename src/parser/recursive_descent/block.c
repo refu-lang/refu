@@ -63,8 +63,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     ast_node_add_child(n, expr);
 
     // now add expressions to the block
-    expr = parser_acc_expression(p);
-    while (expr) {
+    while ((expr = parser_acc_expression(p))) {
         ast_node_add_child(n, expr);
         end = ast_node_endmark(expr);
     }
@@ -83,7 +82,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     }
 
     ast_node_set_start(n, start);
-    ast_node_set_start(n, end);
+    ast_node_set_end(n, end);
     return n;
 
 err_free_block:
