@@ -38,6 +38,12 @@ enum parser_fndecl_list_err {
 enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
                                                    struct ast_node *parent);
 
+/*
+ * function_implementation = function_declaration block
+ */
+struct ast_node *parser_acc_fnimpl(struct parser *p);
+
+
 #define TOKENS_ARE_POSSIBLE_FNCALL(tok1_, tok2_)                        \
     (tok1_ && tok2_ && (tok1_)->type == TOKEN_IDENTIFIER &&             \
      ((tok2_)->type == TOKEN_SM_OPAREN || (tok2_)->type == TOKEN_OP_LT))

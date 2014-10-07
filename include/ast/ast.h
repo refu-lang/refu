@@ -30,6 +30,7 @@ enum ast_type {
     AST_GENERIC_TYPE,
     AST_GENERIC_ATTRIBUTE,
     AST_FUNCTION_DECLARATION,
+    AST_FUNCTION_IMPLEMENTATION,
     AST_FUNCTION_CALL,
     AST_ARRAY_REFERENCE,
     AST_XIDENTIFIER,
@@ -59,6 +60,7 @@ struct ast_node {
         struct ast_typeclass typeclass;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
+        struct ast_fnimpl fnimpl;
         struct ast_fncall fncall;
         struct ast_arrayref arrayref;
         struct ast_binaryop binaryop;

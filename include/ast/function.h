@@ -21,6 +21,12 @@ i_INLINE_DECL struct RFstring *ast_fndecl_name_str(struct ast_node *n)
 struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
 
 
+struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
+                                   struct inplocation_mark *end,
+                                   struct ast_node *decl,
+                                   struct ast_node *body);
+
+
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
                                    struct ast_node *name,

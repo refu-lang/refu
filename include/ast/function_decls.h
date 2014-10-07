@@ -16,6 +16,13 @@ struct ast_fndecl {
 };
 
 
+struct ast_fnimpl {
+    //! The function's declaration (signature)
+    struct ast_node *decl;
+    //! The function's body
+    struct ast_node *body;
+};
+
 struct ast_fncall {
     //! identifier of the name
     struct ast_node *name;

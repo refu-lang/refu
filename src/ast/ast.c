@@ -17,6 +17,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("generic type"),
     RF_STRING_STATIC_INIT("generic attribute"),
     RF_STRING_STATIC_INIT("function declaration"),
+    RF_STRING_STATIC_INIT("function implementation"),
     RF_STRING_STATIC_INIT("function call"),
     RF_STRING_STATIC_INIT("array reference"),
     RF_STRING_STATIC_INIT("annotated identifier"),

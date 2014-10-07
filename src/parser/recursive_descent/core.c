@@ -48,7 +48,7 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
         goto fail;
     } else if ((stmt = parser_acc_typedecl(p))) {
         goto fail;
-    } else if ((stmt = parser_acc_fndecl(p))) {
+    } else if ((stmt = parser_acc_fnimpl(p))) {
         goto fail;
     }
 

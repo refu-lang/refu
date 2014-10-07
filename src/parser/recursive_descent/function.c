@@ -8,6 +8,7 @@
 #include "generics.h"
 #include "type.h"
 #include "expression.h"
+#include "block.h"
 
 struct ast_node *parser_acc_fndecl(struct parser *p)
 {
@@ -137,6 +138,37 @@ enum parser_fndecl_list_err  parser_acc_fndecl_list(struct parser *p,
     }
 
     return PARSER_FNDECL_LIST_SUCCESS;
+}
+
+struct ast_node *parser_acc_fnimpl(struct parser *p)
+{
+    struct ast_node *n;
+    struct ast_node *decl;
+    struct ast_node *body;
+
+    decl = parser_acc_fndecl(p);
+    if (!decl) {
+        return NULL;
+    }
+
+    body = parser_acc_block(p, true);
+    if (!body) {
+        parser_synerr(p, ast_node_endmark(decl), NULL,
+                      "Expected a body for \""RF_STR_PF_FMT"\" function "
+                      "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
+        ast_node_destroy(decl);
+        return NULL;
+    }
+
+    n = ast_fnimpl_create(ast_node_startmark(decl), ast_node_endmark(body),
+                          decl, body);
+    if (!n) {
+        RF_ERRNOMEM();
+        ast_node_destroy(body);
+        ast_node_destroy(decl);
+        return NULL;
+    }
+    return n;
 }
 
 struct ast_node *parser_acc_fncall(struct parser *p)

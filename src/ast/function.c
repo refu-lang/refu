@@ -28,6 +28,27 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
 i_INLINE_INS struct RFstring *ast_fndecl_name_str(struct ast_node *n);
 
 
+struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
+                                   struct inplocation_mark *end,
+                                   struct ast_node *decl,
+                                   struct ast_node *body)
+{
+    struct ast_node *ret;
+    RF_ASSERT(decl->type == AST_FUNCTION_DECLARATION);
+    RF_ASSERT(body->type == AST_BLOCK);
+
+    ret = ast_node_create_marks(AST_FUNCTION_IMPLEMENTATION, start, end);
+    if (!ret) {
+        RF_ERRNOMEM();
+        return NULL;
+    }
+
+    ast_node_register_child(ret, decl, fnimpl.decl);
+    ast_node_register_child(ret, body, fnimpl.body);
+
+    return ret;
+}
+
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
                                    struct ast_node *name,
