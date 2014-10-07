@@ -60,6 +60,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     if (!start) {
         start = ast_node_startmark(expr);
     }
+    end = ast_node_endmark(expr);
     ast_node_add_child(n, expr);
 
     // now add expressions to the block
