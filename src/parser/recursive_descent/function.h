@@ -19,7 +19,6 @@ enum parser_fndecl_list_err {
     PARSER_FNDECL_LIST_SUCCESS = 0,
     PARSER_FNDECL_LIST_EMPTY = 1,
     PARSER_FNDECL_LIST_FAILURE = 2,
-
 };
 
 /**
@@ -38,11 +37,34 @@ enum parser_fndecl_list_err {
 enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
                                                    struct ast_node *parent);
 
+
 /*
  * function_implementation = function_declaration block
  */
 struct ast_node *parser_acc_fnimpl(struct parser *p);
 
+enum parser_fnimpl_list_err {
+    PARSER_FNIMPL_LIST_SUCCESS = 0,
+    PARSER_FNIMPL_LIST_EMPTY = 1,
+    PARSER_FNIMPL_LIST_FAILURE = 2,
+};
+
+/**
+ * function_implementations = function_implementation
+ *                          / function_implementation function_implementations
+ *
+ * Accepts a list of function implementations and adds them to another node
+ *
+ * @param p              The parser object to work with
+ * @param parent         The ast_node on which to add the function
+ *                       implementations
+ *
+ * @return               Will return an error code to determine if the list got
+ *                       parsed succesfully, if there was an error or if it was
+ *                       empty. @look parser_fnimpl_list_err
+ */
+enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
+                                                   struct ast_node *parent);
 
 #define TOKENS_ARE_POSSIBLE_FNCALL(tok1_, tok2_)                        \
     (tok1_ && tok2_ && (tok1_)->type == TOKEN_IDENTIFIER &&             \

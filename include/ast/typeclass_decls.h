@@ -7,4 +7,11 @@ struct ast_typeclass
     struct ast_node *generics;
 };
 
+struct ast_typeinstance
+{
+    struct ast_node *class_name;
+    struct ast_node *type_name;
+    struct ast_node *generics;
+};
+
 #endif

@@ -81,8 +81,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         tok->type == TOKEN_STRING_LITERAL) {
         n = token_get_value(tok);
     } else {
-        parser_synerr(p, token_get_start(tok), NULL,
-                      "expected "EXPR_ELEMENT_START);
+        // no expression found. This is not an error
         return NULL;
     }
 

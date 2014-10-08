@@ -26,6 +26,7 @@ enum ast_type {
     AST_TYPE_OPERATOR,
     AST_TYPE_DESCRIPTION,
     AST_TYPECLASS_DECLARATION,
+    AST_TYPECLASS_INSTANCE,
     AST_GENERIC_DECLARATION,
     AST_GENERIC_TYPE,
     AST_GENERIC_ATTRIBUTE,
@@ -58,6 +59,7 @@ struct ast_node {
         struct ast_typeop typeop;
         struct ast_typedesc typedesc;
         struct ast_typeclass typeclass;
+        struct ast_typeinstance typeinstance;
         struct ast_genrtype genrtype;
         struct ast_fndecl fndecl;
         struct ast_fnimpl fnimpl;

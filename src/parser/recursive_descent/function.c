@@ -171,6 +171,29 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
     return n;
 }
 
+enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
+                                                   struct ast_node *parent)
+{
+   struct ast_node *impl;
+   struct token *tok;
+   tok = lexer_lookahead(p->lexer, 1);
+
+   if (!tok || tok->type != TOKEN_KW_FUNCTION) {
+       return PARSER_FNIMPL_LIST_EMPTY;
+   }
+
+   while (tok && tok->type == TOKEN_KW_FUNCTION) {
+       impl = parser_acc_fnimpl(p);
+       if (!impl) {
+           return PARSER_FNIMPL_LIST_FAILURE;
+       }
+       ast_node_add_child(parent, impl);
+       tok = lexer_lookahead(p->lexer, 1);
+   }
+
+   return PARSER_FNIMPL_LIST_SUCCESS;
+}
+
 struct ast_node *parser_acc_fncall(struct parser *p)
 {
     struct ast_node *n;
