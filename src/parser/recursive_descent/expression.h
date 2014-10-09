@@ -12,6 +12,7 @@ struct parser;
  * expression = expr_level1 expression'
  *
  * expression' = TOKEN_OP_ASSIGN expr_level1 expression'
+ *             / EMPTY
  *
  * expr_level1 = expr_level2 expr_level1'
  *

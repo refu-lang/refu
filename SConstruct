@@ -49,6 +49,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/arrayref.c',
         'parser/recursive_descent/block.c',
         'parser/recursive_descent/vardecl.c',
+        'parser/recursive_descent/ifexpr.c',
     ]
 
 # add specific environment variables
