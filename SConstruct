@@ -34,6 +34,7 @@ refu_src = [
     'ast/arrayref.c',
     'ast/generics.c',
     'ast/operators.c',
+    'ast/ifexpr.c',
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

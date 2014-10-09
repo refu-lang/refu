@@ -14,6 +14,7 @@
 #include <ast/identifier.h>
 #include <ast/constant_num_decls.h>
 #include <ast/operators_decls.h>
+#include <ast/ifexpr_decls.h>
 #include <ast/arrayref_decls.h>
 
 #define AST_PRINT_DEPTHMUL 4
@@ -34,6 +35,8 @@ enum ast_type {
     AST_FUNCTION_IMPLEMENTATION,
     AST_FUNCTION_CALL,
     AST_ARRAY_REFERENCE,
+    AST_CONDITIONAL_BRANCH,
+    AST_IF_EXPRESSION,
     AST_XIDENTIFIER,
     AST_BINARY_OPERATOR,
     AST_UNARY_OPERATOR,
@@ -65,6 +68,8 @@ struct ast_node {
         struct ast_fnimpl fnimpl;
         struct ast_fncall fncall;
         struct ast_arrayref arrayref;
+        struct ast_condbranch condbranch;
+        struct ast_ifexpr ifexpr;
         struct ast_binaryop binaryop;
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;
