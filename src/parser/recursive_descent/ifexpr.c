@@ -45,23 +45,58 @@ static struct ast_node *parser_acc_condbranch(struct parser *p)
 struct ast_node *parser_acc_ifexpr(struct parser *p)
 {
     struct ast_node *n;
-    struct ast_node *taken_branch;
+    struct ast_node *branch;
     struct token *tok;
+    struct inplocation_mark *start;
     
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_KW_IF) {
         return NULL;
     }
+    start = token_get_start(tok);
 
     // consume 'if'
     lexer_next_token(p->lexer);
     
-    taken_branch = parser_acc_condbranch(p);
-    if (!taken_branch) {
+    // parse the taken branch
+    branch = parser_acc_condbranch(p);
+    if (!branch) {
         parser_synerr(p, token_get_end(tok), NULL,
-                      "expected a condition expression after 'if'");
+                      "expected a conditional branch after 'if'");
+        return NULL;
+    }
+
+
+    // create the if expression
+    n = ast_ifexpr_create(start, ast_node_endmark(branch),
+                          branch, NULL);
+    if (!n) {
+        ast_node_destroy(branch);
+        RF_ERRNOMEM();
+        return NULL;
+    }
+
+    tok = lexer_lookahead(p->lexer, 1);
+    while (tok && (tok->type == TOKEN_KW_ELIF || tok->type == TOKEN_KW_ELSE)) {
+        // consume 'elif' or 'else'
+        lexer_next_token(p->lexer);
+
+        branch = parser_acc_condbranch(p);
+        if (!branch) {
+            parser_synerr(p, token_get_end(tok), NULL,
+                          "expected a conditional branch after"
+                          " '"RF_STR_PF_FMT"'",
+                          RF_STR_PF_ARG(tokentype_to_str(tok->type)));
+            ast_node_destroy(n);
+            return NULL;
+        }
+        if (tok->type == TOKEN_KW_ELIF) {
+            ast_ifexpr_add_elif_branch(n, branch);
+        } else { //can only be an else
+            ast_ifexpr_add_fall_through_branch(n, branch);
+        }
+        tok = lexer_lookahead(p->lexer, 1);
     }
     
-    // TODO: the rest of the parsing
     return n;
 }

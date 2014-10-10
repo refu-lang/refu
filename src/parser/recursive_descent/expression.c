@@ -162,15 +162,28 @@ static inline bool check_operator_type(struct token *tok, int level)
     }
 
     switch(level) {
-    case 1:
+    case 1: /* assignment */
         return (tok->type == TOKEN_OP_ASSIGN);
-    case 2:
+    case 2: /* logic OR */
+        return (tok->type == TOKEN_OP_LOGICOR);
+    case 3: /* logic AND */
+        return (tok->type == TOKEN_OP_LOGICAND);
+    case 4: /* equality comparison */
+        return (tok->type == TOKEN_OP_EQ || tok->type == TOKEN_OP_NEQ);
+    case 5: /* relational comparison */
+        return (tok->type == TOKEN_OP_GT   ||
+                tok->type == TOKEN_OP_GTEQ ||
+                tok->type == TOKEN_OP_LT   ||
+                tok->type == TOKEN_OP_LTEQ);
+
+    case 6: /* additive operators */
         return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
-    case 3:
+    case 7: /* multiplicative operators */
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
     }
 
     RF_ASSERT(0); //unknown level
+    RF_CRITICAL("Illegal level %d for expression parsing", level);
     return false;
 }
 
@@ -179,7 +192,7 @@ static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)
     struct ast_node *prime;
     struct ast_node *term;
 
-    if (level == 4) { // end, we got to the factor level
+    if (level == 8) { // end, we got to the factor level
         term = parser_acc_exprfactor(p);
     } else {
         term = parser_acc_exprlevel(p, level + 1);

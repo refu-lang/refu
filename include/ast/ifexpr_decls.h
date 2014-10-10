@@ -13,9 +13,9 @@ struct ast_condbranch {
 struct ast_ifexpr {
     //! A conditional branch for the 'if' of the if expression
     struct ast_node *taken_branch;
+    /* Additional elif's are simply added as children of the ast node */
     //! The block for the else code
     struct ast_node *fall_through_branch;
-    //! Additional elif's are simply added as children of the ast node
 };
 
 #endif

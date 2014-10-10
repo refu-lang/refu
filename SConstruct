@@ -93,6 +93,7 @@ unit_tests_files = [
     'parser/test_parser_typeclass.c',
     'parser/test_parser_operators.c',
     'parser/test_parser_block.c',
+    'parser/test_parser_ifexpr.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

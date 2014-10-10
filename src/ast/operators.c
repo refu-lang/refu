@@ -32,6 +32,16 @@ static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_MULTI]    =   BINARYOP_MUL,
     [TOKEN_OP_DIV]      =   BINARYOP_DIV,
 
+    [TOKEN_OP_EQ]       =   BINARYOP_CMP_EQ,
+    [TOKEN_OP_NEQ]      =   BINARYOP_CMP_NEQ,
+    [TOKEN_OP_GT]       =   BINARYOP_CMP_GT,
+    [TOKEN_OP_GTEQ]     =   BINARYOP_CMP_GTEQ,
+    [TOKEN_OP_LT]       =   BINARYOP_CMP_LT,
+    [TOKEN_OP_LTEQ]     =   BINARYOP_CMP_LTEQ,
+
+    [TOKEN_OP_LOGICAND] =   BINARYOP_LOGIC_AND,
+    [TOKEN_OP_LOGICOR]  =   BINARYOP_LOGIC_OR,
+
     [TOKEN_OP_ASSIGN]   =   BINARYOP_ASSIGN
 };
 
@@ -42,10 +52,20 @@ enum binaryop_type binaryop_type_from_token(struct token *tok)
 }
 
 static const enum token_type  token_type_lookup[] = {
-    [BINARYOP_ADD]     =   TOKEN_OP_PLUS,
-    [BINARYOP_SUB]     =   TOKEN_OP_MINUS,
-    [BINARYOP_MUL]     =   TOKEN_OP_MULTI,
-    [BINARYOP_DIV]     =   TOKEN_OP_DIV,
+    [BINARYOP_ADD]        =   TOKEN_OP_PLUS,
+    [BINARYOP_SUB]        =   TOKEN_OP_MINUS,
+    [BINARYOP_MUL]        =   TOKEN_OP_MULTI,
+    [BINARYOP_DIV]        =   TOKEN_OP_DIV,
+
+    [BINARYOP_CMP_EQ]     =   TOKEN_OP_EQ,
+    [BINARYOP_CMP_NEQ]    =   TOKEN_OP_NEQ,
+    [BINARYOP_CMP_GT]     =   TOKEN_OP_GT,
+    [BINARYOP_CMP_GTEQ]   =   TOKEN_OP_GTEQ,
+    [BINARYOP_CMP_LT]     =   TOKEN_OP_LT,
+    [BINARYOP_CMP_LTEQ]   =   TOKEN_OP_LTEQ,
+
+    [BINARYOP_LOGIC_AND]  =   TOKEN_OP_LOGICAND,
+    [BINARYOP_LOGIC_OR]   =   TOKEN_OP_LOGICOR,
 
     [BINARYOP_ASSIGN]  =   TOKEN_OP_ASSIGN
 };

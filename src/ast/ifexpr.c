@@ -36,3 +36,11 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
     
 }
 
+i_INLINE_INS void ast_ifexpr_add_fall_through_branch(struct ast_node *n,
+                                                     struct ast_node *branch);
+i_INLINE_INS void ast_ifexpr_add_elif_branch(struct ast_node *n,
+                                             struct ast_node *branch);
+i_INLINE_INS void ast_ifexpr_add_branch(struct ast_node *n,
+                                        struct ast_node *branch,
+                                        enum token_type type);
+
