@@ -282,15 +282,19 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
 
     if (got_children != expect_children) {
         ck_astcheck_abort(filename, line,
-                          "2 ast nodes have different number of children", 0);
+                          "2 \""RF_STR_PF_FMT"\" ast nodes have different "
+                          "number of children.\n Got %d != Expected %d",
+                          RF_STR_PF_ARG(ast_node_str(got)),
+                          got_children, expect_children);
         return false;
     }
 
     if(!inplocation_equal(&got->location, &expect->location)) {
         ck_astcheck_abort(
             filename, line,
-            "2 ast nodes have different location: Got "INPLOCATION_FMT2 " but"
-            " expected "INPLOCATION_FMT2,
+            "2 \""RF_STR_PF_FMT"\" ast nodes have different location: "
+            "Got "INPLOCATION_FMT2 " but"
+            " expected "INPLOCATION_FMT2, RF_STR_PF_ARG(ast_node_str(got)),
             INPLOCATION_ARG2(ifile, &got->location),
             INPLOCATION_ARG2(ifile, &expect->location)
         );

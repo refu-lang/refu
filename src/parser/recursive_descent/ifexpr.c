@@ -81,20 +81,28 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
         // consume 'elif' or 'else'
         lexer_next_token(p->lexer);
 
-        branch = parser_acc_condbranch(p);
-        if (!branch) {
-            parser_synerr(p, token_get_end(tok), NULL,
-                          "expected a conditional branch after"
-                          " '"RF_STR_PF_FMT"'",
-                          RF_STR_PF_ARG(tokentype_to_str(tok->type)));
-            ast_node_destroy(n);
-            return NULL;
-        }
         if (tok->type == TOKEN_KW_ELIF) {
+            branch = parser_acc_condbranch(p);
+            if (!branch) {
+                parser_synerr(p, token_get_end(tok), NULL,
+                              "expected a conditional branch after 'elif'");
+                ast_node_destroy(n);
+                return NULL;
+            }
             ast_ifexpr_add_elif_branch(n, branch);
+
         } else { //can only be an else
+            branch = parser_acc_block(p, true);
+            if (!branch) {
+                parser_synerr(p, token_get_end(tok), NULL,
+                              "expected a block after 'else'");
+                ast_node_destroy(n);
+                return NULL;
+            }
             ast_ifexpr_add_fall_through_branch(n, branch);
         }
+
+        ast_node_set_end(n, ast_node_endmark(branch));
         tok = lexer_lookahead(p->lexer, 1);
     }
     

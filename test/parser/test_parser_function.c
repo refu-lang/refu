@@ -376,7 +376,7 @@ START_TEST(test_acc_fncall_2) {
                                                                 0, 17, 0, 17);
     testsupport_parser_constant_create(cnum, file,
                                        0, 20, 0, 21, integer, 31);
-    testsupport_parser_string_literal_create(sliteral,file,
+    testsupport_parser_string_literal_create(sliteral, file,
                                              0, 24, 0, 30);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 31,
                                    name,
