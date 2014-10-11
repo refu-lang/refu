@@ -10,7 +10,9 @@
 #include "expression.h"
 #include "block.h"
 
-static struct ast_node *parser_acc_condbranch(struct parser *p)
+/* will always post a syntax error if it fails */
+static struct ast_node *parser_acc_condbranch(struct parser *p,
+                                              struct token *after_tok)
 {
     struct ast_node *n;
     struct ast_node *expr;
@@ -18,18 +20,23 @@ static struct ast_node *parser_acc_condbranch(struct parser *p)
 
     expr = parser_acc_expression(p);
     if (!expr) {
+        parser_synerr(p, token_get_end(after_tok), NULL,
+                      "Expected an expression after '"RF_STR_PF_FMT"'",
+                      RF_STR_PF_ARG(tokentype_to_str(after_tok->type)));
         return NULL;
     }
 
     block = parser_acc_block(p, true);
     if (!block) {
         parser_synerr(p, ast_node_endmark(expr), NULL,
-                      "expected a block after conditional expression");
+                      "Expected a block after \""RF_STR_PF_FMT"\"'s "
+                      "conditional expression",
+                      RF_STR_PF_ARG(tokentype_to_str(after_tok->type)));
         ast_node_destroy(expr);
         return NULL;
     }
 
-    n = ast_condbranch_create(ast_node_startmark(expr), 
+    n = ast_condbranch_create(ast_node_startmark(expr),
                               ast_node_endmark(block),
                               expr, block);
     if (!n) {
@@ -38,7 +45,7 @@ static struct ast_node *parser_acc_condbranch(struct parser *p)
         ast_node_destroy(block);
         return NULL;
     }
-    
+
     return n;
 }
 
@@ -48,7 +55,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
     struct ast_node *branch;
     struct token *tok;
     struct inplocation_mark *start;
-    
+
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_KW_IF) {
         return NULL;
@@ -57,12 +64,10 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
 
     // consume 'if'
     lexer_next_token(p->lexer);
-    
+
     // parse the taken branch
-    branch = parser_acc_condbranch(p);
+    branch = parser_acc_condbranch(p, tok);
     if (!branch) {
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "expected a conditional branch after 'if'");
         return NULL;
     }
 
@@ -82,10 +87,8 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
         lexer_next_token(p->lexer);
 
         if (tok->type == TOKEN_KW_ELIF) {
-            branch = parser_acc_condbranch(p);
+            branch = parser_acc_condbranch(p, tok);
             if (!branch) {
-                parser_synerr(p, token_get_end(tok), NULL,
-                              "expected a conditional branch after 'elif'");
                 ast_node_destroy(n);
                 return NULL;
             }
@@ -95,7 +98,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
             branch = parser_acc_block(p, true);
             if (!branch) {
                 parser_synerr(p, token_get_end(tok), NULL,
-                              "expected a block after 'else'");
+                              "Expected a block after 'else'");
                 ast_node_destroy(n);
                 return NULL;
             }
@@ -105,6 +108,6 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
         ast_node_set_end(n, ast_node_endmark(branch));
         tok = lexer_lookahead(p->lexer, 1);
     }
-    
+
     return n;
 }

@@ -293,9 +293,134 @@ START_TEST(test_acc_ifexpr_4) {
 }END_TEST
 
 
+START_TEST(test_acc_ifexpr_errors_1) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if {\n"
+        " do_sth()\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_ifexpr(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing if expression should fail");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected an expression after 'if'",
+            0, 1),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_ifexpr_errors_2) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if a > 25 \n"
+        " do_sth()\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_ifexpr(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing if expression should fail");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a block after \"if\"'s conditional expression",
+            0, 8),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_ifexpr_errors_3) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if a > 25 {\n"
+        " do_sth()\n"
+        "} else {"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_ifexpr(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing if expression should fail");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected an expression or a '}' at block end",
+            2, 7),
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a block after 'else'",
+            2, 5),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_ifexpr_errors_4) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if a > 25 {\n"
+        " do_sth()\n"
+        "} elif {\n"
+        "  10 + 231\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_ifexpr(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing if expression should fail");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected an expression after 'elif'",
+            2, 5),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_ifexpr_errors_5) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if a > 25 {\n"
+        " do_sth()\n"
+        "} elif 55 == foo_value \n"
+        "  10 + 231\n"
+        "} else {\n"
+        "  else_action()\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_ifexpr(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing if expression should fail");
+
+    struct info_msg errors[] = {
+        TESTPARSER_MSG_INIT_START(
+            &d->front.file,
+            "Expected a block after \"elif\"'s conditional expression",
+            2, 21),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
 Suite *parser_ifexpr_suite_create(void)
 {
-    Suite *s = suite_create("if_expression");
+    Suite *s = suite_create("parser_if_expression");
 
     TCase *ifp = tcase_create("if_expression_parsing");
     tcase_add_checked_fixture(ifp, setup_front_tests, teardown_front_tests);
@@ -304,7 +429,16 @@ Suite *parser_ifexpr_suite_create(void)
     tcase_add_test(ifp, test_acc_ifexpr_3);
     tcase_add_test(ifp, test_acc_ifexpr_4);
 
+    TCase *iferr = tcase_create("if_expression_parsing_errors");
+    tcase_add_checked_fixture(iferr, setup_front_tests, teardown_front_tests);
+    tcase_add_test(iferr, test_acc_ifexpr_errors_1);
+    tcase_add_test(iferr, test_acc_ifexpr_errors_2);
+    tcase_add_test(iferr, test_acc_ifexpr_errors_3);
+    tcase_add_test(iferr, test_acc_ifexpr_errors_4);
+    tcase_add_test(iferr, test_acc_ifexpr_errors_5);
+
     suite_add_tcase(s, ifp);
+    suite_add_tcase(s, iferr);
 
     return s;
 }
