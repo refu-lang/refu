@@ -120,4 +120,4 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
     ret->typedecl.desc = desc;
     return ret;
 }
-i_INLINE_INS struct RFstring *ast_typedecl_name_str(struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);

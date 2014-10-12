@@ -35,6 +35,8 @@ refu_src = [
     'ast/generics.c',
     'ast/operators.c',
     'ast/ifexpr.c',
+
+    'analyzer/symbol_table.c'
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
@@ -56,6 +58,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
 local_env.Append(CPPDEFINES=[
     "RF_MODULE_STRINGS",
     "RF_MODULE_INTRUSIVE_LIST",
+    "RF_MODULE_HTABLE",
     "RF_MODULE_SYSTEM",
     "RF_MODULE_IO",
     "RF_MODULE_IO_TEXTFILE"])
@@ -94,6 +97,9 @@ unit_tests_files = [
     'parser/test_parser_operators.c',
     'parser/test_parser_block.c',
     'parser/test_parser_ifexpr.c',
+
+    'analyzer/testsupport_analyzer.c',
+    'analyzer/test_symbol_table.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

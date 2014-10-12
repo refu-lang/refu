@@ -25,7 +25,7 @@ void ast_identifier_print(struct ast_node *n, int depth)
                RF_STR_PF_ARG(&n->identifier.string));
 }
 
-struct RFstring *ast_identifier_str(struct ast_node *n)
+const struct RFstring *ast_identifier_str(const struct ast_node *n)
 {
     RF_ASSERT(n->type == AST_IDENTIFIER);
     return &n->identifier.string;

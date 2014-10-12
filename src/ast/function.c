@@ -25,7 +25,7 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS struct RFstring *ast_fndecl_name_str(struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n);
 
 
 struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,

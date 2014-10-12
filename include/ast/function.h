@@ -13,7 +13,7 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
                                    struct ast_node *ret);
 
 
-i_INLINE_DECL struct RFstring *ast_fndecl_name_str(struct ast_node *n)
+i_INLINE_DECL const struct RFstring *ast_fndecl_name_str(const struct ast_node *n)
 {
     RF_ASSERT(n->type == AST_FUNCTION_DECLARATION);
     return ast_identifier_str(n->fndecl.name);

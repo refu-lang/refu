@@ -49,7 +49,7 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
                                      struct ast_node *name,
                                      struct ast_node *desc);
 
-i_INLINE_DECL struct RFstring *ast_typedecl_name_str(struct ast_node *n)
+i_INLINE_DECL const struct RFstring *ast_typedecl_name_str(struct ast_node *n)
 {
     return ast_identifier_str(n->typedecl.name);
 }

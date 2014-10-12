@@ -14,6 +14,8 @@ Suite *parser_operators_suite_create(void);
 Suite *parser_block_suite_create(void);
 Suite *parser_ifexpr_suite_create(void);
 
+Suite *analyzer_symboltable_suite_create(void);
+
 static const char *SILENT = "CK_SILENT";
 static const char *MINIMAL = "CK_MINIMAL";
 static const char *NORMAL = "CK_NORMAL";
@@ -71,6 +73,8 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, parser_operators_suite_create());
     srunner_add_suite(sr, parser_block_suite_create());
     srunner_add_suite(sr, parser_ifexpr_suite_create());
+
+    srunner_add_suite(sr, analyzer_symboltable_suite_create());
 
     srunner_set_fork_status (sr, fork_type);
     srunner_run_all(sr, print_type);
