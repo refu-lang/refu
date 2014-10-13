@@ -3,22 +3,23 @@
 #include <info/info.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
+#include <analyzer/analyzer.h>
 
 bool front_ctx_init(struct front_ctx *ctx,
                     const struct RFstring *filename)
 {
     if (!inpfile_init(&ctx->file, filename)) {
-        goto free_info;
+        goto err;
     }
 
     ctx->info = info_ctx_create(&ctx->file);
     if (!ctx->info) {
-        return false;
+        goto free_file;
     }
 
     ctx->lexer = lexer_create(&ctx->file, ctx->info);
     if (!ctx->lexer) {
-        goto free_file;
+        goto free_info;
     }
 
     ctx->parser = parser_create(&ctx->file, ctx->lexer, ctx->info);
@@ -26,14 +27,23 @@ bool front_ctx_init(struct front_ctx *ctx,
         goto free_lexer;
     }
 
+    ctx->analyzer = analyzer_create(ctx->info);
+    if (!ctx->analyzer) {
+        goto free_parser;
+    }
+
     return true;
 
+free_parser:
+    parser_destroy(ctx->parser);
 free_lexer:
     lexer_destroy(ctx->lexer);
-free_file:
-    inpfile_deinit(&ctx->file);
 free_info:
     info_ctx_destroy(ctx->info);
+free_file:
+    inpfile_deinit(&ctx->file);
+err:
+    RF_ERRNOMEM();
     return false;
 }
 
@@ -54,6 +64,7 @@ void front_ctx_deinit(struct front_ctx *ctx)
     lexer_destroy(ctx->lexer);
     parser_destroy(ctx->parser);
     info_ctx_destroy(ctx->info);
+    analyzer_destroy(ctx->analyzer);
 }
 
 void front_ctx_destroy(struct front_ctx *ctx)
@@ -68,7 +79,11 @@ bool front_ctx_process(struct front_ctx *ctx)
         return false;
     }
 
-    if (parser_process_file(ctx->parser)) {
+    if (!parser_process_file(ctx->parser)) {
+        return false;
+    }
+
+    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser)) {
         return false;
     }
 

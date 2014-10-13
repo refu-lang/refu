@@ -17,7 +17,13 @@
 #include <ast/ifexpr_decls.h>
 #include <ast/arrayref_decls.h>
 
+#include <analyzer/symbol_table.h>
+
 #define AST_PRINT_DEPTHMUL 4
+
+struct ast_root {
+    struct symbol_table st;
+};
 
 enum ast_type {
     AST_ROOT = 0,
@@ -55,6 +61,7 @@ struct ast_node {
     struct RFilist_node lh;
     struct RFilist_head children;
     union {
+        struct ast_root root;
         struct ast_identifier identifier;
         struct ast_xidentifier xidentifier;
         struct ast_vardecl vardecl;
@@ -129,6 +136,11 @@ i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 }
 
 const struct RFstring *ast_node_str(struct ast_node *n);
+
+
+struct ast_node *ast_root_create(struct inpfile *file);
+
+
 
 // temporary function, to visualize an ast tree
 void ast_print(struct ast_node *root, struct inpfile *f, int depth);

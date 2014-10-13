@@ -47,4 +47,12 @@ i_INLINE_DECL bool parser_has_syntax_error_reset(struct parser *parser)
     return ret;
 }
 
+i_INLINE_DECL struct ast_node *parser_yield_ast_root(struct parser *parser)
+{
+    struct ast_node *root;
+    root = parser->root;
+    parser->root = NULL;
+    return root;
+}
+
 #endif

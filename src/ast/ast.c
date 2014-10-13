@@ -94,8 +94,14 @@ void ast_node_destroy(struct ast_node *n)
     struct ast_node *tmp;
 
     /* type specific destruction */
-    //TODO: if ever needing destruction specific to an ast type
-    //      perform it with a switch() here.
+    switch(n->type) {
+    case AST_ROOT:
+        symbol_table_deinit(&n->root.st);
+        break;
+    default:
+        // no type specific destruction for the rest
+        break;
+    }
 
     rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
         ast_node_destroy(child);
@@ -159,6 +165,29 @@ static void ast_print_prelude(struct ast_node *n, struct inpfile *f,
                RF_STR_PF_ARG(ast_node_str(n)),
                INPLOCATION_ARG2(f, &n->location));
     }
+}
+
+struct ast_node *ast_root_create(struct inpfile *file)
+{
+    char *beg;
+    struct ast_node *n = NULL;
+    
+    beg = inpstr_beg(&file->str);
+    n = ast_node_create_ptrs(
+        AST_ROOT, file, beg,
+        beg + inpstr_len_from_beg(&file->str));    
+    
+    if (!n) {
+        RF_ERRNOMEM();
+    }
+
+    if (!symbol_table_init(&n->root.st)) {
+        free(n); // not calling ast_node_destroy, since symbol table isn't valid
+        RF_ERROR("Could not initialize symbol table for a root ast node");
+        n = NULL;
+    }
+
+    return n;
 }
 
 void ast_print(struct ast_node *n, struct inpfile *f, int depth)

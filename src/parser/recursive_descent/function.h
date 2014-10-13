@@ -6,6 +6,11 @@
 struct parser;
 struct ast_node;
 
+#define TOKENS_ARE_FNDECL_OR_IMPL(tok1_, tok2_) \
+    ((tok1_) && (tok2_) &&                      \
+     (tok1_)->type == TOKEN_KW_FUNCTION  &&     \
+     (tok2_)->type == TOKEN_IDENTIFIER)
+
 /**
  * function_return = TOKEN_OP_IMPL type_description
  *

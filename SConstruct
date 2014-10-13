@@ -36,7 +36,9 @@ refu_src = [
     'ast/operators.c',
     'ast/ifexpr.c',
 
-    'analyzer/symbol_table.c'
+    'analyzer/analyzer.c',
+    'analyzer/symbol_table.c',
+    'analyzer/symbol_table_creation.c'
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

@@ -3,9 +3,11 @@
 
 #include <inpfile.h>
 
+struct info_ctx;
 struct lexer;
 struct parser;
-struct info_ctx;
+struct analyzer;
+
 /**
  * The front end context
  * Defines and manages the front end pipeline an input file
@@ -16,6 +18,7 @@ struct front_ctx {
     struct inpfile file;
     struct lexer *lexer;
     struct parser *parser;
+    struct analyzer *analyzer;
     struct info_ctx *info;
 };
 

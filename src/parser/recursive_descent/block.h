@@ -5,6 +5,8 @@
 
 struct parser;
 
+#define TOKEN_IS_BLOCK_START(tok_) ((tok_) && (tok_)->type == TOKEN_SM_OCBRACE)
+
 /**
  * block = TOKEN_SM_OCBRACE expressions TOKEN_SM_CCBRACE
  */

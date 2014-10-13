@@ -39,6 +39,8 @@ struct parser;
  */
 struct ast_node *parser_acc_typedesc(struct parser *p);
 
+#define TOKEN_IS_TYPEDECL_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_TYPE)
+
 /**
  * type_declaration = TOKEN_KW_TYPE TOKEN_SM_OCBRACE type_description TOKEN_SM_CCBRACE
  */

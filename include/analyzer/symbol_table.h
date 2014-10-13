@@ -2,13 +2,18 @@
 #define LFR_ANALYZER_SYMBOL_TABLE_H
 
 #include <Data_Structures/htable.h>
+#include <String/rf_str_decl.h>
 
 struct ast_node;
 struct RFstring;
 
 struct symbol_table {
     struct htable table;
-    
+};
+
+struct symbol_table_record {
+    struct ast_node *type;
+    struct RFstring id;
 };
 
 bool symbol_table_init(struct symbol_table *t);
