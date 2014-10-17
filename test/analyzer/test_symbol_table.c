@@ -4,12 +4,18 @@
 #include <string.h>
 
 #include <String/rf_str_core.h>
+#include <Utils/hash.h>
 
+#include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include <ast/ast.h>
+#include <ast/block.h>
 #include <ast/identifier.h>
 
+#include "../../src/analyzer/symbol_table_creation.h"
+
 #include "../testsupport_front.h"
+#include "../parser/testsupport_parser.h"
 #include "testsupport_analyzer.h"
 
 #include CLIB_TEST_HELPERS
@@ -33,12 +39,12 @@ START_TEST(test_symbol_table_add) {
     struct ast_node *id2 = front_testdriver_generate_identifier(d, 1, 0, 1, 0,
                                                                 "var_2");
 
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id2), id2));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
 
-    n = symbol_table_lookup(&st, &id1s);
+    n = symbol_table_lookup_node(&st, &id1s);
     ck_assert(n == id1);
-    n = symbol_table_lookup(&st, &id2s);
+    n = symbol_table_lookup_node(&st, &id2s);
     ck_assert(n == id2);
 
     symbol_table_deinit(&st);
@@ -46,7 +52,7 @@ START_TEST(test_symbol_table_add) {
 
 START_TEST(test_symbol_table_add_existing) {
     struct symbol_table st;
-    struct ast_node *n;
+    struct symbol_table_record *rec;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a = 4.214\n"
         "var_2 = 5 + a"
@@ -63,14 +69,14 @@ START_TEST(test_symbol_table_add_existing) {
     struct ast_node *id2 = front_testdriver_generate_identifier(d, 1, 0, 1, 0,
                                                                 "var_2");
 
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id2), id2));
-    ck_assert(!symbol_table_add(&st, ast_identifier_str(id2), id2));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
+    ck_assert(!symbol_table_add_node(&st, ast_identifier_str(id2), id2));
 
-    n = symbol_table_lookup(&st, &id1s);
-    ck_assert(n == id1);
-    n = symbol_table_lookup(&st, &id2s);
-    ck_assert(n == id2);
+    rec = symbol_table_lookup_record(&st, &id1s);
+    ck_assert(symbol_table_record_type(rec) == id1);
+    rec = symbol_table_lookup_record(&st, &id2s);
+    ck_assert(symbol_table_record_type(rec) == id2);
 
     symbol_table_deinit(&st);
 }END_TEST
@@ -91,12 +97,12 @@ START_TEST(test_symbol_table_lookup_non_existing) {
                                                                 "var_2");
 
     // add something so that we don't check against an empty symbol table
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add(&st, ast_identifier_str(id2), id2));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
+    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
 
 
-    ck_assert(symbol_table_lookup(&st, &id1s) == NULL);
-    ck_assert(symbol_table_lookup(&st, &id2s) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id1s) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id2s) == NULL);
 
     symbol_table_deinit(&st);
 }END_TEST
@@ -220,6 +226,7 @@ static struct ast_node *generate_test_identifier(struct front_testdriver *d,
 START_TEST(test_symbol_table_many_symbols) {
     size_t ids_num;
     struct ast_node *n;
+    struct symbol_table_record *rec;
     unsigned int i;
     struct symbol_table st;
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
@@ -232,27 +239,61 @@ START_TEST(test_symbol_table_many_symbols) {
         n = generate_test_identifier(d, i);
         ck_assert_msg(n, "Could not generate a test identifier");
         ids_arr[i].n = n;
-        ck_assert_msg(symbol_table_add(&st, &ids_arr[i].s, n),
+        ck_assert_msg(symbol_table_add_node(&st, &ids_arr[i].s, n),
                       "Could not add %u/%zu generated identifier to the symbol table",
                       i, ids_num);
     }
 
     for (i = 0; i < ids_num; i ++) {
-            n = symbol_table_lookup(&st, &ids_arr[i].s);
-            ck_assert_msg(n == ids_arr[i].n,
+            rec = symbol_table_lookup_record(&st, &ids_arr[i].s);
+            ck_assert_msg(symbol_table_record_type(rec) == ids_arr[i].n,
                           "Generated identifier lookup mismatch");
     }
 
     symbol_table_deinit(&st);
 } END_TEST
 
+START_TEST(test_block_symbol_table) {
+    struct symbol_table *st;
+    struct ast_node *n;
+    static const struct RFstring id1s = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id2s = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "   a:i64\n"
+        "   b:u32\n"
+        "   c = a + b\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
 
+    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
+                                                 1, 5, 1, 7);
+    testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 2, 5, 2, 7);
+
+    testsupport_analyzer_prepare(d);
+    ck_assert(analyzer_populate_symbol_tables(d->front.analyzer));
+
+    struct ast_node *block = ast_node_get_child(d->front.analyzer->root, 0);
+    ck_assert_msg(block, "block node was not found");
+    st = ast_block_get_symbol_table(block);
+
+    testsupport_symbol_table_lookup_node(st, &id1s, n);
+    check_ast_match(n, id1, &d->front.file);
+    testsupport_symbol_table_lookup_node(st, &id2s, n);
+    check_ast_match(n, id2, &d->front.file);
+
+    ast_node_destroy(id1);
+    ast_node_destroy(id2);
+} END_TEST
 
 Suite *analyzer_symboltable_suite_create(void)
 {
     Suite *s = suite_create("analyzer_symbol_Table");
 
-    TCase *st1 = tcase_create("analyzer_symbol_table_simple");
+    TCase *st1 = tcase_create("analyzer_symbol_table_simple_mechanics");
     tcase_add_checked_fixture(st1,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
@@ -262,7 +303,14 @@ Suite *analyzer_symboltable_suite_create(void)
     tcase_add_test(st1, test_symbol_table_lookup_non_existing);
     tcase_add_test(st1, test_symbol_table_many_symbols);
 
+    TCase *st2 = tcase_create("analyzer_symbol_table_populate");
+    tcase_add_checked_fixture(st2,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(st2, test_block_symbol_table);
+
     suite_add_tcase(s, st1);
+    suite_add_tcase(s, st2);
     return s;
 }
 

@@ -3,11 +3,15 @@
 
 #include <stdbool.h>
 
+#include <Definitions/inline.h>
+
 struct parser;
 
 struct analyzer {
     struct info_ctx *info;
     struct ast_node *root;
+
+    bool have_semantic_err;
 };
 
 struct analyzer *analyzer_create(struct info_ctx *info);
@@ -17,4 +21,33 @@ void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
 
 bool analyzer_analyze_file(struct analyzer *a, struct parser *parser);
+
+i_INLINE_DECL void analyzer_set_semantic_error(struct analyzer *a)
+{
+    a->have_semantic_err = true;
+}
+
+i_INLINE_DECL bool analyzer_has_semantic_error(struct analyzer *a)
+{
+    return a->have_semantic_err;
+}
+
+i_INLINE_DECL bool analyzer_has_semantic_error_reset(struct analyzer *a)
+{
+    bool ret = a->have_semantic_err;
+    a->have_semantic_err = false;
+    return ret;
+}
+
+// TODO: Change both this, the lexer and the parser macro to something better
+#define analyzer_err(analyzer_, start_, end_, ...) \
+    do {                                          \
+        i_info_ctx_add_msg((analyzer_)->info,       \
+                           MESSAGE_SEMANTIC_ERROR,  \
+                           (start_),              \
+                           (end_),                \
+                           __VA_ARGS__);          \
+        analyzer_set_semantic_error(analyzer_);         \
+    } while(0)
+
 #endif

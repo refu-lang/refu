@@ -49,7 +49,9 @@ i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
     RF_ASSERT(tok->type == TOKEN_IDENTIFIER ||
               tok->type == TOKEN_STRING_LITERAL ||
               tok->type == TOKEN_CONSTANT_INTEGER ||
-              tok->type == TOKEN_CONSTANT_FLOAT);
+              tok->type == TOKEN_CONSTANT_FLOAT,
+              "Requesting value of illegal token type"
+    );
     tok->value.owned_by_lexer = false;
     return tok->value.v;
 }

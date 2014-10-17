@@ -37,6 +37,7 @@ refu_src = [
     'ast/ifexpr.c',
 
     'analyzer/analyzer.c',
+    'analyzer/analyzer_utils.c',
     'analyzer/symbol_table.c',
     'analyzer/symbol_table_creation.c'
 ]
@@ -106,6 +107,10 @@ unit_tests_files = [
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)
 test_env = local_env.Clone()
+
+# Runs tests in debug mode
+test_env.Append(CPPDEFINES='RF_OPTION_DEBUG')
+
 test_env.Append(CHECK_EXTRA_DEFINES={
     'CLIB_TEST_HELPERS':
     "\\\"" + os.path.abspath(

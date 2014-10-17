@@ -18,13 +18,13 @@ struct ast_node *ast_constantnum_create_float(struct inplocation *loc,
 
 i_INLINE_DECL enum constant_type ast_constantnum_get_type(struct ast_node *n)
 {
-    RF_ASSERT(n->type == AST_CONSTANT_NUMBER);
+    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT_NUMBER);
     return n->constantnum.type;
 }
 
 i_INLINE_DECL bool ast_constantnum_get_float(struct ast_node *n, double *v)
 {
-    RF_ASSERT(n->type == AST_CONSTANT_NUMBER);
+    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT_NUMBER);
 
     if (n->constantnum.type != CONSTANT_NUMBER_FLOAT) {
         return false;
@@ -36,7 +36,7 @@ i_INLINE_DECL bool ast_constantnum_get_float(struct ast_node *n, double *v)
 
 i_INLINE_DECL bool ast_constantnum_get_integer(struct ast_node *n, uint64_t *v)
 {
-    RF_ASSERT(n->type == AST_CONSTANT_NUMBER);
+    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT_NUMBER);
 
     if (n->constantnum.type != CONSTANT_NUMBER_INTEGER) {
         return false;

@@ -3,6 +3,7 @@
 #include <Utils/memory.h>
 
 #include <info/info.h>
+#include <ast/ast.h>
 
 bool parser_init(struct parser *p,
                  struct inpfile *file,
@@ -13,6 +14,7 @@ bool parser_init(struct parser *p,
     p->file = file;
     p->lexer = lex;
     p->info = info;
+    p->have_syntax_err = false;
     return true;
 }
 
@@ -31,6 +33,10 @@ struct parser *parser_create(struct inpfile *f,
 
 void parser_deinit(struct parser *p)
 {
+    if (p->root) {
+        // if parser has ownership of ast tree
+        ast_node_destroy(p->root);
+    }
     p->lexer = NULL;
     p->info = NULL;
     p->file = NULL;

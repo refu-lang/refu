@@ -6,7 +6,7 @@ struct ast_node *ast_arrayref_create(struct inplocation_mark *start,
                                      struct ast_node *expr)
 {
     struct ast_node *ret;
-    RF_ASSERT(name->type == AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
 
     ret = ast_node_create_marks(AST_ARRAY_REFERENCE, start, end);
     if (!ret) {

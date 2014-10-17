@@ -167,8 +167,8 @@ bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
         }
         break;
     default: /* should never get here */
-        RF_ASSERT(0);
-        return false;
+        RF_ASSERT_OR_CRITICAL(false,
+                              "Illegal compiler message type encountered");
         break;
     }
 

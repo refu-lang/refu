@@ -33,4 +33,6 @@ struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
                                         struct ast_node *id,
                                         bool is_constant,
                                         struct ast_node *genr);
+
+const struct RFstring *ast_xidentifier_str(const struct ast_node *n);
 #endif

@@ -535,14 +535,15 @@ void lexer_push(struct lexer *l)
 
 void lexer_pop(struct lexer *l)
 {
-    RF_ASSERT(!darray_empty(l->indices));
+    RF_ASSERT(!darray_empty(l->indices), "lexer_pop called with empty array");
     (void)darray_pop(l->indices);
 }
 
 void lexer_rollback(struct lexer *l)
 {
     unsigned int idx;
-    RF_ASSERT(!darray_empty(l->indices));
+    RF_ASSERT(!darray_empty(l->indices),
+              "lexer_roolback called with empty array");
     idx = darray_pop(l->indices);
     l->tok_index = idx;
 }

@@ -32,7 +32,8 @@ bool inpstr_ptr_to_linecol(struct inpstr *s,
     char *sbeg = inpstr_beg(s);
     uint32_t off = p - sbeg;
 
-    RF_ASSERT(s->lines_num > 0);
+    RF_ASSERT(s->lines_num > 0,
+              "The input string line indexing should start from 1");
 
     for (i = 0; i < s->lines_num - 1; i++) {
         if (off >= s->lines[i] && off < s->lines[i + 1]) {
@@ -52,7 +53,8 @@ bool inpstr_ptr_to_linecol(struct inpstr *s,
 
     *line = i;
     sp = sbeg + s->lines[*line];
-    RF_ASSERT(p - sp >= 0);
+    RF_ASSERT(p - sp >= 0,
+              "pointer difference should always be positive");
 
     RF_STRING_SHALLOW_INIT(&tmp, sp, p - sp);
     *col = rf_string_length(&tmp);

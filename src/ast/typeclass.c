@@ -6,7 +6,7 @@ struct ast_node *ast_typeclass_create(struct inplocation_mark *start,
                                       struct ast_node *genr)
 {
     struct ast_node *ret;
-    RF_ASSERT(name->type == AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
 
     ret = ast_node_create_marks(AST_TYPECLASS_DECLARATION, start, end);
     if (!ret) {
@@ -27,8 +27,8 @@ struct ast_node *ast_typeinstance_create(struct inplocation_mark *start,
                                          struct ast_node *genr)
 {
     struct ast_node *ret;
-    RF_ASSERT(class_name->type == AST_IDENTIFIER);
-    RF_ASSERT(type_name->type == AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(class_name, AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(type_name, AST_IDENTIFIER);
 
     ret = ast_node_create_marks(AST_TYPECLASS_INSTANCE, start, end);
     if (!ret) {

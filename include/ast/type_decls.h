@@ -1,6 +1,8 @@
 #ifndef LFR_AST_TYPE_DECLS_H
 #define LFR_AST_TYPE_DECLS_H
 
+#include <analyzer/symbol_table.h>
+
 struct ast_node;
 
 enum typeop_type {
@@ -31,5 +33,7 @@ struct ast_typedecl {
     struct ast_node *name;
     //! Data description
     struct ast_node *desc;
+    //! Symbol table for the type description
+    struct symbol_table st;
 };
 #endif

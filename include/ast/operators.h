@@ -13,7 +13,7 @@ struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
 
 i_INLINE_DECL void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r)
 {
-    RF_ASSERT(op->type == AST_BINARY_OPERATOR);
+    AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     ast_node_add_child(op, r);
     op->binaryop.right = r;
     ast_node_set_end(op, ast_node_endmark(r));
@@ -21,7 +21,7 @@ i_INLINE_DECL void ast_binaryop_set_right(struct ast_node *op, struct ast_node *
 
 i_INLINE_DECL enum binaryop_type ast_binaryop_op(struct ast_node *op)
 {
-    RF_ASSERT(op->type == AST_BINARY_OPERATOR);
+    AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return op->binaryop.type;
 }
 

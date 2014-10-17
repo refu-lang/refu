@@ -23,14 +23,14 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
 i_INLINE_DECL void ast_ifexpr_add_fall_through_branch(struct ast_node *n,
                                                       struct ast_node *branch)
 {
-    RF_ASSERT(branch->type == AST_CONDITIONAL_BRANCH);
+    AST_NODE_ASSERT_TYPE(branch, AST_CONDITIONAL_BRANCH);
     ast_node_register_child(n, branch, ifexpr.fall_through_branch);
 }
 
 i_INLINE_DECL void ast_ifexpr_add_elif_branch(struct ast_node *n,
                                               struct ast_node *branch)
 {
-    RF_ASSERT(branch->type == AST_CONDITIONAL_BRANCH);
+    AST_NODE_ASSERT_TYPE(branch, AST_CONDITIONAL_BRANCH);
     ast_node_add_child(n, branch);
 }
 
@@ -43,8 +43,10 @@ i_INLINE_DECL void ast_ifexpr_add_branch(struct ast_node *n,
     } else if (type == TOKEN_KW_ELSE) {
         ast_ifexpr_add_fall_through_branch(n, branch);
     } else {
-        RF_ASSERT(false); // should never happen
-        RF_CRITICAL("Illegal token type for if expression branch addition");
+        // should never happen
+        RF_ASSERT_OR_CRITICAL(
+            false,
+            "Illegal token type for if expression branch addition");
     }
 }
 #endif

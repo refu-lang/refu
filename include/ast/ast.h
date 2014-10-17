@@ -16,6 +16,7 @@
 #include <ast/operators_decls.h>
 #include <ast/ifexpr_decls.h>
 #include <ast/arrayref_decls.h>
+#include <ast/block_decls.h>
 
 #include <analyzer/symbol_table.h>
 
@@ -55,6 +56,16 @@ enum ast_type {
     AST_TYPES_COUNT /* always last */
 };
 
+/**
+ * Performs an assert on the type of the AST node in debug mode
+ */
+#define AST_NODE_ASSERT_TYPE(node_, type_)                              \
+    RF_ASSERT((node_)->type == type_, "Illegal ast node type. Expected \"" \
+              RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"",    \
+              RF_STR_PF_ARG(ast_nodetype_str(type_)),                   \
+              RF_STR_PF_ARG(ast_node_str(node_)))
+
+
 struct ast_node {
     enum ast_type type;
     struct inplocation location;
@@ -62,6 +73,7 @@ struct ast_node {
     struct RFilist_head children;
     union {
         struct ast_root root;
+        struct ast_block block;
         struct ast_identifier identifier;
         struct ast_xidentifier xidentifier;
         struct ast_vardecl vardecl;
@@ -104,6 +116,16 @@ void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);
 
+/**
+ * Depending on the node type, it finds the child node
+ * that identifies it and returns the string of the identifier
+ *
+ * @param n             The node in question
+ * @return              Either the string of the identifying node or NULL
+ *                      if not applicable
+ */
+const struct RFstring * ast_node_get_name_str(const struct ast_node *n);
+
 /*
  * Registers a child if not NULL with a specific type
  * of an ast_node
@@ -116,6 +138,19 @@ void ast_node_add_child(struct ast_node *parent,
         (parent_)->position_ = child_;                      \
     } while (0)
 
+i_INLINE_DECL struct ast_node *ast_node_get_child(struct ast_node *n,
+                                                  unsigned int num)
+{
+    struct ast_node *child;
+    rf_ilist_for_each(&n->children, child, lh) {
+        if (num == 0) {
+            return child;
+        }
+        num --;
+    }
+
+    return NULL;
+}
 
 i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)
 {
@@ -126,21 +161,24 @@ i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
 {
     return n->location.end.p;
 }
+
 i_INLINE_DECL struct inplocation_mark *ast_node_startmark(struct ast_node *n)
 {
     return &n->location.start;
 }
+
 i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 {
     return &n->location.end;
 }
 
-const struct RFstring *ast_node_str(struct ast_node *n);
+const struct RFstring *ast_nodetype_str(enum ast_type type);
+const struct RFstring *ast_node_str(const struct ast_node *n);
 
 
 struct ast_node *ast_root_create(struct inpfile *file);
 
-
+struct symbol_table *ast_node_get_symbol_table(struct ast_node *n);
 
 // temporary function, to visualize an ast tree
 void ast_print(struct ast_node *root, struct inpfile *f, int depth);

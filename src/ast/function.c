@@ -9,7 +9,7 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
                                    struct ast_node *ret_type)
 {
     struct ast_node *ret;
-    RF_ASSERT(name->type == AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
 
     ret = ast_node_create_marks(AST_FUNCTION_DECLARATION, start, end);
     if (!ret) {
@@ -21,12 +21,14 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
     ast_node_register_child(ret, genr, fndecl.genr);
     ast_node_register_child(ret, args, fndecl.args);
     ast_node_register_child(ret, ret_type, fndecl.ret);
+    ret->fndecl.st = NULL;
 
     return ret;
 }
 
 i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n);
-
+i_INLINE_INS void ast_fndecl_set_symbol_table(struct ast_node *n,
+                                               struct symbol_table *st);
 
 struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
@@ -34,8 +36,8 @@ struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
                                    struct ast_node *body)
 {
     struct ast_node *ret;
-    RF_ASSERT(decl->type == AST_FUNCTION_DECLARATION);
-    RF_ASSERT(body->type == AST_BLOCK);
+    AST_NODE_ASSERT_TYPE(decl, AST_FUNCTION_DECLARATION);
+    AST_NODE_ASSERT_TYPE(body, AST_BLOCK);
 
     ret = ast_node_create_marks(AST_FUNCTION_IMPLEMENTATION, start, end);
     if (!ret) {
@@ -55,7 +57,7 @@ struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct ast_node *genr)
 {
     struct ast_node *ret;
-    RF_ASSERT(name->type == AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
 
     ret = ast_node_create_marks(AST_FUNCTION_CALL, start, end);
     if (!ret) {

@@ -4,11 +4,14 @@
 
 #include <Utils/memory.h>
 
+#include <ast/ast.h>
 #include <parser/parser.h>
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
     a->info = info;
+    a->root = NULL;
+    a->have_semantic_err = false;
     return true;
 }
 
@@ -34,6 +37,11 @@ void analyzer_deinit(struct analyzer *a)
 
 void analyzer_destroy(struct analyzer *a)
 {
+    if (a->root) {
+        // if analyzer has ownership of ast tree
+        ast_node_destroy(a->root);
+    }
+
     analyzer_deinit(a);
     free(a);
 }
@@ -46,3 +54,8 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
     analyzer_populate_symbol_tables(a);
     return true;
 }
+
+
+i_INLINE_INS void analyzer_set_semantic_error(struct analyzer *a);
+i_INLINE_INS bool analyzer_has_semantic_error(struct analyzer *a);
+i_INLINE_INS bool analyzer_has_semantic_error_reset(struct analyzer *a);

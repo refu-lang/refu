@@ -98,6 +98,9 @@ void ast_node_destroy(struct ast_node *n)
     case AST_ROOT:
         symbol_table_deinit(&n->root.st);
         break;
+    case AST_BLOCK:
+        symbol_table_deinit(&n->block.st);
+        break;
     default:
         // no type specific destruction for the rest
         break;
@@ -126,19 +129,44 @@ void ast_node_add_child(struct ast_node *parent,
     rf_ilist_add_tail(&parent->children, &child->lh);
 }
 
+const struct RFstring * ast_node_get_name_str(const struct ast_node *n)
+{
+    switch(n->type) {
+    case AST_IDENTIFIER:
+        return ast_identifier_str(n);
+        break;
+    case AST_XIDENTIFIER:
+        return ast_xidentifier_str(n);
+        break;
+    default:
+        RF_ASSERT_OR_CRITICAL(false, "Requesting identifier string from illegal"
+                              "ast node type \""RF_STR_PF_FMT"\"",
+                              RF_STR_PF_ARG(ast_node_str(n)));
+        return NULL;
+        break;
+    }
+}
 
+
+i_INLINE_INS struct ast_node *ast_node_get_child(struct ast_node *n,
+                                                  unsigned int num);
 i_INLINE_INS char *ast_node_startsp(struct ast_node *n);
 i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
 
-const struct RFstring *ast_node_str(struct ast_node *n)
+const struct RFstring *ast_nodetype_str(enum ast_type type)
+{
+    return &ast_type_strings[type];
+}
+
+const struct RFstring *ast_node_str(const struct ast_node *n)
 {
     // assert that the array size is same as enum size
     BUILD_ASSERT(
         sizeof(ast_type_strings)/sizeof(struct RFstring) == AST_TYPES_COUNT
     );
-    return &ast_type_strings[n->type];
+    return ast_nodetype_str(n->type);
 }
 
 static void ast_print_prelude(struct ast_node *n, struct inpfile *f,
@@ -188,6 +216,22 @@ struct ast_node *ast_root_create(struct inpfile *file)
     }
 
     return n;
+}
+
+struct symbol_table *ast_node_get_symbol_table(struct ast_node *n)
+{
+    switch(n->type) {
+    case AST_BLOCK:
+        return &n->block.st;
+    case AST_FUNCTION_DECLARATION:
+        return n->fndecl.st;
+    default:
+        RF_ASSERT_OR_CRITICAL(false,
+                              "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"
+                              " is an illegal node for this action",
+                              RF_STR_PF_ARG(ast_node_str(n)));
+        return NULL;
+    }
 }
 
 void ast_print(struct ast_node *n, struct inpfile *f, int depth)

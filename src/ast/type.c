@@ -17,8 +17,8 @@ struct ast_node *ast_typeop_create(struct inplocation_mark *start,
                                    struct ast_node *right)
 {
     struct ast_node *ret;
-    RF_ASSERT(left->type == AST_TYPE_DESCRIPTION);
-    RF_ASSERT(right->type == AST_TYPE_DESCRIPTION);
+    AST_NODE_ASSERT_TYPE(left, AST_TYPE_DESCRIPTION);
+
     ret = ast_node_create_marks(AST_TYPE_OPERATOR, start, end);
     if (!ret) {
         RF_ERRNOMEM();
@@ -37,7 +37,7 @@ struct ast_node *ast_typeop_create(struct inplocation_mark *start,
 
 void ast_typeop_set_right(struct ast_node *op, struct ast_node *r)
 {
-    RF_ASSERT(op->type == AST_TYPE_OPERATOR);
+    AST_NODE_ASSERT_TYPE(op, AST_TYPE_OPERATOR);
     ast_node_add_child(op, r);
     op->typeop.right = r;
     ast_node_set_end(op, ast_node_endmark(r));
@@ -54,7 +54,8 @@ const struct RFstring *ast_typeop_opstr(struct ast_node *n)
     case TYPEOP_IMPLICATION:
         return &op_str_impl_;
     default:
-        RF_ASSERT(0);
+        RF_ASSERT_OR_CRITICAL(false,
+                              "Unexpected type operator type encountered");
         return NULL;
     }
 }
@@ -105,12 +106,18 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
                                      struct ast_node *desc)
 {
     struct ast_node *ret;
-    RF_ASSERT(name->type == AST_IDENTIFIER);
-    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION);
+    AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
+    AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION);
 
     ret = ast_node_create_marks(AST_TYPE_DECLARATION, start, end);
     if (!ret) {
         RF_ERRNOMEM();
+        return NULL;
+    }
+
+    if (!symbol_table_init(&ret->typedecl.st)) {
+        free(ret);
+        RF_ERROR("Could not initialize symbol table for a typedecl node");
         return NULL;
     }
 

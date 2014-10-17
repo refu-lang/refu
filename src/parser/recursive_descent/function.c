@@ -160,6 +160,9 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
         return NULL;
     }
 
+    // point the fndecl symbol table pointer to the block's symbol table
+    ast_fndecl_set_symbol_table(decl, ast_node_get_symbol_table(decl));
+
     n = ast_fnimpl_create(ast_node_startmark(decl), ast_node_endmark(body),
                           decl, body);
     if (!n) {

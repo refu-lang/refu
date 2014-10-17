@@ -182,8 +182,9 @@ static inline bool check_operator_type(struct token *tok, int level)
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
     }
 
-    RF_ASSERT(0); //unknown level
-    RF_CRITICAL("Illegal level %d for expression parsing", level);
+    // illegal expression parsing level, should never happen
+    RF_ASSERT_OR_CRITICAL(false,
+                          "Illegal level %d for expression parsing", level);
     return false;
 }
 

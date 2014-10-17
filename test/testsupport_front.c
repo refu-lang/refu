@@ -10,6 +10,7 @@
 #include <ast/operators.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
+#include <analyzer/analyzer.h>
 
 i_THREAD__ struct front_testdriver __front_testdriver;
 
@@ -126,7 +127,15 @@ bool front_testdriver_init(struct front_testdriver *d)
         goto free_lexer;
     }
 
+    d->front.analyzer = analyzer_create(d->front.info);
+    if (!d->front.analyzer) {
+        goto free_parser;
+    }
+
     return true;
+
+free_parser:
+    parser_destroy(d->front.parser);
 free_lexer:
     lexer_destroy(d->front.lexer);
 free_info:
@@ -151,6 +160,7 @@ void front_testdriver_deinit(struct front_testdriver *d)
     lexer_destroy(d->front.lexer);
     parser_destroy(d->front.parser);
     info_ctx_destroy(d->front.info);
+    analyzer_destroy(d->front.analyzer);
 }
 
 struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
