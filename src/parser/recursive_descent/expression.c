@@ -180,6 +180,8 @@ static inline bool check_operator_type(struct token *tok, int level)
         return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
     case 7: /* multiplicative operators */
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
+    case 8: /* no operators at the last level (expr_factor) */
+        return false;
     }
 
     // illegal expression parsing level, should never happen
