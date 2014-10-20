@@ -33,7 +33,8 @@ struct ast_typedecl {
     struct ast_node *name;
     //! Data description
     struct ast_node *desc;
-    //! Symbol table for the type description
+
+    //! Symbol table for the type description. Only initialized at analyzer phase
     struct symbol_table st;
 };
 #endif

@@ -21,11 +21,17 @@ i_INLINE_DECL const struct RFstring *ast_fndecl_name_str(const struct ast_node *
     return ast_identifier_str(n->fndecl.name);
 }
 
-i_INLINE_DECL void ast_fndecl_set_symbol_table(struct ast_node *n,
-                                               struct symbol_table *st)
+i_INLINE_DECL bool ast_fndecl_symbol_table_init(struct ast_node *n,
+                                                struct analyzer *a)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
-    n->fndecl.st = st;
+    return symbol_table_init(&n->fndecl.st, a);
+}
+
+i_INLINE_DECL struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    return &n->fndecl.st;
 }
 
 struct RFstring *ast_fndecl_ret_str(struct ast_node *n);

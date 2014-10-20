@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <Definitions/inline.h>
+#include <Utils/fixed_memory_pool.h>
 
 struct parser;
 
@@ -11,6 +12,7 @@ struct analyzer {
     struct info_ctx *info;
     struct ast_node *root;
 
+    struct rf_fixed_memorypool symbol_table_records_pool;
     bool have_semantic_err;
 };
 

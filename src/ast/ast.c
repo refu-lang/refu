@@ -1,9 +1,12 @@
 #include <ast/ast.h>
 
+#include <ast/block.h>
+#include <ast/function.h>
+#include <ast/type.h>
+
 #include <Utils/sanity.h>
 #include <Utils/build_assert.h>
 #include <RFmemory.h>
-
 
 static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("root"),
@@ -35,6 +38,7 @@ static const struct RFstring ast_type_strings[] = {
 
 void ast_node_init(struct ast_node * n, enum ast_type type)
 {
+    n->owner = AST_OWNEDBY_PARSER;
     n->type = type;
     rf_ilist_head_init(&n->children);
 }
@@ -63,6 +67,7 @@ struct ast_node *ast_node_create_marks(enum ast_type type,
                                        struct inplocation_mark *start,
                                        struct inplocation_mark *end)
 {
+
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
 
@@ -93,17 +98,25 @@ void ast_node_destroy(struct ast_node *n)
     struct ast_node *child;
     struct ast_node *tmp;
 
-    /* type specific destruction */
-    switch(n->type) {
-    case AST_ROOT:
-        symbol_table_deinit(&n->root.st);
-        break;
-    case AST_BLOCK:
-        symbol_table_deinit(&n->block.st);
-        break;
-    default:
-        // no type specific destruction for the rest
-        break;
+    /* type specific destruction  -- only if owned by analyzer and after */
+    if (n->owner >= AST_OWNEDBY_ANALYZER) {
+        switch(n->type) {
+        case AST_ROOT:
+            symbol_table_deinit(ast_root_symbol_table_get(n));
+            break;
+        case AST_BLOCK:
+            symbol_table_deinit(ast_block_symbol_table_get(n));
+            break;
+        case AST_TYPE_DECLARATION:
+            symbol_table_deinit(ast_typedecl_symbol_table_get(n));
+            break;
+        case AST_FUNCTION_DECLARATION:
+            symbol_table_deinit(ast_fndecl_symbol_table_get(n));
+            break;
+        default:
+            // no type specific destruction for the rest
+            break;
+        }
     }
 
     rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
@@ -195,6 +208,28 @@ static void ast_print_prelude(struct ast_node *n, struct inpfile *f,
     }
 }
 
+struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
+{
+    switch(n->type) {
+    case AST_ROOT:
+        return ast_root_symbol_table_get(n);
+    case AST_BLOCK:
+        return ast_block_symbol_table_get(n);
+    case AST_FUNCTION_DECLARATION:
+        return ast_fndecl_symbol_table_get(n);
+    case AST_TYPE_DECLARATION:
+        return ast_typedecl_symbol_table_get(n);
+    default:
+        RF_ASSERT_OR_CRITICAL(false,
+                              "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"
+                              " is an illegal node for this action",
+                              RF_STR_PF_ARG(ast_node_str(n)));
+        return NULL;
+    }
+}
+
+/* -- ast_root functions -- */
+
 struct ast_node *ast_root_create(struct inpfile *file)
 {
     char *beg;
@@ -209,30 +244,12 @@ struct ast_node *ast_root_create(struct inpfile *file)
         RF_ERRNOMEM();
     }
 
-    if (!symbol_table_init(&n->root.st)) {
-        free(n); // not calling ast_node_destroy, since symbol table isn't valid
-        RF_ERROR("Could not initialize symbol table for a root ast node");
-        n = NULL;
-    }
-
     return n;
 }
 
-struct symbol_table *ast_node_get_symbol_table(struct ast_node *n)
-{
-    switch(n->type) {
-    case AST_BLOCK:
-        return &n->block.st;
-    case AST_FUNCTION_DECLARATION:
-        return n->fndecl.st;
-    default:
-        RF_ASSERT_OR_CRITICAL(false,
-                              "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"
-                              " is an illegal node for this action",
-                              RF_STR_PF_ARG(ast_node_str(n)));
-        return NULL;
-    }
-}
+i_INLINE_INS bool ast_root_symbol_table_init(struct ast_node *n,
+                                             struct analyzer *a);
+i_INLINE_INS struct symbol_table *ast_root_symbol_table_get(struct ast_node *n);
 
 void ast_print(struct ast_node *n, struct inpfile *f, int depth)
 {

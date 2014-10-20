@@ -6,21 +6,20 @@
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
+#include <analyzer/analyzer.h>
 
 /* -- symbol table record related functions -- */
 
-static struct symbol_table_record *symbol_table_record_alloc()
+static struct symbol_table_record *symbol_table_record_alloc(
+    struct symbol_table *st)
 {
-    //TODO: probably use some memory pool implementation here
-    struct symbol_table_record *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    return ret;
+    return rf_fixed_memorypool_alloc_element(st->pool);
 }
 
-static void symbol_table_record_free(struct symbol_table_record *rec)
+static void symbol_table_record_free(struct symbol_table_record *rec,
+                                     struct symbol_table *st)
 {
-    //TODO: probably use some memory pool implementation here
-    free(rec);
+    rf_fixed_memorypool_free_element(st->pool, rec);
 }
 
 void symbol_table_record_init(struct symbol_table_record *rec,
@@ -31,11 +30,12 @@ void symbol_table_record_init(struct symbol_table_record *rec,
     rec->id = id;
 }
 
-struct symbol_table_record *symbol_table_record_create(struct ast_node *type,
+struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
+                                                       struct ast_node *type,
                                                        const struct RFstring *id)
 {
     struct symbol_table_record *ret;
-    ret = symbol_table_record_alloc();
+    ret = symbol_table_record_alloc(st);
     if (!ret) {
         RF_ERROR("Failed to allocate a symbol table record");
         return NULL;
@@ -44,10 +44,11 @@ struct symbol_table_record *symbol_table_record_create(struct ast_node *type,
     return ret;
 }
 
-void symbol_table_record_destroy(struct symbol_table_record *rec)
+void symbol_table_record_destroy(struct symbol_table_record *rec,
+                                 struct symbol_table *st)
 {
     //TODO: if needing to deinit anything create a XXX_deinit() function
-    symbol_table_record_free(rec);
+    symbol_table_record_free(rec, st);
 }
 
 i_INLINE_INS const struct RFstring *
@@ -71,10 +72,11 @@ static bool cmp_fn(const void *e, void *str)
     return rf_string_equal(rec->id, str);
 }
 
-bool symbol_table_init(struct symbol_table *t)
+bool symbol_table_init(struct symbol_table *t, struct analyzer *a)
 {
     htable_init(&t->table, rehash_fn, NULL);
     t->parent = NULL;
+    t->pool = &a->symbol_table_records_pool;
     return true;
 }
 
@@ -83,8 +85,7 @@ bool symbol_table_init(struct symbol_table *t)
 void symbol_table_deinit(struct symbol_table *t)
 {
     // free memory of all symbol table records
-    symbol_table_iterate(t,
-                         (htable_iter_cb)symbol_table_record_destroy);
+    symbol_table_iterate(t, (htable_iter_cb)symbol_table_record_destroy, t);
     // clear the table
     htable_clear(&t->table);
 }
@@ -94,13 +95,13 @@ bool symbol_table_add_node(struct symbol_table *t,
                            struct ast_node *n)
 {
     struct symbol_table_record *rec;
-    rec = symbol_table_record_create(n, id);
+    rec = symbol_table_record_create(t, n, id);
     if (!rec) {
         return false;
     }
 
     if (!symbol_table_add_record(t, rec)) {
-        symbol_table_record_destroy(rec);
+        symbol_table_record_destroy(rec, t);
         return false;
     }
 
@@ -135,9 +136,9 @@ struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
     return rec->type;
 }
 
-void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb)
+void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 {
-    htable_iterate_values(&t->table, cb);
+    htable_iterate_values(&t->table, cb, user);
 }
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,

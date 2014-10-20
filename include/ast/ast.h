@@ -20,6 +20,15 @@
 
 #include <analyzer/symbol_table.h>
 
+/**
+ * Performs an assert on the type of the AST node in debug mode
+ */
+#define AST_NODE_ASSERT_TYPE(node_, type_)                              \
+    RF_ASSERT((node_)->type == type_, "Illegal ast node type. Expected \"" \
+              RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"",    \
+              RF_STR_PF_ARG(ast_nodetype_str(type_)),                   \
+              RF_STR_PF_ARG(ast_node_str(node_)))
+
 #define AST_PRINT_DEPTHMUL 4
 
 struct ast_root {
@@ -56,18 +65,14 @@ enum ast_type {
     AST_TYPES_COUNT /* always last */
 };
 
-/**
- * Performs an assert on the type of the AST node in debug mode
- */
-#define AST_NODE_ASSERT_TYPE(node_, type_)                              \
-    RF_ASSERT((node_)->type == type_, "Illegal ast node type. Expected \"" \
-              RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"",    \
-              RF_STR_PF_ARG(ast_nodetype_str(type_)),                   \
-              RF_STR_PF_ARG(ast_node_str(node_)))
-
+enum ast_owner {
+    AST_OWNEDBY_PARSER = 0,
+    AST_OWNEDBY_ANALYZER = 1,
+};
 
 struct ast_node {
     enum ast_type type;
+    enum ast_owner owner;
     struct inplocation location;
     struct RFilist_node lh;
     struct RFilist_head children;
@@ -175,10 +180,25 @@ i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 const struct RFstring *ast_nodetype_str(enum ast_type type);
 const struct RFstring *ast_node_str(const struct ast_node *n);
 
+struct symbol_table *ast_node_symbol_table_get(struct ast_node *n);
 
+
+/* -- ast_root functions -- */
 struct ast_node *ast_root_create(struct inpfile *file);
 
-struct symbol_table *ast_node_get_symbol_table(struct ast_node *n);
+i_INLINE_DECL bool ast_root_symbol_table_init(struct ast_node *n,
+                                              struct analyzer *a)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_ROOT);
+    return symbol_table_init(&n->root.st, a);
+}
+
+i_INLINE_DECL struct symbol_table *ast_root_symbol_table_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_ROOT);
+    return &n->root.st;
+}
+
 
 // temporary function, to visualize an ast tree
 void ast_print(struct ast_node *root, struct inpfile *f, int depth);

@@ -115,16 +115,14 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
         return NULL;
     }
 
-    if (!symbol_table_init(&ret->typedecl.st)) {
-        free(ret);
-        RF_ERROR("Could not initialize symbol table for a typedecl node");
-        return NULL;
-    }
-
     ast_node_add_child(ret, name);
     ret->typedecl.name = name;
     ast_node_add_child(ret, desc);
     ret->typedecl.desc = desc;
     return ret;
 }
+
 i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);
+i_INLINE_INS bool ast_typedecl_symbol_table_init(struct ast_node *n,
+                                                 struct analyzer *a);
+i_INLINE_INS struct symbol_table* ast_typedecl_symbol_table_get(struct ast_node *n);

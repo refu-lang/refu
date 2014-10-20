@@ -6,6 +6,8 @@
 
 #include <ast/ast.h>
 
+struct analyzer;
+
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(struct inplocation_mark *start,
@@ -51,6 +53,21 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
 
 i_INLINE_DECL const struct RFstring *ast_typedecl_name_str(struct ast_node *n)
 {
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
     return ast_identifier_str(n->typedecl.name);
 }
+
+i_INLINE_DECL bool ast_typedecl_symbol_table_init(struct ast_node *n,
+                                                  struct analyzer *a)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
+    return symbol_table_init(&n->typedecl.st, a);
+}
+
+i_INLINE_DECL struct symbol_table* ast_typedecl_symbol_table_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
+    return &n->typedecl.st;
+}
+
 #endif

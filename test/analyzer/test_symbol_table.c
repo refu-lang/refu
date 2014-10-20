@@ -32,7 +32,7 @@ START_TEST(test_symbol_table_add) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert(symbol_table_init(&st));
+    ck_assert(symbol_table_init(&st, d->front.analyzer));
 
     struct ast_node *id1 = front_testdriver_generate_identifier(d, 0, 0, 0, 0,
                                                                 "a");
@@ -62,7 +62,7 @@ START_TEST(test_symbol_table_add_existing) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert(symbol_table_init(&st));
+    ck_assert(symbol_table_init(&st, d->front.analyzer));
 
     struct ast_node *id1 = front_testdriver_generate_identifier(d, 0, 0, 0, 0,
                                                                 "a");
@@ -89,7 +89,7 @@ START_TEST(test_symbol_table_lookup_non_existing) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert(symbol_table_init(&st));
+    ck_assert(symbol_table_init(&st, d->front.analyzer));
 
     struct ast_node *id1 = front_testdriver_generate_identifier(d, 0, 0, 0, 0,
                                                                 "a");
@@ -232,7 +232,7 @@ START_TEST(test_symbol_table_many_symbols) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    ck_assert(symbol_table_init(&st));
+    ck_assert(symbol_table_init(&st, d->front.analyzer));
 
     ids_num = sizeof(ids_arr) / sizeof(struct st_test_record);
     for (i = 0; i < ids_num; i ++) {
@@ -274,11 +274,11 @@ START_TEST(test_block_symbol_table) {
                                                  2, 5, 2, 7);
 
     testsupport_analyzer_prepare(d);
-    ck_assert(analyzer_populate_symbol_tables(d->front.analyzer));
+    ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
 
     struct ast_node *block = ast_node_get_child(d->front.analyzer->root, 0);
     ck_assert_msg(block, "block node was not found");
-    st = ast_block_get_symbol_table(block);
+    st = ast_block_symbol_table_get(block);
 
     testsupport_symbol_table_lookup_node(st, &id1s, n);
     check_ast_match(n, id1, &d->front.file);

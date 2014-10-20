@@ -13,9 +13,9 @@ struct ast_fndecl {
     struct ast_node *args;
     //! Optional: type description of the return value
     struct ast_node *ret;
-    //! Optional: a pointer to function block's symbol table
-    //! only used if the fndecl is part of an implementation
-    struct symbol_table *st;
+
+    //! Symbol table of the function's arguments. Only initialized in analyzer phase
+    struct symbol_table st;
 };
 
 

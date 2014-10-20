@@ -21,14 +21,14 @@ struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
     ast_node_register_child(ret, genr, fndecl.genr);
     ast_node_register_child(ret, args, fndecl.args);
     ast_node_register_child(ret, ret_type, fndecl.ret);
-    ret->fndecl.st = NULL;
 
     return ret;
 }
 
 i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n);
-i_INLINE_INS void ast_fndecl_set_symbol_table(struct ast_node *n,
-                                               struct symbol_table *st);
+i_INLINE_INS bool ast_fndecl_symbol_table_init(struct ast_node *n,
+                                               struct analyzer *a);
+i_INLINE_INS struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n);
 
 struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
