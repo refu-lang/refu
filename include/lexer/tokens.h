@@ -44,6 +44,10 @@ enum token_type {
     TOKEN_OP_LT,
     TOKEN_OP_LTEQ,
 
+    /* logic binary operators (keep grouped with all binary operators)*/
+    TOKEN_OP_LOGICAND,
+    TOKEN_OP_LOGICOR,
+
     /* unary operators*/
     TOKEN_OP_AMPERSAND,
     TOKEN_OP_INC,
@@ -54,17 +58,12 @@ enum token_type {
     TOKEN_OP_COMMA,
     TOKEN_OP_IMPL,
 
-    /* boolean operators */
-    TOKEN_OP_LOGICAND,
-    TOKEN_OP_LOGICOR,
-
-
     TOKENS_MAX
 };
 
 #define TOKEN_IS_BINARY_OP(tok_)                \
     ((tok_)->type >= TOKEN_OP_PLUS &&           \
-     (tok_)->type <= TOKEN_OP_LTEQ)
+     (tok_)->type <= TOKEN_OP_LOGICOR)
 
 #define TOKEN_IS_UNARY_OP(tok_)                \
     ((tok_)->type >= TOKEN_OP_AMPERSAND &&     \

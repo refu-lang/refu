@@ -11,6 +11,8 @@
 #include <ast/ast.h>
 #include <ast/block.h>
 #include <ast/identifier.h>
+#include <ast/function.h>
+#include <ast/type.h>
 
 #include "../../src/analyzer/symbol_table_creation.h"
 
@@ -289,6 +291,72 @@ START_TEST(test_block_symbol_table) {
     ast_node_destroy(id2);
 } END_TEST
 
+START_TEST(test_fndecl_symbol_table) {
+    struct symbol_table *st;
+    struct ast_node *n;
+    static const struct RFstring id1s = RF_STRING_STATIC_INIT("var");
+    static const struct RFstring id2s = RF_STRING_STATIC_INIT("s");
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_sth(var:u64, s:string) -> u32 { }"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
+                                                 0, 14, 0, 16);
+    testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 0, 21, 0, 26);
+
+    testsupport_analyzer_prepare(d);
+    ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
+
+    struct ast_node *fnimpl = ast_node_get_child(d->front.analyzer->root, 0);
+    ck_assert_msg(fnimpl, "fnimpl node was not found");
+    st = ast_fndecl_symbol_table_get(ast_fnimpl_fndecl_get(fnimpl));
+
+    testsupport_symbol_table_lookup_node(st, &id1s, n);
+    check_ast_match(n, id1, &d->front.file);
+    testsupport_symbol_table_lookup_node(st, &id2s, n);
+    check_ast_match(n, id2, &d->front.file);
+
+    ast_node_destroy(id1);
+    ast_node_destroy(id2);
+} END_TEST
+
+START_TEST(test_typedecl_symbol_table) {
+    struct symbol_table *st;
+    struct ast_node *n;
+    static const struct RFstring id1s = RF_STRING_STATIC_INIT("name");
+    static const struct RFstring id2s = RF_STRING_STATIC_INIT("age");
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person {\n"
+        "name:string, age:u16\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
+                                                 1, 5, 1, 10);
+    testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 1, 17, 1, 19);
+
+    testsupport_analyzer_prepare(d);
+    ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
+
+    struct ast_node *td = ast_node_get_child(d->front.analyzer->root, 0);
+    ck_assert_msg(td, "typedecl node was not found");
+    st = ast_typedecl_symbol_table_get(td);
+
+    testsupport_symbol_table_lookup_node(st, &id1s, n);
+    check_ast_match(n, id1, &d->front.file);
+    testsupport_symbol_table_lookup_node(st, &id2s, n);
+    check_ast_match(n, id2, &d->front.file);
+
+    ast_node_destroy(id1);
+    ast_node_destroy(id2);
+} END_TEST
+
 Suite *analyzer_symboltable_suite_create(void)
 {
     Suite *s = suite_create("analyzer_symbol_Table");
@@ -308,6 +376,8 @@ Suite *analyzer_symboltable_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(st2, test_block_symbol_table);
+    tcase_add_test(st2, test_fndecl_symbol_table);
+    tcase_add_test(st2, test_typedecl_symbol_table);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

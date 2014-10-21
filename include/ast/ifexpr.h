@@ -23,7 +23,7 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
 i_INLINE_DECL void ast_ifexpr_add_fall_through_branch(struct ast_node *n,
                                                       struct ast_node *branch)
 {
-    AST_NODE_ASSERT_TYPE(branch, AST_CONDITIONAL_BRANCH);
+    AST_NODE_ASSERT_TYPE(branch, AST_BLOCK);
     ast_node_register_child(n, branch, ifexpr.fall_through_branch);
 }
 
