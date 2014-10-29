@@ -167,6 +167,11 @@ i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
     return n->location.end.p;
 }
 
+i_INLINE_DECL struct inplocation *ast_node_location(struct ast_node *n)
+{
+    return &n->location;
+}
+
 i_INLINE_DECL struct inplocation_mark *ast_node_startmark(struct ast_node *n)
 {
     return &n->location.start;

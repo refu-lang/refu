@@ -29,16 +29,27 @@ void teardown_analyzer_tests();
         (driver_)->front.analyzer->root = parser_yield_ast_root((driver_)->front.parser); \
     } while (0)
 
-#define testsupport_symbol_table_lookup_node(st_, idstring_, retval_)  \
-    do {                                                               \
-        retval_ = symbol_table_lookup_node(st_, idstring_);            \
-        ck_assert_msg(retval_, "Symbol table lookup failed");          \
+#define testsupport_symbol_table_add_node(st_, driver_, id_, node_)     \
+    do {                                                                \
+        ck_assert(symbol_table_add_node(st_, (driver_)->front.analyzer, id_, node_)); \
+    } while (0)
+
+#define testsupport_symbol_table_lookup_node(st_, idstring_, retval_, first_st) \
+    do {                                                                \
+        bool at_first_st;                                               \
+        retval_ = symbol_table_lookup_node(st_, idstring_, &at_first_st); \
+        ck_assert_msg(retval_, "Symbol table lookup failed");           \
+        ck_assert_msg(first_st == at_first_st,                          \
+                      "symbol found but not, in the expected table");   \
     } while(0);
 
-#define testsupport_symbol_table_lookup_record(st_, idstring_, retval_) \
+#define testsupport_symbol_table_lookup_record(st_, idstring_, retval_, first_st) \
     do {                                                                \
-        retval_ = symbol_table_lookup_record(st_, idstring_);           \
+        bool at_first_st;                                               \
+        retval_ = symbol_table_lookup_record(st_, idstring_, &at_first_st); \
         ck_assert_msg(retval_, "Symbol table lookup failed");           \
+        ck_assert_msg(first_st == at_first_st,                          \
+                      "symbol found but not, in the expected table");   \
     } while(0);
 
 #endif

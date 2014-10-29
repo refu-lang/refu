@@ -53,6 +53,11 @@ void analyzer_destroy(struct analyzer *a)
     free(a);
 }
 
+struct inpfile *analyzer_get_file(struct analyzer *a)
+{
+    return a->info->file;
+}
+
 bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
 {
     // acquire the root of the AST from the parser

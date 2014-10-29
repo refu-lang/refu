@@ -165,6 +165,7 @@ i_INLINE_INS struct ast_node *ast_node_get_child(struct ast_node *n,
                                                   unsigned int num);
 i_INLINE_INS char *ast_node_startsp(struct ast_node *n);
 i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
+i_INLINE_INS struct inplocation *ast_node_location(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
 

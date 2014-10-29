@@ -5,7 +5,8 @@ Import('env clib_static')
 
 local_env = env.Clone()
 
-gperf_src = ['lexer/tokens_htable.gperf']
+gperf_src = ['lexer/tokens_htable.gperf',
+             'analyzer/builtin_types_htable.gperf']
 refu_src = [
     'compiler_args.c',
 
@@ -40,7 +41,8 @@ refu_src = [
     'analyzer/analyzer.c',
     'analyzer/analyzer_utils.c',
     'analyzer/symbol_table.c',
-    'analyzer/symbol_table_creation.c'
+    'analyzer/symbol_table_creation.c',
+    'analyzer/typecheck.c'
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

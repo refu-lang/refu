@@ -22,16 +22,65 @@ static void symbol_table_record_free(struct symbol_table_record *rec,
     rf_fixed_memorypool_free_element(st->pool, rec);
 }
 
-void symbol_table_record_init(struct symbol_table_record *rec,
-                              struct ast_node *type,
+bool symbol_table_record_init(struct symbol_table_record *rec,
+                              struct analyzer *analyzer,
+                              struct symbol_table *st,
+                              struct ast_node *node,
                               const struct RFstring *id)
 {
-    rec->type = type;
+    int rc;
+    struct symbol_table_record *look_rec;
+    bool at_first_symbol_table;
+    const struct RFstring *type_name;
+
+    rec->node = node;
     rec->id = id;
+    switch (node->type) {
+    case AST_TYPE_DECLARATION:
+        type_init(&rec->data, TYPE_CATEGORY_USER_DEFINED, node);
+        break;
+    case AST_IDENTIFIER:
+    case AST_XIDENTIFIER:
+        type_name = ast_identifier_str(node);
+        rc = analyzer_identifier_is_builtin(type_name);
+        if (rc) {
+            // builtin
+            type_builtin_init(&rec->data, rc);
+        } else {
+            // search for the type of this record in the symbol tables
+            look_rec = symbol_table_lookup_record(st, type_name,
+                                                  &at_first_symbol_table);
+            if (!look_rec) {
+                analyzer_err(analyzer, ast_node_startmark(node),
+                             ast_node_endmark(node),
+                             "\""RF_STR_PF_FMT"\" is declared as undefined "
+                             "type \""RF_STR_PF_FMT"\"",
+                             RF_STR_PF_ARG(id), RF_STR_PF_ARG(type_name));
+                return false;
+            }
+
+            type_init(&rec->data, TYPE_CATEGORY_USER_DEFINED, look_rec->data.decl);
+        }
+        break;
+    case AST_TYPE_DESCRIPTION:
+        type_init(&rec->data, TYPE_CATEGORY_ANONYMOUS, node);
+        break;
+    case AST_FUNCTION_DECLARATION:
+        type_init(&rec->data, TYPE_CATEGORY_FUNCTION, node);
+        break;
+    default:
+        RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "
+                              "for illegal ast node type \""RF_STR_PF_FMT"\"",
+                              RF_STR_PF_ARG(ast_node_str(node)));
+        return false;
+    }
+
+    return true;
 }
 
 struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
-                                                       struct ast_node *type,
+                                                       struct analyzer *analyzer,
+                                                       struct ast_node *node,
                                                        const struct RFstring *id)
 {
     struct symbol_table_record *ret;
@@ -40,7 +89,12 @@ struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
         RF_ERROR("Failed to allocate a symbol table record");
         return NULL;
     }
-    symbol_table_record_init(ret, type, id);
+
+    if (!symbol_table_record_init(ret, analyzer, st, node, id)) {
+        symbol_table_record_destroy(ret, st);
+        return NULL;
+    }
+
     return ret;
 }
 
@@ -53,9 +107,12 @@ void symbol_table_record_destroy(struct symbol_table_record *rec,
 
 i_INLINE_INS const struct RFstring *
 symbol_table_record_id(struct symbol_table_record *rec);
+i_INLINE_INS enum type_category
+symbol_table_record_category(struct symbol_table_record *rec);
 i_INLINE_INS struct ast_node *
+symbol_table_record_node(struct symbol_table_record *rec);
+i_INLINE_INS struct type *
 symbol_table_record_type(struct symbol_table_record *rec);
-
 
 /* -- symbol table related functions -- */
 
@@ -91,14 +148,28 @@ void symbol_table_deinit(struct symbol_table *t)
 }
 
 bool symbol_table_add_node(struct symbol_table *t,
+                           struct analyzer *analyzer,
                            const struct RFstring *id,
                            struct ast_node *n)
 {
     struct symbol_table_record *rec;
-    rec = symbol_table_record_create(t, n, id);
+    bool at_first;
+
+    // this check may be redundant due to the way symbol tables are
+    // created in symbol_table_creation.c BUT better safe than sorry
+    rec = symbol_table_lookup_record(t, id, &at_first);
+    if (rec && at_first) {
+        // so .. we should not get here
+        RF_ASSERT_OR_CRITICAL(false, "Attempted to add an already existing node"
+                              " to a symol table");
+        return false;
+    }
+
+    rec = symbol_table_record_create(t, analyzer, n, id);
     if (!rec) {
         return false;
     }
+
 
     if (!symbol_table_add_record(t, rec)) {
         symbol_table_record_destroy(rec, t);
@@ -111,10 +182,6 @@ bool symbol_table_add_node(struct symbol_table *t,
 bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec)
 {
-    if (NULL != symbol_table_lookup_record(t, rec->id)) {
-        return false;
-    }
-
     if (!htable_add(&t->table, rf_hash_str_stable(rec->id, 0), rec)) {
         return false;
     }
@@ -122,18 +189,39 @@ bool symbol_table_add_record(struct symbol_table *t,
     return true;
 }
 
+
 struct symbol_table_record *symbol_table_lookup_record(struct symbol_table *t,
-                                                       const struct RFstring *id)
+                                                       const struct RFstring *id,
+                                                       bool *at_first_symbol_table)
 {
-    return htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    struct symbol_table_record *rec;
+    struct symbol_table *lp_table = t;
+
+    *at_first_symbol_table = false;
+
+    rec = htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    if (rec) {
+        *at_first_symbol_table = true;
+        return rec;
+    }
+
+    while (!rec && lp_table->parent) {
+        lp_table = lp_table->parent;
+        rec = htable_get(&lp_table->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    }
+    return rec;
 }
 
 struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
-                                          const struct RFstring *id)
+                                          const struct RFstring *id,
+                                          bool *at_first_symbol_table)
 {
     struct symbol_table_record *rec;
-    rec = symbol_table_lookup_record(t, id);
-    return rec->type;
+    rec = symbol_table_lookup_record(t, id, at_first_symbol_table);
+    if (!rec) {
+        return NULL;
+    }
+    return rec ? rec->node : NULL;
 }
 
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)

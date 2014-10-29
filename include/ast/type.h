@@ -8,6 +8,39 @@
 
 struct analyzer;
 
+
+/* -- functions concerning both type description and operators */
+
+i_INLINE_DECL struct ast_node *ast_types_left(struct ast_node *n)
+{
+    switch (n->type) {
+    case AST_TYPE_DESCRIPTION:
+        return n->typedesc.left;
+    case AST_TYPE_OPERATOR:
+        return n->typeop.left;
+    default:
+        RF_ASSERT_OR_CRITICAL(false, "Attempted to call accessor"
+                              "for illegal ast node type \""RF_STR_PF_FMT"\"",
+                              RF_STR_PF_ARG(ast_node_str(n)));
+        return NULL;
+    }
+}
+
+i_INLINE_DECL struct ast_node *ast_types_right(struct ast_node *n)
+{
+    switch (n->type) {
+    case AST_TYPE_DESCRIPTION:
+        return n->typedesc.right;
+    case AST_TYPE_OPERATOR:
+        return n->typeop.right;
+    default:
+        RF_ASSERT_OR_CRITICAL(false, "Attempted to call accessor"
+                              "for illegal ast node type \""RF_STR_PF_FMT"\"",
+                              RF_STR_PF_ARG(ast_node_str(n)));
+        return NULL;
+    }
+}
+
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(struct inplocation_mark *start,
@@ -43,6 +76,37 @@ struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
 void ast_typedesc_set_left(struct ast_node *n, struct ast_node *l);
 void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r);
 
+/**
+ * Check that the type description is regarding a simple identifier.
+ */
+i_INLINE_DECL bool ast_typedesc_type_is_single_identifier(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    struct ast_node *left = ast_types_left(n);
+
+    if (n->type == AST_TYPE_DESCRIPTION && left &&
+        !ast_types_right(n) && left->type == AST_IDENTIFIER) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Check that the type description is regarding an anonymous (complex) type
+ */
+i_INLINE_DECL bool ast_typedesc_type_is_anonymous(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    struct ast_node *left = ast_types_left(n);
+
+    if (n->type == AST_TYPE_DESCRIPTION && left &&
+        !ast_types_right(n) && left->type == AST_IDENTIFIER) {
+        return true;
+    }
+
+    return false;
+}
 
 /* -- type declaration functions -- */
 

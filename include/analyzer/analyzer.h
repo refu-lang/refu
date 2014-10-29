@@ -7,6 +7,7 @@
 #include <Utils/fixed_memory_pool.h>
 
 struct parser;
+struct inpfile;
 
 struct analyzer {
     struct info_ctx *info;
@@ -21,6 +22,8 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info);
 
 void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
+
+struct inpfile *analyzer_get_file(struct analyzer *a);
 
 bool analyzer_analyze_file(struct analyzer *a, struct parser *parser);
 

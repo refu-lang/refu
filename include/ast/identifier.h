@@ -16,6 +16,10 @@ struct ast_identifier {
 
 struct ast_node *ast_identifier_create(struct inplocation *loc);
 void ast_identifier_print(struct ast_node *n, int depth);
+
+/**
+ * String getter for both an identifier and an xidentifier's string
+ */
 const struct RFstring *ast_identifier_str(const struct ast_node *n);
 
 /**
@@ -34,5 +38,8 @@ struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
                                         bool is_constant,
                                         struct ast_node *genr);
 
+/**
+ * String getter for only for an xidentifier's string
+ */
 const struct RFstring *ast_xidentifier_str(const struct ast_node *n);
 #endif

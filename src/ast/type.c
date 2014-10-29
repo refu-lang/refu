@@ -8,6 +8,11 @@ static const struct RFstring op_str_prod_  = RF_STRING_STATIC_INIT(",");
 static const struct RFstring op_str_sum_   = RF_STRING_STATIC_INIT("|");
 static const struct RFstring op_str_impl_  = RF_STRING_STATIC_INIT("->");
 
+/* -- functions concerning both type description and operators */
+
+i_INLINE_INS struct ast_node *ast_types_left(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_types_right(struct ast_node *n);
+
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(struct inplocation_mark *start,
@@ -33,6 +38,7 @@ struct ast_node *ast_typeop_create(struct inplocation_mark *start,
         ast_node_add_child(ret, right);
         ret->typeop.right = right;
     }
+
     return ret;
 }
 

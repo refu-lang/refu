@@ -22,9 +22,13 @@
 
 #include CLIB_TEST_HELPERS
 
+/* -- simple symbol table functionality tests -- */
+
 START_TEST(test_symbol_table_add) {
+    // just a simple addition test, makes no sense functionality wise
     struct symbol_table st;
     struct ast_node *n;
+    bool at_first;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a = 4.214\n"
         "var_2 = 5 + a"
@@ -41,19 +45,22 @@ START_TEST(test_symbol_table_add) {
     struct ast_node *id2 = front_testdriver_generate_identifier(d, 1, 0, 1, 0,
                                                                 "var_2");
 
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id1), id1);
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id2), id2);
 
-    n = symbol_table_lookup_node(&st, &id1s);
+    n = symbol_table_lookup_node(&st, &id1s, &at_first);
     ck_assert(n == id1);
-    n = symbol_table_lookup_node(&st, &id2s);
+    ck_assert(at_first);
+    n = symbol_table_lookup_node(&st, &id2s, &at_first);
     ck_assert(n == id2);
+    ck_assert(at_first);
 
     symbol_table_deinit(&st);
 }END_TEST
 
 START_TEST(test_symbol_table_add_existing) {
     struct symbol_table st;
+    bool at_first;
     struct symbol_table_record *rec;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a = 4.214\n"
@@ -71,20 +78,24 @@ START_TEST(test_symbol_table_add_existing) {
     struct ast_node *id2 = front_testdriver_generate_identifier(d, 1, 0, 1, 0,
                                                                 "var_2");
 
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
-    ck_assert(!symbol_table_add_node(&st, ast_identifier_str(id2), id2));
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id1), id1);
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id2), id2);
+    ck_assert(!symbol_table_add_node(&st, d->front.analyzer,
+                                     ast_identifier_str(id2), id2));
 
-    rec = symbol_table_lookup_record(&st, &id1s);
-    ck_assert(symbol_table_record_type(rec) == id1);
-    rec = symbol_table_lookup_record(&st, &id2s);
-    ck_assert(symbol_table_record_type(rec) == id2);
+    rec = symbol_table_lookup_record(&st, &id1s, &at_first);
+    ck_assert(symbol_table_record_node(rec) == id1);
+    ck_assert(at_first);
+    rec = symbol_table_lookup_record(&st, &id2s, &at_first);
+    ck_assert(symbol_table_record_node(rec) == id2);
+    ck_assert(at_first);
 
     symbol_table_deinit(&st);
 }END_TEST
 
 START_TEST(test_symbol_table_lookup_non_existing) {
     struct symbol_table st;
+    bool at_first;
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("I_dont_exist");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("neither_do_I");
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
@@ -99,12 +110,12 @@ START_TEST(test_symbol_table_lookup_non_existing) {
                                                                 "var_2");
 
     // add something so that we don't check against an empty symbol table
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id1), id1));
-    ck_assert(symbol_table_add_node(&st, ast_identifier_str(id2), id2));
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id1), id1);
+    testsupport_symbol_table_add_node(&st, d, ast_identifier_str(id2), id2);
 
 
-    ck_assert(symbol_table_lookup_record(&st, &id1s) == NULL);
-    ck_assert(symbol_table_lookup_record(&st, &id2s) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id1s, &at_first) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id2s, &at_first) == NULL);
 
     symbol_table_deinit(&st);
 }END_TEST
@@ -227,6 +238,7 @@ static struct ast_node *generate_test_identifier(struct front_testdriver *d,
 
 START_TEST(test_symbol_table_many_symbols) {
     size_t ids_num;
+    bool at_first;
     struct ast_node *n;
     struct symbol_table_record *rec;
     unsigned int i;
@@ -241,19 +253,25 @@ START_TEST(test_symbol_table_many_symbols) {
         n = generate_test_identifier(d, i);
         ck_assert_msg(n, "Could not generate a test identifier");
         ids_arr[i].n = n;
-        ck_assert_msg(symbol_table_add_node(&st, &ids_arr[i].s, n),
+        ck_assert_msg(symbol_table_add_node(&st, d->front.analyzer,
+                                            &ids_arr[i].s, n),
                       "Could not add %u/%zu generated identifier to the symbol table",
                       i, ids_num);
     }
 
     for (i = 0; i < ids_num; i ++) {
-            rec = symbol_table_lookup_record(&st, &ids_arr[i].s);
-            ck_assert_msg(symbol_table_record_type(rec) == ids_arr[i].n,
-                          "Generated identifier lookup mismatch");
+        rec = symbol_table_lookup_record(&st, &ids_arr[i].s, &at_first);
+        ck_assert(at_first);
+        ck_assert_msg(symbol_table_record_node(rec) == ids_arr[i].n,
+                      "Generated identifier lookup mismatch");
     }
 
     symbol_table_deinit(&st);
 } END_TEST
+
+
+/* -- symbol table creation testing for specific nodes -- */
+
 
 START_TEST(test_block_symbol_table) {
     struct symbol_table *st;
@@ -270,9 +288,9 @@ START_TEST(test_block_symbol_table) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
-                                                 1, 5, 1, 7);
     testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 1, 5, 1, 7);
+    testsupport_parser_xidentifier_create_simple(id4, &d->front.file,
                                                  2, 5, 2, 7);
 
     testsupport_analyzer_prepare(d);
@@ -282,18 +300,19 @@ START_TEST(test_block_symbol_table) {
     ck_assert_msg(block, "block node was not found");
     st = ast_block_symbol_table_get(block);
 
-    testsupport_symbol_table_lookup_node(st, &id1s, n);
-    check_ast_match(n, id1, &d->front.file);
-    testsupport_symbol_table_lookup_node(st, &id2s, n);
+    testsupport_symbol_table_lookup_node(st, &id1s, n, true);
     check_ast_match(n, id2, &d->front.file);
+    testsupport_symbol_table_lookup_node(st, &id2s, n, true);
+    check_ast_match(n, id4, &d->front.file);
 
-    ast_node_destroy(id1);
     ast_node_destroy(id2);
+    ast_node_destroy(id4);
 } END_TEST
 
 START_TEST(test_fndecl_symbol_table) {
     struct symbol_table *st;
-    struct ast_node *n;
+    struct symbol_table_record *rec;
+    static const struct RFstring names = RF_STRING_STATIC_INIT("do_sth");
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("var");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("s");
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -302,10 +321,39 @@ START_TEST(test_fndecl_symbol_table) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
-                                                 0, 14, 0, 16);
+
+    struct ast_node *fn_name = testsupport_parser_identifier_create(
+        &d->front.file,
+        0, 3, 0, 8);
+
+    struct ast_node *id1 = testsupport_parser_identifier_create(
+        &d->front.file,
+        0, 10, 0, 12);
     testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 0, 14, 0, 16);
+    testsupport_parser_node_create(t1, typedesc, &d->front.file,
+                                   0, 10, 0, 16, id1, id2);
+
+
+    struct ast_node *id3 = testsupport_parser_identifier_create(
+        &d->front.file,
+        0, 19, 0, 19);
+    testsupport_parser_xidentifier_create_simple(id4, &d->front.file,
                                                  0, 21, 0, 26);
+    testsupport_parser_node_create(t2, typedesc, &d->front.file,
+                                   0, 19, 0, 26, id3, id4);
+    testsupport_parser_node_create(op1, typeop, &d->front.file, 0, 10, 0, 26,
+                                   TYPEOP_PRODUCT, t1, t2);
+
+    testsupport_parser_xidentifier_create_simple(id5, &d->front.file,
+                                                 0, 32, 0, 34);
+
+    testsupport_parser_node_create(fn, fndecl, &d->front.file, 0, 0, 0, 34,
+                                   fn_name,
+                                   NULL,
+                                   op1,
+                                   id5
+    );
 
     testsupport_analyzer_prepare(d);
     ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
@@ -314,18 +362,28 @@ START_TEST(test_fndecl_symbol_table) {
     ck_assert_msg(fnimpl, "fnimpl node was not found");
     st = ast_fndecl_symbol_table_get(ast_fnimpl_fndecl_get(fnimpl));
 
-    testsupport_symbol_table_lookup_node(st, &id1s, n);
-    check_ast_match(n, id1, &d->front.file);
-    testsupport_symbol_table_lookup_node(st, &id2s, n);
-    check_ast_match(n, id2, &d->front.file);
+    testsupport_symbol_table_lookup_record(st, &id1s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_UINT_64);
+    check_ast_match(symbol_table_record_node(rec), id2, &d->front.file);
 
-    ast_node_destroy(id1);
-    ast_node_destroy(id2);
+    testsupport_symbol_table_lookup_record(st, &id2s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_STRING);
+    check_ast_match(symbol_table_record_node(rec), id4, &d->front.file);
+
+    testsupport_symbol_table_lookup_record(st, &names, rec, false);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_FUNCTION);
+    check_ast_match(symbol_table_record_node(rec), fn, &d->front.file);
+
+    ast_node_destroy(fn);
 } END_TEST
+
 
 START_TEST(test_typedecl_symbol_table) {
     struct symbol_table *st;
-    struct ast_node *n;
+    struct symbol_table_record *rec;
+    static const struct RFstring names = RF_STRING_STATIC_INIT("person");
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("name");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("age");
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -336,10 +394,30 @@ START_TEST(test_typedecl_symbol_table) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_parser_xidentifier_create_simple(id1, &d->front.file,
-                                                 1, 5, 1, 10);
+    struct ast_node *type_name = testsupport_parser_identifier_create(
+        &d->front.file,
+        0, 5, 0, 10);
+    struct ast_node *id1 = testsupport_parser_identifier_create(
+        &d->front.file,
+        1, 0, 1, 3);
     testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 1, 5, 1, 10);
+    testsupport_parser_node_create(t1, typedesc, &d->front.file,
+                                   1, 0, 1, 10, id1, id2);
+
+
+    struct ast_node *id3 = testsupport_parser_identifier_create(
+        &d->front.file,
+        1, 13, 1, 15);
+    testsupport_parser_xidentifier_create_simple(id4, &d->front.file,
                                                  1, 17, 1, 19);
+    testsupport_parser_node_create(t2, typedesc, &d->front.file,
+                                   1, 13, 1, 19, id3, id4);
+
+    testsupport_parser_node_create(op1, typeop, &d->front.file, 1, 0, 1, 19,
+                                   TYPEOP_PRODUCT, t1, t2);
+    testsupport_parser_node_create(tdecl, typedecl, &d->front.file, 0, 0, 2, 0,
+                                   type_name, op1);
 
     testsupport_analyzer_prepare(d);
     ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
@@ -348,18 +426,27 @@ START_TEST(test_typedecl_symbol_table) {
     ck_assert_msg(td, "typedecl node was not found");
     st = ast_typedecl_symbol_table_get(td);
 
-    testsupport_symbol_table_lookup_node(st, &id1s, n);
-    check_ast_match(n, id1, &d->front.file);
-    testsupport_symbol_table_lookup_node(st, &id2s, n);
-    check_ast_match(n, id2, &d->front.file);
+    testsupport_symbol_table_lookup_record(st, &id1s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_STRING);
+    check_ast_match(symbol_table_record_node(rec), id2, &d->front.file);
 
-    ast_node_destroy(id1);
-    ast_node_destroy(id2);
+    testsupport_symbol_table_lookup_record(st, &id2s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_UINT_16);
+    check_ast_match(symbol_table_record_node(rec), id4, &d->front.file);
+
+    testsupport_symbol_table_lookup_record(st, &names, rec, false);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_USER_DEFINED);
+    check_ast_match(symbol_table_record_node(rec), tdecl, &d->front.file);
+
+
+    ast_node_destroy(tdecl);
 } END_TEST
 
 Suite *analyzer_symboltable_suite_create(void)
 {
-    Suite *s = suite_create("analyzer_symbol_Table");
+    Suite *s = suite_create("analyzer_symbol_table");
 
     TCase *st1 = tcase_create("analyzer_symbol_table_simple_mechanics");
     tcase_add_checked_fixture(st1,

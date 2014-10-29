@@ -27,8 +27,11 @@ void ast_identifier_print(struct ast_node *n, int depth)
 
 const struct RFstring *ast_identifier_str(const struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    return &n->identifier.string;
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER || AST_XIDENTIFIER);
+    if (n->type == AST_IDENTIFIER) {
+        return &n->identifier.string;
+    }
+    return ast_xidentifier_str(n);
 }
 
 
@@ -57,6 +60,5 @@ struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
 
 const struct RFstring *ast_xidentifier_str(const struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_XIDENTIFIER);
-    return ast_identifier_str(n->xidentifier.id);
+    return &n->xidentifier.id->identifier.string;
 }
