@@ -90,13 +90,13 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
     return n;
 }
 
-#define TOKEN_IS_PREFIX_UNARY_OP(tok_)          \
+#define TOKEN_IS_PREFIX_UNARY_OP(tok_)              \
     (tok && ((tok_)->type == TOKEN_OP_AMPERSAND ||  \
              (tok_)->type == TOKEN_OP_INC ||        \
              (tok_)->type == TOKEN_OP_DEC))
 
-#define TOKEN_IS_POSTFIX_UNARY_OP(tok_)          \
-    (tok && ((tok_)->type == TOKEN_OP_INC ||        \
+#define TOKEN_IS_POSTFIX_UNARY_OP(tok_)         \
+    (tok && ((tok_)->type == TOKEN_OP_INC ||    \
              (tok_)->type == TOKEN_OP_DEC))
 
 static struct ast_node *parser_acc_exprfactor(struct parser *p)

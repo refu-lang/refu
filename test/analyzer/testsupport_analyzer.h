@@ -22,10 +22,18 @@ struct analyzer_testdriver *get_analyzer_testdriver();
 void setup_analyzer_tests();
 void teardown_analyzer_tests();
 
-#define testsupport_analyzer_prepare(driver_)                     \
-    do {                                                          \
-        ck_assert(lexer_scan((driver_)->front.lexer));            \
-        ck_assert(parser_process_file((driver_)->front.parser));        \
+#define testsupport_analyzer_prepare(driver_, msg_)                     \
+    do {                                                                \
+        ck_assert(lexer_scan((driver_)->front.lexer));                  \
+        if (!(parser_process_file((driver_)->front.parser))) {          \
+            struct RFstringx *tmp_ = front_testdriver_geterrors(driver_); \
+            if (tmp_) {                                                 \
+                ck_abort_msg(msg_" -- at parsing with errors:\n"RF_STR_PF_FMT, \
+                             RF_STR_PF_ARG(tmp_));                      \
+            } else {                                                    \
+                ck_abort_msg(msg_" -- at parsing with no parser errors"); \
+            }                                                           \
+        }                                                               \
         (driver_)->front.analyzer->root = parser_yield_ast_root((driver_)->front.parser); \
     } while (0)
 

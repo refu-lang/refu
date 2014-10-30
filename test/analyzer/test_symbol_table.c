@@ -293,7 +293,7 @@ START_TEST(test_block_symbol_table) {
     testsupport_parser_xidentifier_create_simple(id4, &d->front.file,
                                                  2, 5, 2, 7);
 
-    testsupport_analyzer_prepare(d);
+    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
 
     struct ast_node *block = ast_node_get_child(d->front.analyzer->root, 0);
@@ -355,7 +355,7 @@ START_TEST(test_fndecl_symbol_table) {
                                    id5
     );
 
-    testsupport_analyzer_prepare(d);
+    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
 
     struct ast_node *fnimpl = ast_node_get_child(d->front.analyzer->root, 0);
@@ -419,7 +419,7 @@ START_TEST(test_typedecl_symbol_table) {
     testsupport_parser_node_create(tdecl, typedecl, &d->front.file, 0, 0, 2, 0,
                                    type_name, op1);
 
-    testsupport_analyzer_prepare(d);
+    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
 
     struct ast_node *td = ast_node_get_child(d->front.analyzer->root, 0);
@@ -439,6 +439,96 @@ START_TEST(test_typedecl_symbol_table) {
     testsupport_symbol_table_lookup_record(st, &names, rec, false);
     ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_USER_DEFINED);
     check_ast_match(symbol_table_record_node(rec), tdecl, &d->front.file);
+
+
+    ast_node_destroy(tdecl);
+} END_TEST
+
+START_TEST(test_multiple_level_symbol_tables) {
+    struct symbol_table *st;
+    struct symbol_table_record *rec;
+    static const struct RFstring names = RF_STRING_STATIC_INIT("person");
+    static const struct RFstring id1s = RF_STRING_STATIC_INIT("name");
+    static const struct RFstring id2s = RF_STRING_STATIC_INIT("age");
+    static const struct RFstring v1s = RF_STRING_STATIC_INIT("var1");
+    static const struct RFstring v2s = RF_STRING_STATIC_INIT("var2");
+    static const struct RFstring v3s = RF_STRING_STATIC_INIT("var3");
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "var1:string\n"
+        "{\n"
+        "type person {\n"
+        "name:string, age:u16\n"
+        "}\n"
+        "var2:i8\n"
+        "}\n"
+        "var3:u64"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    struct ast_node *type_name = testsupport_parser_identifier_create(
+        &d->front.file,
+        2, 5, 2, 10);
+    struct ast_node *id1 = testsupport_parser_identifier_create(
+        &d->front.file,
+        3, 0, 3, 3);
+    testsupport_parser_xidentifier_create_simple(id2, &d->front.file,
+                                                 3, 5, 3, 10);
+    testsupport_parser_node_create(t1, typedesc, &d->front.file,
+                                   3, 0, 3, 10, id1, id2);
+
+
+    struct ast_node *id3 = testsupport_parser_identifier_create(
+        &d->front.file,
+        3, 13, 3, 15);
+    testsupport_parser_xidentifier_create_simple(id4, &d->front.file,
+                                                 3, 17, 3, 19);
+    testsupport_parser_node_create(t2, typedesc, &d->front.file,
+                                   3, 13, 3, 19, id3, id4);
+
+    testsupport_parser_node_create(op1, typeop, &d->front.file, 3, 0, 3, 19,
+                                   TYPEOP_PRODUCT, t1, t2);
+    testsupport_parser_node_create(tdecl, typedecl, &d->front.file, 2, 0, 4, 0,
+                                   type_name, op1);
+
+
+    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
+    ck_assert(analyzer_create_symbol_tables(d->front.analyzer));
+
+    struct ast_node *root = d->front.analyzer->root;
+    struct ast_node *block_1 = ast_node_get_child(root, 1);
+    struct ast_node *td = ast_node_get_child(block_1, 0);
+    ck_assert_msg(td, "typedecl node was not found");
+
+    // first check for symbols at root
+    st = ast_root_symbol_table_get(root);
+    testsupport_symbol_table_lookup_record(st, &v1s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_STRING);
+    testsupport_symbol_table_lookup_record(st, &v3s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_UINT_64);
+
+    // now check for symbols at the block
+    st = ast_block_symbol_table_get(block_1);
+    testsupport_symbol_table_lookup_record(st, &names, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_USER_DEFINED);
+    check_ast_match(symbol_table_record_node(rec), tdecl, &d->front.file);
+    testsupport_symbol_table_lookup_record(st, &v2s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_INT_8);
+
+    // finally check for symbols inside the type declaration
+    st = ast_typedecl_symbol_table_get(td);
+    testsupport_symbol_table_lookup_record(st, &id1s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_STRING);
+    check_ast_match(symbol_table_record_node(rec), id2, &d->front.file);
+
+    testsupport_symbol_table_lookup_record(st, &id2s, rec, true);
+    ck_assert(symbol_table_record_category(rec) == TYPE_CATEGORY_BUILTIN);
+    ck_assert(type_builtin(symbol_table_record_type(rec)) == BUILTIN_UINT_16);
+    check_ast_match(symbol_table_record_node(rec), id4, &d->front.file);
 
 
     ast_node_destroy(tdecl);
@@ -465,6 +555,7 @@ Suite *analyzer_symboltable_suite_create(void)
     tcase_add_test(st2, test_block_symbol_table);
     tcase_add_test(st2, test_fndecl_symbol_table);
     tcase_add_test(st2, test_typedecl_symbol_table);
+    tcase_add_test(st2, test_multiple_level_symbol_tables);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

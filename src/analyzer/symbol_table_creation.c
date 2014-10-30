@@ -217,12 +217,39 @@ static bool analyzer_create_symbol_tables_do(struct ast_node *n,
     return true;
 }
 
+static bool analyzer_switch_current_symbol_table(struct ast_node *n,
+                                          void *user_arg)
+{
+    struct st_creation_ctx *ctx = (struct st_creation_ctx*)user_arg;
+    switch(n->type) {
+        // nodes that change the current symbol table
+    case AST_BLOCK:
+        ctx->current_st = ast_block_symbol_table_get(n)->parent;
+        break;
+    case AST_TYPE_DECLARATION:
+        ctx->current_st = ast_typedecl_symbol_table_get(n)->parent;
+        break;
+    case AST_FUNCTION_DECLARATION:
+        ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
+        break;
+    default:
+        // do nothing
+        break;
+    }
+
+    RF_ASSERT(ctx->current_st, "Symbol table movement to parent lead to "
+              "a NULL table!");
+    return true;
+}
+
 bool analyzer_create_symbol_tables(struct analyzer *a)
 {
     struct st_creation_ctx ctx;
     st_creation_ctx_init(&ctx, a);
 
-    return analyzer_pre_traverse_tree(a,
-                                      analyzer_create_symbol_tables_do,
-                                      &ctx);
+    return analyzer_traverse_tree(a,
+                                  analyzer_create_symbol_tables_do,
+                                  &ctx,
+                                  analyzer_switch_current_symbol_table,
+                                  &ctx);
 }

@@ -6,12 +6,44 @@
 #include <lexer/lexer.h>
 #include "common.h"
 #include "expression.h"
+#include "type.h"
+
+static struct ast_node *parser_acc_expr_statement(struct parser *p)
+{
+    struct token *tok;
+    struct ast_node *n = NULL;
+
+    tok = lexer_lookahead(p->lexer, 1);
+
+    if (TOKEN_IS_BLOCK_START(tok)) {
+        n = parser_acc_block(p, true);
+    } else if (TOKEN_IS_TYPEDECL_START(tok)) {
+        n = parser_acc_typedecl(p);
+    }
+
+    return n;
+}
+
+/**
+ * Accepts a block element, which is either an expression or
+ * an expression statement
+ */
+static struct ast_node *parser_acc_block_element(struct parser *p)
+{
+    struct ast_node *n;
+    n = parser_acc_expression(p);
+    if (n) {
+        return n;
+    }
+
+    return parser_acc_expr_statement(p);
+}
 
 struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
 {
     struct ast_node *n;
     struct token *tok;
-    struct ast_node *expr;
+    struct ast_node *element;
     struct inplocation_mark *start = NULL;
     struct inplocation_mark *end = NULL;
 
@@ -35,9 +67,9 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
         return NULL;
     }
 
-    //try to parse the first expression
-    expr = parser_acc_expression(p);
-    if (!expr) {
+    //try to parse the first element
+    element = parser_acc_block_element(p);
+    if (!element) {
         if (!expect_braces) {
             goto err_free_block;
         }
@@ -58,15 +90,15 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     }
 
     if (!start) {
-        start = ast_node_startmark(expr);
+        start = ast_node_startmark(element);
     }
-    end = ast_node_endmark(expr);
-    ast_node_add_child(n, expr);
+    end = ast_node_endmark(element);
+    ast_node_add_child(n, element);
 
-    // now add expressions to the block
-    while ((expr = parser_acc_expression(p))) {
-        ast_node_add_child(n, expr);
-        end = ast_node_endmark(expr);
+    // now add elements to the block
+    while ((element = parser_acc_block_element(p))) {
+        ast_node_add_child(n, element);
+        end = ast_node_endmark(element);
     }
 
     if (expect_braces) {
