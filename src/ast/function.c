@@ -1,5 +1,6 @@
 #include <ast/function.h>
 
+/* -- function declaration functions -- */
 
 struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
@@ -29,6 +30,11 @@ i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n
 i_INLINE_INS bool ast_fndecl_symbol_table_init(struct ast_node *n,
                                                struct analyzer *a);
 i_INLINE_INS struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_genrdecl_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_args_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_return_get(struct ast_node *n);
+
+/* -- function implementation functions -- */
 
 struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
@@ -52,6 +58,8 @@ struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS struct ast_node *ast_fnimpl_fndecl_get(struct ast_node *n);
+
+/* -- function call functions -- */
 
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,

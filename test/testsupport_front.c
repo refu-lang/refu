@@ -3,14 +3,16 @@
 #include <refu.h>
 #include <Definitions/threadspecific.h>
 
-#include <ast/ast.h>
 #include <ast/type.h>
 #include <ast/string_literal.h>
 #include <ast/constant_num.h>
 #include <ast/operators.h>
+#include <ast/vardecl.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
+
+#include <stdarg.h>
 
 i_THREAD__ struct front_testdriver __front_testdriver;
 
@@ -242,6 +244,82 @@ struct ast_node *front_testdriver_generate_constant_integer(
     if (!ret) {
         return NULL;
     }
+    darray_append(d->nodes, ret);
+    return ret;
+}
+
+void front_testdriver_node_remove_children_from_array(struct front_testdriver *d,
+                                                      struct ast_node *n)
+{
+    // extremey inefficient but this is just testing code
+    struct ast_node *child;
+    struct ast_node **arr_n;
+    unsigned int i;
+    rf_ilist_for_each(&n->children, child, lh) {
+
+        front_testdriver_node_remove_children_from_array(d, child);
+
+        i = 0;
+        darray_foreach(arr_n, d->nodes) {
+            if (*arr_n == child) {
+                darray_remove(d->nodes, i);
+                break;
+            }
+            ++i;
+        }
+    }
+}
+
+struct ast_node *do_front_testdriver_generate_node(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    enum ast_type type, unsigned int args_num, ...)
+{
+    va_list args;
+    struct ast_node *ret;
+    struct ast_node *n1 = NULL;
+    struct ast_node *n2 = NULL;
+    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    struct inplocation_mark *smark = &temp_loc.start;
+    struct inplocation_mark *emark = &temp_loc.end;
+    bool is_constant = false;
+
+    va_start(args, args_num);
+
+    switch(type) {
+    case AST_XIDENTIFIER:
+        ck_assert_uint_gt(args_num, 0);
+        n1 = front_testdriver_generate_identifier(d, sl, sc, el, ec,
+                                                 va_arg(args, const char *));
+        if (args_num > 1) {
+            is_constant = va_arg(args, bool);
+        }
+
+        if (args_num > 2) {
+            n2 = va_arg(args, struct ast_node *);
+        }
+        ret = ast_xidentifier_create(smark, emark, n1, is_constant, n2);
+        break;
+    case AST_TYPE_DESCRIPTION:
+        ck_assert_uint_gt(args_num, 1);
+        n1 = va_arg(args, struct ast_node *);
+        n2 = va_arg(args, struct ast_node *);
+        ret = ast_typedesc_create(smark, emark, n1, n2);
+        break;
+    case AST_VARIABLE_DECLARATION:
+        ck_assert_uint_gt(args_num, 0);
+        n1 = va_arg(args, struct ast_node *);
+        ret = ast_vardecl_create(smark, emark, n1);
+        break;
+    default:
+        ck_assert_msg("invalid type provided to front test driver node generation");
+        return NULL;
+    }
+    va_end(args);
+
+    // extremey inefficient but this is just testing code
+    front_testdriver_node_remove_children_from_array(d, ret);
+
     darray_append(d->nodes, ret);
     return ret;
 }

@@ -1,6 +1,8 @@
 #ifndef LFR_AST_FUNCTIONS_DECLS_H
 #define LFR_AST_FUNCTIONS_DECLS_H
 
+#include <analyzer/symbol_table.h>
+
 struct ast_node;
 struct inplocation_mark;
 

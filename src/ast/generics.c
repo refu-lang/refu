@@ -22,6 +22,8 @@ struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id)
     return ret;
 }
 
+i_INLINE_INS const struct RFstring *ast_genrtype_id_str(struct ast_node *n);
+
 struct ast_node *ast_genrdecl_create(struct inplocation_mark *start,
                                      struct inplocation_mark *end)
 {
@@ -33,6 +35,20 @@ struct ast_node *ast_genrdecl_create(struct inplocation_mark *start,
         return NULL;
     }
     return ret;
+}
+
+struct ast_node *ast_genrdecl_string_is_genr(struct ast_node *n,
+                                             const struct RFstring *id)
+{
+    struct ast_node *child;
+
+    AST_NODE_ASSERT_TYPE(n, AST_GENERIC_DECLARATION);
+    rf_ilist_for_each(&n->children, child, lh) {
+        if (rf_string_equal(id, ast_genrtype_id_str(child))) {
+            return child;
+        }
+    }
+    return NULL;
 }
 
 struct ast_node *ast_genrattr_create(struct inplocation_mark *start,

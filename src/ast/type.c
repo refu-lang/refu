@@ -66,6 +66,8 @@ const struct RFstring *ast_typeop_opstr(struct ast_node *n)
         return NULL;
     }
 }
+i_INLINE_INS struct ast_node *ast_typeop_left(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeop_right(struct ast_node *n);
 
 /* -- type description functions -- */
 
@@ -106,6 +108,9 @@ void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r)
     n->typedesc.right = r;
 }
 
+i_INLINE_INS struct ast_node *ast_typedesc_left(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typedesc_right(struct ast_node *n);
+
 /* -- type declaration functions -- */
 struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
                                      struct inplocation_mark *end,
@@ -130,6 +135,5 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);
-i_INLINE_INS bool ast_typedecl_symbol_table_init(struct ast_node *n,
-                                                 struct analyzer *a);
-i_INLINE_INS struct symbol_table* ast_typedecl_symbol_table_get(struct ast_node *n);
+i_INLINE_INS struct ast_node* ast_typedecl_typedesc_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n);

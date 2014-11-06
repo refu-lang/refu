@@ -64,7 +64,17 @@ i_INLINE_DECL enum typeop_type ast_typeop_op(struct ast_node *n)
  */
 const struct RFstring *ast_typeop_opstr(struct ast_node *n);
 
+i_INLINE_DECL struct ast_node *ast_typeop_left(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
+    return n->typeop.left;
+}
 
+i_INLINE_DECL struct ast_node *ast_typeop_right(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
+    return n->typeop.right;
+}
 
 /* -- type description functions -- */
 
@@ -75,6 +85,18 @@ struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
 
 void ast_typedesc_set_left(struct ast_node *n, struct ast_node *l);
 void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r);
+
+i_INLINE_DECL struct ast_node *ast_typedesc_left(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
+    return n->typedesc.left;
+}
+
+i_INLINE_DECL struct ast_node *ast_typedesc_right(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
+    return n->typedesc.right;
+}
 
 /**
  * Check that the type description is regarding a simple identifier.
@@ -121,17 +143,15 @@ i_INLINE_DECL const struct RFstring *ast_typedecl_name_str(struct ast_node *n)
     return ast_identifier_str(n->typedecl.name);
 }
 
-i_INLINE_DECL bool ast_typedecl_symbol_table_init(struct ast_node *n,
-                                                  struct analyzer *a)
+i_INLINE_DECL struct ast_node *ast_typedecl_typedesc_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
-    return symbol_table_init(&n->typedecl.st, a);
+    return n->typedecl.desc;
 }
 
-i_INLINE_DECL struct symbol_table* ast_typedecl_symbol_table_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
-    return &n->typedecl.st;
+    return n->typedecl.genrdecl;
 }
-
 #endif

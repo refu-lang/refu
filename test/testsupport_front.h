@@ -6,12 +6,14 @@
 #include <Data_Structures/darray.h>
 #include <inpfile.h>
 #include <front_ctx.h>
+#include <ast/ast.h>
+
 
 struct front_testdriver {
     struct front_ctx front;
     struct RFstringx buffstr;
-    //! A buffer of ast node pointers for quick identifier checks
-    //! and easy freeing at test teardown
+    //! A buffer of ast node pointers for easy freeing
+    //! of some nodes at test teardown
     struct {darray(struct ast_node*);} nodes;
 };
 
@@ -64,6 +66,17 @@ struct ast_node *front_testdriver_generate_constant_integer(
     struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     uint64_t val);
+
+struct ast_node *do_front_testdriver_generate_node(
+    struct front_testdriver *d,
+    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
+    enum ast_type type, unsigned int args_num, ...);
+
+#define front_testdriver_generate_node(identifier_, ...)                \
+    struct ast_node *identifier_;                                       \
+    do {                                                                \
+        identifier_ = do_front_testdriver_generate_node(__VA_ARGS__);   \
+    } while(0)
 
 void setup_front_tests();
 void teardown_front_tests();

@@ -22,22 +22,6 @@ static const struct RFstring builtin_type_strings[] = {
 };
 
 
-void type_builtin_init(struct type *t, enum builtin_type bt)
-{
-    RF_ASSERT(bt >= 0, "illegal builtin data type given");
-
-    t->category = TYPE_CATEGORY_BUILTIN;
-    t->btype = bt;
-}
-
-void type_init(struct type *t, enum type_category ctg, struct ast_node *decl)
-{
-    t->category = ctg;
-    t->decl = decl;
-}
-
-i_INLINE_INS enum builtin_type type_builtin(struct type *t);
-
 int analyzer_identifier_is_builtin(const struct RFstring *id)
 {
     const struct gperf_builtin_type *btype;

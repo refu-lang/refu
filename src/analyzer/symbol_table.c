@@ -6,6 +6,7 @@
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
+#include <ast/type.h>
 #include <analyzer/analyzer.h>
 
 /* -- symbol table record related functions -- */
@@ -28,45 +29,17 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
                               struct ast_node *node,
                               const struct RFstring *id)
 {
-    int rc;
-    struct symbol_table_record *look_rec;
-    bool at_first_symbol_table;
-    const struct RFstring *type_name;
-
     rec->node = node;
     rec->id = id;
     switch (node->type) {
     case AST_TYPE_DECLARATION:
-        type_init(&rec->data, TYPE_CATEGORY_USER_DEFINED, node);
+        rec->data = type_create_from_typedecl(node, analyzer, st);
         break;
-    case AST_IDENTIFIER:
-    case AST_XIDENTIFIER:
-        type_name = ast_identifier_str(node);
-        rc = analyzer_identifier_is_builtin(type_name);
-        if (rc) {
-            // builtin
-            type_builtin_init(&rec->data, rc);
-        } else {
-            // search for the type of this record in the symbol tables
-            look_rec = symbol_table_lookup_record(st, type_name,
-                                                  &at_first_symbol_table);
-            if (!look_rec) {
-                analyzer_err(analyzer, ast_node_startmark(node),
-                             ast_node_endmark(node),
-                             "\""RF_STR_PF_FMT"\" is declared as undefined "
-                             "type \""RF_STR_PF_FMT"\"",
-                             RF_STR_PF_ARG(id), RF_STR_PF_ARG(type_name));
-                return false;
-            }
-
-            type_init(&rec->data, TYPE_CATEGORY_USER_DEFINED, look_rec->data.decl);
-        }
-        break;
-    case AST_TYPE_DESCRIPTION:
-        type_init(&rec->data, TYPE_CATEGORY_ANONYMOUS, node);
+    case AST_VARIABLE_DECLARATION:
+        rec->data = type_create_from_vardecl(node, analyzer, st);
         break;
     case AST_FUNCTION_DECLARATION:
-        type_init(&rec->data, TYPE_CATEGORY_FUNCTION, node);
+        rec->data = type_create_from_fndecl(node, analyzer, st);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "
@@ -75,6 +48,20 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         return false;
     }
 
+    if (!rec->data) {
+        return false;
+    }
+
+    return true;
+}
+
+bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
+                                        const struct RFstring *id,
+                                        struct type *t)
+{
+    rec->node = NULL;
+    rec->id = id;
+    rec->data = t;
     return true;
 }
 
@@ -91,6 +78,27 @@ struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
     }
 
     if (!symbol_table_record_init(ret, analyzer, st, node, id)) {
+        symbol_table_record_destroy(ret, st);
+        return NULL;
+    }
+
+    return ret;
+}
+
+struct symbol_table_record *symbol_table_record_create_from_type(
+    struct symbol_table *st,
+    struct analyzer *analyzer,
+    const struct RFstring *id,
+    struct type *t)
+{
+    struct symbol_table_record *ret;
+    ret = symbol_table_record_alloc(st);
+    if (!ret) {
+        RF_ERROR("Failed to allocate a symbol table record");
+        return NULL;
+    }
+
+    if (!symbol_table_record_init_from_type(ret, id, t)) {
         symbol_table_record_destroy(ret, st);
         return NULL;
     }
@@ -183,6 +191,77 @@ bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec)
 {
     if (!htable_add(&t->table, rf_hash_str_stable(rec->id, 0), rec)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool symbol_table_add_typedecl(struct symbol_table *st,
+                               struct analyzer *analyzer,
+                               struct ast_node *n)
+{
+    struct ast_node *search_node;
+    struct symbol_table_record *rec;
+    bool symbol_found_at_first_st;
+    const struct RFstring *type_name;
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
+
+    type_name = ast_typedecl_name_str(n);
+    search_node = symbol_table_lookup_node(st,
+                                           type_name,
+                                           &symbol_found_at_first_st);
+
+    if (search_node && symbol_found_at_first_st) {
+        analyzer_err(analyzer, ast_node_startmark(search_node),
+                     ast_node_endmark(search_node),
+                     "Type \""RF_STR_PF_FMT"\" was already declared in scope "
+                     "at "INPLOCATION_FMT,
+                     RF_STR_PF_ARG(type_name),
+                     INPLOCATION_ARG(analyzer_get_file(analyzer),
+                                     ast_node_location(search_node)));
+        return false;
+    }
+
+    //we can create the type now
+    rec = symbol_table_record_create(st, analyzer, n, type_name);
+    if (!rec) {
+        return false;
+    }
+
+    return true;
+}
+
+bool symbol_table_add_type(struct symbol_table *st,
+                           struct analyzer *analyzer,
+                           const struct RFstring *id,
+                           struct type *t)
+{
+    struct symbol_table_record *rec;
+    bool symbol_found_at_first_st;
+
+
+    rec = symbol_table_lookup_record(st, id, &symbol_found_at_first_st);
+
+    if (rec && symbol_found_at_first_st) {
+        analyzer_err(analyzer, ast_node_startmark(rec->node),
+                     ast_node_endmark(rec->node),
+                     "Identifier \""RF_STR_PF_FMT"\" was already declared in scope "
+                     "at "INPLOCATION_FMT,
+                     RF_STR_PF_ARG(id),
+                     INPLOCATION_ARG(analyzer_get_file(analyzer),
+                                     ast_node_location(rec->node)));
+        return false;
+    }
+
+    //we can create the type now
+    rec = symbol_table_record_create_from_type(st, analyzer, id, t);
+    if (!rec) {
+        return false;
+    }
+
+    if (!symbol_table_add_record(st, rec)) {
+        symbol_table_record_destroy(rec, st);
         return false;
     }
 

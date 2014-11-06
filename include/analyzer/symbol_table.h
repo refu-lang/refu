@@ -4,7 +4,7 @@
 #include <Data_Structures/htable.h>
 #include <String/rf_str_decl.h>
 #include <Definitions/inline.h>
-#include <analyzer/typecheck.h>
+#include <analyzer/types.h>
 
 struct analyzer;
 struct ast_node;
@@ -16,10 +16,11 @@ struct symbol_table;
 struct symbol_table_record {
     //! The identifier string used as the key to the symbol table
     const struct RFstring *id;
-    //! The ast node the identifier should point to
+    //! [optional] The ast node the identifier should point to
+    //! Can actually be NULL.
     struct ast_node *node;
     //! Description of the type the identifier refers to
-    struct type data;
+    struct type *data;
 };
 
 bool symbol_table_record_init(struct symbol_table_record *rec,
@@ -46,7 +47,7 @@ symbol_table_record_id(struct symbol_table_record *rec)
 i_INLINE_DECL enum type_category
 symbol_table_record_category(struct symbol_table_record *rec)
 {
-    return rec->data.category;
+    return rec->data->category;
 }
 
 i_INLINE_DECL struct ast_node *
@@ -58,7 +59,7 @@ symbol_table_record_node(struct symbol_table_record *rec)
 i_INLINE_DECL struct type *
 symbol_table_record_type(struct symbol_table_record *rec)
 {
-    return &rec->data;
+    return rec->data;
 }
 
 
@@ -78,6 +79,11 @@ bool symbol_table_add_node(struct symbol_table *t,
                            struct analyzer *analyzer,
                            const struct RFstring *id,
                            struct ast_node *n);
+
+bool symbol_table_add_type(struct symbol_table *st,
+                           struct analyzer *analyzer,
+                           const struct RFstring *id,
+                           struct type *t);
 
 bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec);

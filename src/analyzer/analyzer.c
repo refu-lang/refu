@@ -7,8 +7,10 @@
 
 #include <ast/ast.h>
 #include <parser/parser.h>
+#include <analyzer/types.h>
 
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
+#define TYPES_POOL_CHUNK_SIZE 2048
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
@@ -20,14 +22,26 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
     rc = rf_fixed_memorypool_init(&a->symbol_table_records_pool,
                                   sizeof(struct symbol_table_record),
                                   RECORDS_TABLE_POOL_CHUNK_SIZE);
-    return rc == true;
+    if (!rc) {
+        return false;
+    }
+    rc = rf_fixed_memorypool_init(&a->types_pool,
+                                  sizeof(struct type),
+                                  TYPES_POOL_CHUNK_SIZE);
+    if (!rc) {
+        return false;
+    }
+
+    rf_ilist_head_init(&a->anonymous_types);
+    rf_ilist_head_init(&a->types);
+    return true;
 }
 
 struct analyzer *analyzer_create(struct info_ctx *info)
 {
     struct analyzer *a;
     RF_MALLOC(a, sizeof(*a), return NULL);
-    
+
     if (!analyzer_init(a, info)) {
         free(a);
         return NULL;
@@ -40,6 +54,7 @@ struct analyzer *analyzer_create(struct info_ctx *info)
 void analyzer_deinit(struct analyzer *a)
 {
     rf_fixed_memorypool_deinit(&a->symbol_table_records_pool);
+    rf_fixed_memorypool_deinit(&a->types_pool);
 }
 
 void analyzer_destroy(struct analyzer *a)
@@ -58,13 +73,42 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
+struct type *analyzer_get_or_create_anonymous_type(struct analyzer *a,
+                                                   struct ast_node *desc,
+                                                   struct symbol_table *st,
+                                                   struct ast_node *genrdecl)
+{
+    struct type *t;
+    AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    rf_ilist_for_each(&a->anonymous_types, t, lh) {
+        if (type_equals_typedesc(t, desc, a, st, genrdecl)) {
+            return t;
+        }
+    }
+
+    // else we have to create a new anonymous type
+    t = type_anonymous_create(desc, a, st, genrdecl);
+    if (!t) {
+        RF_ERROR("Failure to create an anonymous type");
+        return NULL;
+    }
+
+    // add it to the list
+    rf_ilist_add(&a->anonymous_types, &t->lh);
+    return t;
+}
+
 bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
 {
     // acquire the root of the AST from the parser
     a->root = parser_yield_ast_root(parser);
-    
+
     // create symbol tables and change ast nodes ownership
     analyzer_create_symbol_tables(a);
+
+    //TODO: type check
+
+    //TODO: finalize ast
     return true;
 }
 
