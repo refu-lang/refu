@@ -1,5 +1,7 @@
 #include <analyzer/types.h>
 
+#include <Utils/build_assert.h>
+#include <Persistent/buffers.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
@@ -8,6 +10,8 @@
 #include <ast/generics.h>
 #include <ast/vardecl.h>
 #include <ast/function.h>
+
+#include "builtin_types_htable.h"
 
 /* -- miscellaneous type functions used internally (static) -- */
 struct function_args_ctx {
@@ -324,7 +328,11 @@ struct type *type_anonymous_create(struct ast_node *n,
 
 /* -- type comparison functions -- */
 
-static inline bool type_category_equals(struct type *t1, struct type *t2)
+i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
+                                           enum comparison_reason reason);
+
+static inline bool type_category_equals(const struct type *t1,
+                                        const struct type *t2)
 {
     if (t1->category == t2->category) {
         return true;
@@ -343,25 +351,45 @@ static inline bool type_category_equals(struct type *t1, struct type *t2)
     return false;
 }
 
-static inline bool type_builtin_equals(struct type_builtin *t1,
-                                       struct type_builtin *t2)
+static inline bool type_builtin_equals(const struct type_builtin *t1,
+                                       const struct type_builtin *t2,
+                                       struct type_comparison_ctx *ctx)
 {
-    return t1->btype == t2->btype;
+    if (t1->btype == t2->btype) {
+        return true;
+    }
+
+    if (!ctx) {
+        return false;
+    }
+
+    if (t1->btype <= BUILTIN_UINT_64 &&
+        t2->btype <= BUILTIN_UINT_64) {
+        // they are both int/uint types, we can work with it
+        return true;
+    }
+
+    return false;
 }
 
-static inline bool type_function_equals(struct type_function *t1,
-                                        struct type_function *t2)
+static inline bool type_function_equals(const struct type_function *t1,
+                                        const struct type_function *t2,
+                                        struct type_comparison_ctx *ctx)
 {
-    return type_equals(t1->argument_type, t2->argument_type) &&
-        type_equals( t1->return_type, t2->return_type);
+    return type_equals(t1->argument_type, t2->argument_type, ctx) &&
+        type_equals( t1->return_type, t2->return_type, ctx);
 }
 
-static inline bool type_leaf_equals(struct type_leaf *t1, struct type_leaf *t2)
+static inline bool type_leaf_equals(const struct type_leaf *t1,
+                                    const struct type_leaf *t2,
+                                    struct type_comparison_ctx *ctx)
 {
-    return type_equals(t1->type, t2->type);
+    return type_equals(t1->type, t2->type, ctx);
 }
 
-static bool type_composite_equals(struct type_composite *t1, struct type_composite *t2)
+static bool type_composite_equals(const struct type_composite *t1,
+                                  const struct type_composite *t2,
+                                  struct type_comparison_ctx *ctx)
 {
     if (t1 == t2) {
         return true;
@@ -376,15 +404,16 @@ static bool type_composite_equals(struct type_composite *t1, struct type_composi
             return false;
         }
 
-        return type_equals(t1->op.left, t2->op.left) &&
-            type_equals(t1->op.right, t2->op.right);
+        return type_equals(t1->op.left, t2->op.left, ctx) &&
+            type_equals(t1->op.right, t2->op.right, ctx);
     }
 
-    return type_leaf_equals(&t1->leaf, &t2->leaf);
+    return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
 
 }
 
-bool type_equals(struct type* t1, struct type *t2)
+bool type_equals(const struct type* t1, const struct type *t2,
+                 struct type_comparison_ctx *ctx)
 {
     // first check if we refer to the same type (builtin or anonymous)
     if (t1 == t2) {
@@ -397,25 +426,25 @@ bool type_equals(struct type* t1, struct type *t2)
 
     switch (t1->category) {
     case TYPE_CATEGORY_USER_DEFINED:
-        return type_composite_equals(t1->defined.type, t2->defined.type);
+        return type_composite_equals(t1->defined.type, t2->defined.type, ctx);
     case TYPE_CATEGORY_ANONYMOUS:
         if (t2->category == TYPE_CATEGORY_LEAF) {
             //handle special case where we compare composite to a leaf composite type
-            return type_leaf_equals(&t1->anonymous.leaf, &t2->leaf);
+            return type_leaf_equals(&t1->anonymous.leaf, &t2->leaf, ctx);
         } else {
-            return type_composite_equals(&t1->anonymous, &t2->anonymous);
+            return type_composite_equals(&t1->anonymous, &t2->anonymous, ctx);
         }
     case TYPE_CATEGORY_BUILTIN:
-        return type_builtin_equals(&t1->builtin, &t2->builtin);
+        return type_builtin_equals(&t1->builtin, &t2->builtin, ctx);
     case TYPE_CATEGORY_LEAF:
         if (t2->category == TYPE_CATEGORY_ANONYMOUS) {
             //handle special case where we compare leaf to a composite leaf type
-            return type_leaf_equals(&t1->leaf, &t2->anonymous.leaf);
+            return type_leaf_equals(&t1->leaf, &t2->anonymous.leaf, ctx);
         } else {
-            return type_leaf_equals(&t1->leaf, &t2->leaf);
+            return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
         }
     case TYPE_CATEGORY_FUNCTION:
-        return type_function_equals(&t1->function, &t2->function);
+        return type_function_equals(&t1->function, &t2->function, ctx);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         break;
@@ -466,10 +495,10 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
             return false;
         }
 
-        return type_equals(t, looked_up_t);
+        return type_equals(t, looked_up_t, NULL);
     } else {
         RF_ASSERT_OR_CRITICAL(false, "Illegal ast node type \""RF_STR_PF_FMT"\""
-                              " detected insteaf of a type description",
+                              " detected instead of a type description",
                               RF_STR_PF_ARG(ast_node_str(type_desc)));
         return false;
     }
@@ -478,26 +507,48 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
 
 /* -- type getters -- */
 
+// NOTE: preserve order
+static const struct RFstring builtin_type_strings[] = {
+    RF_STRING_STATIC_INIT("i8"),
+    RF_STRING_STATIC_INIT("u8"),
+    RF_STRING_STATIC_INIT("i16"),
+    RF_STRING_STATIC_INIT("u16"),
+    RF_STRING_STATIC_INIT("i32"),
+    RF_STRING_STATIC_INIT("u32"),
+    RF_STRING_STATIC_INIT("i64"),
+    RF_STRING_STATIC_INIT("u64"),
+    RF_STRING_STATIC_INIT("f32"),
+    RF_STRING_STATIC_INIT("f64"),
+    RF_STRING_STATIC_INIT("string"),
+};
+
+
 #define INIT_BUILTIN_TYPE_ARRAY_INDEX(i_type)                           \
     [i_type] = {.category = TYPE_CATEGORY_BUILTIN, .builtin = {.btype=i_type}}
 
+// NOTE: preserve order
 static const struct type i_builtin_types[] = {
-    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_8),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_8),
-    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_16),
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_8),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_16),
-    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_32),
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_16),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_32),
-    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_64),
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_32),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_64),
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_64),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_FLOAT_32),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_FLOAT_64),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_STRING)
 };
 
-static inline const struct type *type_builtin_get(enum builtin_type btype)
+const struct type *type_builtin_get_type(enum builtin_type btype)
 {
     return &i_builtin_types[btype];
+}
+
+const struct RFstring *type_builtin_get_str(enum builtin_type btype)
+{
+    return &builtin_type_strings[btype];
 }
 
 struct type *type_lookup_xidentifier(struct ast_node *n,
@@ -517,7 +568,7 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
     // check if it's a builtin type
     builtin_type = analyzer_identifier_is_builtin(id);
     if (builtin_type != -1) {
-        return (struct type*)type_builtin_get(builtin_type);
+        return (struct type*)type_builtin_get_type(builtin_type);
     }
 
     // if not check if we know about it from the symbol tables
@@ -546,6 +597,26 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 }
 
 i_INLINE_INS enum builtin_type type_builtin(struct type *t);
+
+const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff)
+{
+    const struct RFstring *ret_str;
+    switch(t->category) {
+    case TYPE_CATEGORY_BUILTIN:
+        ret_str = type_builtin_get_str(t->builtin.btype);
+        if (buff) {
+            // This is just to show myself how to do it, now need to do it for
+            // a builtin type
+            return rf_persistent_buffer_create_str_from_str(buff, ret_str);
+        }
+        return ret_str;
+    default:
+        RF_ASSERT(false, "TODO: Not yet implemented");
+        break;
+    }
+
+
+}
 
 /* -- type traversal functions -- */
 
@@ -590,4 +661,24 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     }
 
     return true;
+}
+
+/* -- various type related functions -- */
+
+int analyzer_identifier_is_builtin(const struct RFstring *id)
+{
+    const struct gperf_builtin_type *btype;
+    // assert that the array size is same as enum size
+    BUILD_ASSERT(
+        sizeof(builtin_type_strings)/sizeof(struct RFstring) == BUILTIN_TYPES_COUNT
+    );
+
+    btype = analyzer_string_is_builtin(rf_string_data(id),
+                                       rf_string_length_bytes(id));
+
+    if (!btype) {
+        return -1;
+    }
+
+    return btype->type;
 }

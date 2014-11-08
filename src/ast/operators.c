@@ -78,6 +78,9 @@ const struct RFstring * ast_binaryop_opstr(struct ast_node *op)
     return tokentype_to_str(token_type_lookup[op->binaryop.type]);
 }
 
+i_INLINE_INS struct ast_node *ast_binaryop_left(struct ast_node *op);
+i_INLINE_INS struct ast_node *ast_binaryop_right(struct ast_node *op);
+
 /* -- unary operator related functions -- */
 
 struct ast_node *ast_unaryop_create(struct inplocation_mark *start,

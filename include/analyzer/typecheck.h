@@ -6,11 +6,13 @@
 
 #include <stdbool.h>
 
-struct symbol_table;
-struct ast_node;
+struct analyzer;
 struct RFstring;
+struct type;
+struct ast_node;
 
-int analyzer_identifier_is_builtin(const struct RFstring *id);
-bool analyzer_type_check(struct ast_node *type, struct symbol_table *st);
+bool analyzer_typecheck(struct analyzer *a);
+
+const struct type *expression_determine_type(struct ast_node *expr);
 
 #endif

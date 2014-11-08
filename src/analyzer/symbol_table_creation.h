@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 struct analyzer;
+struct ast_node;
+struct analyzer_traversal_ctx;
 
 /**
  * Initializes the symbol tables for the nodes where this is needed and also
@@ -14,5 +16,16 @@ struct analyzer;
  * @return      True for success, false otherwise
  */
 bool analyzer_create_symbol_tables(struct analyzer *a);
+
+/**
+ * A callback function to to be called for a node while traversing the AST
+ * during analysis. Switches the traversal context's current symbol table
+ * to the parent's node symbol table
+ *
+ * @param n           The node the callback is called for
+ * @param ctx         The traversal context
+ */
+bool analyzer_make_parent_st_current(struct ast_node *n,
+                                     struct analyzer_traversal_ctx *ctx);
 
 #endif

@@ -10,6 +10,7 @@
 #include <lexer/lexer.h>
 
 #include <analyzer/types.h>
+#include <analyzer/typecheck.h>
 
 
 
@@ -65,7 +66,7 @@ void teardown_analyzer_tests();
 
 #define testsupport_types_equal(t1_, t2_)                               \
     do {                                                                \
-        ck_assert_msg(type_equals(t1_, t2_), "expected type mismatch"); \
+        ck_assert_msg(type_equals(t1_, t2_, NULL), "expected type mismatch"); \
     } while(0)
 
 
@@ -84,6 +85,44 @@ struct type *testsupport_analyzer_type_create_defined(const struct RFstring *id,
 struct type *testsupport_analyzer_type_create_function(struct type *arg,
                                                        struct type *ret);
 
+
+
+
+
+#define testsupport_typecheck_prepare(driver_)                          \
+    do {                                                                \
+        testsupport_analyzer_prepare(driver_,                           \
+                                     "Preparing for the analyzer phase failed"); \
+        ck_assert_msg(analyzer_create_symbol_tables((driver_)->front.analyzer), \
+                      "Creating symbol tables failed");                 \
+    } while (0)
+
+
+#define ck_assert_typecheck_ok(d_)                                      \
+    do {                                                                \
+        if (!analyzer_typecheck((d_)->front.analyzer)) {                \
+            struct RFstringx *tmp_ = front_testdriver_geterrors(d_);    \
+            if (tmp_) {                                                 \
+                ck_abort_msg("Typecheck failed -- with analyzer "       \
+                             "errors\n"RF_STR_PF_FMT,                   \
+                             RF_STR_PF_ARG(tmp_));                      \
+            } else {                                                    \
+                ck_abort_msg("Typecheck failed -- with no analyzer errors"); \
+            }                                                           \
+        }                                                               \
+    } while(0)
+
+#define ck_assert_analyzer_errors(info_, expected_arr_)                   \
+    ck_assert_parser_errors_impl(                                       \
+        info_,                                                          \
+        expected_arr_,                                                  \
+        sizeof(expected_arr_)/sizeof(struct info_msg),                  \
+        __FILE__, __LINE__)
+bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
+                                    struct info_msg *errors,
+                                    unsigned num,
+                                    const char *filename,
+                                    unsigned int line);
 
 
 #endif

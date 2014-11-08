@@ -12,16 +12,18 @@
 
 struct analyzer;
 struct symbol_table;
+struct RFbuffer;
 
+// NOTE: preserve order
 enum builtin_type {
-    BUILTIN_UINT_8 = 0,
-    BUILTIN_INT_8,
-    BUILTIN_UINT_16,
+    BUILTIN_INT_8 = 0,
+    BUILTIN_UINT_8,
     BUILTIN_INT_16,
-    BUILTIN_UINT_32,
+    BUILTIN_UINT_16,
     BUILTIN_INT_32,
-    BUILTIN_UINT_64,
+    BUILTIN_UINT_32,
     BUILTIN_INT_64,
+    BUILTIN_UINT_64,
     BUILTIN_FLOAT_32,
     BUILTIN_FLOAT_64,
     BUILTIN_STRING,
@@ -119,7 +121,51 @@ struct type *type_anonymous_create(struct ast_node *n,
 
 /* -- type comparison functions -- */
 
-bool type_equals(struct type* t1, struct type *t2);
+enum promoted_type {
+    NO_PROMOTION = 0,
+    FIRST_PROMOTION,
+    SECOND_PROMOTION
+};
+
+enum comparison_reason {
+    COMPARISON_REASON_ASSIGNMENT = 0,
+    COMPARISON_REASON_ADDITION,
+};
+struct type_comparison_ctx {
+    //! The reason for the request of
+    enum comparison_reason reason;
+    //! Query to see if any promotion happened and in which type. t1, or t2?
+    enum promoted_type promotion;
+    //! If any promotion happened this shold point to the promoted type
+    struct type *promoted_type;
+};
+
+i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
+                                            enum comparison_reason reason)
+{
+    ctx->reason = reason;
+    ctx->promotion = NO_PROMOTION;
+    ctx->promoted_type = NULL;
+}
+
+/**
+ * Compare two types and see if they are equal or if one can be promoted to
+ * the other
+ * @param t1        Type 1 for comparison
+ * @param t2        Type 2 for comparison
+ * @param ctx       Type comparison context passed by the user of the function.
+ *                  Should be initialized with type_comparison_ctx_init().
+ *                  Check @c type_comparison_ctx for description.
+ *                  Can be NULL if all we want is a simple type check.
+ * @return          True if they are perfectly equal or if one type can be
+ *                  promoted to the other and thus be equal. In the second case
+ *                  @c ctx is set accordingly
+ *                  False for mismatch.
+ */
+bool type_equals(const struct type* t1, const struct type *t2,
+                 struct type_comparison_ctx *ctx);
+
+
 bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl);
@@ -131,6 +177,9 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 
 /* -- type getters -- */
 
+/**
+ * Gets the builtin type of a specific builtin type
+ */
 i_INLINE_DECL enum builtin_type type_builtin(struct type *t)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_BUILTIN,
@@ -138,11 +187,36 @@ i_INLINE_DECL enum builtin_type type_builtin(struct type *t)
     return t->builtin.btype;
 }
 
+/**
+ * Given a built-in type value, returns the type itself
+ */
+const struct type *type_builtin_get_type(enum builtin_type btype);
+
+/**
+ * Given a built-in type value return the type string representation
+ */
+const struct RFstring *type_builtin_get_str(enum builtin_type btype);
+
+/**
+ * Gets a string representation of the type
+ *
+ * @param t             The type whose string representation to get
+ * @param buff          If t is not a builtin type you can pass a buffer
+ *                      here from which to initialize the string representation.
+ *                      User should return the buffer to its previous state
+ *                      right after use. Can also be NULL.
+ * @return              Returns a pointer to the the string representation.
+ *                      If there is an error returns NULL.
+ */
+const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff);
+
 /* -- type traversal functions -- */
 
 typedef bool (*leaf_type_cb) (struct type_leaf *t, void *user_arg);
 
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg);
 
+/* -- various type related functions -- */
+int analyzer_identifier_is_builtin(const struct RFstring *id);
 
 #endif

@@ -13,20 +13,8 @@
 static bool analyzer_create_symbol_tables_do(struct ast_node *n,
                                              void *user_arg);
 
-struct st_creation_ctx {
-    struct analyzer *a;
-    struct symbol_table *current_st;
-};
 
-static inline void st_creation_ctx_init(struct st_creation_ctx *ctx,
-                                        struct analyzer *a)
-{
-    ctx->a = a;
-    ctx->current_st = NULL;
-}
-
-
-static bool analyzer_create_symbol_table_typedecl(struct st_creation_ctx *ctx,
+static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
                                                   struct ast_node *n)
 {
     struct ast_node *search_node;
@@ -58,7 +46,7 @@ static bool analyzer_create_symbol_table_typedecl(struct st_creation_ctx *ctx,
     return true;
 }
 
-static bool analyzer_create_symbol_table_vardecl(struct st_creation_ctx *ctx,
+static bool analyzer_create_symbol_table_vardecl(struct analyzer_traversal_ctx *ctx,
                                                  struct ast_node *n)
 {
     struct ast_node *search_node;
@@ -107,7 +95,7 @@ static bool analyzer_create_symbol_table_vardecl(struct st_creation_ctx *ctx,
     return true;
 }
 
-static bool analyzer_create_symbol_table_fndecl(struct st_creation_ctx *ctx,
+static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
                                                 struct ast_node *n)
 {
     struct symbol_table *st;
@@ -156,7 +144,7 @@ static bool analyzer_create_symbol_tables_do(struct ast_node *n,
                                              void *user_arg)
 {
     struct symbol_table *st;
-    struct st_creation_ctx *ctx = (struct st_creation_ctx*)user_arg;
+    struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
 
     // since this is the very first phase of the analyzer and should happen
     // only once, change node ownership here
@@ -207,10 +195,9 @@ static bool analyzer_create_symbol_tables_do(struct ast_node *n,
     return true;
 }
 
-static bool analyzer_switch_current_symbol_table(struct ast_node *n,
-                                                 void *user_arg)
+bool analyzer_make_parent_st_current(struct ast_node *n,
+                                     struct analyzer_traversal_ctx *ctx)
 {
-    struct st_creation_ctx *ctx = (struct st_creation_ctx*)user_arg;
     switch(n->type) {
         // nodes that change the current symbol table
     case AST_BLOCK:
@@ -231,12 +218,13 @@ static bool analyzer_switch_current_symbol_table(struct ast_node *n,
 
 bool analyzer_create_symbol_tables(struct analyzer *a)
 {
-    struct st_creation_ctx ctx;
-    st_creation_ctx_init(&ctx, a);
+    struct analyzer_traversal_ctx ctx;
+    analyzer_traversal_ctx_init(&ctx, a);
 
-    return analyzer_traverse_tree(a,
-                                  analyzer_create_symbol_tables_do,
-                                  &ctx,
-                                  analyzer_switch_current_symbol_table,
-                                  &ctx);
+    return analyzer_traverse_tree(
+        a,
+        analyzer_create_symbol_tables_do,
+        &ctx,
+        (analyzer_tree_node_cb)analyzer_make_parent_st_current,
+        &ctx);
 }

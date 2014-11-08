@@ -108,6 +108,7 @@ unit_tests_files = [
 
     'analyzer/testsupport_analyzer.c',
     'analyzer/test_symbol_table.c',
+    'analyzer/test_typecheck.c'
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

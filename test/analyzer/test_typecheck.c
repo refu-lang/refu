@@ -1,0 +1,62 @@
+#include <check.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <String/rf_str_core.h>
+#include <Utils/hash.h>
+
+#include <analyzer/analyzer.h>
+#include <analyzer/symbol_table.h>
+#include <analyzer/types.h>
+#include <ast/ast.h>
+#include <ast/block.h>
+#include <ast/identifier.h>
+#include <ast/function.h>
+#include <ast/vardecl.h>
+#include <ast/type.h>
+
+#include "../../src/analyzer/symbol_table_creation.h"
+
+#include "../testsupport_front.h"
+#include "../parser/testsupport_parser.h"
+#include "testsupport_analyzer.h"
+
+#include CLIB_TEST_HELPERS
+
+/* -- simple symbol table functionality tests -- */
+
+START_TEST(test_typecheck_assignment_simple) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u64\n"
+        "name:string\n"
+        "b:f64\n"
+        "a = 456\n"
+        "name = \"Lefteris\"\n"
+        "b = 0.231\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+Suite *analyzer_typecheck_suite_create(void)
+{
+    Suite *s = suite_create("analyzer_type_check");
+
+    TCase *st1 = tcase_create("analyzer_typecheck_assignments");
+    tcase_add_checked_fixture(st1,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+
+    tcase_add_test(st1, test_typecheck_assignment_simple);
+
+
+    suite_add_tcase(s, st1);
+    return s;
+}
+
+

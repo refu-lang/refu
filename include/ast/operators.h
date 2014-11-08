@@ -29,6 +29,18 @@ const struct RFstring * ast_binaryop_opstr(struct ast_node *op);
 
 enum binaryop_type binaryop_type_from_token(struct token *tok);
 
+i_INLINE_DECL struct ast_node *ast_binaryop_left(struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
+    return op->binaryop.left;
+}
+
+i_INLINE_DECL struct ast_node *ast_binaryop_right(struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
+    return op->binaryop.right;
+}
+
 /* -- unary operator functions -- */
 
 struct ast_node *ast_unaryop_create(struct inplocation_mark *start,

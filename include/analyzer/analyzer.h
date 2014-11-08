@@ -11,6 +11,19 @@ struct parser;
 struct inpfile;
 struct type;
 struct symbol_table;
+struct analyzer;
+
+struct  analyzer_traversal_ctx {
+    struct analyzer *a;
+    struct symbol_table *current_st;
+};
+
+i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
+                                               struct analyzer *a)
+{
+    ctx->a = a;
+    ctx->current_st = NULL;
+}
 
 struct analyzer {
     struct info_ctx *info;
@@ -29,6 +42,8 @@ struct analyzer {
 
     bool have_semantic_err;
 };
+
+
 
 struct analyzer *analyzer_create(struct info_ctx *info);
 bool analyzer_init(struct analyzer *a, struct info_ctx *info);

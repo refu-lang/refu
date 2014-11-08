@@ -8,9 +8,13 @@
 #include <ast/ast.h>
 #include <parser/parser.h>
 #include <analyzer/types.h>
+#include <analyzer/typecheck.h>
 
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
 #define TYPES_POOL_CHUNK_SIZE 2048
+
+i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
+                                              struct analyzer *a);
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
@@ -107,6 +111,7 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
     analyzer_create_symbol_tables(a);
 
     //TODO: type check
+    analyzer_typecheck(a);
 
     //TODO: finalize ast
     return true;

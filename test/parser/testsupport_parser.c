@@ -5,7 +5,7 @@
 
 #include <ast/identifier.h>
 
-#define ck_parserr_check_abort(file_, line_, msg_, ...)                 \
+#define ck_parser_check_abort(file_, line_, msg_, ...)                 \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
 
@@ -24,7 +24,7 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
 
         // check for error message string
         if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
-            ck_parserr_check_abort(
+            ck_parser_check_abort(
                 filename, line,
                 "For parser error number %u: Got:\n\""RF_STR_PF_FMT"\"\n"
                 "but expected:\n\""RF_STR_PF_FMT"\"", i,
@@ -34,7 +34,7 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
 
         // check for error message location
         if (!inplocation_mark_equal(&msg->start_mark, &exp_errors[i].start_mark)) {
-            ck_parserr_check_abort(
+            ck_parser_check_abort(
                 filename, line,
                 "For parser error number %u got different start location marks. Got:\n"
                 INPLOCMARKS_FMT " but"
@@ -48,7 +48,7 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
 
         if (info_msg_has_end_mark(msg) &&
             !inplocation_mark_equal(&msg->end_mark, &exp_errors[i].end_mark)) {
-            ck_parserr_check_abort(
+            ck_parser_check_abort(
                 filename, line,
                 "For parser error number %u got different end location marks. Got:\n"
                 INPLOCMARKS_FMT " but"
