@@ -193,8 +193,9 @@ START_TEST(test_acc_typeclass_err1) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the typeclass name after 'class'",
             0, 6)
     };
@@ -218,8 +219,9 @@ START_TEST(test_acc_typeclass_err2) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected at least one function declaration inside the body of "
             "typeclass \"pointers\" after '{'",
             0, 15)
@@ -242,12 +244,14 @@ START_TEST(test_acc_typeclass_err3) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected either a ',' or a '>' at generic declaration",
             0, 20),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a generic declaration for typeclass \"adder\" "
             "after identifier",
             0, 10)
@@ -272,8 +276,9 @@ START_TEST(test_acc_typeclass_err4) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected '{' at \"pointers\" typeclass "
             "declaration after identifier",
             0, 13)
@@ -297,8 +302,9 @@ START_TEST(test_acc_typeclass_err5) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected '}' at the end of \"pointers\" typeclass declaration",
             1, 10)
     };
@@ -322,12 +328,14 @@ START_TEST(test_acc_typeclass_err6) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected ')' at function declaration after '('",
             1, 8),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a proper function declaration "
             "inside typeclass \"pointers\"",
             2, 0),

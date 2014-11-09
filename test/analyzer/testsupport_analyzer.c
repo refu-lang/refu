@@ -189,8 +189,24 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
             return false;
         }
 
+        // check for message type
+        if (msg->type != exp_errors[i].type) {
+            ck_analyzer_check_abort(
+                filename, line,
+                "For analyzer error number %u got different message types", i);
+            return false;
+        }
+
 
         i ++;
     }
+
+    if (i != num) {
+            ck_analyzer_check_abort(
+                filename, line,
+                "Expected %u analyzer messages but found %u", num, i);
+            return false;
+    }
+
     return true;
 }

@@ -117,9 +117,11 @@ START_TEST(test_acc_typedesc_fail3) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(&d->front.file,
-                            "Expected a '(' or identifier after ','",
-                            0, 8)
+        TESTSUPPORT_INFOMSG_INIT_START(
+            &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a '(' or identifier after ','",
+            0, 8)
     };
     ck_assert_parser_errors(d->front.info, errors);
 }END_TEST

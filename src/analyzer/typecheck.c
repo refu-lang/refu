@@ -1,6 +1,7 @@
 #include <analyzer/typecheck.h>
 
 #include <Utils/build_assert.h>
+#include <Utils/bits.h>
 #include <Persistent/buffers.h>
 
 #include <ast/ast.h>
@@ -15,68 +16,95 @@
 #include "symbol_table_creation.h" // for analyzer_make_parent_st_current()
 #include "analyzer_utils.h"
 
-static bool analyzer_typecheck_binary_op(struct ast_node *n,
-                                         struct analyzer_traversal_ctx *ctx)
+static bool analyzer_typecheck_assignment(struct ast_node *n,
+                                          struct ast_node *left,
+                                          struct ast_node *right,
+                                          struct analyzer_traversal_ctx *ctx)
 {
-    struct ast_node *left = ast_binaryop_left(n);
-    struct ast_node *right = ast_binaryop_right(n);
     const struct type *tright;
     const struct type *tleft;
     struct symbol_table_record *rec;
     struct type_comparison_ctx cmp_ctx;
     uint32_t buffer_index;
     bool at_first;
+    bool ret = false;
 
+    buffer_index = rf_buffer_index(TSBUFFA);
+    // left side of an assignment should be an identifier (?)
+    if (left->type != AST_IDENTIFIER) {
+        analyzer_err(ctx->a, ast_node_startmark(left),
+                     ast_node_endmark(left),
+                     "Expected an identifier as left part of the assignment "
+                     "but found a \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(ast_node_str(left)));
+        return false;
+    }
+
+    rec = symbol_table_lookup_record(ctx->current_st,
+                                     ast_identifier_str(left),
+                                     &at_first);
+
+    if (!rec) {
+        analyzer_err(ctx->a, ast_node_startmark(left),
+                     ast_node_endmark(left),
+                     "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
+                     RF_STR_PF_ARG(ast_identifier_str(left)));
+        return false;
+    }
+
+    tright = expression_determine_type(right);
+    tleft = symbol_table_record_type(rec);
+
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
+    if (!type_equals(tleft, tright, &cmp_ctx)) {
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Assignment between incompatible types. Can't assign "
+                     "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                     RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+        goto end;
+    }
+
+    if (ctx->a->warn_on_implicit_conversions) {
+
+        if (RF_BITFLAG_ON(cmp_ctx.conversion, SIGNED_TO_UNSIGNED)) {
+            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                          "Assignment from a signed to an unsigned type."
+                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                          RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                          RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+        }
+
+        if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
+            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                          "Assignment from a larger to a smaller builtin type."
+                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                          RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                          RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+        }
+    }
+
+
+    ret = true;
+  end:
+    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    return ret;
+}
+static bool analyzer_typecheck_binary_op(struct ast_node *n,
+                                         struct analyzer_traversal_ctx *ctx)
+{
+    struct ast_node *left = ast_binaryop_left(n);
+    struct ast_node *right = ast_binaryop_right(n);
 
     switch (ast_binaryop_op(n)) {
     case BINARYOP_ASSIGN:
-        // left side of an assignment should be an identifier (?)
-        if (left->type != AST_IDENTIFIER) {
-            analyzer_err(ctx->a, ast_node_startmark(left),
-                         ast_node_endmark(left),
-                         "Expected an identifier as left part of the assignment "
-                         "but found a \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(ast_node_str(left)));
-            return false;
-        }
-
-        rec = symbol_table_lookup_record(ctx->current_st,
-                                         ast_identifier_str(left),
-                                         &at_first);
-
-        if (!rec) {
-            analyzer_err(ctx->a, ast_node_startmark(left),
-                         ast_node_endmark(left),
-                         "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
-                         RF_STR_PF_ARG(ast_identifier_str(left)));
-            return false;
-        }
-
-        tright = expression_determine_type(right);
-        tleft = symbol_table_record_type(rec);
-
-        type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
-        if (!type_equals(tleft, tright, &cmp_ctx)) {
-            buffer_index = rf_buffer_index(TSBUFFA);
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Assignment between incompatible types. Can't assign "
-                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\".",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
-            goto free_strings;
-        }
-
-        // TODO: Here we can check if strange promotions happened and issue warnings
+        return analyzer_typecheck_assignment(n, left, right, ctx);
     default:
         // nothing to do
         break;
     }
 
     return true;
-
-free_strings:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
-    return false;
 }
 
 static bool analyzer_typecheck_do(struct ast_node *n,

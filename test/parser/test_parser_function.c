@@ -193,8 +193,9 @@ START_TEST(test_acc_fndecl_err1) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the function name after 'fn'",
             0, 3)
     };
@@ -216,8 +217,9 @@ START_TEST(test_acc_fndecl_err2) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected '(' at function declaration",
             0, 8)
     };
@@ -239,8 +241,9 @@ START_TEST(test_acc_fndecl_err3) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected ')' at function declaration after type description",
             0, 13)
     };
@@ -262,12 +265,14 @@ START_TEST(test_acc_fndecl_err4) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 14),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected either a type description for the function's arguments "
             "or ')' after '('",
             0, 8),
@@ -290,8 +295,9 @@ START_TEST(test_acc_fndecl_err5) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
             0, 17)
@@ -314,16 +320,19 @@ START_TEST(test_acc_fndecl_err6) {
         "a syntax error should have been reported");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 25),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a type description after '('",
             0, 19),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
             0, 17)

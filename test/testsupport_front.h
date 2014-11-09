@@ -117,4 +117,20 @@ bool check_ast_match_impl(struct ast_node *got,
                           const char* filename,
                           unsigned int line);
 
+#define TESTSUPPORT_INFOMSG_INIT_START(file_, type_, msg_, sl_, sc_)    \
+    {                                                                   \
+        .s = RF_STRING_STATIC_INIT(msg_),                               \
+            .type = type_,                                              \
+            .start_mark = LOCMARK_INIT(file_, sl_, sc_)                 \
+    }
+
+
+#define TESTSUPPORT_INFOMSG_INIT_BOTH(file_, type_, msg_, sl_, sc_, el_, ec_) \
+    {                                                                   \
+        .s = RF_STRING_STATIC_INIT(msg_),                               \
+            .type = type_,                                              \
+            .start_mark = LOCMARK_INIT(file_, sl_, sc_),                \
+            .end_mark = LOCMARK_INIT(file_, el_, ec_)                   \
+    }
+
 #endif

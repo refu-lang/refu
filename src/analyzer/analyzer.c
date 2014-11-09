@@ -38,6 +38,8 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 
     rf_ilist_head_init(&a->anonymous_types);
     rf_ilist_head_init(&a->types);
+
+    a->warn_on_implicit_conversions = DEFAULT_WARN_ON_IMPLICIT_CONVERSIONS;
     return true;
 }
 

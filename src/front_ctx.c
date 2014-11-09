@@ -1,14 +1,15 @@
 #include <front_ctx.h>
 
+#include <compiler_args.h>
 #include <info/info.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
 
 bool front_ctx_init(struct front_ctx *ctx,
-                    const struct RFstring *filename)
+                    const struct compiler_args *args)
 {
-    if (!inpfile_init(&ctx->file, filename)) {
+    if (!inpfile_init(&ctx->file, &args->input)) {
         goto err;
     }
 
@@ -47,11 +48,11 @@ err:
     return false;
 }
 
-struct front_ctx *front_ctx_create(const struct RFstring *filename)
+struct front_ctx *front_ctx_create(const struct compiler_args *args)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, filename)) {
+    if (!front_ctx_init(ret, args)) {
         free(ret);
         return NULL;
     }
@@ -89,3 +90,8 @@ bool front_ctx_process(struct front_ctx *ctx)
 
     return true;
 }
+
+
+/* -- some convenience setters/getters --*/
+i_INLINE_INS void front_ctx_set_warn_on_implicit_conversions(struct front_ctx *ctx,
+                                                             bool v);

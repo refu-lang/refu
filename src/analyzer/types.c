@@ -1,6 +1,7 @@
 #include <analyzer/types.h>
 
 #include <Utils/build_assert.h>
+#include <Utils/bits.h>
 #include <Persistent/buffers.h>
 
 #include <analyzer/analyzer.h>
@@ -326,6 +327,17 @@ struct type *type_anonymous_create(struct ast_node *n,
     return t;
 }
 
+/* -- type predicates - static for now */
+static inline bool type_builtin_int_is_unsigned(const struct type_builtin *t)
+{
+    return t->btype % 2 != 0;
+}
+
+static inline bool type_builtin_is_unsigned(const struct type_builtin *t)
+{
+    return t->btype <= BUILTIN_UINT_64 && type_builtin_int_is_unsigned(t);
+}
+
 /* -- type comparison functions -- */
 
 i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
@@ -365,7 +377,25 @@ static inline bool type_builtin_equals(const struct type_builtin *t1,
 
     if (t1->btype <= BUILTIN_UINT_64 &&
         t2->btype <= BUILTIN_UINT_64) {
-        // they are both int/uint types, we can work with it
+
+        if (ctx->reason == COMPARISON_REASON_ASSIGNMENT) {
+            if (type_builtin_int_is_unsigned(t1) &&
+                !type_builtin_is_unsigned(t2)) {
+
+                RF_BITFLAG_SET(ctx->conversion, SIGNED_TO_UNSIGNED);
+            }
+
+            if (t1->btype < t2->btype) {
+                RF_BITFLAG_SET(ctx->conversion, LARGER_TO_SMALLER);
+            }
+        }
+        return true;
+    }
+
+
+    if (t1->btype >= BUILTIN_FLOAT_32 && t1->btype <= BUILTIN_FLOAT_64 &&
+        t2->btype >= BUILTIN_FLOAT_32 && t2->btype <= BUILTIN_FLOAT_64) {
+        // they are both floats, we can work with it
         return true;
     }
 

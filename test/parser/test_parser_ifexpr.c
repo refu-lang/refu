@@ -308,8 +308,9 @@ START_TEST(test_acc_ifexpr_errors_1) {
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected an expression after 'if'",
             0, 1),
     };
@@ -331,8 +332,9 @@ START_TEST(test_acc_ifexpr_errors_2) {
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a block after \"if\"'s conditional expression",
             0, 8),
     };
@@ -354,12 +356,14 @@ START_TEST(test_acc_ifexpr_errors_3) {
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected an expression or a '}' at block end",
             2, 7),
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a block after 'else'",
             2, 5),
     };
@@ -383,8 +387,9 @@ START_TEST(test_acc_ifexpr_errors_4) {
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected an expression after 'elif'",
             2, 5),
     };
@@ -410,8 +415,9 @@ START_TEST(test_acc_ifexpr_errors_5) {
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
-        TESTPARSER_MSG_INIT_START(
+        TESTSUPPORT_INFOMSG_INIT_START(
             &d->front.file,
+            MESSAGE_SYNTAX_ERROR,
             "Expected a block after \"elif\"'s conditional expression",
             2, 21),
     };

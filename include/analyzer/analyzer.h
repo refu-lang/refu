@@ -39,8 +39,13 @@ struct analyzer {
      */
     struct RFilist_head types;
 
-
     bool have_semantic_err;
+
+    /* -- options -- */
+
+    /* Warn if there is an implicit type conversion that can cause loss of data */
+    #define DEFAULT_WARN_ON_IMPLICIT_CONVERSIONS false
+    bool warn_on_implicit_conversions;
 };
 
 
@@ -86,6 +91,15 @@ i_INLINE_DECL bool analyzer_has_semantic_error_reset(struct analyzer *a)
                            (end_),                \
                            __VA_ARGS__);          \
         analyzer_set_semantic_error(analyzer_);         \
+    } while(0)
+
+#define analyzer_warn(analyzer_, start_, end_, ...)     \
+    do {                                                \
+        i_info_ctx_add_msg((analyzer_)->info,           \
+                           MESSAGE_SEMANTIC_WARNING,    \
+                           (start_),                    \
+                           (end_),                      \
+                           __VA_ARGS__);                \
     } while(0)
 
 #endif

@@ -121,10 +121,10 @@ struct type *type_anonymous_create(struct ast_node *n,
 
 /* -- type comparison functions -- */
 
-enum promoted_type {
-    NO_PROMOTION = 0,
-    FIRST_PROMOTION,
-    SECOND_PROMOTION
+enum conversion_type {
+    NO_CONVERSION = 0x0,
+    SIGNED_TO_UNSIGNED = 0x1,
+    LARGER_TO_SMALLER = 0X2,
 };
 
 enum comparison_reason {
@@ -134,18 +134,18 @@ enum comparison_reason {
 struct type_comparison_ctx {
     //! The reason for the request of
     enum comparison_reason reason;
-    //! Query to see if any promotion happened and in which type. t1, or t2?
-    enum promoted_type promotion;
-    //! If any promotion happened this shold point to the promoted type
-    struct type *promoted_type;
+    //! Query to see what conversions happened. Can contain multiple bitflags
+    enum conversion_type conversion;
+    //! If any conversion happened this should point to the converted type
+    struct type *converted_type;
 };
 
 i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                             enum comparison_reason reason)
 {
     ctx->reason = reason;
-    ctx->promotion = NO_PROMOTION;
-    ctx->promoted_type = NULL;
+    ctx->conversion = NO_CONVERSION;
+    ctx->converted_type = NULL;
 }
 
 /**
@@ -157,10 +157,9 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
  *                  Should be initialized with type_comparison_ctx_init().
  *                  Check @c type_comparison_ctx for description.
  *                  Can be NULL if all we want is a simple type check.
- * @return          True if they are perfectly equal or if one type can be
- *                  promoted to the other and thus be equal. In the second case
- *                  @c ctx is set accordingly
- *                  False for mismatch.
+ * @return          True if they are perfectly equal or if they can be equal
+ *                  through conversions. In the second case @c ctx is set
+ *                  accordingly. False for mismatch.
  */
 bool type_equals(const struct type* t1, const struct type *t2,
                  struct type_comparison_ctx *ctx);

@@ -6,6 +6,7 @@
 #include <String/rf_str_core.h>
 #include <Utils/hash.h>
 
+#include <info/msg.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include <analyzer/types.h>
@@ -43,6 +44,31 @@ START_TEST(test_typecheck_assignment_simple) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
+START_TEST(test_typecheck_assignment_conversion) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u8\n"
+        "b:f32\n"
+        "a = 456\n"
+        "b = 0.231\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            &d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Assignment from a larger to a smaller builtin type."
+            "\"u64\" to \"u8\"",
+            2, 0, 2, 6)
+    };
+
+    // set conversion warnings on
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_with_messages(d, true, messages);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -53,6 +79,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
 
     tcase_add_test(st1, test_typecheck_assignment_simple);
+    tcase_add_test(st1, test_typecheck_assignment_conversion);
 
 
     suite_add_tcase(s, st1);
