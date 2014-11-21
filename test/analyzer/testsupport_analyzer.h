@@ -93,7 +93,7 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
     do {                                                                \
         testsupport_analyzer_prepare(driver_,                           \
                                      "Preparing for the analyzer phase failed"); \
-        ck_assert_msg(analyzer_create_symbol_tables((driver_)->front.analyzer), \
+        ck_assert_msg(analyzer_first_pass((driver_)->front.analyzer), \
                       "Creating symbol tables failed");                 \
     } while (0)
 

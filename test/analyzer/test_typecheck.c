@@ -17,7 +17,7 @@
 #include <ast/vardecl.h>
 #include <ast/type.h>
 
-#include "../../src/analyzer/symbol_table_creation.h"
+#include "../../src/analyzer/analyzer_pass1.h"
 
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"

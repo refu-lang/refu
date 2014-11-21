@@ -41,9 +41,12 @@ refu_src = [
     'analyzer/analyzer.c',
     'analyzer/analyzer_utils.c',
     'analyzer/symbol_table.c',
-    'analyzer/symbol_table_creation.c',
+    'analyzer/analyzer_pass1.c',
     'analyzer/typecheck.c',
-    'analyzer/types.c'
+    'analyzer/types.c',
+    'analyzer/string_table.c',
+
+    'serializer/serializer.c'
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

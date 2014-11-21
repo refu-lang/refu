@@ -13,7 +13,7 @@
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
-#include "symbol_table_creation.h" // for analyzer_make_parent_st_current()
+#include "analyzer_pass1.h" // for analyzer_make_parent_st_current()
 #include "analyzer_utils.h"
 
 static bool analyzer_typecheck_assignment(struct ast_node *n,

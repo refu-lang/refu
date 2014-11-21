@@ -1,4 +1,4 @@
-#include "symbol_table_creation.h"
+a#include "analyzer_pass1.h"
 
 #include <analyzer/analyzer.h>
 
@@ -10,8 +10,8 @@
 
 #include "analyzer_utils.h"
 
-static bool analyzer_create_symbol_tables_do(struct ast_node *n,
-                                             void *user_arg);
+static bool analyzer_first_pass_do(struct ast_node *n,
+                                   void *user_arg);
 
 
 static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
@@ -140,15 +140,11 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     return true;
 }
 
-static bool analyzer_create_symbol_tables_do(struct ast_node *n,
-                                             void *user_arg)
+static bool analyzer_first_pass_do(struct ast_node *n,
+                                   void *user_arg)
 {
     struct symbol_table *st;
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
-
-    // since this is the very first phase of the analyzer and should happen
-    // only once, change node ownership here
-    n->owner = AST_OWNEDBY_ANALYZER;
 
     // act depending on the node type
     switch(n->type) {
@@ -187,11 +183,20 @@ static bool analyzer_create_symbol_tables_do(struct ast_node *n,
             return false;
         }
         break;
+    case AST_IDENTIFIER:
+        // create identifier hash and dissasociate from the file
+        break;
+    case AST_STRING_LITERAL:
+        // create literal hash and dissasociate from the file
+        break;
     default:
         // do nothing
         break;
     }
 
+    // since this is the very first pass of the analyzer and should happen
+    // only once, change node ownership here
+    n->owner = AST_OWNEDBY_ANALYZER_PASS1;
     return true;
 }
 
@@ -216,14 +221,14 @@ bool analyzer_make_parent_st_current(struct ast_node *n,
     return true;
 }
 
-bool analyzer_create_symbol_tables(struct analyzer *a)
+bool analyzer_first_pass(struct analyzer *a)
 {
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
     return analyzer_traverse_tree(
         a,
-        analyzer_create_symbol_tables_do,
+        analyzer_first_pass_do,
         &ctx,
         (analyzer_tree_node_cb)analyzer_make_parent_st_current,
         &ctx);

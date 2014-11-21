@@ -99,7 +99,7 @@ void ast_node_destroy(struct ast_node *n)
     struct ast_node *tmp;
 
     /* type specific destruction  -- only if owned by analyzer and after */
-    if (n->owner >= AST_OWNEDBY_ANALYZER) {
+    if (n->owner >= AST_OWNEDBY_ANALYZER_PASS1) {
         switch(n->type) {
         case AST_ROOT:
             symbol_table_deinit(ast_root_symbol_table_get(n));

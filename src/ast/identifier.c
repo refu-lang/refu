@@ -1,7 +1,10 @@
 #include <ast/identifier.h>
 
 #include <ast/ast.h>
+#include <analyzer/analyzer.h>
+
 #include <Utils/sanity.h>
+
 
 
 struct ast_node *ast_identifier_create(struct inplocation *loc)
@@ -34,6 +37,24 @@ const struct RFstring *ast_identifier_str(const struct ast_node *n)
     return ast_xidentifier_str(n);
 }
 
+bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
+{
+    return string_table_add_str(&a->identifiers_table,
+                                &n->identifier.string,
+                                &n->identifier.hash);
+}
+
+uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
+    if (n->owner == AST_OWNEDBY_PARSER) {
+        ast_identifier_hash_create(n, a);
+    }
+    return n->identifier.hash;
+}
+
+
+/* -- xidentifier functions -- */
 
 struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
                                         struct inplocation_mark *end,

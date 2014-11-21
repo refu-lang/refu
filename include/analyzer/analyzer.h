@@ -7,6 +7,8 @@
 #include <Definitions/inline.h>
 #include <Utils/fixed_memory_pool.h>
 
+#include <analyzer/string_table.h>
+
 struct parser;
 struct inpfile;
 struct type;
@@ -38,6 +40,9 @@ struct analyzer {
      * already having that Information
      */
     struct RFilist_head types;
+
+    struct string_table identifiers_table;
+    struct string_table string_literals_table;
 
     bool have_semantic_err;
 

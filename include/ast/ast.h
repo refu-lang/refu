@@ -67,7 +67,7 @@ enum ast_type {
 
 enum ast_owner {
     AST_OWNEDBY_PARSER = 0,
-    AST_OWNEDBY_ANALYZER = 1,
+    AST_OWNEDBY_ANALYZER_PASS1 = 1,
 };
 
 struct ast_node {

@@ -28,7 +28,7 @@ int main(int argc,char** argv)
         goto err;
     }
 
-    if (!front_ctx_init(&front, &args->input)) {
+    if (!front_ctx_init(&front, args)) {
         ERROR("Failure at frontend initialization");
         rc = 1;
         goto err;

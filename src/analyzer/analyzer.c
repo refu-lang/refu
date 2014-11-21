@@ -1,6 +1,6 @@
 #include <analyzer/analyzer.h>
 
-#include "symbol_table_creation.h"
+#include "analyzer_pass1.h"
 
 #include <Utils/memory.h>
 #include <Utils/fixed_memory_pool.h>
@@ -39,6 +39,14 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
     rf_ilist_head_init(&a->anonymous_types);
     rf_ilist_head_init(&a->types);
 
+    if (!string_table_init(&a->identifiers_table)) {
+        return false;
+    }
+    if (!string_table_init(&a->string_literals_table)) {
+        return false;
+    }
+
+
     a->warn_on_implicit_conversions = DEFAULT_WARN_ON_IMPLICIT_CONVERSIONS;
     return true;
 }
@@ -61,6 +69,8 @@ void analyzer_deinit(struct analyzer *a)
 {
     rf_fixed_memorypool_deinit(&a->symbol_table_records_pool);
     rf_fixed_memorypool_deinit(&a->types_pool);
+    string_table_deinit(&a->identifiers_table);
+    string_table_deinit(&a->string_literals_table);
 }
 
 void analyzer_destroy(struct analyzer *a)
@@ -110,7 +120,7 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
     a->root = parser_yield_ast_root(parser);
 
     // create symbol tables and change ast nodes ownership
-    analyzer_create_symbol_tables(a);
+    analyzer_first_pass(a);
 
     //TODO: type check
     analyzer_typecheck(a);
