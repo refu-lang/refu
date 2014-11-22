@@ -1,4 +1,4 @@
-a#include "analyzer_pass1.h"
+#include "analyzer_pass1.h"
 
 #include <analyzer/analyzer.h>
 
@@ -185,9 +185,14 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         break;
     case AST_IDENTIFIER:
         // create identifier hash and dissasociate from the file
+        RF_ASSERT(n->owner == AST_OWNEDBY_PARSER,
+                  "Attempting to create identifier hash for node in a wrong state of processing");
+        if (!ast_identifier_hash_create(n, ctx->a)) {
+            return false;
+        }
         break;
     case AST_STRING_LITERAL:
-        // create literal hash and dissasociate from the file
+        // TODO: create literal hash and dissasociate from the file
         break;
     default:
         // do nothing

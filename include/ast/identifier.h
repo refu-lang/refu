@@ -22,9 +22,17 @@ struct ast_node *ast_identifier_create(struct inplocation *loc);
 void ast_identifier_print(struct ast_node *n, int depth);
 
 /**
- * String getter for both an identifier and an xidentifier's string
+ * String getter for both an identifier and an xidentifier's string when
+ * the identifier is still before the first pass of the analyzer
  */
 const struct RFstring *ast_identifier_str(const struct ast_node *n);
+
+/**
+ * String getter for both an identifier and an xidentifier's string when
+ * the identifier has been indexed by the analyzer
+ */
+const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
+                                                   const struct analyzer *a);
 
 bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a);
 uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a);

@@ -37,6 +37,20 @@ const struct RFstring *ast_identifier_str(const struct ast_node *n)
     return ast_xidentifier_str(n);
 }
 
+const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
+                                                   const struct analyzer *a)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER || AST_XIDENTIFIER);
+    RF_ASSERT(n->owner >= AST_OWNEDBY_ANALYZER_PASS1,
+              "calling function at wrong part of processing pipeline");
+
+    if (n->type == AST_IDENTIFIER) {
+        return string_table_get_str(&a->identifiers_table, n->identifier.hash);
+    }
+    return string_table_get_str(&a->identifiers_table,
+                                n->xidentifier.id->identifier.hash);
+}
+
 bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
 {
     return string_table_add_str(&a->identifiers_table,

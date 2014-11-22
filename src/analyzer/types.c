@@ -645,7 +645,7 @@ const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff)
         break;
     }
 
-
+    return NULL;
 }
 
 /* -- type traversal functions -- */

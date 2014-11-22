@@ -2,21 +2,32 @@
 
 #include <Utils/hash.h>
 #include <Utils/log.h>
+#include <Utils/memory.h>
 #include <String/rf_str_core.h>
 
-static void string_table_string_destroy(void* string, void *user_arg)
+struct string_table_record {
+    struct RFstring string;
+    uint32_t hash;
+};
+
+
+static void string_table_record_destroy(void* record, void *user_arg)
 {
-    rf_string_destroy(string);
+    struct string_table_record *rec = record;
+    rf_string_deinit(&rec->string);
+    free(rec);
 }
 
 static size_t rehash_fn(const void *e, void *user_arg)
 {
-    return rf_hash_str_stable(e, 0);
+    const struct string_table_record *rec = e;
+    return rf_hash_str_stable(&rec->string, 0);
 }
 
-static bool cmp_fn(const void *e, void *other_str)
+static bool cmp_fn(const void *e, void *hash)
 {
-    return rf_string_equal(e, other_str);
+    const struct string_table_record *rec = e;
+    return rec->hash == *(uint32_t*)hash;
 }
 
 bool string_table_init(struct string_table *t)
@@ -28,37 +39,59 @@ bool string_table_init(struct string_table *t)
 void string_table_deinit(struct string_table *t)
 {
     // free memory of all strings
-    htable_iterate_values(&t->table, string_table_string_destroy, NULL);
+    htable_iterate_values(&t->table, string_table_record_destroy, NULL);
     htable_clear(&t->table);
 }
 
 bool string_table_add_str(struct string_table *t,
-                          struct RFstring *input,
+                          const struct RFstring *input,
                           uint32_t *out_hash)
 {
-    struct RFstring *str;
+    struct string_table_record *rec;
     uint32_t hash = rf_hash_str_stable(input, 0);
 
     // first see if it's already in the table
-    str = htable_get(&t->table, hash, cmp_fn, input);
-    if (str) {
-        *out_hash = hash;
+    rec = htable_get(&t->table, hash, cmp_fn, &hash);
+    if (rec) {
+        *out_hash = rec->hash;
         return true;
     }
 
-    str = rf_string_copy_out(input);
-    if (!str) {
+    // create the string table record
+    RF_MALLOC(rec, sizeof(*rec), return false);
+    if (!rec) {
         RF_ERRNOMEM();
         return false;
     }
+    if (!rf_string_copy_in(&rec->string, input)) {
+        RF_ERRNOMEM();
+        return false;
+    }
+    rec->hash = hash;
 
-    if (!htable_add(&t->table, hash, str)) {
-        rf_string_destroy(str);
+    // and add it
+    if (!htable_add(&t->table, hash, rec)) {
+        RF_ERROR("Could not add hash of "RF_STR_PF_FMT" to string table",
+                 RF_STR_PF_ARG(input));
+        string_table_record_destroy(rec, NULL);
         return false;
     }
 
     *out_hash = hash;
     return true;
+}
+
+const struct RFstring *string_table_get_str(const struct string_table *t,
+                                            uint32_t hash)
+{
+    const struct string_table_record *rec;
+
+    rec = htable_get(&t->table, hash, cmp_fn, &hash);
+    if (!rec) {
+        return NULL;
+    }
+
+    return &rec->string;
 }
 
 
