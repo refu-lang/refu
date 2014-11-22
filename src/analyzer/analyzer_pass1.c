@@ -7,6 +7,7 @@
 #include <ast/type.h>
 #include <ast/vardecl.h>
 #include <ast/function.h>
+#include <ast/string_literal.h>
 
 #include "analyzer_utils.h"
 
@@ -186,13 +187,20 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     case AST_IDENTIFIER:
         // create identifier hash and dissasociate from the file
         RF_ASSERT(n->owner == AST_OWNEDBY_PARSER,
-                  "Attempting to create identifier hash for node in a wrong state of processing");
+                  "Attempting to create identifier hash for node in a wrong "
+                  "state of processing");
         if (!ast_identifier_hash_create(n, ctx->a)) {
             return false;
         }
         break;
     case AST_STRING_LITERAL:
-        // TODO: create literal hash and dissasociate from the file
+        // create literal hash and dissasociate from the file
+        RF_ASSERT(n->owner == AST_OWNEDBY_PARSER,
+                  "Attempting to create literal hash for node in a wrong state "
+                  "of processing");
+        if (!ast_string_literal_hash_create(n, ctx->a)) {
+            return false;
+        }
         break;
     default:
         // do nothing

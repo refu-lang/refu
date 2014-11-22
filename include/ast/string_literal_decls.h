@@ -5,5 +5,6 @@
 
 struct ast_string_literal {
     struct RFstring string;
+    uint32_t hash;
 };
 #endif
