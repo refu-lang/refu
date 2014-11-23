@@ -2,21 +2,37 @@
 
 #include <Utils/memory.h>
 
-bool serializer_init(struct serializer *sr, struct ast_node *root)
+#include <analyzer/analyzer.h>
+
+bool serializer_init(struct serializer *sr)
 {
-    sr->root = root;
+    // TODO: can delete if nothing needs initializing
     return true;
 }
 
-struct serializer *serializer_create(struct ast_node *root)
+struct serializer *serializer_create()
 {
     struct serializer *sr;
     RF_MALLOC(sr, sizeof(*sr), return NULL);
 
-    if (!serializer_init(sr, root)) {
+    if (!serializer_init(sr)) {
         free(sr);
         return NULL;
     }
 
     return sr;
+}
+
+void serializer_destroy(struct serializer *sr)
+{
+    free(sr);
+}
+
+bool serializer_serialize_file(struct serializer *sr, struct analyzer *a)
+{
+    // acquire the root of the AST from the parser
+    sr->root = analyzer_yield_ast_root(a);
+
+    //TODO
+    return true;
 }

@@ -7,6 +7,7 @@
 struct info_ctx;
 struct lexer;
 struct parser;
+struct serializer;
 struct compiler_args;
 
 /**
@@ -20,6 +21,7 @@ struct front_ctx {
     struct lexer *lexer;
     struct parser *parser;
     struct analyzer *analyzer;
+    struct serializer *serializer;
     struct info_ctx *info;
 };
 

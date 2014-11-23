@@ -5,6 +5,7 @@
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
+#include <serializer/serializer.h>
 
 bool front_ctx_init(struct front_ctx *ctx,
                     const struct compiler_args *args)
@@ -33,8 +34,15 @@ bool front_ctx_init(struct front_ctx *ctx,
         goto free_parser;
     }
 
+    ctx->serializer = serializer_create();
+    if (!ctx->serializer) {
+        goto free_analyzer;
+    }
+
     return true;
 
+free_analyzer:
+    analyzer_destroy(ctx->analyzer);
 free_parser:
     parser_destroy(ctx->parser);
 free_lexer:
@@ -66,6 +74,7 @@ void front_ctx_deinit(struct front_ctx *ctx)
     parser_destroy(ctx->parser);
     info_ctx_destroy(ctx->info);
     analyzer_destroy(ctx->analyzer);
+    serializer_destroy(ctx->serializer);
 }
 
 void front_ctx_destroy(struct front_ctx *ctx)
@@ -85,6 +94,11 @@ bool front_ctx_process(struct front_ctx *ctx)
     }
 
     if (!analyzer_analyze_file(ctx->analyzer, ctx->parser)) {
+        return false;
+    }
+
+    // TODO
+    if (!serializer_serialize_file(ctx->serializer, ctx->analyzer)) {
         return false;
     }
 

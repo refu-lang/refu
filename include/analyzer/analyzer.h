@@ -87,6 +87,14 @@ i_INLINE_DECL bool analyzer_has_semantic_error_reset(struct analyzer *a)
     return ret;
 }
 
+i_INLINE_DECL struct ast_node *analyzer_yield_ast_root(struct analyzer *analyzer)
+{
+    struct ast_node *root;
+    root = analyzer->root;
+    analyzer->root = NULL;
+    return root;
+}
+
 // TODO: Change both this, the lexer and the parser macro to something better
 #define analyzer_err(analyzer_, start_, end_, ...) \
     do {                                          \

@@ -125,7 +125,6 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
     //TODO: type check
     analyzer_typecheck(a);
 
-    //TODO: finalize ast
     return true;
 }
 
@@ -133,3 +132,4 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
 i_INLINE_INS void analyzer_set_semantic_error(struct analyzer *a);
 i_INLINE_INS bool analyzer_has_semantic_error(struct analyzer *a);
 i_INLINE_INS bool analyzer_has_semantic_error_reset(struct analyzer *a);
+i_INLINE_INS struct ast_node *analyzer_yield_ast_root(struct analyzer *analyzer);
