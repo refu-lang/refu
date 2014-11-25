@@ -15,6 +15,7 @@ struct compiler_args {
     unsigned verbose_level;
     bool repl;
     struct RFstring input;
+    struct RFstring *output;
     struct RFstringx buff;
 };
 

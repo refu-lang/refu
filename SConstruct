@@ -80,6 +80,15 @@ local_env.Append(LIBS=[clib_static, 'pthread'])
 local_env.Append(LIBPATH=local_env['CLIB_DIR'])
 local_env.Append(CCFLAGS=['-Wall'])
 
+# compile with LLVM support
+linker_exec = 'gcc'
+if local_env['LANG_BACKEND'] == 'LLVM':
+    refu_src += ['backend/llvm.c']
+    local_env.Append(LIBS=['dl', 'z', 'ncurses'])
+    local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
+                          ' executionengine jit interpreter native')
+    linker_exec = 'g++'
+
 # add path before the sources
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]
 refu_src_final = refu_src + ['src/main.c']
@@ -88,8 +97,12 @@ gperf_result = local_env.Gperf(gperf_src)
 
 refu_obj = local_env.Object(refu_src_final)
 Depends(refu_obj, gperf_result)
+
+# for now also create the executable in debug mode
+set_debug_mode(local_env, True)
 refu = local_env.Program("refu", refu_obj,
-                         LIBPATH=local_env['CLIB_DIR'])
+                         LIBPATH=local_env['CLIB_DIR'],
+                         CC=linker_exec)
 local_env.Alias('refu', refu)
 
 # -- UNIT TESTS

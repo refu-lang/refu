@@ -635,7 +635,7 @@ const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff)
     case TYPE_CATEGORY_BUILTIN:
         ret_str = type_builtin_get_str(t->builtin.btype);
         if (buff) {
-            // This is just to show myself how to do it, now need to do it for
+            // This is just to show myself how to do it, no need to do it for
             // a builtin type
             return rf_persistent_buffer_create_str_from_str(buff, ret_str);
         }

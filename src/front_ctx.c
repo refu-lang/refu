@@ -83,26 +83,28 @@ void front_ctx_destroy(struct front_ctx *ctx)
     free(ctx);
 }
 
-bool front_ctx_process(struct front_ctx *ctx)
+struct ast_node *front_ctx_process(struct front_ctx *ctx)
 {
     if (!lexer_scan(ctx->lexer)) {
-        return false;
+        return NULL;
     }
 
     if (!parser_process_file(ctx->parser)) {
-        return false;
+        return NULL;
     }
 
     if (!analyzer_analyze_file(ctx->analyzer, ctx->parser)) {
-        return false;
+        return NULL;
     }
 
-    // TODO
+    // TODO -- also think when should the AST be serialized to a file (?)
+    // some argument maybe which would signify we need to transfer the processed
+    // program to another computer
     if (!serializer_serialize_file(ctx->serializer, ctx->analyzer)) {
-        return false;
+        return NULL;
     }
 
-    return true;
+    return ctx->serializer->root;
 }
 
 

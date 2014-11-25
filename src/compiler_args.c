@@ -29,6 +29,7 @@ void compiler_args_modinit()
     _args.backend_connection = BACKEND_DEFAULT;
     _args.verbose_level = VERBOSE_LEVEL_DEFAULT;
     _args.repl = false;
+    _args.output = NULL;
     rf_string_init(&_args.input, "");
     rf_stringx_init_buff(&_args.buff, 128, "");
 }
@@ -125,6 +126,27 @@ static void check_repl(int* i, int argc, char** argv, bool* consumed)
     }
 }
 
+static bool check_output_name(int* i, int argc, char** argv, bool* consumed)
+{
+    if(strcmp(argv[*i], "-o") == 0 ||
+       strcmp(argv[*i], "--output") == 0)
+    {
+        *i = *i + 1;
+        if (argc >= *i) {
+            *consumed = true;
+            _args.output = rf_string_create(argv[*i]);
+            if (!_args.output) {
+                ERROR("Internal error while consuming the input file argument");
+                return false;
+            }
+        } else {
+            ERROR("A filename should follow the output argument");
+            return false;
+        }
+    }
+    return true;
+}
+
 struct compiler_args *compiler_args_parse(int argc, char** argv)
 {
     bool consumed;
@@ -150,6 +172,13 @@ struct compiler_args *compiler_args_parse(int argc, char** argv)
         }
 
         check_repl(&i, argc, argv, &consumed);
+        if (consumed) {
+            continue;
+        }
+
+        if (!check_output_name(&i, argc, argv, &consumed)) {
+            return NULL;
+        }
         if (consumed) {
             continue;
         }
