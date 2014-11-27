@@ -155,8 +155,7 @@ struct compiler_args *compiler_args_parse(int argc, char** argv)
     for (i = 1; i < argc; i++) {
 
         consumed = false;
-        if(!check_backend(&i, argc, argv, &consumed))
-        {
+        if (!check_backend(&i, argc, argv, &consumed)) {
             ERROR("Error while consuming the backend "
                         "connection argument");
             printf(help_message);
@@ -184,11 +183,11 @@ struct compiler_args *compiler_args_parse(int argc, char** argv)
         }
 
         /* if we get here the argument should be a file */
-        if(!rf_string_assign(&_args.input, RFS_(argv[i]))) {
+        if (!rf_string_assignv(&_args.input, "%s", argv[i])) {
             ERROR("Internal error while consuming the input file argument");
             return NULL;
         }
-        if(!rf_system_file_exists(&_args.input)) {
+        if (!rf_system_file_exists(&_args.input)) {
             ERROR("File \""RF_STR_PF_FMT"\" does not exist",
                   RF_STR_PF_ARG(&_args.input));
             return NULL;

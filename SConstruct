@@ -132,9 +132,9 @@ unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)
 test_env = local_env.Clone()
 
+test_env['linker_exec'] = linker_exec
 # Runs tests in debug mode
 set_debug_mode(test_env, True)
-
 test_env.Append(CHECK_EXTRA_DEFINES={
     'CLIB_TEST_HELPERS':
     "\\\"" + os.path.abspath(
