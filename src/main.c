@@ -44,9 +44,8 @@ int main(int argc,char** argv)
         ERROR("Failure to parse the input");
         rc = 1;
         goto err;
-    } else {
-        printf("input file parsed succesfully\n");
     }
+    RF_DEBUG("input file parsed succesfully\n");
 
     backend_llvm_generate(ast, args);
 

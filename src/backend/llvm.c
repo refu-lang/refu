@@ -25,7 +25,7 @@ static bool backend_llvm_ir_generate(struct ast_node *ast, struct compiler_args 
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main_fn, "main_entry");
     LLVMBuilderRef builder = LLVMCreateBuilder();
     LLVMPositionBuilderAtEnd(builder, entry);
-    LLVMValueRef main_ret = LLVMConstInt(LLVMInt32Type(), 0, 0);
+    LLVMValueRef main_ret = LLVMConstInt(LLVMInt32Type(), 15, 0);
     LLVMBuildRet(builder, main_ret);
 
     LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
@@ -48,38 +48,53 @@ static bool backend_llvm_ir_generate(struct ast_node *ast, struct compiler_args 
     return true;
 }
 
-static bool backend_llvm_ir_to_asm(struct compiler_args *args)
+static bool transformation_step_do(struct compiler_args *args,
+                                   const char *executable,
+                                   const char *insuff,
+                                   const char *outsuff)
 {
+    int rc;
     FILE *proc;
+    bool ret = true;
     RFS_buffer_push();
-    proc = rf_popen(RFS_("llc "RF_STR_PF_FMT".ll -o "RF_STR_PF_FMT".s",
-                         RF_STR_PF_ARG(args->output),
-                         RF_STR_PF_ARG(args->output)),
+
+    struct RFstring *inname = RFS_(RF_STR_PF_FMT".%s",
+                                   RF_STR_PF_ARG(args->output), insuff);
+
+    fflush(stdout);
+    proc = rf_popen(RFS_("%s "RF_STR_PF_FMT" -o "RF_STR_PF_FMT".%s",
+                         executable, RF_STR_PF_ARG(inname),
+                         RF_STR_PF_ARG(args->output), outsuff),
                     "r");
-    RFS_buffer_pop();
 
     if (!proc) {
-        return false;
+        ret = false;
+        goto end;
     }
 
-    return true;
+    rc = rf_pclose(proc);
+    if (0 != rc) {
+        ERROR("%s failed with error code: %d", executable, rc);
+        ret = false;
+        goto end;
+    }
+
+    // delete no longer needed input name file
+    rf_system_delete_file(inname);
+    fflush(stdout);
+end:
+    RFS_buffer_pop();
+    return ret;
+}
+
+static bool backend_llvm_ir_to_asm(struct compiler_args *args)
+{
+    return transformation_step_do(args, "llc", "ll", "s");
 }
 
 static bool backend_asm_to_exec(struct compiler_args *args)
 {
-    FILE *proc;
-    RFS_buffer_push();
-    proc = rf_popen(RFS_("gcc "RF_STR_PF_FMT".s -o "RF_STR_PF_FMT".exe",
-                         RF_STR_PF_ARG(args->output),
-                         RF_STR_PF_ARG(args->output)),
-                    "r");
-    RFS_buffer_pop();
-
-    if (!proc) {
-        return false;
-    }
-
-    return true;
+    return transformation_step_do(args, "gcc", "s", "exe");
 }
 
 bool backend_llvm_generate(struct ast_node *ast, struct compiler_args *args)
