@@ -69,6 +69,12 @@ i_INLINE_DECL struct ast_node *ast_fnimpl_fndecl_get(struct ast_node *n)
     return n->fnimpl.decl;
 }
 
+i_INLINE_DECL struct ast_node *ast_fnimpl_body_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    return n->fnimpl.body;
+}
+
 /* -- function call functions -- */
 
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,

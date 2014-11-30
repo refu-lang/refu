@@ -9,7 +9,7 @@
 #include <ast/function.h>
 #include <ast/string_literal.h>
 
-#include "analyzer_utils.h"
+#include <ast/ast_utils.h>
 
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
@@ -239,10 +239,10 @@ bool analyzer_first_pass(struct analyzer *a)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
-    return analyzer_traverse_tree(
-        a,
+    return ast_traverse_tree(
+        a->root,
         analyzer_first_pass_do,
         &ctx,
-        (analyzer_tree_node_cb)analyzer_make_parent_st_current,
+        (ast_node_cb)analyzer_make_parent_st_current,
         &ctx);
 }

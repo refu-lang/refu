@@ -37,9 +37,9 @@ refu_src = [
     'ast/generics.c',
     'ast/operators.c',
     'ast/ifexpr.c',
+    'ast/ast_utils.c',
 
     'analyzer/analyzer.c',
-    'analyzer/analyzer_utils.c',
     'analyzer/symbol_table.c',
     'analyzer/analyzer_pass1.c',
     'analyzer/typecheck.c',
@@ -83,7 +83,10 @@ local_env.Append(CCFLAGS=['-Wall'])
 # compile with LLVM support
 linker_exec = 'gcc'
 if local_env['LANG_BACKEND'] == 'LLVM':
-    refu_src += ['backend/llvm.c']
+    refu_src += [
+        'backend/llvm.c',
+        'backend/llvm_ast.c'
+    ]
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
                           ' executionengine jit interpreter native')

@@ -58,6 +58,7 @@ struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS struct ast_node *ast_fnimpl_fndecl_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fnimpl_body_get(struct ast_node *n);
 
 /* -- function call functions -- */
 

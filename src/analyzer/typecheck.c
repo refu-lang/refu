@@ -9,12 +9,13 @@
 #include <ast/function.h>
 #include <ast/block.h>
 #include <ast/constant_num.h>
+#include <ast/ast_utils.h>
 
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include "analyzer_pass1.h" // for analyzer_make_parent_st_current()
-#include "analyzer_utils.h"
+
 
 static bool analyzer_typecheck_assignment(struct ast_node *n,
                                           struct ast_node *left,
@@ -139,11 +140,11 @@ bool analyzer_typecheck(struct analyzer *a)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
-    return analyzer_traverse_tree(
-        a,
+    return ast_traverse_tree(
+        a->root,
         analyzer_typecheck_do,
         &ctx,
-        (analyzer_tree_node_cb)analyzer_make_parent_st_current,
+        (ast_node_cb)analyzer_make_parent_st_current,
         &ctx);
 }
 
