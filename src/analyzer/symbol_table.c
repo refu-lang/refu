@@ -41,6 +41,9 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     case AST_FUNCTION_DECLARATION:
         rec->data = type_create_from_fndecl(node, analyzer, st);
         break;
+    case AST_TYPE_DESCRIPTION:
+        rec->data = type_create_from_typedesc(node, analyzer, st, NULL);
+        break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",

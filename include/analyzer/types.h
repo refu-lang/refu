@@ -16,7 +16,9 @@ struct RFbuffer;
 
 // NOTE: preserve order
 enum builtin_type {
-    BUILTIN_INT_8 = 0,
+    BUILTIN_INT = 0,
+    BUILTIN_UINT,
+    BUILTIN_INT_8,
     BUILTIN_UINT_8,
     BUILTIN_INT_16,
     BUILTIN_UINT_16,
@@ -119,6 +121,11 @@ struct type *type_anonymous_create(struct ast_node *n,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl);
 
+struct type *type_create_from_typedesc(struct ast_node *typedesc,
+                                       struct analyzer *a,
+                                       struct symbol_table *st,
+                                       struct ast_node *genrdecl);
+
 /* -- type comparison functions -- */
 
 enum conversion_type {
@@ -176,15 +183,9 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 
 /* -- type getters -- */
 
-/**
- * Gets the builtin type of a specific builtin type
- */
-i_INLINE_DECL enum builtin_type type_builtin(struct type *t)
-{
-    RF_ASSERT(t->category == TYPE_CATEGORY_BUILTIN,
-              "Non built-in type category detected");
-    return t->builtin.btype;
-}
+
+/* -- builtin type getters -- */
+
 
 /**
  * Given a built-in type value, returns the type itself
@@ -195,6 +196,19 @@ const struct type *type_builtin_get_type(enum builtin_type btype);
  * Given a built-in type value return the type string representation
  */
 const struct RFstring *type_builtin_get_str(enum builtin_type btype);
+
+
+/* -- general type getters -- */
+
+/**
+ * Gets the builtin type of a specific builtin type
+ */
+i_INLINE_DECL enum builtin_type type_builtin(struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_BUILTIN,
+              "Non built-in type category detected");
+    return t->builtin.btype;
+}
 
 /**
  * Gets a string representation of the type

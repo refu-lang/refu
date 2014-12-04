@@ -120,10 +120,16 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
     a->root = parser_yield_ast_root(parser);
 
     // create symbol tables and change ast nodes ownership
-    analyzer_first_pass(a);
+    if (!analyzer_first_pass(a)) {
+        RF_ERROR("Failure at analyzer's first pass");
+        return false;
+    }
 
     //TODO: type check
-    analyzer_typecheck(a);
+    if (!analyzer_typecheck(a)) {
+        RF_ERROR("Failure at analyzer's first pass");
+        return false;
+    }
 
     return true;
 }

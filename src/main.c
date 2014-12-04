@@ -13,10 +13,18 @@ int main(int argc,char** argv)
     int rc = 0;
     struct compiler_args *args;
     struct front_ctx front;
-    struct ast_node *ast;
+    struct analyzer *analyzer;
+    struct RFstringx err_buff;
 
-    //initialize Refu library
+    // initialize Refu library
     rf_init("refuclib.log", 0, LOG_DEBUG);
+
+    // initialize an error buffer string
+    if (!rf_stringx_init_buff(&err_buff, 1024, "")) {
+        ERROR("Internal error");
+        rc = 1;
+        goto err;
+    }
 
     //parse the arguments given to the compiler
     compiler_args_modinit();
@@ -39,15 +47,23 @@ int main(int argc,char** argv)
         goto err;
     }
 
-    ast = front_ctx_process(&front);
-    if (!ast) {
-        ERROR("Failure to parse the input");
+    analyzer = front_ctx_process(&front);
+    if (!analyzer) {
+        ERROR("Failure to parse and analyze the input");
         rc = 1;
+
+        // for now temporarily just dump all messages in the info context
+        // TODO: fix
+        if (!info_ctx_get_messages_fmt(front.info, MESSAGE_ANY, &err_buff)) {
+            RF_ERROR("Could not retrieve messages from the info context");
+            goto err;
+        }
+        printf(RF_STR_PF_FMT, RF_STR_PF_ARG(&err_buff));
         goto err;
     }
     RF_DEBUG("input file parsed succesfully\n");
 
-    backend_llvm_generate(ast, args);
+    backend_llvm_generate(analyzer, args);
 
 err:
     rf_deinit();

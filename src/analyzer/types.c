@@ -14,6 +14,11 @@
 
 #include "builtin_types_htable.h"
 
+/* -- forward declarations of functions -- */
+static bool type_composite_init(struct type_composite *t, struct ast_node *n,
+                                struct analyzer *a, struct symbol_table *st,
+                                struct ast_node *genrdecl);
+
 /* -- miscellaneous type functions used internally (static) -- */
 struct function_args_ctx {
     struct symbol_table *st;
@@ -66,6 +71,8 @@ static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
     if (right->type == AST_XIDENTIFIER) {
         leaf->type = type_lookup_xidentifier(right, a, st, genrdecl);
         if (!leaf->type) {
+            RF_ERROR("No type could be looked up for xidentifier \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(ast_xidentifier_str(right)));
             return false;
         }
 
@@ -90,15 +97,19 @@ static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
                                     struct analyzer *a, struct symbol_table *st,
                                     struct ast_node *genrdecl)
 {
-    t->category = TYPE_CATEGORY_LEAF;
-
-    return type_leaf_init(&t->leaf, typedesc, a, st, genrdecl);
+    if (ast_types_left(typedesc)->type == AST_IDENTIFIER) {
+        t->category = TYPE_CATEGORY_LEAF;
+        return type_leaf_init(&t->leaf, typedesc, a, st, genrdecl);
+    } else {
+        t->category = TYPE_CATEGORY_ANONYMOUS;
+        return type_composite_init(&t->anonymous, typedesc, a, st, genrdecl);
+    }
 }
 
-static struct type *type_create_from_typedesc(struct ast_node *typedesc,
-                                              struct analyzer *a,
-                                              struct symbol_table *st,
-                                              struct ast_node *genrdecl)
+struct type *type_create_from_typedesc(struct ast_node *typedesc,
+                                       struct analyzer *a,
+                                       struct symbol_table *st,
+                                       struct ast_node *genrdecl)
 {
     struct type *ret;
     ret = type_alloc(a);
@@ -194,6 +205,7 @@ struct type *type_create(struct ast_node *node,
     case AST_TYPE_DECLARATION:
         return type_create_from_typedecl(node, a, st);
     case AST_TYPE_DESCRIPTION:
+    case AST_TYPE_OPERATOR:
         return type_create_from_typedesc(node, a, st, genrdecl);
     case AST_FUNCTION_DECLARATION:
         break;
@@ -254,26 +266,30 @@ static bool type_init_from_fndecl(struct type *t,
                                   struct symbol_table *st)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    struct ast_node *args = ast_fndecl_args_get(n);
+    struct ast_node *ret = ast_fndecl_return_get(n);
 
     t->category = TYPE_CATEGORY_FUNCTION;
-    t->function.argument_type = type_composite_lookup_or_create(
-        ast_fndecl_args_get(n),
-        a, st,
-        ast_fndecl_genrdecl_get(n));
 
-    if (!t->function.argument_type) {
-        // TODO: Free argument_type if created
-        return false;
+    t->function.argument_type = NULL;
+    if (args) {
+        t->function.argument_type = type_composite_lookup_or_create(
+            args, a, st, ast_fndecl_genrdecl_get(n));
+        if (!t->function.argument_type) {
+            // TODO: Free argument_type if created
+            return false;
+        }
     }
 
-    t->function.return_type = type_composite_lookup_or_create(
-        ast_fndecl_return_get(n),
-        a, st,
-        ast_fndecl_genrdecl_get(n));
+    t->function.return_type = NULL;
+    if (ret) {
+        t->function.return_type = type_composite_lookup_or_create(
+            ret, a, st, ast_fndecl_genrdecl_get(n));
 
-    if (!t->function.return_type) {
-        // TODO: Free return_type if created
-        return false;
+        if (!t->function.return_type) {
+            // TODO: Free return_type if created
+            return false;
+        }
     }
 
     // also add the function's arguments to its symbol table
@@ -299,9 +315,6 @@ struct type *type_create_from_fndecl(struct ast_node *n,
         type_free(t, a);
         t = NULL;
     }
-
-    // also add each argument to the symbol table of the function
-
 
     return t;
 }
@@ -539,6 +552,8 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
 
 // NOTE: preserve order
 static const struct RFstring builtin_type_strings[] = {
+    RF_STRING_STATIC_INIT("int"),
+    RF_STRING_STATIC_INIT("uint"),
     RF_STRING_STATIC_INIT("i8"),
     RF_STRING_STATIC_INIT("u8"),
     RF_STRING_STATIC_INIT("i16"),
@@ -558,6 +573,8 @@ static const struct RFstring builtin_type_strings[] = {
 
 // NOTE: preserve order
 static const struct type i_builtin_types[] = {
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT),
+    INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_8),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_UINT_8),
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_INT_16),

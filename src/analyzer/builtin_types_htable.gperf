@@ -8,6 +8,8 @@ struct gperf_builtin_type {const char *name; enum builtin_type type; };
 # attempted to have TAB as delimiter but could not make it work
 #
 # keywords
+intBUILTIN_INT
+uintBUILTIN_UINT
 u8BUILTIN_UINT_8
 i8BUILTIN_INT_8
 u16BUILTIN_UINT_16

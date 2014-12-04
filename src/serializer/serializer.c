@@ -30,9 +30,6 @@ void serializer_destroy(struct serializer *sr)
 
 bool serializer_serialize_file(struct serializer *sr, struct analyzer *a)
 {
-    // acquire the root of the AST from the parser
-    sr->root = analyzer_yield_ast_root(a);
-
     //TODO
     return true;
 }
