@@ -48,47 +48,17 @@ static LLVMTypeRef backend_llvm_builtin_to_type(enum builtin_type type)
     return NULL;
 }
 
-static bool backend_llvm_typedesc_to_args(struct ast_node *desc,
+static bool backend_llvm_typedesc_to_args(struct type_leaf *t,
                                           struct llvm_traversal_ctx *ctx)
 {
+    // TODO: only builtin types for now
+    enum builtin_type btype;
+    RF_ASSERT(t->type->category == TYPE_CATEGORY_BUILTIN,
+              "Only dealing with builtin types at the moment in the backend");
+    btype = type_builtin(t->type);
 
-    if (desc->type == AST_TYPE_OPERATOR) {
-        //TODO: For now only commas here, no sum operation on types yet
-        RF_ASSERT(ast_typeop_op(desc) == TYPEOP_PRODUCT,
-                  "Only product types supported for now in the backend");
-    } else if (desc->type == AST_TYPE_DESCRIPTION) {
-        struct ast_node *left = ast_typedesc_left(desc);
-        struct symbol_table_record *rec;
-        bool at_first;
-        struct type* type;
-        // TODO: no complex types for now
-        RF_ASSERT(left->type == AST_IDENTIFIER,
-                  "No complex types in the backend for now");
-
-        rec = symbol_table_lookup_record(ctx->current_st, ast_identifier_str(left), &at_first);
-        RF_ASSERT_OR_CRITICAL(rec != NULL,
-                              "Symbol table lookup failed. Should never happen at this stage");
-
-        type = symbol_table_record_type(rec);
-
-        // TODO: only builtin types for now
-        enum builtin_type btype;
-        RF_ASSERT(type->category == TYPE_CATEGORY_BUILTIN || type->category == TYPE_CATEGORY_LEAF,
-                  "Only dealing with builtin types at the moment in the backend");
-        if (type->category == TYPE_CATEGORY_LEAF) {
-            RF_ASSERT(type->leaf.type->category == TYPE_CATEGORY_BUILTIN,
-                      "Only dealing with builtin types at the moment in the backend");
-            btype = type_builtin(type->leaf.type);
-        } else {
-            btype = type_builtin(type);
-        }
-
-        LLVMTypeRef llvm_type = backend_llvm_builtin_to_type(btype);
-        darray_append(ctx->params, llvm_type);
-    }
-
-    // ignore all other node types under the type description
-
+    LLVMTypeRef llvm_type = backend_llvm_builtin_to_type(btype);
+    darray_append(ctx->params, llvm_type);
     return true;
 }
 
@@ -116,10 +86,11 @@ static bool backend_llvm_function(struct ast_node *n,
     RFS_buffer_push();
     fnname = rf_string_cstr_from_buff(ast_fndecl_name_str(fndecl));
 
-    //for now totally ignore function's types, all accept and return an int
-    if (!ast_pre_traverse_tree(ast_fndecl_args_get(fndecl),
-                               (ast_node_cb)backend_llvm_typedesc_to_args,
-                               ctx)) {
+    // TODO: Properly implement this. For now it just takes all leaf types
+    // of the argument and adds them to LLVM function args
+    if (!type_for_each_leaf(ast_typedesc_type_get(ast_fndecl_args_get(fndecl)),
+                            (leaf_type_cb)backend_llvm_typedesc_to_args,
+                            ctx)) {
         return false;
     }
 
