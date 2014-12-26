@@ -1,97 +1,15 @@
-#ifndef LFR_ANALYZER_TYPES_H
-#define LFR_ANALYZER_TYPES_H
-
-#include <stdbool.h>
+#ifndef LFR_TYPES_TYPE_H
+#define LFR_TYPES_TYPE_H
 
 #include <Utils/sanity.h>
 #include <Definitions/inline.h>
 #include <String/rf_str_decl.h>
-#include <Data_Structures/intrusive_list.h>
 
-#include <ast/type_decls.h>
-
+#include <types/type_decls.h>
 struct analyzer;
 struct symbol_table;
 struct RFbuffer;
 
-// NOTE: preserve order
-enum builtin_type {
-    BUILTIN_INT = 0,
-    BUILTIN_UINT,
-    BUILTIN_INT_8,
-    BUILTIN_UINT_8,
-    BUILTIN_INT_16,
-    BUILTIN_UINT_16,
-    BUILTIN_INT_32,
-    BUILTIN_UINT_32,
-    BUILTIN_INT_64,
-    BUILTIN_UINT_64,
-    BUILTIN_FLOAT_32,
-    BUILTIN_FLOAT_64,
-    BUILTIN_STRING,
-
-    BUILTIN_TYPES_COUNT /* keep as last */
-};
-
-
-enum type_category {
-    TYPE_CATEGORY_ANONYMOUS = 0,        /* an anonymous type */
-    TYPE_CATEGORY_LEAF,                 /* almost always part of another type */
-    TYPE_CATEGORY_BUILTIN,              /* a builtin type */
-    TYPE_CATEGORY_USER_DEFINED,         /* a user defined type */
-    TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
-    TYPE_CATEGORY_FUNCTION,             /* a function */
-};
-
-struct type_builtin {
-    enum builtin_type btype;
-};
-
-struct type_generic {
-    const struct RFstring id;
-};
-
-struct type_leaf {
-    const struct RFstring *id;
-    struct type *type;
-};
-
-struct type_operator {
-    enum typeop_type type;
-    struct type *left;
-    struct type *right;
-};
-
-struct type_composite {
-    bool is_operator;
-    union {
-        struct type_operator op;
-        struct type_leaf leaf;
-    };
-};
-
-struct type_defined {
-    const struct RFstring *id;
-    struct type_composite *type;
-};
-
-struct type_function {
-    struct type *argument_type;
-    struct type *return_type;
-};
-
-struct type {
-    enum type_category category;
-    /* list handler, to be added to either types or anonymous types list */
-    struct RFilist_node lh;
-    union {
-        struct type_builtin builtin;
-        struct type_defined defined;
-        struct type_function function;
-        struct type_composite anonymous;
-        struct type_leaf leaf;
-    };
-};
 
 /* -- type allocation functions -- */
 
@@ -128,26 +46,6 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
 
 /* -- type comparison functions -- */
 
-enum conversion_type {
-    NO_CONVERSION = 0x0,
-    SIGNED_TO_UNSIGNED = 0x1,
-    LARGER_TO_SMALLER = 0X2,
-};
-
-enum comparison_reason {
-    COMPARISON_REASON_ASSIGNMENT = 0,
-    COMPARISON_REASON_ADDITION,
-};
-
-struct type_comparison_ctx {
-    //! The reason for the request of
-    enum comparison_reason reason;
-    //! Query to see what conversions happened. Can contain multiple bitflags
-    enum conversion_type conversion;
-    //! If any conversion happened this should point to the converted type
-    struct type *converted_type;
-};
-
 i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                             enum comparison_reason reason)
 {
@@ -182,41 +80,6 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);
 
-/* -- type getters -- */
-
-/* -- function type getters -- */
-i_INLINE_DECL struct type *type_function_get_argtype(struct type *t)
-{
-    RF_ASSERT(t->category == TYPE_CATEGORY_FUNCTION, "Non function type detected");
-    return t->function.argument_type;
-}
-
-/* -- builtin type getters -- */
-
-
-/**
- * Given a built-in type value, returns the type itself
- */
-const struct type *type_builtin_get_type(enum builtin_type btype);
-
-/**
- * Given a built-in type value return the type string representation
- */
-const struct RFstring *type_builtin_get_str(enum builtin_type btype);
-
-
-/* -- general type getters -- */
-
-/**
- * Gets the builtin type of a specific builtin type
- */
-i_INLINE_DECL enum builtin_type type_builtin(struct type *t)
-{
-    RF_ASSERT(t->category == TYPE_CATEGORY_BUILTIN,
-              "Non built-in type category detected");
-    return t->builtin.btype;
-}
-
 /**
  * Gets a string representation of the type
  *
@@ -235,8 +98,4 @@ const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff);
 typedef bool (*leaf_type_cb) (struct type_leaf *t, void *user_arg);
 
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg);
-
-/* -- various type related functions -- */
-int analyzer_identifier_is_builtin(const struct RFstring *id);
-
 #endif

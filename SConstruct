@@ -46,6 +46,8 @@ refu_src = [
     'analyzer/typecheck.c',
 
     'types/type.c',
+    'types/type_function.c',
+    'types/type_builtin.c',
 
     'serializer/serializer.c'
 ]

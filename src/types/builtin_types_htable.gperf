@@ -1,6 +1,6 @@
 %compare-strncmp
 %readonly-tables
-%define lookup-function-name analyzer_string_is_builtin
+%define lookup-function-name types_string_is_builtin
 %delimiters=''
 struct gperf_builtin_type {const char *name; enum builtin_type type; };
 %%

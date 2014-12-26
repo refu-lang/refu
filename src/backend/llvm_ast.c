@@ -16,6 +16,9 @@
 #include <ast/function.h>
 #include <ast/type.h>
 
+#include <types/type_function.h>
+#include <types/type_builtin.h>
+
 #include <backend/llvm.h>
 
 static LLVMTypeRef backend_llvm_builtin_to_type(enum builtin_type type)

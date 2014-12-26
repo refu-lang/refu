@@ -11,6 +11,7 @@
 #include <ast/constant_num.h>
 #include <ast/ast_utils.h>
 
+#include <types/type_builtin.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>

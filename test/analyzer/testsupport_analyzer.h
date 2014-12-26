@@ -9,7 +9,7 @@
 #include <parser/parser.h>
 #include <lexer/lexer.h>
 
-#include <analyzer/types.h>
+#include <types/type.h>
 #include <analyzer/typecheck.h>
 
 

@@ -9,13 +9,14 @@
 #include <info/msg.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
-#include <analyzer/types.h>
 #include <ast/ast.h>
 #include <ast/block.h>
 #include <ast/identifier.h>
 #include <ast/function.h>
 #include <ast/vardecl.h>
 #include <ast/type.h>
+
+#include <types/type.h>
 
 #include "../../src/analyzer/analyzer_pass1.h"
 
