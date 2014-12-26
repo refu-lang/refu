@@ -314,3 +314,6 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,
                                           struct symbol_table *parent);
+i_INLINE_INS struct type *symbol_table_lookup_type(struct symbol_table *t,
+                                                   const struct RFstring *id,
+                                                   bool *at_first_symbol_table);

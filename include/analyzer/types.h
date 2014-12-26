@@ -183,6 +183,12 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 
 /* -- type getters -- */
 
+/* -- function type getters -- */
+i_INLINE_DECL struct type *type_function_get_argtype(struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_FUNCTION, "Non function type detected");
+    return t->function.argument_type;
+}
 
 /* -- builtin type getters -- */
 

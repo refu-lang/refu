@@ -104,4 +104,17 @@ i_INLINE_DECL void symbol_table_set_parent(struct symbol_table *t,
     t->parent = parent;
 }
 
+
+i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
+                                                    const struct RFstring *id,
+                                                    bool *at_first_symbol_table)
+{
+    struct symbol_table_record *rec = symbol_table_lookup_record(t, id, at_first_symbol_table);
+    if (!rec) {
+        return NULL;
+    }
+
+    return rec->data;
+}
+
 #endif

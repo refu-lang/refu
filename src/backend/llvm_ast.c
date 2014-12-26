@@ -78,17 +78,26 @@ static bool backend_llvm_function(struct ast_node *n,
 {
     char *fnname;
     LLVMValueRef fn;
+    bool at_first;
     struct ast_node *fndecl = ast_fnimpl_fndecl_get(n);
+    const struct RFstring *fn_name = ast_fndecl_name_str(fndecl);
+    struct type *fn_type = symbol_table_lookup_type(ctx->current_st,
+                                                    fn_name,
+                                                    &at_first);
+    if (RF_CRITICAL_TEST(!fn_type, "couldn't find function " RF_STR_PF_FMT
+                         "in the symbol table.", RF_STR_PF_ARG(fn_name))) {
+        return false;
+    }
 
     // set the current symbol table
     ctx->current_st = ast_fndecl_symbol_table_get(fndecl);
 
     RFS_buffer_push();
-    fnname = rf_string_cstr_from_buff(ast_fndecl_name_str(fndecl));
+    fnname = rf_string_cstr_from_buff(fn_name);
 
     // TODO: Properly implement this. For now it just takes all leaf types
     // of the argument and adds them to LLVM function args
-    if (!type_for_each_leaf(ast_typedesc_type_get(ast_fndecl_args_get(fndecl)),
+    if (!type_for_each_leaf(type_function_get_argtype(fn_type),
                             (leaf_type_cb)backend_llvm_typedesc_to_args,
                             ctx)) {
         return false;
@@ -105,7 +114,8 @@ static bool backend_llvm_create_ir_ast_do(struct ast_node *n, void *user_arg)
     struct llvm_traversal_ctx *ctx = user_arg;
     switch(n->type) {
     case AST_ROOT:
-        ctx->mod = LLVMModuleCreateWithName(rf_string_data(ctx->args->output));
+        ctx->current_st = ast_root_symbol_table_get(n);
+        ctx->mod = LLVMModuleCreateWithName(rf_string_data(compiler_args_get_output(ctx->args)));
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         return backend_llvm_function(n, ctx);

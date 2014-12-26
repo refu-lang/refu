@@ -26,4 +26,15 @@ struct compiler_args *compiler_args_get();
 /** Initializes the compiler_arguments to their defaults */
 void compiler_args_modinit();
 
+
+/* -- Getters -- */
+i_INLINE_DECL struct RFstring *compiler_args_get_output(struct compiler_args *args)
+{
+    if (args->output) {
+        return args->output;
+    }
+
+    return &args->input;
+}
+
 #endif//include guards end

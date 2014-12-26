@@ -14,55 +14,6 @@
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
 
-static bool analyzer_symbol_table_add_typedesc(struct ast_node *n,
-                                               struct analyzer_traversal_ctx *ctx)
-{
-    struct ast_node *search_node;
-    struct ast_node *left;
-    bool symbol_found_at_first_st;
-    const struct RFstring *id_name;
-    if (n->type != AST_TYPE_DESCRIPTION) {
-        return true; //skip
-    }
-
-    left = ast_typedesc_left(n);
-
-    if (left->type != AST_IDENTIFIER) {
-        analyzer_err(ctx->a, ast_node_startmark(left),
-                     ast_node_endmark(left),
-                     "Expected an identifier in the left side of a type "
-                     "description node but "
-                     "found a \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_node_str(left)));
-        return false;
-    }
-
-    id_name = ast_identifier_str(left);
-    search_node = symbol_table_lookup_node(ctx->current_st,
-                                           id_name,
-                                           &symbol_found_at_first_st);
-
-    if (search_node && symbol_found_at_first_st) {
-        analyzer_err(ctx->a, ast_node_startmark(n),
-                     ast_node_endmark(n),
-                     "Identifier \""RF_STR_PF_FMT"\" was already used in scope "
-                     "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(id_name),
-                     INPLOCATION_ARG(analyzer_get_file(ctx->a),
-                                     ast_node_location(search_node)));
-        return false;
-    }
-
-    if (!symbol_table_add_node(ctx->current_st, ctx->a,
-                               id_name, n)) {
-        RF_ERROR("Could not add a type description's left node "
-                 "to a symbol table");
-        return false;
-    }
-
-    return true;
-}
-
 static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
                                                   struct ast_node *n)
 {
@@ -186,15 +137,7 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     symbol_table_set_parent(st, ctx->current_st);
     ctx->current_st = st;
 
-    // add the function's arguments to the symbol table
-    // TODO: fix this, this is a very naive way to do that
-    if (!ast_pre_traverse_tree(ast_fndecl_args_get(n),
-                               (ast_node_cb)analyzer_symbol_table_add_typedesc,
-                               ctx)) {
-        RF_ERROR("Could not add a function's arguments to its symbol table");
-        return false;
-    }
-
+    // function's arguments are added to the symbol table by type creation
     return true;
 }
 

@@ -588,6 +588,9 @@ static const struct type i_builtin_types[] = {
     INIT_BUILTIN_TYPE_ARRAY_INDEX(BUILTIN_STRING)
 };
 
+
+i_INLINE_INS struct type *type_function_get_argtype(struct type *t);
+
 const struct type *type_builtin_get_type(enum builtin_type btype)
 {
     return &i_builtin_types[btype];

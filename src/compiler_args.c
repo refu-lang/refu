@@ -201,3 +201,4 @@ struct compiler_args *compiler_args_get()
     return &_args;
 }
 
+i_INLINE_INS struct RFstring *compiler_args_get_output(struct compiler_args *args);
