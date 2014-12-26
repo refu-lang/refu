@@ -1,4 +1,4 @@
-#include <analyzer/types.h>
+#include <types/type.h>
 
 #include <Utils/build_assert.h>
 #include <Utils/bits.h>

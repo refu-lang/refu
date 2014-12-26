@@ -138,6 +138,7 @@ enum comparison_reason {
     COMPARISON_REASON_ASSIGNMENT = 0,
     COMPARISON_REASON_ADDITION,
 };
+
 struct type_comparison_ctx {
     //! The reason for the request of
     enum comparison_reason reason;

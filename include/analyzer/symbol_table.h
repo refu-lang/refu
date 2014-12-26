@@ -4,7 +4,7 @@
 #include <Data_Structures/htable.h>
 #include <String/rf_str_decl.h>
 #include <Definitions/inline.h>
-#include <analyzer/types.h>
+#include <types/type.h>
 
 struct analyzer;
 struct ast_node;

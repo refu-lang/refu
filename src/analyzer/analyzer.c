@@ -7,7 +7,7 @@
 
 #include <ast/ast.h>
 #include <parser/parser.h>
-#include <analyzer/types.h>
+#include <types/type.h>
 #include <analyzer/typecheck.h>
 
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
