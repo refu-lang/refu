@@ -19,13 +19,13 @@ struct compiler_args {
     struct RFstringx buff;
 };
 
-struct compiler_args *compiler_args_parse(int argc, char** argv);
+bool compiler_args_init(struct compiler_args *args);
 
-struct compiler_args *compiler_args_get();
+struct compiler_args *compiler_args_create();
 
-/** Initializes the compiler_arguments to their defaults */
-void compiler_args_modinit();
+void compiler_args_destroy(struct compiler_args *args);
 
+bool compiler_args_parse(struct compiler_args *args, int argc, char** argv);
 
 /* -- Getters -- */
 i_INLINE_DECL struct RFstring *compiler_args_get_output(struct compiler_args *args)

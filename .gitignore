@@ -19,4 +19,5 @@ refu
 
 # generated files
 src/lexer/tokens_htable.h
-src/analyzer/builtin_types_htable.h
+src/types/builtin_types_htable.h
+

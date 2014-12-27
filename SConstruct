@@ -8,6 +8,7 @@ local_env = env.Clone()
 gperf_src = ['lexer/tokens_htable.gperf',
              'types/builtin_types_htable.gperf']
 refu_src = [
+    'compiler.c',
     'compiler_args.c',
 
     'inpfile.c',

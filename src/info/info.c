@@ -38,6 +38,7 @@ void info_ctx_destroy(struct info_ctx *ctx)
     free(ctx);
 }
 
+#if 0 // was used in the old INFO() message to judge if verbosity is high enough to print message. Find better way.
 void info_print_cond(int vlevel, const char *fmt, ...)
 {
     struct compiler_args *cargs = compiler_args_get();
@@ -48,6 +49,7 @@ void info_print_cond(int vlevel, const char *fmt, ...)
         va_end(args);
     }
 }
+#endif
 
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,

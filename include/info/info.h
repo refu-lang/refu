@@ -75,12 +75,6 @@ struct info_msg *info_ctx_msg_iterator_next(struct info_ctx_msg_iterator *it);
         printf("\n");                           \
     } while(0)
 
-#define INFO(level_, ...)                                     \
-    do {                                                      \
-        info_print_cond(level_, "refu: [info] "__VA_ARGS__);  \
-        printf("\n");                                         \
-    } while(0)
-
 #define WARN(...)                               \
     do {                                        \
         printf("refu: [warning] "__VA_ARGS__);  \
