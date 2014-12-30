@@ -18,5 +18,5 @@ int main(int argc, char **argv)
 
 end:
     compiler_deinit(&compiler);
-    return 0;
+    return rc;
 }

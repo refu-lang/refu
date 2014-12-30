@@ -172,13 +172,13 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
             ERROR("Error while consuming the backend "
                   "connection argument");
             printf(help_message);
-            return NULL;
+            return false;
         }
 
         ok = compiler_args_check_verbosity(args, &i, argc, argv, &consumed);
         if (consumed) {
             if (!ok) {
-                return NULL;
+                return false;
             }
         }
 
@@ -188,7 +188,7 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
         }
 
         if (!compiler_args_check_output(args, &i, argc, argv, &consumed)) {
-            return NULL;
+            return false;
         }
         if (consumed) {
             continue;
@@ -197,15 +197,15 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
         /* if we get here the argument should be a file */
         if (!rf_string_assignv(&args->input, "%s", argv[i])) {
             ERROR("Internal error while consuming the input file argument");
-            return NULL;
+            return false;
         }
         if (!rf_system_file_exists(&args->input)) {
             ERROR("File \""RF_STR_PF_FMT"\" does not exist",
                   RF_STR_PF_ARG(&args->input));
-            return NULL;
+            return false;
         }
     }
-    return args;
+    return true;
 }
 
 i_INLINE_INS struct RFstring *compiler_args_get_output(struct compiler_args *args);

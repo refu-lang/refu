@@ -13,8 +13,8 @@ bool compiler_init(struct compiler *c)
     RF_STRUCT_ZERO(c);
 
     // initialize Refu library
-    rf_init("refuclib.log", 0, LOG_DEBUG);
-    
+    rf_init(LOG_TARGET_STDOUT, NULL, LOG_DEBUG);
+
     // initialize an error buffer string
     if (!rf_stringx_init_buff(&c->err_buff, 1024, "")) {
         return false;
@@ -27,30 +27,46 @@ bool compiler_init(struct compiler *c)
     return true;
 }
 
-bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
+void compiler_deinit(struct compiler *c)
 {
-    if (!compiler_init(c)) {
-        return false;
+    if (c->front) {
+        front_ctx_destroy(c->front);
     }
 
+    compiler_args_destroy(c->args);
+    rf_stringx_deinit(&c->err_buff);
+    rf_deinit();
+}
+
+bool compiler_pass_args(struct compiler *c, int argc, char **argv)
+{
     if (!compiler_args_parse(c->args, argc, argv)) {
-        ERROR("Failed to parse command line arguments");
+        RF_ERROR("Failed to parse command line arguments");
         return false;
     }
 
     if (!(c->front = front_ctx_create(c->args))) {
-        ERROR("Failure at frontend context initialization");
+        RF_ERROR("Failure at frontend context initialization");
         return false;
     }
 
     return true;
 }
 
+bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
+{
+    if (!compiler_init(c)) {
+        return false;
+    }
+
+    return compiler_pass_args(c, argc, argv);
+}
+
 bool compiler_process(struct compiler *c)
 {
     struct analyzer *analyzer = front_ctx_process(c->front);
     if (!analyzer) {
-        ERROR("Failure to parse and analyze the input");
+        RF_ERROR("Failure to parse and analyze the input");
 
         // for now temporarily just dump all messages in the info context
         // TODO: fix
@@ -66,15 +82,4 @@ bool compiler_process(struct compiler *c)
     backend_llvm_generate(analyzer, c->args);
 
     return true;
-}
-
-void compiler_deinit(struct compiler *c)
-{
-    if (c->front) {
-        front_ctx_destroy(c->front);
-    }
-    
-    compiler_args_destroy(c->args);
-    rf_stringx_deinit(&c->err_buff);
-    rf_deinit();
 }

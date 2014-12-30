@@ -52,7 +52,6 @@ free_info:
 free_file:
     inpfile_deinit(&ctx->file);
 err:
-    RF_ERRNOMEM();
     return false;
 }
 

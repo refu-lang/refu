@@ -15,13 +15,17 @@ bool inpfile_init(struct inpfile* f,
     struct RFstringx file_str;
     struct RFarray lines_arr;
     int lines;
+    RF_STRUCT_ZERO(f);
+
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
 
 
     if (!rf_stringx_init_buff(&file_str, FILE_BUFFER_INITIAL_SIZE, "")) {
+        RF_ERRNOMEM();
         return false;
     }
     if (!rf_string_copy_in(&f->file_name, name)) {
+        RF_ERRNOMEM();
         return false;
     }
 

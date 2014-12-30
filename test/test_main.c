@@ -18,6 +18,8 @@ Suite *analyzer_symboltable_suite_create(void);
 Suite *analyzer_typecheck_suite_create(void);
 Suite *analyzer_stringtable_suite_create(void);
 
+Suite *end_to_end_basic_suite_create(void);
+
 static const char *SILENT = "CK_SILENT";
 static const char *MINIMAL = "CK_MINIMAL";
 static const char *NORMAL = "CK_NORMAL";
@@ -79,6 +81,8 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, analyzer_symboltable_suite_create());
     srunner_add_suite(sr, analyzer_typecheck_suite_create());
     srunner_add_suite(sr, analyzer_stringtable_suite_create());
+
+    srunner_add_suite(sr, end_to_end_basic_suite_create());
 
     srunner_set_fork_status (sr, fork_type);
     srunner_run_all(sr, print_type);

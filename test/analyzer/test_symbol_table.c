@@ -480,7 +480,6 @@ Suite *analyzer_symboltable_suite_create(void)
                               teardown_analyzer_tests);
 
     tcase_add_test(st1, test_symbol_table_add);
-    tcase_add_test(st1, test_symbol_table_add_existing);
     tcase_add_test(st1, test_symbol_table_lookup_non_existing);
     tcase_add_test(st1, test_symbol_table_many_symbols);
 
@@ -493,8 +492,15 @@ Suite *analyzer_symboltable_suite_create(void)
     tcase_add_test(st2, test_typedecl_symbol_table);
     tcase_add_test(st2, test_multiple_level_symbol_tables);
 
+    TCase *st3 = tcase_create("analyzer_symbol_table_invalid_op");
+    tcase_add_checked_fixture(st3,
+                              setup_analyzer_tests_with_filelog,
+                              teardown_analyzer_tests);
+    tcase_add_test(st3, test_symbol_table_add_existing);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
+    suite_add_tcase(s, st3);
     return s;
 }
 

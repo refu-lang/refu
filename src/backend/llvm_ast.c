@@ -71,7 +71,7 @@ static bool backend_llvm_function_body(struct ast_node *n,
 {
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(function, "function_entry");
     LLVMPositionBuilderAtEnd(ctx->builder, entry);
-    LLVMValueRef ret = LLVMConstInt(LLVMInt32Type(), 15, 0);
+    LLVMValueRef ret = LLVMConstInt(LLVMInt32Type(), 13, 0);
     LLVMBuildRet(ctx->builder, ret);
     return true;
 }
@@ -84,6 +84,7 @@ static bool backend_llvm_function(struct ast_node *n,
     bool at_first;
     struct ast_node *fndecl = ast_fnimpl_fndecl_get(n);
     const struct RFstring *fn_name = ast_fndecl_name_str(fndecl);
+    struct ast_node *fn_args = ast_fndecl_args_get(fndecl);
     struct type *fn_type = symbol_table_lookup_type(ctx->current_st,
                                                     fn_name,
                                                     &at_first);
@@ -100,14 +101,19 @@ static bool backend_llvm_function(struct ast_node *n,
 
     // TODO: Properly implement this. For now it just takes all leaf types
     // of the argument and adds them to LLVM function args
-    if (!type_for_each_leaf(type_function_get_argtype(fn_type),
+
+    if (fn_args &&
+        !type_for_each_leaf(type_function_get_argtype(fn_type),
                             (leaf_type_cb)backend_llvm_typedesc_to_args,
                             ctx)) {
         return false;
     }
 
     fn = LLVMAddFunction(ctx->mod, fnname,
-                         LLVMFunctionType(LLVMInt32Type(), ctx->params.item, 1, 0));
+                         LLVMFunctionType(LLVMInt32Type(),
+                                          llvm_traversal_ctx_get_params(ctx),
+                                          llvm_traversal_ctx_get_param_count(ctx),
+                                          0)); // not variadic for now
     RFS_buffer_pop();
     return backend_llvm_function_body(ast_fnimpl_body_get(n), fn, ctx);
 }
@@ -148,3 +154,7 @@ bool backend_llvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
         NULL); //POST USER ARG
 
 }
+
+
+i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
+i_INLINE_INS unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_ctx *ctx);

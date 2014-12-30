@@ -17,10 +17,12 @@ struct compiler {
 
 bool compiler_init(struct compiler *c);
 
+void compiler_deinit(struct compiler *c);
+
 bool compiler_init_with_args(struct compiler *c, int argc, char **argv);
 
-bool compiler_process(struct compiler *c);
+bool compiler_pass_args(struct compiler *c, int argc, char **argv);
 
-void compiler_deinit(struct compiler *c);
+bool compiler_process(struct compiler *c);
 
 #endif

@@ -277,6 +277,9 @@ static bool type_init_from_fndecl(struct type *t,
             // TODO: Free argument_type if created
             return false;
         }
+
+        // also add the function's arguments to its symbol table
+        type_function_add_args_to_st(&t->function, a, ast_fndecl_symbol_table_get(n));
     }
 
     t->function.return_type = NULL;
@@ -289,9 +292,6 @@ static bool type_init_from_fndecl(struct type *t,
             return false;
         }
     }
-
-    // also add the function's arguments to its symbol table
-    type_function_add_args_to_st(&t->function, a, ast_fndecl_symbol_table_get(n));
 
     return true;
 }

@@ -327,7 +327,15 @@ struct ast_node *do_front_testdriver_generate_node(
 
 void setup_front_tests()
 {
-    ck_assert_msg(rf_init("refuclib.log", 0, LOG_DEBUG),
+    ck_assert_msg(rf_init(LOG_TARGET_STDOUT, NULL, LOG_DEBUG),
+                  "Failed to initialize refu library");
+    ck_assert_msg(front_testdriver_init(&__front_testdriver),
+                  "Failed to initialize front end test driver");
+}
+
+void setup_front_tests_with_file_log()
+{
+    ck_assert_msg(rf_init(LOG_TARGET_FILE, "refu.log", LOG_DEBUG),
                   "Failed to initialize refu library");
     ck_assert_msg(front_testdriver_init(&__front_testdriver),
                   "Failed to initialize front end test driver");

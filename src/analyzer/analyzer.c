@@ -27,12 +27,14 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
                                   sizeof(struct symbol_table_record),
                                   RECORDS_TABLE_POOL_CHUNK_SIZE);
     if (!rc) {
+        RF_ERROR("Failed to initialize a fixed memory pool for symbol records");
         return false;
     }
     rc = rf_fixed_memorypool_init(&a->types_pool,
                                   sizeof(struct type),
                                   TYPES_POOL_CHUNK_SIZE);
     if (!rc) {
+        RF_ERROR("Failed to initialize a fixed memory pool for types");
         return false;
     }
 
@@ -40,12 +42,13 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
     rf_ilist_head_init(&a->types);
 
     if (!string_table_init(&a->identifiers_table)) {
+        RF_ERROR("Failed to initialize a string table for identifiers");
         return false;
     }
     if (!string_table_init(&a->string_literals_table)) {
+        RF_ERROR("Failed to initialize a string table for string literals");
         return false;
     }
-
 
     a->warn_on_implicit_conversions = DEFAULT_WARN_ON_IMPLICIT_CONVERSIONS;
     return true;

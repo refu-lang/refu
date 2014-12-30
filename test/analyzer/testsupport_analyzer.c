@@ -42,6 +42,13 @@ void setup_analyzer_tests()
                   "Failed to initialize the analyzer test driver");
 }
 
+void setup_analyzer_tests_with_filelog()
+{
+    setup_front_tests_with_file_log();
+    ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
+                  "Failed to initialize the analyzer test driver");
+}
+
 void teardown_analyzer_tests()
 {
     analyzer_testdriver_deinit(&i_analyzer_test_driver_);

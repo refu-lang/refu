@@ -24,6 +24,7 @@ struct analyzer_testdriver {
 struct analyzer_testdriver *get_analyzer_testdriver();
 
 void setup_analyzer_tests();
+void setup_analyzer_tests_with_filelog();
 void teardown_analyzer_tests();
 
 #define testsupport_analyzer_prepare(driver_, msg_)                     \

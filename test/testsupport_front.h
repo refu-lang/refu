@@ -79,6 +79,7 @@ struct ast_node *do_front_testdriver_generate_node(
     } while(0)
 
 void setup_front_tests();
+void setup_front_tests_with_file_log();
 void teardown_front_tests();
 
 
