@@ -8,6 +8,7 @@
 #include <ast/constant_num.h>
 #include <ast/operators.h>
 #include <ast/vardecl.h>
+#include <ast/block.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
@@ -348,9 +349,39 @@ void teardown_front_tests()
 }
 
 
+
 #define ck_astcheck_abort(file_, line_, msg_, ...)      \
     ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
+static bool check_block_node(struct ast_node *got, struct ast_node *expect,
+                             struct inpfile *ifile,
+                             const char* filename,
+                             unsigned int line)
+{
+    // for blocks check the value node has correctly been parsed
+    struct ast_node *val_got = ast_block_valueexpr_get(got);
+    struct ast_node *val_expect = ast_block_valueexpr_get(expect);
+
+    if (val_got == NULL || val_expect == NULL) {
+        if (val_got != val_expect) {
+            ck_astcheck_abort(filename, line,
+                              "block value expression mismatch for block at"
+                              INPLOCATION_FMT2,
+                              INPLOCATION_ARG2(ifile, &got->location));
+        }
+        return true;
+    }
+    if (!check_ast_match_impl(ast_block_valueexpr_get(got),
+                              ast_block_valueexpr_get(expect),
+                              ifile, filename, line)) {
+        ck_astcheck_abort(filename, line,
+                          "block value expression mismatch for block at"
+                          INPLOCATION_FMT2,
+                          INPLOCATION_ARG2(ifile, &got->location));
+    }
+    return true;
+
+}
 static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                         struct inpfile *ifile,
                         const char* filename,
@@ -445,6 +476,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 RF_STR_PF_ARG(ast_string_literal_get_str(expect)));
         }
         break;
+    case AST_BLOCK:
+        return check_block_node(got, expect, ifile, filename, line);
     case AST_CONSTANT_NUMBER:
         ctype = ast_constantnum_get_type(got);
         if (ctype != ast_constantnum_get_type(expect)) {

@@ -57,6 +57,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         "<=\n"
         "&&\n"
         "||\n"
+        "return\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -187,6 +188,11 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_OP_LOGICOR,
             .location=LOC_INIT(f, 13, 0, 13, 1)
+        },
+        /* 15th line */
+        {
+            .type=TOKEN_KW_RETURN,
+            .location=LOC_INIT(f, 14, 0, 14, 5)
         },
     };
     ck_assert(lexer_scan(lex));
