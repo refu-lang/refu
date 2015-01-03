@@ -17,3 +17,4 @@ struct ast_node *ast_returnstmt_create(struct inplocation_mark *start,
     return ret;
 }
 
+i_INLINE_INS struct ast_node *ast_returnstmt_expr_get(struct ast_node *n);

@@ -12,7 +12,7 @@
 
 START_TEST(test_pipeline_end_to_end) {
     struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT("fn main() {return 13}");
+    static const struct RFstring s = RF_STRING_STATIC_INIT("fn main() {return 42}");
     int expected_ret;
     ck_assert_msg(end_to_end_driver_create_file(d, "test_input_file.rf", &s),
                   "Could not create the input file for the test driver");
@@ -20,7 +20,7 @@ START_TEST(test_pipeline_end_to_end) {
                   "Could not compile the input file");
     ck_assert_msg(end_to_end_driver_run(d, &expected_ret),
                   "Failed to execute driver's compiled result");
-    ck_assert_int_eq(13, expected_ret);
+    ck_assert_int_eq(42, expected_ret);
 } END_TEST
 
 

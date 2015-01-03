@@ -133,11 +133,11 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
         start = ast_node_startmark(element);
     }
     end = ast_node_endmark(element);
-    ast_node_add_child(n, element);
+    ast_block_add_element(n, element);
 
     // now add elements to the block
     while ((element = parser_acc_block_element(p))) {
-        ast_node_add_child(n, element);
+        ast_block_add_element(n, element);
         end = ast_node_endmark(element);
     }
 

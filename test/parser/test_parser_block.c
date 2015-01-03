@@ -204,6 +204,8 @@ START_TEST(test_acc_block_2) {
 }END_TEST
 
 START_TEST(test_acc_block_value_without_return) {
+    //TODO: This actually tests that the value is NULL. Should not be like that
+    // but remains to be implemented
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -291,6 +293,7 @@ START_TEST(test_acc_block_value_with_return) {
     testsupport_parser_node_create(op3, binaryop, file, 3, 7, 3, 11,
                                    BINARYOP_MUL, id4, cnum3);
     testsupport_parser_node_create(ret, returnstmt, file, 3, 0, 3, 11, op3);
+    ast_block_valueexpr_set(bnode, ret);
     ast_node_add_child(bnode, ret);
 
     ck_test_parse_as(n, block, d, "block", bnode, true);

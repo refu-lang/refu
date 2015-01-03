@@ -35,7 +35,7 @@ i_INLINE_DECL void ast_block_valueexpr_set(struct ast_node *n, struct ast_node *
 i_INLINE_DECL void ast_block_add_element(struct ast_node *n, struct ast_node *element)
 {
     AST_NODE_ASSERT_TYPE(n, AST_BLOCK);
-    if (ast_node_type(n) == AST_RETURN_STATEMENT) {
+    if (ast_node_type(element) == AST_RETURN_STATEMENT) {
         ast_block_valueexpr_set(n, element);
     }
     ast_node_add_child(n, element);

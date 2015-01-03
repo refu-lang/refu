@@ -15,6 +15,9 @@
 #include <ast/ast_utils.h>
 #include <ast/function.h>
 #include <ast/type.h>
+#include <ast/block.h>
+#include <ast/returnstmt.h>
+#include <ast/constant_num.h>
 
 #include <types/type_function.h>
 #include <types/type_builtin.h>
@@ -70,8 +73,21 @@ static bool backend_llvm_function_body(struct ast_node *n,
                                        struct llvm_traversal_ctx *ctx)
 {
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(function, "function_entry");
+    struct ast_node *retstmt;
+    struct ast_node *retexpr;
+    uint64_t val;
     LLVMPositionBuilderAtEnd(ctx->builder, entry);
-    LLVMValueRef ret = LLVMConstInt(LLVMInt32Type(), 13, 0);
+    // TODO: make this proper in the future. For now just create the return value
+    // and only if it's a const number
+    retstmt = ast_block_valueexpr_get(n);
+    retexpr = ast_returnstmt_expr_get(retstmt);
+    RF_ASSERT(ast_node_type(retexpr) == AST_CONSTANT_NUMBER,
+    "Only constant number supported in returns for now");
+    if (!ast_constantnum_get_integer(retexpr, &val)) {
+        RF_ERROR("Failed to convert a constant num node to number");
+        return false;
+    }
+    LLVMValueRef ret = LLVMConstInt(LLVMInt32Type(), val, 0);
     LLVMBuildRet(ctx->builder, ret);
     return true;
 }
