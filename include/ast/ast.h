@@ -17,6 +17,7 @@
 #include <ast/ifexpr_decls.h>
 #include <ast/arrayref_decls.h>
 #include <ast/block_decls.h>
+#include <ast/returnstmt_decls.h>
 
 #include <analyzer/symbol_table.h>
 
@@ -39,6 +40,7 @@ enum ast_type {
     AST_ROOT = 0,
     AST_BLOCK,
     AST_VARIABLE_DECLARATION,
+    AST_RETURN_STATEMENT,
     AST_TYPE_DECLARATION,
     AST_TYPE_OPERATOR,
     AST_TYPE_DESCRIPTION,
@@ -98,6 +100,7 @@ struct ast_node {
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;
         struct ast_constantnum constantnum;
+        struct ast_returnstmt returnstmt;
     };
 };
 
@@ -180,6 +183,11 @@ i_INLINE_DECL struct inplocation_mark *ast_node_startmark(struct ast_node *n)
 i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 {
     return &n->location.end;
+}
+
+i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
+{
+    return n->type;
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);

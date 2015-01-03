@@ -38,6 +38,7 @@ refu_src = [
     'ast/generics.c',
     'ast/operators.c',
     'ast/ifexpr.c',
+    'ast/returnstmt.c',
     'ast/ast_utils.c',
 
     'analyzer/analyzer.c',

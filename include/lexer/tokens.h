@@ -18,6 +18,7 @@ enum token_type {
     TOKEN_KW_IF,
     TOKEN_KW_ELIF,
     TOKEN_KW_ELSE,
+    TOKEN_KW_RETURN,
 
     /* symbols */
     TOKEN_SM_COLON,

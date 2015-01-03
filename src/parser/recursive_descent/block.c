@@ -4,9 +4,47 @@
 
 #include <parser/parser.h>
 #include <lexer/lexer.h>
+#include <ast/returnstmt.h>
 #include "common.h"
 #include "expression.h"
 #include "type.h"
+
+#define TOKEN_IS_RETURNSTMT_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_RETURN)
+static struct ast_node *parser_acc_return_statement(struct parser *p)
+{
+    struct token *tok;
+    struct ast_node *expr;
+    struct ast_node *n = NULL;
+    struct inplocation_mark *start;
+
+    tok = lexer_lookahead(p->lexer, 1);
+    if (!tok) {
+        return NULL;
+    }
+
+    if (tok->type != TOKEN_KW_RETURN) {
+        return NULL;
+    }
+    start = token_get_start(tok);
+    //consume the return keyword
+    lexer_next_token(p->lexer);
+
+
+    expr = parser_acc_expression(p);
+    if (!expr) {
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                      "Expected an expression for the return statement");
+        goto end;
+    }
+
+    n = ast_returnstmt_create(start, ast_node_endmark(expr), expr);
+    if (!n) {
+        RF_ERROR("Could not create a return statement during parsing");
+    }
+
+end:
+    return n;
+}
 
 static struct ast_node *parser_acc_expr_statement(struct parser *p)
 {
@@ -19,6 +57,8 @@ static struct ast_node *parser_acc_expr_statement(struct parser *p)
         n = parser_acc_block(p, true);
     } else if (TOKEN_IS_TYPEDECL_START(tok)) {
         n = parser_acc_typedecl(p);
+    } else if (TOKEN_IS_RETURNSTMT_START(tok)) {
+        n = parser_acc_return_statement(p);
     }
 
     return n;

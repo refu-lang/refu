@@ -12,6 +12,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("root"),
     RF_STRING_STATIC_INIT("block"),
     RF_STRING_STATIC_INIT("variable declaration"),
+    RF_STRING_STATIC_INIT("return statement"),
     RF_STRING_STATIC_INIT("type declaration"),
     RF_STRING_STATIC_INIT("type operator"),
     RF_STRING_STATIC_INIT("type description"),
@@ -165,6 +166,7 @@ i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
 i_INLINE_INS struct inplocation *ast_node_location(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
+i_INLINE_INS enum ast_type ast_node_type(struct ast_node *n);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {
