@@ -36,11 +36,28 @@ bool string_table_init(struct string_table *t)
     return true;
 }
 
+struct string_table *string_table_create()
+{
+    struct string_table *ret;
+    RF_MALLOC(ret, sizeof(*ret), NULL);
+    if (!string_table_init(ret)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
 void string_table_deinit(struct string_table *t)
 {
     // free memory of all strings
     htable_iterate_values(&t->table, string_table_record_destroy, NULL);
     htable_clear(&t->table);
+}
+
+void string_table_destroy(struct string_table *t)
+{
+    string_table_deinit(t);
+    free(t);
 }
 
 bool string_table_add_str(struct string_table *t,

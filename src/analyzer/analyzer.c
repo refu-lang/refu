@@ -70,6 +70,10 @@ struct analyzer *analyzer_create(struct info_ctx *info)
 
 void analyzer_deinit(struct analyzer *a)
 {
+    if (a->root) {
+        // if analyzer has ownership of ast tree
+        ast_node_destroy(a->root);
+    }
     rf_fixed_memorypool_deinit(&a->symbol_table_records_pool);
     rf_fixed_memorypool_deinit(&a->types_pool);
     string_table_deinit(&a->identifiers_table);
@@ -78,11 +82,6 @@ void analyzer_deinit(struct analyzer *a)
 
 void analyzer_destroy(struct analyzer *a)
 {
-    if (a->root) {
-        // if analyzer has ownership of ast tree
-        ast_node_destroy(a->root);
-    }
-
     analyzer_deinit(a);
     free(a);
 }

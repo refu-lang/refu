@@ -11,7 +11,10 @@ struct string_table {
 };
 
 bool string_table_init(struct string_table *t);
+struct string_table *string_table_create();
+
 void string_table_deinit(struct string_table *t);
+void string_table_destroy(struct string_table *t);
 
 /**
  * Allocates a string with the contents of @c input and stores it in the table.
