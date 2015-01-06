@@ -5,9 +5,6 @@
 
 #include <Data_Structures/intrusive_list.h>
 #include <Definitions/inline.h>
-#include <Utils/fixed_memory_pool.h>
-
-#include <analyzer/string_table.h>
 
 struct parser;
 struct inpfile;
@@ -31,18 +28,16 @@ struct analyzer {
     struct info_ctx *info;
     struct ast_node *root;
 
-    struct rf_fixed_memorypool symbol_table_records_pool;
-    struct rf_fixed_memorypool types_pool;
+    /* Memory pools */
+    struct rf_fixed_memorypool *symbol_table_records_pool;
+    struct rf_fixed_memorypool *types_pool;
 
-    /* A list of all anonymous types */
+    //! A list of all anonymous types
     struct RFilist_head anonymous_types;
-    /* A list of all types, currently not used due to the symbol tables
-     * already having that Information
-     */
-    struct RFilist_head types;
 
-    struct string_table identifiers_table;
-    struct string_table string_literals_table;
+    /* String tables containing identifiers and string literals found during parsing */
+    struct string_table *identifiers_table;
+    struct string_table *string_literals_table;
 
     bool have_semantic_err;
 

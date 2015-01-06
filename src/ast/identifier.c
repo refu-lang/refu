@@ -2,9 +2,9 @@
 
 #include <ast/ast.h>
 #include <analyzer/analyzer.h>
+#include <analyzer/string_table.h>
 
 #include <Utils/sanity.h>
-
 
 
 struct ast_node *ast_identifier_create(struct inplocation *loc)
@@ -45,15 +45,15 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
               "calling function at wrong part of processing pipeline");
 
     if (n->type == AST_IDENTIFIER) {
-        return string_table_get_str(&a->identifiers_table, n->identifier.hash);
+        return string_table_get_str(a->identifiers_table, n->identifier.hash);
     }
-    return string_table_get_str(&a->identifiers_table,
+    return string_table_get_str(a->identifiers_table,
                                 n->xidentifier.id->identifier.hash);
 }
 
 bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
 {
-    return string_table_add_str(&a->identifiers_table,
+    return string_table_add_str(a->identifiers_table,
                                 &n->identifier.string,
                                 &n->identifier.hash);
 }

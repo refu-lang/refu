@@ -9,6 +9,7 @@
 #include <parser/parser.h>
 #include <types/type.h>
 #include <analyzer/typecheck.h>
+#include <analyzer/string_table.h>
 
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
 #define TYPES_POOL_CHUNK_SIZE 2048
@@ -18,35 +19,30 @@ i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
-    bool rc;
     a->info = info;
     a->root = NULL;
     a->have_semantic_err = false;
 
-    rc = rf_fixed_memorypool_init(&a->symbol_table_records_pool,
-                                  sizeof(struct symbol_table_record),
-                                  RECORDS_TABLE_POOL_CHUNK_SIZE);
-    if (!rc) {
+    a->symbol_table_records_pool = rf_fixed_memorypool_create(sizeof(struct symbol_table_record),
+                                                              RECORDS_TABLE_POOL_CHUNK_SIZE);
+    if (!a->symbol_table_records_pool) {
         RF_ERROR("Failed to initialize a fixed memory pool for symbol records");
         return false;
     }
-    rc = rf_fixed_memorypool_init(&a->types_pool,
-                                  sizeof(struct type),
-                                  TYPES_POOL_CHUNK_SIZE);
-    if (!rc) {
+    a->types_pool = rf_fixed_memorypool_create(sizeof(struct type),
+                                               TYPES_POOL_CHUNK_SIZE);
+    if (!a->types_pool) {
         RF_ERROR("Failed to initialize a fixed memory pool for types");
         return false;
     }
-
     rf_ilist_head_init(&a->anonymous_types);
-    rf_ilist_head_init(&a->types);
 
-    if (!string_table_init(&a->identifiers_table)) {
-        RF_ERROR("Failed to initialize a string table for identifiers");
+    if (!(a->identifiers_table = string_table_create())) {
+        RF_ERROR("Failed to allocate a string table for identifiers");
         return false;
     }
-    if (!string_table_init(&a->string_literals_table)) {
-        RF_ERROR("Failed to initialize a string table for string literals");
+    if (!(a->string_literals_table = string_table_create())) {
+        RF_ERROR("Failed to allocate a string table for string literals");
         return false;
     }
 
@@ -74,10 +70,10 @@ void analyzer_deinit(struct analyzer *a)
         // if analyzer has ownership of ast tree
         ast_node_destroy(a->root);
     }
-    rf_fixed_memorypool_deinit(&a->symbol_table_records_pool);
-    rf_fixed_memorypool_deinit(&a->types_pool);
-    string_table_deinit(&a->identifiers_table);
-    string_table_deinit(&a->string_literals_table);
+    rf_fixed_memorypool_destroy(a->symbol_table_records_pool);
+    rf_fixed_memorypool_destroy(a->types_pool);
+    string_table_destroy(a->identifiers_table);
+    string_table_destroy(a->string_literals_table);
 }
 
 void analyzer_destroy(struct analyzer *a)

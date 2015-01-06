@@ -34,15 +34,9 @@ bool front_ctx_init(struct front_ctx *ctx,
         goto free_parser;
     }
 
-    ctx->serializer = serializer_create();
-    if (!ctx->serializer) {
-        goto free_analyzer;
-    }
 
     return true;
 
-free_analyzer:
-    analyzer_destroy(ctx->analyzer);
 free_parser:
     parser_destroy(ctx->parser);
 free_lexer:
@@ -73,7 +67,6 @@ void front_ctx_deinit(struct front_ctx *ctx)
     parser_destroy(ctx->parser);
     info_ctx_destroy(ctx->info);
     analyzer_destroy(ctx->analyzer);
-    serializer_destroy(ctx->serializer);
 }
 
 void front_ctx_destroy(struct front_ctx *ctx)
@@ -93,13 +86,6 @@ struct analyzer *front_ctx_process(struct front_ctx *ctx)
     }
 
     if (!analyzer_analyze_file(ctx->analyzer, ctx->parser)) {
-        return NULL;
-    }
-
-    // TODO -- also think when should the AST be serialized to a file (?)
-    // some argument maybe which would signify we need to transfer the processed
-    // program to another computer
-    if (!serializer_serialize_file(ctx->serializer, ctx->analyzer)) {
         return NULL;
     }
 

@@ -3,6 +3,7 @@
 #include <String/rf_str_core.h>
 #include <Utils/hash.h>
 #include <Utils/memory.h>
+#include <Utils/fixed_memory_pool.h>
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
@@ -145,7 +146,7 @@ bool symbol_table_init(struct symbol_table *t, struct analyzer *a)
 {
     htable_init(&t->table, rehash_fn, NULL);
     t->parent = NULL;
-    t->pool = &a->symbol_table_records_pool;
+    t->pool = a->symbol_table_records_pool;
     return true;
 }
 

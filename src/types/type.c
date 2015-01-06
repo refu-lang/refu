@@ -1,6 +1,7 @@
 #include <types/type.h>
 
 #include <Persistent/buffers.h>
+#include <Utils/fixed_memory_pool.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
@@ -44,12 +45,12 @@ static bool type_function_add_args_to_st(struct type_function *ft,
 
 struct type *type_alloc(struct analyzer *a)
 {
-    return rf_fixed_memorypool_alloc_element(&a->types_pool);
+    return rf_fixed_memorypool_alloc_element(a->types_pool);
 }
 
 void type_free(struct type *t, struct analyzer *a)
 {
-    rf_fixed_memorypool_free_element(&a->types_pool, t);
+    rf_fixed_memorypool_free_element(a->types_pool, t);
 }
 
 /* -- type creation and initialization functions used internally -- */

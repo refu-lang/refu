@@ -6,6 +6,7 @@
 #include <info/info.h>
 #include <compiler_args.h>
 #include <front_ctx.h>
+#include <ir/rir.h>
 #include <backend/llvm.h>
 
 bool compiler_init(struct compiler *c)
@@ -31,6 +32,10 @@ void compiler_deinit(struct compiler *c)
 {
     if (c->front) {
         front_ctx_destroy(c->front);
+    }
+
+    if (c->ir) {
+        rir_destroy(c->ir);
     }
 
     compiler_args_destroy(c->args);
@@ -77,9 +82,25 @@ bool compiler_process(struct compiler *c)
         printf(RF_STR_PF_FMT, RF_STR_PF_ARG(&c->err_buff));
         return false;
     }
-    RF_DEBUG("input file parsed succesfully\n");
 
-    backend_llvm_generate(analyzer, c->args);
+    // create the intermediate representation from the analyzer and free analyzer
+    c->ir = rir_create(analyzer);
+    if (!c->ir) {
+        RF_ERROR("Could not initialize the intermediate representation");
+        return false;
+    }
+    analyzer_destroy(analyzer);
+
+
+    // TODO -- also think when should the AST be serialized to a file (?)
+    // some argument maybe which would signify we need to transfer the processed
+    // program to another computer
+    /* if (!serializer_serialize_file(c->serializer, c->ir)) { */
+    /*     return NULL; */
+    /* } */
+
+    // TODO: This should interface with the IR and not analyzer
+    /* backend_llvm_generate(analyzer, c->args); */
 
     return true;
 }

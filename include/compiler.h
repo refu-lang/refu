@@ -5,6 +5,8 @@
 #include <String/rf_str_core.h>
 
 struct compiler_args;
+struct serializer;
+struct rir;
 
 struct compiler {
     //! An error buffer for the compiler
@@ -13,6 +15,12 @@ struct compiler {
     struct compiler_args *args;
     //! The compiler's front end context
     struct front_ctx *front;
+    //! The intermediate representation of the code, created after the analysis
+    //! of the code.
+    struct rir *ir;
+    //! The serializer that can serialize the Intermediate Representation to a file
+    //! TODO: Maybe just lose this in favour of a to_file() in the IR itself?
+    struct serializer *serializer;
 };
 
 bool compiler_init(struct compiler *c);
