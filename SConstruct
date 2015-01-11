@@ -52,6 +52,7 @@ refu_src = [
     'types/type_builtin.c',
 
     'ir/rir.c',
+    'ir/elements.c',
 
     'serializer/serializer.c'
 ]

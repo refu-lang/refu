@@ -75,6 +75,8 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl);
 
+struct type *type_lookup_identifier(struct ast_node *n,
+                                    struct symbol_table *st);
 struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st,

@@ -7,12 +7,7 @@
 #include <stdbool.h>
 
 struct analyzer;
-struct RFstring;
-struct type;
-struct ast_node;
 
 bool analyzer_typecheck(struct analyzer *a);
-
-const struct type *expression_determine_type(struct ast_node *expr);
 
 #endif

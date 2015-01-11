@@ -70,6 +70,22 @@ START_TEST(test_typecheck_assignment_conversion) {
     ck_assert_typecheck_with_messages(d, true, messages);
 } END_TEST
 
+
+START_TEST(test_typecheck_addition_simple) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u64\n"
+        "b:u64\n"
+        "c:u64\n"
+        "a = b + c\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -78,12 +94,17 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_checked_fixture(st1,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-
     tcase_add_test(st1, test_typecheck_assignment_simple);
     tcase_add_test(st1, test_typecheck_assignment_conversion);
 
+    TCase *st2 = tcase_create("analyzer_typecheck_additions");
+    tcase_add_checked_fixture(st2,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(st2, test_typecheck_addition_simple);
 
     suite_add_tcase(s, st1);
+    suite_add_tcase(s, st2);
     return s;
 }
 

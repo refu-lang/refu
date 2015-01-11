@@ -10,13 +10,94 @@
 #include <ast/block.h>
 #include <ast/constant_num.h>
 #include <ast/ast_utils.h>
+#include <ast/type.h>
 
+#include <types/type.h>
 #include <types/type_builtin.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include "analyzer_pass1.h" // for analyzer_make_parent_st_current()
 
+
+static bool analyzer_typecheck_addition(struct ast_node *n,
+                                        struct ast_node *left,
+                                        struct ast_node *right,
+                                        struct analyzer_traversal_ctx *ctx)
+{
+    const struct type *tright;
+    const struct type *tleft;
+    struct type_comparison_ctx cmp_ctx;
+    uint32_t buffer_index;
+    bool ret = false;
+
+    buffer_index = rf_buffer_index(TSBUFFA);
+
+    tright = ast_expression_get_type(right);
+    tleft = ast_expression_get_type(left);
+
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
+    if (!type_equals(tleft, tright, &cmp_ctx)) {
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Addition between incompatible types. Can't add "
+                     "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                     RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+        goto end;
+    }
+
+    // set the type of the addition as the type of either of its operands for now
+    n->expression_type = tright;
+
+    ret = true;
+  end:
+    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    return ret;
+}
+
+static bool analyzer_typecheck_constantnum(struct ast_node *n)
+{
+    enum constant_type ctype = ast_constantnum_get_type(n);
+    if (ctype == CONSTANT_NUMBER_INTEGER) {
+        n->expression_type = type_builtin_get_type(BUILTIN_UINT_64);
+    } else if (ctype == CONSTANT_NUMBER_FLOAT) {
+        n->expression_type = type_builtin_get_type(BUILTIN_FLOAT_64);
+    }
+
+    return n->expression_type; //converted to bool
+}
+
+static bool analyzer_typecheck_identifier(struct ast_node *n,
+                                          struct analyzer_traversal_ctx *ctx)
+{
+    n->expression_type = type_lookup_identifier(n, ctx->current_st);
+
+    if (!n->expression_type) {
+        analyzer_err(ctx->a, ast_node_startmark(n),
+                     ast_node_endmark(n),
+                     "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
+                     RF_STR_PF_ARG(ast_identifier_str(n)));
+        return false;
+    }
+
+    return true;
+}
+
+static bool analyzer_typecheck_xidentifier(struct ast_node *n,
+                                          struct analyzer_traversal_ctx *ctx)
+{
+    (void)ctx;
+    n->expression_type = n->xidentifier.id->expression_type;
+    return true;
+}
+
+static bool analyzer_typecheck_typedesc(struct ast_node *n,
+                                        struct analyzer_traversal_ctx *ctx)
+{
+    (void)ctx;
+    n->expression_type = ast_typedesc_right(n)->expression_type;
+    return true;
+}
 
 static bool analyzer_typecheck_assignment(struct ast_node *n,
                                           struct ast_node *left,
@@ -25,10 +106,8 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    struct symbol_table_record *rec;
     struct type_comparison_ctx cmp_ctx;
     uint32_t buffer_index;
-    bool at_first;
     bool ret = false;
 
     buffer_index = rf_buffer_index(TSBUFFA);
@@ -42,20 +121,8 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
         return false;
     }
 
-    rec = symbol_table_lookup_record(ctx->current_st,
-                                     ast_identifier_str(left),
-                                     &at_first);
-
-    if (!rec) {
-        analyzer_err(ctx->a, ast_node_startmark(left),
-                     ast_node_endmark(left),
-                     "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
-                     RF_STR_PF_ARG(ast_identifier_str(left)));
-        return false;
-    }
-
-    tright = expression_determine_type(right);
-    tleft = symbol_table_record_type(rec);
+    tright = ast_expression_get_type(right);
+    tleft = ast_expression_get_type(left);
 
     type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
     if (!type_equals(tleft, tright, &cmp_ctx)) {
@@ -87,20 +154,26 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
     }
 
 
+    // set the type of assignment as the type of the left operand
+    n->expression_type = tleft;
     ret = true;
   end:
     rf_buffer_set_index(TSBUFFA, buffer_index, char);
     return ret;
 }
+
 static bool analyzer_typecheck_binary_op(struct ast_node *n,
                                          struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
 
+    //TODO: more binary operators
     switch (ast_binaryop_op(n)) {
     case BINARYOP_ASSIGN:
         return analyzer_typecheck_assignment(n, left, right, ctx);
+    case BINARYOP_ADD:
+        return analyzer_typecheck_addition(n, left, right, ctx);
     default:
         // nothing to do
         break;
@@ -109,8 +182,7 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
     return true;
 }
 
-static bool analyzer_typecheck_do(struct ast_node *n,
-                                   void *user_arg)
+static bool analyzer_typecheck_descend(struct ast_node *n, void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
     switch(n->type) {
@@ -125,15 +197,54 @@ static bool analyzer_typecheck_do(struct ast_node *n,
         ctx->current_st = ast_fndecl_symbol_table_get(n);
         break;
 
-        // nodes for which we actually need to typecheck
-    case AST_BINARY_OPERATOR:
-        return analyzer_typecheck_binary_op(n, ctx);
     default:
         // do nothing
         break;
     }
 
     return true;
+}
+
+
+static bool analyzer_typecheck_do(struct ast_node *n,
+                                  void *user_arg)
+{
+    struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
+    bool ret = true;
+
+    // TODO: Temporary debug string, delete
+    printf("Typechecking "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
+    fflush(stdout);
+
+    switch(n->type) {
+    case AST_BINARY_OPERATOR:
+        ret = analyzer_typecheck_binary_op(n, ctx);
+        break;
+    case AST_IDENTIFIER:
+        ret = analyzer_typecheck_identifier(n, ctx);
+        break;
+    case AST_XIDENTIFIER:
+        ret = analyzer_typecheck_xidentifier(n, ctx);
+        break;
+    case AST_TYPE_DESCRIPTION:
+        ret = analyzer_typecheck_typedesc(n, ctx);
+        break;
+    case AST_CONSTANT_NUMBER:
+        ret = analyzer_typecheck_constantnum(n);
+        break;
+    case AST_STRING_LITERAL:
+        n->expression_type = type_builtin_get_type(BUILTIN_STRING);
+        ret = n->expression_type;
+        break;
+    default:
+        // do nothing. So what type (if any) should be saved for:
+        // - variable declaration?
+        break;
+    }
+
+    // also change symbol table upwards if needed
+    analyzer_make_parent_st_current(n, ctx);
+    return ret;
 }
 
 bool analyzer_typecheck(struct analyzer *a)
@@ -143,44 +254,10 @@ bool analyzer_typecheck(struct analyzer *a)
 
     return ast_traverse_tree(
         a->root,
-        analyzer_typecheck_do,
+        analyzer_typecheck_descend,
         &ctx,
-        (ast_node_cb)analyzer_make_parent_st_current,
+        analyzer_typecheck_do,
         &ctx);
 }
 
 
-/* -- functions having to do with determining the type of an expression */
-
-static inline const struct type *expression_constantnum_get_type(struct ast_node *n)
-{
-    enum constant_type ctype = ast_constantnum_get_type(n);
-    if (ctype == CONSTANT_NUMBER_INTEGER) {
-        return type_builtin_get_type(BUILTIN_UINT_64);
-    } else if (ctype == CONSTANT_NUMBER_FLOAT) {
-        return type_builtin_get_type(BUILTIN_FLOAT_64);
-    }
-
-    // should never happen
-    RF_ASSERT_OR_CRITICAL(false,
-                          "Illegal constantnum type");
-    return NULL;
-}
-
-const struct type *expression_determine_type(struct ast_node *expr)
-{
-    switch (expr->type) {
-    case AST_CONSTANT_NUMBER:
-        return expression_constantnum_get_type(expr);
-        break;
-    case AST_STRING_LITERAL:
-        return type_builtin_get_type(BUILTIN_STRING);
-    default:
-        RF_ASSERT_OR_CRITICAL(false,
-                              "Illegal ast node type \""RF_STR_PF_FMT"\" detected"
-                              " in determining the type of an expression",
-                              RF_STR_PF_ARG(ast_node_str(expr)));
-        break;
-    }
-    return NULL;
-}

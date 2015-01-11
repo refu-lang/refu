@@ -22,6 +22,18 @@ bool ast_pre_traverse_tree(struct ast_node *n,
                            void *user_arg);
 
 /**
+ * Post-order traversal of the AST tree
+ *
+ * @param n              The node to traverse
+ * @param cb             A callback to be executed at tree traversal for each
+ *                       node in post-order. i.e: Going from the bottom up
+ * @param user_arg       Argument passed to the callback
+ */
+bool ast_post_traverse_tree(struct ast_node *n,
+                            ast_node_cb cb,
+                            void *user_arg);
+
+/**
  * Traversal of the AST tree
  *
  * @param n              The node to traverse

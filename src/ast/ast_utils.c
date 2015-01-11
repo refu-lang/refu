@@ -21,6 +21,25 @@ bool ast_pre_traverse_tree(struct ast_node *n,
     return true;
 }
 
+bool ast_post_traverse_tree(struct ast_node *n,
+                            ast_node_cb cb,
+                            void *user_arg)
+{
+    struct ast_node *child;
+
+    rf_ilist_for_each(&n->children, child, lh) {
+        if (!ast_post_traverse_tree(child, cb, user_arg)) {
+            return false;
+        }
+    }
+
+    if (!cb(n, user_arg)) {
+        return false;
+    }
+
+    return true;
+}
+
 bool ast_traverse_tree(struct ast_node *n,
                        ast_node_cb pre_cb,
                        void *pre_user_arg,

@@ -10,6 +10,9 @@
 
 #include CLIB_TEST_HELPERS
 
+// TODO: Switch those when backend implementation starts properly.
+// For now this is failing since this test was just to test LLVM
+
 START_TEST(test_pipeline_end_to_end) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT("fn main() {return 42}");

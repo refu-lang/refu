@@ -503,25 +503,15 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl)
 {
-    struct symbol_table_record *rec;
-    bool at_first_st;
-    int builtin_type;
     const struct RFstring *id;
+    struct type* ret;
 
     AST_NODE_ASSERT_TYPE(n, AST_XIDENTIFIER);
     id = ast_xidentifier_str(n);
 
-
-    // check if it's a builtin type
-    builtin_type = type_builtin_identifier_p(id);
-    if (builtin_type != -1) {
-        return (struct type*)type_builtin_get_type(builtin_type);
-    }
-
-    // if not check if we know about it from the symbol tables
-    rec = symbol_table_lookup_record(st, id, &at_first_st);
-    if (rec) {
-        return symbol_table_record_type(rec);
+    ret = type_lookup_identifier(n->xidentifier.id, st);
+    if (ret) {
+        return ret;
     }
 
     // if not check if we have generic and if it is one of them
@@ -540,6 +530,33 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                  ast_node_endmark(n),
                  "Type \""RF_STR_PF_FMT"\" is not defined",
                  RF_STR_PF_ARG(id));
+    return NULL;
+}
+
+struct type *type_lookup_identifier(struct ast_node *n,
+                                    struct symbol_table *st)
+{
+    struct symbol_table_record *rec;
+    bool at_first_st;
+    int builtin_type;
+    const struct RFstring *id;
+
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
+    id = ast_identifier_str(n);
+
+
+    // check if it's a builtin type
+    builtin_type = type_builtin_identifier_p(id);
+    if (builtin_type != -1) {
+        return (struct type*)type_builtin_get_type(builtin_type);
+    }
+
+    // if not check if we know about it from the symbol tables
+    rec = symbol_table_lookup_record(st, id, &at_first_st);
+    if (rec) {
+        return symbol_table_record_type(rec);
+    }
+
     return NULL;
 }
 

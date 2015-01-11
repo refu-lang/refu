@@ -75,6 +75,7 @@ enum ast_owner {
 struct ast_node {
     enum ast_type type;
     enum ast_owner owner;
+    const struct type *expression_type;
     struct inplocation location;
     struct RFilist_node lh;
     struct RFilist_head children;
@@ -188,6 +189,12 @@ i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
 {
     return n->type;
+}
+
+i_INLINE_DECL const struct type *ast_expression_get_type(struct ast_node *expr)
+{
+    RF_ASSERT(expr->expression_type != NULL, "Expression type getter called before typecheck");
+    return expr->expression_type;
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);

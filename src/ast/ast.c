@@ -41,6 +41,7 @@ void ast_node_init(struct ast_node * n, enum ast_type type)
 {
     n->owner = AST_OWNEDBY_PARSER;
     n->type = type;
+    n->expression_type = NULL;
     rf_ilist_head_init(&n->children);
 }
 
@@ -167,6 +168,7 @@ i_INLINE_INS struct inplocation *ast_node_location(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
 i_INLINE_INS enum ast_type ast_node_type(struct ast_node *n);
+i_INLINE_INS const struct type *ast_expression_get_type(struct ast_node *expr);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {
