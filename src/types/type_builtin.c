@@ -69,20 +69,23 @@ bool type_builtin_equals(const struct type_builtin *t1,
     if (t1->btype <= BUILTIN_UINT_64 &&
         t2->btype <= BUILTIN_UINT_64) {
 
-        if (ctx->reason == COMPARISON_REASON_ASSIGNMENT) {
-            if (type_builtin_int_is_unsigned(t1) &&
-                !type_builtin_is_unsigned(t2)) {
 
-                RF_BITFLAG_SET(ctx->conversion, SIGNED_TO_UNSIGNED);
-            }
+        if (type_builtin_int_is_unsigned(t1) &&
+            !type_builtin_is_unsigned(t2)) {
 
-            if (t1->btype < t2->btype) {
-                RF_BITFLAG_SET(ctx->conversion, LARGER_TO_SMALLER);
+            RF_BITFLAG_SET(ctx->conversion, SIGNED_TO_UNSIGNED);
+        }
+
+        if (t1->btype < t2->btype) {
+            if (ctx->reason == COMPARISON_REASON_ASSIGNMENT) {
+                // it's an error to assign bigger type to smaller type
+                return false;
             }
+            // else
+            RF_BITFLAG_SET(ctx->conversion, LARGER_TO_SMALLER);
         }
         return true;
     }
-
 
     if (t1->btype >= BUILTIN_FLOAT_32 && t1->btype <= BUILTIN_FLOAT_64 &&
         t2->btype >= BUILTIN_FLOAT_32 && t2->btype <= BUILTIN_FLOAT_64) {

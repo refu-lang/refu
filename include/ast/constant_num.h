@@ -13,6 +13,8 @@ struct ast_node *ast_constantnum_create_integer(struct inplocation *loc,
 struct ast_node *ast_constantnum_create_float(struct inplocation *loc,
                                               double value);
 
+//! Depending on the size of the constant literal, get the smallest type that would fit it
+const struct type * ast_constantnum_get_storagetype(struct ast_node *n);
 
 #include <ast/ast.h>
 

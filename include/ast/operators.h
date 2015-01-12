@@ -25,6 +25,7 @@ i_INLINE_DECL enum binaryop_type ast_binaryop_op(struct ast_node *op)
     return op->binaryop.type;
 }
 
+const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op);
 const struct RFstring * ast_binaryop_opstr(struct ast_node *op);
 
 enum binaryop_type binaryop_type_from_token(struct token *tok);

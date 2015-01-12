@@ -20,6 +20,59 @@
 #include "analyzer_pass1.h" // for analyzer_make_parent_st_current()
 
 
+static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
+                                                    enum binaryop_type operation,
+                                                    const struct type *tleft,
+                                                    const struct type *tright,
+                                                    struct analyzer_traversal_ctx *ctx)
+{
+    struct type_comparison_ctx cmp_ctx;
+    uint32_t buffer_index;
+    bool ret = false;
+
+    buffer_index = rf_buffer_index(TSBUFFA);
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
+    if (type_equals(tleft, tright, &cmp_ctx)) {
+        if (ctx->a->warn_on_implicit_conversions) {
+            if (RF_BITFLAG_ON(cmp_ctx.conversion, SIGNED_TO_UNSIGNED)) {
+                analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                              RF_STR_PF_FMT" from a signed to an unsigned type."
+                              "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                              ast_binaryop_operation_name_str(operation),
+                              RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                              RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+            }
+
+            if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
+                    analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                                  RF_STR_PF_FMT" from a larger to a smaller builtin type."
+                                  "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                                  ast_binaryop_operation_name_str(operation),
+                                  RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                                  RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+            }
+        }
+        ret = true;
+    }
+
+
+    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    return ret;
+}
+
+
+static bool analyzer_types_addable(struct ast_node *left,
+                                   struct ast_node *right,
+                                   struct analyzer_traversal_ctx *ctx)
+{
+    // TODO: Check if two types that are not strictly equal can still be added
+    // if for example there is an addition typeclass instance
+    (void)left;
+    (void)right;
+    (void)ctx;
+    return false;
+}
+
 static bool analyzer_typecheck_addition(struct ast_node *n,
                                         struct ast_node *left,
                                         struct ast_node *right,
@@ -27,43 +80,38 @@ static bool analyzer_typecheck_addition(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    struct type_comparison_ctx cmp_ctx;
     uint32_t buffer_index;
     bool ret = false;
 
     buffer_index = rf_buffer_index(TSBUFFA);
 
-    tright = ast_expression_get_type(right);
     tleft = ast_expression_get_type(left);
+    tright = ast_expression_get_type(right);
 
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
-    if (!type_equals(tleft, tright, &cmp_ctx)) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                     "Addition between incompatible types. Can't add "
-                     "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                     RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
-        goto end;
+    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_ADD, tleft, tright, ctx)) {
+        if (!analyzer_types_addable(left, right, ctx)) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "Addition between incompatible types. Can't add "
+                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+            goto end;
+        }
     }
+
 
     // set the type of the addition as the type of either of its operands for now
     n->expression_type = tright;
-
     ret = true;
-  end:
+
+end:
     rf_buffer_set_index(TSBUFFA, buffer_index, char);
     return ret;
 }
 
 static bool analyzer_typecheck_constantnum(struct ast_node *n)
 {
-    enum constant_type ctype = ast_constantnum_get_type(n);
-    if (ctype == CONSTANT_NUMBER_INTEGER) {
-        n->expression_type = type_builtin_get_type(BUILTIN_UINT_64);
-    } else if (ctype == CONSTANT_NUMBER_FLOAT) {
-        n->expression_type = type_builtin_get_type(BUILTIN_FLOAT_64);
-    }
-
+    n->expression_type = ast_constantnum_get_storagetype(n);
     return n->expression_type; //converted to bool
 }
 
@@ -99,6 +147,19 @@ static bool analyzer_typecheck_typedesc(struct ast_node *n,
     return true;
 }
 
+
+static bool analyzer_types_assignable(struct ast_node *left,
+                                      struct ast_node *right,
+                                      struct analyzer_traversal_ctx *ctx)
+{
+    // TODO: Check if two types that are not strictly equal can still be assignable
+    // if for example there is an assignment typeclass instance
+    (void)left;
+    (void)right;
+    (void)ctx;
+    return false;
+}
+
 static bool analyzer_typecheck_assignment(struct ast_node *n,
                                           struct ast_node *left,
                                           struct ast_node *right,
@@ -106,7 +167,6 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    struct type_comparison_ctx cmp_ctx;
     uint32_t buffer_index;
     bool ret = false;
 
@@ -124,40 +184,22 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
     tright = ast_expression_get_type(right);
     tleft = ast_expression_get_type(left);
 
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_ASSIGNMENT);
-    if (!type_equals(tleft, tright, &cmp_ctx)) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                     "Assignment between incompatible types. Can't assign "
-                     "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                     RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
-        goto end;
-    }
-
-    if (ctx->a->warn_on_implicit_conversions) {
-
-        if (RF_BITFLAG_ON(cmp_ctx.conversion, SIGNED_TO_UNSIGNED)) {
-            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                          "Assignment from a signed to an unsigned type."
-                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                          RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                          RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
-        }
-
-        if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
-            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                          "Assignment from a larger to a smaller builtin type."
-                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                          RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                          RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_ASSIGN, tleft, tright, ctx)) {
+        if (!analyzer_types_assignable(left, right, ctx)) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "Assignment between incompatible types. Can't assign "
+                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
+                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+            goto end;
         }
     }
-
 
     // set the type of assignment as the type of the left operand
     n->expression_type = tleft;
     ret = true;
-  end:
+
+end:
     rf_buffer_set_index(TSBUFFA, buffer_index, char);
     return ret;
 }
@@ -212,9 +254,9 @@ static bool analyzer_typecheck_do(struct ast_node *n,
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
     bool ret = true;
 
-    // TODO: Temporary debug string, delete
-    printf("Typechecking "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
-    fflush(stdout);
+    // TODO: Temporary debug string commented out for quick check while testing, delete soon
+    /* printf("Typechecking "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n))); */
+    /* fflush(stdout); */
 
     switch(n->type) {
     case AST_BINARY_OPERATOR:

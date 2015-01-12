@@ -26,6 +26,32 @@ struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
 i_INLINE_INS void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r);
 i_INLINE_INS enum binaryop_type ast_binaryop_op(struct ast_node *op);
 
+
+static const struct RFstring binaryop_operation_names[] = {
+    [BINARYOP_ADD]        =   RF_STRING_STATIC_INIT("addition"),
+    [BINARYOP_SUB]        =   RF_STRING_STATIC_INIT("subtraction"),
+    [BINARYOP_MUL]        =   RF_STRING_STATIC_INIT("multiplication"),
+    [BINARYOP_DIV]        =   RF_STRING_STATIC_INIT("division"),
+
+    [BINARYOP_CMP_EQ]     =   RF_STRING_STATIC_INIT("equality"),
+    [BINARYOP_CMP_NEQ]    =   RF_STRING_STATIC_INIT("unequality"),
+    [BINARYOP_CMP_GT]     =   RF_STRING_STATIC_INIT("greater than comparison"),
+    [BINARYOP_CMP_GTEQ]   =   RF_STRING_STATIC_INIT("greater or equal comparison"),
+    [BINARYOP_CMP_LT]     =   RF_STRING_STATIC_INIT("less than comparison"),
+    [BINARYOP_CMP_LTEQ]   =   RF_STRING_STATIC_INIT("less or equal comparison"),
+
+    [BINARYOP_LOGIC_AND]  =   RF_STRING_STATIC_INIT("logical and"),
+    [BINARYOP_LOGIC_OR]   =   RF_STRING_STATIC_INIT("logical or"),
+
+    [BINARYOP_ASSIGN]  =   RF_STRING_STATIC_INIT("assignment")
+};
+
+const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op)
+{
+    return &binaryop_operation_names[op];
+}
+
+
 static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_PLUS]     =   BINARYOP_ADD,
     [TOKEN_OP_MINUS]    =   BINARYOP_SUB,
@@ -72,7 +98,7 @@ static const enum token_type  token_type_lookup[] = {
     [BINARYOP_ASSIGN]  =   TOKEN_OP_ASSIGN
 };
 
-const struct RFstring * ast_binaryop_opstr(struct ast_node *op)
+const struct RFstring *ast_binaryop_opstr(struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return tokentype_to_str(token_type_lookup[op->binaryop.type]);
