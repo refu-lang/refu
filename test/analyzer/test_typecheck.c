@@ -45,35 +45,6 @@ START_TEST(test_typecheck_assignment_simple) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
-
-START_TEST(test_typecheck_assignment_literal_to_var) {
-    //TODO: This may be showing a warning to me and not seeing it right now
-    // The warning should not be there. Even if all constants are u64 they could
-    // be assigned to a smaller variable if possible like here.
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u8\n"
-        "a = 103\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-        struct info_msg messages[] = {
-        /* TESTSUPPORT_INFOMSG_INIT_BOTH( */
-        /*     &d->front.file, */
-        /*     MESSAGE_SEMANTIC_WARNING, */
-        /*     "Assignment from a larger to a smaller builtin type." */
-        /*     "\"u64\" to \"u8\"", */
-        /*     2, 0, 2, 6) */
-    };
-
-    testsupport_typecheck_prepare(d);
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
-
-    ck_assert_typecheck_with_messages(d, true, messages);
-    /* ck_assert_typecheck_ok(d); */
-} END_TEST
-
 START_TEST(test_typecheck_assignment_invalid_storage_size) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u8\n"
@@ -97,7 +68,7 @@ START_TEST(test_typecheck_assignment_invalid_storage_size) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
-START_TEST(test_typecheck_assignment_invalid1) {
+START_TEST(test_typecheck_assignment_invalid_string_to_int) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
         "name:string\n"
@@ -120,13 +91,13 @@ START_TEST(test_typecheck_assignment_invalid1) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
-START_TEST(test_typecheck_addition_simple) {
+START_TEST(test_typecheck_valid_addition_simple) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
         "b:u64\n"
         "c:u64\n"
         "name:string\n"
-        "a = b + c\n"
+        "a = b + c + 321 + 234\n"
         "name = \"foo\" + \"bar\""
         "}"
     );
@@ -136,13 +107,69 @@ START_TEST(test_typecheck_addition_simple) {
     testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
-START_TEST(test_typecheck_addition_complex) {
+
+START_TEST(test_typecheck_valid_subtraction_simple) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
         "b:u64\n"
         "c:u64\n"
-        "a = b + c + 321 + 234\n"
+        "foo:string\n"
+        "foo = \"FooBar\" - \"Bar\"\n"
+        "a = b - c - 321 - 234\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_valid_multiplication_simple) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u64\n"
+        "b:u64\n"
+        "c:u64\n"
+        "a = b * c * 234\n"
+        "d:f64\n"
+        "d = 3.14 * 0.14\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_valid_division_simple) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u64\n"
+        "b:u64\n"
+        "c:u64\n"
+        "a = b / c\n"
+        "d:f64\n"
+        "d = 3.14 / 0.14\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_variable_declarations) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u64 = 523432\n"
+        "b:u64 = 123 + b\n"
+        "s:string = \"Foo\" + \"Bar\"\n"
+        "d:f32 = 98 / 3.21\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
@@ -161,19 +188,27 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(st1, test_typecheck_assignment_simple);
-    tcase_add_test(st1, test_typecheck_assignment_literal_to_var);
     tcase_add_test(st1, test_typecheck_assignment_invalid_storage_size);
-    tcase_add_test(st1, test_typecheck_assignment_invalid1);
+    tcase_add_test(st1, test_typecheck_assignment_invalid_string_to_int);
 
-    TCase *st2 = tcase_create("analyzer_typecheck_additions");
+    TCase *st2 = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(st2,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(st2, test_typecheck_addition_simple);
-    tcase_add_test(st2, test_typecheck_addition_complex);
+    tcase_add_test(st2, test_typecheck_valid_addition_simple);
+    tcase_add_test(st2, test_typecheck_valid_subtraction_simple);
+    tcase_add_test(st2, test_typecheck_valid_multiplication_simple);
+    tcase_add_test(st2, test_typecheck_valid_division_simple);
+
+    TCase *st3 = tcase_create("analyzer_typecheck_misc");
+    tcase_add_checked_fixture(st3,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(st3, test_typecheck_variable_declarations);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
+    suite_add_tcase(s, st3);
     return s;
 }
 

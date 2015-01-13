@@ -44,6 +44,11 @@ static const struct type i_builtin_types[] = {
 #undef INIT_BUILTIN_TYPE_ARRAY_INDEX
 };
 
+static inline bool type_builtin_is_int(const struct type_builtin *t)
+{
+    return t->btype <= BUILTIN_UINT_64;
+}
+
 static inline bool type_builtin_int_is_unsigned(const struct type_builtin *t)
 {
     return t->btype % 2 != 0;
@@ -51,7 +56,12 @@ static inline bool type_builtin_int_is_unsigned(const struct type_builtin *t)
 
 static inline bool type_builtin_is_unsigned(const struct type_builtin *t)
 {
-    return t->btype <= BUILTIN_UINT_64 && type_builtin_int_is_unsigned(t);
+    return type_builtin_is_int(t) && type_builtin_int_is_unsigned(t);
+}
+
+static inline bool type_builtin_is_float(const struct type_builtin *t)
+{
+    return t->btype >= BUILTIN_FLOAT_32 && t->btype <= BUILTIN_FLOAT_64;
 }
 
 bool type_builtin_equals(const struct type_builtin *t1,
@@ -84,6 +94,14 @@ bool type_builtin_equals(const struct type_builtin *t1,
             // else
             RF_BITFLAG_SET(ctx->conversion, LARGER_TO_SMALLER);
         }
+        return true;
+    }
+
+    if ((type_builtin_is_float(t1) && type_builtin_is_int((t2))) ||
+        (type_builtin_is_float(t2) && type_builtin_is_int((t1)))) {
+        // operations between float and ints are allowed
+
+        //TODO: Warn/disallow implicit conversions here
         return true;
     }
 

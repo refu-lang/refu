@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <String/rf_str_decl.h>
 #include <ast/type_decls.h> // for enum type_op
+#include <ast/operators_decls.h> // for binary operations enum
 #include <Data_Structures/intrusive_list.h>
 
 // NOTE: preserve order
@@ -93,8 +94,11 @@ enum conversion_type {
 };
 
 enum comparison_reason {
-    COMPARISON_REASON_ASSIGNMENT = 0,
-    COMPARISON_REASON_ADDITION,
+    COMPARISON_REASON_ASSIGNMENT = BINARYOP_ASSIGN,
+    COMPARISON_REASON_ADDITION = BINARYOP_ADD,
+    COMPARISON_REASON_SUBTRACTION = BINARYOP_SUB,
+    COMPARISON_REASON_MULTIPLICATION = BINARYOP_MUL,
+    COMPARISON_REASON_DIVISION = BINARYOP_DIV,
 };
 
 struct type_comparison_ctx {
