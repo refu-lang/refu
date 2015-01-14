@@ -6,16 +6,20 @@
 
 #include <types/type_decls.h>
 
-i_INLINE_DECL struct type *type_function_get_argtype(struct type *t)
+//! Gets the type descriptions of the arguments of the function
+i_INLINE_DECL struct type *type_function_get_argtype(const struct type *t)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_FUNCTION, "Non function type detected");
     return t->function.argument_type;
 }
 
-i_INLINE_DECL struct type *type_function_get_rettype(struct type *t)
+i_INLINE_DECL struct type *type_function_get_rettype(const struct type *t)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_FUNCTION, "Non function type detected");
     return t->function.return_type;
 }
+
+//! Gets the type description of a particular argument or NULL if @c n is out of bounds
+const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n);
 
 #endif

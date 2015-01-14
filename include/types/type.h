@@ -75,8 +75,8 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl);
 
-struct type *type_lookup_identifier(struct ast_node *n,
-                                    struct symbol_table *st);
+struct type *type_lookup_identifier_string(const struct RFstring *str,
+                                           struct symbol_table *st);
 struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st,
@@ -85,15 +85,15 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 /**
  * Gets a string representation of the type
  *
+ * Before this function you need to execute use @ref RFS_push() in order
+ * to remember the temporary string buffer position and after it you need to
+ * pop it with @ref RFS_pop().
+ *
  * @param t             The type whose string representation to get
- * @param buff          If t is not a builtin type you can pass a buffer
- *                      here from which to initialize the string representation.
- *                      User should return the buffer to its previous state
- *                      right after use. Can also be NULL.
  * @return              Returns a pointer to the the string representation.
  *                      If there is an error returns NULL.
  */
-const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff);
+const struct RFstring *type_str(const struct type *t);
 
 /* -- type traversal functions -- */
 

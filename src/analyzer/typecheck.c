@@ -15,6 +15,7 @@
 
 #include <types/type.h>
 #include <types/type_builtin.h>
+#include <types/type_function.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
@@ -28,10 +29,9 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
                                                     struct analyzer_traversal_ctx *ctx)
 {
     struct type_comparison_ctx cmp_ctx;
-    uint32_t buffer_index;
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
+    RFS_buffer_push();
     // comparison reason and operation share common enum values and as such this cast is valid
     type_comparison_ctx_init(&cmp_ctx, (enum comparison_reason)operation);
 
@@ -42,8 +42,8 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
                               RF_STR_PF_FMT" from a signed to an unsigned type."
                               "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                               ast_binaryop_operation_name_str(operation),
-                              RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                              RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                              RF_STR_PF_ARG(type_str(tright)),
+                              RF_STR_PF_ARG(type_str(tleft)));
             }
 
             if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
@@ -51,15 +51,15 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
                                   RF_STR_PF_FMT" from a larger to a smaller builtin type."
                                   "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                                   ast_binaryop_operation_name_str(operation),
-                                  RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                                  RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                                  RF_STR_PF_ARG(type_str(tright)),
+                                  RF_STR_PF_ARG(type_str(tleft)));
             }
         }
         ret = true;
     }
 
 
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
     return ret;
 }
 
@@ -83,11 +83,10 @@ static bool analyzer_typecheck_addition(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    uint32_t buffer_index;
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
 
+    RFS_buffer_push();
     tleft = ast_expression_get_type(left);
     tright = ast_expression_get_type(right);
 
@@ -96,8 +95,8 @@ static bool analyzer_typecheck_addition(struct ast_node *n,
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Addition between incompatible types. Can't add "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                         RF_STR_PF_ARG(type_str(tright)),
+                         RF_STR_PF_ARG(type_str(tleft)));
             goto end;
         }
     }
@@ -107,7 +106,7 @@ static bool analyzer_typecheck_addition(struct ast_node *n,
     ret = true;
 
 end:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
     return ret;
 }
 
@@ -130,11 +129,9 @@ static bool analyzer_typecheck_subtraction(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    uint32_t buffer_index;
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
-
+    RFS_buffer_push();
     tleft = ast_expression_get_type(left);
     tright = ast_expression_get_type(right);
 
@@ -143,8 +140,8 @@ static bool analyzer_typecheck_subtraction(struct ast_node *n,
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Subtraction between incompatible types. Can't subtract "
                          "\""RF_STR_PF_FMT"\" from \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                         RF_STR_PF_ARG(type_str(tright)),
+                         RF_STR_PF_ARG(type_str(tleft)));
             goto end;
         }
     }
@@ -154,7 +151,7 @@ static bool analyzer_typecheck_subtraction(struct ast_node *n,
     ret = true;
 
 end:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
     return ret;
 }
 
@@ -177,11 +174,10 @@ static bool analyzer_typecheck_multiplication(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    uint32_t buffer_index;
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
 
+    RFS_buffer_push();
     tleft = ast_expression_get_type(left);
     tright = ast_expression_get_type(right);
 
@@ -190,8 +186,8 @@ static bool analyzer_typecheck_multiplication(struct ast_node *n,
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Multiplication between incompatible types. Can't multiply "
                          "\""RF_STR_PF_FMT"\" by \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                         RF_STR_PF_ARG(type_str(tright)),
+                         RF_STR_PF_ARG(type_str(tleft)));
             goto end;
         }
     }
@@ -201,7 +197,7 @@ static bool analyzer_typecheck_multiplication(struct ast_node *n,
     ret = true;
 
 end:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
     return ret;
 }
 
@@ -224,11 +220,10 @@ static bool analyzer_typecheck_division(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    uint32_t buffer_index;
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
 
+    RFS_buffer_push();
     tleft = ast_expression_get_type(left);
     tright = ast_expression_get_type(right);
 
@@ -237,8 +232,8 @@ static bool analyzer_typecheck_division(struct ast_node *n,
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Division between incompatible types. Can't divide "
                          "\""RF_STR_PF_FMT"\" by \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                         RF_STR_PF_ARG(type_str(tright)),
+                         RF_STR_PF_ARG(type_str(tleft)));
             goto end;
         }
     }
@@ -248,7 +243,7 @@ static bool analyzer_typecheck_division(struct ast_node *n,
     ret = true;
 
 end:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
     return ret;
 }
 
@@ -261,7 +256,8 @@ static bool analyzer_typecheck_constantnum(struct ast_node *n)
 static bool analyzer_typecheck_identifier(struct ast_node *n,
                                           struct analyzer_traversal_ctx *ctx)
 {
-    n->expression_type = type_lookup_identifier(n, ctx->current_st);
+    n->expression_type = type_lookup_identifier_string(ast_identifier_str(n),
+                                                       ctx->current_st);
 
     if (!n->expression_type) {
         analyzer_err(ctx->a, ast_node_startmark(n),
@@ -310,10 +306,10 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
-    uint32_t buffer_index;
+
     bool ret = false;
 
-    buffer_index = rf_buffer_index(TSBUFFA);
+
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
         analyzer_err(ctx->a, ast_node_startmark(left),
@@ -325,16 +321,17 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
         return false;
     }
 
+
+    RFS_buffer_push();
     tright = ast_expression_get_type(right);
     tleft = ast_expression_get_type(left);
-
     if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_ASSIGN, tleft, tright, ctx)) {
         if (!analyzer_types_assignable(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright, TSBUFFA)),
-                         RF_STR_PF_ARG(type_str(tleft, TSBUFFA)));
+                         RF_STR_PF_ARG(type_str(tright)),
+                         RF_STR_PF_ARG(type_str(tleft)));
             goto end;
         }
     }
@@ -344,7 +341,70 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
     ret = true;
 
 end:
-    rf_buffer_set_index(TSBUFFA, buffer_index, char);
+    RFS_buffer_pop();
+    return ret;
+}
+
+static bool analyzer_typecheck_function_call(struct ast_node *n,
+                                             struct analyzer_traversal_ctx *ctx)
+{
+    const struct RFstring *fn_name;
+    const struct type *fn_type;
+    const struct type *fn_args_type;
+    struct ast_node *argument;
+    struct type_comparison_ctx cmp_ctx;
+    bool first_iteration = true;
+    bool ret = false;
+    unsigned int i = 0;
+
+
+    fn_name = ast_fncall_name(n);
+    fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
+    if (!fn_type || fn_type->category != TYPE_CATEGORY_FUNCTION) {
+        analyzer_err(ctx->a, ast_node_startmark(n),
+                     ast_node_endmark(n),
+                     "Undefined function call \""RF_STR_PF_FMT"\" detected",
+                     RF_STR_PF_ARG(fn_name));
+        goto end;
+    }
+
+    //also check that the types of its arguments do indeed match
+    fn_args_type = type_function_get_argtype(fn_type);
+    rf_ilist_for_each(&n->children, argument, lh) {
+        // Note that iterating this way we iterate through all the children nodes,
+        // function_cal name, generics, e.t.c. That's why there is some extra logic
+        // TODO: Improve this somehow by providing an argument specific iteration
+        if (first_iteration) {
+            first_iteration = false;
+            continue; // skip the first child node, which is the name.
+        }
+        const struct type *arg_type = ast_expression_get_type(argument);
+        const struct type * fn_arg_type = type_function_get_argtype_n(fn_args_type, i);
+
+        RF_ASSERT(fn_arg_type, "Unable to find function "RF_STR_PF_FMT"() "
+                  "argument %u. This should not happen", RF_STR_PF_ARG(fn_name), i);
+
+        type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
+        if (!type_equals(arg_type, fn_arg_type, &cmp_ctx)) {
+            RFS_buffer_push();
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "Argument %u of function's "RF_STR_PF_FMT"() call does "
+                         "not match the function signature. Expected "
+                         "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\"",
+                         i + 1, RF_STR_PF_ARG(fn_name),
+                         RF_STR_PF_ARG(type_str(fn_arg_type)),
+                         RF_STR_PF_ARG(type_str(arg_type)));
+            RFS_buffer_pop();
+            goto end;
+        }
+        ++i;
+    }
+
+    // success. TODO: So .. what happens for functions returning nothing?
+    n->expression_type = type_function_get_rettype(fn_type);
+    ret = true;
+
+end:
     return ret;
 }
 
@@ -432,6 +492,9 @@ static bool analyzer_typecheck_do(struct ast_node *n,
         // for a variable definition, the variable's type description should be
         // the type of the expression
         n->expression_type = ast_vardecl_desc_get(n)->expression_type;
+        break;
+    case AST_FUNCTION_CALL:
+        ret = analyzer_typecheck_function_call(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

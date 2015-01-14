@@ -509,7 +509,7 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
     AST_NODE_ASSERT_TYPE(n, AST_XIDENTIFIER);
     id = ast_xidentifier_str(n);
 
-    ret = type_lookup_identifier(n->xidentifier.id, st);
+    ret = type_lookup_identifier_string(id, st);
     if (ret) {
         return ret;
     }
@@ -531,28 +531,23 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                  "Type \""RF_STR_PF_FMT"\" is not defined",
                  RF_STR_PF_ARG(id));
     return NULL;
-}
 
-struct type *type_lookup_identifier(struct ast_node *n,
-                                    struct symbol_table *st)
+}
+struct type *type_lookup_identifier_string(const struct RFstring *str,
+                                           struct symbol_table *st)
 {
     struct symbol_table_record *rec;
     bool at_first_st;
     int builtin_type;
-    const struct RFstring *id;
-
-    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    id = ast_identifier_str(n);
-
 
     // check if it's a builtin type
-    builtin_type = type_builtin_identifier_p(id);
+    builtin_type = type_builtin_identifier_p(str);
     if (builtin_type != -1) {
         return (struct type*)type_builtin_get_type(builtin_type);
     }
 
     // if not check if we know about it from the symbol tables
-    rec = symbol_table_lookup_record(st, id, &at_first_st);
+    rec = symbol_table_lookup_record(st, str, &at_first_st);
     if (rec) {
         return symbol_table_record_type(rec);
     }
@@ -560,18 +555,14 @@ struct type *type_lookup_identifier(struct ast_node *n,
     return NULL;
 }
 
-const struct RFstring *type_str(const struct type *t, struct RFbuffer *buff)
+const struct RFstring *type_str(const struct type *t)
 {
-    const struct RFstring *ret_str;
     switch(t->category) {
     case TYPE_CATEGORY_BUILTIN:
-        ret_str = type_builtin_get_str(t->builtin.btype);
-        if (buff) {
-            // This is just to show myself how to do it, no need to do it for
-            // a builtin type
-            return rf_persistent_buffer_create_str_from_str(buff, ret_str);
-        }
-        return ret_str;
+        return type_builtin_get_str(t->builtin.btype);
+    case TYPE_CATEGORY_LEAF:
+        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
+                    RF_STR_PF_ARG(type_str(t->leaf.type)));
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
         break;
