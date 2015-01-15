@@ -141,7 +141,7 @@ START_TEST(test_acc_assignment) {
     ast_node_destroy(bop);
 }END_TEST
 
-START_TEST(test_acc_complex_1) {
+START_TEST(test_acc_complex_binary_op_1) {
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -176,7 +176,7 @@ START_TEST(test_acc_complex_1) {
     ast_node_destroy(bop);
 }END_TEST
 
-START_TEST(test_acc_complex_2) {
+START_TEST(test_acc_complex_binary_op_2) {
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -221,7 +221,7 @@ START_TEST(test_acc_complex_2) {
     ast_node_destroy(bop);
 }END_TEST
 
-START_TEST(test_acc_complex_3) {
+START_TEST(test_acc_complex_binary_op_3) {
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -284,7 +284,7 @@ START_TEST(test_acc_complex_3) {
     ast_node_destroy(bop);
 }END_TEST
 
-START_TEST(test_acc_complex_4) {
+START_TEST(test_acc_complex_binary_op_4) {
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -330,23 +330,80 @@ START_TEST(test_acc_complex_4) {
     ast_node_destroy(bop);
 }END_TEST
 
+START_TEST(test_acc_operator_precedence_1) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "(a * 32) & b + 15 ^ 2 | 3");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = &d->front.file;
+
+    // a * 32
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 1, 0, 1);
+    testsupport_parser_constant_create(cnum_32, file,
+                                       0, 5, 0, 6, integer, 32);
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 1, 0, 6,
+                                   BINARYOP_MUL, id_a, cnum_32);
+
+    // b + 15
+    struct ast_node *id_b = testsupport_parser_identifier_create(file,
+                                                                 0, 11, 0, 11);
+    testsupport_parser_constant_create(cnum_15, file,
+                                       0, 15, 0, 16, integer, 15);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 11, 0, 16,
+                                   BINARYOP_ADD, id_b, cnum_15);
+
+    // (a * 32) & b + 15
+    testsupport_parser_node_create(bop3, binaryop, file, 0, 1, 0, 16,
+                                   BINARYOP_BITWISE_AND, bop1, bop2);
+
+
+    // (a * 32) & b + 15 ^ 2
+    testsupport_parser_constant_create(cnum_2, file,
+                                       0, 20, 0, 20, integer, 2);
+    testsupport_parser_node_create(bop4, binaryop, file, 0, 1, 0, 20,
+                                   BINARYOP_BITWISE_XOR, bop3, cnum_2);
+
+
+    // (a * 32) & b + 15 ^ 2 | 3
+    testsupport_parser_constant_create(cnum_3, file,
+                                       0, 24, 0, 24, integer, 3);
+    testsupport_parser_node_create(bop5, binaryop, file, 0, 1, 0, 24,
+                                   BINARYOP_BITWISE_OR, bop4, cnum_3);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop5);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop4);
+}END_TEST
+
 Suite *parser_operators_suite_create(void)
 {
     Suite *s = suite_create("parser_operators");
 
-    TCase *bop = tcase_create("parser_operators_binary");
-    tcase_add_checked_fixture(bop, setup_front_tests, teardown_front_tests);
-    tcase_add_test(bop, test_acc_addition);
-    tcase_add_test(bop, test_acc_multi);
-    tcase_add_test(bop, test_acc_sub);
-    tcase_add_test(bop, test_acc_div);
-    tcase_add_test(bop, test_acc_assignment);
+    TCase *sbop = tcase_create("parser_operators_simple_binary");
+    tcase_add_checked_fixture(sbop, setup_front_tests, teardown_front_tests);
+    tcase_add_test(sbop, test_acc_addition);
+    tcase_add_test(sbop, test_acc_multi);
+    tcase_add_test(sbop, test_acc_sub);
+    tcase_add_test(sbop, test_acc_div);
+    tcase_add_test(sbop, test_acc_assignment);
 
-    tcase_add_test(bop, test_acc_complex_1);
-    tcase_add_test(bop, test_acc_complex_2);
-    tcase_add_test(bop, test_acc_complex_3);
-    tcase_add_test(bop, test_acc_complex_4);
+    TCase *cbop = tcase_create("parser_operators_complex_binary");
+    tcase_add_checked_fixture(cbop, setup_front_tests, teardown_front_tests);
+    tcase_add_test(cbop, test_acc_complex_binary_op_1);
+    tcase_add_test(cbop, test_acc_complex_binary_op_2);
+    tcase_add_test(cbop, test_acc_complex_binary_op_3);
+    tcase_add_test(cbop, test_acc_complex_binary_op_4);
 
-    suite_add_tcase(s, bop);
+    TCase *op_predence = tcase_create("parser_operator_precedence");
+    tcase_add_checked_fixture(op_predence, setup_front_tests, teardown_front_tests);
+    tcase_add_test(op_predence, test_acc_operator_precedence_1);
+
+    suite_add_tcase(s, sbop);
+    suite_add_tcase(s, cbop);
+    suite_add_tcase(s, op_predence);
     return s;
 }

@@ -165,22 +165,31 @@ static inline bool check_operator_type(struct token *tok, int level)
     case 1: /* assignment */
         return (tok->type == TOKEN_OP_ASSIGN);
     case 2: /* logic OR */
-        return (tok->type == TOKEN_OP_LOGICOR);
+        return (tok->type == TOKEN_OP_LOGIC_OR);
     case 3: /* logic AND */
-        return (tok->type == TOKEN_OP_LOGICAND);
-    case 4: /* equality comparison */
+        return (tok->type == TOKEN_OP_LOGIC_AND);
+    case 4: /* bitwise OR */
+        return (tok->type == TOKEN_OP_TYPESUM);
+    case 5: /* bitwise XOR */
+        return (tok->type == TOKEN_OP_BITWISE_XOR);
+    case 6: /* bitwise AND */
+        return (tok->type == TOKEN_OP_AMPERSAND);
+
+
+
+    case 7: /* equality comparison */
         return (tok->type == TOKEN_OP_EQ || tok->type == TOKEN_OP_NEQ);
-    case 5: /* relational comparison */
+    case 8: /* relational comparison */
         return (tok->type == TOKEN_OP_GT   ||
                 tok->type == TOKEN_OP_GTEQ ||
                 tok->type == TOKEN_OP_LT   ||
                 tok->type == TOKEN_OP_LTEQ);
 
-    case 6: /* additive operators */
+    case 9: /* additive operators */
         return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
-    case 7: /* multiplicative operators */
+    case 10: /* multiplicative operators */
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
-    case 8: /* no operators at the last level (expr_factor) */
+    case 11: /* no operators at the last level (expr_factor) */
         return false;
     }
 
@@ -195,7 +204,7 @@ static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)
     struct ast_node *prime;
     struct ast_node *term;
 
-    if (level == 8) { // end, we got to the factor level
+    if (level == 11) { // end, we got to the factor level
         term = parser_acc_exprfactor(p);
     } else {
         term = parser_acc_exprlevel(p, level + 1);

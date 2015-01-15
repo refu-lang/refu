@@ -30,14 +30,14 @@ enum token_type {
     TOKEN_SM_CPAREN,
     TOKEN_SM_DBLQUOTE,
 
-    /* binary operators (keep grouped with all binary operators)*/
+    /* binary operators (keep grouped with all binary operators) */
     TOKEN_OP_PLUS,
     TOKEN_OP_MINUS,
     TOKEN_OP_MULTI,
     TOKEN_OP_DIV,
     TOKEN_OP_ASSIGN,
 
-    /* binary comparison operators (keep grouped with all binary operators)*/
+    /* binary comparison operators (keep grouped with all binary operators) */
     TOKEN_OP_EQ,
     TOKEN_OP_NEQ,
     TOKEN_OP_GT,
@@ -45,9 +45,14 @@ enum token_type {
     TOKEN_OP_LT,
     TOKEN_OP_LTEQ,
 
-    /* logic binary operators (keep grouped with all binary operators)*/
-    TOKEN_OP_LOGICAND,
-    TOKEN_OP_LOGICOR,
+    /* logic binary operators (keep grouped with all binary operators) */
+    TOKEN_OP_LOGIC_AND,
+    TOKEN_OP_LOGIC_OR,
+
+    /* bitwise binary operators (keep grouped with all binary operators) */
+    TOKEN_OP_BITWISE_OR, // at least for now same as type sum operator, so this is ignored in the lexing stage
+    TOKEN_OP_BITWISE_AND, // at least for now same as TOKEN_OP_AMPERSAND, so this is ignored in the lexing stage
+    TOKEN_OP_BITWISE_XOR,
 
     /* unary operators*/
     TOKEN_OP_AMPERSAND,
@@ -62,9 +67,12 @@ enum token_type {
     TOKENS_MAX
 };
 
+
 #define TOKEN_IS_BINARY_OP(tok_)                \
-    ((tok_)->type >= TOKEN_OP_PLUS &&           \
-     (tok_)->type <= TOKEN_OP_LOGICOR)
+    (((tok_)->type >= TOKEN_OP_PLUS &&          \
+      (tok_)->type <= TOKEN_OP_BITWISE_XOR) ||  \
+     (tok_)->type == TOKEN_OP_AMPERSAND ||      \
+     (tok_)->type == TOKEN_OP_TYPESUM)
 
 #define TOKEN_IS_UNARY_OP(tok_)                \
     ((tok_)->type >= TOKEN_OP_AMPERSAND &&     \

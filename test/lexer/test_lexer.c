@@ -58,6 +58,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         "&&\n"
         "||\n"
         "return\n"
+        "^\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -181,18 +182,23 @@ START_TEST(test_lexer_scan_tokens_2) {
         },
         /* 13th line */
         {
-            .type=TOKEN_OP_LOGICAND,
+            .type=TOKEN_OP_LOGIC_AND,
             .location=LOC_INIT(f, 12, 0, 12, 1)
         },
         /* 14th line */
         {
-            .type=TOKEN_OP_LOGICOR,
+            .type=TOKEN_OP_LOGIC_OR,
             .location=LOC_INIT(f, 13, 0, 13, 1)
         },
         /* 15th line */
         {
             .type=TOKEN_KW_RETURN,
             .location=LOC_INIT(f, 14, 0, 14, 5)
+        },
+        /* 16th line */
+        {
+            .type=TOKEN_OP_BITWISE_XOR,
+            .location=LOC_INIT(f, 15, 0, 15, 0)
         },
     };
     ck_assert(lexer_scan(lex));
@@ -222,7 +228,7 @@ START_TEST(test_lexer_scan_tokens_crammed) {
             .location=LOC_INIT(f, 0, 5, 0, 5)
         },
         {
-            .type=TOKEN_OP_LOGICOR,
+            .type=TOKEN_OP_LOGIC_OR,
             .location=LOC_INIT(f, 0, 6, 0, 7)
         }
     };

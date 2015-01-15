@@ -43,6 +43,10 @@ static const struct RFstring binaryop_operation_names[] = {
     [BINARYOP_LOGIC_AND]  =   RF_STRING_STATIC_INIT("logical and"),
     [BINARYOP_LOGIC_OR]   =   RF_STRING_STATIC_INIT("logical or"),
 
+    [BINARYOP_BITWISE_OR]  =   RF_STRING_STATIC_INIT("bitwise or"),
+    [BINARYOP_BITWISE_AND] =   RF_STRING_STATIC_INIT("bitwise and"),
+    [BINARYOP_BITWISE_XOR] =   RF_STRING_STATIC_INIT("biwise xor"),
+
     [BINARYOP_ASSIGN]  =   RF_STRING_STATIC_INIT("assignment")
 };
 
@@ -65,8 +69,12 @@ static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_LT]       =   BINARYOP_CMP_LT,
     [TOKEN_OP_LTEQ]     =   BINARYOP_CMP_LTEQ,
 
-    [TOKEN_OP_LOGICAND] =   BINARYOP_LOGIC_AND,
-    [TOKEN_OP_LOGICOR]  =   BINARYOP_LOGIC_OR,
+    [TOKEN_OP_LOGIC_AND] =   BINARYOP_LOGIC_AND,
+    [TOKEN_OP_LOGIC_OR]  =   BINARYOP_LOGIC_OR,
+
+    [TOKEN_OP_TYPESUM]   =   BINARYOP_BITWISE_OR,
+    [TOKEN_OP_AMPERSAND]   =   BINARYOP_BITWISE_AND,
+    [TOKEN_OP_BITWISE_XOR]   =   BINARYOP_BITWISE_XOR,
 
     [TOKEN_OP_ASSIGN]   =   BINARYOP_ASSIGN
 };
@@ -80,20 +88,24 @@ enum binaryop_type binaryop_type_from_token(struct token *tok)
 }
 
 static const enum token_type  token_type_lookup[] = {
-    [BINARYOP_ADD]        =   TOKEN_OP_PLUS,
-    [BINARYOP_SUB]        =   TOKEN_OP_MINUS,
-    [BINARYOP_MUL]        =   TOKEN_OP_MULTI,
-    [BINARYOP_DIV]        =   TOKEN_OP_DIV,
+    [BINARYOP_ADD]         =   TOKEN_OP_PLUS,
+    [BINARYOP_SUB]         =   TOKEN_OP_MINUS,
+    [BINARYOP_MUL]         =   TOKEN_OP_MULTI,
+    [BINARYOP_DIV]         =   TOKEN_OP_DIV,
 
-    [BINARYOP_CMP_EQ]     =   TOKEN_OP_EQ,
-    [BINARYOP_CMP_NEQ]    =   TOKEN_OP_NEQ,
-    [BINARYOP_CMP_GT]     =   TOKEN_OP_GT,
-    [BINARYOP_CMP_GTEQ]   =   TOKEN_OP_GTEQ,
-    [BINARYOP_CMP_LT]     =   TOKEN_OP_LT,
-    [BINARYOP_CMP_LTEQ]   =   TOKEN_OP_LTEQ,
+    [BINARYOP_CMP_EQ]      =   TOKEN_OP_EQ,
+    [BINARYOP_CMP_NEQ]     =   TOKEN_OP_NEQ,
+    [BINARYOP_CMP_GT]      =   TOKEN_OP_GT,
+    [BINARYOP_CMP_GTEQ]    =   TOKEN_OP_GTEQ,
+    [BINARYOP_CMP_LT]      =   TOKEN_OP_LT,
+    [BINARYOP_CMP_LTEQ]    =   TOKEN_OP_LTEQ,
 
-    [BINARYOP_LOGIC_AND]  =   TOKEN_OP_LOGICAND,
-    [BINARYOP_LOGIC_OR]   =   TOKEN_OP_LOGICOR,
+    [BINARYOP_LOGIC_AND]   =   TOKEN_OP_LOGIC_AND,
+    [BINARYOP_LOGIC_OR]    =   TOKEN_OP_LOGIC_OR,
+
+    [BINARYOP_BITWISE_OR]  =   TOKEN_OP_BITWISE_OR,
+    [BINARYOP_BITWISE_AND] =   TOKEN_OP_BITWISE_AND,
+    [BINARYOP_BITWISE_XOR] =   TOKEN_OP_BITWISE_XOR,
 
     [BINARYOP_ASSIGN]  =   TOKEN_OP_ASSIGN
 };
