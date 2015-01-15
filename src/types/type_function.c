@@ -3,35 +3,43 @@
 i_INLINE_INS struct type *type_function_get_argtype(const struct type *t);
 i_INLINE_INS struct type *type_function_get_rettype(const struct type *t);
 
+static inline bool type_is_product_op(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ANONYMOUS &&
+        t->anonymous.is_operator &&
+        t->anonymous.op.type == TYPEOP_PRODUCT;
+}
+
 static const struct type *do_type_function_get_argtype_n(const struct type *t, unsigned int n)
 {
-    // TODO: This should probably be an actual check and not an assert
-    RF_ASSERT(t->category == TYPE_CATEGORY_ANONYMOUS &&
-              t->anonymous.is_operator &&
-              t->anonymous.op.type == TYPEOP_PRODUCT,
-              "Unexpected function argument format");
+    if (n == 0) {
+        // if it's a leaf don't take the identifier
+        if (t->category == TYPE_CATEGORY_LEAF) {
+            return t->leaf.type;
+        }
+        return NULL;
+    }
 
-    return (n == 0) ? t->anonymous.op.left
-                    : do_type_function_get_argtype_n(t->anonymous.op.right, n -1);
+    // else it should be a product operator, since arguments should be comma separated
+    if (!type_is_product_op(t)) {
+        return NULL;
+    }
+
+    // continue recursion
+    return do_type_function_get_argtype_n(t->anonymous.op.right, n -1);
 }
 
 const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n)
 {
     // special case of 1 argument only
-    if (t->category == TYPE_CATEGORY_LEAF) {
-        if (n != 0) {
-            return NULL;
-        }
-
-        return t;
+    if (n == 0 && t->category != TYPE_CATEGORY_LEAF) {
+        return t->anonymous.op.left->leaf.type;
     }
 
     // else it should be a product operator, since arguments should be comma separated
-    // TODO: This should probably be an actual check and not an assert
-    RF_ASSERT(t->category == TYPE_CATEGORY_ANONYMOUS &&
-              t->anonymous.is_operator &&
-              t->anonymous.op.type == TYPEOP_PRODUCT,
-              "Unexpected function argument format");
+    if (!type_is_product_op(t)) {
+        return NULL;
+    }
 
-    return do_type_function_get_argtype_n(t, n);
+    return do_type_function_get_argtype_n(t->anonymous.op.right, n - 1);
 }

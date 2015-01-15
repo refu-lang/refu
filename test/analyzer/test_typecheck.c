@@ -197,6 +197,40 @@ START_TEST(test_typecheck_valid_function_call) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
+START_TEST(test_typecheck_invalid_function_call_arguments) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(name:string, age:u16) -> f32\n"
+        "{\n"
+        "return age * 0.14\n"
+        "}\n"
+        "{\n"
+        "a:u32 = 15\n"
+        "do_something(a, \"Berlin\")\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    // set conversion warnings on
+    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            &d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Argument 1 of do_something() function call does not match the "
+            "function signature. Expected \"string\" but got \"u32\".",
+            6, 0, 6, 24),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            &d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Argument 2 of do_something() function call does not match the "
+            "function signature. Expected \"u16\" but got \"string\".",
+            6, 0, 6, 24)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -229,6 +263,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(st4, test_typecheck_valid_function_call);
+    tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

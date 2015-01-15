@@ -354,7 +354,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
     struct ast_node *argument;
     struct type_comparison_ctx cmp_ctx;
     bool first_iteration = true;
-    bool ret = false;
+    bool ret = true;
     unsigned int i = 0;
 
 
@@ -365,6 +365,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
+        ret = false;
         goto end;
     }
 
@@ -379,7 +380,14 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
             continue; // skip the first child node, which is the name.
         }
         const struct type *arg_type = ast_expression_get_type(argument);
-        const struct type * fn_arg_type = type_function_get_argtype_n(fn_args_type, i);
+        const struct type *fn_arg_type = type_function_get_argtype_n(fn_args_type, i);
+        if (!fn_arg_type) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "Illegal argument expression for function "
+                         RF_STR_PF_FMT"()", RF_STR_PF_ARG(fn_name));
+            ret = false;
+            goto end; // no point in looking any further
+        }
 
         RF_ASSERT(fn_arg_type, "Unable to find function "RF_STR_PF_FMT"() "
                   "argument %u. This should not happen", RF_STR_PF_ARG(fn_name), i);
@@ -388,21 +396,20 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
         if (!type_equals(arg_type, fn_arg_type, &cmp_ctx)) {
             RFS_buffer_push();
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Argument %u of function's "RF_STR_PF_FMT"() call does "
+                         "Argument %u of "RF_STR_PF_FMT"() function call does "
                          "not match the function signature. Expected "
-                         "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\"",
+                         "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
                          i + 1, RF_STR_PF_ARG(fn_name),
                          RF_STR_PF_ARG(type_str(fn_arg_type)),
                          RF_STR_PF_ARG(type_str(arg_type)));
             RFS_buffer_pop();
-            goto end;
+            ret = false;
         }
         ++i;
     }
 
     // success. TODO: So .. what happens for functions returning nothing?
     n->expression_type = type_function_get_rettype(fn_type);
-    ret = true;
 
 end:
     return ret;
