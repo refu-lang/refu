@@ -231,6 +231,47 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
+START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
+#if 0 //work in progress
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(name:string, age:u16) -> f32\n"
+        "{\n"
+        "return age * 0.14\n"
+        "}\n"
+        "fn do_something_else(name:string, age:u16, alien:bool) -> f32\n"
+        "{\n"
+        "return age * 0.14\n"
+        "}\n"
+        "{\n"
+        "a:u32 = 15\n"
+        "do_something(\"Berlin\")\n"
+        "do_something_else(\"Berlin\", a)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    // set conversion warnings on
+    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            &d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Invalid number of arguments provided to function \"do_something()\"."
+            " Expected 2 arguments but provided 1."
+            10, 0, 10, 21),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            &d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Invalid number of arguments provided to function \"do_something_else()\"."
+            " Expected 3 arguments but provided 2."
+            11, 0, 11, 29),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+#endif
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -264,6 +305,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
+    tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

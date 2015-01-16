@@ -22,6 +22,7 @@ enum builtin_type {
     BUILTIN_FLOAT_32,
     BUILTIN_FLOAT_64,
     BUILTIN_STRING,
+    BUILTIN_BOOL,
 
     BUILTIN_TYPES_COUNT /* keep as last */
 };

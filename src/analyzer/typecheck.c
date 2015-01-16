@@ -58,7 +58,6 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
         ret = true;
     }
 
-
     RFS_buffer_pop();
     return ret;
 }
@@ -247,6 +246,62 @@ end:
     return ret;
 }
 
+
+static bool i_should_be_changed(struct ast_node *left,
+                                struct ast_node *right,
+                                struct analyzer_traversal_ctx *ctx)
+{
+    // TODO: this is just a callback which should never exist. Should check if op is applicable
+    // Wherever it's used it's just temporary and should be changed to
+    // either a callback per binary operator or something else
+    (void)left;
+    (void)right;
+    (void)ctx;
+    return false;
+}
+
+// Generic typecheck function for binary operations. If special functionality
+// needs to be implemented for an operator do that in a separate function
+static bool analyzer_typecheck_binaryop_generic(struct ast_node *n,
+                                                struct ast_node *left,
+                                                struct ast_node *right,
+                                                struct analyzer_traversal_ctx *ctx,
+                                                enum binaryop_type operation,
+                                                bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+                                                const char *error_intro,
+                                                const char *error_conj,
+                                                bool bool_type)
+{
+    const struct type *tright;
+    const struct type *tleft;
+    bool ret = false;
+
+    RFS_buffer_push();
+    tleft = ast_expression_get_type(left);
+    tright = ast_expression_get_type(right);
+
+    if (!analyzer_typecheck_equal_or_convertible(n, operation, tleft, tright, ctx)) {
+        if (!operator_applicable_cb(left, right, ctx)) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                         error_intro, RF_STR_PF_ARG(type_str(tright)),
+                         error_conj, RF_STR_PF_ARG(type_str(tleft)));
+            goto end;
+        }
+    }
+
+    if (bool_type) {
+        n->expression_type = type_builtin_get_type(BUILTIN_BOOL);
+    } else {
+        // set the type of the operation as the type of either of its operands
+        n->expression_type = tright;
+    }
+    ret = true;
+end:
+    RFS_buffer_pop();
+    return ret;
+}
+
 static bool analyzer_typecheck_constantnum(struct ast_node *n)
 {
     n->expression_type = ast_constantnum_get_storagetype(n);
@@ -379,18 +434,23 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
             first_iteration = false;
             continue; // skip the first child node, which is the name.
         }
-        const struct type *arg_type = ast_expression_get_type(argument);
+
+        if (ast_node_type(argument) == AST_GENERIC_ATTRIBUTE) {
+            break;
+        }
+        /* -- iteration logic ends -- */
+
+        // TODO: This is plain wrong. Rethink and fix. Can't assume arguments
+        // to a function call would be situated like this
         const struct type *fn_arg_type = type_function_get_argtype_n(fn_args_type, i);
         if (!fn_arg_type) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Illegal argument expression for function "
-                         RF_STR_PF_FMT"()", RF_STR_PF_ARG(fn_name));
+                         RF_STR_PF_FMT"() argument %d", RF_STR_PF_ARG(fn_name), i);
             ret = false;
             goto end; // no point in looking any further
         }
-
-        RF_ASSERT(fn_arg_type, "Unable to find function "RF_STR_PF_FMT"() "
-                  "argument %u. This should not happen", RF_STR_PF_ARG(fn_name), i);
+        const struct type *arg_type = ast_expression_get_type(argument);
 
         type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
         if (!type_equals(arg_type, fn_arg_type, &cmp_ctx)) {
@@ -420,9 +480,9 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
-
+    enum binaryop_type bop_type = ast_binaryop_op(n);
     //TODO: more binary operators
-    switch (ast_binaryop_op(n)) {
+    switch (bop_type) {
     case BINARYOP_ASSIGN:
         return analyzer_typecheck_assignment(n, left, right, ctx);
     case BINARYOP_ADD:
@@ -433,9 +493,59 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
         return analyzer_typecheck_multiplication(n, left, right, ctx);
     case BINARYOP_DIV:
         return analyzer_typecheck_division(n, left, right, ctx);
+
+    case BINARYOP_CMP_EQ:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is equal to", true);
+    case BINARYOP_CMP_NEQ:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is not equal to", true);
+    case BINARYOP_CMP_GT:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is greater than", true);
+    case BINARYOP_CMP_GTEQ:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is greater than or equal", true);
+    case BINARYOP_CMP_LT:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is less than", true);
+    case BINARYOP_CMP_LTEQ:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't compare if", "is less than or equal", true);
+
+    case BINARYOP_LOGIC_AND:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't apply logic operator && between", "and", true);
+    case BINARYOP_LOGIC_OR:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't apply logic operator || between", "and", true);
+
+    case BINARYOP_BITWISE_OR:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't apply bitwise OR to", "and", false);
+    case BINARYOP_BITWISE_AND:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't apply bitwise AND to", "and", false);
+    case BINARYOP_BITWISE_XOR:
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't apply bitwise XOR to", "and", false);
+
     default:
-        // nothing to do
-        break;
+        RF_ASSERT(false, "Typechecking for unimplemented binary "
+                  "operator "RF_STR_PF_FMT,
+                  RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+        return false;
     }
 
     return true;
