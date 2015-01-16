@@ -51,9 +51,11 @@ void ast_typeop_set_right(struct ast_node *op, struct ast_node *r)
 }
 
 i_INLINE_INS enum typeop_type ast_typeop_op(struct ast_node *n);
-const struct RFstring *ast_typeop_opstr(struct ast_node *n)
+
+
+const struct RFstring *type_op_str(enum typeop_type op)
 {
-    switch(n->typeop.type) {
+    switch(op) {
     case TYPEOP_PRODUCT:
         return &op_str_prod_;
     case TYPEOP_SUM:
@@ -66,6 +68,12 @@ const struct RFstring *ast_typeop_opstr(struct ast_node *n)
         return NULL;
     }
 }
+
+const struct RFstring *ast_typeop_opstr(struct ast_node *n)
+{
+    return type_op_str(n->typeop.type);
+}
+
 i_INLINE_INS struct ast_node *ast_typeop_left(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_typeop_right(struct ast_node *n);
 

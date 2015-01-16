@@ -560,6 +560,16 @@ const struct RFstring *type_str(const struct type *t)
     switch(t->category) {
     case TYPE_CATEGORY_BUILTIN:
         return type_builtin_get_str(t->builtin.btype);
+    case TYPE_CATEGORY_ANONYMOUS:
+        if (t->anonymous.is_operator) {
+            return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                        RF_STR_PF_ARG(type_str(t->anonymous.op.left)),
+                        RF_STR_PF_ARG(type_op_str(t->anonymous.op.type)),
+                        RF_STR_PF_ARG(type_str(t->anonymous.op.right)));
+        }
+        // same as leaf
+        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->anonymous.leaf.id),
+                    RF_STR_PF_ARG(type_str(t->anonymous.leaf.type)));
     case TYPE_CATEGORY_LEAF:
         return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
                     RF_STR_PF_ARG(type_str(t->leaf.type)));

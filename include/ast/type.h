@@ -63,6 +63,7 @@ i_INLINE_DECL enum typeop_type ast_typeop_op(struct ast_node *n)
  * Return the string representing the operation's type
  */
 const struct RFstring *ast_typeop_opstr(struct ast_node *n);
+const struct RFstring *type_op_str(enum typeop_type op);
 
 i_INLINE_DECL struct ast_node *ast_typeop_left(struct ast_node *n)
 {

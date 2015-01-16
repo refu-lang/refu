@@ -139,6 +139,8 @@ unit_tests_files = [
     'analyzer/test_typecheck.c',
     'analyzer/test_string_table.c',
 
+    'types/test_types.c',
+
     'end_to_end/test_end_to_end_basic.c',
     'end_to_end/testsupport_end_to_end.c'
 ]

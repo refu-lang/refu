@@ -85,9 +85,9 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 /**
  * Gets a string representation of the type
  *
- * Before this function you need to execute use @ref RFS_push() in order
+ * Before this function you need to execute use @ref RFS_buffer_push() in order
  * to remember the temporary string buffer position and after it you need to
- * pop it with @ref RFS_pop().
+ * pop it with @ref RFS_buffer_pop().
  *
  * @param t             The type whose string representation to get
  * @return              Returns a pointer to the the string representation.

@@ -26,8 +26,6 @@
 
 #include CLIB_TEST_HELPERS
 
-/* -- simple symbol table functionality tests -- */
-
 START_TEST(test_typecheck_assignment_simple) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
@@ -231,8 +229,8 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
+#if 0 //TODO: work in progress
 START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
-#if 0 //work in progress
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16) -> f32\n"
         "{\n"
@@ -269,8 +267,8 @@ START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
-#endif
 } END_TEST
+#endif
 
 Suite *analyzer_typecheck_suite_create(void)
 {
@@ -305,7 +303,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
-    tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments);
+    /* tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments); */
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
