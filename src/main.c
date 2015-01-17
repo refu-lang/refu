@@ -11,6 +11,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    if (compiler_help_requested(&compiler)) {
+        return 0;
+    }
+
     if (!compiler_process(&compiler)) {
         rc = 1;
         goto end;

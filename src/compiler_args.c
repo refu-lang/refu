@@ -12,9 +12,24 @@
 #define BACKEND_GCC 3
 #define BACKEND_LLVM 4
 
+//TODO: probably move the version defines elsewhere
+#define MAJOR_VERSION 0
+#define MINOR_VERSION 0
+#define PATCH_VERSION 1
+#define i_eval(_def) #_def
+#define i_str(_def) i_eval(_def)
+
+static const char* version_message = ""
+    "Refu language compiler ver"i_str(MAJOR_VERSION)"." i_str(MINOR_VERSION) "." i_str(PATCH_VERSION) "\n";
+#undef i_str
+#undef i_eval
+
 static const char* help_message = ""
 "Usage: refu [options] file\n"
-"--backend [GCC|LLVM]\t The backend connection the refu compiler will use\n"
+"{-h --help}                        Print this help message\n"
+"{-v --verbose-level} [0-4]         Set compiler verbosity level\n"
+"{-o --output}        filename      Set the name of the produced output\n"
+"--backend            [GCC|LLVM]    The backend connection the refu compiler will use\n"
 "";
 
 bool compiler_args_init(struct compiler_args *args)
@@ -22,6 +37,7 @@ bool compiler_args_init(struct compiler_args *args)
     args->backend_connection = BACKEND_DEFAULT;
     args->verbose_level = VERBOSE_LEVEL_DEFAULT;
     args->repl = false;
+    args->help_requested = HELP_NONE;
     args->output = NULL;
     rf_string_init(&args->input, "");
     rf_stringx_init_buff(&args->buff, 128, "");
@@ -48,13 +64,10 @@ void compiler_args_destroy(struct compiler_args *args)
 
 static inline bool compiler_args_compare_backend_values(struct compiler_args *args, char* val)
 {
-    if(strcmp(val, "GCC") == 0)
-    {
+    if(strcmp(val, "GCC") == 0) {
         args->backend_connection = BACKEND_GCC;
         return true;
-    }
-    else if(strcmp(val, "LLVM") == 0)
-    {
+    } else if(strcmp(val, "LLVM") == 0) {
         args->backend_connection = BACKEND_LLVM;
         return true;
     }
@@ -138,6 +151,22 @@ static void compiler_args_check_repl(struct compiler_args *args,int* i,
     }
 }
 
+static bool compiler_args_check_help(struct compiler_args *args, int* i, char **argv)
+{
+    if(strcmp(argv[*i], "-h") == 0 ||
+       strcmp(argv[*i], "--help") == 0) {
+        args->help_requested = HELP_ARGS;
+        return true;
+    }
+
+    if(strcmp(argv[*i], "-v") == 0 ||
+       strcmp(argv[*i], "--version") == 0) {
+        args->help_requested = HELP_VERSION;
+        return true;
+    }
+    return false;
+}
+
 static bool compiler_args_check_output(struct compiler_args *args,int* i,
                                        int argc, char** argv, bool* consumed)
 {
@@ -166,12 +195,17 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
     bool ok;
     int i;
     for (i = 1; i < argc; i++) {
-
         consumed = false;
+
+        if (compiler_args_check_help(args, &i, argv)) {
+            // then stop parsing and compiler will pick up and handle request for help
+            return true;
+        }
+
         if (!compiler_args_check_backend(args, &i, argc, argv, &consumed)) {
             ERROR("Error while consuming the backend "
                   "connection argument");
-            printf(help_message);
+            printf("%s", help_message);
             return false;
         }
 
@@ -206,6 +240,16 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
         }
     }
     return true;
+}
+
+void compiler_args_print_help()
+{
+    printf("%s", help_message);
+}
+
+void compiler_args_print_version()
+{
+    printf("%s", version_message);
 }
 
 i_INLINE_INS struct RFstring *compiler_args_get_output(struct compiler_args *args);

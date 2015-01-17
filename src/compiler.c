@@ -50,6 +50,11 @@ bool compiler_pass_args(struct compiler *c, int argc, char **argv)
         return false;
     }
 
+    // do not proceed any further if we got request for help
+    if (c->args->help_requested != HELP_NONE) {
+        return true;
+    }
+
     if (!(c->front = front_ctx_create(c->args))) {
         RF_ERROR("Failure at frontend context initialization");
         return false;
@@ -103,4 +108,18 @@ bool compiler_process(struct compiler *c)
     /* backend_llvm_generate(analyzer, c->args); */
 
     return true;
+}
+
+bool compiler_help_requested(struct compiler *c)
+{
+    switch(c->args->help_requested) {
+    case HELP_ARGS:
+        compiler_args_print_help();
+        return true;
+    case HELP_VERSION:
+        compiler_args_print_version();
+        return true;
+    default:
+        return false;
+    }
 }

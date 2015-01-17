@@ -33,4 +33,8 @@ bool compiler_pass_args(struct compiler *c, int argc, char **argv);
 
 bool compiler_process(struct compiler *c);
 
+//! Query compiler's argument and if help was requested, print help message and
+//! return true. If true, program should exit succesfully
+bool compiler_help_requested(struct compiler *c);
+
 #endif
