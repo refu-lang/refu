@@ -42,6 +42,16 @@ static const struct type *do_type_function_get_argtype_n(const struct type_opera
     return do_type_function_get_argtype_n(&t->composite.op, n - 1);
 }
 
+void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type)
+{
+    t->category = TYPE_CATEGORY_COMPOSITE;
+    t->composite.is_operator = true;
+    t->composite.op.type = TYPEOP_IMPLICATION;
+
+    type_function_set_argtype(t, arg_type);
+    type_function_set_rettype(t, ret_type);
+}
+
 const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n)
 {
     // special case of 1 argument only

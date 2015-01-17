@@ -31,15 +31,14 @@ static bool do_type_function_add_args_to_st(struct type_leaf *lt, void *user)
     return symbol_table_add_type(ctx->st, ctx->analyzer, lt->id, lt->type);
 }
 
-static bool type_function_add_args_to_st(struct type *t,
+static bool type_function_add_args_to_st(struct type *args_t,
                                          struct analyzer *a,
                                          struct symbol_table *st)
 {
     struct function_args_ctx ctx;
     ctx.st = st;
     ctx.analyzer = a;
-    return type_for_each_leaf(type_function_get_argtype(t),
-                              do_type_function_add_args_to_st, &ctx);
+    return type_for_each_leaf(args_t, do_type_function_add_args_to_st, &ctx);
 }
 
 
@@ -259,9 +258,6 @@ static bool type_init_from_fndecl(struct type *t,
     struct type *arg_type = NULL;
     struct type *ret_type = NULL;
 
-    t->category = TYPE_CATEGORY_COMPOSITE;
-    t->composite.op.type = TYPEOP_IMPLICATION;
-
     // set argument type (left part of the operand)
     if (args) {
         arg_type = type_composite_lookup_or_create(args, a, st,
@@ -271,9 +267,8 @@ static bool type_init_from_fndecl(struct type *t,
             return false;
         }
         // also add the function's arguments to its symbol table
-        type_function_add_args_to_st(t, a, ast_fndecl_symbol_table_get(n));
+        type_function_add_args_to_st(arg_type, a, ast_fndecl_symbol_table_get(n));
     }
-    type_function_set_argtype(t, arg_type);
 
     if (ret) {
         ret_type = type_composite_lookup_or_create(ret, a, st,
@@ -283,7 +278,8 @@ static bool type_init_from_fndecl(struct type *t,
             return false;
         }
     }
-    type_function_set_rettype(t, ret_type);
+
+    type_function_init(t, arg_type, ret_type);
 
     return true;
 }

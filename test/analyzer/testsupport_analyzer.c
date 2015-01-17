@@ -8,6 +8,8 @@
 
 #include <ast/ast.h>
 
+#include <types/type_function.h>
+
 #define ck_analyzer_check_abort(file_, line_, msg_, ...)                 \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
@@ -109,23 +111,6 @@ struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
     return t;
 }
 
-struct type *testsupport_analyzer_type_create_defined(const struct RFstring *id,
-                                                      struct type_composite *type)
-{
-    struct front_testdriver *fdriver = get_front_testdriver();
-    struct analyzer_testdriver *adriver = get_analyzer_testdriver();
-    struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
-    ck_assert_msg(t, "Failed to allocate type");
-
-    t->category = TYPE_CATEGORY_USER_DEFINED;
-    t->defined.id = id;
-    t->defined.type = type;
-
-    darray_append(adriver->types, t);
-    return t;
-}
-
 struct type *testsupport_analyzer_type_create_function(struct type *arg,
                                                        struct type *ret)
 {
@@ -134,11 +119,7 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
     struct type *t;
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
-
-    t->category = TYPE_CATEGORY_FUNCTION;
-    t->function.argument_type = arg;
-    t->function.return_type = ret;
-
+    type_function_init(t, arg, ret);
     darray_append(adriver->types, t);
     return t;
 }

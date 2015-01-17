@@ -397,9 +397,6 @@ START_TEST(test_typedecl_symbol_table) {
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
-    struct type *person_type = testsupport_analyzer_type_create_defined(
-        &names, &op1->composite
-    );
 
     testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_first_pass(d->front.analyzer));
@@ -409,7 +406,7 @@ START_TEST(test_typedecl_symbol_table) {
     st = ast_root_symbol_table_get(d->front.analyzer->root);
 
     testsupport_symbol_table_lookup_record(st, &names, rec, true);
-    testsupport_types_equal(symbol_table_record_type(rec), person_type);
+    testsupport_types_equal(symbol_table_record_type(rec), op1);
 } END_TEST
 
 START_TEST(test_multiple_level_symbol_tables) {
@@ -441,9 +438,6 @@ START_TEST(test_multiple_level_symbol_tables) {
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
-    struct type *person_type = testsupport_analyzer_type_create_defined(
-        &names, &op1->composite
-    );
     struct type *ti8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
 
@@ -465,7 +459,7 @@ START_TEST(test_multiple_level_symbol_tables) {
     // now check for symbols at the block
     st = ast_block_symbol_table_get(block_1);
     testsupport_symbol_table_lookup_record(st, &names, rec, true);
-    testsupport_types_equal(symbol_table_record_type(rec), person_type);
+    testsupport_types_equal(symbol_table_record_type(rec), op1);
     testsupport_symbol_table_lookup_record(st, &v2s, rec, true);
     testsupport_types_equal(symbol_table_record_type(rec), ti8);
 } END_TEST

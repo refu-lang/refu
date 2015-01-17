@@ -38,6 +38,11 @@ i_INLINE_DECL void type_function_set_rettype(struct type *t, struct type *other)
     t->composite.op.right = other;
 }
 
+/**
+ * Initialize a type structure as a function type
+ */
+void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type);
+
 /** @return the type of a particular argument or NULL if there was a
  * malformed expression type or @n is out of bounds
  */
