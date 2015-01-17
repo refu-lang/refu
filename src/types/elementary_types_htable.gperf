@@ -1,0 +1,24 @@
+%compare-strncmp
+%readonly-tables
+%define lookup-function-name types_string_is_elementary
+%delimiters=''
+struct gperf_elementary_type {const char *name; enum elementary_type type; };
+%%
+# -- Keywords section --
+# attempted to have TAB as delimiter but could not make it work
+#
+# keywords
+intELEMENTARY_TYPE_INT
+uintELEMENTARY_TYPE_UINT
+u8ELEMENTARY_TYPE_UINT_8
+i8ELEMENTARY_TYPE_INT_8
+u16ELEMENTARY_TYPE_UINT_16
+i16ELEMENTARY_TYPE_INT_16
+u32ELEMENTARY_TYPE_UINT_32
+i32ELEMENTARY_TYPE_INT_32
+u64ELEMENTARY_TYPE_UINT_64
+i64ELEMENTARY_TYPE_INT_64
+f32ELEMENTARY_TYPE_FLOAT_32
+f64ELEMENTARY_TYPE_FLOAT_64
+stringELEMENTARY_TYPE_STRING
+boolELEMENTARY_TYPE_BOOL

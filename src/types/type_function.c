@@ -1,13 +1,16 @@
 #include <types/type_function.h>
 
+i_INLINE_INS bool type_is_function(const struct type *t);
 i_INLINE_INS struct type *type_function_get_argtype(const struct type *t);
+i_INLINE_INS void type_function_set_argtype(struct type *t, struct type *other);
 i_INLINE_INS struct type *type_function_get_rettype(const struct type *t);
+i_INLINE_INS void type_function_set_rettype(struct type *t, struct type *other);
 
 static inline bool type_is_product_op(const struct type *t)
 {
-    return t->category == TYPE_CATEGORY_ANONYMOUS &&
-        t->anonymous.is_operator &&
-        t->anonymous.op.type == TYPEOP_PRODUCT;
+    return t->category == TYPE_CATEGORY_COMPOSITE &&
+        t->composite.is_operator &&
+        t->composite.op.type == TYPEOP_PRODUCT;
 }
 
 static const struct type *do_type_function_get_argtype_n(const struct type_operator *op,
@@ -36,14 +39,14 @@ static const struct type *do_type_function_get_argtype_n(const struct type_opera
     }
 
     // continue recursion
-    return do_type_function_get_argtype_n(&t->anonymous.op, n - 1);
+    return do_type_function_get_argtype_n(&t->composite.op, n - 1);
 }
 
 const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n)
 {
     // special case of 1 argument only
     if (n == 0 && t->category == TYPE_CATEGORY_LEAF) {
-        return t->anonymous.op.left->leaf.type;
+        return t->composite.op.left->leaf.type;
     }
 
     // else it should be a product operator, since arguments should be comma separated
@@ -51,5 +54,5 @@ const struct type *type_function_get_argtype_n(const struct type *t, unsigned in
         return NULL;
     }
 
-    return do_type_function_get_argtype_n(&t->anonymous.op, n);
+    return do_type_function_get_argtype_n(&t->composite.op, n);
 }

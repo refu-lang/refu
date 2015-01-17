@@ -15,8 +15,8 @@ struct rir {
     struct string_table *identifiers_table;
     struct string_table *string_literals_table;
 
-    //! A list of all anonymous types of the file
-    struct RFilist_head anonymous_types;
+    //! A list of all composite types of the file
+    struct RFilist_head composite_types;
 };
 
 bool rir_init(struct rir *r, struct analyzer *a);

@@ -11,7 +11,8 @@
 #include <ast/vardecl.h>
 #include <ast/function.h>
 
-#include <types/type_builtin.h>
+#include <types/type_elementary.h>
+#include <types/type_function.h>
 
 /* -- forward declarations of functions -- */
 static bool type_composite_init(struct type_composite *t, struct ast_node *n,
@@ -29,14 +30,15 @@ static bool do_type_function_add_args_to_st(struct type_leaf *lt, void *user)
     struct function_args_ctx *ctx = user;
     return symbol_table_add_type(ctx->st, ctx->analyzer, lt->id, lt->type);
 }
-static bool type_function_add_args_to_st(struct type_function *ft,
+
+static bool type_function_add_args_to_st(struct type *t,
                                          struct analyzer *a,
                                          struct symbol_table *st)
 {
     struct function_args_ctx ctx;
     ctx.st = st;
     ctx.analyzer = a;
-    return type_for_each_leaf(ft->argument_type,
+    return type_for_each_leaf(type_function_get_argtype(t),
                               do_type_function_add_args_to_st, &ctx);
 }
 
@@ -77,7 +79,7 @@ static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
 
     } else if (right->type == AST_TYPE_DESCRIPTION ||
                right->type == AST_TYPE_OPERATOR) {
-        leaf->type = analyzer_get_or_create_anonymous_type(a, right, st, genrdecl);
+        leaf->type = analyzer_get_or_create_composite_type(a, right, st, genrdecl);
         if (!leaf->type) {
             return false;
         }
@@ -100,8 +102,8 @@ static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
         t->category = TYPE_CATEGORY_LEAF;
         return type_leaf_init(&t->leaf, typedesc, a, st, genrdecl);
     } else {
-        t->category = TYPE_CATEGORY_ANONYMOUS;
-        return type_composite_init(&t->anonymous, typedesc, a, st, genrdecl);
+        t->category = TYPE_CATEGORY_COMPOSITE;
+        return type_composite_init(&t->composite, typedesc, a, st, genrdecl);
     }
 }
 
@@ -182,7 +184,7 @@ static struct type *type_composite_lookup_or_create(struct ast_node *n,
         }
         // else fall through case, same as type operator
     case AST_TYPE_OPERATOR:
-        return analyzer_get_or_create_anonymous_type(a, n, st, genrdecl);
+        return analyzer_get_or_create_composite_type(a, n, st, genrdecl);
     default:
         RF_ASSERT_OR_CRITICAL(false,"Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
@@ -222,26 +224,13 @@ struct type *type_create_from_typedecl(struct ast_node *n,
                                        struct analyzer *a,
                                        struct symbol_table *st)
 {
-    struct type *t;
-    struct type *temp;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
 
-    t = type_alloc(a);
-    if (!t) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
-    }
+    return type_create_from_typedesc(ast_typedecl_typedesc_get(n),
+                                     a,
+                                     st,
+                                     ast_typedecl_genrdecl_get(n));
 
-    t->category = TYPE_CATEGORY_USER_DEFINED;
-    t->defined.id = ast_typedecl_name_str(n);
-    temp = type_composite_lookup_or_create(ast_typedecl_typedesc_get(n), a, st,
-                                           ast_typedecl_genrdecl_get(n));
-    if (!temp) {
-        return NULL;
-    }
-    t->defined.type = &temp->anonymous;
-
-    return t;
 }
 
 struct type *type_create_from_vardecl(struct ast_node *n,
@@ -267,32 +256,34 @@ static bool type_init_from_fndecl(struct type *t,
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     struct ast_node *args = ast_fndecl_args_get(n);
     struct ast_node *ret = ast_fndecl_return_get(n);
+    struct type *arg_type = NULL;
+    struct type *ret_type = NULL;
 
-    t->category = TYPE_CATEGORY_FUNCTION;
+    t->category = TYPE_CATEGORY_COMPOSITE;
+    t->composite.op.type = TYPEOP_IMPLICATION;
 
-    t->function.argument_type = NULL;
+    // set argument type (left part of the operand)
     if (args) {
-        t->function.argument_type = type_composite_lookup_or_create(
-            args, a, st, ast_fndecl_genrdecl_get(n));
-        if (!t->function.argument_type) {
+        arg_type = type_composite_lookup_or_create(args, a, st,
+                                                   ast_fndecl_genrdecl_get(n));
+        if (!arg_type) {
             // TODO: Free argument_type if created
             return false;
         }
-
         // also add the function's arguments to its symbol table
-        type_function_add_args_to_st(&t->function, a, ast_fndecl_symbol_table_get(n));
+        type_function_add_args_to_st(t, a, ast_fndecl_symbol_table_get(n));
     }
+    type_function_set_argtype(t, arg_type);
 
-    t->function.return_type = NULL;
     if (ret) {
-        t->function.return_type = type_composite_lookup_or_create(
-            ret, a, st, ast_fndecl_genrdecl_get(n));
-
-        if (!t->function.return_type) {
+        ret_type = type_composite_lookup_or_create(ret, a, st,
+                                                   ast_fndecl_genrdecl_get(n));
+        if (!ret_type) {
             // TODO: Free return_type if created
             return false;
         }
     }
+    type_function_set_rettype(t, ret_type);
 
     return true;
 }
@@ -318,7 +309,7 @@ struct type *type_create_from_fndecl(struct ast_node *n,
     return t;
 }
 
-struct type *type_anonymous_create(struct ast_node *n,
+struct type *type_composite_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl)
@@ -330,8 +321,8 @@ struct type *type_anonymous_create(struct ast_node *n,
         return NULL;
     }
 
-    t->category = TYPE_CATEGORY_ANONYMOUS;
-    if (!type_composite_init(&t->anonymous, n, a, st, genrdecl)) {
+    t->category = TYPE_CATEGORY_COMPOSITE;
+    if (!type_composite_init(&t->composite, n, a, st, genrdecl)) {
         type_free(t, a);
         t = NULL;
     }
@@ -352,24 +343,16 @@ static inline bool type_category_equals(const struct type *t1,
     }
 
     if (t1->category == TYPE_CATEGORY_LEAF &&
-        t2->category == TYPE_CATEGORY_ANONYMOUS && (!t2->anonymous.is_operator)) {
+        t2->category == TYPE_CATEGORY_COMPOSITE && (!t2->composite.is_operator)) {
         return true;
     }
 
     if (t2->category == TYPE_CATEGORY_LEAF &&
-        t1->category == TYPE_CATEGORY_ANONYMOUS && (!t1->anonymous.is_operator)) {
+        t1->category == TYPE_CATEGORY_COMPOSITE && (!t1->composite.is_operator)) {
         return true;
     }
 
     return false;
-}
-
-static inline bool type_function_equals(const struct type_function *t1,
-                                        const struct type_function *t2,
-                                        struct type_comparison_ctx *ctx)
-{
-    return type_equals(t1->argument_type, t2->argument_type, ctx) &&
-        type_equals( t1->return_type, t2->return_type, ctx);
 }
 
 static inline bool type_leaf_equals(const struct type_leaf *t1,
@@ -407,7 +390,7 @@ static bool type_composite_equals(const struct type_composite *t1,
 bool type_equals(const struct type* t1, const struct type *t2,
                  struct type_comparison_ctx *ctx)
 {
-    // first check if we refer to the same type (builtin or anonymous)
+    // first check if we refer to the same type (elementary or composite)
     if (t1 == t2) {
         return true;
     }
@@ -417,26 +400,22 @@ bool type_equals(const struct type* t1, const struct type *t2,
     }
 
     switch (t1->category) {
-    case TYPE_CATEGORY_USER_DEFINED:
-        return type_composite_equals(t1->defined.type, t2->defined.type, ctx);
-    case TYPE_CATEGORY_ANONYMOUS:
+    case TYPE_CATEGORY_COMPOSITE:
         if (t2->category == TYPE_CATEGORY_LEAF) {
             //handle special case where we compare composite to a leaf composite type
-            return type_leaf_equals(&t1->anonymous.leaf, &t2->leaf, ctx);
+            return type_leaf_equals(&t1->composite.leaf, &t2->leaf, ctx);
         } else {
-            return type_composite_equals(&t1->anonymous, &t2->anonymous, ctx);
+            return type_composite_equals(&t1->composite, &t2->composite, ctx);
         }
-    case TYPE_CATEGORY_BUILTIN:
-        return type_builtin_equals(&t1->builtin, &t2->builtin, ctx);
+    case TYPE_CATEGORY_ELEMENTARY:
+        return type_elementary_equals(&t1->elementary, &t2->elementary, ctx);
     case TYPE_CATEGORY_LEAF:
-        if (t2->category == TYPE_CATEGORY_ANONYMOUS) {
+        if (t2->category == TYPE_CATEGORY_COMPOSITE) {
             //handle special case where we compare leaf to a composite leaf type
-            return type_leaf_equals(&t1->leaf, &t2->anonymous.leaf, ctx);
+            return type_leaf_equals(&t1->leaf, &t2->composite.leaf, ctx);
         } else {
             return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
         }
-    case TYPE_CATEGORY_FUNCTION:
-        return type_function_equals(&t1->function, &t2->function, ctx);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         break;
@@ -453,13 +432,12 @@ bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
     if (type_desc->type == AST_TYPE_OPERATOR) {
         struct type_composite *composite;
 
-        if (t->category == TYPE_CATEGORY_USER_DEFINED) {
-            composite = t->defined.type;
-        } else if (t->category != TYPE_CATEGORY_ANONYMOUS) {
-            composite = &t->anonymous;
+        if (t->category != TYPE_CATEGORY_COMPOSITE) {
+            composite = &t->composite;
         } else {
             return false;
         }
+
         if (!composite->is_operator) {
             return false;
         }
@@ -538,12 +516,12 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
 {
     struct symbol_table_record *rec;
     bool at_first_st;
-    int builtin_type;
+    int elementary_type;
 
-    // check if it's a builtin type
-    builtin_type = type_builtin_identifier_p(str);
-    if (builtin_type != -1) {
-        return (struct type*)type_builtin_get_type(builtin_type);
+    // check if it's an elementary type
+    elementary_type = type_elementary_identifier_p(str);
+    if (elementary_type != -1) {
+        return (struct type*)type_elementary_get_type(elementary_type);
     }
 
     // if not check if we know about it from the symbol tables
@@ -558,18 +536,18 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
 const struct RFstring *type_str(const struct type *t)
 {
     switch(t->category) {
-    case TYPE_CATEGORY_BUILTIN:
-        return type_builtin_get_str(t->builtin.btype);
-    case TYPE_CATEGORY_ANONYMOUS:
-        if (t->anonymous.is_operator) {
+    case TYPE_CATEGORY_ELEMENTARY:
+        return type_elementary_get_str(t->elementary.etype);
+    case TYPE_CATEGORY_COMPOSITE:
+        if (t->composite.is_operator) {
             return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                        RF_STR_PF_ARG(type_str(t->anonymous.op.left)),
-                        RF_STR_PF_ARG(type_op_str(t->anonymous.op.type)),
-                        RF_STR_PF_ARG(type_str(t->anonymous.op.right)));
+                        RF_STR_PF_ARG(type_str(t->composite.op.left)),
+                        RF_STR_PF_ARG(type_op_str(t->composite.op.type)),
+                        RF_STR_PF_ARG(type_str(t->composite.op.right)));
         }
         // same as leaf
-        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->anonymous.leaf.id),
-                    RF_STR_PF_ARG(type_str(t->anonymous.leaf.type)));
+        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->composite.leaf.id),
+                    RF_STR_PF_ARG(type_str(t->composite.leaf.type)));
     case TYPE_CATEGORY_LEAF:
         return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
                     RF_STR_PF_ARG(type_str(t->leaf.type)));
@@ -586,36 +564,26 @@ const struct RFstring *type_str(const struct type *t)
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
 {
     switch(t->category) {
-    case TYPE_CATEGORY_BUILTIN:
+    case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
         // Do nothing
         break;
-    case TYPE_CATEGORY_ANONYMOUS:
-        if (t->anonymous.is_operator) {
-            if (!type_for_each_leaf(t->anonymous.op.left, cb, user_arg)) {
+
+    case TYPE_CATEGORY_COMPOSITE:
+        if (t->composite.is_operator) {
+            if (!type_for_each_leaf(t->composite.op.left, cb, user_arg)) {
                 return false;
             }
-            if (!type_for_each_leaf(t->anonymous.op.right, cb, user_arg)) {
+            if (!type_for_each_leaf(t->composite.op.right, cb, user_arg)) {
                 return false;
             }
         } else {
-            if (!cb(&t->anonymous.leaf, user_arg)) {
+            if (!cb(&t->composite.leaf, user_arg)) {
                 return false;
             }
         }
+        break;
 
-        break;
-    case TYPE_CATEGORY_USER_DEFINED:
-        RF_ASSERT(false, "Should not get here");
-        return false;
-    case TYPE_CATEGORY_FUNCTION:
-        if (!type_for_each_leaf(t->function.argument_type, cb, user_arg)) {
-            return false;
-        }
-        if (!type_for_each_leaf(t->function.return_type, cb, user_arg)) {
-            return false;
-        }
-        break;
     case TYPE_CATEGORY_LEAF:
         if (!cb(&t->leaf, user_arg)) {
             return false;

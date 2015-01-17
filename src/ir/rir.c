@@ -18,8 +18,8 @@ bool rir_init(struct rir *r, struct analyzer *a)
     r->string_literals_table = a->string_literals_table;
     a->string_literals_table = NULL;
 
-    // copy anonymous types list
-    rf_ilist_copy(&a->anonymous_types, &r->anonymous_types);
+    // copy composite types list
+    rf_ilist_copy(&a->composite_types, &r->composite_types);
 
     return true;
 }

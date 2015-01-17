@@ -8,8 +8,9 @@
 #include <ast/vardecl.h>
 #include <ast/function.h>
 #include <ast/string_literal.h>
-
 #include <ast/ast_utils.h>
+
+#include <types/type_function.h>
 
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
@@ -115,7 +116,7 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
                                      fn_name,
                                      &symbol_found_at_first_st);
 
-    if (rec && symbol_table_record_category(rec) == TYPE_CATEGORY_FUNCTION) {
+    if (rec && type_is_function(rec->data)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Function \""RF_STR_PF_FMT"\" was already declared "

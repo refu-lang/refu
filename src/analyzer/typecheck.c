@@ -14,7 +14,7 @@
 #include <ast/type.h>
 
 #include <types/type.h>
-#include <types/type_builtin.h>
+#include <types/type_elementary.h>
 #include <types/type_function.h>
 
 #include <analyzer/analyzer.h>
@@ -48,7 +48,7 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
 
             if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
                     analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                                  RF_STR_PF_FMT" from a larger to a smaller builtin type."
+                                  RF_STR_PF_FMT" from a larger to a smaller elementary type."
                                   "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                                   ast_binaryop_operation_name_str(operation),
                                   RF_STR_PF_ARG(type_str(tright)),
@@ -291,7 +291,7 @@ static bool analyzer_typecheck_binaryop_generic(struct ast_node *n,
     }
 
     if (bool_type) {
-        n->expression_type = type_builtin_get_type(BUILTIN_BOOL);
+        n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
     } else {
         // set the type of the operation as the type of either of its operands
         n->expression_type = tright;
@@ -415,7 +415,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
 
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
-    if (!fn_type || fn_type->category != TYPE_CATEGORY_FUNCTION) {
+    if (!fn_type || !type_is_function((fn_type))) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
@@ -602,7 +602,7 @@ static bool analyzer_typecheck_do(struct ast_node *n,
         ret = analyzer_typecheck_constantnum(n);
         break;
     case AST_STRING_LITERAL:
-        n->expression_type = type_builtin_get_type(BUILTIN_STRING);
+        n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_STRING);
         ret = n->expression_type;
         break;
     case AST_VARIABLE_DECLARATION:

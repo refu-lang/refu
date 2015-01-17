@@ -8,41 +8,35 @@
 #include <Data_Structures/intrusive_list.h>
 
 // NOTE: preserve order
-enum builtin_type {
-    BUILTIN_INT = 0,
-    BUILTIN_UINT,
-    BUILTIN_INT_8,
-    BUILTIN_UINT_8,
-    BUILTIN_INT_16,
-    BUILTIN_UINT_16,
-    BUILTIN_INT_32,
-    BUILTIN_UINT_32,
-    BUILTIN_INT_64,
-    BUILTIN_UINT_64,
-    BUILTIN_FLOAT_32,
-    BUILTIN_FLOAT_64,
-    BUILTIN_STRING,
-    BUILTIN_BOOL,
+enum elementary_type {
+    ELEMENTARY_TYPE_INT = 0,
+    ELEMENTARY_TYPE_UINT,
+    ELEMENTARY_TYPE_INT_8,
+    ELEMENTARY_TYPE_UINT_8,
+    ELEMENTARY_TYPE_INT_16,
+    ELEMENTARY_TYPE_UINT_16,
+    ELEMENTARY_TYPE_INT_32,
+    ELEMENTARY_TYPE_UINT_32,
+    ELEMENTARY_TYPE_INT_64,
+    ELEMENTARY_TYPE_UINT_64,
+    ELEMENTARY_TYPE_FLOAT_32,
+    ELEMENTARY_TYPE_FLOAT_64,
+    ELEMENTARY_TYPE_STRING,
+    ELEMENTARY_TYPE_BOOL,
 
-    BUILTIN_TYPES_COUNT /* keep as last */
+    ELEMENTARY_TYPE_TYPES_COUNT /* keep as last */
 };
 
 
 enum type_category {
-    TYPE_CATEGORY_ANONYMOUS = 0,        /* an anonymous type */
+    TYPE_CATEGORY_COMPOSITE = 0,        /* a type combination of other types */
     TYPE_CATEGORY_LEAF,                 /* almost always part of another type */
-    TYPE_CATEGORY_BUILTIN,              /* a builtin type */
-    TYPE_CATEGORY_USER_DEFINED,         /* a user defined type */
+    TYPE_CATEGORY_ELEMENTARY,           /* an elementary/builtin type */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
-    TYPE_CATEGORY_FUNCTION,             /* a function */
 };
 
-struct type_builtin {
-    enum builtin_type btype;
-};
-
-struct type_generic {
-    const struct RFstring id;
+struct type_elementary {
+    enum elementary_type etype;
 };
 
 struct type_leaf {
@@ -64,25 +58,14 @@ struct type_composite {
     };
 };
 
-struct type_defined {
-    const struct RFstring *id;
-    struct type_composite *type;
-};
-
-struct type_function {
-    struct type *argument_type;
-    struct type *return_type;
-};
 
 struct type {
     enum type_category category;
-    /* list handler, to be added to either types or anonymous types list */
+    /* list handler, to be added to either the types or the composite types list */
     struct RFilist_node lh;
     union {
-        struct type_builtin builtin;
-        struct type_defined defined;
-        struct type_function function;
-        struct type_composite anonymous;
+        struct type_elementary elementary;
+        struct type_composite composite;
         struct type_leaf leaf;
     };
 };

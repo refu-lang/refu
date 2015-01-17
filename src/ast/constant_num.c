@@ -1,7 +1,7 @@
 #include <ast/constant_num.h>
 #include <ast/ast.h>
 
-#include <types/type_builtin.h>
+#include <types/type_elementary.h>
 
 #include <stdint.h>
 
@@ -45,22 +45,22 @@ const struct type * ast_constantnum_get_storagetype(struct ast_node *n)
         }
 
         if (n->constantnum.value.integer > UINT32_MAX) {
-            return type_builtin_get_type(BUILTIN_UINT_64);
+            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_64);
         }
 
         if (n->constantnum.value.integer > UINT16_MAX) {
-            return type_builtin_get_type(BUILTIN_UINT_32);
+            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_32);
         }
 
         if (n->constantnum.value.integer > UINT8_MAX) {
-            return type_builtin_get_type(BUILTIN_UINT_16);
+            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_16);
         }
 
-        return type_builtin_get_type(BUILTIN_UINT_8);
+        return type_elementary_get_type(ELEMENTARY_TYPE_UINT_8);
     }
 
     // else it's a float literal (simple for now)
-    return type_builtin_get_type(BUILTIN_FLOAT_64);
+    return type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
 }
 
 i_INLINE_INS enum constant_type ast_constantnum_get_type(struct ast_node *n);

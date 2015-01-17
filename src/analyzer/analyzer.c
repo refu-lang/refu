@@ -35,7 +35,7 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
         RF_ERROR("Failed to initialize a fixed memory pool for types");
         return false;
     }
-    rf_ilist_head_init(&a->anonymous_types);
+    rf_ilist_head_init(&a->composite_types);
 
     if (!(a->identifiers_table = string_table_create())) {
         RF_ERROR("Failed to allocate a string table for identifiers");
@@ -87,28 +87,28 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
-struct type *analyzer_get_or_create_anonymous_type(struct analyzer *a,
+struct type *analyzer_get_or_create_composite_type(struct analyzer *a,
                                                    struct ast_node *desc,
                                                    struct symbol_table *st,
                                                    struct ast_node *genrdecl)
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
-    rf_ilist_for_each(&a->anonymous_types, t, lh) {
+    rf_ilist_for_each(&a->composite_types, t, lh) {
         if (type_equals_typedesc(t, desc, a, st, genrdecl)) {
             return t;
         }
     }
 
-    // else we have to create a new anonymous type
-    t = type_anonymous_create(desc, a, st, genrdecl);
+    // else we have to create a new composite type
+    t = type_composite_create(desc, a, st, genrdecl);
     if (!t) {
-        RF_ERROR("Failure to create an anonymous type");
+        RF_ERROR("Failure to create an composite type");
         return NULL;
     }
 
     // add it to the list
-    rf_ilist_add(&a->anonymous_types, &t->lh);
+    rf_ilist_add(&a->composite_types, &t->lh);
     return t;
 }
 

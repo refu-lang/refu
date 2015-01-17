@@ -56,7 +56,7 @@ void teardown_analyzer_tests()
 }
 
 
-struct type *testsupport_analyzer_type_create_builtin(enum builtin_type btype)
+struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype)
 {
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
@@ -64,8 +64,8 @@ struct type *testsupport_analyzer_type_create_builtin(enum builtin_type btype)
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
-    t->category = TYPE_CATEGORY_BUILTIN;
-    t->builtin.btype = btype;
+    t->category = TYPE_CATEGORY_ELEMENTARY;
+    t->elementary.etype = etype;
 
     darray_append(adriver->types, t);
     return t;
@@ -81,11 +81,11 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
-    t->category = TYPE_CATEGORY_ANONYMOUS;
-    t->anonymous.is_operator = true;
-    t->anonymous.op.type = type;
-    t->anonymous.op.left = left;
-    t->anonymous.op.right = right;
+    t->category = TYPE_CATEGORY_COMPOSITE;
+    t->composite.is_operator = true;
+    t->composite.op.type = type;
+    t->composite.op.left = left;
+    t->composite.op.right = right;
 
     darray_append(adriver->types, t);
     return t;
@@ -100,10 +100,10 @@ struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
-    t->category = TYPE_CATEGORY_ANONYMOUS;
-    t->anonymous.is_operator = false;
-    t->anonymous.leaf.id = id;
-    t->anonymous.leaf.type = type;
+    t->category = TYPE_CATEGORY_COMPOSITE;
+    t->composite.is_operator = false;
+    t->composite.leaf.id = id;
+    t->composite.leaf.type = type;
 
     darray_append(adriver->types, t);
     return t;

@@ -32,8 +32,8 @@ struct analyzer {
     struct rf_fixed_memorypool *symbol_table_records_pool;
     struct rf_fixed_memorypool *types_pool;
 
-    //! A list of all anonymous types
-    struct RFilist_head anonymous_types;
+    //! A list of all composite types
+    struct RFilist_head composite_types;
 
     /* String tables containing identifiers and string literals found during parsing */
     struct string_table *identifiers_table;
@@ -56,7 +56,7 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info);
 void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
 
-struct type *analyzer_get_or_create_anonymous_type(struct analyzer *a,
+struct type *analyzer_get_or_create_composite_type(struct analyzer *a,
                                                    struct ast_node *desc,
                                                    struct symbol_table *st,
                                                    struct ast_node *genrdecl);

@@ -34,7 +34,7 @@ struct type *type_create_from_fndecl(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st);
 
-struct type *type_anonymous_create(struct ast_node *n,
+struct type *type_composite_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl);

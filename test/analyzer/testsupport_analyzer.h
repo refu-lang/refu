@@ -71,7 +71,7 @@ void teardown_analyzer_tests();
     } while(0)
 
 
-struct type *testsupport_analyzer_type_create_builtin(enum builtin_type btype);
+struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype);
 
 struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
                                                        struct type *left,

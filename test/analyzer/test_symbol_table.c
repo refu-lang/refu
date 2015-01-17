@@ -320,8 +320,8 @@ START_TEST(test_block_symbol_table) {
     testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_first_pass(d->front.analyzer));
 
-    struct type *ti64 = testsupport_analyzer_type_create_builtin(BUILTIN_INT_64);
-    struct type *tu32 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_32);
+    struct type *ti64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
 
     struct ast_node *block = ast_node_get_child(d->front.analyzer->root, 0);
     ck_assert_msg(block, "block node was not found");
@@ -346,9 +346,9 @@ START_TEST(test_fndecl_symbol_table) {
     front_testdriver_assign(d, &s);
 
 
-    struct type *tu64 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_64);
-    struct type *tstring = testsupport_analyzer_type_create_builtin(BUILTIN_STRING);
-    struct type *tu32 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_32);
+    struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tu64);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tstring);
     struct type *op1 = testsupport_analyzer_type_create_operator(
@@ -391,14 +391,14 @@ START_TEST(test_typedecl_symbol_table) {
 
 
 
-    struct type *tstring = testsupport_analyzer_type_create_builtin(BUILTIN_STRING);
-    struct type *tu16 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_16);
+    struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *tu16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tstring);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
     struct type *person_type = testsupport_analyzer_type_create_defined(
-        &names, &op1->anonymous
+        &names, &op1->composite
     );
 
     testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
@@ -435,17 +435,17 @@ START_TEST(test_multiple_level_symbol_tables) {
     front_testdriver_assign(d, &s);
 
 
-    struct type *tstring = testsupport_analyzer_type_create_builtin(BUILTIN_STRING);
-    struct type *tu16 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_16);
+    struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *tu16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tstring);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
     struct type *person_type = testsupport_analyzer_type_create_defined(
-        &names, &op1->anonymous
+        &names, &op1->composite
     );
-    struct type *ti8 = testsupport_analyzer_type_create_builtin(BUILTIN_INT_8);
-    struct type *tu64 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_64);
+    struct type *ti8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
 
     testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
     ck_assert(analyzer_first_pass(d->front.analyzer));
