@@ -22,7 +22,7 @@ START_TEST(test_acc_typedesc_simple1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -41,7 +41,7 @@ START_TEST(test_acc_typedesc_simple2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("a : \t  i16");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -60,7 +60,7 @@ START_TEST(test_acc_typedesc_no_colon) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16 -> int");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -118,7 +118,7 @@ START_TEST(test_acc_typedesc_fail3) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 8)
@@ -133,7 +133,7 @@ static void test_simple_typeop(enum typeop_type op_type, char *str, int t2_start
     const struct RFstring s = RF_STRING_SHALLOW_INIT_CSTR(str);
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -176,7 +176,7 @@ START_TEST(test_acc_typedesc_prod2) {
         "a:i16, b:i32, c:f64");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -212,7 +212,7 @@ START_TEST(test_acc_typedesc_sum_associativity) {
                                                            "c:f64, d:f32");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -259,7 +259,7 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
         "a:i16, b:i32  -> c:f64 | d:f32");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);

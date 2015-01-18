@@ -20,7 +20,7 @@ START_TEST(test_lexer_scan_tokens_1) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
+    f = front->file;
     lex = front->lexer;
     struct token expected[] = {
         TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 2, "asd"),
@@ -63,7 +63,7 @@ START_TEST(test_lexer_scan_tokens_2) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
+    f = front->file;
     lex = front->lexer;
     struct token expected[] = {
         {
@@ -215,7 +215,7 @@ START_TEST(test_lexer_scan_tokens_crammed) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
+    f = front->file;
     lex = front->lexer;
     struct token expected[] = {
         TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 3, "food"),
@@ -298,7 +298,7 @@ START_TEST(test_lexer_scan_identifier_at_end) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
+    f = front->file;
     lex = front->lexer;
     struct token expected[] = {
         {
@@ -325,7 +325,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = &front->file;
+    f = front->file;
     lex = front->lexer;
     struct token expected[] = {
         {

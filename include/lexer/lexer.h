@@ -93,6 +93,11 @@ i_INLINE_DECL struct inplocation_mark *lexer_last_token_end(struct lexer *l)
     return &(lexer_last_token_valid(l))->location.end;
 }
 
+i_INLINE_DECL void lexer_inject_input_file(struct lexer *l, struct inpfile *f)
+{
+    l->file = f;
+}
+
 void lexer_push(struct lexer *l);
 void lexer_pop(struct lexer *l);
 void lexer_rollback(struct lexer *l);

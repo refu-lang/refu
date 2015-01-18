@@ -102,7 +102,7 @@ void teardown_front_tests();
 
 #define ck_assert_driver_offset_eq(i_driver_, i_bytes_, i_chars_, i_lines_) \
     do {                                                                \
-        struct inpoffset *off_ = inputfile_offset(&(i_driver_)->f);     \
+        struct inpoffset *off_ = inputfile_offset((i_driver_)->f);     \
         ck_assert_uint_eq(off_->bytes_moved, i_bytes_);                 \
         ck_assert_uint_eq(off_->chars_moved, i_chars_);                 \
         ck_assert_uint_eq(off_->lines_moved, i_lines_);                 \

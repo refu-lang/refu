@@ -33,7 +33,7 @@ START_TEST(test_acc_ifexpr_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 3);
@@ -74,7 +74,7 @@ START_TEST(test_acc_ifexpr_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 3);
@@ -129,7 +129,7 @@ START_TEST(test_acc_ifexpr_3) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 3);
@@ -211,7 +211,7 @@ START_TEST(test_acc_ifexpr_4) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 3);
@@ -309,7 +309,7 @@ START_TEST(test_acc_ifexpr_errors_1) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression after 'if'",
             0, 1),
@@ -333,7 +333,7 @@ START_TEST(test_acc_ifexpr_errors_2) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a block after \"if\"'s conditional expression",
             0, 8),
@@ -357,12 +357,12 @@ START_TEST(test_acc_ifexpr_errors_3) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression or a '}' at block end",
             2, 7),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a block after 'else'",
             2, 5),
@@ -388,7 +388,7 @@ START_TEST(test_acc_ifexpr_errors_4) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression after 'elif'",
             2, 5),
@@ -416,7 +416,7 @@ START_TEST(test_acc_ifexpr_errors_5) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a block after \"elif\"'s conditional expression",
             2, 21),

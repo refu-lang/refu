@@ -10,21 +10,22 @@
 bool front_ctx_init(struct front_ctx *ctx,
                     const struct compiler_args *args)
 {
-    if (!inpfile_init(&ctx->file, &args->input)) {
+    RF_STRUCT_ZERO(ctx);
+    if (!inpfile_init(ctx->file, &args->input)) {
         goto err;
     }
 
-    ctx->info = info_ctx_create(&ctx->file);
+    ctx->info = info_ctx_create(ctx->file);
     if (!ctx->info) {
         goto free_file;
     }
 
-    ctx->lexer = lexer_create(&ctx->file, ctx->info);
+    ctx->lexer = lexer_create(ctx->file, ctx->info);
     if (!ctx->lexer) {
         goto free_info;
     }
 
-    ctx->parser = parser_create(&ctx->file, ctx->lexer, ctx->info);
+    ctx->parser = parser_create(ctx->file, ctx->lexer, ctx->info);
     if (!ctx->parser) {
         goto free_lexer;
     }
@@ -44,7 +45,7 @@ free_lexer:
 free_info:
     info_ctx_destroy(ctx->info);
 free_file:
-    inpfile_deinit(&ctx->file);
+    inpfile_destroy(ctx->file);
 err:
     return false;
 }
@@ -62,7 +63,7 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args)
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {
-    inpfile_deinit(&ctx->file);
+    inpfile_destroy(ctx->file);
     lexer_destroy(ctx->lexer);
     parser_destroy(ctx->parser);
     info_ctx_destroy(ctx->info);

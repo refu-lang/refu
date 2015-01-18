@@ -32,7 +32,7 @@ START_TEST(test_acc_block_empty) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 1, 0);
     ck_test_parse_as(n, block, d, "block", bnode, true);
@@ -51,7 +51,7 @@ START_TEST(test_acc_block_no_braces_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 1, 0, 2, 12);
 
@@ -91,7 +91,7 @@ START_TEST(test_acc_block_no_braces_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 0, 25);
 
@@ -131,7 +131,7 @@ START_TEST(test_acc_block_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
 
@@ -173,7 +173,7 @@ START_TEST(test_acc_block_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 2, 0);
 
@@ -216,7 +216,7 @@ START_TEST(test_acc_block_value_without_return) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
 
@@ -260,7 +260,7 @@ START_TEST(test_acc_block_value_with_return) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 4, 0);
 

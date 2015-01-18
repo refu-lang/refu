@@ -527,6 +527,7 @@ struct token *lexer_last_token_valid(struct lexer *l)
 i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);
 i_INLINE_INS struct inplocation_mark *lexer_last_token_start(struct lexer *l);
 i_INLINE_INS struct inplocation_mark *lexer_last_token_end(struct lexer *l);
+i_INLINE_INS void lexer_inject_input_file(struct lexer *l, struct inpfile *f);
 
 void lexer_push(struct lexer *l)
 {

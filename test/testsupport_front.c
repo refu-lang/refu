@@ -24,10 +24,13 @@ struct front_testdriver *get_front_testdriver()
 
 struct inpfile *front_testdriver_get_file(struct front_testdriver *d)
 {
-    return &d->front.file;
+    return d->front.file;
 }
-static bool inpfile_dummy_init(struct inpfile *f, struct info_ctx *info)
+
+static struct inpfile *inpfile_dummy_create(struct info_ctx *info)
 {
+    struct inpfile *f;
+    RF_MALLOC(f, sizeof(*f), return NULL);
     if (!rf_string_init(&f->file_name, "test_file")) {
         return false;
     }
@@ -39,10 +42,10 @@ static bool inpfile_dummy_init(struct inpfile *f, struct info_ctx *info)
     f->info = info;
     f->root = NULL;
     inpoffset_init(&f->offset);
-    return true;
+    return f;
 }
 
-static void inpfile_dummy_deinit(struct inpfile *f)
+static void inpfile_dummy_destroy(struct inpfile *f)
 {
     /*
      * if in the test the inpfile_dummy_assign() function
@@ -52,7 +55,8 @@ static void inpfile_dummy_deinit(struct inpfile *f)
     if (!f->str.lines) {
         RF_MALLOC(f->str.lines, 1,;);
     }
-    inpfile_deinit(f);
+    /* inpfile_deinit(f); */
+    inpfile_destroy(f);
 }
 
 static bool inpfile_dummy_assign(struct inpfile *f,
@@ -77,7 +81,7 @@ static bool inpfile_dummy_assign(struct inpfile *f,
     if (lines == 1) { //we got nothing to copy from, so don't
         f->str.lines[0] = 0;
     } else {
-        unsigned int i;
+        int i;
         f->str.lines[0] = 0;
         for (i = 1; i < lines; i ++) {
             f->str.lines[i] = rf_array_at_unsafe(&arr, i - 1, uint32_t) + 1;
@@ -101,29 +105,28 @@ struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 
 bool front_testdriver_init(struct front_testdriver *d)
 {
-    bool ret;
-    ret = inpfile_dummy_init(&d->front.file, d->front.info);
-    if (!ret) {
-        return false;
-    }
-
+    RF_STRUCT_ZERO(d);
     darray_init(d->nodes);
+
+    // Note: Here are providing NULL pointer for front context input file
+    // The input file is created and injected at lexer and parser during
+    // front_testdriver_assign()
 
     if (!rf_stringx_init_buff(&d->buffstr, 1024, "")) {
         goto free_nodes;
     }
 
-    d->front.info = info_ctx_create(&d->front.file);
+    d->front.info = info_ctx_create(d->front.file);
     if (!d->front.info) {
         goto free_buff;
     }
 
-    d->front.lexer = lexer_create(&d->front.file, d->front.info);
+    d->front.lexer = lexer_create(d->front.file, d->front.info);
     if (!d->front.lexer) {
         goto free_info;
     }
 
-    d->front.parser = parser_create(&d->front.file,
+    d->front.parser = parser_create(d->front.file,
                                     d->front.lexer,
                                     d->front.info);
     if (!d->front.parser) {
@@ -147,7 +150,6 @@ free_buff:
     rf_stringx_deinit(&d->buffstr);
 free_nodes:
     darray_free(d->nodes);
-    inpfile_dummy_deinit(&d->front.file);
     return false;
 }
 void front_testdriver_deinit(struct front_testdriver *d)
@@ -158,7 +160,10 @@ void front_testdriver_deinit(struct front_testdriver *d)
         ast_node_destroy(*n);
     }
     darray_free(d->nodes);
-    inpfile_dummy_deinit(&d->front.file);
+
+    if (d->front.file) {
+        inpfile_dummy_destroy(d->front.file);
+    }
 
     lexer_destroy(d->front.lexer);
     parser_destroy(d->front.parser);
@@ -169,9 +174,18 @@ void front_testdriver_deinit(struct front_testdriver *d)
 struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
                                           const struct RFstring *s)
 {
-    if (!inpfile_dummy_assign(&d->front.file, s)) {
+    d->front.file = inpfile_dummy_create(d->front.info);
+
+    if (!d->front.file) {
+        ck_abort_msg("Failed to create a dummy input file");
+    }
+
+    if (!inpfile_dummy_assign(d->front.file, s)) {
         ck_abort_msg("Assigning a string to a test driver failed");
     }
+
+    lexer_inject_input_file(d->front.lexer, d->front.file);
+    parser_inject_input_file(d->front.parser, d->front.file);
 
     return &d->front;
 }
@@ -181,7 +195,7 @@ static inline struct ast_node *front_testdriver_node_from_loc(
     struct front_testdriver *d, enum ast_type type,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
 {
-    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
     return ast_node_create_loc(type, &temp_loc);
 }
 
@@ -209,8 +223,8 @@ struct ast_node *front_testdriver_generate_string_literal(
     struct ast_node *ret;
     struct inplocation temp_loc = LOC_INIT_FULL(
         sl, sc, el, ec,
-        inpfile_line_p(&d->front.file, sl) + sl_byte_off,
-        inpfile_line_p(&d->front.file, el) + el_byte_off);
+        inpfile_line_p(d->front.file, sl) + sl_byte_off,
+        inpfile_line_p(d->front.file, el) + el_byte_off);
     ret = ast_string_literal_create(&temp_loc);
     if (!ret) {
         return NULL;
@@ -225,7 +239,7 @@ struct ast_node *front_testdriver_generate_constant_float(
     double val)
 {
     struct ast_node *ret;
-    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
     ret = ast_constantnum_create_float(&temp_loc, val);
     if (!ret) {
         return NULL;
@@ -240,7 +254,7 @@ struct ast_node *front_testdriver_generate_constant_integer(
     uint64_t val)
 {
     struct ast_node *ret;
-    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
     ret = ast_constantnum_create_integer(&temp_loc, val);
     if (!ret) {
         return NULL;
@@ -280,7 +294,7 @@ struct ast_node *do_front_testdriver_generate_node(
     struct ast_node *ret;
     struct ast_node *n1 = NULL;
     struct ast_node *n2 = NULL;
-    struct inplocation temp_loc = LOC_INIT(&d->front.file, sl, sc, el, ec);
+    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
     struct inplocation_mark *smark = &temp_loc.start;
     struct inplocation_mark *emark = &temp_loc.end;
     bool is_constant = false;

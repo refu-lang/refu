@@ -23,7 +23,7 @@ START_TEST(test_acc_genrdecl_simple1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a>");
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
-    file = &front->file;
+    file = front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
@@ -48,7 +48,7 @@ START_TEST(test_acc_genrdecl_simple2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("  <  Type a >  ");
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
-    file = &front->file;
+    file = front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
@@ -73,7 +73,7 @@ START_TEST(test_acc_genrdecl_simple3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a, Type b>");
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
-    file = &front->file;
+    file = front->file;
     ck_assert_msg(front, "Failed to assign string to file ");
 
 
@@ -113,12 +113,12 @@ START_TEST(test_acc_genrdecl_fail1) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the generic type name",
             0, 4),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a generic declaration after '<'",
             0, 0),
@@ -141,7 +141,7 @@ START_TEST(test_acc_genrdecl_fail2) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected either a ',' or a '>' at generic declaration",
             0, 8),

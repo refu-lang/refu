@@ -49,6 +49,7 @@ bool inpfile_init(struct inpfile* f,
     rf_array_deinit(&lines_arr);
     return true;
 }
+
 struct inpfile *inpfile_create(const struct RFstring *name)
 {
     struct inpfile *ret;
@@ -58,6 +59,7 @@ struct inpfile *inpfile_create(const struct RFstring *name)
     }
     return ret;
 }
+
 void inpfile_deinit(struct inpfile *f)
 {
     if (f->root) {
@@ -66,6 +68,7 @@ void inpfile_deinit(struct inpfile *f)
     rf_string_deinit(&f->file_name);
     inpstr_deinit(&f->str);
 }
+
 void inpfile_destroy(struct inpfile *f)
 {
     inpfile_deinit(f);

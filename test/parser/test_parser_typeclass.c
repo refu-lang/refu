@@ -30,7 +30,7 @@ START_TEST(test_acc_typeclass_1) {
         "}");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 6, 0, 17);
@@ -67,7 +67,7 @@ START_TEST(test_acc_typeclass_with_generics) {
         "}");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 6, 0, 17);
@@ -115,7 +115,7 @@ START_TEST(test_acc_typeclass_2) {
         "}");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 6, 0, 17);
@@ -194,7 +194,7 @@ START_TEST(test_acc_typeclass_err1) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the typeclass name after 'class'",
             0, 6)
@@ -220,7 +220,7 @@ START_TEST(test_acc_typeclass_err2) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected at least one function declaration inside the body of "
             "typeclass \"pointers\" after '{'",
@@ -245,12 +245,12 @@ START_TEST(test_acc_typeclass_err3) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected either a ',' or a '>' at generic declaration",
             0, 20),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a generic declaration for typeclass \"adder\" "
             "after identifier",
@@ -277,7 +277,7 @@ START_TEST(test_acc_typeclass_err4) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected '{' at \"pointers\" typeclass "
             "declaration after identifier",
@@ -303,7 +303,7 @@ START_TEST(test_acc_typeclass_err5) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected '}' at the end of \"pointers\" typeclass declaration",
             1, 10)
@@ -329,12 +329,12 @@ START_TEST(test_acc_typeclass_err6) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected ')' at function declaration after '('",
             1, 8),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a proper function declaration "
             "inside typeclass \"pointers\"",
@@ -356,7 +356,7 @@ START_TEST(test_acc_typeinstance_1) {
         "}");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *class_name = testsupport_parser_identifier_create(file,
                                                                 0, 9, 0, 20);
@@ -422,7 +422,7 @@ START_TEST(test_acc_typeinstance_2) {
         "}");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *class_name = testsupport_parser_identifier_create(file,
                                                                 0, 9, 0, 20);

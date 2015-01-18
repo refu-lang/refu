@@ -29,7 +29,7 @@ START_TEST(test_acc_fndecl_1) {
         "fn dosth(a:i32) -> i32");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 7);
@@ -58,7 +58,7 @@ START_TEST(test_acc_fndecl_2) {
         "fn dosth(a:i32, b:string) -> i32|nil");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 7);
@@ -98,7 +98,7 @@ START_TEST(test_acc_fndecl_void) {
         "fn dosth_no_args()");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 15);
@@ -123,7 +123,7 @@ START_TEST(test_acc_fndecl_with_generics) {
         "fn do_generic<Type a, Type b>(a:b, x:string) -> (r1:i32,r2:i8)");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 12);
@@ -194,7 +194,7 @@ START_TEST(test_acc_fndecl_err1) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the function name after 'fn'",
             0, 3)
@@ -218,7 +218,7 @@ START_TEST(test_acc_fndecl_err2) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected '(' at function declaration",
             0, 8)
@@ -242,7 +242,7 @@ START_TEST(test_acc_fndecl_err3) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected ')' at function declaration after type description",
             0, 13)
@@ -266,12 +266,12 @@ START_TEST(test_acc_fndecl_err4) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 14),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected either a type description for the function's arguments "
             "or ')' after '('",
@@ -296,7 +296,7 @@ START_TEST(test_acc_fndecl_err5) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
@@ -321,17 +321,17 @@ START_TEST(test_acc_fndecl_err6) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 25),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a type description after '('",
             0, 19),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
@@ -347,7 +347,7 @@ START_TEST(test_acc_fncall_1) {
         "foo(a, b)");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 2);
@@ -375,7 +375,7 @@ START_TEST(test_acc_fncall_2) {
         "do_something (a, b, 31, \"celka\")");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 0, 0, 11);
@@ -409,7 +409,7 @@ START_TEST(test_acc_fncall_3) {
         "do_something <a, b> (a, b, 31, \"celka\")");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 0, 0, 11);
@@ -455,7 +455,7 @@ START_TEST(test_acc_fnimpl_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
 
 
@@ -530,7 +530,7 @@ START_TEST(test_acc_fnimpl_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
 
 

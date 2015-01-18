@@ -53,7 +53,7 @@ START_TEST(test_typecheck_assignment_invalid_storage_size) {
     front_testdriver_assign(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. "
             "Can't assign \"u16\" to \"u8\"",
@@ -79,7 +79,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
     front_testdriver_assign(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"string\" to \"u64\"",
@@ -213,13 +213,13 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Argument 1 of do_something() function call does not match the "
             "function signature. Expected \"string\" but got \"u32\".",
             6, 0, 6, 24),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Argument 2 of do_something() function call does not match the "
             "function signature. Expected \"u16\" but got \"string\".",
@@ -253,13 +253,13 @@ START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Invalid number of arguments provided to function \"do_something()\"."
             " Expected 2 arguments but provided 1."
             10, 0, 10, 21),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Invalid number of arguments provided to function \"do_something_else()\"."
             " Expected 3 arguments but provided 2."
