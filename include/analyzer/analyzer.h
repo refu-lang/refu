@@ -32,7 +32,7 @@ struct analyzer {
     struct rf_fixed_memorypool *symbol_table_records_pool;
     struct rf_fixed_memorypool *types_pool;
 
-    //! A list of all composite types
+    //! A list of all composite types. Basically any non-elementary types.
     struct RFilist_head composite_types;
 
     /* String tables containing identifiers and string literals found during parsing */
@@ -56,10 +56,21 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info);
 void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
 
-struct type *analyzer_get_or_create_composite_type(struct analyzer *a,
-                                                   struct ast_node *desc,
-                                                   struct symbol_table *st,
-                                                   struct ast_node *genrdecl);
+/**
+ * If existing, retrieve the type and if not existing create the type
+ * for ast node @c desc.
+ *
+ * @param a          The analyzer instance from which to retrieve the type
+ * @param desc       The node whose type to check
+ * @param st         The symbol table to check for type existence
+ * @param genrdecl   Optional generic delcation that accompanied @c desc.
+ *                   Can be NULL.
+ * @return           The retrieved or created type, or NULL in error.
+ */
+struct type *analyzer_get_or_create_type(struct analyzer *a,
+                                         struct ast_node *desc,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl);
 
 struct inpfile *analyzer_get_file(struct analyzer *a);
 

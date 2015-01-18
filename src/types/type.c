@@ -15,7 +15,7 @@
 #include <types/type_function.h>
 
 /* -- forward declarations of functions -- */
-static bool type_composite_init(struct type_composite *t, struct ast_node *n,
+static bool type_operator_init(struct type_operator *t, struct ast_node *n,
                                 struct analyzer *a, struct symbol_table *st,
                                 struct ast_node *genrdecl);
 
@@ -78,7 +78,7 @@ static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
 
     } else if (right->type == AST_TYPE_DESCRIPTION ||
                right->type == AST_TYPE_OPERATOR) {
-        leaf->type = analyzer_get_or_create_composite_type(a, right, st, genrdecl);
+        leaf->type = analyzer_get_or_create_type(a, right, st, genrdecl);
         if (!leaf->type) {
             return false;
         }
@@ -98,11 +98,13 @@ static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
                                     struct ast_node *genrdecl)
 {
     if (ast_types_left(typedesc)->type == AST_IDENTIFIER) {
+        AST_NODE_ASSERT_TYPE(typedesc, AST_TYPE_DESCRIPTION);
+
         t->category = TYPE_CATEGORY_LEAF;
         return type_leaf_init(&t->leaf, typedesc, a, st, genrdecl);
     } else {
-        t->category = TYPE_CATEGORY_COMPOSITE;
-        return type_composite_init(&t->composite, typedesc, a, st, genrdecl);
+        t->category = TYPE_CATEGORY_OPERATOR;
+        return type_operator_init(&t->operator, typedesc, a, st, genrdecl);
     }
 }
 
@@ -124,52 +126,37 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
     return ret;
 }
 
-static bool type_composite_init(struct type_composite *t, struct ast_node *n,
+static bool type_operator_init(struct type_operator *t, struct ast_node *n,
                                 struct analyzer *a, struct symbol_table *st,
                                 struct ast_node *genrdecl)
 {
-    if (n->type == AST_TYPE_OPERATOR) {
-        struct type *left;
-        struct type *right;
+    struct type *left;
+    struct type *right;
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
 
-        t->is_operator = true;
-        t->op.type = ast_typeop_op(n);
-
-        left = type_create(ast_typeop_left(n), a, st, genrdecl);
-        if (!left) {
-            return false;
-        }
-        right = type_create(ast_typeop_right(n), a, st, genrdecl);
-        if (!right) {
-            return false;
-        }
-
-        t->op.left = left;
-        t->op.right = right;
-
-
-    } else if (n->type == AST_TYPE_DESCRIPTION) {
-        t->is_operator = false;
-        if (!type_leaf_init(&t->leaf, n, a, st, genrdecl)) {
-            return false;
-        }
-
-    } else {
-        RF_ASSERT_OR_CRITICAL(false,"Illegal ast node type "
-                              "\""RF_STR_PF_FMT"\" detected in typedesec",
-                              RF_STR_PF_ARG(ast_node_str(n)));
+    // TODO: Figure out why type_lookup_or_create() fails the tests if used here
+    t->type = ast_typeop_op(n);
+    left = type_create(ast_typeop_left(n), a, st, genrdecl);
+    if (!left) {
         return false;
     }
+    right = type_create(ast_typeop_right(n), a, st, genrdecl);
+    if (!right) {
+        return false;
+    }
+
+    t->left = left;
+    t->right = right;
 
     return true;
 }
 
 
 
-static struct type *type_composite_lookup_or_create(struct ast_node *n,
-                                                    struct analyzer *a,
-                                                    struct symbol_table *st,
-                                                    struct ast_node *genrdecl)
+struct type *type_lookup_or_create(struct ast_node *n,
+                                   struct analyzer *a,
+                                   struct symbol_table *st,
+                                   struct ast_node *genrdecl)
 {
     switch (n->type) {
     case AST_XIDENTIFIER:
@@ -183,7 +170,7 @@ static struct type *type_composite_lookup_or_create(struct ast_node *n,
         }
         // else fall through case, same as type operator
     case AST_TYPE_OPERATOR:
-        return analyzer_get_or_create_composite_type(a, n, st, genrdecl);
+        return analyzer_get_or_create_type(a, n, st, genrdecl);
     default:
         RF_ASSERT_OR_CRITICAL(false,"Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
@@ -239,7 +226,7 @@ struct type *type_create_from_vardecl(struct ast_node *n,
     struct type *t;
     AST_NODE_ASSERT_TYPE(n, AST_VARIABLE_DECLARATION);
 
-    t = type_composite_lookup_or_create(ast_vardecl_desc_get(n), a, st, NULL);
+    t = type_lookup_or_create(ast_vardecl_desc_get(n), a, st, NULL);
     if (!t) {
         return NULL;
     }
@@ -260,8 +247,8 @@ static bool type_init_from_fndecl(struct type *t,
 
     // set argument type (left part of the operand)
     if (args) {
-        arg_type = type_composite_lookup_or_create(args, a, st,
-                                                   ast_fndecl_genrdecl_get(n));
+        arg_type = type_lookup_or_create(args, a, st,
+                                         ast_fndecl_genrdecl_get(n));
         if (!arg_type) {
             // TODO: Free argument_type if created
             return false;
@@ -271,8 +258,8 @@ static bool type_init_from_fndecl(struct type *t,
     }
 
     if (ret) {
-        ret_type = type_composite_lookup_or_create(ret, a, st,
-                                                   ast_fndecl_genrdecl_get(n));
+        ret_type = type_lookup_or_create(ret, a, st,
+                                         ast_fndecl_genrdecl_get(n));
         if (!ret_type) {
             // TODO: Free return_type if created
             return false;
@@ -305,10 +292,10 @@ struct type *type_create_from_fndecl(struct ast_node *n,
     return t;
 }
 
-struct type *type_composite_create(struct ast_node *n,
-                                   struct analyzer *a,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl)
+struct type *type_operator_create(struct ast_node *n,
+                                  struct analyzer *a,
+                                  struct symbol_table *st,
+                                  struct ast_node *genrdecl)
 {
     struct type *t;
     t = type_alloc(a);
@@ -317,8 +304,8 @@ struct type *type_composite_create(struct ast_node *n,
         return NULL;
     }
 
-    t->category = TYPE_CATEGORY_COMPOSITE;
-    if (!type_composite_init(&t->composite, n, a, st, genrdecl)) {
+    t->category = TYPE_CATEGORY_OPERATOR;
+    if (!type_operator_init(&t->operator, n, a, st, genrdecl)) {
         type_free(t, a);
         t = NULL;
     }
@@ -334,20 +321,10 @@ i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
 static inline bool type_category_equals(const struct type *t1,
                                         const struct type *t2)
 {
+    // TODO: Think if this function is still needed
     if (t1->category == t2->category) {
         return true;
     }
-
-    if (t1->category == TYPE_CATEGORY_LEAF &&
-        t2->category == TYPE_CATEGORY_COMPOSITE && (!t2->composite.is_operator)) {
-        return true;
-    }
-
-    if (t2->category == TYPE_CATEGORY_LEAF &&
-        t1->category == TYPE_CATEGORY_COMPOSITE && (!t1->composite.is_operator)) {
-        return true;
-    }
-
     return false;
 }
 
@@ -358,29 +335,20 @@ static inline bool type_leaf_equals(const struct type_leaf *t1,
     return type_equals(t1->type, t2->type, ctx);
 }
 
-static bool type_composite_equals(const struct type_composite *t1,
-                                  const struct type_composite *t2,
-                                  struct type_comparison_ctx *ctx)
+static bool type_operator_equals(const struct type_operator *t1,
+                                 const struct type_operator *t2,
+                                 struct type_comparison_ctx *ctx)
 {
     if (t1 == t2) {
         return true;
     }
 
-    if (t1->is_operator != t2->is_operator) {
+    if (t1->type != t2->type) {
         return false;
     }
 
-    if (t1->is_operator) {
-        if (t1->op.type != t2->op.type) {
-            return false;
-        }
-
-        return type_equals(t1->op.left, t2->op.left, ctx) &&
-            type_equals(t1->op.right, t2->op.right, ctx);
-    }
-
-    return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
-
+    return type_equals(t1->left, t2->left, ctx) &&
+           type_equals(t1->right, t2->right, ctx);
 }
 
 bool type_equals(const struct type* t1, const struct type *t2,
@@ -396,65 +364,48 @@ bool type_equals(const struct type* t1, const struct type *t2,
     }
 
     switch (t1->category) {
-    case TYPE_CATEGORY_COMPOSITE:
-        if (t2->category == TYPE_CATEGORY_LEAF) {
-            //handle special case where we compare composite to a leaf composite type
-            return type_leaf_equals(&t1->composite.leaf, &t2->leaf, ctx);
-        } else {
-            return type_composite_equals(&t1->composite, &t2->composite, ctx);
-        }
+    case TYPE_CATEGORY_OPERATOR:
+        return type_operator_equals(&t1->operator, &t2->operator, ctx);
     case TYPE_CATEGORY_ELEMENTARY:
         return type_elementary_equals(&t1->elementary, &t2->elementary, ctx);
     case TYPE_CATEGORY_LEAF:
-        if (t2->category == TYPE_CATEGORY_COMPOSITE) {
-            //handle special case where we compare leaf to a composite leaf type
-            return type_leaf_equals(&t1->leaf, &t2->composite.leaf, ctx);
-        } else {
             return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
-        }
     case TYPE_CATEGORY_GENERIC:
         //TODO
+        RF_ASSERT(false, "Not yet implemented");
         break;
     }
 
     return false;
 }
 
-bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
+bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl)
 {
-    struct type *looked_up_t;
     if (type_desc->type == AST_TYPE_OPERATOR) {
-        struct type_composite *composite;
-
-        if (t->category != TYPE_CATEGORY_COMPOSITE) {
-            composite = &t->composite;
-        } else {
+        if (t->category != TYPE_CATEGORY_OPERATOR) {
             return false;
         }
 
-        if (!composite->is_operator) {
+        if (t->operator.type != ast_typeop_op(type_desc)) {
             return false;
         }
 
-        if (composite->op.type != ast_typeop_op(type_desc)) {
-            return false;
-        }
-
-        return type_equals_typedesc(composite->op.left,
+        return type_equals_ast_node(t->operator.left,
                                     ast_typeop_left(type_desc),
                                     a, st, genrdecl) &&
-            type_equals_typedesc(composite->op.right,
+            type_equals_ast_node(t->operator.right,
                                  ast_typeop_right(type_desc),
                                  a, st, genrdecl);
 
     } else if (type_desc->type == AST_TYPE_DESCRIPTION) {
         AST_NODE_ASSERT_TYPE(ast_typedesc_left(type_desc), AST_IDENTIFIER);
-        return type_equals_typedesc(t, ast_typedesc_right(type_desc),
+        return type_equals_ast_node(t, ast_typedesc_right(type_desc),
                                     a, st, genrdecl);
 
     } else if (type_desc->type == AST_XIDENTIFIER) {
+        struct type *looked_up_t;
         looked_up_t = type_lookup_xidentifier(type_desc, a, st, genrdecl);
         if (!looked_up_t) {
             RF_ERROR("Failed to lookup an identifier");
@@ -534,16 +485,11 @@ const struct RFstring *type_str(const struct type *t)
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         return type_elementary_get_str(t->elementary.etype);
-    case TYPE_CATEGORY_COMPOSITE:
-        if (t->composite.is_operator) {
-            return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                        RF_STR_PF_ARG(type_str(t->composite.op.left)),
-                        RF_STR_PF_ARG(type_op_str(t->composite.op.type)),
-                        RF_STR_PF_ARG(type_str(t->composite.op.right)));
-        }
-        // same as leaf
-        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->composite.leaf.id),
-                    RF_STR_PF_ARG(type_str(t->composite.leaf.type)));
+    case TYPE_CATEGORY_OPERATOR:
+        return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                    RF_STR_PF_ARG(type_str(t->operator.left)),
+                    RF_STR_PF_ARG(type_op_str(t->operator.type)),
+                    RF_STR_PF_ARG(type_str(t->operator.right)));
     case TYPE_CATEGORY_LEAF:
         return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
                     RF_STR_PF_ARG(type_str(t->leaf.type)));
@@ -565,18 +511,12 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
         // Do nothing
         break;
 
-    case TYPE_CATEGORY_COMPOSITE:
-        if (t->composite.is_operator) {
-            if (!type_for_each_leaf(t->composite.op.left, cb, user_arg)) {
-                return false;
-            }
-            if (!type_for_each_leaf(t->composite.op.right, cb, user_arg)) {
-                return false;
-            }
-        } else {
-            if (!cb(&t->composite.leaf, user_arg)) {
-                return false;
-            }
+    case TYPE_CATEGORY_OPERATOR:
+        if (!type_for_each_leaf(t->operator.left, cb, user_arg)) {
+            return false;
+        }
+        if (!type_for_each_leaf(t->operator.right, cb, user_arg)) {
+            return false;
         }
         break;
 

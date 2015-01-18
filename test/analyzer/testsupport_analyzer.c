@@ -83,11 +83,10 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
-    t->category = TYPE_CATEGORY_COMPOSITE;
-    t->composite.is_operator = true;
-    t->composite.op.type = type;
-    t->composite.op.left = left;
-    t->composite.op.right = right;
+    t->category = TYPE_CATEGORY_OPERATOR;
+    t->operator.type = type;
+    t->operator.left = left;
+    t->operator.right = right;
 
     darray_append(adriver->types, t);
     return t;
@@ -102,10 +101,9 @@ struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
     t = type_alloc(fdriver->front.analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
-    t->category = TYPE_CATEGORY_COMPOSITE;
-    t->composite.is_operator = false;
-    t->composite.leaf.id = id;
-    t->composite.leaf.type = type;
+    t->category = TYPE_CATEGORY_LEAF;
+    t->leaf.id = id;
+    t->leaf.type = type;
 
     darray_append(adriver->types, t);
     return t;

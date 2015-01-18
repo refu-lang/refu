@@ -87,21 +87,21 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
-struct type *analyzer_get_or_create_composite_type(struct analyzer *a,
-                                                   struct ast_node *desc,
-                                                   struct symbol_table *st,
-                                                   struct ast_node *genrdecl)
+struct type *analyzer_get_or_create_type(struct analyzer *a,
+                                         struct ast_node *desc,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl)
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
     rf_ilist_for_each(&a->composite_types, t, lh) {
-        if (type_equals_typedesc(t, desc, a, st, genrdecl)) {
+        if (type_equals_ast_node(t, desc, a, st, genrdecl)) {
             return t;
         }
     }
 
-    // else we have to create a new composite type
-    t = type_composite_create(desc, a, st, genrdecl);
+    // else we have to create a new type
+    t = type_create(desc, a, st, genrdecl);
     if (!t) {
         RF_ERROR("Failure to create an composite type");
         return NULL;

@@ -22,6 +22,7 @@ struct ast_typeop {
 struct ast_typedesc {
     struct ast_node *left;
     struct ast_node *right;
+    // TODO: This should go away. Base ast_node has a type field now
     struct type *type;
 };
 #define ast_typedesc_to_node(n_)                  \

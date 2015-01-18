@@ -29,7 +29,7 @@ enum elementary_type {
 
 
 enum type_category {
-    TYPE_CATEGORY_COMPOSITE = 0,        /* a type combination of other types */
+    TYPE_CATEGORY_OPERATOR = 0,         /* a type combination of other types */
     TYPE_CATEGORY_LEAF,                 /* almost always part of another type */
     TYPE_CATEGORY_ELEMENTARY,           /* an elementary/builtin type */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
@@ -50,22 +50,13 @@ struct type_operator {
     struct type *right;
 };
 
-struct type_composite {
-    bool is_operator;
-    union {
-        struct type_operator op;
-        struct type_leaf leaf;
-    };
-};
-
-
 struct type {
     enum type_category category;
     /* list handler, to be added to either the types or the composite types list */
     struct RFilist_node lh;
     union {
         struct type_elementary elementary;
-        struct type_composite composite;
+        struct type_operator operator;
         struct type_leaf leaf;
     };
 };
