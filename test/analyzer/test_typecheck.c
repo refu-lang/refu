@@ -301,8 +301,10 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_checked_fixture(st4,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
+
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
+
     /* tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments); */
 
     suite_add_tcase(s, st1);

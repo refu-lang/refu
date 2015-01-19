@@ -562,6 +562,9 @@ static bool analyzer_typecheck_descend(struct ast_node *n, void *user_arg)
     case AST_BLOCK:
         ctx->current_st = ast_block_symbol_table_get(n);
         break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        ctx->current_st = ast_fnimpl_symbol_table_get(n);
+        break;
     case AST_FUNCTION_DECLARATION:
         ctx->current_st = ast_fndecl_symbol_table_get(n);
         break;
@@ -580,10 +583,6 @@ static bool analyzer_typecheck_do(struct ast_node *n,
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
     bool ret = true;
-
-    // TODO: Temporary debug string commented out for quick check while testing, delete soon
-    /* printf("Typechecking "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n))); */
-    /* fflush(stdout); */
 
     switch(n->type) {
     case AST_BINARY_OPERATOR:

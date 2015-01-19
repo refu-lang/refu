@@ -376,7 +376,7 @@ START_TEST(test_acc_operator_precedence_1) {
     ck_test_parse_as(n, expression, d, "binary operator", bop5);
 
     ast_node_destroy(n);
-    ast_node_destroy(bop4);
+    ast_node_destroy(bop5);
 }END_TEST
 
 Suite *parser_operators_suite_create(void)

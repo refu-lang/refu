@@ -9,6 +9,7 @@
 #include <ast/operators.h>
 #include <ast/vardecl.h>
 #include <ast/block.h>
+#include <ast/function.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
@@ -186,6 +187,7 @@ struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
 
     lexer_inject_input_file(d->front.lexer, d->front.file);
     parser_inject_input_file(d->front.parser, d->front.file);
+    info_ctx_inject_input_file(d->front.info, d->front.file);
 
     return &d->front;
 }
@@ -364,9 +366,14 @@ void teardown_front_tests()
 
 
 
-#define ck_astcheck_abort(file_, line_, msg_, ...)      \
+#define ck_astcheck_abort(...)                                      \
+    RP_SELECT_FUNC_IF_NARGIS(i_ck_astcheck_abort, 3, __VA_ARGS__)
+#define i_ck_astcheck_abort1(file_, line_, msg_)                        \
+    ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_, file_, line_)
+#define i_ck_astcheck_abort0(file_, line_, msg_, ...)       \
     ck_abort_msg("Checking ast trees from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
+
 static bool check_block_node(struct ast_node *got, struct ast_node *expect,
                              struct inpfile *ifile,
                              const char* filename,
@@ -443,6 +450,14 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     }
 
     switch(got->type) {
+    case AST_FUNCTION_DECLARATION:
+        if (ast_fndecl_position_get(got) != ast_fndecl_position_get(expect)) {
+            ck_astcheck_abort(
+                filename, line, "Function declaration expected code position mismatch."
+            );
+            return false;
+        }
+        break;
     case AST_IDENTIFIER:
         if (!rf_string_equal(ast_identifier_str(got),
                              ast_identifier_str(expect))) {

@@ -10,7 +10,7 @@
 #include "expression.h"
 #include "block.h"
 
-struct ast_node *parser_acc_fndecl(struct parser *p)
+struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
 {
     struct ast_node *n;
     struct token *tok;
@@ -91,7 +91,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p)
         end = ast_node_endmark(ret_type);
     }
 
-    n = ast_fndecl_create(start, end, name, genr, args, ret_type);
+    n = ast_fndecl_create(start, end, fndecl_position, name, genr, args, ret_type);
     if (!n) {
         RF_ERRNOMEM();
         goto err_free_rettype;
@@ -117,8 +117,9 @@ err:
 }
 
 
-enum parser_fndecl_list_err  parser_acc_fndecl_list(struct parser *p,
-                                                    struct ast_node *parent)
+enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
+                                                   struct ast_node *parent,
+                                                   int fndecl_position)
 {
     struct ast_node *decl;
     struct token *tok;
@@ -129,7 +130,7 @@ enum parser_fndecl_list_err  parser_acc_fndecl_list(struct parser *p,
     }
 
     while (tok && tok->type == TOKEN_KW_FUNCTION) {
-        decl = parser_acc_fndecl(p);
+        decl = parser_acc_fndecl(p, fndecl_position);
         if (!decl) {
             return PARSER_FNDECL_LIST_FAILURE;
         }
@@ -146,7 +147,7 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
     struct ast_node *decl;
     struct ast_node *body;
 
-    decl = parser_acc_fndecl(p);
+    decl = parser_acc_fndecl(p, FNDECL_PARTOF_IMPL);
     if (!decl) {
         return NULL;
     }

@@ -45,6 +45,7 @@ START_TEST(test_acc_typeclass_1) {
     testsupport_parser_node_create(t1, typedesc, file, 1, 9, 1, 13, id1, id2);
     testsupport_parser_xidentifier_create_simple(id3, file, 1, 19, 1, 21);
     testsupport_parser_node_create(fn, fndecl, file, 1, 0, 1, 21,
+                                   FNDECL_PARTOF_TYPECLASS,
                                    fn_name,
                                    NULL,
                                    t1,
@@ -91,6 +92,7 @@ START_TEST(test_acc_typeclass_with_generics) {
     testsupport_parser_node_create(t1, typedesc, file, 1, 9, 1, 13, id3, id4);
     testsupport_parser_xidentifier_create_simple(id5, file, 1, 19, 1, 21);
     testsupport_parser_node_create(fn, fndecl, file, 1, 0, 1, 21,
+                                   FNDECL_PARTOF_TYPECLASS,
                                    fn_name,
                                    NULL,
                                    t1,
@@ -139,6 +141,7 @@ START_TEST(test_acc_typeclass_2) {
     testsupport_parser_node_create(t1, typedesc, file, 1, 9, 1, 13, id3, id4);
     testsupport_parser_xidentifier_create_simple(id5, file, 1, 19, 1, 21);
     testsupport_parser_node_create(fn1, fndecl, file, 1, 0, 1, 21,
+                                   FNDECL_PARTOF_TYPECLASS,
                                    fn_name1,
                                    NULL,
                                    t1,
@@ -150,6 +153,7 @@ START_TEST(test_acc_typeclass_2) {
                                                                     2, 3, 2, 12);
     testsupport_parser_xidentifier_create_simple(id6, file, 2, 19, 2, 21);
     testsupport_parser_node_create(fn2, fndecl, file, 2, 0, 2, 21,
+                                   FNDECL_PARTOF_TYPECLASS,
                                    fn_name2,
                                    NULL,
                                    NULL,
@@ -165,6 +169,7 @@ START_TEST(test_acc_typeclass_2) {
     testsupport_parser_node_create(t2, typedesc, file, 3, 7, 3, 11, id7, id8);
     testsupport_parser_xidentifier_create_simple(id9, file, 3, 17, 3, 19);
     testsupport_parser_node_create(fn3, fndecl, file, 3, 0, 3, 19,
+                                   FNDECL_PARTOF_TYPECLASS,
                                    fn_name3,
                                    NULL,
                                    t2,
@@ -375,6 +380,7 @@ START_TEST(test_acc_typeinstance_1) {
     testsupport_parser_node_create(t1, typedesc, file, 1, 9, 1, 13, id1, id2);
     testsupport_parser_xidentifier_create_simple(id3, file, 1, 19, 1, 21);
     testsupport_parser_node_create(fnd, fndecl, file, 1, 0, 1, 21,
+                                   FNDECL_PARTOF_IMPL,
                                    fn_name,
                                    NULL,
                                    t1,
@@ -457,6 +463,7 @@ START_TEST(test_acc_typeinstance_2) {
     testsupport_parser_node_create(t1, typedesc, file, 1, 17, 1, 21, id1, id2);
     testsupport_parser_xidentifier_create_simple(id3, file, 1, 27, 1, 29);
     testsupport_parser_node_create(fnd1, fndecl, file, 1, 0, 1, 29,
+                                   FNDECL_PARTOF_IMPL,
                                    fn_name,
                                    genr2,
                                    t1,
@@ -483,6 +490,7 @@ START_TEST(test_acc_typeinstance_2) {
     testsupport_parser_xidentifier_create_simple(id6, file, 6, 19, 6, 21);
     testsupport_parser_node_create(t2, typedesc, file, 6, 15, 6, 21, id5, id6);
     testsupport_parser_node_create(fnd2, fndecl, file, 6, 0, 6, 22,
+                                   FNDECL_PARTOF_IMPL,
                                    fn_name2,
                                    NULL,
                                    t2,

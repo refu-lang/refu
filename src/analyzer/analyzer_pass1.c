@@ -173,6 +173,10 @@ static bool analyzer_first_pass_do(struct ast_node *n,
             return false;
         }
         break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        // function implementation symbol table should point to its decl table
+        ast_fnimpl_symbol_table_set(n, ast_fndecl_symbol_table_get(n->fnimpl.decl));
+        break;
 
         // nodes that only contribute records to symbol tables
     case AST_TYPE_DECLARATION:
@@ -222,8 +226,16 @@ bool analyzer_make_parent_st_current(struct ast_node *n,
     case AST_BLOCK:
         ctx->current_st = ast_block_symbol_table_get(n)->parent;
         break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        ctx->current_st = ast_fnimpl_symbol_table_get(n)->parent;
+        break;
     case AST_FUNCTION_DECLARATION:
-        ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
+        // When the function declaration is inside a function implementation it
+        // should not go upwards here since it would mess up current symbol table
+        // for the function's block
+        if (ast_fndecl_position_get(n) != FNDECL_PARTOF_IMPL) {
+            ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
+        }
         break;
     default:
         // do nothing

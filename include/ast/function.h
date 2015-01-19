@@ -11,6 +11,7 @@
 
 struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
+                                   enum fndecl_position pos,
                                    struct ast_node *name,
                                    struct ast_node *genr,
                                    struct ast_node *args,
@@ -54,6 +55,12 @@ i_INLINE_DECL struct ast_node *ast_fndecl_return_get(struct ast_node *n)
     return n->fndecl.ret;
 }
 
+i_INLINE_DECL enum fndecl_position ast_fndecl_position_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    return n->fndecl.position;
+}
+
 struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
 
 /* -- function implementation functions -- */
@@ -73,6 +80,19 @@ i_INLINE_DECL struct ast_node *ast_fnimpl_body_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     return n->fnimpl.body;
+}
+
+i_INLINE_DECL void ast_fnimpl_symbol_table_set(struct ast_node *n,
+                                               struct symbol_table *st)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    n->fnimpl.st = st;
+}
+
+i_INLINE_DECL struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    return n->fnimpl.st;
 }
 
 /* -- function call functions -- */
