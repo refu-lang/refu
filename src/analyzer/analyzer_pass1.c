@@ -99,7 +99,6 @@ static bool analyzer_create_symbol_table_vardecl(struct analyzer_traversal_ctx *
 static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
                                                 struct ast_node *n)
 {
-    struct symbol_table *st;
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
     const struct RFstring *fn_name;
@@ -132,11 +131,6 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
         RF_ERROR("Could not add a function node to a symbol table");
         return false;
     }
-
-    // set the current symbol table to the function's one
-    st = ast_fndecl_symbol_table_get(n);
-    symbol_table_set_parent(st, ctx->current_st);
-    ctx->current_st = st;
 
     // function's arguments are added to the symbol table by type creation
     return true;
@@ -172,6 +166,9 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
             return false;
         }
+        st = ast_fndecl_symbol_table_get(n);
+        symbol_table_set_parent(st, ctx->current_st);
+        ctx->current_st = st;
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         // function implementation symbol table should point to its decl table
@@ -218,8 +215,8 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     return true;
 }
 
-bool analyzer_make_parent_st_current(struct ast_node *n,
-                                     struct analyzer_traversal_ctx *ctx)
+bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
+                                            struct analyzer_traversal_ctx *ctx)
 {
     switch(n->type) {
         // nodes that change the current symbol table
@@ -247,6 +244,28 @@ bool analyzer_make_parent_st_current(struct ast_node *n,
     return true;
 }
 
+bool analyzer_handle_symbol_table_descending(struct ast_node *n,
+                                             struct analyzer_traversal_ctx *ctx)
+{
+    switch(n->type) {
+    case AST_ROOT:
+        ctx->current_st = ast_root_symbol_table_get(n);
+        break;
+    case AST_BLOCK:
+        ctx->current_st = ast_block_symbol_table_get(n);
+        break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        ctx->current_st = ast_fnimpl_symbol_table_get(n);
+        break;
+    case AST_FUNCTION_DECLARATION:
+        ctx->current_st = ast_fndecl_symbol_table_get(n);
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+
 bool analyzer_first_pass(struct analyzer *a)
 {
     struct analyzer_traversal_ctx ctx;
@@ -256,6 +275,6 @@ bool analyzer_first_pass(struct analyzer *a)
         a->root,
         analyzer_first_pass_do,
         &ctx,
-        (ast_node_cb)analyzer_make_parent_st_current,
+        (ast_node_cb)analyzer_handle_symbol_table_ascending,
         &ctx);
 }

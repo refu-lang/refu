@@ -19,7 +19,7 @@
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
-#include "analyzer_pass1.h" // for analyzer_make_parent_st_current()
+#include "analyzer_pass1.h" // for analyzer symbol table change functions
 
 
 static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
@@ -551,33 +551,6 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
     return true;
 }
 
-static bool analyzer_typecheck_descend(struct ast_node *n, void *user_arg)
-{
-    struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
-    switch(n->type) {
-        // nodes that change the current symbol table
-    case AST_ROOT:
-        ctx->current_st = ast_root_symbol_table_get(n);
-        break;
-    case AST_BLOCK:
-        ctx->current_st = ast_block_symbol_table_get(n);
-        break;
-    case AST_FUNCTION_IMPLEMENTATION:
-        ctx->current_st = ast_fnimpl_symbol_table_get(n);
-        break;
-    case AST_FUNCTION_DECLARATION:
-        ctx->current_st = ast_fndecl_symbol_table_get(n);
-        break;
-
-    default:
-        // do nothing
-        break;
-    }
-
-    return true;
-}
-
-
 static bool analyzer_typecheck_do(struct ast_node *n,
                                   void *user_arg)
 {
@@ -618,7 +591,7 @@ static bool analyzer_typecheck_do(struct ast_node *n,
     }
 
     // also change symbol table upwards if needed
-    analyzer_make_parent_st_current(n, ctx);
+    analyzer_handle_symbol_table_ascending(n, ctx);
     return ret;
 }
 
@@ -629,7 +602,7 @@ bool analyzer_typecheck(struct analyzer *a)
 
     return ast_traverse_tree(
         a->root,
-        analyzer_typecheck_descend,
+        (ast_node_cb)analyzer_handle_symbol_table_descending,
         &ctx,
         analyzer_typecheck_do,
         &ctx);
