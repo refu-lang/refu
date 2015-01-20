@@ -127,8 +127,8 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
 }
 
 static bool type_operator_init(struct type_operator *t, struct ast_node *n,
-                                struct analyzer *a, struct symbol_table *st,
-                                struct ast_node *genrdecl)
+                               struct analyzer *a, struct symbol_table *st,
+                               struct ast_node *genrdecl)
 {
     struct type *left;
     struct type *right;
@@ -150,8 +150,6 @@ static bool type_operator_init(struct type_operator *t, struct ast_node *n,
 
     return true;
 }
-
-
 
 struct type *type_lookup_or_create(struct ast_node *n,
                                    struct analyzer *a,
@@ -180,6 +178,28 @@ struct type *type_lookup_or_create(struct ast_node *n,
     }
 
     return NULL;
+}
+
+struct type *type_create_from_operation(enum typeop_type type,
+                                        struct type *left,
+                                        struct type *right,
+                                        struct analyzer *a)
+{
+    struct type *t;
+    // TODO: Somehow also check if the type is already existing in the analyzer
+    //       and it is return it instead of creating it
+    t = type_alloc(a);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+
+    t->category = TYPE_CATEGORY_OPERATOR;
+    t->operator.type = type;
+    t->operator.left = left;
+    t->operator.right = right;
+
+    return t;
 }
 
 /* -- various type creation and initialization functions -- */
@@ -318,14 +338,38 @@ struct type *type_operator_create(struct ast_node *n,
 i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                            enum comparison_reason reason);
 
-static inline bool type_category_equals(const struct type *t1,
-                                        const struct type *t2)
+//! Possible resuls of @see type_initial_check()
+enum type_initial_check_result {
+    TYPES_ARE_NOT_EQUAL,
+    TYPES_ARE_EQUAL,
+    TYPES_CHECK_CAN_CONTINUE,
+};
+/**
+ *  Performs the first step of type comparison with 3 possible outcomes
+ */
+static inline enum type_initial_check_result type_initial_check(const struct type *t1,
+                                                                const struct type *t2,
+                                                                struct type_comparison_ctx *ctx)
 {
-    // TODO: Think if this function is still needed
+    enum type_initial_check_result ret = TYPES_ARE_NOT_EQUAL;
+
     if (t1->category == t2->category) {
-        return true;
+        ret = TYPES_CHECK_CAN_CONTINUE;
     }
-    return false;
+
+    // TODO: This should be also changed to include user defined types and not only elementary ones
+    // A type should be equal to a leaf of the same type
+    if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
+        if (type_equals(t1, t2->leaf.type, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
+        if (type_equals(t2, t1->leaf.type, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    }
+
+    return ret;
 }
 
 static inline bool type_leaf_equals(const struct type_leaf *t1,
@@ -359,8 +403,13 @@ bool type_equals(const struct type* t1, const struct type *t2,
         return true;
     }
 
-    if (!type_category_equals(t1, t2)) {
+    switch (type_initial_check(t1, t2, ctx)) {
+    case TYPES_ARE_EQUAL:
+        return true;
+    case TYPES_ARE_NOT_EQUAL:
         return false;
+    case TYPES_CHECK_CAN_CONTINUE:
+        break;
     }
 
     switch (t1->category) {

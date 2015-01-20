@@ -503,8 +503,7 @@ START_TEST(test_acc_typeinstance_2) {
     struct ast_node *id8 = testsupport_parser_identifier_create(file,
                                                                 8, 17, 8, 19);
     testsupport_parser_node_create(fc1, fncall, file, 8, 0, 8, 20,
-                                   id7, NULL);
-    ast_node_add_child(fc1, id8);
+                                   id7, id8, NULL);
     ast_node_add_child(bnode2, fc1);
 
     testsupport_parser_node_create(fim2, fnimpl, file,

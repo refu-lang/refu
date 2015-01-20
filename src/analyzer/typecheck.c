@@ -400,17 +400,39 @@ end:
     return ret;
 }
 
+static bool analyzer_typecheck_comma(struct ast_node *n,
+                                     struct ast_node *left,
+                                     struct ast_node *right,
+                                     struct analyzer_traversal_ctx *ctx)
+{
+    struct type *tright;
+    struct type *tleft;
+
+
+    tleft = (struct type*)ast_expression_get_type(left);
+    tright = (struct type*)ast_expression_get_type(right);
+
+    // for now at least let's assume that all types can have the comma
+    // operator applied to them
+
+    // set the type of assignment as the type of the left operand
+    n->expression_type = type_create_from_operation(TYPEOP_PRODUCT, tleft, tright, ctx->a);
+    if (!n->expression_type) {
+        RF_ERROR("Could not create a type as a product of 2 other types.");
+        return false;
+    }
+
+    return true;
+}
+
 static bool analyzer_typecheck_function_call(struct ast_node *n,
                                              struct analyzer_traversal_ctx *ctx)
 {
     const struct RFstring *fn_name;
     const struct type *fn_type;
-    const struct type *fn_args_type;
-    struct ast_node *argument;
+    const struct type *fn_declared_args_type;
+    const struct type *fn_found_args_type;
     struct type_comparison_ctx cmp_ctx;
-    bool first_iteration = true;
-    bool ret = true;
-    unsigned int i = 0;
 
 
     fn_name = ast_fncall_name(n);
@@ -420,59 +442,30 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
-        ret = false;
-        goto end;
+        return false;
     }
 
     //also check that the types of its arguments do indeed match
-    fn_args_type = type_function_get_argtype(fn_type);
-    rf_ilist_for_each(&n->children, argument, lh) {
-        // Note that iterating this way we iterate through all the children nodes,
-        // function_cal name, generics, e.t.c. That's why there is some extra logic
-        // TODO: Improve this somehow by providing an argument specific iteration
-        if (first_iteration) {
-            first_iteration = false;
-            continue; // skip the first child node, which is the name.
-        }
-
-        if (ast_node_type(argument) == AST_GENERIC_ATTRIBUTE) {
-            break;
-        }
-        /* -- iteration logic ends -- */
-
-        // TODO: This is plain wrong. Rethink and fix. Can't assume arguments
-        // to a function call would be situated like this
-        const struct type *fn_arg_type = type_function_get_argtype_n(fn_args_type, i);
-        if (!fn_arg_type) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Illegal argument expression for function "
-                         RF_STR_PF_FMT"() argument %d", RF_STR_PF_ARG(fn_name), i);
-            ret = false;
-            goto end; // no point in looking any further
-        }
-        const struct type *arg_type = ast_expression_get_type(argument);
-
-        type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
-        if (!type_equals(arg_type, fn_arg_type, &cmp_ctx)) {
-            RFS_buffer_push();
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Argument %u of "RF_STR_PF_FMT"() function call does "
-                         "not match the function signature. Expected "
-                         "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
-                         i + 1, RF_STR_PF_ARG(fn_name),
-                         RF_STR_PF_ARG(type_str(fn_arg_type)),
-                         RF_STR_PF_ARG(type_str(arg_type)));
-            RFS_buffer_pop();
-            ret = false;
-        }
-        ++i;
+    fn_declared_args_type = type_function_get_argtype(fn_type);
+    fn_found_args_type = ast_expression_get_type(ast_fncall_args(n));
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
+    if (!type_equals(fn_declared_args_type, fn_found_args_type, &cmp_ctx)) {
+        RFS_buffer_push();
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "function "RF_STR_PF_FMT"() is called with argument type of "
+                     "\""RF_STR_PF_FMT"\" which does not match the expected "
+                     "type of \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(fn_name),
+                     RF_STR_PF_ARG(type_str(fn_found_args_type)),
+                     RF_STR_PF_ARG(type_str(fn_declared_args_type)));
+        RFS_buffer_pop();
+        return false;
     }
 
     // success. TODO: So .. what happens for functions returning nothing?
     n->expression_type = type_function_get_rettype(fn_type);
 
-end:
-    return ret;
+    return true;
 }
 
 static bool analyzer_typecheck_binary_op(struct ast_node *n,
@@ -485,6 +478,9 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
     switch (bop_type) {
     case BINARYOP_ASSIGN:
         return analyzer_typecheck_assignment(n, left, right, ctx);
+    case BINARYOP_COMMA:
+        return analyzer_typecheck_comma(n, left, right, ctx);
+
     case BINARYOP_ADD:
         return analyzer_typecheck_addition(n, left, right, ctx);
     case BINARYOP_SUB:

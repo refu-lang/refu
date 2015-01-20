@@ -81,8 +81,7 @@ enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
     (tok1_ && tok2_ && (tok1_)->type == TOKEN_IDENTIFIER &&             \
      ((tok2_)->type == TOKEN_SM_OPAREN || (tok2_)->type == TOKEN_OP_LT))
 /**
- * expressions_list,
- * identifier [genrattr] TOKEN_SM_OPAREN TOKEN_SM_CPAREN
+ * identifier [genrattr] TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */
 struct ast_node *parser_acc_fncall(struct parser *p);
 

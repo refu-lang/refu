@@ -203,9 +203,12 @@ START_TEST(test_acc_complex_binary_op_2) {
                                        0, 31, 0, 32, integer, 42);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 35, 0, 37);
-    testsupport_parser_node_create(fn, fncall, file, 0, 25, 0, 38, fn_name, NULL);
-    ast_node_add_child(fn, cnum2);
-    ast_node_add_child(fn, id2);
+
+    testsupport_parser_node_create(arg_bop, binaryop, file, 0, 31, 0, 37,
+                                   BINARYOP_COMMA,
+                                   cnum2, id2);
+    testsupport_parser_node_create(fn, fncall, file, 0, 25, 0, 38,
+                                   fn_name, arg_bop, NULL);
 
     testsupport_parser_node_create(bop2, binaryop, file, 0, 21, 0, 38,
                                    BINARYOP_ADD,
@@ -262,9 +265,7 @@ START_TEST(test_acc_complex_binary_op_3) {
                                    bop2, cnum4);
 
     testsupport_parser_node_create(fn, fncall, file, 0, 1, 0, 27,
-                                   fn_name, gattr);
-    ast_node_add_child(fn, bop3);
-
+                                   fn_name, bop3, gattr);
 
     testsupport_parser_constant_create(cnum5, file,
                                        0, 31, 0, 33, integer, 325);
@@ -306,10 +307,11 @@ START_TEST(test_acc_complex_binary_op_4) {
                                        0, 17, 0, 17, integer, 3);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 20, 0, 20);
+    testsupport_parser_node_create(arg_bop, binaryop, file, 0, 17, 0, 20,
+                                   BINARYOP_COMMA,
+                                   cnum2, id2);
     testsupport_parser_node_create(fn, fncall, file, 0, 13, 0, 21,
-                                   fn_name, NULL);
-    ast_node_add_child(fn, cnum2);
-    ast_node_add_child(fn, id2);
+                                   fn_name, arg_bop, NULL);
 
     testsupport_parser_node_create(bop1, binaryop, file, 0, 1, 0, 21,
                                    BINARYOP_ADD, arr, fn);

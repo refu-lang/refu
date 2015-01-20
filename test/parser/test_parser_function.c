@@ -359,13 +359,15 @@ START_TEST(test_acc_fncall_1) {
                                                                 0, 4, 0, 4);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 7, 0, 7);
+
+    testsupport_parser_node_create(args, binaryop, file, 0, 4, 0, 7,
+                                   BINARYOP_COMMA,
+                                   id1, id2);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 8,
                                    name,
+                                   args,
                                    NULL
     );
-    ast_node_add_child(fc, id1);
-    ast_node_add_child(fc, id2);
-
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 
     ast_node_destroy(n);
@@ -391,14 +393,21 @@ START_TEST(test_acc_fncall_2) {
                                        0, 20, 0, 21, integer, 31);
     testsupport_parser_string_literal_create(sliteral, file,
                                              0, 24, 0, 30);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 14, 0, 17,
+                                   BINARYOP_COMMA,
+                                   id1, id2);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 14, 0, 21,
+                                   BINARYOP_COMMA,
+                                   bop1, cnum);
+    testsupport_parser_node_create(args, binaryop, file, 0, 14, 0, 30,
+                                   BINARYOP_COMMA,
+                                   bop2, sliteral);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 31,
                                    name,
+                                   args,
                                    NULL
     );
-    ast_node_add_child(fc, id1);
-    ast_node_add_child(fc, id2);
-    ast_node_add_child(fc, cnum);
-    ast_node_add_child(fc, sliteral);
 
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 
@@ -434,13 +443,20 @@ START_TEST(test_acc_fncall_3) {
                                        0, 27, 0, 28, integer, 31);
     testsupport_parser_string_literal_create(sliteral, file,
                                              0, 31, 0, 37);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 21, 0, 24,
+                                   BINARYOP_COMMA,
+                                   id3, id4);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 21, 0, 28,
+                                   BINARYOP_COMMA,
+                                   bop1, cnum);
+    testsupport_parser_node_create(args, binaryop, file, 0, 21, 0, 37,
+                                   BINARYOP_COMMA,
+                                   bop2, sliteral);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 38,
                                    name,
+                                   args,
                                    gnattr);
-    ast_node_add_child(fc, id3);
-    ast_node_add_child(fc, id4);
-    ast_node_add_child(fc, cnum);
-    ast_node_add_child(fc, sliteral);
 
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 

@@ -42,6 +42,8 @@ struct ast_fnimpl {
 struct ast_fncall {
     //! identifier of the name
     struct ast_node *name;
+    //! Expression describing the function arguments or NULL if there is no arguments
+    struct ast_node *args;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

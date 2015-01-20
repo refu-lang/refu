@@ -67,8 +67,8 @@ static inline bool type_elementary_is_float(const struct type_elementary *t)
 }
 
 bool type_elementary_equals(const struct type_elementary *t1,
-                         const struct type_elementary *t2,
-                         struct type_comparison_ctx *ctx)
+                            const struct type_elementary *t2,
+                            struct type_comparison_ctx *ctx)
 {
     if (t1->etype == t2->etype) {
         return true;

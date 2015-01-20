@@ -100,12 +100,25 @@ i_INLINE_DECL struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
                                    struct ast_node *name,
+                                   struct ast_node *args,
                                    struct ast_node *genr);
 
 i_INLINE_DECL const struct RFstring* ast_fncall_name(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     return ast_identifier_str(n->fncall.name);
+}
+
+i_INLINE_DECL struct ast_node* ast_fncall_args(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    return n->fncall.args;
+}
+
+i_INLINE_DECL struct ast_node* ast_fncall_genr(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    return n->fncall.genr;
 }
 
 #endif

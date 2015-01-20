@@ -48,7 +48,7 @@ START_TEST(test_acc_ifexpr_1) {
         file,
         1, 4, 1, 9);
 
-    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL);
+    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL, NULL);
     ast_node_add_child(bnode, fc);
 
     testsupport_parser_node_create(cond, condbranch, file, 0, 3, 2, 0,
@@ -89,7 +89,7 @@ START_TEST(test_acc_ifexpr_2) {
         file,
         1, 4, 1, 9);
 
-    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL);
+    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL, NULL);
     ast_node_add_child(bnode1, fc);
 
     testsupport_parser_node_create(cond1, condbranch, file, 0, 3, 2, 0,
@@ -144,7 +144,7 @@ START_TEST(test_acc_ifexpr_3) {
         file,
         1, 4, 1, 9);
 
-    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL);
+    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL, NULL);
     ast_node_add_child(bnode1, fc);
 
     testsupport_parser_node_create(cond1, condbranch, file, 0, 3, 2, 0,
@@ -162,7 +162,7 @@ START_TEST(test_acc_ifexpr_3) {
         file,
         2, 19, 2, 25);
     testsupport_parser_node_create(fc2, fncall, file, 2, 19, 2, 27,
-                                   fn_name2, NULL);
+                                   fn_name2, NULL, NULL);
     testsupport_parser_node_create(cmp_exp2, binaryop, file, 2, 8, 2, 27,
                                    BINARYOP_LOGIC_AND, op1, fc2);
 
@@ -226,7 +226,7 @@ START_TEST(test_acc_ifexpr_4) {
         file,
         1, 4, 1, 9);
 
-    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL);
+    testsupport_parser_node_create(fc, fncall, file, 1, 4, 1, 11, fn_name, NULL, NULL);
     ast_node_add_child(bnode1, fc);
 
     testsupport_parser_node_create(cond1, condbranch, file, 0, 3, 2, 0,
@@ -244,7 +244,7 @@ START_TEST(test_acc_ifexpr_4) {
         file,
         2, 19, 2, 25);
     testsupport_parser_node_create(fc2, fncall, file, 2, 19, 2, 27,
-                                   fn_name2, NULL);
+                                   fn_name2, NULL, NULL);
     testsupport_parser_node_create(cmp_exp2, binaryop, file, 2, 8, 2, 27,
                                    BINARYOP_LOGIC_AND, op1, fc2);
 

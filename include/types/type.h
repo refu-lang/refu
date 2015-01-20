@@ -58,6 +58,19 @@ struct type *type_lookup_or_create(struct ast_node *n,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl);
 
+/**
+ * Applies a type operator to 2 types and returns the result
+ * @param type          The type operator to apply to @c left and @c right
+ * @param left          The type to become left part of the operand
+ * @param right         The type to become right part of the operand
+ * @param a             The analyzer instance for which we are typechecking
+ * @return              The new type or NULL if there was an error
+ */
+struct type *type_create_from_operation(enum typeop_type type,
+                                        struct type *left,
+                                        struct type *right,
+                                        struct analyzer *a);
+
 /* -- type comparison functions -- */
 
 i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,

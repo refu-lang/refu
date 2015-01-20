@@ -189,11 +189,14 @@ START_TEST(test_acc_block_2) {
                                        1, 25, 1, 26, integer, 15);
     testsupport_parser_node_create(arr, arrayref, file,
                                    1, 21, 1, 27, id3, cnum1);
-    
-    testsupport_parser_node_create(fn, fncall, file, 1, 0, 1, 28, id1, NULL);
-    ast_node_add_child(fn, id2);
-    ast_node_add_child(fn, str);
-    ast_node_add_child(fn, arr);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 1, 7, 1, 18,
+                                   BINARYOP_COMMA,
+                                   id2, str);
+    testsupport_parser_node_create(arg_bop, binaryop, file, 1, 7, 1, 27,
+                                   BINARYOP_COMMA,
+                                   bop1, arr);
+    testsupport_parser_node_create(fn, fncall, file, 1, 0, 1, 28, id1, arg_bop, NULL);
 
     ast_node_add_child(bnode, fn);
     

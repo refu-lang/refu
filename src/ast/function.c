@@ -72,6 +72,7 @@ i_INLINE_INS struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *n
 struct ast_node *ast_fncall_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
                                    struct ast_node *name,
+                                   struct ast_node *args,
                                    struct ast_node *genr)
 {
     struct ast_node *ret;
@@ -84,9 +85,12 @@ struct ast_node *ast_fncall_create(struct inplocation_mark *start,
     }
 
     ast_node_register_child(ret, name, fncall.name);
+    ast_node_register_child(ret, args, fncall.args);
     ast_node_register_child(ret, genr, fncall.genr);
 
     return ret;
 }
 
 i_INLINE_INS const struct RFstring* ast_fncall_name(struct ast_node *n);
+i_INLINE_INS struct ast_node* ast_fncall_args(struct ast_node *n);
+i_INLINE_INS struct ast_node* ast_fncall_genr(struct ast_node *n);

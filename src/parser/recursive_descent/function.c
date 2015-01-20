@@ -201,6 +201,7 @@ struct ast_node *parser_acc_fncall(struct parser *p)
     struct token *tok;
     struct ast_node *name;
     struct ast_node *genr = NULL;
+    struct ast_node *args = NULL;
 
     name = parser_acc_identifier(p);
     if (!name) {
@@ -221,15 +222,14 @@ struct ast_node *parser_acc_fncall(struct parser *p)
     //consume '('
     lexer_next_token(p->lexer);
 
-    n = ast_fncall_create(ast_node_startmark(name), NULL, name, genr);
-    if (!n) {
-        RF_ERRNOMEM();
-        goto err_free_genr;
-    }
 
-    if (!parser_acc_expressions_list(p, n)) {
-        ast_node_destroy(n);
-        return NULL;
+    args = parser_acc_expression(p);
+    if (!args) {
+        if (parser_has_syntax_error(p)) {
+            parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+                          "Expected argument expression for function call");
+            goto err_free_genr;
+        }
     }
 
     tok = lexer_lookahead(p->lexer, 1);
@@ -237,14 +237,24 @@ struct ast_node *parser_acc_fncall(struct parser *p)
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected ')' at end of "RF_STR_PF_FMT" function call",
                       RF_STR_PF_ARG(ast_identifier_str(name)));
-        goto err_free_genr;
+        goto err_free_args;
     }
     //consume ')'
     lexer_next_token(p->lexer);
-    ast_node_set_end(n, token_get_end(tok));
+
+    n = ast_fncall_create(ast_node_startmark(name), token_get_end(tok),
+                          name, args, genr);
+    if (!n) {
+        RF_ERRNOMEM();
+        goto err_free_args;
+    }
 
     return n;
 
+err_free_args:
+    if (args) {
+        ast_node_destroy(args);
+    }
 err_free_genr:
     if (genr) {
         ast_node_destroy(genr);

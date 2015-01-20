@@ -215,15 +215,10 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Argument 1 of do_something() function call does not match the "
-            "function signature. Expected \"string\" but got \"u32\".",
+            "function do_something() is called with argument type of "
+            "\"u32,string\" which does not match the expected type of "
+            "\"name:string,age:u16\"",
             6, 0, 6, 24),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Argument 2 of do_something() function call does not match the "
-            "function signature. Expected \"u16\" but got \"string\".",
-            6, 0, 6, 24)
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
@@ -304,7 +299,6 @@ Suite *analyzer_typecheck_suite_create(void)
 
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
-
     /* tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments); */
 
     suite_add_tcase(s, st1);

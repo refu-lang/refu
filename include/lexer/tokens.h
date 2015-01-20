@@ -72,6 +72,7 @@ enum token_type {
     (((tok_)->type >= TOKEN_OP_PLUS &&          \
       (tok_)->type <= TOKEN_OP_BITWISE_XOR) ||  \
      (tok_)->type == TOKEN_OP_AMPERSAND ||      \
+     (tok_)->type == TOKEN_OP_COMMA     ||      \
      (tok_)->type == TOKEN_OP_TYPESUM)
 
 #define TOKEN_IS_UNARY_OP(tok_)                \
