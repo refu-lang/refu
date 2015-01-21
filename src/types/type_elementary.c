@@ -101,9 +101,13 @@ bool type_elementary_equals(const struct type_elementary *t1,
 
     if ((type_elementary_is_float(t1) && type_elementary_is_int((t2))) ||
         (type_elementary_is_float(t2) && type_elementary_is_int((t1)))) {
-        // operations between float and ints are allowed
+        // some operations between float and ints are allowed for now
+        // except for:
+        if (ctx->reason == COMPARISON_REASON_ASSIGNMENT) {
+            return false;
+        }
 
-        //TODO: Warn/disallow implicit conversions here
+        //TODO: warn/disallow implicit conversions to float here
         return true;
     }
 

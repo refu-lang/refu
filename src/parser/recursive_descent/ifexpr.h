@@ -3,6 +3,7 @@
 
 struct parser;
 
+#define TOKEN_IS_POSSIBLE_IFEXPR(tok_) (tok_ && (tok_)->type == TOKEN_KW_IF)
 
 /**
  * conditional_branch = expression TOKEN_SM_OCBRACE block TOKEN_SM_CCBRACE

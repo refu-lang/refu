@@ -12,6 +12,7 @@
 #include "vardecl.h"
 #include "function.h"
 #include "arrayref.h"
+#include "ifexpr.h"
 
 #define MAX_LEVEL_OP_PRECEDENCE 12
 
@@ -77,7 +78,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
         return n;
-
+    } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
+        n = parser_acc_ifexpr(p);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected an if expression");
+            return NULL;
+        }
+        return n;
     } else if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {

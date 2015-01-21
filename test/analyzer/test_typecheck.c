@@ -208,8 +208,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -224,41 +223,71 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
-#if 0 //TODO: work in progress
-START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
+START_TEST(test_typecheck_invalid_function_call_return) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16) -> f32\n"
         "{\n"
         "return age * 0.14\n"
         "}\n"
-        "fn do_something_else(name:string, age:u16, alien:bool) -> f32\n"
-        "{\n"
-        "return age * 0.14\n"
-        "}\n"
         "{\n"
         "a:u32 = 15\n"
-        "do_something(\"Berlin\")\n"
-        "do_something_else(\"Berlin\", a)\n"
+        "c:u64 = do_something(\"Berlin\", a)\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Invalid number of arguments provided to function \"do_something()\"."
-            " Expected 2 arguments but provided 1."
-            10, 0, 10, 21),
+            "Assignment between incompatible types. Can't assign "
+            "\"f32\" to \"u64\"",
+            6, 0, 6, 32),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
+
+START_TEST(test_typecheck_valid_function_impl) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
+        "{\n"
+        "    if vegetarian {\n"
+        "        return age + height * weight\n"
+        "    } else {\n"
+        "        return weight * age - height\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+#if 0
+START_TEST(test_typecheck_invalid_function_impl_return) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something() -> string\n"
+        "{\n"
+        "return 15"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Invalid number of arguments provided to function \"do_something_else()\"."
-            " Expected 3 arguments but provided 2."
-            11, 0, 11, 29),
+            "Return statement type \"u64\" does not match expected "
+            "return of \"string\"",
+            2, 0, 2, 9),
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
@@ -296,11 +325,13 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_checked_fixture(st4,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
-    /* tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments); */
-
+    tcase_add_test(st4, test_typecheck_invalid_function_call_return);
+    tcase_add_test(st4, test_typecheck_valid_function_impl);
+#if 0
+    tcase_add_test(st4, test_typecheck_invalid_function_impl_return);
+#endif
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);

@@ -11,6 +11,7 @@
 #include <ast/constant_num.h>
 #include <ast/vardecl.h>
 #include <ast/ast_utils.h>
+#include <ast/returnstmt.h>
 #include <ast/type.h>
 
 #include <types/type.h>
@@ -434,7 +435,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
     const struct type *fn_found_args_type;
     struct type_comparison_ctx cmp_ctx;
 
-
+    // check for existence of function
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
     if (!fn_type || !type_is_function((fn_type))) {
@@ -445,7 +446,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
         return false;
     }
 
-    //also check that the types of its arguments do indeed match
+    //check that the types of its arguments do indeed match
     fn_declared_args_type = type_function_get_argtype(fn_type);
     fn_found_args_type = ast_expression_get_type(ast_fncall_args(n));
     type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
@@ -465,6 +466,15 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
     // success. TODO: So .. what happens for functions returning nothing?
     n->expression_type = type_function_get_rettype(fn_type);
 
+    return true;
+}
+
+static bool analyzer_typecheck_return_stmt(struct ast_node *n,
+                                           struct analyzer_traversal_ctx *ctx)
+{
+    // TODO
+    (void)n;
+    (void)ctx;
     return true;
 }
 
@@ -580,6 +590,9 @@ static bool analyzer_typecheck_do(struct ast_node *n,
         break;
     case AST_FUNCTION_CALL:
         ret = analyzer_typecheck_function_call(n, ctx);
+        break;
+    case AST_RETURN_STATEMENT:
+        ret = analyzer_typecheck_return_stmt(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...
