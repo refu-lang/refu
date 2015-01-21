@@ -23,6 +23,7 @@ enum elementary_type {
     ELEMENTARY_TYPE_FLOAT_64,
     ELEMENTARY_TYPE_STRING,
     ELEMENTARY_TYPE_BOOL,
+    ELEMENTARY_TYPE_NIL,
 
     ELEMENTARY_TYPE_TYPES_COUNT /* keep as last */
 };

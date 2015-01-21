@@ -250,6 +250,33 @@ START_TEST(test_typecheck_invalid_function_call_return) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
+START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something()\n"
+        "{\n"
+        "11\n"
+        "}\n"
+        "{\n"
+        "a:u32 = 15\n"
+        "c:u64 = do_something(\"Berlin\", a)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "function do_something() is called with argument type of "
+            "\"string,u32\" which does not match the expected type of \"nil\"",
+            6, 8, 6, 32)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
+
 START_TEST(test_typecheck_valid_function_impl) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
@@ -326,6 +353,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
     tcase_add_test(st4, test_typecheck_invalid_function_call_return);
+    tcase_add_test(st4, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(st4, test_typecheck_valid_function_impl);
     tcase_add_test(st4, test_typecheck_invalid_function_impl_return);
 

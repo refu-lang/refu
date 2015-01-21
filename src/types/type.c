@@ -275,6 +275,8 @@ static bool type_init_from_fndecl(struct type *t,
         }
         // also add the function's arguments to its symbol table
         type_function_add_args_to_st(arg_type, a, ast_fndecl_symbol_table_get(n));
+    } else {
+        arg_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     }
 
     if (ret) {
@@ -284,10 +286,10 @@ static bool type_init_from_fndecl(struct type *t,
             // TODO: Free return_type if created
             return false;
         }
+    } else {
+        ret_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     }
-
     type_function_init(t, arg_type, ret_type);
-
     return true;
 }
 

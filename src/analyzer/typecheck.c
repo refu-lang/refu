@@ -463,9 +463,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
         return false;
     }
 
-    // success. TODO: So .. what happens for functions returning nothing?
     n->expression_type = type_function_get_rettype(fn_type);
-
     return true;
 }
 
