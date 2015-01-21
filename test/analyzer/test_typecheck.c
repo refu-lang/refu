@@ -269,7 +269,6 @@ START_TEST(test_typecheck_valid_function_impl) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
-#if 0
 START_TEST(test_typecheck_invalid_function_impl_return) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something() -> string\n"
@@ -285,14 +284,13 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Return statement type \"u64\" does not match expected "
-            "return of \"string\"",
-            2, 0, 2, 9),
+            "Return statement type \"u8\" does not match the "
+            "expected return type of \"string\"",
+            2, 0, 2, 8),
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
-#endif
 
 Suite *analyzer_typecheck_suite_create(void)
 {
@@ -329,9 +327,8 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
     tcase_add_test(st4, test_typecheck_invalid_function_call_return);
     tcase_add_test(st4, test_typecheck_valid_function_impl);
-#if 0
     tcase_add_test(st4, test_typecheck_invalid_function_impl_return);
-#endif
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);

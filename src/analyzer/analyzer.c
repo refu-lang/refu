@@ -123,9 +123,8 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
         return false;
     }
 
-    //TODO: type check
-    if (!analyzer_typecheck(a)) {
-        RF_ERROR("Failure at analyzer's first pass");
+    if (!analyzer_typecheck(a, a->root)) {
+        RF_ERROR("Failure at analyzer's typechecking");
         return false;
     }
 

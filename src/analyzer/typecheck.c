@@ -472,9 +472,38 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
 static bool analyzer_typecheck_return_stmt(struct ast_node *n,
                                            struct analyzer_traversal_ctx *ctx)
 {
-    // TODO
-    (void)n;
-    (void)ctx;
+    struct type_comparison_ctx cmp_ctx;
+    struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
+    if (!fn_decl) {
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Return statement outside of function body");
+        return false;
+    }
+
+    // at this stage the function declaration won't have been typechecked.
+    // Do it now .. which is not optimal since it will happen again when going upwards
+    // TODO: perhaps add a check in the typecheck reverse tree traversal to not visit
+    // certain subtrees if they are already typechecked.
+    if (!analyzer_typecheck(ctx->a, fn_decl)) {
+        return false;
+    }
+
+    const struct type *fn_ret_type = ast_expression_get_type(ast_fndecl_return_get(fn_decl));
+    const struct type *found_ret_type = ast_expression_get_type(ast_returnstmt_expr_get(n));
+
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
+    if (!type_equals(fn_ret_type, found_ret_type, &cmp_ctx)) {
+        RFS_buffer_push();
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Return statement type \""RF_STR_PF_FMT"\" does not match "
+                     "the expected return type of \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(type_str(found_ret_type)),
+                     RF_STR_PF_ARG(type_str(fn_ret_type)));
+        RFS_buffer_pop();
+        return false;
+    }
+    n->expression_type = found_ret_type;
+
     return true;
 }
 
@@ -604,13 +633,13 @@ static bool analyzer_typecheck_do(struct ast_node *n,
     return ret;
 }
 
-bool analyzer_typecheck(struct analyzer *a)
+bool analyzer_typecheck(struct analyzer *a, struct ast_node *root)
 {
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
     return ast_traverse_tree(
-        a->root,
+        root,
         (ast_node_cb)analyzer_handle_symbol_table_descending,
         &ctx,
         analyzer_typecheck_do,

@@ -139,7 +139,6 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg)
 {
-    struct symbol_table *st;
     struct analyzer_traversal_ctx *ctx = user_arg;
 
     // act depending on the node type
@@ -158,17 +157,14 @@ static bool analyzer_first_pass_do(struct ast_node *n,
             RF_ERROR("Could not initialize symbol table for block node");
             return false;
         }
-        st = ast_block_symbol_table_get(n);
-        symbol_table_set_parent(st, ctx->current_st);
-        ctx->current_st = st;
+        symbol_table_swap_current(&ctx->current_st, ast_block_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
         if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
             return false;
         }
-        st = ast_fndecl_symbol_table_get(n);
-        symbol_table_set_parent(st, ctx->current_st);
-        ctx->current_st = st;
+        symbol_table_swap_current(&ctx->current_st, ast_fndecl_symbol_table_get(n));
+        symbol_table_set_fndecl(ctx->current_st, n);
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         // function implementation symbol table should point to its decl table
