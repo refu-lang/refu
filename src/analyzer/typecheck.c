@@ -63,191 +63,6 @@ static bool analyzer_typecheck_equal_or_convertible(struct ast_node *n,
     return ret;
 }
 
-
-static bool analyzer_types_addable(struct ast_node *left,
-                                   struct ast_node *right,
-                                   struct analyzer_traversal_ctx *ctx)
-{
-    // TODO: Check if two types that are not strictly equal can still be added
-    // if for example there is an addition typeclass instance
-    (void)left;
-    (void)right;
-    (void)ctx;
-    return false;
-}
-
-static bool analyzer_typecheck_addition(struct ast_node *n,
-                                        struct ast_node *left,
-                                        struct ast_node *right,
-                                        struct analyzer_traversal_ctx *ctx)
-{
-    const struct type *tright;
-    const struct type *tleft;
-    bool ret = false;
-
-
-    RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
-
-    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_ADD, tleft, tright, ctx)) {
-        if (!analyzer_types_addable(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Addition between incompatible types. Can't add "
-                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright)),
-                         RF_STR_PF_ARG(type_str(tleft)));
-            goto end;
-        }
-    }
-
-    // set the type of the addition as the type of either of its operands for now
-    n->expression_type = tright;
-    ret = true;
-
-end:
-    RFS_buffer_pop();
-    return ret;
-}
-
-static bool analyzer_types_subtractable(struct ast_node *left,
-                                        struct ast_node *right,
-                                        struct analyzer_traversal_ctx *ctx)
-{
-    // TODO: Check if two types that are not strictly equal can still be subtracted
-    // if for example there is a subtraction typeclass instance
-    (void)left;
-    (void)right;
-    (void)ctx;
-    return false;
-}
-
-static bool analyzer_typecheck_subtraction(struct ast_node *n,
-                                           struct ast_node *left,
-                                           struct ast_node *right,
-                                           struct analyzer_traversal_ctx *ctx)
-{
-    const struct type *tright;
-    const struct type *tleft;
-    bool ret = false;
-
-    RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
-
-    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_SUB, tleft, tright, ctx)) {
-        if (!analyzer_types_subtractable(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Subtraction between incompatible types. Can't subtract "
-                         "\""RF_STR_PF_FMT"\" from \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright)),
-                         RF_STR_PF_ARG(type_str(tleft)));
-            goto end;
-        }
-    }
-
-    // set the type of the addition as the type of either of its operands for now
-    n->expression_type = tright;
-    ret = true;
-
-end:
-    RFS_buffer_pop();
-    return ret;
-}
-
-static bool analyzer_types_multipliable(struct ast_node *left,
-                                        struct ast_node *right,
-                                        struct analyzer_traversal_ctx *ctx)
-{
-    // TODO: Check if two types that are not strictly equal can still be multiplied
-    // if for example there is a multiplication typeclass instance
-    (void)left;
-    (void)right;
-    (void)ctx;
-    return false;
-}
-
-static bool analyzer_typecheck_multiplication(struct ast_node *n,
-                                              struct ast_node *left,
-                                              struct ast_node *right,
-                                              struct analyzer_traversal_ctx *ctx)
-{
-    const struct type *tright;
-    const struct type *tleft;
-    bool ret = false;
-
-
-    RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
-
-    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_MUL, tleft, tright, ctx)) {
-        if (!analyzer_types_multipliable(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Multiplication between incompatible types. Can't multiply "
-                         "\""RF_STR_PF_FMT"\" by \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright)),
-                         RF_STR_PF_ARG(type_str(tleft)));
-            goto end;
-        }
-    }
-
-    // set the type of the addition as the type of either of its operands for now
-    n->expression_type = tright;
-    ret = true;
-
-end:
-    RFS_buffer_pop();
-    return ret;
-}
-
-static bool analyzer_types_divisible(struct ast_node *left,
-                                     struct ast_node *right,
-                                     struct analyzer_traversal_ctx *ctx)
-{
-    // TODO: Check if two types that are not strictly equal can still be divided
-    // if for example there is a division typeclass instance
-    (void)left;
-    (void)right;
-    (void)ctx;
-    return false;
-}
-
-static bool analyzer_typecheck_division(struct ast_node *n,
-                                        struct ast_node *left,
-                                        struct ast_node *right,
-                                        struct analyzer_traversal_ctx *ctx)
-{
-    const struct type *tright;
-    const struct type *tleft;
-    bool ret = false;
-
-
-    RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
-
-    if (!analyzer_typecheck_equal_or_convertible(n, BINARYOP_DIV, tleft, tright, ctx)) {
-        if (!analyzer_types_divisible(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "Division between incompatible types. Can't divide "
-                         "\""RF_STR_PF_FMT"\" by \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright)),
-                         RF_STR_PF_ARG(type_str(tleft)));
-            goto end;
-        }
-    }
-
-    // set the type of the addition as the type of either of its operands for now
-    n->expression_type = tright;
-    ret = true;
-
-end:
-    RFS_buffer_pop();
-    return ret;
-}
-
-
 static bool i_should_be_changed(struct ast_node *left,
                                 struct ast_node *right,
                                 struct analyzer_traversal_ctx *ctx)
@@ -263,19 +78,18 @@ static bool i_should_be_changed(struct ast_node *left,
 
 // Generic typecheck function for binary operations. If special functionality
 // needs to be implemented for an operator do that in a separate function
-static bool analyzer_typecheck_binaryop_generic(struct ast_node *n,
-                                                struct ast_node *left,
-                                                struct ast_node *right,
-                                                struct analyzer_traversal_ctx *ctx,
-                                                enum binaryop_type operation,
-                                                bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
-                                                const char *error_intro,
-                                                const char *error_conj,
-                                                bool bool_type)
+static enum ast_traversal_cb_res analyzer_typecheck_binaryop_generic(struct ast_node *n,
+                                                                     struct ast_node *left,
+                                                                     struct ast_node *right,
+                                                                     struct analyzer_traversal_ctx *ctx,
+                                                                     enum binaryop_type operation,
+                                                                     bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+                                                                     const char *error_intro,
+                                                                     const char *error_conj)
 {
     const struct type *tright;
     const struct type *tleft;
-    bool ret = false;
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_ERROR;
 
     RFS_buffer_push();
     tleft = ast_expression_get_type(left);
@@ -291,26 +105,57 @@ static bool analyzer_typecheck_binaryop_generic(struct ast_node *n,
         }
     }
 
-    if (bool_type) {
-        n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
-    } else {
-        // set the type of the operation as the type of either of its operands
-        n->expression_type = tright;
-    }
-    ret = true;
+    // set the type of the operation as the type of either of its operands
+    n->expression_type = tright;
+    ret = AST_TRAVERSAL_OK;
 end:
     RFS_buffer_pop();
     return ret;
 }
 
-static bool analyzer_typecheck_constantnum(struct ast_node *n)
+// Generic typecheck function for binary operations who type should be a boolean
+static enum ast_traversal_cb_res analyzer_typecheck_bool_binaryop_generic(struct ast_node *n,
+                                                                          struct ast_node *left,
+                                                                          struct ast_node *right,
+                                                                          struct analyzer_traversal_ctx *ctx,
+                                                                          enum binaryop_type operation,
+                                                                          bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+                                                                          const char *error_intro,
+                                                                          const char *error_conj)
 {
-    n->expression_type = ast_constantnum_get_storagetype(n);
-    return n->expression_type; //converted to bool
+    const struct type *tright;
+    const struct type *tleft;
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_ERROR;
+
+    RFS_buffer_push();
+    tleft = ast_expression_get_type(left);
+    tright = ast_expression_get_type(right);
+
+    if (!analyzer_typecheck_equal_or_convertible(n, operation, tleft, tright, ctx)) {
+        if (!operator_applicable_cb(left, right, ctx)) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                         error_intro, RF_STR_PF_ARG(type_str(tright)),
+                         error_conj, RF_STR_PF_ARG(type_str(tleft)));
+            goto end;
+        }
+    }
+
+    n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
+    ret = AST_TRAVERSAL_OK;
+end:
+    RFS_buffer_pop();
+    return ret;
 }
 
-static bool analyzer_typecheck_identifier(struct ast_node *n,
-                                          struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_constantnum(struct ast_node *n)
+{
+    n->expression_type = ast_constantnum_get_storagetype(n);
+    return (n->expression_type) ? AST_TRAVERSAL_OK : AST_TRAVERSAL_ERROR;
+}
+
+static enum ast_traversal_cb_res analyzer_typecheck_identifier(struct ast_node *n,
+                                                               struct analyzer_traversal_ctx *ctx)
 {
     n->expression_type = type_lookup_identifier_string(ast_identifier_str(n),
                                                        ctx->current_st);
@@ -320,26 +165,26 @@ static bool analyzer_typecheck_identifier(struct ast_node *n,
                      ast_node_endmark(n),
                      "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
                      RF_STR_PF_ARG(ast_identifier_str(n)));
-        return false;
+        return AST_TRAVERSAL_ERROR;
     }
 
-    return true;
+    return AST_TRAVERSAL_OK;
 }
 
-static bool analyzer_typecheck_xidentifier(struct ast_node *n,
-                                           struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_xidentifier(struct ast_node *n,
+                                                                struct analyzer_traversal_ctx *ctx)
 {
     (void)ctx;
     n->expression_type = n->xidentifier.id->expression_type;
-    return true;
+    return AST_TRAVERSAL_OK;
 }
 
-static bool analyzer_typecheck_typedesc(struct ast_node *n,
-                                        struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_typedesc(struct ast_node *n,
+                                                             struct analyzer_traversal_ctx *ctx)
 {
     (void)ctx;
     n->expression_type = ast_typedesc_right(n)->expression_type;
-    return true;
+    return AST_TRAVERSAL_OK;
 }
 
 
@@ -355,16 +200,14 @@ static bool analyzer_types_assignable(struct ast_node *left,
     return false;
 }
 
-static bool analyzer_typecheck_assignment(struct ast_node *n,
-                                          struct ast_node *left,
-                                          struct ast_node *right,
-                                          struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_assignment(struct ast_node *n,
+                                                               struct ast_node *left,
+                                                               struct ast_node *right,
+                                                               struct analyzer_traversal_ctx *ctx)
 {
     const struct type *tright;
     const struct type *tleft;
-
-    bool ret = false;
-
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
 
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
@@ -374,7 +217,7 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
                      "as left part of the assignment "
                      "but found a \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(ast_node_str(left)));
-        return false;
+        ret = AST_TRAVERSAL_ERROR;
     }
 
 
@@ -388,27 +231,26 @@ static bool analyzer_typecheck_assignment(struct ast_node *n,
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                          RF_STR_PF_ARG(type_str(tright)),
                          RF_STR_PF_ARG(type_str(tleft)));
+            ret = AST_TRAVERSAL_ERROR;
             goto end;
         }
     }
 
     // set the type of assignment as the type of the left operand
     n->expression_type = tleft;
-    ret = true;
 
 end:
     RFS_buffer_pop();
     return ret;
 }
 
-static bool analyzer_typecheck_comma(struct ast_node *n,
-                                     struct ast_node *left,
-                                     struct ast_node *right,
-                                     struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_comma(struct ast_node *n,
+                                                          struct ast_node *left,
+                                                          struct ast_node *right,
+                                                          struct analyzer_traversal_ctx *ctx)
 {
     struct type *tright;
     struct type *tleft;
-
 
     tleft = (struct type*)ast_expression_get_type(left);
     tright = (struct type*)ast_expression_get_type(right);
@@ -420,20 +262,21 @@ static bool analyzer_typecheck_comma(struct ast_node *n,
     n->expression_type = type_create_from_operation(TYPEOP_PRODUCT, tleft, tright, ctx->a);
     if (!n->expression_type) {
         RF_ERROR("Could not create a type as a product of 2 other types.");
-        return false;
+        return AST_TRAVERSAL_FATAL_ERROR;
     }
 
-    return true;
+    return AST_TRAVERSAL_OK;
 }
 
-static bool analyzer_typecheck_function_call(struct ast_node *n,
-                                             struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_function_call(struct ast_node *n,
+                                                                  struct analyzer_traversal_ctx *ctx)
 {
     const struct RFstring *fn_name;
     const struct type *fn_type;
     const struct type *fn_declared_args_type;
     const struct type *fn_found_args_type;
     struct type_comparison_ctx cmp_ctx;
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
 
     // check for existence of function
     fn_name = ast_fncall_name(n);
@@ -443,7 +286,7 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
-        return false;
+        return AST_TRAVERSAL_ERROR;
     }
 
     //check that the types of its arguments do indeed match
@@ -460,22 +303,23 @@ static bool analyzer_typecheck_function_call(struct ast_node *n,
                      RF_STR_PF_ARG(type_str(fn_found_args_type)),
                      RF_STR_PF_ARG(type_str(fn_declared_args_type)));
         RFS_buffer_pop();
-        return false;
+        ret = AST_TRAVERSAL_ERROR;
     }
 
     n->expression_type = type_function_get_rettype(fn_type);
-    return true;
+    return ret;
 }
 
-static bool analyzer_typecheck_return_stmt(struct ast_node *n,
-                                           struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_return_stmt(struct ast_node *n,
+                                                                struct analyzer_traversal_ctx *ctx)
 {
     struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
     if (!fn_decl) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement outside of function body");
-        return false;
+        return AST_TRAVERSAL_ERROR;
     }
 
     // at this stage the function declaration won't have been typechecked.
@@ -483,7 +327,7 @@ static bool analyzer_typecheck_return_stmt(struct ast_node *n,
     // TODO: perhaps add a check in the typecheck reverse tree traversal to not visit
     // certain subtrees if they are already typechecked.
     if (!analyzer_typecheck(ctx->a, fn_decl)) {
-        return false;
+        return AST_TRAVERSAL_ERROR;
     }
 
     const struct type *fn_ret_type = ast_expression_get_type(ast_fndecl_return_get(fn_decl));
@@ -498,15 +342,14 @@ static bool analyzer_typecheck_return_stmt(struct ast_node *n,
                      RF_STR_PF_ARG(type_str(found_ret_type)),
                      RF_STR_PF_ARG(type_str(fn_ret_type)));
         RFS_buffer_pop();
-        return false;
+        ret = AST_TRAVERSAL_ERROR;
     }
     n->expression_type = found_ret_type;
-
-    return true;
+    return ret;
 }
 
-static bool analyzer_typecheck_binary_op(struct ast_node *n,
-                                         struct analyzer_traversal_ctx *ctx)
+static enum ast_traversal_cb_res analyzer_typecheck_binary_op(struct ast_node *n,
+                                                              struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
@@ -519,76 +362,84 @@ static bool analyzer_typecheck_binary_op(struct ast_node *n,
         return analyzer_typecheck_comma(n, left, right, ctx);
 
     case BINARYOP_ADD:
-        return analyzer_typecheck_addition(n, left, right, ctx);
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't add", "to");
     case BINARYOP_SUB:
-        return analyzer_typecheck_subtraction(n, left, right, ctx);
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't subtract", "from");
     case BINARYOP_MUL:
-        return analyzer_typecheck_multiplication(n, left, right, ctx);
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't multiply", "by");
     case BINARYOP_DIV:
-        return analyzer_typecheck_division(n, left, right, ctx);
+        return analyzer_typecheck_binaryop_generic(
+            n, left, right, ctx, bop_type, i_should_be_changed,
+            "Can't divide", "by");
 
     case BINARYOP_CMP_EQ:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is equal to", true);
+            "Can't compare if", "is equal to");
     case BINARYOP_CMP_NEQ:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is not equal to", true);
+            "Can't compare if", "is not equal to");
     case BINARYOP_CMP_GT:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is greater than", true);
+            "Can't compare if", "is greater than");
     case BINARYOP_CMP_GTEQ:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is greater than or equal", true);
+            "Can't compare if", "is greater than or equal");
     case BINARYOP_CMP_LT:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is less than", true);
+            "Can't compare if", "is less than");
     case BINARYOP_CMP_LTEQ:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't compare if", "is less than or equal", true);
+            "Can't compare if", "is less than or equal");
 
     case BINARYOP_LOGIC_AND:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't apply logic operator && between", "and", true);
+            "Can't apply logic operator && between", "and");
     case BINARYOP_LOGIC_OR:
-        return analyzer_typecheck_binaryop_generic(
+        return analyzer_typecheck_bool_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't apply logic operator || between", "and", true);
+            "Can't apply logic operator || between", "and");
 
     case BINARYOP_BITWISE_OR:
         return analyzer_typecheck_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't apply bitwise OR to", "and", false);
+            "Can't apply bitwise OR to", "and");
     case BINARYOP_BITWISE_AND:
         return analyzer_typecheck_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't apply bitwise AND to", "and", false);
+            "Can't apply bitwise AND to", "and");
     case BINARYOP_BITWISE_XOR:
         return analyzer_typecheck_binaryop_generic(
             n, left, right, ctx, bop_type, i_should_be_changed,
-            "Can't apply bitwise XOR to", "and", false);
+            "Can't apply bitwise XOR to", "and");
 
     default:
         RF_ASSERT(false, "Typechecking for unimplemented binary "
                   "operator "RF_STR_PF_FMT,
                   RF_STR_PF_ARG(ast_binaryop_opstr(n)));
-        return false;
+        return AST_TRAVERSAL_FATAL_ERROR;
     }
 
-    return true;
+    return AST_TRAVERSAL_OK;
 }
 
-static bool analyzer_typecheck_do(struct ast_node *n,
-                                  void *user_arg)
+static enum ast_traversal_cb_res analyzer_typecheck_do(struct ast_node *n,
+                                                       void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
-    bool ret = true;
+    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
 
     switch(n->type) {
     case AST_BINARY_OPERATOR:
@@ -608,7 +459,6 @@ static bool analyzer_typecheck_do(struct ast_node *n,
         break;
     case AST_STRING_LITERAL:
         n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_STRING);
-        ret = n->expression_type;
         break;
     case AST_VARIABLE_DECLARATION:
         // for a variable definition, the variable's type description should be
@@ -636,7 +486,7 @@ bool analyzer_typecheck(struct analyzer *a, struct ast_node *root)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
-    return ast_traverse_tree(
+    return AST_TRAVERSAL_OK == ast_traverse_tree_nostop_post_cb(
         root,
         (ast_node_cb)analyzer_handle_symbol_table_descending,
         &ctx,

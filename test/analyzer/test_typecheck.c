@@ -271,7 +271,12 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"string,u32\" which does not match the expected type of \"nil\"",
-            6, 8, 6, 32)
+            6, 8, 6, 32),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign \"nil\" to \"u64\"",
+            6, 0, 6, 32)
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
@@ -345,6 +350,8 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(st3, test_typecheck_variable_declarations);
+    // TODO: Test where there are errors in two different parts of the code
+    //       to assert the continuation of the traversal works
 
     TCase *st4 = tcase_create("analyzer_typecheck_functions");
     tcase_add_checked_fixture(st4,

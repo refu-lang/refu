@@ -8,6 +8,7 @@
 
 struct analyzer;
 struct ast_node;
+
 bool analyzer_typecheck(struct analyzer *a, struct ast_node *root);
 
 #endif
