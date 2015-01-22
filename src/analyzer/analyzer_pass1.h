@@ -24,13 +24,24 @@ struct analyzer_traversal_ctx;
 bool analyzer_first_pass(struct analyzer *a);
 
 /**
- * A callback function to to be called for a node while traversing the AST
+ * A function to to be called for a node while traversing the AST
  * during analysis. Switches the traversal context's current symbol table
- * to the parent's node symbol table
+ * to the parent's node symbol table dependin on various condition.
  *
  * @param n           The node the callback is called for
  * @param ctx         The traversal context
  */
-bool analyzer_make_parent_st_current(struct ast_node *n,
-                                     struct analyzer_traversal_ctx *ctx);
+bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
+                                            struct analyzer_traversal_ctx *ctx);
+
+/**
+ * A function to to be called for a node while traversing the AST
+ * during analysis. Switches the traversal context's current symbol table to the
+ * new symbol table of child @c n if it has one and if all conditions are met
+ *
+ * @param n           The node the callback is called for
+ * @param ctx         The traversal context
+ */
+bool analyzer_handle_symbol_table_descending(struct ast_node *n,
+                                             struct analyzer_traversal_ctx *ctx);
 #endif

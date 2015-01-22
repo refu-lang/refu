@@ -12,8 +12,7 @@ struct ast_node *ast_returnstmt_create(struct inplocation_mark *start,
         return NULL;
     }
 
-    ret->returnstmt.expr = expr;
-
+    ast_node_register_child(ret, expr, returnstmt.expr);
     return ret;
 }
 

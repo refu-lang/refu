@@ -6,7 +6,7 @@ Import('env clib_static')
 local_env = env.Clone()
 
 gperf_src = ['lexer/tokens_htable.gperf',
-             'types/builtin_types_htable.gperf']
+             'types/elementary_types_htable.gperf']
 refu_src = [
     'compiler.c',
     'compiler_args.c',
@@ -49,7 +49,7 @@ refu_src = [
 
     'types/type.c',
     'types/type_function.c',
-    'types/type_builtin.c',
+    'types/type_elementary.c',
 
     'ir/rir.c',
     'ir/elements.c',

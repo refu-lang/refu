@@ -7,7 +7,8 @@
 #include <stdbool.h>
 
 struct analyzer;
+struct ast_node;
 
-bool analyzer_typecheck(struct analyzer *a);
+bool analyzer_typecheck(struct analyzer *a, struct ast_node *root);
 
 #endif

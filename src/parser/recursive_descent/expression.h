@@ -48,13 +48,4 @@ struct parser;
  */
 struct ast_node *parser_acc_expression(struct parser *p);
 
-/**
- * expressions_list = expression expressions_list'
- *                  / EMPTY
- * expressions_list' = TOKEN_OP_COMMA expression expressions_list'
- *                   / EMPTY
- */
-bool parser_acc_expressions_list(struct parser *p,
-                                 struct ast_node *parent);
-
 #endif

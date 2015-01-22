@@ -17,11 +17,11 @@
 
 START_TEST (test_type_to_str) {
 
-    struct type *t_u32 = testsupport_analyzer_type_create_builtin(BUILTIN_UINT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     struct type *t_leaf_u32 = testsupport_analyzer_type_create_leaf(&id_foo, t_u32);
 
-    struct type *t_f64 = testsupport_analyzer_type_create_builtin(BUILTIN_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_boo, t_f64);
 

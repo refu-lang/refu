@@ -8,8 +8,9 @@
 #include <ast/vardecl.h>
 #include <ast/function.h>
 #include <ast/string_literal.h>
-
 #include <ast/ast_utils.h>
+
+#include <types/type_function.h>
 
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
@@ -98,7 +99,6 @@ static bool analyzer_create_symbol_table_vardecl(struct analyzer_traversal_ctx *
 static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
                                                 struct ast_node *n)
 {
-    struct symbol_table *st;
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
     const struct RFstring *fn_name;
@@ -115,7 +115,7 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
                                      fn_name,
                                      &symbol_found_at_first_st);
 
-    if (rec && symbol_table_record_category(rec) == TYPE_CATEGORY_FUNCTION) {
+    if (rec && type_is_function(rec->data)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Function \""RF_STR_PF_FMT"\" was already declared "
@@ -132,11 +132,6 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
         return false;
     }
 
-    // set the current symbol table to the function's one
-    st = ast_fndecl_symbol_table_get(n);
-    symbol_table_set_parent(st, ctx->current_st);
-    ctx->current_st = st;
-
     // function's arguments are added to the symbol table by type creation
     return true;
 }
@@ -144,7 +139,6 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg)
 {
-    struct symbol_table *st;
     struct analyzer_traversal_ctx *ctx = user_arg;
 
     // act depending on the node type
@@ -163,14 +157,18 @@ static bool analyzer_first_pass_do(struct ast_node *n,
             RF_ERROR("Could not initialize symbol table for block node");
             return false;
         }
-        st = ast_block_symbol_table_get(n);
-        symbol_table_set_parent(st, ctx->current_st);
-        ctx->current_st = st;
+        symbol_table_swap_current(&ctx->current_st, ast_block_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
         if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
             return false;
         }
+        symbol_table_swap_current(&ctx->current_st, ast_fndecl_symbol_table_get(n));
+        symbol_table_set_fndecl(ctx->current_st, n);
+        break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        // function implementation symbol table should point to its decl table
+        ast_fnimpl_symbol_table_set(n, ast_fndecl_symbol_table_get(n->fnimpl.decl));
         break;
 
         // nodes that only contribute records to symbol tables
@@ -213,16 +211,24 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     return true;
 }
 
-bool analyzer_make_parent_st_current(struct ast_node *n,
-                                     struct analyzer_traversal_ctx *ctx)
+bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
+                                            struct analyzer_traversal_ctx *ctx)
 {
     switch(n->type) {
         // nodes that change the current symbol table
     case AST_BLOCK:
         ctx->current_st = ast_block_symbol_table_get(n)->parent;
         break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        ctx->current_st = ast_fnimpl_symbol_table_get(n)->parent;
+        break;
     case AST_FUNCTION_DECLARATION:
-        ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
+        // When the function declaration is inside a function implementation it
+        // should not go upwards here since it would mess up current symbol table
+        // for the function's block
+        if (ast_fndecl_position_get(n) != FNDECL_PARTOF_IMPL) {
+            ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
+        }
         break;
     default:
         // do nothing
@@ -231,6 +237,28 @@ bool analyzer_make_parent_st_current(struct ast_node *n,
 
     RF_ASSERT(ctx->current_st, "Symbol table movement to parent lead to "
               "a NULL table!");
+    return true;
+}
+
+bool analyzer_handle_symbol_table_descending(struct ast_node *n,
+                                             struct analyzer_traversal_ctx *ctx)
+{
+    switch(n->type) {
+    case AST_ROOT:
+        ctx->current_st = ast_root_symbol_table_get(n);
+        break;
+    case AST_BLOCK:
+        ctx->current_st = ast_block_symbol_table_get(n);
+        break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        ctx->current_st = ast_fnimpl_symbol_table_get(n);
+        break;
+    case AST_FUNCTION_DECLARATION:
+        ctx->current_st = ast_fndecl_symbol_table_get(n);
+        break;
+    default:
+        break;
+    }
     return true;
 }
 
@@ -243,6 +271,6 @@ bool analyzer_first_pass(struct analyzer *a)
         a->root,
         analyzer_first_pass_do,
         &ctx,
-        (ast_node_cb)analyzer_make_parent_st_current,
+        (ast_node_cb)analyzer_handle_symbol_table_ascending,
         &ctx);
 }

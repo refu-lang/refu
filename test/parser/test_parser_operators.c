@@ -27,7 +27,7 @@ START_TEST(test_acc_addition) {
         "a + b");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -50,7 +50,7 @@ START_TEST(test_acc_multi) {
         "214 * foo");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_constant_create(cnum, file,
                                        0, 0, 0, 2, integer, 214);
@@ -73,7 +73,7 @@ START_TEST(test_acc_sub) {
         "214 - 5651");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_constant_create(cnum1, file,
                                        0, 0, 0, 2, integer, 214);
@@ -96,7 +96,7 @@ START_TEST(test_acc_div) {
         "3.142/2.1245");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_constant_create(cnum1, file,
                                        0, 0, 0, 4, float, 3.142);
@@ -119,7 +119,7 @@ START_TEST(test_acc_assignment) {
         "a = 5 + 2.149");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -148,7 +148,7 @@ START_TEST(test_acc_complex_binary_op_1) {
         "a + 12.232 * 5 - foo");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
@@ -183,7 +183,7 @@ START_TEST(test_acc_complex_binary_op_2) {
         "\"start\" + 1.0e-10 - (a + dosth(42, foo))");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
 
     testsupport_parser_string_literal_create(literal, file, 0, 0, 0, 6);
@@ -203,9 +203,12 @@ START_TEST(test_acc_complex_binary_op_2) {
                                        0, 31, 0, 32, integer, 42);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 35, 0, 37);
-    testsupport_parser_node_create(fn, fncall, file, 0, 25, 0, 38, fn_name, NULL);
-    ast_node_add_child(fn, cnum2);
-    ast_node_add_child(fn, id2);
+
+    testsupport_parser_node_create(arg_bop, binaryop, file, 0, 31, 0, 37,
+                                   BINARYOP_COMMA,
+                                   cnum2, id2);
+    testsupport_parser_node_create(fn, fncall, file, 0, 25, 0, 38,
+                                   fn_name, arg_bop, NULL);
 
     testsupport_parser_node_create(bop2, binaryop, file, 0, 21, 0, 38,
                                    BINARYOP_ADD,
@@ -228,7 +231,7 @@ START_TEST(test_acc_complex_binary_op_3) {
         "(foo<a, b>((25/2) * 323 + 2) + 325) * 3.14");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(file,
                                                                     0, 1, 0, 3);
@@ -262,9 +265,7 @@ START_TEST(test_acc_complex_binary_op_3) {
                                    bop2, cnum4);
 
     testsupport_parser_node_create(fn, fncall, file, 0, 1, 0, 27,
-                                   fn_name, gattr);
-    ast_node_add_child(fn, bop3);
-
+                                   fn_name, bop3, gattr);
 
     testsupport_parser_constant_create(cnum5, file,
                                        0, 31, 0, 33, integer, 325);
@@ -291,7 +292,7 @@ START_TEST(test_acc_complex_binary_op_4) {
         "(table[56] + foo(3, b)) + 4 * 321");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 1, 0, 5);
@@ -306,10 +307,11 @@ START_TEST(test_acc_complex_binary_op_4) {
                                        0, 17, 0, 17, integer, 3);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 20, 0, 20);
+    testsupport_parser_node_create(arg_bop, binaryop, file, 0, 17, 0, 20,
+                                   BINARYOP_COMMA,
+                                   cnum2, id2);
     testsupport_parser_node_create(fn, fncall, file, 0, 13, 0, 21,
-                                   fn_name, NULL);
-    ast_node_add_child(fn, cnum2);
-    ast_node_add_child(fn, id2);
+                                   fn_name, arg_bop, NULL);
 
     testsupport_parser_node_create(bop1, binaryop, file, 0, 1, 0, 21,
                                    BINARYOP_ADD, arr, fn);
@@ -337,7 +339,7 @@ START_TEST(test_acc_operator_precedence_1) {
         "(a * 32) & b + 15 ^ 2 | 3");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     // a * 32
     struct ast_node *id_a = testsupport_parser_identifier_create(file,
@@ -376,7 +378,7 @@ START_TEST(test_acc_operator_precedence_1) {
     ck_test_parse_as(n, expression, d, "binary operator", bop5);
 
     ast_node_destroy(n);
-    ast_node_destroy(bop4);
+    ast_node_destroy(bop5);
 }END_TEST
 
 Suite *parser_operators_suite_create(void)

@@ -12,6 +12,9 @@
 #include "vardecl.h"
 #include "function.h"
 #include "arrayref.h"
+#include "ifexpr.h"
+
+#define MAX_LEVEL_OP_PRECEDENCE 12
 
 static struct ast_node *parser_acc_expression_prime(
     struct parser *p,
@@ -75,7 +78,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
         return n;
-
+    } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
+        n = parser_acc_ifexpr(p);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected an if expression");
+            return NULL;
+        }
+        return n;
     } else if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {
@@ -162,34 +172,36 @@ static inline bool check_operator_type(struct token *tok, int level)
     }
 
     switch(level) {
-    case 1: /* assignment */
+    case 1: /* comma operator */
+        return (tok->type == TOKEN_OP_COMMA);
+    case 2: /* assignment */
         return (tok->type == TOKEN_OP_ASSIGN);
-    case 2: /* logic OR */
+    case 3: /* logic OR */
         return (tok->type == TOKEN_OP_LOGIC_OR);
-    case 3: /* logic AND */
+    case 4: /* logic AND */
         return (tok->type == TOKEN_OP_LOGIC_AND);
-    case 4: /* bitwise OR */
+    case 5: /* bitwise OR */
         return (tok->type == TOKEN_OP_TYPESUM);
-    case 5: /* bitwise XOR */
+    case 6: /* bitwise XOR */
         return (tok->type == TOKEN_OP_BITWISE_XOR);
-    case 6: /* bitwise AND */
+    case 7: /* bitwise AND */
         return (tok->type == TOKEN_OP_AMPERSAND);
 
 
 
-    case 7: /* equality comparison */
+    case 8: /* equality comparison */
         return (tok->type == TOKEN_OP_EQ || tok->type == TOKEN_OP_NEQ);
-    case 8: /* relational comparison */
+    case 9: /* relational comparison */
         return (tok->type == TOKEN_OP_GT   ||
                 tok->type == TOKEN_OP_GTEQ ||
                 tok->type == TOKEN_OP_LT   ||
                 tok->type == TOKEN_OP_LTEQ);
 
-    case 9: /* additive operators */
+    case 10: /* additive operators */
         return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
-    case 10: /* multiplicative operators */
+    case 11: /* multiplicative operators */
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
-    case 11: /* no operators at the last level (expr_factor) */
+    case MAX_LEVEL_OP_PRECEDENCE: /* no operators at the last level (expr_factor) */
         return false;
     }
 
@@ -204,7 +216,7 @@ static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)
     struct ast_node *prime;
     struct ast_node *term;
 
-    if (level == 11) { // end, we got to the factor level
+    if (level == MAX_LEVEL_OP_PRECEDENCE) { // end, we got to the factor level
         term = parser_acc_exprfactor(p);
     } else {
         term = parser_acc_exprlevel(p, level + 1);
@@ -269,36 +281,4 @@ static struct ast_node *parser_acc_expression_prime(
 struct ast_node *parser_acc_expression(struct parser *p)
 {
     return parser_acc_exprlevel(p, 1);
-}
-
-bool parser_acc_expressions_list(struct parser *p,
-                                 struct ast_node *parent)
-{
-    struct ast_node *expr;
-    struct token *tok;
-
-    // check for the first expression
-    expr = parser_acc_expression(p);
-
-    if (!expr) { // empty list is valid
-        return true;
-    }
-    ast_node_add_child(parent, expr);
-
-    tok = lexer_lookahead(p->lexer, 1);
-    while (tok && tok->type == TOKEN_OP_COMMA) {
-        // consume the comma
-        lexer_next_token(p->lexer);
-        // get the next expression
-        expr = parser_acc_expression(p);
-        if (!expr) {
-            parser_synerr(p, token_get_start(tok), NULL,
-                          "expected an expression after ','");
-            return false;
-        }
-        ast_node_add_child(parent, expr);
-        tok = lexer_lookahead(p->lexer, 1);
-    }
-
-    return true;
 }

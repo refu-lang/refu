@@ -144,13 +144,11 @@ static bool cmp_fn(const void *e, void *str)
 
 bool symbol_table_init(struct symbol_table *t, struct analyzer *a)
 {
+    RF_STRUCT_ZERO(t);
     htable_init(&t->table, rehash_fn, NULL);
-    t->parent = NULL;
     t->pool = a->symbol_table_records_pool;
     return true;
 }
-
-
 
 void symbol_table_deinit(struct symbol_table *t)
 {
@@ -315,6 +313,11 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,
                                           struct symbol_table *parent);
+i_INLINE_INS void symbol_table_set_fndecl(struct symbol_table *t,
+                                           struct ast_node *decl);
+i_INLINE_INS struct ast_node *symbol_table_get_fndecl(struct symbol_table *t);
+i_INLINE_INS void symbol_table_swap_current(struct symbol_table **current_st_ptr,
+                                            struct symbol_table *new_st);
 i_INLINE_INS struct type *symbol_table_lookup_type(struct symbol_table *t,
                                                    const struct RFstring *id,
                                                    bool *at_first_symbol_table);

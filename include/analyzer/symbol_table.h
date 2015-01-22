@@ -67,9 +67,15 @@ symbol_table_record_type(struct symbol_table_record *rec)
 
 
 struct symbol_table {
+    //! Hash table of symbols
     struct htable table;
+    //! Pointer to the parent symbol table, or NULL if this is the top table
     struct symbol_table *parent;
+    //! Pointer to the analyzer instance's memory pool
     struct rf_fixed_memorypool *pool;
+    //! Pointer to the function declaration that contains this table, or NULL
+    //! if this is the top table
+    struct ast_node *fndecl;
 };
 
 bool symbol_table_init(struct symbol_table *t, struct analyzer *a);
@@ -104,6 +110,27 @@ i_INLINE_DECL void symbol_table_set_parent(struct symbol_table *t,
     t->parent = parent;
 }
 
+i_INLINE_DECL void symbol_table_set_fndecl(struct symbol_table *t,
+                                           struct ast_node *decl)
+{
+    t->fndecl = decl;
+}
+
+i_INLINE_DECL struct ast_node *symbol_table_get_fndecl(struct symbol_table *t)
+{
+    return t->fndecl;
+}
+
+/** Convenience function to help swapp a parent symbol table with its child while
+ *  traversing the AST downwards in symbol table creation.
+ */
+i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_ptr,
+                                             struct symbol_table *new_st)
+{
+    symbol_table_set_parent(new_st, *current_st_ptr);
+    symbol_table_set_fndecl(new_st, (*current_st_ptr)->fndecl);
+    *current_st_ptr = new_st;
+}
 
 i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
                                                     const struct RFstring *id,

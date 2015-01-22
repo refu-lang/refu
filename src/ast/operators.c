@@ -47,7 +47,8 @@ static const struct RFstring binaryop_operation_names[] = {
     [BINARYOP_BITWISE_AND] =   RF_STRING_STATIC_INIT("bitwise and"),
     [BINARYOP_BITWISE_XOR] =   RF_STRING_STATIC_INIT("biwise xor"),
 
-    [BINARYOP_ASSIGN]  =   RF_STRING_STATIC_INIT("assignment")
+    [BINARYOP_ASSIGN]      =   RF_STRING_STATIC_INIT("assignment"),
+    [BINARYOP_COMMA]       =   RF_STRING_STATIC_INIT("comma")
 };
 
 const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op)
@@ -76,7 +77,8 @@ static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_AMPERSAND]   =   BINARYOP_BITWISE_AND,
     [TOKEN_OP_BITWISE_XOR]   =   BINARYOP_BITWISE_XOR,
 
-    [TOKEN_OP_ASSIGN]   =   BINARYOP_ASSIGN
+    [TOKEN_OP_ASSIGN]   =   BINARYOP_ASSIGN,
+    [TOKEN_OP_COMMA]   =   BINARYOP_COMMA
 };
 
 enum binaryop_type binaryop_type_from_token(struct token *tok)
@@ -107,7 +109,8 @@ static const enum token_type  token_type_lookup[] = {
     [BINARYOP_BITWISE_AND] =   TOKEN_OP_BITWISE_AND,
     [BINARYOP_BITWISE_XOR] =   TOKEN_OP_BITWISE_XOR,
 
-    [BINARYOP_ASSIGN]  =   TOKEN_OP_ASSIGN
+    [BINARYOP_ASSIGN]      =   TOKEN_OP_ASSIGN,
+    [BINARYOP_COMMA]       =   TOKEN_OP_COMMA
 };
 
 const struct RFstring *ast_binaryop_opstr(struct ast_node *op)

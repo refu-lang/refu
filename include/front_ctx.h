@@ -16,7 +16,7 @@ struct compiler_args;
  */
 struct front_ctx {
     /* Owned objects */
-    struct inpfile file;
+    struct inpfile *file;
     struct lexer *lexer;
     struct parser *parser;
     struct analyzer *analyzer;

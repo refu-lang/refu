@@ -23,7 +23,8 @@ enum binaryop_type {
     BINARYOP_BITWISE_AND,
     BINARYOP_BITWISE_XOR,
 
-    BINARYOP_ASSIGN
+    BINARYOP_ASSIGN,
+    BINARYOP_COMMA
 };
 
 struct ast_binaryop {

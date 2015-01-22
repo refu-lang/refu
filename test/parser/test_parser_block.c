@@ -32,7 +32,7 @@ START_TEST(test_acc_block_empty) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 1, 0);
     ck_test_parse_as(n, block, d, "block", bnode, true);
@@ -51,7 +51,7 @@ START_TEST(test_acc_block_no_braces_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 1, 0, 2, 12);
 
@@ -91,7 +91,7 @@ START_TEST(test_acc_block_no_braces_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 0, 25);
 
@@ -131,7 +131,7 @@ START_TEST(test_acc_block_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
 
@@ -173,7 +173,7 @@ START_TEST(test_acc_block_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 2, 0);
 
@@ -189,11 +189,14 @@ START_TEST(test_acc_block_2) {
                                        1, 25, 1, 26, integer, 15);
     testsupport_parser_node_create(arr, arrayref, file,
                                    1, 21, 1, 27, id3, cnum1);
-    
-    testsupport_parser_node_create(fn, fncall, file, 1, 0, 1, 28, id1, NULL);
-    ast_node_add_child(fn, id2);
-    ast_node_add_child(fn, str);
-    ast_node_add_child(fn, arr);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 1, 7, 1, 18,
+                                   BINARYOP_COMMA,
+                                   id2, str);
+    testsupport_parser_node_create(arg_bop, binaryop, file, 1, 7, 1, 27,
+                                   BINARYOP_COMMA,
+                                   bop1, arr);
+    testsupport_parser_node_create(fn, fncall, file, 1, 0, 1, 28, id1, arg_bop, NULL);
 
     ast_node_add_child(bnode, fn);
     
@@ -216,7 +219,7 @@ START_TEST(test_acc_block_value_without_return) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
 
@@ -260,7 +263,7 @@ START_TEST(test_acc_block_value_with_return) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     testsupport_parser_block_create(bnode, file, 0, 0, 4, 0);
 

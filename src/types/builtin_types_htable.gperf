@@ -1,24 +1,0 @@
-%compare-strncmp
-%readonly-tables
-%define lookup-function-name types_string_is_builtin
-%delimiters=''
-struct gperf_builtin_type {const char *name; enum builtin_type type; };
-%%
-# -- Keywords section --
-# attempted to have TAB as delimiter but could not make it work
-#
-# keywords
-intBUILTIN_INT
-uintBUILTIN_UINT
-u8BUILTIN_UINT_8
-i8BUILTIN_INT_8
-u16BUILTIN_UINT_16
-i16BUILTIN_INT_16
-u32BUILTIN_UINT_32
-i32BUILTIN_INT_32
-u64BUILTIN_UINT_64
-i64BUILTIN_INT_64
-f32BUILTIN_FLOAT_32
-f64BUILTIN_FLOAT_64
-stringBUILTIN_STRING
-boolBUILTIN_BOOL

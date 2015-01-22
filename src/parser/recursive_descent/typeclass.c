@@ -58,7 +58,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
         goto err_free_genr;
     }
 
-    err = parser_acc_fndecl_list(p, n);
+    err = parser_acc_fndecl_list(p, n, FNDECL_PARTOF_TYPECLASS);
     switch (err) {
     case PARSER_FNDECL_LIST_EMPTY:
         parser_synerr(p, token_get_end(tok), NULL,

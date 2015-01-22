@@ -42,6 +42,11 @@ bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
 void info_ctx_print(struct info_ctx *ctx, unsigned int index);
 
+i_INLINE_DECL void info_ctx_inject_input_file(struct info_ctx *ctx, struct inpfile *f)
+{
+    ctx->file = f;
+}
+
 /**
  * Gets all messages of a certain type, properly formatted and returns them
  * in the given RFstringx

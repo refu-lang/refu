@@ -53,7 +53,7 @@ START_TEST(test_typecheck_assignment_invalid_storage_size) {
     front_testdriver_assign(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. "
             "Can't assign \"u16\" to \"u8\"",
@@ -79,7 +79,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
     front_testdriver_assign(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"string\" to \"u64\"",
@@ -208,67 +208,121 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Argument 1 of do_something() function call does not match the "
-            "function signature. Expected \"string\" but got \"u32\".",
+            "function do_something() is called with argument type of "
+            "\"u32,string\" which does not match the expected type of "
+            "\"name:string,age:u16\"",
             6, 0, 6, 24),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Argument 2 of do_something() function call does not match the "
-            "function signature. Expected \"u16\" but got \"string\".",
-            6, 0, 6, 24)
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
-#if 0 //TODO: work in progress
-START_TEST(test_typecheck_invalid_function_call_number_of_arguments) {
+START_TEST(test_typecheck_invalid_function_call_return) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16) -> f32\n"
         "{\n"
         "return age * 0.14\n"
         "}\n"
-        "fn do_something_else(name:string, age:u16, alien:bool) -> f32\n"
-        "{\n"
-        "return age * 0.14\n"
-        "}\n"
         "{\n"
         "a:u32 = 15\n"
-        "do_something(\"Berlin\")\n"
-        "do_something_else(\"Berlin\", a)\n"
+        "c:u64 = do_something(\"Berlin\", a)\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Invalid number of arguments provided to function \"do_something()\"."
-            " Expected 2 arguments but provided 1."
-            10, 0, 10, 21),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            &d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Invalid number of arguments provided to function \"do_something_else()\"."
-            " Expected 3 arguments but provided 2."
-            11, 0, 11, 29),
+            "Assignment between incompatible types. Can't assign "
+            "\"f32\" to \"u64\"",
+            6, 0, 6, 32),
     };
 
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
-#endif
+
+START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something()\n"
+        "{\n"
+        "11\n"
+        "}\n"
+        "{\n"
+        "a:u32 = 15\n"
+        "c:u64 = do_something(\"Berlin\", a)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "function do_something() is called with argument type of "
+            "\"string,u32\" which does not match the expected type of \"nil\"",
+            6, 8, 6, 32),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign \"nil\" to \"u64\"",
+            6, 0, 6, 32)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
+
+START_TEST(test_typecheck_valid_function_impl) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
+        "{\n"
+        "    if vegetarian {\n"
+        "        return age + height * weight\n"
+        "    } else {\n"
+        "        return weight * age - height\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    testsupport_typecheck_prepare(d);
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_invalid_function_impl_return) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something() -> string\n"
+        "{\n"
+        "return 15"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Return statement type \"u8\" does not match the "
+            "expected return type of \"string\"",
+            2, 0, 2, 8),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
 
 Suite *analyzer_typecheck_suite_create(void)
 {
@@ -296,6 +350,8 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(st3, test_typecheck_variable_declarations);
+    // TODO: Test where there are errors in two different parts of the code
+    //       to assert the continuation of the traversal works
 
     TCase *st4 = tcase_create("analyzer_typecheck_functions");
     tcase_add_checked_fixture(st4,
@@ -303,7 +359,10 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(st4, test_typecheck_valid_function_call);
     tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
-    /* tcase_add_test(st4, test_typecheck_invalid_function_call_number_of_arguments); */
+    tcase_add_test(st4, test_typecheck_invalid_function_call_return);
+    tcase_add_test(st4, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
+    tcase_add_test(st4, test_typecheck_valid_function_impl);
+    tcase_add_test(st4, test_typecheck_invalid_function_impl_return);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

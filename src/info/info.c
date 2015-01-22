@@ -106,6 +106,8 @@ void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type)
     }
 }
 
+i_INLINE_INS void info_ctx_inject_input_file(struct info_ctx *ctx, struct inpfile *f);
+
 bool info_ctx_get_messages_fmt(struct info_ctx *ctx,
                                enum info_msg_type type,
                                struct RFstringx *str)

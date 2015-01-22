@@ -8,7 +8,7 @@
 #define TESTLEX_IDENTIFIER_INIT(driver_, sl_, sc_, el_, ec_,  val_)     \
     {                                                                   \
         .type=TOKEN_IDENTIFIER,                                         \
-        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .location=LOC_INIT((driver_)->front.file, sl_, sc_, el_, ec_), \
         .value.v=                                                       \
         front_testdriver_generate_identifier(                           \
             driver_,                                                    \
@@ -18,7 +18,7 @@
 #define TESTLEX_INTEGER_INIT(driver_, sl_, sc_, el_, ec_,  val_)     \
     {                                                                   \
         .type=TOKEN_CONSTANT_INTEGER,                                   \
-        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .location=LOC_INIT((driver_)->front.file, sl_, sc_, el_, ec_), \
         .value.v=                                                       \
         front_testdriver_generate_constant_integer(                     \
             driver_,                                                    \
@@ -28,7 +28,7 @@
 #define TESTLEX_FLOAT_INIT(driver_, sl_, sc_, el_, ec_,  val_)          \
     {                                                                   \
         .type=TOKEN_CONSTANT_FLOAT,                                     \
-        .location=LOC_INIT(&(driver_)->front.file, sl_, sc_, el_, ec_), \
+        .location=LOC_INIT((driver_)->front.file, sl_, sc_, el_, ec_), \
         .value.v=                                                       \
         front_testdriver_generate_constant_float(                       \
             driver_,                                                    \
@@ -53,8 +53,8 @@
         .type=TOKEN_STRING_LITERAL,                                     \
         .location=LOC_INIT_FULL(                                        \
             sl_, sc_, el_, ec_,                                         \
-            inpfile_line_p(&(driver_)->front.file, sl_) + sp_,          \
-            inpfile_line_p(&(driver_)->front.file, el_) + ep_),         \
+            inpfile_line_p((driver_)->front.file, sl_) + sp_,          \
+            inpfile_line_p((driver_)->front.file, el_) + ep_),         \
         .value.v=                                                       \
         front_testdriver_generate_string_literal(                       \
             driver_,                                                    \

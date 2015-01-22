@@ -20,35 +20,35 @@
 #include <ast/constant_num.h>
 
 #include <types/type_function.h>
-#include <types/type_builtin.h>
+#include <types/type_elementary.h>
 
 #include <backend/llvm.h>
 
-static LLVMTypeRef backend_llvm_builtin_to_type(enum builtin_type type)
+static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
 {
     switch(type) {
         // LLVM does not differentiate between signed and unsigned
-    case BUILTIN_INT:
-    case BUILTIN_UINT:
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
         return LLVMIntType(32);// TODO: Think of how to represent size agnostic
-    case BUILTIN_INT_8:
-    case BUILTIN_UINT_8:
+    case ELEMENTARY_TYPE_INT_8:
+    case ELEMENTARY_TYPE_UINT_8:
         return LLVMInt8Type();
-    case BUILTIN_INT_16:
-    case BUILTIN_UINT_16:
+    case ELEMENTARY_TYPE_INT_16:
+    case ELEMENTARY_TYPE_UINT_16:
         return LLVMInt16Type();
-    case BUILTIN_INT_32:
-    case BUILTIN_UINT_32:
+    case ELEMENTARY_TYPE_INT_32:
+    case ELEMENTARY_TYPE_UINT_32:
         return LLVMInt32Type();
-    case BUILTIN_INT_64:
-    case BUILTIN_UINT_64:
+    case ELEMENTARY_TYPE_INT_64:
+    case ELEMENTARY_TYPE_UINT_64:
         return LLVMInt64Type();
 
     default:
         RF_ASSERT_OR_CRITICAL(false,
-                              "Unsupported builtin type \""RF_STR_PF_FMT"\" "
+                              "Unsupported elementary type \""RF_STR_PF_FMT"\" "
                               "during LLVM conversion",
-                              RF_STR_PF_ARG(type_builtin_get_str(type)));
+                              RF_STR_PF_ARG(type_elementary_get_str(type)));
         break;
     }
     return NULL;
@@ -57,13 +57,13 @@ static LLVMTypeRef backend_llvm_builtin_to_type(enum builtin_type type)
 static bool backend_llvm_typedesc_to_args(struct type_leaf *t,
                                           struct llvm_traversal_ctx *ctx)
 {
-    // TODO: only builtin types for now
-    enum builtin_type btype;
-    RF_ASSERT(t->type->category == TYPE_CATEGORY_BUILTIN,
-              "Only dealing with builtin types at the moment in the backend");
-    btype = type_builtin(t->type);
+    // TODO: only elementary types for now
+    enum elementary_type etype;
+    RF_ASSERT(t->type->category == TYPE_CATEGORY_ELEMENTARY,
+              "Only dealing with elementary types at the moment in the backend");
+    etype = type_elementary(t->type);
 
-    LLVMTypeRef llvm_type = backend_llvm_builtin_to_type(btype);
+    LLVMTypeRef llvm_type = backend_llvm_elementary_to_type(etype);
     darray_append(ctx->params, llvm_type);
     return true;
 }

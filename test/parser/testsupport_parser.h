@@ -109,7 +109,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             testsupport_parser_prepare(driver_);                        \
             node_ = parser_acc_##type_((driver_)->front.parser, __VA_ARGS__); \
             ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
-            check_ast_match(n, target_, &(driver_)->front.file);        \
+            check_ast_match(n, target_, (driver_)->front.file);        \
         } while (0)
 
 #define i_ck_test_parse_as0(node_, type_, driver_,  node_name, target_)    \
@@ -117,7 +117,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             testsupport_parser_prepare(driver_);                        \
             node_ = parser_acc_##type_((driver_)->front.parser);        \
             ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
-            check_ast_match(n, target_, &(driver_)->front.file);        \
+            check_ast_match(n, target_, (driver_)->front.file);        \
         } while (0)
 
 

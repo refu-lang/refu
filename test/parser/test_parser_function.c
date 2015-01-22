@@ -29,7 +29,7 @@ START_TEST(test_acc_fndecl_1) {
         "fn dosth(a:i32) -> i32");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 7);
@@ -39,13 +39,14 @@ START_TEST(test_acc_fndecl_1) {
     testsupport_parser_node_create(t1, typedesc, file, 0, 9, 0, 13, id1, id2);
     testsupport_parser_xidentifier_create_simple(id3, file, 0, 19, 0, 21);
     testsupport_parser_node_create(fn, fndecl, file, 0, 0, 0, 21,
+                                   FNDECL_STANDALONE,
                                    name,
                                    NULL,
                                    t1,
                                    id3
     );
 
-    ck_test_parse_as(n, fndecl, d, "function", fn);
+    ck_test_parse_as(n, fndecl, d, "function", fn, FNDECL_STANDALONE);
 
     ast_node_destroy(n);
     ast_node_destroy(fn);
@@ -58,7 +59,7 @@ START_TEST(test_acc_fndecl_2) {
         "fn dosth(a:i32, b:string) -> i32|nil");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 7);
@@ -79,13 +80,14 @@ START_TEST(test_acc_fndecl_2) {
                                    TYPEOP_SUM, id5, id6);
 
     testsupport_parser_node_create(fn, fndecl, file, 0, 0, 0, 35,
+                                   FNDECL_STANDALONE,
                                    name,
                                    NULL,
                                    op1,
                                    op2
     );
 
-    ck_test_parse_as(n, fndecl, d, "function", fn);
+    ck_test_parse_as(n, fndecl, d, "function", fn, FNDECL_STANDALONE);
 
     ast_node_destroy(n);
     ast_node_destroy(fn);
@@ -98,19 +100,20 @@ START_TEST(test_acc_fndecl_void) {
         "fn dosth_no_args()");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 15);
 
     testsupport_parser_node_create(fn, fndecl, file, 0, 0, 0, 17,
+                                   FNDECL_STANDALONE,
                                    name,
                                    NULL,
                                    NULL,
                                    NULL
     );
 
-    ck_test_parse_as(n, fndecl, d, "function", fn);
+    ck_test_parse_as(n, fndecl, d, "function", fn, FNDECL_STANDALONE);
 
     ast_node_destroy(n);
     ast_node_destroy(fn);
@@ -123,7 +126,7 @@ START_TEST(test_acc_fndecl_with_generics) {
         "fn do_generic<Type a, Type b>(a:b, x:string) -> (r1:i32,r2:i8)");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 3, 0, 12);
@@ -166,13 +169,14 @@ START_TEST(test_acc_fndecl_with_generics) {
                                    TYPEOP_PRODUCT, t3, t4);
 
     testsupport_parser_node_create(fn, fndecl, file, 0, 0, 0, 60,
+                                   FNDECL_STANDALONE,
                                    name,
                                    genr,
                                    op1,
                                    op2
     );
 
-    ck_test_parse_as(n, fndecl, d, "function", fn);
+    ck_test_parse_as(n, fndecl, d, "function", fn, FNDECL_STANDALONE);
 
     ast_node_destroy(n);
     ast_node_destroy(fn);
@@ -186,7 +190,7 @@ START_TEST(test_acc_fndecl_err1) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -194,7 +198,7 @@ START_TEST(test_acc_fndecl_err1) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected an identifier for the function name after 'fn'",
             0, 3)
@@ -210,7 +214,7 @@ START_TEST(test_acc_fndecl_err2) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -218,7 +222,7 @@ START_TEST(test_acc_fndecl_err2) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected '(' at function declaration",
             0, 8)
@@ -234,7 +238,7 @@ START_TEST(test_acc_fndecl_err3) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -242,7 +246,7 @@ START_TEST(test_acc_fndecl_err3) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected ')' at function declaration after type description",
             0, 13)
@@ -258,7 +262,7 @@ START_TEST(test_acc_fndecl_err4) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -266,12 +270,12 @@ START_TEST(test_acc_fndecl_err4) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 14),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected either a type description for the function's arguments "
             "or ')' after '('",
@@ -288,7 +292,7 @@ START_TEST(test_acc_fndecl_err5) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -296,7 +300,7 @@ START_TEST(test_acc_fndecl_err5) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
@@ -313,7 +317,7 @@ START_TEST(test_acc_fndecl_err6) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_fndecl(d->front.parser);
+    n = parser_acc_fndecl(d->front.parser, FNDECL_STANDALONE);
     ck_assert_msg(n == NULL, "parsing function declaration should fail");
     ck_assert_msg(
         parser_has_syntax_error(d->front.parser),
@@ -321,17 +325,17 @@ START_TEST(test_acc_fndecl_err6) {
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a '(' or identifier after ','",
             0, 25),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected a type description after '('",
             0, 19),
         TESTSUPPORT_INFOMSG_INIT_START(
-            &d->front.file,
+            d->front.file,
             MESSAGE_SYNTAX_ERROR,
             "Expected type description for the function's return type after"
             " '->'",
@@ -347,7 +351,7 @@ START_TEST(test_acc_fncall_1) {
         "foo(a, b)");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 2);
@@ -355,13 +359,15 @@ START_TEST(test_acc_fncall_1) {
                                                                 0, 4, 0, 4);
     struct ast_node *id2 = testsupport_parser_identifier_create(file,
                                                                 0, 7, 0, 7);
+
+    testsupport_parser_node_create(args, binaryop, file, 0, 4, 0, 7,
+                                   BINARYOP_COMMA,
+                                   id1, id2);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 8,
                                    name,
+                                   args,
                                    NULL
     );
-    ast_node_add_child(fc, id1);
-    ast_node_add_child(fc, id2);
-
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 
     ast_node_destroy(n);
@@ -375,7 +381,7 @@ START_TEST(test_acc_fncall_2) {
         "do_something (a, b, 31, \"celka\")");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 0, 0, 11);
@@ -387,14 +393,21 @@ START_TEST(test_acc_fncall_2) {
                                        0, 20, 0, 21, integer, 31);
     testsupport_parser_string_literal_create(sliteral, file,
                                              0, 24, 0, 30);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 14, 0, 17,
+                                   BINARYOP_COMMA,
+                                   id1, id2);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 14, 0, 21,
+                                   BINARYOP_COMMA,
+                                   bop1, cnum);
+    testsupport_parser_node_create(args, binaryop, file, 0, 14, 0, 30,
+                                   BINARYOP_COMMA,
+                                   bop2, sliteral);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 31,
                                    name,
+                                   args,
                                    NULL
     );
-    ast_node_add_child(fc, id1);
-    ast_node_add_child(fc, id2);
-    ast_node_add_child(fc, cnum);
-    ast_node_add_child(fc, sliteral);
 
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 
@@ -409,7 +422,7 @@ START_TEST(test_acc_fncall_3) {
         "do_something <a, b> (a, b, 31, \"celka\")");
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 0, 0, 11);
@@ -430,13 +443,20 @@ START_TEST(test_acc_fncall_3) {
                                        0, 27, 0, 28, integer, 31);
     testsupport_parser_string_literal_create(sliteral, file,
                                              0, 31, 0, 37);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 21, 0, 24,
+                                   BINARYOP_COMMA,
+                                   id3, id4);
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 21, 0, 28,
+                                   BINARYOP_COMMA,
+                                   bop1, cnum);
+    testsupport_parser_node_create(args, binaryop, file, 0, 21, 0, 37,
+                                   BINARYOP_COMMA,
+                                   bop2, sliteral);
     testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 38,
                                    name,
+                                   args,
                                    gnattr);
-    ast_node_add_child(fc, id3);
-    ast_node_add_child(fc, id4);
-    ast_node_add_child(fc, cnum);
-    ast_node_add_child(fc, sliteral);
 
     ck_test_parse_as(n, fncall, d, "function_call", fc);
 
@@ -455,10 +475,7 @@ START_TEST(test_acc_fnimpl_1) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
-
-
-
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 3, 0, 18);
@@ -490,8 +507,8 @@ START_TEST(test_acc_fnimpl_1) {
     testsupport_parser_node_create(op2, typeop, file, 0, 20, 0, 42,
                                    TYPEOP_SUM, op1, t3);
 
-    testsupport_parser_node_create(decl, fndecl, file,
-                                   0, 0, 0, 43, name, NULL, op2, NULL);
+    testsupport_parser_node_create(decl, fndecl, file, 0, 0, 0, 43,
+                                   FNDECL_PARTOF_IMPL, name, NULL, op2, NULL);
 
 
     testsupport_parser_block_create(bnode, file, 1, 0, 3, 0);
@@ -530,10 +547,7 @@ START_TEST(test_acc_fnimpl_2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    file = &d->front.file;
-
-
-
+    file = d->front.file;
 
     struct ast_node *name = testsupport_parser_identifier_create(file,
                                                                  0, 3, 0, 18);
@@ -574,8 +588,8 @@ START_TEST(test_acc_fnimpl_2) {
     testsupport_parser_node_create(op2, typeop, file, 0, 28, 0, 50,
                                    TYPEOP_SUM, op1, t3);
 
-    testsupport_parser_node_create(decl, fndecl, file,
-                                   0, 0, 0, 51, name, genr, op2, NULL);
+    testsupport_parser_node_create(decl, fndecl, file, 0, 0, 0, 51,
+                                   FNDECL_PARTOF_IMPL, name, genr, op2, NULL);
 
 
     testsupport_parser_block_create(bnode, file, 1, 0, 4, 0);

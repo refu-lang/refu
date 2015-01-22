@@ -34,15 +34,42 @@ struct type *type_create_from_fndecl(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st);
 
-struct type *type_anonymous_create(struct ast_node *n,
-                                   struct analyzer *a,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl);
-
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
+
+struct type *type_operator_create(struct ast_node *n,
+                                  struct analyzer *a,
+                                  struct symbol_table *st,
+                                  struct ast_node *genrdecl);
+
+/**
+ * Attempts to retrieve the type for @c n and if it does not exist it creates it
+ * @param n            The node whose type to retrieve/create
+ * @param a            The analyzer instance for which to do it
+ * @param st           The symbol table to check for the type
+ * @param genrdecl     An optional generic declaration node that describes @c n.
+ *                     Can be NULL.
+ * @return             Return either the type of @c n or NULL if there was an error
+ */
+struct type *type_lookup_or_create(struct ast_node *n,
+                                   struct analyzer *a,
+                                   struct symbol_table *st,
+                                   struct ast_node *genrdecl);
+
+/**
+ * Applies a type operator to 2 types and returns the result
+ * @param type          The type operator to apply to @c left and @c right
+ * @param left          The type to become left part of the operand
+ * @param right         The type to become right part of the operand
+ * @param a             The analyzer instance for which we are typechecking
+ * @return              The new type or NULL if there was an error
+ */
+struct type *type_create_from_operation(enum typeop_type type,
+                                        struct type *left,
+                                        struct type *right,
+                                        struct analyzer *a);
 
 /* -- type comparison functions -- */
 
@@ -70,8 +97,18 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
 bool type_equals(const struct type* t1, const struct type *t2,
                  struct type_comparison_ctx *ctx);
 
-
-bool type_equals_typedesc(struct type *t, struct ast_node *type_desc,
+/**
+ * Compare a type and an AST node that describes a type.
+ * @param t         The type to compare
+ * @param n         The node with which to compare @c t
+ * @param a         The analyzer instance
+ * @param st        The symbol table to use in the comparison
+ * @param genrdecl  An optional generic declaration that describes @c n.
+ *                     Can be NULL.
+ * @return          true if the type and the node describe the same type.
+ *                  false otherwise.
+ */
+bool type_equals_ast_node(struct type *t, struct ast_node *n,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl);
 
