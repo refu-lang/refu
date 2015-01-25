@@ -9,6 +9,8 @@
 #include <ir/rir.h>
 #include <backend/llvm.h>
 
+struct rir_module;
+
 bool compiler_init(struct compiler *c)
 {
     RF_STRUCT_ZERO(c);
@@ -96,6 +98,11 @@ bool compiler_process(struct compiler *c)
     }
     analyzer_destroy(analyzer);
 
+    struct rir_module *rir_mod = rir_process(c->ir);
+    if (!rir_mod) {
+        RF_ERROR("Failed to create the Refu IR");
+        return false;
+    }
 
     // TODO -- also think when should the AST be serialized to a file (?)
     // some argument maybe which would signify we need to transfer the processed
@@ -104,8 +111,10 @@ bool compiler_process(struct compiler *c)
     /*     return NULL; */
     /* } */
 
-    // TODO: This should interface with the IR and not analyzer
-    /* backend_llvm_generate(analyzer, c->args); */
+    if (!backend_llvm_generate(rir_mod, c->args)) {
+        RF_ERROR("Failed to create the LLVM IR from the Refu IR");
+        return false;
+    }
 
     return true;
 }

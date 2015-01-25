@@ -32,6 +32,8 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
 {
     rec->node = node;
     rec->id = id;
+    rec->rir_data = NULL;
+    rec->backend_handle = NULL;
     switch (node->type) {
     case AST_TYPE_DECLARATION:
         rec->data = type_create_from_typedecl(node, analyzer, st);
@@ -126,6 +128,12 @@ i_INLINE_INS struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec);
 i_INLINE_INS struct type *
 symbol_table_record_type(struct symbol_table_record *rec);
+i_INLINE_INS struct rir_type *
+symbol_table_record_rir_type(struct symbol_table_record *rec);
+i_INLINE_INS void *
+symbol_table_record_get_backend_handle(struct symbol_table_record *rec);
+i_INLINE_INS void
+symbol_table_record_set_backend_handle(struct symbol_table_record *rec, void *handle);
 
 /* -- symbol table related functions -- */
 

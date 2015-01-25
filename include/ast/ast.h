@@ -77,6 +77,7 @@ struct ast_node {
     enum ast_owner owner;
     const struct type *expression_type;
     struct inplocation location;
+    struct RFilist_node ln_for_rir_blocks;
     struct RFilist_node lh;
     struct RFilist_head children;
     union {
@@ -105,7 +106,7 @@ struct ast_node {
     };
 };
 
-void ast_node_init(struct ast_node * n, enum ast_type type);
+void ast_node_init(struct ast_node *n, enum ast_type type);
 struct ast_node *ast_node_create(enum ast_type type);
 
 struct ast_node *ast_node_create_loc(enum ast_type type,

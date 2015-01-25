@@ -30,7 +30,7 @@ int type_elementary_identifier_p(const struct RFstring *id);
 /**
  * Gets the elementary type of a type provided it is indeed an elementary type
  */
-i_INLINE_DECL enum elementary_type type_elementary(struct type *t)
+i_INLINE_DECL enum elementary_type type_elementary(const struct type *t)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_ELEMENTARY,
               "Non built-in type category detected");

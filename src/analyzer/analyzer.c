@@ -67,13 +67,20 @@ struct analyzer *analyzer_create(struct info_ctx *info)
 void analyzer_deinit(struct analyzer *a)
 {
     if (a->root) {
-        // if analyzer has ownership of ast tree
         ast_node_destroy(a->root);
     }
-    rf_fixed_memorypool_destroy(a->symbol_table_records_pool);
-    rf_fixed_memorypool_destroy(a->types_pool);
-    string_table_destroy(a->identifiers_table);
-    string_table_destroy(a->string_literals_table);
+    if (a->symbol_table_records_pool) {
+        rf_fixed_memorypool_destroy(a->symbol_table_records_pool);
+    }
+    if (a->types_pool) {
+        rf_fixed_memorypool_destroy(a->types_pool);
+    }
+    if (a->identifiers_table) {
+        string_table_destroy(a->identifiers_table);
+    }
+    if (a->string_literals_table) {
+        string_table_destroy(a->string_literals_table);
+    }
 }
 
 void analyzer_destroy(struct analyzer *a)

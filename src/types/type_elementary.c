@@ -150,4 +150,4 @@ int type_elementary_identifier_p(const struct RFstring *id)
     return etype->type;
 }
 
-i_INLINE_INS enum elementary_type type_elementary(struct type *t);
+i_INLINE_INS enum elementary_type type_elementary(const struct type *t);

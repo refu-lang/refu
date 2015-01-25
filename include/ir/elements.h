@@ -7,10 +7,19 @@
 
 struct type;
 struct RFstring;
-struct ast_expression;
+struct ast_node;
+struct symbol_table;
 
 /**
  * Representation of a type for the Refu IR
+ *
+ * It is much like @see struct type but with some constraints.
+ * It is represented by an array of subtypes and not by a tree. A single
+ * rir_type can only contain subtypes that are connected by the same type
+ * operation.
+ *
+ * TODO: In order to achieve this all possible composite types need to be defined
+ * somewhere. Figure out where and do it.
  */
 struct rir_type {
     //! TODO: This should be an enum with all elementary types + 1 for composite type
@@ -22,31 +31,40 @@ struct rir_type {
     //! Whether the @c subtypes are connected as product types (so by ,) or
     //! as sum types (so by | )  TODO: Think if we will use this
     bool are_product_type;
-
-    /* -- control attributes -- */
-    //! To be added to parameter lists (?)
-    //! TODO: Think if we will use this
-    struct RFilist_node lh;
+    //! Name of the variable the type describes. TODO: Maybe move this somwhere
+    //! else. Separate the notion of type from parameter?
+    struct RFstring name;
 };
-struct rir_type *rir_type_alloc(struct type *input);
-struct rir_type *rir_type_create(struct type *input);
-bool rir_type_init(struct rir_type *type, struct type *input);
+struct rir_type *rir_type_alloc(const struct type *input);
+struct rir_type *rir_type_create(const struct type *input,
+                                 const struct RFstring *name);
+bool rir_type_init(struct rir_type *type, const struct type *input,
+                   const struct RFstring *name);
 
 void rir_type_dealloc(struct rir_type *t);
 void rir_type_destroy(struct rir_type *t);
 void rir_type_deinit(struct rir_type *t);
 
+//! @return the name of the nth parameter of the type
+const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n);
+//! @return the type of the nth parameter of the type
+const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
+
 /**
  * Representation of a function for the Refu IR
  */
 struct rir_function {
+    //! Function symbols
+    struct symbol_table *symbols;
     struct rir_type *arg_type;
     struct rir_type *ret_type;
     struct rir_basic_block *entry;
     struct RFstring name;
+
+    /*-- control for module list --*/
+    struct RFilist_node ln_for_module;
 };
-RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct type *fn_type,
-                               struct RFstring *name);
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct ast_node *fn_impl);
 
 
 struct rir_simple_branch {
@@ -80,13 +98,27 @@ struct rir_branch {
  * and has only one single exit.
  */
 struct rir_basic_block {
-    //! List of expressions (?)
-
+    //! Block symbols
+    struct symbol_table *symbols;
+    //! List of expressions
+    struct RFilist_head lh;
     //! exit branch
     struct rir_branch exit;
 };
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
+struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n);
 
-RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block, int a);
-
+/**
+ * Represents a module in the IR
+ *
+ * It's basically (for now) a set of functions and one main function
+ */
+struct rir_module {
+    //! Global symbols of the module
+    struct symbol_table *symbols;
+    //! List of functions of the module
+    struct RFilist_head functions;
+};
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_module, struct ast_node *n);
 
 #endif

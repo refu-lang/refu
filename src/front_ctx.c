@@ -11,7 +11,8 @@ bool front_ctx_init(struct front_ctx *ctx,
                     const struct compiler_args *args)
 {
     RF_STRUCT_ZERO(ctx);
-    if (!inpfile_init(ctx->file, &args->input)) {
+    ctx->file = inpfile_create(&args->input);
+    if (!ctx->file) {
         goto err;
     }
 

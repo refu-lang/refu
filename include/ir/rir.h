@@ -17,6 +17,9 @@ struct rir {
 
     //! A list of all composite types of the file
     struct RFilist_head composite_types;
+
+    //! The root of the ast node
+    struct ast_node *root;
 };
 
 bool rir_init(struct rir *r, struct analyzer *a);
@@ -24,4 +27,6 @@ struct rir *rir_create(struct analyzer *a);
 
 void rir_deinit(struct rir *r);
 void rir_destroy(struct rir *r);
+
+struct rir_module *rir_process(struct rir *r);
 #endif

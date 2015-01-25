@@ -13,17 +13,16 @@
 #include <info/info.h>
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
+#include <ir/elements.h>
 
 #include "llvm_ast.h"
 
 
 static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
-                                           struct analyzer *analyzer,
                                            struct compiler_args *args)
 {
     ctx->mod = NULL;
     ctx->current_st = NULL;
-    ctx->analyzer = analyzer;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
@@ -36,22 +35,24 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     LLVMDisposeModule(ctx->mod);
 }
 
-static bool backend_llvm_ir_generate(struct analyzer *analyzer,
+static bool backend_llvm_ir_generate(struct rir_module *module,
                                      struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
+    struct LLVMOpaqueModule *llvm_module;
     char *error = NULL; // Used to retrieve messages from functions
     LLVMLinkInJIT();
     LLVMInitializeNativeTarget();
 
-    llvm_traversal_ctx_init(&ctx, analyzer, args);
-    if (!backend_llvm_create_ir_ast(&ctx, analyzer->root)) {
+    llvm_traversal_ctx_init(&ctx, args);
+    llvm_module = backend_llvm_create_module(module, &ctx);
+    if (!llvm_module) {
         ERROR("Failed to form the LLVM IR ast");
         return false;
     }
 
     // verify module and create code
-    LLVMVerifyModule(ctx.mod, LLVMAbortProcessAction, &error);
+    LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error);
     LLVMDisposeMessage(error); // Handler == LLVMAbortProcessAction -> No need to check errors
 
     RFS_buffer_push();
@@ -121,10 +122,10 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool backend_llvm_generate(struct analyzer *analyzer, struct compiler_args *args)
+bool backend_llvm_generate(struct rir_module *module, struct compiler_args *args)
 {
 
-    if (!backend_llvm_ir_generate(analyzer, args)) {
+    if (!backend_llvm_ir_generate(module, args)) {
         return false;
     }
 

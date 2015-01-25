@@ -25,3 +25,4 @@ struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
 }
 
 i_INLINE_INS struct ast_node *ast_vardecl_desc_get(struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_vardecl_get_name(struct ast_node *n);

@@ -1,8 +1,14 @@
 #include <ir/rir.h>
 
 #include <Utils/memory.h>
+#include <Utils/fixed_memory_pool.h>
 
+#include <ast/ast.h>
 #include <analyzer/analyzer.h>
+#include <analyzer/string_table.h>
+#include <ir/elements.h>
+
+
 
 bool rir_init(struct rir *r, struct analyzer *a)
 {
@@ -17,6 +23,9 @@ bool rir_init(struct rir *r, struct analyzer *a)
     a->identifiers_table = NULL;
     r->string_literals_table = a->string_literals_table;
     a->string_literals_table = NULL;
+    // transfer ownership of AST
+    r->root = a->root;
+    a->root = NULL;
 
     // copy composite types list
     rf_ilist_copy(&a->composite_types, &r->composite_types);
@@ -37,11 +46,21 @@ struct rir *rir_create(struct analyzer *a)
 
 void rir_deinit(struct rir *r)
 {
-    (void)r;
+    ast_node_destroy(r->root);
+    rf_fixed_memorypool_destroy(r->symbol_table_records_pool);
+    rf_fixed_memorypool_destroy(r->types_pool);
+    string_table_destroy(r->identifiers_table);
+    string_table_destroy(r->string_literals_table);
 }
 
 void rir_destroy(struct rir *r)
 {
     rir_deinit(r);
     free(r);
+}
+
+
+struct rir_module *rir_process(struct rir *r)
+{
+    return rir_module_create(r->root);
 }

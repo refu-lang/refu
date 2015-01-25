@@ -22,6 +22,8 @@
 #include <types/type_function.h>
 #include <types/type_elementary.h>
 
+#include <ir/elements.h>
+
 #include <backend/llvm.h>
 
 static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
@@ -54,123 +56,139 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
     return NULL;
 }
 
-static bool backend_llvm_typedesc_to_args(struct type_leaf *t,
-                                          struct llvm_traversal_ctx *ctx)
-{
-    // TODO: only elementary types for now
-    enum elementary_type etype;
-    RF_ASSERT(t->type->category == TYPE_CATEGORY_ELEMENTARY,
-              "Only dealing with elementary types at the moment in the backend");
-    etype = type_elementary(t->type);
-
-    LLVMTypeRef llvm_type = backend_llvm_elementary_to_type(etype);
-    darray_append(ctx->params, llvm_type);
-    return true;
-}
-
-static bool backend_llvm_function_body(struct ast_node *n,
-                                       LLVMValueRef function,
-                                       struct llvm_traversal_ctx *ctx)
-{
-    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(function, "function_entry");
-    struct ast_node *retstmt;
-    struct ast_node *retexpr;
-    uint64_t val;
-    LLVMPositionBuilderAtEnd(ctx->builder, entry);
-    // TODO: make this proper in the future. For now just create the return value
-    // and only if it's a const number
-    retstmt = ast_block_valueexpr_get(n);
-    retexpr = ast_returnstmt_expr_get(retstmt);
-    RF_ASSERT(ast_node_type(retexpr) == AST_CONSTANT_NUMBER,
-    "Only constant number supported in returns for now");
-    if (!ast_constantnum_get_integer(retexpr, &val)) {
-        RF_ERROR("Failed to convert a constant num node to number");
-        return false;
-    }
-    LLVMValueRef ret = LLVMConstInt(LLVMInt32Type(), val, 0);
-    LLVMBuildRet(ctx->builder, ret);
-    return true;
-}
-
-static bool backend_llvm_function(struct ast_node *n,
-                                  struct llvm_traversal_ctx *ctx)
-{
-    char *fnname;
-    LLVMValueRef fn;
-    bool at_first;
-    struct ast_node *fndecl = ast_fnimpl_fndecl_get(n);
-    const struct RFstring *fn_name = ast_fndecl_name_str(fndecl);
-    struct ast_node *fn_args = ast_fndecl_args_get(fndecl);
-    struct type *fn_type = symbol_table_lookup_type(ctx->current_st,
-                                                    fn_name,
-                                                    &at_first);
-    if (RF_CRITICAL_TEST(!fn_type, "couldn't find function " RF_STR_PF_FMT
-                         "in the symbol table.", RF_STR_PF_ARG(fn_name))) {
-        return false;
-    }
-
-    // set the current symbol table
-    ctx->current_st = ast_fndecl_symbol_table_get(fndecl);
-
-    RFS_buffer_push();
-    fnname = rf_string_cstr_from_buff(fn_name);
-
-    // TODO: Properly implement this. For now it just takes all leaf types
-    // of the argument and adds them to LLVM function args
-
-    if (fn_args &&
-        !type_for_each_leaf(type_function_get_argtype(fn_type),
-                            (leaf_type_cb)backend_llvm_typedesc_to_args,
-                            ctx)) {
-        return false;
-    }
-
-    fn = LLVMAddFunction(ctx->mod, fnname,
-                         LLVMFunctionType(LLVMInt32Type(),
-                                          llvm_traversal_ctx_get_params(ctx),
-                                          llvm_traversal_ctx_get_param_count(ctx),
-                                          0)); // not variadic for now
-    RFS_buffer_pop();
-    return backend_llvm_function_body(ast_fnimpl_body_get(n), fn, ctx);
-}
-
-static bool backend_llvm_create_ir_ast_do(struct ast_node *n, void *user_arg)
-{
-    struct llvm_traversal_ctx *ctx = user_arg;
-    switch(n->type) {
-    case AST_ROOT:
-        ctx->current_st = ast_root_symbol_table_get(n);
-        ctx->mod = LLVMModuleCreateWithName(rf_string_data(compiler_args_get_output(ctx->args)));
-        break;
-    case AST_FUNCTION_IMPLEMENTATION:
-        return backend_llvm_function(n, ctx);
-    default:
-        // do nothing
-        break;
-    }
-
-    return true;
-}
-
-
-static bool end_visit_do(struct ast_node *n, void *user_arg)
-{
-    // nothing for now. IF indeed nothing is needed then use ast_pre_traverse_tree()
-    return true;
-}
-
-bool backend_llvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
-                                struct ast_node *root)
-{
-    return ast_traverse_tree(
-        root,
-        backend_llvm_create_ir_ast_do,
-        ctx,
-        end_visit_do, //POST callback
-        NULL); //POST USER ARG
-
-}
-
-
 i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_ctx *ctx);
+
+
+static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
+                                     struct llvm_traversal_ctx *ctx)
+{
+    //TODO: ctx not used here for now. If not used at all remove
+    (void)ctx;
+    return backend_llvm_elementary_to_type(type->elementary);
+}
+
+static LLVMTypeRef *backend_llvm_types(struct rir_type *type,
+                                       struct llvm_traversal_ctx *ctx)
+{
+    struct rir_type **subtype;
+    if (darray_size(type->subtypes) == 0) {
+        darray_append(ctx->params, backend_llvm_type(type, ctx));
+    } else {
+        darray_foreach(subtype, type->subtypes) {
+            darray_append(ctx->params, backend_llvm_type(*subtype, ctx));
+        }
+    }
+    return llvm_traversal_ctx_get_params(ctx);
+}
+
+static void backend_llvm_expression_iterate(struct ast_node *n,
+                                            struct llvm_traversal_ctx *ctx)
+{
+    uint64_t val;
+    switch(n->type) {
+    case AST_RETURN_STATEMENT:
+        LLVMBuildRet(ctx->builder, ctx->current_value);
+        break;
+    case AST_CONSTANT_NUMBER:
+        if (!ast_constantnum_get_integer(n, &val)) {
+            RF_ERROR("Failed to convert a constant num node to number for LLVM");
+        }
+        // TODO: This is not using rir_types
+        ctx->current_value = LLVMConstInt(LLVMInt32Type(), val, 0);
+        break;
+    default:
+        break;
+    }
+}
+
+static void backend_llvm_expression(struct ast_node *n,
+                                    struct llvm_traversal_ctx *ctx)
+{
+    ctx->current_value = NULL;
+    backend_llvm_expression_iterate(n, ctx);
+    ctx->current_value = NULL;
+}
+
+static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
+                                    struct llvm_traversal_ctx *ctx)
+{
+    char *name;
+    // for each symbol in the allocate an LLVM variable in the stack with alloca
+    struct rir_type *type = symbol_table_record_rir_type(rec);
+    RFS_buffer_push();
+    name = rf_string_cstr_from_buff(symbol_table_record_id(rec));
+    // note: this simply creates the stack space but does not allocate it
+    LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, backend_llvm_type(type, ctx), name);
+    symbol_table_record_set_backend_handle(rec, allocation);
+    RFS_buffer_pop();
+}
+
+static void backend_llvm_basic_block(struct rir_basic_block *block,
+                                     struct llvm_traversal_ctx *ctx)
+{
+    struct ast_node *expr;
+    symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
+    rf_ilist_for_each(&block->lh, expr, ln_for_rir_blocks) {
+        backend_llvm_expression(expr, ctx);
+    }
+
+}
+
+static LLVMValueRef backend_llvm_function(struct rir_function *fn,
+                                          struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef llvm_fn;
+    char *fn_name;
+    char *param_name;
+    bool at_first;
+    RFS_buffer_push();
+    fn_name = rf_string_cstr_from_buff(&fn->name);
+    llvm_fn = LLVMAddFunction(ctx->mod, fn_name,
+                              LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
+                                               backend_llvm_types(fn->arg_type, ctx),
+                                               llvm_traversal_ctx_get_param_count(ctx),
+                                               0)); // never variadic for now
+    RFS_buffer_pop();
+
+    // now handle function body
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(llvm_fn, "entry");
+    LLVMPositionBuilderAtEnd(ctx->builder, entry);
+    // place function's argument in the stack
+    unsigned int i = 0;
+    LLVMValueRef allocation;
+    const struct RFstring *param_name_str;
+    struct symbol_table_record *rec;
+    for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
+        // for each argument of the function allocate an LLVM variable
+        // in the stack with alloca
+        param_name_str = rir_type_get_nth_name(fn->arg_type, i);
+        RFS_buffer_push();
+        param_name = rf_string_cstr_from_buff(param_name_str);
+        allocation = LLVMBuildAlloca(ctx->builder,
+                                     backend_llvm_type(rir_type_get_nth_type(fn->arg_type, i), ctx),
+                                     param_name);
+        RFS_buffer_pop();
+        // and assign to it the argument value
+        LLVMBuildStore(ctx->builder, LLVMGetParam(llvm_fn, i) ,allocation);
+        // also note the alloca in the symbol table
+        rec = symbol_table_lookup_record(fn->symbols, param_name_str, &at_first);
+        RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did not contain expected parameter");
+        symbol_table_record_set_backend_handle(rec, allocation);
+    }
+
+    // now handle function entry block
+    backend_llvm_basic_block(fn->entry, ctx);
+    return llvm_fn;
+}
+
+struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
+                                                    struct llvm_traversal_ctx *ctx)
+{
+    struct rir_function *fn;
+    // for each function of the module create code
+    rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
+        backend_llvm_function(fn, ctx);
+    }
+    return ctx->mod;
+}

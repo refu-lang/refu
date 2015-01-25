@@ -296,7 +296,6 @@ START_TEST(test_acc_block_value_with_return) {
     testsupport_parser_node_create(op3, binaryop, file, 3, 7, 3, 11,
                                    BINARYOP_MUL, id4, cnum3);
     testsupport_parser_node_create(ret, returnstmt, file, 3, 0, 3, 11, op3);
-    ast_block_valueexpr_set(bnode, ret);
     ast_node_add_child(bnode, ret);
 
     ck_test_parse_as(n, block, d, "block", bnode, true);

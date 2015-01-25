@@ -348,6 +348,18 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     return ret;
 }
 
+static enum ast_traversal_cb_res typecheck_block(struct ast_node *n,
+                                                 struct analyzer_traversal_ctx *ctx)
+{
+    // TODO: Here somehow find the type of the block, it should all depend on its
+    // last expression/expression/statement or it can also be a sum product if it
+    // has conditional exits from the block
+    n->expression_type = NULL;
+
+    
+    return AST_TRAVERSAL_OK;
+}
+
 static enum ast_traversal_cb_res typecheck_binary_op(struct ast_node *n,
                                                      struct analyzer_traversal_ctx *ctx)
 {
@@ -440,7 +452,7 @@ static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
     enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
-
+    struct type *t;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
         ret = typecheck_binary_op(n, ctx);
@@ -468,8 +480,22 @@ static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
     case AST_FUNCTION_CALL:
         ret = typecheck_function_call(n, ctx);
         break;
+    case AST_FUNCTION_DECLARATION:
+        t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
+        if (!t) {
+            RF_ERROR("Function declaration name not found in the symbol table at impossible point");
+            ret = AST_TRAVERSAL_ERROR;
+        }
+        n->expression_type = t;
+        break;
+    case AST_FUNCTION_IMPLEMENTATION:
+        n->expression_type = ast_expression_get_type(ast_fnimpl_fndecl_get(n));
+        break;
     case AST_RETURN_STATEMENT:
         ret = typecheck_return_stmt(n, ctx);
+        break;
+    case AST_BLOCK:
+        ret = typecheck_block(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

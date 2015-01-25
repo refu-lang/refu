@@ -10,6 +10,7 @@ struct analyzer;
 struct ast_node;
 struct RFstring;
 struct symbol_table;
+struct rir_type;
 
 /* -- symbol table record functionality -- */
 
@@ -21,6 +22,15 @@ struct symbol_table_record {
     struct ast_node *node;
     //! Description of the type the identifier refers to
     struct type *data;
+
+    /* -- needed by Refu IR -- */
+    //! Refu Intermediate Format Description of the type the identifier refers to
+    struct rir_type *rir_data;
+
+    /* -- needed by the backends -- */
+    //! Refu backend handle. Information stored by the backend for specific id
+    //! + @c LLVM: It's an LLVMValueRef
+    void *backend_handle;
 };
 
 bool symbol_table_record_init(struct symbol_table_record *rec,
@@ -62,6 +72,25 @@ symbol_table_record_type(struct symbol_table_record *rec)
     return rec->data;
 }
 
+i_INLINE_DECL struct rir_type *
+symbol_table_record_rir_type(struct symbol_table_record *rec)
+{
+    RF_ASSERT(rec->rir_data, "Empty IR type description detected");
+    return rec->rir_data;
+}
+
+i_INLINE_DECL void *
+symbol_table_record_get_backend_handle(struct symbol_table_record *rec)
+{
+    RF_ASSERT(rec->backend_handle, "Empty backend_handle detected");
+    return rec->backend_handle;
+}
+
+i_INLINE_DECL void
+symbol_table_record_set_backend_handle(struct symbol_table_record *rec, void *handle)
+{
+    rec->backend_handle = handle;
+}
 
 /* -- symbol table functionality -- */
 
@@ -121,7 +150,7 @@ i_INLINE_DECL struct ast_node *symbol_table_get_fndecl(struct symbol_table *t)
     return t->fndecl;
 }
 
-/** Convenience function to help swapp a parent symbol table with its child while
+/** Convenience function to help swap a parent symbol table with its child while
  *  traversing the AST downwards in symbol table creation.
  */
 i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_ptr,

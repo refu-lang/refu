@@ -11,14 +11,10 @@ struct ast_node *ast_block_create()
         return NULL;
     }
 
-    ast_block_valueexpr_set(ret, NULL);
-
     return ret;
 }
 
 i_INLINE_INS bool ast_block_symbol_table_init(struct ast_node *n,
                                               struct analyzer *a);
 i_INLINE_INS struct symbol_table* ast_block_symbol_table_get(struct ast_node *n);
-i_INLINE_INS struct ast_node* ast_block_valueexpr_get(struct ast_node *n);
-i_INLINE_INS void ast_block_valueexpr_set(struct ast_node *n, struct ast_node *expr);
 i_INLINE_INS void ast_block_add_element(struct ast_node *n, struct ast_node *element);
