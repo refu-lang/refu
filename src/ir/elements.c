@@ -39,12 +39,15 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        RF_ASSERT(name, "For now, we always need to have a name in the rir type");
-        new_type = rir_type_create(input, NULL);
-        if (!rf_string_copy_in(&type->name, name)) {
-            return false;
+        if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
+            /* RF_ASSERT(name, "For now, we always need to have a name in the rir type"); */
+            new_type = rir_type_alloc(input);
+            if (!rf_string_copy_in(&new_type->name, name)) {
+                return false;
+            }
+            darray_push(type->subtypes, new_type);
         }
-        darray_push(type->subtypes, new_type);
+        break;
     case TYPE_CATEGORY_OPERATOR:
         // TODO: make it work with sum types too
         if (input->operator.type != TYPEOP_PRODUCT) {
@@ -160,7 +163,7 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl)
 
     // TODO: Somehow here create the parameters, so that names are also included.
     // We need them in the backend
-    this->symbols = ast_fndecl_symbol_table_get(fn_impl);
+    this->symbols = ast_fndecl_symbol_table_get(fn_decl);
     if (!rf_string_copy_in(&this->name, ast_fndecl_name_str(fn_decl))) {
         RF_ERROR("failed to iniailize rir_function name");
         return false;
@@ -218,6 +221,7 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
     bool at_first;
     AST_NODE_ASSERT_TYPE(n, AST_BLOCK);
     b = rir_basic_block_create();
+    b->symbols = ast_block_symbol_table_get(n);
     rf_ilist_for_each(&n->children, c, lh) {
         // TODO depending on the children create other blocks and connect them to
         // this one but for now just simply ignore branching
@@ -246,15 +250,21 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
 }
 
 /* -- rir_module -- */
-RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_module, struct ast_node*, n)
-RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n)
+RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_module, struct ast_node*, n, const struct RFstring*, name)
+RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name)
 {
     struct ast_node *c;
     struct rir_function *fn;
     struct rir_function *tmp;
     AST_NODE_ASSERT_TYPE(n, AST_ROOT);
 
+    if (!rf_string_copy_in(&this->name, name)) {
+        RF_ERROR("Failed to copy rir_module name");
+        return false;
+    }
+
     this->symbols = &n->root.st;
+    rf_ilist_head_init(&this->functions);
     rf_ilist_for_each(&n->children, c, lh) {
         // for now any non function children trigger failure
         if (c->type != AST_FUNCTION_IMPLEMENTATION) {
@@ -281,6 +291,7 @@ RF_STRUCT_DEINIT_SIG(rir_module)
 {
     struct rir_function *fn;
     struct rir_function *tmp;
+    rf_string_deinit(&this->name);
     rf_ilist_for_each_safe(&this->functions, fn, tmp, ln_for_module) {
         rir_function_destroy(fn);
     }

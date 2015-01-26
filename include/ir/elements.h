@@ -118,7 +118,9 @@ struct rir_module {
     struct symbol_table *symbols;
     //! List of functions of the module
     struct RFilist_head functions;
+    //! Name of a module
+    struct RFstring name;
 };
-RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_module, struct ast_node *n);
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_module, struct ast_node *n, const struct RFstring *name);
 
 #endif

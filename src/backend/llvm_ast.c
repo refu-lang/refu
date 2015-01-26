@@ -46,6 +46,10 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
     case ELEMENTARY_TYPE_UINT_64:
         return LLVMInt64Type();
 
+    case ELEMENTARY_TYPE_NIL:
+        return LLVMVoidType();
+        break;
+
     default:
         RF_ASSERT_OR_CRITICAL(false,
                               "Unsupported elementary type \""RF_STR_PF_FMT"\" "
@@ -88,6 +92,7 @@ static void backend_llvm_expression_iterate(struct ast_node *n,
     uint64_t val;
     switch(n->type) {
     case AST_RETURN_STATEMENT:
+        backend_llvm_expression_iterate(ast_returnstmt_expr_get(n), ctx);
         LLVMBuildRet(ctx->builder, ctx->current_value);
         break;
     case AST_CONSTANT_NUMBER:
@@ -148,7 +153,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
                               LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
                                                backend_llvm_types(fn->arg_type, ctx),
                                                llvm_traversal_ctx_get_param_count(ctx),
-                                               0)); // never variadic for now
+                                               false)); // never variadic for now
     RFS_buffer_pop();
 
     // now handle function body
@@ -186,6 +191,11 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
                                                     struct llvm_traversal_ctx *ctx)
 {
     struct rir_function *fn;
+    const char *mod_name;
+    RFS_buffer_push();
+    mod_name = rf_string_cstr_from_buff(&mod->name);
+    ctx->mod = LLVMModuleCreateWithName(mod_name);
+    RFS_buffer_pop();
     // for each function of the module create code
     rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
         backend_llvm_function(fn, ctx);

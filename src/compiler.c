@@ -96,7 +96,6 @@ bool compiler_process(struct compiler *c)
         RF_ERROR("Could not initialize the intermediate representation");
         return false;
     }
-    analyzer_destroy(analyzer);
 
     struct rir_module *rir_mod = rir_process(c->ir);
     if (!rir_mod) {

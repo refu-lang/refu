@@ -316,6 +316,7 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
     enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
+    const struct type *fn_type;
     if (!fn_decl) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement outside of function body");
@@ -330,7 +331,8 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         return AST_TRAVERSAL_ERROR;
     }
 
-    const struct type *fn_ret_type = ast_expression_get_type(ast_fndecl_return_get(fn_decl));
+    fn_type = ast_expression_get_type(fn_decl);
+    const struct type *fn_ret_type = type_function_get_rettype(fn_type);
     const struct type *found_ret_type = ast_expression_get_type(ast_returnstmt_expr_get(n));
 
     type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
@@ -447,12 +449,24 @@ static enum ast_traversal_cb_res typecheck_binary_op(struct ast_node *n,
     return AST_TRAVERSAL_OK;
 }
 
+static enum ast_traversal_cb_res typecheck_fndecl(struct ast_node *n,
+                                                  struct analyzer_traversal_ctx *ctx)
+{
+    struct type *t;
+    t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
+    if (!t) {
+        RF_ERROR("Function declaration name not found in the symbol table at impossible point");
+        return AST_TRAVERSAL_ERROR;
+    }
+    n->expression_type = t;
+    return AST_TRAVERSAL_OK;
+}
+
 static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
                                               void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
     enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
-    struct type *t;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
         ret = typecheck_binary_op(n, ctx);
@@ -481,12 +495,7 @@ static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_function_call(n, ctx);
         break;
     case AST_FUNCTION_DECLARATION:
-        t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
-        if (!t) {
-            RF_ERROR("Function declaration name not found in the symbol table at impossible point");
-            ret = AST_TRAVERSAL_ERROR;
-        }
-        n->expression_type = t;
+        ret = typecheck_fndecl(n, ctx);
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         n->expression_type = ast_expression_get_type(ast_fnimpl_fndecl_get(n));
