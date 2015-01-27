@@ -18,10 +18,6 @@
 
 #include <types/type.h>
 
-// TODO: I don't like this way of testing analyzer_first_pass ..
-//       maybe move it in the includes? or just test function that calls it?
-#include "../../src/analyzer/analyzer_pass1.h"
-
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
 #include "testsupport_analyzer.h"
@@ -41,7 +37,6 @@ START_TEST(test_typecheck_assignment_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -104,7 +99,6 @@ START_TEST(test_typecheck_valid_addition_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -122,7 +116,6 @@ START_TEST(test_typecheck_valid_subtraction_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -140,7 +133,6 @@ START_TEST(test_typecheck_valid_multiplication_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -158,7 +150,6 @@ START_TEST(test_typecheck_valid_division_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -175,7 +166,6 @@ START_TEST(test_typecheck_variable_declarations) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -193,7 +183,6 @@ START_TEST(test_typecheck_valid_function_call) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -299,7 +288,6 @@ START_TEST(test_typecheck_valid_function_impl) {
     front_testdriver_assign(d, &s);
     front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
-    testsupport_typecheck_prepare(d);
     ck_assert_typecheck_ok(d);
 } END_TEST
 
@@ -330,46 +318,59 @@ Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
 
-    TCase *st1 = tcase_create("analyzer_typecheck_assignments");
-    tcase_add_checked_fixture(st1,
+    TCase *t_assign_val = tcase_create("analyzer_typecheck_assignments");
+    tcase_add_checked_fixture(t_assign_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(st1, test_typecheck_assignment_simple);
-    tcase_add_test(st1, test_typecheck_assignment_invalid_storage_size);
-    tcase_add_test(st1, test_typecheck_assignment_invalid_string_to_int);
+    tcase_add_test(t_assign_val, test_typecheck_assignment_simple);
 
-    TCase *st2 = tcase_create("analyzer_typecheck_binary_operations");
-    tcase_add_checked_fixture(st2,
-                              setup_analyzer_tests,
+    TCase *t_assign_inv = tcase_create("analyzer_typecheck_invalid_assignments");
+    tcase_add_checked_fixture(t_assign_inv,
+                              setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
-    tcase_add_test(st2, test_typecheck_valid_addition_simple);
-    tcase_add_test(st2, test_typecheck_valid_subtraction_simple);
-    tcase_add_test(st2, test_typecheck_valid_multiplication_simple);
-    tcase_add_test(st2, test_typecheck_valid_division_simple);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_storage_size);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
 
-    TCase *st3 = tcase_create("analyzer_typecheck_misc");
-    tcase_add_checked_fixture(st3,
+    TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
+    tcase_add_checked_fixture(t_bop_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(st3, test_typecheck_variable_declarations);
+    tcase_add_test(t_bop_val, test_typecheck_valid_addition_simple);
+    tcase_add_test(t_bop_val, test_typecheck_valid_subtraction_simple);
+    tcase_add_test(t_bop_val, test_typecheck_valid_multiplication_simple);
+    tcase_add_test(t_bop_val, test_typecheck_valid_division_simple);
+
+    TCase *t_vardecl_val = tcase_create("analyzer_typecheck_misc");
+    tcase_add_checked_fixture(t_vardecl_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_vardecl_val, test_typecheck_variable_declarations);
     // TODO: Test where there are errors in two different parts of the code
     //       to assert the continuation of the traversal works
 
-    TCase *st4 = tcase_create("analyzer_typecheck_functions");
-    tcase_add_checked_fixture(st4,
+    TCase *t_func_val = tcase_create("analyzer_typecheck_functions");
+    tcase_add_checked_fixture(t_func_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(st4, test_typecheck_valid_function_call);
-    tcase_add_test(st4, test_typecheck_invalid_function_call_arguments);
-    tcase_add_test(st4, test_typecheck_invalid_function_call_return);
-    tcase_add_test(st4, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
-    tcase_add_test(st4, test_typecheck_valid_function_impl);
-    tcase_add_test(st4, test_typecheck_invalid_function_impl_return);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
 
-    suite_add_tcase(s, st1);
-    suite_add_tcase(s, st2);
-    suite_add_tcase(s, st3);
-    suite_add_tcase(s, st4);
+
+    TCase *t_func_inv = tcase_create("analyzer_typecheck_invalid_functions");
+    tcase_add_checked_fixture(t_func_inv,
+                              setup_analyzer_tests_with_filelog,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_arguments);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
+
+    suite_add_tcase(s, t_assign_val);
+    suite_add_tcase(s, t_assign_inv);
+    suite_add_tcase(s, t_bop_val);
+    suite_add_tcase(s, t_vardecl_val);
+    suite_add_tcase(s, t_func_val);
+    suite_add_tcase(s, t_func_inv);
     return s;
 }
 

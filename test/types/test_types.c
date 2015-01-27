@@ -8,9 +8,6 @@
 
 #include <types/type.h>
 
-// TODO: I don't like this way of testing analyzer_first_pass ..
-//       maybe move it in the includes? or just test function that calls it?
-#include "../../src/analyzer/analyzer_pass1.h"
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
 #include "../analyzer/testsupport_analyzer.h"
@@ -50,7 +47,7 @@ START_TEST(test_composite_types_list_population) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    ck_assert_front_ctx_process(d);
+    ck_assert_typecheck_ok(d);
 
     struct analyzer *a = d->front.analyzer;
     struct type *t;

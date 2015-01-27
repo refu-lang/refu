@@ -26,7 +26,7 @@ void setup_analyzer_tests();
 void setup_analyzer_tests_with_filelog();
 void teardown_analyzer_tests();
 
-#define testsupport_analyzer_prepare(driver_, msg_)                     \
+#define testsupport_scan_and_parse(driver_, msg_)                       \
     do {                                                                \
         ck_assert(lexer_scan((driver_)->front.lexer));                  \
         if (!(parser_process_file((driver_)->front.parser))) {          \
@@ -38,6 +38,11 @@ void teardown_analyzer_tests();
                 ck_abort_msg(msg_" -- at parsing with no parser errors"); \
             }                                                           \
         }                                                               \
+    } while (0)
+
+#define testsupport_analyzer_prepare(driver_, msg_)                     \
+    do {                                                                \
+        testsupport_scan_and_parse(driver_, msg_);                      \
         (driver_)->front.analyzer->root = parser_yield_ast_root((driver_)->front.parser); \
     } while(0)
 
@@ -98,18 +103,11 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 
 /* -- typecheck related support -- */
 
-#define testsupport_typecheck_prepare(driver_)                          \
-    do {                                                                \
-        testsupport_analyzer_prepare(driver_,                           \
-                                     "Preparing for the analyzer phase failed"); \
-        ck_assert_msg(analyzer_first_pass((driver_)->front.analyzer), \
-                      "Creating symbol tables failed");                 \
-    } while (0)
-
-
+//! Assert all of the front context processing including typechecking is done
 #define ck_assert_typecheck_ok(d_)                                      \
     do {                                                                \
-        if (!analyzer_typecheck((d_)->front.analyzer, (d_)->front.analyzer->root)) { \
+        testsupport_scan_and_parse(d_, "Scanning and parsing failed");  \
+        if (!analyzer_analyze_file((d_)->front.analyzer, (d_)->front.parser)) {      \
             struct RFstringx *tmp_ = front_testdriver_geterrors(d_);    \
             if (tmp_) {                                                 \
                 ck_abort_msg("Typecheck failed -- with analyzer "       \
@@ -123,18 +121,11 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 
 #define ck_assert_typecheck_with_messages(d_, success_, expected_msgs_) \
     do {                                                                \
-        testsupport_typecheck_prepare(d_);                              \
-        ck_assert_msg(success_ == analyzer_typecheck((d_)->front.analyzer, \
-                                                     (d_)->front.analyzer->root), \
+        testsupport_scan_and_parse(d_, "Scanning and parsing failed");  \
+        ck_assert_msg(success_ == analyzer_analyze_file((d_)->front.analyzer, \
+                                                        (d_)->front.parser), \
                       "Unexpected typecheck result");                   \
         ck_assert_analyzer_errors((d_)->front.info, expected_msgs_);    \
-    } while(0)
-
-//! Assert all of the front context processing including typechecking is done
-#define ck_assert_front_ctx_process(driver_)    \
-    do {                                        \
-        testsupport_typecheck_prepare(driver_); \
-        ck_assert_typecheck_ok(driver_);        \
     } while(0)
 
 #endif
