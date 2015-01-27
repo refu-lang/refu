@@ -187,6 +187,14 @@ static enum ast_traversal_cb_res typecheck_typedesc(struct ast_node *n,
     return AST_TRAVERSAL_OK;
 }
 
+static enum ast_traversal_cb_res typecheck_typedecl(struct ast_node *n,
+                                                    struct analyzer_traversal_ctx *ctx)
+{
+    (void)ctx;
+    n->expression_type = ast_typedecl_typedesc_get(n)->expression_type;
+    return AST_TRAVERSAL_OK;
+}
+
 
 static bool analyzer_types_assignable(struct ast_node *left,
                                       struct ast_node *right,
@@ -219,7 +227,6 @@ static enum ast_traversal_cb_res typecheck_assignment(struct ast_node *n,
                      RF_STR_PF_ARG(ast_node_str(left)));
         ret = AST_TRAVERSAL_ERROR;
     }
-
 
     RFS_buffer_push();
     tright = ast_expression_get_type(right);
@@ -476,6 +483,9 @@ static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_XIDENTIFIER:
         ret = typecheck_xidentifier(n, ctx);
+        break;
+    case AST_TYPE_DECLARATION:
+        ret = typecheck_typedecl(n, ctx);
         break;
     case AST_TYPE_DESCRIPTION:
         ret = typecheck_typedesc(n, ctx);

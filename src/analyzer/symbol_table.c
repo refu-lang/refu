@@ -8,6 +8,7 @@
 #include <ast/ast.h>
 #include <ast/identifier.h>
 #include <ast/type.h>
+#include <types/type.h>
 #include <analyzer/analyzer.h>
 
 /* -- symbol table record related functions -- */

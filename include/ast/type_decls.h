@@ -1,14 +1,10 @@
 #ifndef LFR_AST_TYPE_DECLS_H
 #define LFR_AST_TYPE_DECLS_H
 
-struct ast_node;
+#include <analyzer/symbol_table.h>
+#include <types/type_decls.h>
 
-enum typeop_type {
-    TYPEOP_INVALID,
-    TYPEOP_SUM,
-    TYPEOP_PRODUCT,
-    TYPEOP_IMPLICATION
-};
+struct ast_node;
 
 struct ast_typeop {
     //! Type Operator type
@@ -33,6 +29,8 @@ struct ast_typedecl {
     struct ast_node *name;
     //! Data description
     struct ast_node *desc;
+    //! Symbol table of the identifiers inside the type declaration
+    struct symbol_table st;
 
     //! Optional, generic declaration
     //! TODO: This is not yet implemented!

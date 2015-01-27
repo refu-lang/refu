@@ -1,15 +1,17 @@
 #ifndef LFR_ANALYZER_SYMBOL_TABLE_H
 #define LFR_ANALYZER_SYMBOL_TABLE_H
 
+#include <Utils/sanity.h>
 #include <Data_Structures/htable.h>
 #include <String/rf_str_decl.h>
 #include <Definitions/inline.h>
-#include <types/type.h>
+#include <types/type_decls.h>
 
 struct analyzer;
 struct ast_node;
 struct RFstring;
 struct symbol_table;
+struct type;
 struct rir_type;
 
 /* -- symbol table record functionality -- */
@@ -150,8 +152,9 @@ i_INLINE_DECL struct ast_node *symbol_table_get_fndecl(struct symbol_table *t)
     return t->fndecl;
 }
 
-/** Convenience function to help swap a parent symbol table with its child while
- *  traversing the AST downwards in symbol table creation.
+/**
+ * Convenience function to help swap a parent symbol table with its child while
+ * traversing the AST downwards in symbol table creation.
  */
 i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_ptr,
                                              struct symbol_table *new_st)

@@ -168,4 +168,10 @@ i_INLINE_DECL struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
     return n->typedecl.genrdecl;
 }
+
+i_INLINE_DECL struct symbol_table *ast_typedecl_symbol_table_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
+    return &n->typedecl.st;
+}
 #endif

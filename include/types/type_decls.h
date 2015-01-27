@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <String/rf_str_decl.h>
-#include <ast/type_decls.h> // for enum type_op
 #include <ast/operators_decls.h> // for binary operations enum
 #include <Data_Structures/intrusive_list.h>
 
@@ -28,6 +27,12 @@ enum elementary_type {
     ELEMENTARY_TYPE_TYPES_COUNT /* keep as last */
 };
 
+enum typeop_type {
+    TYPEOP_INVALID,
+    TYPEOP_SUM,
+    TYPEOP_PRODUCT,
+    TYPEOP_IMPLICATION
+};
 
 enum type_category {
     TYPE_CATEGORY_OPERATOR = 0,         /* a type combination of other types */

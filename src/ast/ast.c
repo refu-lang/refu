@@ -219,6 +219,8 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_block_symbol_table_get(n);
     case AST_FUNCTION_IMPLEMENTATION:
         return ast_fnimpl_symbol_table_get(n);
+    case AST_TYPE_DECLARATION:
+        return ast_typedecl_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(false,
                               "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"

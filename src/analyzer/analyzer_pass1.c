@@ -44,6 +44,12 @@ static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx 
         return false;
     }
 
+    // also initialize the symbol table of the type declaration
+    if (!symbol_table_init(&n->typedecl.st, ctx->a)) {
+        RF_ERROR("Failed to initialize type declaration symbol table");
+        return false;
+    }
+
     return true;
 }
 
@@ -176,6 +182,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         if (!analyzer_create_symbol_table_typedecl(ctx, n)) {
             return false;
         }
+        symbol_table_swap_current(&ctx->current_st, ast_typedecl_symbol_table_get(n));
         break;
     case AST_VARIABLE_DECLARATION:
         if (!analyzer_create_symbol_table_vardecl(ctx, n)) {
@@ -230,6 +237,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
             ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
         }
         break;
+    case AST_TYPE_DECLARATION:
+        ctx->current_st = ast_typedecl_symbol_table_get(n)->parent;
+        break;
     default:
         // do nothing
         break;
@@ -255,6 +265,9 @@ bool analyzer_handle_symbol_table_descending(struct ast_node *n,
         break;
     case AST_FUNCTION_DECLARATION:
         ctx->current_st = ast_fndecl_symbol_table_get(n);
+        break;
+    case AST_TYPE_DECLARATION:
+        ctx->current_st = ast_typedecl_symbol_table_get(n);
         break;
     default:
         break;

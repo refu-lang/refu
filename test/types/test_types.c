@@ -8,6 +8,9 @@
 
 #include <types/type.h>
 
+// TODO: I don't like this way of testing analyzer_first_pass ..
+//       maybe move it in the includes? or just test function that calls it?
+#include "../../src/analyzer/analyzer_pass1.h"
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
 #include "../analyzer/testsupport_analyzer.h"
@@ -36,6 +39,27 @@ START_TEST (test_type_to_str) {
     RFS_buffer_pop();
 } END_TEST
 
+#if 0
+START_TEST(test_composite_types_list_population) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i64, b:f64}"
+        "fn do_something() -> u32\n"
+        "{\n"
+        "return 15"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_front_ctx_process(d);
+
+    struct analyzer *a = d->front.analyzer;
+    struct type *t;
+    rf_ilist_for_each(&a->composite_types, t, lh) {
+        int a = 5;
+    }
+} END_TEST
+#endif
+
 Suite *types_suite_create(void)
 {
     Suite *s = suite_create("types");
@@ -44,6 +68,13 @@ Suite *types_suite_create(void)
     tcase_add_checked_fixture(st1, setup_analyzer_tests, teardown_analyzer_tests);
     tcase_add_test(st1, test_type_to_str);
 
+    TCase *st2 = tcase_create("types_management_tests");
+    tcase_add_checked_fixture(st2, setup_analyzer_tests, teardown_analyzer_tests);
+    #if 0
+    tcase_add_test(st2, test_composite_types_list_population);
+    #endif
+
     suite_add_tcase(s, st1);
+    suite_add_tcase(s, st2);
     return s;
 }

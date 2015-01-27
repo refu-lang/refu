@@ -149,3 +149,4 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
 i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_typedecl_typedesc_get(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n);
+i_INLINE_INS struct symbol_table *ast_typedecl_symbol_table_get(struct ast_node *n);

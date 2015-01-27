@@ -18,6 +18,8 @@
 
 #include <types/type.h>
 
+// TODO: I don't like this way of testing analyzer_first_pass ..
+//       maybe move it in the includes? or just test function that calls it?
 #include "../../src/analyzer/analyzer_pass1.h"
 
 #include "../testsupport_front.h"

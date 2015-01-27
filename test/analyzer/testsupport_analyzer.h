@@ -13,7 +13,6 @@
 #include <analyzer/typecheck.h>
 
 
-
 struct ast_node;
 
 struct analyzer_testdriver {
@@ -83,9 +82,21 @@ struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
 struct type *testsupport_analyzer_type_create_function(struct type *arg,
                                                        struct type *ret);
 
+/* -- general analyzer/front context of the compiler support*/
+
+#define ck_assert_analyzer_errors(info_, expected_arr_)					\
+    ck_assert_analyzer_errors_impl(                                       \
+        info_,                                                          \
+        expected_arr_,                                                  \
+        sizeof(expected_arr_)/sizeof(struct info_msg),                  \
+        __FILE__, __LINE__)
+bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
+                                    struct info_msg *errors,
+                                    unsigned num,
+                                    const char *filename,
+                                    unsigned int line);
 
 /* -- typecheck related support -- */
-
 
 #define testsupport_typecheck_prepare(driver_)                          \
     do {                                                                \
@@ -110,20 +121,6 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
         }                                                               \
     } while(0)
 
-
-#define ck_assert_analyzer_errors(info_, expected_arr_)					\
-    ck_assert_analyzer_errors_impl(                                       \
-        info_,                                                          \
-        expected_arr_,                                                  \
-        sizeof(expected_arr_)/sizeof(struct info_msg),                  \
-        __FILE__, __LINE__)
-bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
-                                    struct info_msg *errors,
-                                    unsigned num,
-                                    const char *filename,
-                                    unsigned int line);
-
-
 #define ck_assert_typecheck_with_messages(d_, success_, expected_msgs_) \
     do {                                                                \
         testsupport_typecheck_prepare(d_);                              \
@@ -133,6 +130,11 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
         ck_assert_analyzer_errors((d_)->front.info, expected_msgs_);    \
     } while(0)
 
-
+//! Assert all of the front context processing including typechecking is done
+#define ck_assert_front_ctx_process(driver_)    \
+    do {                                        \
+        testsupport_typecheck_prepare(driver_); \
+        ck_assert_typecheck_ok(driver_);        \
+    } while(0)
 
 #endif
