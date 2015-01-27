@@ -26,23 +26,30 @@ void setup_analyzer_tests();
 void setup_analyzer_tests_with_filelog();
 void teardown_analyzer_tests();
 
-#define testsupport_scan_and_parse(driver_, msg_)                       \
+#define testsupport_show_front_errors(driver_, msg_)                    \
     do {                                                                \
-        ck_assert(lexer_scan((driver_)->front.lexer));                  \
+        struct RFstringx *tmp_ = front_testdriver_geterrors(driver_);   \
+        if (tmp_) {                                                     \
+            ck_abort_msg(msg_ " with errors:\n"RF_STR_PF_FMT,           \
+                         RF_STR_PF_ARG(tmp_));                          \
+        } else {                                                        \
+            ck_abort_msg(msg_" with no specific errors");               \
+        }                                                               \
+    } while(0)
+
+#define testsupport_scan_and_parse(driver_)                             \
+    do {                                                                \
+        if (!(lexer_scan((driver_)->front.lexer))) {                    \
+            testsupport_show_front_errors(driver_, "Scanning failed");  \
+        }                                                               \
         if (!(parser_process_file((driver_)->front.parser))) {          \
-            struct RFstringx *tmp_ = front_testdriver_geterrors(driver_); \
-            if (tmp_) {                                                 \
-                ck_abort_msg(msg_" -- at parsing with errors:\n"RF_STR_PF_FMT, \
-                             RF_STR_PF_ARG(tmp_));                      \
-            } else {                                                    \
-                ck_abort_msg(msg_" -- at parsing with no parser errors"); \
-            }                                                           \
+            testsupport_show_front_errors(driver_, "Parsing failed");   \
         }                                                               \
     } while (0)
 
-#define testsupport_analyzer_prepare(driver_, msg_)                     \
+#define testsupport_analyzer_prepare(driver_)                           \
     do {                                                                \
-        testsupport_scan_and_parse(driver_, msg_);                      \
+        testsupport_scan_and_parse(driver_);                            \
         (driver_)->front.analyzer->root = parser_yield_ast_root((driver_)->front.parser); \
     } while(0)
 
@@ -89,11 +96,11 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
 
 /* -- general analyzer/front context of the compiler support*/
 
-#define ck_assert_analyzer_errors(info_, expected_arr_)					\
-    ck_assert_analyzer_errors_impl(                                       \
-        info_,                                                          \
-        expected_arr_,                                                  \
-        sizeof(expected_arr_)/sizeof(struct info_msg),                  \
+#define ck_assert_analyzer_errors(info_, expected_arr_) \
+    ck_assert_analyzer_errors_impl(                     \
+        info_,                                          \
+        expected_arr_,                                  \
+        sizeof(expected_arr_)/sizeof(struct info_msg),  \
         __FILE__, __LINE__)
 bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
                                     struct info_msg *errors,
@@ -106,22 +113,15 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 //! Assert all of the front context processing including typechecking is done
 #define ck_assert_typecheck_ok(d_)                                      \
     do {                                                                \
-        testsupport_scan_and_parse(d_, "Scanning and parsing failed");  \
-        if (!analyzer_analyze_file((d_)->front.analyzer, (d_)->front.parser)) {      \
-            struct RFstringx *tmp_ = front_testdriver_geterrors(d_);    \
-            if (tmp_) {                                                 \
-                ck_abort_msg("Typecheck failed -- with analyzer "       \
-                             "errors\n"RF_STR_PF_FMT,                   \
-                             RF_STR_PF_ARG(tmp_));                      \
-            } else {                                                    \
-                ck_abort_msg("Typecheck failed -- with no analyzer errors"); \
-            }                                                           \
+        testsupport_scan_and_parse(d_);                                 \
+        if (!analyzer_analyze_file((d_)->front.analyzer, (d_)->front.parser)) { \
+            testsupport_show_front_errors(d_, "Typechecking failed");   \
         }                                                               \
     } while(0)
 
 #define ck_assert_typecheck_with_messages(d_, success_, expected_msgs_) \
     do {                                                                \
-        testsupport_scan_and_parse(d_, "Scanning and parsing failed");  \
+        testsupport_scan_and_parse(d_);                                 \
         ck_assert_msg(success_ == analyzer_analyze_file((d_)->front.analyzer, \
                                                         (d_)->front.parser), \
                       "Unexpected typecheck result");                   \

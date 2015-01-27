@@ -317,7 +317,7 @@ START_TEST(test_block_symbol_table) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
+    testsupport_analyzer_prepare(d);
     ck_assert(analyzer_first_pass(d->front.analyzer));
 
     struct type *ti64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
@@ -357,7 +357,7 @@ START_TEST(test_fndecl_symbol_table) {
 
 
 
-    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
+    testsupport_analyzer_prepare(d);
     ck_assert(analyzer_first_pass(d->front.analyzer));
 
     struct ast_node *fnimpl = ast_node_get_child(d->front.analyzer->root, 0);
@@ -398,7 +398,7 @@ START_TEST(test_typedecl_symbol_table) {
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
 
-    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
+    testsupport_analyzer_prepare(d);
     ck_assert(analyzer_first_pass(d->front.analyzer));
 
     struct ast_node *td = ast_node_get_child(d->front.analyzer->root, 0);
@@ -441,7 +441,7 @@ START_TEST(test_multiple_level_symbol_tables) {
     struct type *ti8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
 
-    testsupport_analyzer_prepare(d, "Preparing for the analyzer phase.");
+    testsupport_analyzer_prepare(d);
     ck_assert(analyzer_first_pass(d->front.analyzer));
 
     struct ast_node *root = d->front.analyzer->root;
