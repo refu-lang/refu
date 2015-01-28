@@ -30,9 +30,10 @@ START_TEST (test_type_to_str) {
                                                                      t_leaf_f64);
 
     RFS_buffer_push();
-    ck_assert_rf_str_eq_cstr(type_str(t_u32), "u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32), "foo:u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_prod_1), "foo:u32,boo:f64");
+    ck_assert_rf_str_eq_cstr(type_str(t_u32, true), "u32");
+    ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32, true), "foo:u32");
+    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, true), "foo:u32,boo:f64");
+    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, false), "u32,f64");
     RFS_buffer_pop();
 } END_TEST
 

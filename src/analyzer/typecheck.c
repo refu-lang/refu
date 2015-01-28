@@ -43,8 +43,8 @@ static bool typecheck_equal_or_convertible(struct ast_node *n,
                               RF_STR_PF_FMT" from a signed to an unsigned type."
                               "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                               ast_binaryop_operation_name_str(operation),
-                              RF_STR_PF_ARG(type_str(tright)),
-                              RF_STR_PF_ARG(type_str(tleft)));
+                              RF_STR_PF_ARG(type_str(tright, false)),
+                              RF_STR_PF_ARG(type_str(tleft, false)));
             }
 
             if (RF_BITFLAG_ON(cmp_ctx.conversion, LARGER_TO_SMALLER)) {
@@ -52,8 +52,8 @@ static bool typecheck_equal_or_convertible(struct ast_node *n,
                               RF_STR_PF_FMT" from a larger to a smaller elementary type."
                               "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                               ast_binaryop_operation_name_str(operation),
-                              RF_STR_PF_ARG(type_str(tright)),
-                              RF_STR_PF_ARG(type_str(tleft)));
+                              RF_STR_PF_ARG(type_str(tright, false)),
+                              RF_STR_PF_ARG(type_str(tleft, false)));
             }
         }
         ret = true;
@@ -99,8 +99,8 @@ static enum ast_traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
         if (!operator_applicable_cb(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                         error_intro, RF_STR_PF_ARG(type_str(tright)),
-                         error_conj, RF_STR_PF_ARG(type_str(tleft)));
+                         error_intro, RF_STR_PF_ARG(type_str(tright, false)),
+                         error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
             goto end;
         }
     }
@@ -135,8 +135,8 @@ static enum ast_traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node
         if (!operator_applicable_cb(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                         error_intro, RF_STR_PF_ARG(type_str(tright)),
-                         error_conj, RF_STR_PF_ARG(type_str(tleft)));
+                         error_intro, RF_STR_PF_ARG(type_str(tright, false)),
+                         error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
             goto end;
         }
     }
@@ -236,8 +236,8 @@ static enum ast_traversal_cb_res typecheck_assignment(struct ast_node *n,
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                         RF_STR_PF_ARG(type_str(tright)),
-                         RF_STR_PF_ARG(type_str(tleft)));
+                         RF_STR_PF_ARG(type_str(tright, false)),
+                         RF_STR_PF_ARG(type_str(tleft, false)));
             ret = AST_TRAVERSAL_ERROR;
             goto end;
         }
@@ -307,8 +307,8 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
                      "\""RF_STR_PF_FMT"\" which does not match the expected "
                      "type of \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(fn_name),
-                     RF_STR_PF_ARG(type_str(fn_found_args_type)),
-                     RF_STR_PF_ARG(type_str(fn_declared_args_type)));
+                     RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
+                     RF_STR_PF_ARG(type_str(fn_declared_args_type, false)));
         RFS_buffer_pop();
         ret = AST_TRAVERSAL_ERROR;
     }
@@ -348,8 +348,8 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement type \""RF_STR_PF_FMT"\" does not match "
                      "the expected return type of \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(type_str(found_ret_type)),
-                     RF_STR_PF_ARG(type_str(fn_ret_type)));
+                     RF_STR_PF_ARG(type_str(found_ret_type, false)),
+                     RF_STR_PF_ARG(type_str(fn_ret_type, false)));
         RFS_buffer_pop();
         ret = AST_TRAVERSAL_ERROR;
     }

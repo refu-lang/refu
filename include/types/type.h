@@ -83,7 +83,12 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
 
 /**
  * Compare two types and see if they are equal or if one can be promoted to
- * the other
+ * the other.
+ * @warning For many comparison reasons type position does matter. So you may
+ *          get different results if you do type_equals(A,B) and type_equals(B,A)
+ *          Such reasons include assignment where for example u64 = u16 is ok but
+ *          u16 = u64 is not allowed.
+ *
  * @param t1        Type 1 for comparison
  * @param t2        Type 2 for comparison
  * @param ctx       Type comparison context passed by the user of the function.
@@ -126,11 +131,14 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
  * to remember the temporary string buffer position and after it you need to
  * pop it with @ref RFS_buffer_pop().
  *
- * @param t             The type whose string representation to get
- * @return              Returns a pointer to the the string representation.
- *                      If there is an error returns NULL.
+ * @param t                 The type whose string representation to get
+ * @param print_leaf_id     If @c true will also print the identifier of a type
+ *                          leaf such as: "age:u32, name:string" instead of
+ *                          just "u32, string"
+ * @return                  Returns a pointer to the the string representation.
+ *                          If there is an error returns NULL.
  */
-const struct RFstring *type_str(const struct type *t);
+const struct RFstring *type_str(const struct type *t, bool print_leaf_id);
 
 /* -- type traversal functions -- */
 

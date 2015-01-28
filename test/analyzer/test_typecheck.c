@@ -207,7 +207,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"u32,string\" which does not match the expected type of "
-            "\"name:string,age:u16\"",
+            "\"string,u16\"",
             6, 0, 6, 24),
     };
 
@@ -314,6 +314,36 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
     ck_assert_typecheck_with_messages(d, false, messages);
 } END_TEST
 
+START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, age:u32}"
+        "fn do_something(a:person) -> string\n"
+        "{\n"
+        "return \"something\""
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, age:u32}"
+        "fn do_something(a:person, b:u64) -> string\n"
+        "{\n"
+        "return \"something\""
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -365,12 +395,20 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 
+    TCase *t_custom_types = tcase_create("analyzer_typecheck_custom_types");
+    tcase_add_checked_fixture(t_custom_types,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_custom_types, test_typecheck_valid_custom_type_and_fncall1);
+    tcase_add_test(t_custom_types, test_typecheck_valid_custom_type_and_fncall2);
+
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
     suite_add_tcase(s, t_bop_val);
     suite_add_tcase(s, t_vardecl_val);
     suite_add_tcase(s, t_func_val);
     suite_add_tcase(s, t_func_inv);
+    suite_add_tcase(s, t_custom_types);
     return s;
 }
 

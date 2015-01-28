@@ -267,6 +267,11 @@ static bool type_init_from_fndecl(struct type *t,
 
     // set argument type (left part of the operand)
     if (args) {
+        // TODO: There is a problem here. if the argument of a function is a single
+        //       custom type for example fn foo(a:person), then this will return the
+        //       type that describes person. Then later we pass it to
+        //       type_function_add_args_to_st() and it appears as if the function has
+        //       the type description of person as arguments. Fix.
         arg_type = type_lookup_or_create(args, a, st,
                                          ast_fndecl_genrdecl_get(n));
         if (!arg_type) {
@@ -366,7 +371,7 @@ static inline enum type_initial_check_result type_initial_check(const struct typ
             ret = TYPES_ARE_EQUAL;
         }
     } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
-        if (type_equals(t2, t1->leaf.type, ctx)) {
+        if (type_equals(t1->leaf.type, t2, ctx)) {
             ret = TYPES_ARE_EQUAL;
         }
     }
@@ -531,19 +536,24 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
-const struct RFstring *type_str(const struct type *t)
+const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
 {
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         return type_elementary_get_str(t->elementary.etype);
     case TYPE_CATEGORY_OPERATOR:
         return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                    RF_STR_PF_ARG(type_str(t->operator.left)),
+                    RF_STR_PF_ARG(type_str(t->operator.left, print_leaf_id)),
                     RF_STR_PF_ARG(type_op_str(t->operator.type)),
-                    RF_STR_PF_ARG(type_str(t->operator.right)));
+                    RF_STR_PF_ARG(type_str(t->operator.right, print_leaf_id)));
     case TYPE_CATEGORY_LEAF:
+        if (print_leaf_id) {
         return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
-                    RF_STR_PF_ARG(type_str(t->leaf.type)));
+                    RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
+        } else {
+            return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
+        }
+
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
         break;

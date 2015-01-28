@@ -93,12 +93,10 @@ struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
     }
 
     if (left) {
-        ast_node_add_child(ret, left);
-        ret->typedesc.left = left;
+        ast_node_register_child(ret, left, typedesc.left);
     }
     if (right) {
-        ast_node_add_child(ret, right);
-        ret->typedesc.right = right;
+        ast_node_register_child(ret, right, typedesc.right);
     }
 
     ret->typedesc.type = NULL;
@@ -138,11 +136,9 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
         RF_ERRNOMEM();
         return NULL;
     }
-
-    ast_node_add_child(ret, name);
-    ret->typedecl.name = name;
-    ast_node_add_child(ret, desc);
-    ret->typedecl.desc = desc;
+    
+    ast_node_register_child(ret, name, typedecl.name);
+    ast_node_register_child(ret, desc, typedecl.desc);
     return ret;
 }
 
