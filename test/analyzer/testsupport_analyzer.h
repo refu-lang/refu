@@ -88,6 +88,9 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
                                                        struct type *left,
                                                        struct type *right);
 
+struct type *testsupport_analyzer_type_create_defined(const struct RFstring *name,
+                                                      struct type *type);
+
 struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
                                                    struct type *type);
 

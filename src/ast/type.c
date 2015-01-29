@@ -136,7 +136,7 @@ struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
         RF_ERRNOMEM();
         return NULL;
     }
-    
+
     ast_node_register_child(ret, name, typedecl.name);
     ast_node_register_child(ret, desc, typedecl.desc);
     return ret;

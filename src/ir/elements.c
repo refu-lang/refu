@@ -48,6 +48,10 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
             darray_push(type->subtypes, new_type);
         }
         break;
+    case TYPE_CATEGORY_DEFINED:
+        //TODO
+        RF_ASSERT(false, "Not implemented yet");
+        break;
     case TYPE_CATEGORY_OPERATOR:
         // TODO: make it work with sum types too
         if (input->operator.type != TYPEOP_PRODUCT) {

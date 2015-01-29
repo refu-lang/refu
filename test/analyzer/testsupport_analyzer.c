@@ -92,6 +92,23 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
     return t;
 }
 
+struct type *testsupport_analyzer_type_create_defined(const struct RFstring *name,
+                                                      struct type *type)
+{
+    struct front_testdriver *fdriver = get_front_testdriver();
+    struct analyzer_testdriver *adriver = get_analyzer_testdriver();
+    struct type *t;
+    t = type_alloc(fdriver->front.analyzer);
+    ck_assert_msg(t, "Failed to allocate type");
+
+    t->category = TYPE_CATEGORY_DEFINED;
+    t->defined.name = name;
+    t->defined.type = type;
+
+    darray_append(adriver->types, t);
+    return t;
+}
+
 struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
                                                    struct type *type)
 {

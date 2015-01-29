@@ -25,15 +25,28 @@ START_TEST (test_type_to_str) {
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_boo, t_f64);
 
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    static const struct RFstring id_goo =  RF_STRING_STATIC_INIT("goo");
+    struct type *t_leaf_string = testsupport_analyzer_type_create_leaf(&id_goo, t_string);
+
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                      t_leaf_u32,
                                                                      t_leaf_f64);
+
+    struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                     t_leaf_f64,
+                                                                     t_leaf_string);
+
+    static const struct RFstring id_person =  RF_STRING_STATIC_INIT("person");
+    struct type *t_defined_1 = testsupport_analyzer_type_create_defined(&id_person,
+                                                                       t_sum_1);
 
     RFS_buffer_push();
     ck_assert_rf_str_eq_cstr(type_str(t_u32, true), "u32");
     ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32, true), "foo:u32");
     ck_assert_rf_str_eq_cstr(type_str(t_prod_1, true), "foo:u32,boo:f64");
     ck_assert_rf_str_eq_cstr(type_str(t_prod_1, false), "u32,f64");
+    ck_assert_rf_str_eq_cstr(type_str(t_defined_1, false), "person");
     RFS_buffer_pop();
 } END_TEST
 

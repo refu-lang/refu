@@ -45,18 +45,28 @@ struct type *type_operator_create(struct ast_node *n,
                                   struct ast_node *genrdecl);
 
 /**
- * Attempts to retrieve the type for @c n and if it does not exist it creates it
+ * Attempts to retrieve the type for ast node @c n and if it does not exist
+ * it creates it.
+ *
+ * @note: If @c n is an ast description of a single type_leaf say a:f64 this is
+ *        the kind of type this should return
+ *
  * @param n            The node whose type to retrieve/create
  * @param a            The analyzer instance for which to do it
  * @param st           The symbol table to check for the type
  * @param genrdecl     An optional generic declaration node that describes @c n.
  *                     Can be NULL.
+ * @param make_leaf    If true and @c n is a type description of a single
+ *                     type_leaf say a:f64 then this will return a type leaf.
+ *                     If false then this will just return the right part of the
+ *                     description
  * @return             Return either the type of @c n or NULL if there was an error
  */
 struct type *type_lookup_or_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
-                                   struct ast_node *genrdecl);
+                                   struct ast_node *genrdecl,
+                                   bool make_leaf);
 
 /**
  * Applies a type operator to 2 types and returns the result
@@ -139,6 +149,14 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
  *                          If there is an error returns NULL.
  */
 const struct RFstring *type_str(const struct type *t, bool print_leaf_id);
+
+/**
+ * Gets a string representation of a type we know is a user defined type
+ *
+ * In contrast to @ref type_str() this provides details as to the description
+ * of the type too.
+ */
+const struct RFstring *type_defined_to_str(const struct type *t);
 
 /* -- type traversal functions -- */
 

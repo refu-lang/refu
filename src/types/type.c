@@ -93,6 +93,25 @@ static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
     return true;
 }
 
+static struct type *type_leaf_create(struct ast_node *typedesc,
+                                     struct analyzer *a, struct symbol_table *st,
+                                     struct ast_node *genrdecl)
+{
+    struct type *ret;
+    ret = type_alloc(a);
+    if (!ret) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+
+    ret->category = TYPE_CATEGORY_LEAF;
+    if (!type_leaf_init(&ret->leaf, typedesc, a, st, genrdecl)) {
+        type_free(ret, a);
+        return NULL;
+    }
+    return ret;
+}
+
 static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
                                     struct analyzer *a, struct symbol_table *st,
                                     struct ast_node *genrdecl)
@@ -154,7 +173,8 @@ static bool type_operator_init(struct type_operator *t, struct ast_node *n,
 struct type *type_lookup_or_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
-                                   struct ast_node *genrdecl)
+                                   struct ast_node *genrdecl,
+                                   bool make_leaf)
 {
     switch (n->type) {
     case AST_XIDENTIFIER:
@@ -164,7 +184,12 @@ struct type *type_lookup_or_create(struct ast_node *n,
         // if it's a simple type description (e.g. only identifier COLON xidentifier
         if (ast_typedesc_left(n)->type == AST_IDENTIFIER &&
             ast_typedesc_right(n)->type == AST_XIDENTIFIER) {
-            return type_lookup_xidentifier(ast_typedesc_right(n), a, st, genrdecl);
+
+            if (make_leaf) {
+                return type_leaf_create(n, a, st, genrdecl);
+            } else {
+                return type_lookup_xidentifier(ast_typedesc_right(n), a, st, genrdecl);
+            }
         }
         // else fall through case, same as type operator
     case AST_TYPE_OPERATOR:
@@ -230,13 +255,26 @@ struct type *type_create_from_typedecl(struct ast_node *n,
                                        struct analyzer *a,
                                        struct symbol_table *st)
 {
+    struct type *t;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
+    t = type_alloc(a);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    t->category = TYPE_CATEGORY_DEFINED;
+    t->defined.name = ast_typedecl_name_str(n);
+    t->defined.type = type_create_from_typedesc(ast_typedecl_typedesc_get(n),
+                                                a,
+                                                st,
+                                                ast_typedecl_genrdecl_get(n));
+    if (!t->defined.type) {
+        RF_ERROR("Failed to create type for typedecl's typedescription");
+        type_free(t, a);
+        t = NULL;
+    }
 
-    return type_create_from_typedesc(ast_typedecl_typedesc_get(n),
-                                     a,
-                                     st,
-                                     ast_typedecl_genrdecl_get(n));
-
+    return t;
 }
 
 struct type *type_create_from_vardecl(struct ast_node *n,
@@ -245,8 +283,7 @@ struct type *type_create_from_vardecl(struct ast_node *n,
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(n, AST_VARIABLE_DECLARATION);
-
-    t = type_lookup_or_create(ast_vardecl_desc_get(n), a, st, NULL);
+    t = type_lookup_or_create(ast_vardecl_desc_get(n), a, st, NULL, false);
     if (!t) {
         return NULL;
     }
@@ -273,7 +310,7 @@ static bool type_init_from_fndecl(struct type *t,
         //       type_function_add_args_to_st() and it appears as if the function has
         //       the type description of person as arguments. Fix.
         arg_type = type_lookup_or_create(args, a, st,
-                                         ast_fndecl_genrdecl_get(n));
+                                         ast_fndecl_genrdecl_get(n), true);
         if (!arg_type) {
             // TODO: Free argument_type if created
             return false;
@@ -286,7 +323,7 @@ static bool type_init_from_fndecl(struct type *t,
 
     if (ret) {
         ret_type = type_lookup_or_create(ret, a, st,
-                                         ast_fndecl_genrdecl_get(n));
+                                         ast_fndecl_genrdecl_get(n), true);
         if (!ret_type) {
             // TODO: Free return_type if created
             return false;
@@ -352,11 +389,17 @@ enum type_initial_check_result {
     TYPES_CHECK_CAN_CONTINUE,
 };
 /**
- *  Performs the first step of type comparison with 3 possible outcomes
+ *  Performs the first step of type comparison making sure that after its call
+ *  one of 3 things happen:
+ *
+ *  * @c TYPES_ARE_NOT_EQUAL:          The comparison fails immediately
+ *  * @c TYPES_ARE_EQUAL:              The comparison succeeds
+ *  * @c TYPES_CHECK_CAN_CONTINUE:     Made sure compared types are of same category
+ *                                     and type equality comparison can proceed.
  */
-static inline enum type_initial_check_result type_initial_check(const struct type *t1,
-                                                                const struct type *t2,
-                                                                struct type_comparison_ctx *ctx)
+static inline enum type_initial_check_result type_category_check(const struct type *t1,
+                                                                 const struct type *t2,
+                                                                 struct type_comparison_ctx *ctx)
 {
     enum type_initial_check_result ret = TYPES_ARE_NOT_EQUAL;
 
@@ -364,14 +407,22 @@ static inline enum type_initial_check_result type_initial_check(const struct typ
         ret = TYPES_CHECK_CAN_CONTINUE;
     }
 
-    // TODO: This should be also changed to include user defined types and not only elementary ones
     // A type should be equal to a leaf of the same type
     if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
+        // TODO: Maybe here and in next if try with type_same_categories_equals()
         if (type_equals(t1, t2->leaf.type, ctx)) {
             ret = TYPES_ARE_EQUAL;
         }
     } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
         if (type_equals(t1->leaf.type, t2, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t1->category == TYPE_CATEGORY_DEFINED) {
+        if (type_equals(t1->defined.type, t2, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t2->category == TYPE_CATEGORY_DEFINED) {
+        if (type_equals(t1, t2->defined.type, ctx)) {
             ret = TYPES_ARE_EQUAL;
         }
     }
@@ -402,6 +453,33 @@ static bool type_operator_equals(const struct type_operator *t1,
            type_equals(t1->right, t2->right, ctx);
 }
 
+static bool type_same_categories_equals(const struct type* t1,
+                                        const struct type *t2,
+                                        struct type_comparison_ctx *ctx)
+{
+    RF_ASSERT(t1->category == t2->category, "type_same_categories_equals() called "
+              "with types of different categories");
+    switch (t1->category) {
+    case TYPE_CATEGORY_OPERATOR:
+        return type_operator_equals(&t1->operator, &t2->operator, ctx);
+    case TYPE_CATEGORY_ELEMENTARY:
+        return type_elementary_equals(&t1->elementary, &t2->elementary, ctx);
+    case TYPE_CATEGORY_LEAF:
+            return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
+    case TYPE_CATEGORY_DEFINED:
+        //TODO
+        RF_ASSERT(false, "Not yet implemented");
+    case TYPE_CATEGORY_GENERIC:
+        //TODO
+        RF_ASSERT(false, "Not yet implemented");
+        break;
+    default:
+        RF_ASSERT(false, "Illegal type category");
+        break;
+    }
+    return false;
+}
+
 bool type_equals(const struct type* t1, const struct type *t2,
                  struct type_comparison_ctx *ctx)
 {
@@ -410,7 +488,7 @@ bool type_equals(const struct type* t1, const struct type *t2,
         return true;
     }
 
-    switch (type_initial_check(t1, t2, ctx)) {
+    switch (type_category_check(t1, t2, ctx)) {
     case TYPES_ARE_EQUAL:
         return true;
     case TYPES_ARE_NOT_EQUAL:
@@ -419,20 +497,8 @@ bool type_equals(const struct type* t1, const struct type *t2,
         break;
     }
 
-    switch (t1->category) {
-    case TYPE_CATEGORY_OPERATOR:
-        return type_operator_equals(&t1->operator, &t2->operator, ctx);
-    case TYPE_CATEGORY_ELEMENTARY:
-        return type_elementary_equals(&t1->elementary, &t2->elementary, ctx);
-    case TYPE_CATEGORY_LEAF:
-            return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
-    case TYPE_CATEGORY_GENERIC:
-        //TODO
-        RF_ASSERT(false, "Not yet implemented");
-        break;
-    }
-
-    return false;
+    // from here and on we must have same categories of types
+    return type_same_categories_equals(t1, t2, ctx);
 }
 
 bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
@@ -536,6 +602,14 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
+const struct RFstring *type_defined_to_str(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Non user defined type provided");
+    return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT "}",
+                RF_STR_PF_ARG(t->defined.name),
+                RF_STR_PF_ARG(type_str(t->defined.type, true)));
+}
+
 const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
 {
     switch(t->category) {
@@ -553,6 +627,8 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
         } else {
             return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
         }
+    case TYPE_CATEGORY_DEFINED:
+        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
 
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
@@ -570,6 +646,12 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
         // Do nothing
+        break;
+
+    case TYPE_CATEGORY_DEFINED:
+        if (!type_for_each_leaf(t->defined.type, cb, user_arg)) {
+            return false;
+        }
         break;
 
     case TYPE_CATEGORY_OPERATOR:
