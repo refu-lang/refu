@@ -99,8 +99,6 @@ struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
         ast_node_register_child(ret, right, typedesc.right);
     }
 
-    ret->typedesc.type = NULL;
-
     return ret;
 }
 
@@ -118,8 +116,6 @@ void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r)
 
 i_INLINE_INS struct ast_node *ast_typedesc_left(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_typedesc_right(struct ast_node *n);
-i_INLINE_INS struct type *ast_typedesc_type_get(struct ast_node *n);
-i_INLINE_INS void ast_typedesc_type_set(struct ast_node *n, struct type *t);
 
 /* -- type declaration functions -- */
 struct ast_node *ast_typedecl_create(struct inplocation_mark *start,

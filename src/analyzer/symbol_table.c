@@ -47,7 +47,6 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         break;
     case AST_TYPE_DESCRIPTION:
         rec->data = type_create_from_typedesc(node, analyzer, st, NULL);
-        ast_typedesc_type_set(node, rec->data);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "

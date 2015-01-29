@@ -99,19 +99,6 @@ i_INLINE_DECL struct ast_node *ast_typedesc_right(struct ast_node *n)
     return n->typedesc.right;
 }
 
-i_INLINE_DECL struct type *ast_typedesc_type_get(struct ast_node *n)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
-    return n->typedesc.type;
-}
-
-i_INLINE_DECL void ast_typedesc_type_set(struct ast_node *n, struct type *t)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
-    n->typedesc.type = t;
-}
-
-
 /**
  * Check that the type description is regarding a simple identifier.
  */
