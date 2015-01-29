@@ -283,6 +283,7 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
     const struct type *fn_declared_args_type;
     const struct type *fn_found_args_type;
     struct type_comparison_ctx cmp_ctx;
+    struct ast_node *fn_call_args = ast_fncall_args(n);
     enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
 
     // check for existence of function
@@ -298,7 +299,8 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
 
     //check that the types of its arguments do indeed match
     fn_declared_args_type = type_function_get_argtype(fn_type);
-    fn_found_args_type = ast_expression_get_type(ast_fncall_args(n));
+    fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
+                                        : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
     if (!type_equals(fn_declared_args_type, fn_found_args_type, &cmp_ctx)) {
         RFS_buffer_push();

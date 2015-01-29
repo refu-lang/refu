@@ -169,7 +169,39 @@ START_TEST(test_typecheck_variable_declarations) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
-START_TEST(test_typecheck_valid_function_call) {
+START_TEST(test_typecheck_valid_function_call0) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something() -> u32\n"
+        "{\n"
+        "return 42\n"
+        "}\n"
+        "{\n"
+        "a:u64 = do_something()\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_valid_function_call1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(age:u16) -> f32\n"
+        "{\n"
+        "return age + 0.14\n"
+        "}\n"
+        "{\n"
+        "do_something(13)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_valid_function_call2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16) -> f32\n"
         "{\n"
@@ -382,7 +414,9 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_checked_fixture(t_func_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(t_func_val, test_typecheck_valid_function_call);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call0);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call1);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call2);
     tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
 
 
