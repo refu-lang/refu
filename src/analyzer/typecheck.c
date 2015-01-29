@@ -377,7 +377,7 @@ static enum ast_traversal_cb_res typecheck_binary_op(struct ast_node *n,
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
     enum binaryop_type bop_type = ast_binaryop_op(n);
-    //TODO: more binary operators
+
     switch (bop_type) {
     case BINARYOP_ASSIGN:
         return typecheck_assignment(n, left, right, ctx);

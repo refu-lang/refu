@@ -207,8 +207,6 @@ START_TEST(test_acc_block_2) {
 }END_TEST
 
 START_TEST(test_acc_block_value_without_return) {
-    //TODO: This actually tests that the value is NULL. Should not be like that
-    // but remains to be implemented
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(

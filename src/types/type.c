@@ -153,9 +153,8 @@ static bool type_operator_init(struct type_operator *t, struct ast_node *n,
     struct type *right;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
 
-    // TODO: Figure out why type_lookup_or_create() fails the tests if used here
     t->type = ast_typeop_op(n);
-    left = type_create(ast_typeop_left(n), a, st, genrdecl);
+    left = type_lookup_or_create(ast_typeop_left(n), a, st, genrdecl, true);
     if (!left) {
         return false;
     }
@@ -304,15 +303,9 @@ static bool type_init_from_fndecl(struct type *t,
 
     // set argument type (left part of the operand)
     if (args) {
-        // TODO: There is a problem here. if the argument of a function is a single
-        //       custom type for example fn foo(a:person), then this will return the
-        //       type that describes person. Then later we pass it to
-        //       type_function_add_args_to_st() and it appears as if the function has
-        //       the type description of person as arguments. Fix.
         arg_type = type_lookup_or_create(args, a, st,
                                          ast_fndecl_genrdecl_get(n), true);
         if (!arg_type) {
-            // TODO: Free argument_type if created
             return false;
         }
         // also add the function's arguments to its symbol table
@@ -325,13 +318,13 @@ static bool type_init_from_fndecl(struct type *t,
         ret_type = type_lookup_or_create(ret, a, st,
                                          ast_fndecl_genrdecl_get(n), true);
         if (!ret_type) {
-            // TODO: Free return_type if created
             return false;
         }
     } else {
         ret_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     }
     type_function_init(t, arg_type, ret_type);
+
     return true;
 }
 
@@ -382,54 +375,6 @@ struct type *type_operator_create(struct ast_node *n,
 i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                            enum comparison_reason reason);
 
-//! Possible resuls of @see type_initial_check()
-enum type_initial_check_result {
-    TYPES_ARE_NOT_EQUAL,
-    TYPES_ARE_EQUAL,
-    TYPES_CHECK_CAN_CONTINUE,
-};
-/**
- *  Performs the first step of type comparison making sure that after its call
- *  one of 3 things happen:
- *
- *  * @c TYPES_ARE_NOT_EQUAL:          The comparison fails immediately
- *  * @c TYPES_ARE_EQUAL:              The comparison succeeds
- *  * @c TYPES_CHECK_CAN_CONTINUE:     Made sure compared types are of same category
- *                                     and type equality comparison can proceed.
- */
-static inline enum type_initial_check_result type_category_check(const struct type *t1,
-                                                                 const struct type *t2,
-                                                                 struct type_comparison_ctx *ctx)
-{
-    enum type_initial_check_result ret = TYPES_ARE_NOT_EQUAL;
-
-    if (t1->category == t2->category) {
-        ret = TYPES_CHECK_CAN_CONTINUE;
-    }
-
-    // A type should be equal to a leaf of the same type
-    if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
-        // TODO: Maybe here and in next if try with type_same_categories_equals()
-        if (type_equals(t1, t2->leaf.type, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
-        if (type_equals(t1->leaf.type, t2, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t1->category == TYPE_CATEGORY_DEFINED) {
-        if (type_equals(t1->defined.type, t2, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t2->category == TYPE_CATEGORY_DEFINED) {
-        if (type_equals(t1, t2->defined.type, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    }
-
-    return ret;
-}
-
 static inline bool type_leaf_equals(const struct type_leaf *t1,
                                     const struct type_leaf *t2,
                                     struct type_comparison_ctx *ctx)
@@ -478,6 +423,53 @@ static bool type_same_categories_equals(const struct type* t1,
         break;
     }
     return false;
+}
+
+//! Possible resuls of @see type_initial_check()
+enum type_initial_check_result {
+    TYPES_ARE_NOT_EQUAL,
+    TYPES_ARE_EQUAL,
+    TYPES_CHECK_CAN_CONTINUE,
+};
+/**
+ *  Performs the first step of type comparison making sure that after its call
+ *  one of 3 things happen:
+ *
+ *  * @c TYPES_ARE_NOT_EQUAL:          The comparison fails immediately
+ *  * @c TYPES_ARE_EQUAL:              The comparison succeeds
+ *  * @c TYPES_CHECK_CAN_CONTINUE:     Made sure compared types are of same category
+ *                                     and type equality comparison can proceed.
+ */
+static inline enum type_initial_check_result type_category_check(const struct type *t1,
+                                                                 const struct type *t2,
+                                                                 struct type_comparison_ctx *ctx)
+{
+    enum type_initial_check_result ret = TYPES_ARE_NOT_EQUAL;
+
+    if (t1->category == t2->category) {
+        ret = TYPES_CHECK_CAN_CONTINUE;
+    }
+
+    // A type should be equal to a leaf of the same type
+        if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
+    if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
+        if (type_same_categories_equals(t1->leaf.type, t2, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t1->category == TYPE_CATEGORY_DEFINED) {
+        if (type_equals(t1->defined.type, t2, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    } else if (t2->category == TYPE_CATEGORY_DEFINED) {
+        if (type_equals(t1, t2->defined.type, ctx)) {
+            ret = TYPES_ARE_EQUAL;
+        }
+    }
+
+    return ret;
 }
 
 bool type_equals(const struct type* t1, const struct type *t2,

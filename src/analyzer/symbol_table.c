@@ -116,7 +116,6 @@ struct symbol_table_record *symbol_table_record_create_from_type(
 void symbol_table_record_destroy(struct symbol_table_record *rec,
                                  struct symbol_table *st)
 {
-    //TODO: if needing to deinit anything create a XXX_deinit() function
     symbol_table_record_free(rec, st);
 }
 
