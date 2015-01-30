@@ -59,6 +59,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         "||\n"
         "return\n"
         "^\n"
+        ".\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -199,6 +200,11 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_OP_BITWISE_XOR,
             .location=LOC_INIT(f, 15, 0, 15, 0)
+        },
+        /* 17th line */
+        {
+            .type=TOKEN_OP_MEMBER_ACCESS,
+            .location=LOC_INIT(f, 16, 0, 16, 0)
         },
     };
     ck_assert(lexer_scan(lex));

@@ -387,9 +387,29 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     if (got->type != expect->type) {
         ck_astcheck_abort(
             filename, line,
-            "2 ast nodes have different type: Got \""RF_STR_PF_FMT"\" != "
-            "expected \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(ast_node_str(got)),
-            RF_STR_PF_ARG(ast_node_str(expect)));
+            "2 ast nodes have different type: Got \""RF_STR_PF_FMT"\" "
+            " at location "INPLOCATION_FMT2" != expected \""RF_STR_PF_FMT"\" at "
+            "location "INPLOCATION_FMT2,
+            RF_STR_PF_ARG(ast_node_str(got)),
+            INPLOCATION_ARG2(ifile, &got->location),
+            RF_STR_PF_ARG(ast_node_str(expect)),
+            INPLOCATION_ARG2(ifile, &expect->location)
+        );
+        return false;
+    }
+
+    if (got->type == AST_BINARY_OPERATOR &&
+        ast_binaryop_op(got) != ast_binaryop_op(expect)) {
+        ck_astcheck_abort(
+            filename, line,
+            "2 ast binary operator nodes have different type: Got \""RF_STR_PF_FMT"\" "
+            " at location "INPLOCATION_FMT2" != expected \""RF_STR_PF_FMT"\" at "
+            "location "INPLOCATION_FMT2,
+            RF_STR_PF_ARG(ast_binaryop_opstr(got)),
+            INPLOCATION_ARG2(ifile, &got->location),
+            RF_STR_PF_ARG(ast_binaryop_opstr(expect)),
+            INPLOCATION_ARG2(ifile, &expect->location)
+        );
         return false;
     }
 

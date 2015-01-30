@@ -12,7 +12,6 @@
 #include <ast/constant_num.h>
 #include <ast/generics.h>
 #include <ast/block.h>
-#include <ast/arrayref.h>
 #include <ast/operators.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
@@ -613,8 +612,8 @@ START_TEST(test_acc_fnimpl_2) {
                                        3, 2, 3, 2, integer, 3);
     testsupport_parser_constant_create(cnum3, file,
                                        3, 7, 3, 8, integer, 33);
-    testsupport_parser_node_create(arr, arrayref, file, 3, 0, 3, 3,
-                                   id9, cnum2);
+    testsupport_parser_node_create(arr, binaryop, file, 3, 0, 3, 3,
+                                   BINARYOP_ARRAY_REFERENCE, id9, cnum2);
     testsupport_parser_node_create(bop3, binaryop, file, 3, 0, 3, 8,
                                    BINARYOP_ASSIGN, arr, cnum3);
     ast_node_add_child(bnode, bop3);

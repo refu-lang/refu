@@ -11,7 +11,6 @@
 #include <ast/operators.h>
 #include <ast/generics.h>
 #include <ast/function.h>
-#include <ast/arrayref.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
 
@@ -298,8 +297,8 @@ START_TEST(test_acc_complex_binary_op_4) {
                                                                 0, 1, 0, 5);
     testsupport_parser_constant_create(cnum1, file,
                                        0, 7, 0, 8, integer, 56);
-    testsupport_parser_node_create(arr, arrayref, file, 0, 1, 0, 9,
-                                   id1, cnum1);
+    testsupport_parser_node_create(arr, binaryop, file, 0, 1, 0, 9,
+                                   BINARYOP_ARRAY_REFERENCE, id1, cnum1);
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(file,
                                                                     0, 13, 0, 15);
@@ -381,6 +380,92 @@ START_TEST(test_acc_operator_precedence_1) {
     ast_node_destroy(bop5);
 }END_TEST
 
+START_TEST(test_acc_operator_precedence_2) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a.foo[13]");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    // a.foo
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 0);
+    struct ast_node *id_foo = testsupport_parser_identifier_create(file,
+                                                                   0, 2, 0, 4);
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 0, 0, 4,
+                                   BINARYOP_MEMBER_ACCESS, id_a, id_foo);
+    // a.foo[13]
+    testsupport_parser_constant_create(cnum_13, file,
+                                       0, 6, 0, 7, integer, 13);
+    testsupport_parser_node_create(arr_ref, binaryop, file, 0, 0, 0, 8,
+                                   BINARYOP_ARRAY_REFERENCE, bop1, cnum_13);
+
+    ck_test_parse_as(n, expression, d, "binary operator", arr_ref);
+
+    ast_node_destroy(n);
+    ast_node_destroy(arr_ref);
+}END_TEST
+
+START_TEST(test_acc_operator_precedence_3) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+#if 0   // TODO: This test should go back to this state and find out why 10 is parsed as float
+        //       Also make more tests that replicate this illegal behaviour and confirm it's fixed
+        "boo(a.foo[13] - 10).member");
+#else
+        "boo(a.foo[13] - gc).member");
+#endif
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    // a.foo
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 4, 0, 4);
+    struct ast_node *id_foo = testsupport_parser_identifier_create(file,
+                                                                   0, 6, 0, 8);
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 4, 0, 8,
+                                   BINARYOP_MEMBER_ACCESS, id_a, id_foo);
+    // a.foo[13]
+    testsupport_parser_constant_create(cnum_13, file,
+                                       0, 10, 0, 11, integer, 13);
+    testsupport_parser_node_create(arr_ref, binaryop, file, 0, 4, 0, 12,
+                                   BINARYOP_ARRAY_REFERENCE, bop1, cnum_13);
+
+    // a.foo[13] - 10
+#if 0 // see above TODO
+    testsupport_parser_constant_create(cnum_10, file,
+                                       0, 16, 0, 17, integer, 10);
+#else
+    struct ast_node *cnum_10 = testsupport_parser_identifier_create(file,
+                                                                    0, 16, 0, 17);
+#endif
+    testsupport_parser_node_create(bop2, binaryop, file, 0, 4, 0, 17,
+                                   BINARYOP_SUB, arr_ref, cnum_10);
+
+    // boo(a.foo[13] - 10)
+    struct ast_node *id_boo = testsupport_parser_identifier_create(file,
+                                                                   0, 0, 0, 2);
+    testsupport_parser_node_create(fc, fncall, file, 0, 0, 0, 18,
+                                   id_boo,
+                                   bop2,
+                                   NULL);
+
+    // boo(a.foo[13] - 10).member
+    struct ast_node *id_member = testsupport_parser_identifier_create(file,
+                                                                      0, 20, 0, 25);
+    testsupport_parser_node_create(bop3, binaryop, file, 0, 0, 0, 25,
+                                   BINARYOP_MEMBER_ACCESS, fc, id_member);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop3);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop3);
+}END_TEST
+
 Suite *parser_operators_suite_create(void)
 {
     Suite *s = suite_create("parser_operators");
@@ -403,6 +488,8 @@ Suite *parser_operators_suite_create(void)
     TCase *op_predence = tcase_create("parser_operator_precedence");
     tcase_add_checked_fixture(op_predence, setup_front_tests, teardown_front_tests);
     tcase_add_test(op_predence, test_acc_operator_precedence_1);
+    tcase_add_test(op_predence, test_acc_operator_precedence_2);
+    tcase_add_test(op_predence, test_acc_operator_precedence_3);
 
     suite_add_tcase(s, sbop);
     suite_add_tcase(s, cbop);

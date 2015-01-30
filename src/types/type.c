@@ -451,8 +451,8 @@ static inline enum type_initial_check_result type_category_check(const struct ty
     }
 
     // A type should be equal to a leaf of the same type
-        if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
     if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
+        if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
             ret = TYPES_ARE_EQUAL;
         }
     } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {

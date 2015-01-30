@@ -11,10 +11,9 @@
 #include "type.h"
 #include "vardecl.h"
 #include "function.h"
-#include "arrayref.h"
 #include "ifexpr.h"
 
-#define MAX_LEVEL_OP_PRECEDENCE 12
+#define MAX_LEVEL_OP_PRECEDENCE 13
 
 static struct ast_node *parser_acc_expression_prime(
     struct parser *p,
@@ -58,14 +57,6 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         if (!n) {
             parser_synerr(p, token_get_end(tok), NULL,
                           "expected a variable declaration");
-            return NULL;
-        }
-        return n;
-    } else if (TOKENS_ARE_POSSIBLE_ARRAYREF(tok, tok2)) {
-        n = parser_acc_arrayref(p);
-        if (!n) {
-            parser_synerr(p, token_get_start(tok), NULL,
-                          "expected array reference");
             return NULL;
         }
         return n;
@@ -201,6 +192,12 @@ static inline bool check_operator_type(struct token *tok, int level)
         return (tok->type == TOKEN_OP_PLUS || tok->type == TOKEN_OP_MINUS);
     case 11: /* multiplicative operators */
         return (tok->type == TOKEN_OP_MULTI || tok->type == TOKEN_OP_DIV);
+    case 12: /* access operators */
+        return tok->type == TOKEN_OP_MEMBER_ACCESS || tok->type == TOKEN_SM_OSBRACE;
+    /* case 12: */
+    /*     return tok->type == TOKEN_SM_OSBRACE; */
+    /* case 13: */
+    /*     return tok->type == TOKEN_OP_MEMBER_ACCESS; */
     case MAX_LEVEL_OP_PRECEDENCE: /* no operators at the last level (expr_factor) */
         return false;
     }
@@ -264,14 +261,27 @@ static struct ast_node *parser_acc_expression_prime(
                       "Expected "EXPR_ELEMENT_START" after "
                       "\""RF_STR_PF_FMT"\"",
                       RF_STR_PF_ARG(tokentype_to_str(tok->type)));
-        ast_node_destroy(op);
         return NULL;
     }
     ast_binaryop_set_right(op, right_hand_side);
+    // special case here for array reference operator we need to consume the closing bracket
+    if (ast_binaryop_op(op) == BINARYOP_ARRAY_REFERENCE) {
+        tok = lexer_lookahead(p->lexer, 1);
+        if (tok->type != TOKEN_SM_CSBRACE) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "Expected ']' after "RF_STR_PF_FMT,
+                          RF_STR_PF_ARG(ast_node_get_name_str(right_hand_side)));
+            ast_node_destroy(op);
+            return NULL;
+        }
+        // consume ']'
+        lexer_next_token(p->lexer);
+        ast_node_set_end(op, token_get_end(tok));
+    }
 
     ret = parser_acc_expression_prime(p, op, level);
     if (parser_has_syntax_error(p)) {
-        // no need to free op, since it's freed inside expression' accepting
+        // no need to free op here, since it's freed inside expression' accepting
         return NULL;
     }
 

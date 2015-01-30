@@ -47,6 +47,8 @@ returnTOKEN_KW_RETURN
 |TOKEN_OP_TYPESUM
 ,TOKEN_OP_COMMA
 ->TOKEN_OP_IMPL
+# other binary operators
+.TOKEN_OP_MEMBER_ACCESS
 # boolean operators
 &&TOKEN_OP_LOGIC_AND
 ||TOKEN_OP_LOGIC_OR

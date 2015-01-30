@@ -49,6 +49,9 @@ enum token_type {
     TOKEN_OP_LOGIC_AND,
     TOKEN_OP_LOGIC_OR,
 
+    /* other binary operators (keep grouped with all binary operators) */
+    TOKEN_OP_MEMBER_ACCESS,
+
     /* bitwise binary operators (keep grouped with all binary operators) */
     TOKEN_OP_BITWISE_OR, // at least for now same as type sum operator, so this is ignored in the lexing stage
     TOKEN_OP_BITWISE_AND, // at least for now same as TOKEN_OP_AMPERSAND, so this is ignored in the lexing stage
@@ -73,7 +76,8 @@ enum token_type {
       (tok_)->type <= TOKEN_OP_BITWISE_XOR) ||  \
      (tok_)->type == TOKEN_OP_AMPERSAND ||      \
      (tok_)->type == TOKEN_OP_COMMA     ||      \
-     (tok_)->type == TOKEN_OP_TYPESUM)
+     (tok_)->type == TOKEN_OP_TYPESUM   ||      \
+     (tok_)->type == TOKEN_SM_OSBRACE)
 
 #define TOKEN_IS_UNARY_OP(tok_)                \
     ((tok_)->type >= TOKEN_OP_AMPERSAND &&     \

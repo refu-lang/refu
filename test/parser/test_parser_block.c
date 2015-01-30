@@ -12,7 +12,6 @@
 #include <ast/type.h>
 #include <ast/vardecl.h>
 #include <ast/string_literal.h>
-#include <ast/arrayref.h>
 #include <ast/constant_num.h>
 #include <ast/returnstmt.h>
 #include <lexer/lexer.h>
@@ -102,8 +101,8 @@ START_TEST(test_acc_block_no_braces_2) {
                                                                 0, 6, 0, 9);
     struct ast_node *id3 = testsupport_parser_identifier_create(file,
                                                                 0, 11, 0, 15);
-    testsupport_parser_node_create(arr, arrayref, file, 
-                                   0, 6, 0, 16, id2, id3);
+    testsupport_parser_node_create(arr, binaryop, file, 0, 6, 0, 16,
+                                   BINARYOP_ARRAY_REFERENCE, id2, id3);
 
     testsupport_parser_constant_create(cnum, file,
                                        0, 20, 0, 25, float, 92.324);
@@ -187,8 +186,8 @@ START_TEST(test_acc_block_2) {
                                                                 1, 21, 1, 23);
     testsupport_parser_constant_create(cnum1, file,
                                        1, 25, 1, 26, integer, 15);
-    testsupport_parser_node_create(arr, arrayref, file,
-                                   1, 21, 1, 27, id3, cnum1);
+    testsupport_parser_node_create(arr, binaryop, file, 1, 21, 1, 27,
+                                   BINARYOP_ARRAY_REFERENCE, id3, cnum1);
 
     testsupport_parser_node_create(bop1, binaryop, file, 1, 7, 1, 18,
                                    BINARYOP_COMMA,
