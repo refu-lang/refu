@@ -254,8 +254,8 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
 
 #define COND_WS(p_)                                               \
     ((p_) == ' ' || (p_) == '\t' || (p_) == '\n' || (p_) == '\r')
-static bool lexer_get_constant_intfloat(struct lexer *l, char *p,
-                                        char *lim, char **ret_p)
+static bool lexer_get_constant_int_or_float(struct lexer *l, char *p,
+                                            char *lim, char **ret_p)
 {
     char *sp = p;
     bool is_float = false;
@@ -265,7 +265,7 @@ static bool lexer_get_constant_intfloat(struct lexer *l, char *p,
     size_t len;
 
     while (p < lim) {
-        if (*(p+1) == '.') {
+        if (COND_NUMERIC(*p) && *(p+1) == '.') {
             is_float = true;
             p ++;
         } else if (COND_WS(*(p+1))) {
@@ -359,7 +359,7 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
                                        rf_string_to_uint_oct);
     }
 
-    return lexer_get_constant_intfloat(l, p, lim, ret_p);
+    return lexer_get_constant_int_or_float(l, p, lim, ret_p);
 }
 
 static bool lexer_get_string_literal(struct lexer *l, char *p,

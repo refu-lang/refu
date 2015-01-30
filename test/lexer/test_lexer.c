@@ -410,6 +410,85 @@ START_TEST(test_lexer_scan_string_literal_at_end) {
     check_lexer_tokens(lex, expected);
 } END_TEST
 
+START_TEST(test_lexer_scan_integer_with_tokens_in_between) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("10|&{23");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 10),
+        {
+            .type=TOKEN_OP_TYPESUM,
+            .location=LOC_INIT(front->file, 0, 2, 0, 2),
+        },
+        {
+            .type=TOKEN_OP_AMPERSAND,
+            .location=LOC_INIT(front->file, 0, 3, 0, 3),
+        },
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(front->file, 0, 4, 0, 4),
+        },
+        TESTLEX_INTEGER_INIT(d, 0, 5, 0, 6, 23),
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
+} END_TEST
+
+START_TEST(test_lexer_scan_float_with_tokens_in_between) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("5.3134|&{23");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        TESTLEX_FLOAT_INIT(d, 0, 0, 0, 5, 5.3134),
+        {
+            .type=TOKEN_OP_TYPESUM,
+            .location=LOC_INIT(front->file, 0, 6, 0, 6),
+        },
+        {
+            .type=TOKEN_OP_AMPERSAND,
+            .location=LOC_INIT(front->file, 0, 7, 0, 7),
+        },
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(front->file, 0, 8, 0, 8),
+        },
+        TESTLEX_INTEGER_INIT(d, 0, 9, 0, 10, 23),
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
+} END_TEST
+
+START_TEST(test_lexer_scan_integer_close_to_member_access) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("10).something_else");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 10),
+        {
+            .type=TOKEN_SM_CPAREN,
+            .location=LOC_INIT(front->file, 0, 2, 0, 2),
+        },
+        {
+            .type=TOKEN_OP_MEMBER_ACCESS,
+            .location=LOC_INIT(front->file, 0, 3, 0, 3),
+        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 4, 0, 17, "something_else"),
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
+} END_TEST
 
 Suite *lexer_suite_create(void)
 {
@@ -434,6 +513,9 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan_edge, test_lexer_scan_constant_int_at_end);
     tcase_add_test(scan_edge, test_lexer_scan_constant_float_at_end);
     tcase_add_test(scan_edge, test_lexer_scan_string_literal_at_end);
+    tcase_add_test(scan_edge, test_lexer_scan_integer_with_tokens_in_between);
+    tcase_add_test(scan_edge, test_lexer_scan_float_with_tokens_in_between);
+    tcase_add_test(scan_edge, test_lexer_scan_integer_close_to_member_access);
 
     suite_add_tcase(s, scan);
     suite_add_tcase(s, scan_edge);

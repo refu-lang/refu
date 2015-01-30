@@ -412,12 +412,7 @@ START_TEST(test_acc_operator_precedence_3) {
     struct ast_node *n;
     struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-#if 0   // TODO: This test should go back to this state and find out why 10 is parsed as float
-        //       Also make more tests that replicate this illegal behaviour and confirm it's fixed
         "boo(a.foo[13] - 10).member");
-#else
-        "boo(a.foo[13] - gc).member");
-#endif
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
     file = d->front.file;
@@ -436,13 +431,8 @@ START_TEST(test_acc_operator_precedence_3) {
                                    BINARYOP_ARRAY_REFERENCE, bop1, cnum_13);
 
     // a.foo[13] - 10
-#if 0 // see above TODO
     testsupport_parser_constant_create(cnum_10, file,
                                        0, 16, 0, 17, integer, 10);
-#else
-    struct ast_node *cnum_10 = testsupport_parser_identifier_create(file,
-                                                                    0, 16, 0, 17);
-#endif
     testsupport_parser_node_create(bop2, binaryop, file, 0, 4, 0, 17,
                                    BINARYOP_SUB, arr_ref, cnum_10);
 
