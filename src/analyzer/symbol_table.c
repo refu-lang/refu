@@ -36,17 +36,15 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     rec->rir_data = NULL;
     rec->backend_handle = NULL;
     switch (node->type) {
+    case AST_FUNCTION_DECLARATION:
+        rec->data = type_create_from_fndecl(node, analyzer, st);
+        break;
     case AST_TYPE_DECLARATION:
         rec->data = type_create_from_typedecl(node, analyzer, st);
         break;
     case AST_VARIABLE_DECLARATION:
-        rec->data = type_create_from_vardecl(node, analyzer, st);
-        break;
-    case AST_FUNCTION_DECLARATION:
-        rec->data = type_create_from_fndecl(node, analyzer, st);
-        break;
     case AST_TYPE_DESCRIPTION:
-        rec->data = type_create_from_typedesc(node, analyzer, st, NULL);
+        rec->data = type_lookup_or_create(node, analyzer, st, NULL, false);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "

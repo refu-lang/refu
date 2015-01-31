@@ -27,10 +27,6 @@ struct type *type_create_from_typedecl(struct ast_node *n,
                                        struct analyzer *a,
                                        struct symbol_table *st);
 
-struct type *type_create_from_vardecl(struct ast_node *n,
-                                      struct analyzer *a,
-                                      struct symbol_table *st);
-
 struct type *type_create_from_fndecl(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st);

@@ -109,6 +109,9 @@ static struct type *type_leaf_create(struct ast_node *typedesc,
         type_free(ret, a);
         return NULL;
     }
+
+    // add it to the types list
+    rf_ilist_add(&a->composite_types, &ret->lh);
     return ret;
 }
 
@@ -142,6 +145,7 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
         type_free(ret, a);
         return NULL;
     }
+
     return ret;
 }
 
@@ -158,7 +162,7 @@ static bool type_operator_init(struct type_operator *t, struct ast_node *n,
     if (!left) {
         return false;
     }
-    right = type_create(ast_typeop_right(n), a, st, genrdecl);
+    right = type_lookup_or_create(ast_typeop_right(n), a, st, genrdecl, true);
     if (!right) {
         return false;
     }
@@ -193,6 +197,8 @@ struct type *type_lookup_or_create(struct ast_node *n,
         // else fall through case, same as type operator
     case AST_TYPE_OPERATOR:
         return analyzer_get_or_create_type(a, n, st, genrdecl);
+    case AST_VARIABLE_DECLARATION:
+        return type_lookup_or_create(ast_vardecl_desc_get(n), a, st, genrdecl, false);
     default:
         RF_ASSERT_OR_CRITICAL(false,"Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
@@ -211,7 +217,7 @@ struct type *type_create_from_operation(enum typeop_type type,
 {
     struct type *t;
     // TODO: Somehow also check if the type is already existing in the analyzer
-    //       and it is return it instead of creating it
+    //       and if it is return it instead of creating it
     t = type_alloc(a);
     if (!t) {
         RF_ERROR("Type allocation failed");
@@ -239,6 +245,7 @@ struct type *type_create(struct ast_node *node,
     case AST_TYPE_OPERATOR:
         return type_create_from_typedesc(node, a, st, genrdecl);
     case AST_FUNCTION_DECLARATION:
+        return type_create_from_fndecl(node, a, st);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create a type "
@@ -263,28 +270,14 @@ struct type *type_create_from_typedecl(struct ast_node *n,
     }
     t->category = TYPE_CATEGORY_DEFINED;
     t->defined.name = ast_typedecl_name_str(n);
-    t->defined.type = type_create_from_typedesc(ast_typedecl_typedesc_get(n),
-                                                a,
-                                                st,
-                                                ast_typedecl_genrdecl_get(n));
+    t->defined.type = type_lookup_or_create(ast_typedecl_typedesc_get(n),
+                                            a,
+                                            st,
+                                            ast_typedecl_genrdecl_get(n), true);
     if (!t->defined.type) {
         RF_ERROR("Failed to create type for typedecl's typedescription");
         type_free(t, a);
         t = NULL;
-    }
-
-    return t;
-}
-
-struct type *type_create_from_vardecl(struct ast_node *n,
-                                      struct analyzer *a,
-                                      struct symbol_table *st)
-{
-    struct type *t;
-    AST_NODE_ASSERT_TYPE(n, AST_VARIABLE_DECLARATION);
-    t = type_lookup_or_create(ast_vardecl_desc_get(n), a, st, NULL, false);
-    if (!t) {
-        return NULL;
     }
 
     return t;
@@ -346,6 +339,8 @@ struct type *type_create_from_fndecl(struct ast_node *n,
         t = NULL;
     }
 
+    // add it to the types list
+    rf_ilist_add(&a->composite_types, &t->lh);
     return t;
 }
 
@@ -367,6 +362,8 @@ struct type *type_operator_create(struct ast_node *n,
         t = NULL;
     }
 
+    // add it to the types list
+    rf_ilist_add(&a->composite_types, &t->lh);
     return t;
 }
 
@@ -500,7 +497,9 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl)
 {
-    if (type_desc->type == AST_TYPE_OPERATOR) {
+    struct type *looked_up_t;
+    switch(type_desc->type) {
+    case AST_TYPE_OPERATOR:
         if (t->category != TYPE_CATEGORY_OPERATOR) {
             return false;
         }
@@ -515,14 +514,14 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
             type_equals_ast_node(t->operator.right,
                                  ast_typeop_right(type_desc),
                                  a, st, genrdecl);
-
-    } else if (type_desc->type == AST_TYPE_DESCRIPTION) {
+    case AST_TYPE_DESCRIPTION:
         AST_NODE_ASSERT_TYPE(ast_typedesc_left(type_desc), AST_IDENTIFIER);
         return type_equals_ast_node(t, ast_typedesc_right(type_desc),
                                     a, st, genrdecl);
-
-    } else if (type_desc->type == AST_XIDENTIFIER) {
-        struct type *looked_up_t;
+    case AST_TYPE_DECLARATION:
+        return type_equals_ast_node(t, ast_typedecl_typedesc_get(type_desc),
+                                    a, st, genrdecl);
+    case AST_XIDENTIFIER:
         looked_up_t = type_lookup_xidentifier(type_desc, a, st, genrdecl);
         if (!looked_up_t) {
             RF_ERROR("Failed to lookup an identifier");
@@ -530,13 +529,14 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
         }
 
         return type_equals(t, looked_up_t, NULL);
-    } else {
-        RF_ASSERT_OR_CRITICAL(false, "Illegal ast node type \""RF_STR_PF_FMT"\""
-                              " detected instead of a type description",
-                              RF_STR_PF_ARG(ast_node_str(type_desc)));
-        return false;
+    default:
+        break;
     }
 
+    RF_ASSERT_OR_CRITICAL(false, "Illegal ast node type \""RF_STR_PF_FMT"\""
+                          " detected instead of a type description",
+                          RF_STR_PF_ARG(ast_node_str(type_desc)));
+    return false;
 }
 
 /* -- type getters -- */

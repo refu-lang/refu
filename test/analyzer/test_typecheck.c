@@ -416,7 +416,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
         "type person { name:string, age:u32}"
         "fn do_something(a:person, b:u64) -> string\n"
         "{\n"
-        "return \"something\""
+        "return \"something\" + a.name"
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();

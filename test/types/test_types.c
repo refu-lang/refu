@@ -14,6 +14,43 @@
 
 #include CLIB_TEST_HELPERS
 
+void ck_assert_type_lists_equal_impl(const struct type **expected_types,
+                                     size_t expected_types_size,
+                                     struct analyzer *a,
+                                     const char *filename,
+                                     unsigned int line)
+{
+    struct type *t;
+    unsigned int i;
+    struct type_comparison_ctx cmp_ctx;
+    bool found;
+    unsigned int found_types_size = 0;
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
+    rf_ilist_for_each(&a->composite_types, t, lh) {
+        found = false;
+        for (i = 0; i < expected_types_size; ++i) {
+            if (type_equals(t, expected_types[i], &cmp_ctx)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ck_abort_msg("Did not manage to find type "RF_STR_PF_FMT" "
+                         "in the types list at %s:%u",
+                         RF_STR_PF_ARG(type_str(t, true)), filename, line);
+        }
+        found_types_size ++;
+    }
+    ck_assert_msg(expected_types_size == found_types_size, "Expected types list "
+                  "size of %u but got %u at %s:%u", expected_types_size,
+                  found_types_size, filename, line);
+}
+
+#define ck_assert_type_lists_equal(i_expected_types_, i_analyzer_)      \
+    ck_assert_type_lists_equal_impl(i_expected_types_,                  \
+                                    sizeof(i_expected_types_) / sizeof(struct type*), \
+                                    i_analyzer_, __FILE__, __LINE__)
+
 
 START_TEST (test_type_to_str) {
 
@@ -50,7 +87,7 @@ START_TEST (test_type_to_str) {
     RFS_buffer_pop();
 } END_TEST
 
-#if 0
+
 START_TEST(test_composite_types_list_population) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i64, b:f64}"
@@ -63,13 +100,62 @@ START_TEST(test_composite_types_list_population) {
     front_testdriver_assign(d, &s);
     ck_assert_typecheck_ok(d);
 
-    struct analyzer *a = d->front.analyzer;
-    struct type *t;
-    rf_ilist_for_each(&a->composite_types, t, lh) {
-        int a = 5;
-    }
+    static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
+
+    static const struct RFstring id_b =  RF_STRING_STATIC_INIT("b");
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
+
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_leaf_i64,
+                                                                      t_leaf_f64);
+
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
+                                                                      t_nil,
+                                                                      t_u32);
+
+    const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64, t_func_1 };
+    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
 } END_TEST
-#endif
+
+START_TEST(test_composite_types_list_population2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i64, b:f64}"
+        "fn do_something(a:i64, b:f64) -> u32\n"
+        "{\n"
+        "return 15"
+        "}\n"
+        "type boo {a:i64, b:f64}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d);
+
+    static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
+
+    static const struct RFstring id_b =  RF_STRING_STATIC_INIT("b");
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
+
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_leaf_i64,
+                                                                      t_leaf_f64);
+
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
+                                                                      t_prod_1,
+                                                                      t_u32);
+
+    const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64, t_func_1 };
+    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+} END_TEST
+
 
 Suite *types_suite_create(void)
 {
@@ -81,9 +167,8 @@ Suite *types_suite_create(void)
 
     TCase *st2 = tcase_create("types_management_tests");
     tcase_add_checked_fixture(st2, setup_analyzer_tests, teardown_analyzer_tests);
-    #if 0
     tcase_add_test(st2, test_composite_types_list_population);
-    #endif
+    tcase_add_test(st2, test_composite_types_list_population2);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
