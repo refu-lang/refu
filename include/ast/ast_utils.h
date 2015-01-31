@@ -2,6 +2,7 @@
 #define LFR_AST_UTILS_H
 
 #include <stdbool.h>
+#include <utils/traversal.h>
 
 struct ast_node;
 
@@ -14,19 +15,13 @@ struct ast_node;
  */
 typedef bool (*ast_node_cb) (struct ast_node *n, void *user_arg);
 
-enum ast_traversal_cb_res {
-    AST_TRAVERSAL_ERROR = -2, /*!< Error occured in the callback */
-    AST_TRAVERSAL_FATAL_ERROR = -1, /*!< Error occured in the callback, will stop traversal */
-    AST_TRAVERSAL_OK = 0, /*!< Callback was succesfull */
-};
-
 /**
  * Callback function used by no-stop ast node traversal
  * @param n           The ast node for which the callback is called
  * @param user_arg    Callback argument
  * @return            @see ast_traversal_cb_res
  */
-typedef enum ast_traversal_cb_res (*ast_node_nostop_cb) (struct ast_node *n, void *user_arg);
+typedef enum traversal_cb_res (*ast_node_nostop_cb) (struct ast_node *n, void *user_arg);
 
 /**
  * Pre-order traversal of the AST tree
@@ -91,7 +86,7 @@ bool ast_traverse_tree(struct ast_node *n,
  *                      of the traversal and other values of @ref ast_traversal_cb_res
  *                      in case of errors
  */
-enum ast_traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
+enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
                                                            ast_node_cb pre_cb,
                                                            void *pre_user_arg,
                                                            ast_node_nostop_cb post_cb,

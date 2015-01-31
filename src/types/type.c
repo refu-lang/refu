@@ -375,6 +375,9 @@ struct type *type_operator_create(struct ast_node *n,
 i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                            enum comparison_reason reason);
 
+i_INLINE_INS bool type_category_equals(const struct type* t,
+                                       enum type_category category);
+
 static inline bool type_leaf_equals(const struct type_leaf *t1,
                                     const struct type_leaf *t2,
                                     struct type_comparison_ctx *ctx)
@@ -663,4 +666,38 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     }
 
     return true;
+}
+
+enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_nostop_cb cb, void *user_arg)
+{
+    enum traversal_cb_res rc = TRAVERSAL_CB_OK;
+    switch(t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+    case TYPE_CATEGORY_GENERIC:
+        // Do nothing
+        break;
+
+    case TYPE_CATEGORY_DEFINED:
+        rc = type_for_each_leaf_nostop(t->defined.type, cb, user_arg);
+        if (traversal_stop(rc)) {
+            return rc;
+        }
+        break;
+
+    case TYPE_CATEGORY_OPERATOR:
+        rc = type_for_each_leaf_nostop(t->operator.left, cb, user_arg);
+        if (traversal_stop(rc)) {
+            return rc;
+        }
+        rc = type_for_each_leaf_nostop(t->operator.right, cb, user_arg);
+        if (traversal_stop(rc)) {
+            return rc;
+        }
+        break;
+
+    case TYPE_CATEGORY_LEAF:
+        return cb(&t->leaf, user_arg);
+    }
+
+    return rc;
 }

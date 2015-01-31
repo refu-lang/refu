@@ -192,7 +192,6 @@ i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
 
 i_INLINE_DECL const struct type *ast_expression_get_type(struct ast_node *expr)
 {
-    RF_ASSERT(expr->expression_type != NULL, "Expression type getter called before typecheck");
     return expr->expression_type;
 }
 

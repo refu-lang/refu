@@ -153,6 +153,56 @@ START_TEST(test_typecheck_valid_division_simple) {
     ck_assert_typecheck_ok(d);
 } END_TEST
 
+START_TEST(test_typecheck_valid_member_access) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person {name:string, age:u32}\n"
+        "{\n"
+        "p:person\n"
+        "a:u32 = 42\n"
+        "b:u32 = a + p.age\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d);
+} END_TEST
+
+START_TEST(test_typecheck_invalid_member_access) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person {name:string, age:u32}\n"
+        "{\n"
+        "p:person\n"
+        "a:u32 = 42\n"
+        "b:u32 = a + p.craze\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Could not find member \"craze\" in type \"person\"",
+            4, 12, 4, 18),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"+\" can not be determined",
+            4, 12, 4, 18),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            4, 8, 4, 18),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages);
+} END_TEST
+
 START_TEST(test_typecheck_variable_declarations) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -402,6 +452,18 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_bop_val, test_typecheck_valid_multiplication_simple);
     tcase_add_test(t_bop_val, test_typecheck_valid_division_simple);
 
+    TCase *t_access_val = tcase_create("analyzer_typecheck_valid_access_operations");
+    tcase_add_checked_fixture(t_access_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_access_val, test_typecheck_valid_member_access);
+
+    TCase *t_access_inv = tcase_create("analyzer_typecheck_invalid_access_operations");
+    tcase_add_checked_fixture(t_access_inv,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_access_inv, test_typecheck_invalid_member_access);
+
     TCase *t_vardecl_val = tcase_create("analyzer_typecheck_misc");
     tcase_add_checked_fixture(t_vardecl_val,
                               setup_analyzer_tests,
@@ -439,6 +501,8 @@ Suite *analyzer_typecheck_suite_create(void)
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
     suite_add_tcase(s, t_bop_val);
+    suite_add_tcase(s, t_access_val);
+    suite_add_tcase(s, t_access_inv);
     suite_add_tcase(s, t_vardecl_val);
     suite_add_tcase(s, t_func_val);
     suite_add_tcase(s, t_func_inv);

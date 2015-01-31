@@ -5,6 +5,7 @@
 #include <Definitions/inline.h>
 #include <String/rf_str_decl.h>
 
+#include <utils/traversal.h>
 #include <types/type_decls.h>
 struct analyzer;
 struct symbol_table;
@@ -92,6 +93,17 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
 }
 
 /**
+ * Check if a type belong to a certain category. If it's a leaf type it's actual
+ * type category is compared.
+ */
+i_INLINE_DECL bool type_category_equals(const struct type* t,
+                                        enum type_category category)
+{
+    return t->category == category ||
+           (t->category== TYPE_CATEGORY_LEAF && t->leaf.type->category == category);
+}
+
+/**
  * Compare two types and see if they are equal or if one can be promoted to
  * the other.
  * @warning For many comparison reasons type position does matter. So you may
@@ -161,6 +173,27 @@ const struct RFstring *type_defined_to_str(const struct type *t);
 /* -- type traversal functions -- */
 
 typedef bool (*leaf_type_cb) (struct type_leaf *t, void *user_arg);
+typedef enum traversal_cb_res (*leaf_type_nostop_cb) (const struct type_leaf *t, void *user_arg);
 
+/**
+ * Iterate and call callback for each subtype leaf
+ * @param t          The type whose subtypes to iterate
+ * @param cb         The callback to call on each type leaf
+ * @param user_arg   The input to the callback
+ *
+ * @return true for success and false if the callback fails anywhere
+ */
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg);
+
+/**
+ * Behaves just like @c type_for_each_leaf() but has different treatment of
+ * callback return.
+ * @param t          The type whose subtypes to iterate
+ * @param cb         The callback to call on each type leaf
+ * @param user_arg   The input to the callback
+ *
+ * @return true for success and false if the callback fails anywhere
+ */
+enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_nostop_cb cb, void *user_arg);
+
 #endif

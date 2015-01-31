@@ -3,6 +3,7 @@
 #include <Utils/build_assert.h>
 #include <Utils/bits.h>
 #include <Persistent/buffers.h>
+#include <String/rf_str_core.h>
 
 #include <ast/ast.h>
 #include <ast/operators.h>
@@ -63,6 +64,28 @@ static bool typecheck_equal_or_convertible(struct ast_node *n,
     return ret;
 }
 
+static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node *left,
+                                            const struct type **tleft,
+                                            struct ast_node *right, const struct type **tright,
+                                            struct analyzer_traversal_ctx *ctx)
+{
+    *tleft = ast_expression_get_type(left);
+    if (!*tleft) {
+        analyzer_err(ctx->a, ast_node_startmark(left), ast_node_endmark(left),
+                     "Type of left side of \""RF_STR_PF_FMT"\" can not be determined",
+                     RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+        return false;
+    }
+    *tright = ast_expression_get_type(right);
+    if (!*tright) {
+        analyzer_err(ctx->a, ast_node_startmark(right), ast_node_endmark(right),
+                     "Type of right side of \""RF_STR_PF_FMT"\" can not be determined",
+                     RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+        return false;
+    }
+    return true;
+}
+
 static bool i_should_be_changed(struct ast_node *left,
                                 struct ast_node *right,
                                 struct analyzer_traversal_ctx *ctx)
@@ -78,22 +101,22 @@ static bool i_should_be_changed(struct ast_node *left,
 
 // Generic typecheck function for binary operations. If special functionality
 // needs to be implemented for an operator do that in a separate function
-static enum ast_traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
-                                                            struct ast_node *left,
-                                                            struct ast_node *right,
-                                                            struct analyzer_traversal_ctx *ctx,
-                                                            enum binaryop_type operation,
-                                                            bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
-                                                            const char *error_intro,
-                                                            const char *error_conj)
+static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
+                                                        struct ast_node *left,
+                                                        struct ast_node *right,
+                                                        struct analyzer_traversal_ctx *ctx,
+                                                        enum binaryop_type operation,
+                                                        bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+                                                        const char *error_intro,
+                                                        const char *error_conj)
 {
     const struct type *tright;
     const struct type *tleft;
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_ERROR;
-
+    enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
     RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
+    if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
+        goto end;
+    }
 
     if (!typecheck_equal_or_convertible(n, operation, tleft, tright, ctx)) {
         if (!operator_applicable_cb(left, right, ctx)) {
@@ -107,29 +130,30 @@ static enum ast_traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
 
     // set the type of the operation as the type of either of its operands
     n->expression_type = tright;
-    ret = AST_TRAVERSAL_OK;
+    ret = TRAVERSAL_CB_OK;
 end:
     RFS_buffer_pop();
     return ret;
 }
 
 // Generic typecheck function for binary operations who type should be a boolean
-static enum ast_traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
-                                                                 struct ast_node *left,
-                                                                 struct ast_node *right,
-                                                                 struct analyzer_traversal_ctx *ctx,
-                                                                 enum binaryop_type operation,
-                                                                 bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
-                                                                 const char *error_intro,
-                                                                 const char *error_conj)
+static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
+                                                             struct ast_node *left,
+                                                             struct ast_node *right,
+                                                             struct analyzer_traversal_ctx *ctx,
+                                                             enum binaryop_type operation,
+                                                             bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+                                                             const char *error_intro,
+                                                             const char *error_conj)
 {
     const struct type *tright;
     const struct type *tleft;
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_ERROR;
+    enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
 
     RFS_buffer_push();
-    tleft = ast_expression_get_type(left);
-    tright = ast_expression_get_type(right);
+    if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
+        goto end;
+    }
 
     if (!typecheck_equal_or_convertible(n, operation, tleft, tright, ctx)) {
         if (!operator_applicable_cb(left, right, ctx)) {
@@ -142,57 +166,138 @@ static enum ast_traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node
     }
 
     n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
-    ret = AST_TRAVERSAL_OK;
+    ret = TRAVERSAL_CB_OK;
 end:
     RFS_buffer_pop();
     return ret;
 }
 
-static enum ast_traversal_cb_res typecheck_constantnum(struct ast_node *n)
+static enum traversal_cb_res typecheck_arrayref(struct ast_node *n,
+                                                struct ast_node *left,
+                                                struct ast_node *right,
+                                                struct analyzer_traversal_ctx *ctx)
 {
-    n->expression_type = ast_constantnum_get_storagetype(n);
-    return (n->expression_type) ? AST_TRAVERSAL_OK : AST_TRAVERSAL_ERROR;
+    // TODO
+    (void)n;
+    (void)left;
+    (void)right;
+    (void)ctx;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_identifier(struct ast_node *n,
-                                                      struct analyzer_traversal_ctx *ctx)
+struct typecheck_member_access_iter_ctx {
+    struct ast_node *member_identifier;
+    struct type *member_type;
+};
+
+static inline void typecheck_member_access_iter_ctx_init(struct typecheck_member_access_iter_ctx *ctx,
+                                                         struct ast_node *member_identifier)
+{
+    ctx->member_identifier = member_identifier;
+    ctx->member_type = NULL;
+}
+
+static enum traversal_cb_res typecheck_member_access_iter_cb(const struct type_leaf *t,
+                                                             struct typecheck_member_access_iter_ctx *ctx)
+{
+    // for now assuming all right parts of member access are identifiers
+    if (rf_string_equal(t->id, ast_identifier_str(ctx->member_identifier))) {
+        ctx->member_type = t->type;
+        return TRAVERSAL_CB_OK_AND_STOP;
+    }
+
+    return TRAVERSAL_CB_ERROR;
+}
+
+static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
+                                                     struct ast_node *left,
+                                                     struct ast_node *right,
+                                                     struct analyzer_traversal_ctx *ctx)
+{
+    const struct type *tleft;
+    struct typecheck_member_access_iter_ctx member_access_iter_ctx;
+    enum traversal_cb_res rc;
+
+    RFS_buffer_push();
+    tleft = ast_expression_get_type(left);
+
+    // left type of member access should be a custom defined type
+    if (!type_category_equals(tleft, TYPE_CATEGORY_DEFINED)) {
+        analyzer_err(ctx->a, ast_node_startmark(left),
+                     ast_node_endmark(left),
+                     "Left part of member access operator \""RF_STR_PF_FMT"\"is "
+                     "not a user defined type",
+                     RF_STR_PF_ARG(ast_node_str(left)));
+        return TRAVERSAL_CB_ERROR;
+    }
+
+    // right type of member access should be an identifier (at least for now)
+    if (right->type != AST_IDENTIFIER) {
+        analyzer_err(ctx->a, ast_node_startmark(right),
+                     ast_node_endmark(right),
+                     "Right part of member access operator is not an identifier"
+                     " but is \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(ast_node_str(right)));
+        return TRAVERSAL_CB_ERROR;
+    }
+
+    typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
+    rc = type_for_each_leaf_nostop(tleft->defined.type,
+                                   (leaf_type_nostop_cb)typecheck_member_access_iter_cb,
+                                   &member_access_iter_ctx);
+    if (!traversal_success(rc)) {
+        analyzer_err(ctx->a, ast_node_startmark(n),
+                     ast_node_endmark(n),
+                     "Could not find member \""RF_STR_PF_FMT"\" in type \""
+                     RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(ast_identifier_str(right)),
+                     RF_STR_PF_ARG(type_str(tleft, false)));
+        return TRAVERSAL_CB_ERROR;
+    }
+
+    n->expression_type = member_access_iter_ctx.member_type;
+
+    RFS_buffer_pop();
+    return TRAVERSAL_CB_OK;
+}
+
+static enum traversal_cb_res typecheck_constantnum(struct ast_node *n)
+{
+    n->expression_type = ast_constantnum_get_storagetype(n);
+    return (n->expression_type) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
+}
+
+static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
+                                                  struct analyzer_traversal_ctx *ctx)
 {
     n->expression_type = type_lookup_identifier_string(ast_identifier_str(n),
                                                        ctx->current_st);
-
-    if (!n->expression_type) {
-        analyzer_err(ctx->a, ast_node_startmark(n),
-                     ast_node_endmark(n),
-                     "Type of identifier \""RF_STR_PF_FMT"\" is unknown",
-                     RF_STR_PF_ARG(ast_identifier_str(n)));
-        return AST_TRAVERSAL_ERROR;
-    }
-
-    return AST_TRAVERSAL_OK;
+    // if this fails and (n->expression_type == NULL) we see it higher on the tree
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_xidentifier(struct ast_node *n,
-                                                       struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
+                                                   struct analyzer_traversal_ctx *ctx)
 {
     (void)ctx;
     n->expression_type = n->xidentifier.id->expression_type;
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_typedesc(struct ast_node *n,
-                                                    struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
+                                                struct analyzer_traversal_ctx *ctx)
 {
     (void)ctx;
     n->expression_type = ast_typedesc_right(n)->expression_type;
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_typedecl(struct ast_node *n,
-                                                    struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
+                                                struct analyzer_traversal_ctx *ctx)
 {
     (void)ctx;
     n->expression_type = ast_typedecl_typedesc_get(n)->expression_type;
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
 
@@ -208,14 +313,14 @@ static bool analyzer_types_assignable(struct ast_node *left,
     return false;
 }
 
-static enum ast_traversal_cb_res typecheck_assignment(struct ast_node *n,
-                                                      struct ast_node *left,
-                                                      struct ast_node *right,
-                                                      struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
+                                                  struct ast_node *left,
+                                                  struct ast_node *right,
+                                                  struct analyzer_traversal_ctx *ctx)
 {
     const struct type *tright;
     const struct type *tleft;
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
+    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
@@ -225,12 +330,13 @@ static enum ast_traversal_cb_res typecheck_assignment(struct ast_node *n,
                      "as left part of the assignment "
                      "but found a \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(ast_node_str(left)));
-        ret = AST_TRAVERSAL_ERROR;
+        ret = TRAVERSAL_CB_ERROR;
     }
 
     RFS_buffer_push();
-    tright = ast_expression_get_type(right);
-    tleft = ast_expression_get_type(left);
+    if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
+        goto end;
+    }
     if (!typecheck_equal_or_convertible(n, BINARYOP_ASSIGN, tleft, tright, ctx)) {
         if (!analyzer_types_assignable(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
@@ -238,7 +344,7 @@ static enum ast_traversal_cb_res typecheck_assignment(struct ast_node *n,
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
                          RF_STR_PF_ARG(type_str(tright, false)),
                          RF_STR_PF_ARG(type_str(tleft, false)));
-            ret = AST_TRAVERSAL_ERROR;
+            ret = TRAVERSAL_CB_ERROR;
             goto end;
         }
     }
@@ -251,32 +357,36 @@ end:
     return ret;
 }
 
-static enum ast_traversal_cb_res typecheck_comma(struct ast_node *n,
-                                                 struct ast_node *left,
-                                                 struct ast_node *right,
-                                                 struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_comma(struct ast_node *n,
+                                             struct ast_node *left,
+                                             struct ast_node *right,
+                                             struct analyzer_traversal_ctx *ctx)
 {
-    struct type *tright;
-    struct type *tleft;
+    const struct type *tright;
+    const struct type *tleft;
 
-    tleft = (struct type*)ast_expression_get_type(left);
-    tright = (struct type*)ast_expression_get_type(right);
+    if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
+        return TRAVERSAL_CB_ERROR;
+    }
 
     // for now at least let's assume that all types can have the comma
     // operator applied to them
 
     // set the type of assignment as the type of the left operand
-    n->expression_type = type_create_from_operation(TYPEOP_PRODUCT, tleft, tright, ctx->a);
+    n->expression_type = type_create_from_operation(TYPEOP_PRODUCT,
+                                                    (struct type*)tleft,
+                                                    (struct type*)tright,
+                                                    ctx->a);
     if (!n->expression_type) {
         RF_ERROR("Could not create a type as a product of 2 other types.");
-        return AST_TRAVERSAL_FATAL_ERROR;
+        return TRAVERSAL_CB_FATAL_ERROR;
     }
 
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
-                                                         struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
+                                                     struct analyzer_traversal_ctx *ctx)
 {
     const struct RFstring *fn_name;
     const struct type *fn_type;
@@ -284,7 +394,7 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
     const struct type *fn_found_args_type;
     struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_call_args = ast_fncall_args(n);
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
+    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
     // check for existence of function
     fn_name = ast_fncall_name(n);
@@ -294,7 +404,7 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
-        return AST_TRAVERSAL_ERROR;
+        return TRAVERSAL_CB_ERROR;
     }
 
     //check that the types of its arguments do indeed match
@@ -312,24 +422,24 @@ static enum ast_traversal_cb_res typecheck_function_call(struct ast_node *n,
                      RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
                      RF_STR_PF_ARG(type_str(fn_declared_args_type, false)));
         RFS_buffer_pop();
-        ret = AST_TRAVERSAL_ERROR;
+        ret = TRAVERSAL_CB_ERROR;
     }
 
     n->expression_type = type_function_get_rettype(fn_type);
     return ret;
 }
 
-static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
-                                                       struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
+                                                   struct analyzer_traversal_ctx *ctx)
 {
     struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
+    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
     const struct type *fn_type;
     if (!fn_decl) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement outside of function body");
-        return AST_TRAVERSAL_ERROR;
+        return TRAVERSAL_CB_ERROR;
     }
 
     // at this stage the function declaration won't have been typechecked.
@@ -337,7 +447,7 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     // TODO: perhaps add a check in the typecheck reverse tree traversal to not visit
     // certain subtrees if they are already typechecked.
     if (!analyzer_typecheck(ctx->a, fn_decl)) {
-        return AST_TRAVERSAL_ERROR;
+        return TRAVERSAL_CB_ERROR;
     }
 
     fn_type = ast_expression_get_type(fn_decl);
@@ -353,26 +463,26 @@ static enum ast_traversal_cb_res typecheck_return_stmt(struct ast_node *n,
                      RF_STR_PF_ARG(type_str(found_ret_type, false)),
                      RF_STR_PF_ARG(type_str(fn_ret_type, false)));
         RFS_buffer_pop();
-        ret = AST_TRAVERSAL_ERROR;
+        ret = TRAVERSAL_CB_ERROR;
     }
     n->expression_type = found_ret_type;
     return ret;
 }
 
-static enum ast_traversal_cb_res typecheck_block(struct ast_node *n,
-                                                 struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_block(struct ast_node *n,
+                                             struct analyzer_traversal_ctx *ctx)
 {
     // TODO: Here somehow find the type of the block, it should all depend on its
     // last expression/expression/statement or it can also be a sum product if it
     // has conditional exits from the block
     n->expression_type = NULL;
 
-    
-    return AST_TRAVERSAL_OK;
+
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_binary_op(struct ast_node *n,
-                                                     struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_binary_op(struct ast_node *n,
+                                                 struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
@@ -448,34 +558,39 @@ static enum ast_traversal_cb_res typecheck_binary_op(struct ast_node *n,
             n, left, right, ctx, bop_type, i_should_be_changed,
             "Can't apply bitwise XOR to", "and");
 
+    case BINARYOP_ARRAY_REFERENCE:
+        return typecheck_arrayref(n, left, right, ctx);
+    case BINARYOP_MEMBER_ACCESS:
+        return typecheck_member_access(n, left, right, ctx);
+
     default:
         RF_ASSERT(false, "Typechecking for unimplemented binary "
                   "operator "RF_STR_PF_FMT,
                   RF_STR_PF_ARG(ast_binaryop_opstr(n)));
-        return AST_TRAVERSAL_FATAL_ERROR;
+        return TRAVERSAL_CB_FATAL_ERROR;
     }
 
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_fndecl(struct ast_node *n,
-                                                  struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
+                                              struct analyzer_traversal_ctx *ctx)
 {
     struct type *t;
     t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
     if (!t) {
         RF_ERROR("Function declaration name not found in the symbol table at impossible point");
-        return AST_TRAVERSAL_ERROR;
+        return TRAVERSAL_CB_ERROR;
     }
     n->expression_type = t;
-    return AST_TRAVERSAL_OK;
+    return TRAVERSAL_CB_OK;
 }
 
-static enum ast_traversal_cb_res typecheck_do(struct ast_node *n,
-                                              void *user_arg)
+static enum traversal_cb_res typecheck_do(struct ast_node *n,
+                                          void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = (struct analyzer_traversal_ctx*)user_arg;
-    enum ast_traversal_cb_res ret = AST_TRAVERSAL_OK;
+    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
         ret = typecheck_binary_op(n, ctx);
@@ -533,7 +648,7 @@ bool analyzer_typecheck(struct analyzer *a, struct ast_node *root)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
-    return AST_TRAVERSAL_OK == ast_traverse_tree_nostop_post_cb(
+    return TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
         root,
         (ast_node_cb)analyzer_handle_symbol_table_descending,
         &ctx,
