@@ -10,17 +10,25 @@
 
 #include CLIB_TEST_HELPERS
 
-START_TEST(test_pipeline_end_to_end) {
+START_TEST(test_smoke) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 42}");
-    int expected_ret;
-    ck_assert_msg(end_to_end_driver_create_file(d, "test_input_file.rf", &s),
-                  "Could not create the input file for the test driver");
-    ck_assert_msg(end_to_end_driver_compile(d, "test_input_file.rf"),
-                  "Could not compile the input file");
-    ck_assert_msg(end_to_end_driver_run(d, &expected_ret),
-                  "Failed to execute driver's compiled result");
-    ck_assert_int_eq(42, expected_ret);
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 42);
+} END_TEST
+
+START_TEST(test_addition) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 12 + 22}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 34);
+} END_TEST
+
+START_TEST(test_multiple_real_arithmetic) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "return (12 + (22 * 12 - 33) + (121 * 56 - 29)) / 233\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 30);
 } END_TEST
 
 
@@ -28,13 +36,15 @@ Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
 
-    TCase *pipeline = tcase_create("end_to_end_basic_pipeline");
-    tcase_add_checked_fixture(pipeline,
+    TCase *st_basic = tcase_create("end_to_end_basic");
+    tcase_add_checked_fixture(st_basic,
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
-    tcase_add_test(pipeline, test_pipeline_end_to_end);
+    tcase_add_test(st_basic, test_smoke);
+    tcase_add_test(st_basic, test_addition);
+    tcase_add_test(st_basic, test_multiple_real_arithmetic);
 
-    suite_add_tcase(s, pipeline);
+    suite_add_tcase(s, st_basic);
 
     return s;
 }

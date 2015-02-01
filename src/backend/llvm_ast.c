@@ -18,6 +18,7 @@
 #include <ast/block.h>
 #include <ast/returnstmt.h>
 #include <ast/constant_num.h>
+#include <ast/operators.h>
 
 #include <types/type_function.h>
 #include <types/type_elementary.h>
@@ -86,32 +87,62 @@ static LLVMTypeRef *backend_llvm_types(struct rir_type *type,
     return llvm_traversal_ctx_get_params(ctx);
 }
 
-static void backend_llvm_expression_iterate(struct ast_node *n,
-                                            struct llvm_traversal_ctx *ctx)
+static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
+                                                        struct llvm_traversal_ctx *ctx)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_BINARY_OPERATOR);
+    LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx);
+    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
+    switch(ast_binaryop_op(n)) {
+        // arithmetic
+        // note: There are different LLVMBuild Arithmetic functions. See if some should
+        //       be used in special situations
+    case BINARYOP_ADD:
+        return LLVMBuildAdd(ctx->builder, left, right, "left + right");
+    case BINARYOP_SUB:
+        return LLVMBuildSub(ctx->builder, left, right, "left - right");
+    case BINARYOP_MUL:
+        return LLVMBuildMul(ctx->builder, left, right, "left * right");
+    case BINARYOP_DIV:
+        return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
+    default:
+        RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
+        break;
+    }
+    return NULL;
+}
+
+LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
+                                             struct llvm_traversal_ctx *ctx)
 {
     uint64_t val;
+    LLVMValueRef llvm_val;
     switch(n->type) {
+    case AST_BINARY_OPERATOR:
+        return backend_llvm_expression_compile_bop(n, ctx);
     case AST_RETURN_STATEMENT:
-        backend_llvm_expression_iterate(ast_returnstmt_expr_get(n), ctx);
-        LLVMBuildRet(ctx->builder, ctx->current_value);
-        break;
+        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n), ctx);
+        return LLVMBuildRet(ctx->builder, llvm_val);
     case AST_CONSTANT_NUMBER:
         if (!ast_constantnum_get_integer(n, &val)) {
             RF_ERROR("Failed to convert a constant num node to number for LLVM");
         }
-        // TODO: This is not using rir_types
+        // TODO: This is not using rir_types ... also maybe get rid of ctx->current_value?
+        //       if we are going to be returning it anyway?
         ctx->current_value = LLVMConstInt(LLVMInt32Type(), val, 0);
-        break;
+        return ctx->current_value;
     default:
+        RF_ASSERT(false, "Illegal node type at LLVM code generation");
         break;
     }
+    return NULL;
 }
 
 static void backend_llvm_expression(struct ast_node *n,
                                     struct llvm_traversal_ctx *ctx)
 {
     ctx->current_value = NULL;
-    backend_llvm_expression_iterate(n, ctx);
+    backend_llvm_expression_compile(n, ctx);
     ctx->current_value = NULL;
 }
 

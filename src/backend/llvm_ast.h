@@ -43,4 +43,10 @@ i_INLINE_DECL unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_
 {
     return darray_size(ctx->params);
 }
+
+/**
+ * Compile an AST node expression to LLVMValueRef
+ */
+struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
+                                                        struct llvm_traversal_ctx *ctx);
 #endif
