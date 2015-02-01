@@ -125,10 +125,24 @@ bool symbol_table_add_type(struct symbol_table *st,
 bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec);
 
+/**
+ * Lookup an ast_node in a symbol table
+ * Arguments are just like @rec symbol_table_lookup_record()
+ * @return  The found ast_node or NULL for failure
+ */
 struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
                                           const struct RFstring *id,
                                           bool *at_first_symbol_table);
-
+/**
+ * Lookup a record in a symbol table
+ *
+ * @param t                        The symbol table in which to lookup the record
+ * @param id                       The identifier (key) with which to perform the lookup
+ * @param at_first_symbol_table    If not NULL then this is passing a boolean which
+ *                                 which return whether or not the record was foun
+ *                                 in @c t itself (true) or in any of its parents (false)
+ * @return                         The symbol table record or NULL for failure.
+ */
 struct symbol_table_record *symbol_table_lookup_record(struct symbol_table *t,
                                                        const struct RFstring *id,
                                                        bool *at_first_symbol_table);
@@ -172,7 +186,6 @@ i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
     if (!rec) {
         return NULL;
     }
-
     return rec->data;
 }
 

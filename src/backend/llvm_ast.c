@@ -146,7 +146,6 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     LLVMValueRef llvm_fn;
     char *fn_name;
     char *param_name;
-    bool at_first;
     RFS_buffer_push();
     fn_name = rf_string_cstr_from_buff(&fn->name);
     llvm_fn = LLVMAddFunction(ctx->mod, fn_name,
@@ -177,7 +176,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
         // and assign to it the argument value
         LLVMBuildStore(ctx->builder, LLVMGetParam(llvm_fn, i) ,allocation);
         // also note the alloca in the symbol table
-        rec = symbol_table_lookup_record(fn->symbols, param_name_str, &at_first);
+        rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
         RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did not contain expected parameter");
         symbol_table_record_set_backend_handle(rec, allocation);
     }

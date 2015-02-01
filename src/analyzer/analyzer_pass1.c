@@ -137,7 +137,6 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
                                                 struct ast_node *n)
 {
     struct symbol_table_record *rec;
-    bool symbol_found_at_first_st;
     const struct RFstring *fn_name;
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
 
@@ -148,9 +147,7 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     }
 
     fn_name = ast_fndecl_name_str(n);
-    rec = symbol_table_lookup_record(ctx->current_st,
-                                     fn_name,
-                                     &symbol_found_at_first_st);
+    rec = symbol_table_lookup_record(ctx->current_st, fn_name, NULL);
 
     if (rec && type_is_function(rec->data)) {
         analyzer_err(ctx->a, ast_node_startmark(n),

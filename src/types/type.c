@@ -579,7 +579,6 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
                                            struct symbol_table *st)
 {
     struct symbol_table_record *rec;
-    bool at_first_st;
     int elementary_type;
 
     // check if it's an elementary type
@@ -589,7 +588,7 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     }
 
     // if not check if we know about it from the symbol tables
-    rec = symbol_table_lookup_record(st, str, &at_first_st);
+    rec = symbol_table_lookup_record(st, str, NULL);
     if (rec) {
         return symbol_table_record_type(rec);
     }

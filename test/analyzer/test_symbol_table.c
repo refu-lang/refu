@@ -125,7 +125,6 @@ START_TEST(test_symbol_table_add_existing) {
 
 START_TEST(test_symbol_table_lookup_non_existing) {
     struct symbol_table st;
-    bool at_first;
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("I_dont_exist");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("neither_do_I");
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
@@ -134,8 +133,8 @@ START_TEST(test_symbol_table_lookup_non_existing) {
 
     ck_assert(symbol_table_init(&st, d->front.analyzer));
 
-    ck_assert(symbol_table_lookup_record(&st, &id1s, &at_first) == NULL);
-    ck_assert(symbol_table_lookup_record(&st, &id2s, &at_first) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id1s, NULL) == NULL);
+    ck_assert(symbol_table_lookup_record(&st, &id2s, NULL) == NULL);
 
     symbol_table_deinit(&st);
 }END_TEST

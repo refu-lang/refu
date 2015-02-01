@@ -222,7 +222,7 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
     struct rir_basic_block *b;
     struct rir_type *type;
     struct symbol_table_record *rec;
-    bool at_first;
+
     AST_NODE_ASSERT_TYPE(n, AST_BLOCK);
     b = rir_basic_block_create();
     b->symbols = ast_block_symbol_table_get(n);
@@ -236,8 +236,7 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
             id = c->vardecl.desc->typedesc.left;
             AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
             rec = symbol_table_lookup_record(ast_block_symbol_table_get(n),
-                                             ast_identifier_str(id),
-                                             &at_first);
+                                             ast_identifier_str(id), NULL);
             if (!rec) {
                 RF_ERROR("During RIR creation identifier was not found in block's symbol table");
                 return NULL;

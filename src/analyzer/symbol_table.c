@@ -284,11 +284,15 @@ struct symbol_table_record *symbol_table_lookup_record(struct symbol_table *t,
     struct symbol_table_record *rec;
     struct symbol_table *lp_table = t;
 
-    *at_first_symbol_table = false;
+    if (at_first_symbol_table) {
+        *at_first_symbol_table = false;
+    }
 
     rec = htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
     if (rec) {
-        *at_first_symbol_table = true;
+        if (at_first_symbol_table) {
+            *at_first_symbol_table = true;
+        }
         return rec;
     }
 
