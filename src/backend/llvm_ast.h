@@ -15,6 +15,7 @@ struct rir_module;
 struct LLVMOpaqueModule;
 struct LLVMOpaqueBuilder;
 struct LLVMOpaqueValue;
+struct LLVMOpaqueType;
 
 struct llvm_traversal_ctx {
     struct LLVMOpaqueModule *mod;
@@ -43,6 +44,16 @@ i_INLINE_DECL unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_
 {
     return darray_size(ctx->params);
 }
+
+i_INLINE_DECL void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ctx)
+{
+    while (!darray_empty(ctx->params)) {
+        (void)darray_pop(ctx->params);
+    }
+}
+
+void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
+                                  struct LLVMOpaqueType *type);
 
 /**
  * Compile an AST node expression to LLVMValueRef

@@ -45,7 +45,7 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
             if (!rf_string_copy_in(&new_type->name, name)) {
                 return false;
             }
-            darray_push(type->subtypes, new_type);
+            darray_append(type->subtypes, new_type);
         }
         break;
     case TYPE_CATEGORY_DEFINED:
@@ -141,7 +141,7 @@ void rir_type_deinit(struct rir_type *t)
 
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
 {
-    if (darray_size(t->subtypes) > n) {
+    if (darray_size(t->subtypes) <= n) {
         RF_ERROR("Requested rir_type name of subtype out of bounds");
         return NULL;
     }
@@ -150,7 +150,7 @@ const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
 
 const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
 {
-    if (darray_size(t->subtypes) > n) {
+    if (darray_size(t->subtypes) <= n) {
         RF_ERROR("Requested rir_type type of subtype out of bounds");
         return NULL;
     }

@@ -27,6 +27,8 @@
 
 #include <backend/llvm.h>
 
+#define DEFAULT_PTR_ADDRESS_SPACE 0
+
 static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
 {
     switch(type) {
@@ -49,7 +51,6 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
 
     case ELEMENTARY_TYPE_NIL:
         return LLVMVoidType();
-        break;
 
     default:
         RF_ASSERT_OR_CRITICAL(false,
@@ -63,7 +64,12 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type)
 
 i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_ctx *ctx);
-
+i_INLINE_INS void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ctx);
+void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
+                                  struct LLVMOpaqueType *type)
+{
+    darray_append(ctx->params, type);
+}
 
 static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
                                      struct llvm_traversal_ctx *ctx)
@@ -73,18 +79,27 @@ static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
     return backend_llvm_elementary_to_type(type->elementary);
 }
 
-static LLVMTypeRef *backend_llvm_types(struct rir_type *type,
-                                       struct llvm_traversal_ctx *ctx)
+// return an array of arg types or NULL if our param type is nil
+static LLVMTypeRef *backend_llvm_fn_arg_types(struct rir_type *type,
+                                              struct llvm_traversal_ctx *ctx)
 {
     struct rir_type **subtype;
+    LLVMTypeRef llvm_type;
+    llvm_traversal_ctx_reset_params(ctx);
     if (darray_size(type->subtypes) == 0) {
-        darray_append(ctx->params, backend_llvm_type(type, ctx));
+        llvm_type = backend_llvm_type(type, ctx);
+        if (llvm_type != LLVMVoidType()) {
+            llvm_traversal_ctx_add_param(ctx, llvm_type);
+        }
     } else {
         darray_foreach(subtype, type->subtypes) {
-            darray_append(ctx->params, backend_llvm_type(*subtype, ctx));
+            llvm_type = backend_llvm_type(*subtype, ctx);
+            if (llvm_type != LLVMVoidType()) {
+                llvm_traversal_ctx_add_param(ctx, llvm_type);
+            }
         }
     }
-    return llvm_traversal_ctx_get_params(ctx);
+    return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
 }
 
 static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
@@ -117,8 +132,8 @@ LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
 {
     (void)n;
     (void)ctx;
-    //TODO
     return NULL;
+    //TODO
 }
 
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
@@ -190,9 +205,13 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     char *param_name;
     RFS_buffer_push();
     fn_name = rf_string_cstr_from_buff(&fn->name);
+    // evaluating types here since you are not guaranteed order of execution of
+    // a function's arguments and this does have sideffects we read from
+    // llvm_traversal_ctx_get_param_count()
+    LLVMTypeRef * types = backend_llvm_fn_arg_types(fn->arg_type, ctx);
     llvm_fn = LLVMAddFunction(ctx->mod, fn_name,
                               LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
-                                               backend_llvm_types(fn->arg_type, ctx),
+                                               types,
                                                llvm_traversal_ctx_get_param_count(ctx),
                                                false)); // never variadic for now
     RFS_buffer_pop();
@@ -205,22 +224,27 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     LLVMValueRef allocation;
     const struct RFstring *param_name_str;
     struct symbol_table_record *rec;
-    for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
-        // for each argument of the function allocate an LLVM variable
-        // in the stack with alloca
-        param_name_str = rir_type_get_nth_name(fn->arg_type, i);
-        RFS_buffer_push();
-        param_name = rf_string_cstr_from_buff(param_name_str);
-        allocation = LLVMBuildAlloca(ctx->builder,
-                                     backend_llvm_type(rir_type_get_nth_type(fn->arg_type, i), ctx),
-                                     param_name);
-        RFS_buffer_pop();
-        // and assign to it the argument value
-        LLVMBuildStore(ctx->builder, LLVMGetParam(llvm_fn, i) ,allocation);
-        // also note the alloca in the symbol table
-        rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
-        RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did not contain expected parameter");
-        symbol_table_record_set_backend_handle(rec, allocation);
+
+    if (fn->arg_type->elementary != ELEMENTARY_TYPE_NIL) {
+        for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
+
+            // for each argument of the function allocate an LLVM variable
+            // in the stack with alloca
+            param_name_str = rir_type_get_nth_name(fn->arg_type, i);
+            RFS_buffer_push();
+            param_name = rf_string_cstr_from_buff(param_name_str);
+            allocation = LLVMBuildAlloca(ctx->builder,
+                                         backend_llvm_type(rir_type_get_nth_type(fn->arg_type, i), ctx),
+                                         param_name);
+            RFS_buffer_pop();
+            // and assign to it the argument value
+            LLVMBuildStore(ctx->builder, LLVMGetParam(llvm_fn, i) ,allocation);
+            // also note the alloca in the symbol table
+            rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
+            RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did "
+                                  "not contain expected parameter");
+            symbol_table_record_set_backend_handle(rec, allocation);
+        }
     }
 
     // now handle function entry block
@@ -231,7 +255,15 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
 static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
 {
     // TODO Put all global/special functions here. e.g. print() e.t.c.
-    (void)ctx;
+    llvm_traversal_ctx_reset_params(ctx);
+
+    llvm_traversal_ctx_add_param(ctx, LLVMPointerType(LLVMInt8Type(), DEFAULT_PTR_ADDRESS_SPACE));
+    llvm_traversal_ctx_add_param(ctx, LLVMInt32Type());
+    LLVMAddGlobal(ctx->mod,
+                  LLVMStructType(llvm_traversal_ctx_get_params(ctx),
+                                 llvm_traversal_ctx_get_param_count(ctx), true),
+                  "string");
+    llvm_traversal_ctx_reset_params(ctx);
     return true;
 }
 
@@ -243,11 +275,12 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     RFS_buffer_push();
     mod_name = rf_string_cstr_from_buff(&mod->name);
     ctx->mod = LLVMModuleCreateWithName(mod_name);
+    RFS_buffer_pop();
     if (!backend_llvm_create_globals(ctx)) {
         RF_ERROR("Failed to create global context for LLVM");
         return NULL;
     }
-    RFS_buffer_pop();
+
     // for each function of the module create code
     rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
         backend_llvm_function(fn, ctx);
