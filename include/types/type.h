@@ -31,6 +31,10 @@ struct type *type_create_from_fndecl(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st);
 
+struct type *type_function_create(struct analyzer *a,
+                                  struct type *arg_type,
+                                  struct type *ret_type);
+
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
@@ -40,6 +44,11 @@ struct type *type_operator_create(struct ast_node *n,
                                   struct analyzer *a,
                                   struct symbol_table *st,
                                   struct ast_node *genrdecl);
+
+struct type *type_leaf_create(struct analyzer *a,
+                              const struct RFstring *id,
+                              struct type *leaf_type);
+
 
 /**
  * Attempts to retrieve the type for ast node @c n and if it does not exist

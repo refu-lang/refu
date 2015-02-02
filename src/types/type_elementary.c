@@ -26,7 +26,7 @@ static const struct RFstring elementary_type_strings[] = {
 };
 
 // NOTE: preserve order
-static const struct type i_elementary_types[] = {
+static struct type i_elementary_types[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                           \
     [i_type] = {.category = TYPE_CATEGORY_ELEMENTARY, .elementary = {.etype=i_type}}
 
@@ -122,7 +122,7 @@ bool type_elementary_equals(const struct type_elementary *t1,
     return false;
 }
 
-const struct type *type_elementary_get_type(enum elementary_type etype)
+struct type *type_elementary_get_type(enum elementary_type etype)
 {
     return &i_elementary_types[etype];
 }

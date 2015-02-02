@@ -37,7 +37,7 @@ START_TEST(test_typecheck_assignment_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_storage_size) {
@@ -60,7 +60,7 @@ START_TEST(test_typecheck_assignment_invalid_storage_size) {
     // set conversion warnings on
     front_ctx_set_warn_on_implicit_conversions(&d->front, false);
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_string_to_int) {
@@ -83,7 +83,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
             4, 0, 4, 7)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_addition_simple) {
@@ -99,7 +99,7 @@ START_TEST(test_typecheck_valid_addition_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_subtraction_simple) {
@@ -116,7 +116,7 @@ START_TEST(test_typecheck_valid_subtraction_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_multiplication_simple) {
@@ -133,7 +133,7 @@ START_TEST(test_typecheck_valid_multiplication_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_division_simple) {
@@ -150,7 +150,7 @@ START_TEST(test_typecheck_valid_division_simple) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_member_access) {
@@ -166,7 +166,7 @@ START_TEST(test_typecheck_valid_member_access) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_member_access) {
@@ -200,7 +200,7 @@ START_TEST(test_typecheck_invalid_member_access) {
             4, 8, 4, 18),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_variable_declarations) {
@@ -216,7 +216,7 @@ START_TEST(test_typecheck_variable_declarations) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call0) {
@@ -232,7 +232,7 @@ START_TEST(test_typecheck_valid_function_call0) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call1) {
@@ -248,7 +248,7 @@ START_TEST(test_typecheck_valid_function_call1) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call2) {
@@ -265,7 +265,7 @@ START_TEST(test_typecheck_valid_function_call2) {
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_arguments) {
@@ -293,7 +293,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
             6, 0, 6, 24),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_return) {
@@ -320,7 +320,7 @@ START_TEST(test_typecheck_invalid_function_call_return) {
             6, 0, 6, 32),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
@@ -352,7 +352,7 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
             6, 0, 6, 32)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_impl) {
@@ -370,7 +370,7 @@ START_TEST(test_typecheck_valid_function_impl) {
     front_testdriver_assign(d, &s);
     front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_impl_return) {
@@ -393,7 +393,7 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
             2, 0, 2, 8),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages);
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
@@ -408,7 +408,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
     front_testdriver_assign(d, &s);
     front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
@@ -423,7 +423,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
     front_testdriver_assign(d, &s);
     front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 Suite *analyzer_typecheck_suite_create(void)

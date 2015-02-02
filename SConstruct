@@ -47,6 +47,7 @@ refu_src = [
     'analyzer/analyzer_pass1.c',
     'analyzer/string_table.c',
     'analyzer/typecheck.c',
+    'analyzer/global_context.c',
 
     'types/type.c',
     'types/type_function.c',

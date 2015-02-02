@@ -56,9 +56,11 @@ void type_free(struct type *t, struct analyzer *a)
 
 /* -- type creation and initialization functions used internally -- */
 
-static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
-                           struct analyzer *a, struct symbol_table *st,
-                           struct ast_node *genrdecl)
+static bool type_leaf_init_from_typedesc(struct type_leaf *leaf,
+                                         struct ast_node *typedesc,
+                                         struct analyzer *a,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl)
 {
     struct ast_node *right;
     struct ast_node *left;
@@ -93,9 +95,10 @@ static bool type_leaf_init(struct type_leaf *leaf, struct ast_node *typedesc,
     return true;
 }
 
-static struct type *type_leaf_create(struct ast_node *typedesc,
-                                     struct analyzer *a, struct symbol_table *st,
-                                     struct ast_node *genrdecl)
+static struct type *type_leaf_create_from_typedesc(struct ast_node *typedesc,
+                                                   struct analyzer *a,
+                                                   struct symbol_table *st,
+                                                   struct ast_node *genrdecl)
 {
     struct type *ret;
     ret = type_alloc(a);
@@ -105,7 +108,7 @@ static struct type *type_leaf_create(struct ast_node *typedesc,
     }
 
     ret->category = TYPE_CATEGORY_LEAF;
-    if (!type_leaf_init(&ret->leaf, typedesc, a, st, genrdecl)) {
+    if (!type_leaf_init_from_typedesc(&ret->leaf, typedesc, a, st, genrdecl)) {
         type_free(ret, a);
         return NULL;
     }
@@ -123,7 +126,7 @@ static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
         AST_NODE_ASSERT_TYPE(typedesc, AST_TYPE_DESCRIPTION);
 
         t->category = TYPE_CATEGORY_LEAF;
-        return type_leaf_init(&t->leaf, typedesc, a, st, genrdecl);
+        return type_leaf_init_from_typedesc(&t->leaf, typedesc, a, st, genrdecl);
     } else {
         t->category = TYPE_CATEGORY_OPERATOR;
         return type_operator_init(&t->operator, typedesc, a, st, genrdecl);
@@ -189,7 +192,7 @@ struct type *type_lookup_or_create(struct ast_node *n,
             ast_typedesc_right(n)->type == AST_XIDENTIFIER) {
 
             if (make_leaf) {
-                return type_leaf_create(n, a, st, genrdecl);
+                return type_leaf_create_from_typedesc(n, a, st, genrdecl);
             } else {
                 return type_lookup_xidentifier(ast_typedesc_right(n), a, st, genrdecl);
             }
@@ -343,6 +346,37 @@ struct type *type_create_from_fndecl(struct ast_node *n,
     rf_ilist_add(&a->composite_types, &t->lh);
     return t;
 }
+
+struct type *type_function_create(struct analyzer *a,
+                                  struct type *arg_type,
+                                  struct type *ret_type)
+{
+    struct type *t;
+    t = type_alloc(a);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    type_function_init(t, arg_type, ret_type);
+    return t;
+}
+
+struct type *type_leaf_create(struct analyzer *a,
+                              const struct RFstring *id,
+                              struct type *leaf_type)
+{
+    struct type *t;
+    t = type_alloc(a);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    t->category = TYPE_CATEGORY_LEAF;
+    t->leaf.id = id;
+    t->leaf.type = leaf_type;
+    return t;
+}
+
 
 struct type *type_operator_create(struct ast_node *n,
                                   struct analyzer *a,

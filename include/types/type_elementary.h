@@ -15,7 +15,7 @@ bool type_elementary_equals(const struct type_elementary *t1,
 /**
  * Given a built-in type value, returns the type itself
  */
-const struct type *type_elementary_get_type(enum elementary_type etype);
+struct type *type_elementary_get_type(enum elementary_type etype);
 
 /**
  * Given a built-in type value return the type string representation

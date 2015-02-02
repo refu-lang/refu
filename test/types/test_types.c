@@ -98,7 +98,7 @@ START_TEST(test_composite_types_list_population) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, false);
 
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
@@ -133,7 +133,7 @@ START_TEST(test_composite_types_list_population2) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d);
+    ck_assert_typecheck_ok(d, false);
 
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);

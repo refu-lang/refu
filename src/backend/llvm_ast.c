@@ -112,6 +112,15 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
     return NULL;
 }
 
+LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
+                                                struct llvm_traversal_ctx *ctx)
+{
+    (void)n;
+    (void)ctx;
+    //TODO
+    return NULL;
+}
+
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
                                              struct llvm_traversal_ctx *ctx)
 {
@@ -123,6 +132,8 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_RETURN_STATEMENT:
         llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n), ctx);
         return LLVMBuildRet(ctx->builder, llvm_val);
+    case AST_FUNCTION_CALL:
+        return backend_llvm_function_call_compile(n, ctx);
     case AST_CONSTANT_NUMBER:
         if (!ast_constantnum_get_integer(n, &val)) {
             RF_ERROR("Failed to convert a constant num node to number for LLVM");
@@ -217,6 +228,13 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     return llvm_fn;
 }
 
+static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
+{
+    // TODO Put all global/special functions here. e.g. print() e.t.c.
+    (void)ctx;
+    return true;
+}
+
 struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
                                                     struct llvm_traversal_ctx *ctx)
 {
@@ -225,6 +243,10 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     RFS_buffer_push();
     mod_name = rf_string_cstr_from_buff(&mod->name);
     ctx->mod = LLVMModuleCreateWithName(mod_name);
+    if (!backend_llvm_create_globals(ctx)) {
+        RF_ERROR("Failed to create global context for LLVM");
+        return NULL;
+    }
     RFS_buffer_pop();
     // for each function of the module create code
     rf_ilist_for_each(&mod->functions, fn, ln_for_module) {

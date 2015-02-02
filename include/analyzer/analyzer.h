@@ -74,7 +74,17 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
 
 struct inpfile *analyzer_get_file(struct analyzer *a);
 
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser);
+/**
+ * Analyze a file
+ *
+ * @param a                   The analyzer instance
+ * @param parser              The parser instance from which the AST was created.
+ * @param with_global_context If @c true also have global context elements introduced
+ *
+ * @return                    @c true for success and @c false for failure
+ */
+bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
+                           bool with_global_context);
 
 i_INLINE_DECL void analyzer_set_semantic_error(struct analyzer *a)
 {

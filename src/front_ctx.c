@@ -87,7 +87,8 @@ struct analyzer *front_ctx_process(struct front_ctx *ctx)
         return NULL;
     }
 
-    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser)) {
+    // for now always create global context for analyzer
+    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, true)) {
         return NULL;
     }
 

@@ -1,5 +1,6 @@
 #include <analyzer/analyzer.h>
 
+#include "global_context.h"
 #include "analyzer_pass1.h"
 
 #include <Utils/memory.h>
@@ -119,11 +120,23 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     return t;
 }
 
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser)
+bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
+                           bool with_global_context)
 {
     // acquire the root of the AST from the parser
     a->root = parser_yield_ast_root(parser);
 
+    // initialize root symbol table here instead od analyzer_first_pass
+    // since we need it at least for now if we want to introduce a global context
+    if (!ast_root_symbol_table_init(a->root, a)) {
+        RF_ERROR("Could not initialize symbol table for root node");
+        return false;
+    }
+    if (with_global_context) {
+        if (!analyzer_load_globals(a)) {
+            RF_ERROR("Failure at loading the global context for the analyzer");
+        }
+    }
     // create symbol tables and change ast nodes ownership
     if (!analyzer_first_pass(a)) {
         RF_ERROR("Failure at analyzer's first pass");

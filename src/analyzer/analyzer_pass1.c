@@ -179,11 +179,8 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     switch(n->type) {
         // nodes that change the current symbol table
     case AST_ROOT:
-        if (!ast_root_symbol_table_init(n, ctx->a)) {
-           RF_ERROR("Could not initialize symbol table for root node");
-           return false;
-        }
         RF_ASSERT(ctx->current_st == NULL, "Visiting root node more than once");
+        // symbol table already initialized in analyzer_analyze_file
         ctx->current_st = ast_root_symbol_table_get(n);
         break;
     case AST_BLOCK:
