@@ -76,7 +76,7 @@ START_TEST (test_type_to_str) {
 
     static const struct RFstring id_person =  RF_STRING_STATIC_INIT("person");
     struct type *t_defined_1 = testsupport_analyzer_type_create_defined(&id_person,
-                                                                       t_sum_1);
+                                                                        t_sum_1);
 
     RFS_buffer_push();
     ck_assert_rf_str_eq_cstr(type_str(t_u32, true), "u32");

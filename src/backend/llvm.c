@@ -40,6 +40,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
+    bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
     LLVMLinkInJIT();
     LLVMInitializeNativeTarget();
@@ -48,7 +49,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
     llvm_module = backend_llvm_create_module(module, &ctx);
     if (!llvm_module) {
         ERROR("Failed to form the LLVM IR ast");
-        return false;
+        goto end;
     }
 
     // verify module and create code
@@ -64,12 +65,14 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
         ERROR("LLVM-error: %s", error);
         LLVMDisposeMessage(error);
         RFS_buffer_pop();
-        return false;
+        goto end;
     }
     RFS_buffer_pop();
 
+    ret = true;
+end:
     llvm_traversal_ctx_deinit(&ctx);
-    return true;
+    return ret;
 }
 
 static bool transformation_step_do(struct compiler_args *args,
@@ -128,6 +131,9 @@ bool backend_llvm_generate(struct rir_module *module, struct compiler_args *args
     if (!backend_llvm_ir_generate(module, args)) {
         return false;
     }
+
+    // now it should be okay to free the module
+    rir_module_destroy(module);
 
     if (!backend_llvm_ir_to_asm(args)) {
         ERROR("Failed to generate assembly from LLVM IR code");

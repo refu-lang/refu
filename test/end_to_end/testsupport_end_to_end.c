@@ -77,7 +77,7 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
         args_number = 1;
     }
 
-    RF_MALLOC(args_cstrings, args_number * sizeof(*args_cstrings) + 1,
+    RF_MALLOC(args_cstrings, (args_number + 1) * sizeof(*args_cstrings),
               goto free_strings_arr);
 
     // executable name is always the first argument
