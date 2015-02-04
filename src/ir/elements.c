@@ -12,7 +12,7 @@
 
 static struct rir_type i_elementary_types[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                           \
-    [i_type] = {.elementary = i_type}
+    [i_type] = {.type = i_type}
 
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT),
@@ -32,19 +32,21 @@ static struct rir_type i_elementary_types[] = {
 #undef INIT_ELEMENTARY_TYPE_ARRAY_INDEX
 };
 
+
+
 static bool rir_type_init_iteration(struct rir_type *type, const struct type *input,
                                     const struct RFstring *name)
 {
+    if (type->type != RIR_TYPE_COMPOSITE) {
+        return true;
+    }
     // for now here we assume it's only product types
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
-            /* RF_ASSERT(name, "For now, we always need to have a name in the rir type"); */
             new_type = rir_type_alloc(input);
-            if (!rf_string_copy_in(&new_type->name, name)) {
-                return false;
-            }
+            new_type->name = name;
             darray_append(type->subtypes, new_type);
         }
         break;
@@ -99,6 +101,7 @@ struct rir_type *rir_type_alloc(const struct type *input)
     // else
     struct rir_type *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->type = RIR_TYPE_COMPOSITE;
     return ret;
 
 }
@@ -125,7 +128,6 @@ void rir_type_dealloc(struct rir_type *t)
 }
 void rir_type_destroy(struct rir_type *t)
 {
-    rf_string_deinit(&t->name);
     rir_type_deinit(t);
     rir_type_dealloc(t);
 }
@@ -145,7 +147,7 @@ const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
         RF_ERROR("Requested rir_type name of subtype out of bounds");
         return NULL;
     }
-    return &((struct rir_type*)darray_item(t->subtypes, n))->name;
+    return ((struct rir_type*)darray_item(t->subtypes, n))->name;
 }
 
 const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)

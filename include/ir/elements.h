@@ -25,7 +25,8 @@ struct rir_type {
     //! TODO: This should be an enum with all elementary types + 1 for composite type
     //! In the case of composite type just define it somewhere else so that backends
     //! like LLVM can have it as a struct
-    enum elementary_type elementary;
+    #define RIR_TYPE_COMPOSITE ELEMENTARY_TYPE_TYPES_COUNT
+    int type;
     //! Array of types that may constitute this type. e.g: i64, u32, string
     struct {darray(struct rir_type*);} subtypes;
     //! Whether the @c subtypes are connected as product types (so by ,) or
@@ -33,7 +34,7 @@ struct rir_type {
     bool are_product_type;
     //! Name of the variable the type describes. TODO: Maybe move this somwhere
     //! else. Separate the notion of type from parameter?
-    struct RFstring name;
+    const struct RFstring *name;
 };
 struct rir_type *rir_type_alloc(const struct type *input);
 struct rir_type *rir_type_create(const struct type *input,

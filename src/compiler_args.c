@@ -57,8 +57,15 @@ struct compiler_args *compiler_args_create()
     return ret;
 }
 
+void compiler_args_deinit(struct compiler_args *args)
+{
+    rf_string_deinit(&args->input);
+    rf_stringx_deinit(&args->buff);
+}
+
 void compiler_args_destroy(struct compiler_args *args)
 {
+    compiler_args_deinit(args);
     free(args);
 }
 

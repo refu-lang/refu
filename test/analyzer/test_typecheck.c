@@ -460,7 +460,7 @@ Suite *analyzer_typecheck_suite_create(void)
 
     TCase *t_access_inv = tcase_create("analyzer_typecheck_invalid_access_operations");
     tcase_add_checked_fixture(t_access_inv,
-                              setup_analyzer_tests,
+                              setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_access_inv, test_typecheck_invalid_member_access);
 

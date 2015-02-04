@@ -16,7 +16,7 @@ bool compiler_init(struct compiler *c)
     RF_STRUCT_ZERO(c);
 
     // initialize Refu library
-    rf_init(LOG_TARGET_STDOUT, NULL, LOG_DEBUG);
+    rf_init(LOG_TARGET_STDOUT, NULL, LOG_WARNING);
 
     // initialize an error buffer string
     if (!rf_stringx_init_buff(&c->err_buff, 1024, "")) {

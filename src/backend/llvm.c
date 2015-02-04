@@ -42,6 +42,8 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
     struct LLVMOpaqueModule *llvm_module;
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
+
+    LLVMInitializeCore(LLVMGetGlobalPassRegistry());
     LLVMLinkInJIT();
     LLVMInitializeNativeTarget();
 
@@ -72,6 +74,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
     ret = true;
 end:
     llvm_traversal_ctx_deinit(&ctx);
+    LLVMShutdown();
     return ret;
 }
 

@@ -112,6 +112,9 @@ void ast_node_destroy(struct ast_node *n)
         case AST_FUNCTION_IMPLEMENTATION:
             symbol_table_deinit(ast_fnimpl_symbol_table_get(n));
             break;
+        case AST_TYPE_DECLARATION:
+            symbol_table_deinit(ast_typedecl_symbol_table_get(n));
+            break;
         default:
             // no type specific destruction for the rest
             break;

@@ -76,7 +76,7 @@ static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
 {
     //TODO: ctx not used here for now. If not used at all remove
     (void)ctx;
-    return backend_llvm_elementary_to_type(type->elementary);
+    return backend_llvm_elementary_to_type(type->type);
 }
 
 // return an array of arg types or NULL if our param type is nil
@@ -225,7 +225,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     const struct RFstring *param_name_str;
     struct symbol_table_record *rec;
 
-    if (fn->arg_type->elementary != ELEMENTARY_TYPE_NIL) {
+    if (fn->arg_type->type != ELEMENTARY_TYPE_NIL) {
         for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
 
             // for each argument of the function allocate an LLVM variable

@@ -27,9 +27,9 @@ struct compiler_args {
 };
 
 bool compiler_args_init(struct compiler_args *args);
-
 struct compiler_args *compiler_args_create();
 
+void compiler_args_deinit(struct compiler_args *args);
 void compiler_args_destroy(struct compiler_args *args);
 
 bool compiler_args_parse(struct compiler_args *args, int argc, char** argv);
