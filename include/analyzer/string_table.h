@@ -40,4 +40,13 @@ bool string_table_add_str(struct string_table *t,
 const struct RFstring *string_table_get_str(const struct string_table *t,
                                             uint32_t hash);
 
+typedef void (*string_table_cb) (const struct RFstring *s, void *user_arg);
+/**
+ * Provide a callback to iterate the string table and do something for each string
+ *
+ * @param[in] t                 The string table in question
+ * @paran[in] cb                The callback to be called for each string value
+ * @param[in] user_arg          The user argument to provide to the callback
+ */
+void string_table_iterate(struct string_table *t, string_table_cb cb, void *user_arg);
 #endif

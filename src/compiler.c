@@ -110,7 +110,7 @@ bool compiler_process(struct compiler *c)
     /*     return NULL; */
     /* } */
 
-    if (!backend_llvm_generate(rir_mod, c->args)) {
+    if (!backend_llvm_generate(rir_mod, c->ir, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");
         return false;
     }

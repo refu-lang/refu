@@ -663,18 +663,53 @@ START_TEST(test_string_table_add_many) {
 
     string_table_init(&st);
 
-    for (i = 0; i < str_num; i ++) {
+    for (i = 0; i < str_num; ++i) {
         ck_assert_msg(
             string_table_add_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
             "Failed to add string number %z to the string table", i);
     }
 
-    for (i = 0; i < str_num; i ++) {
+    for (i = 0; i < str_num; ++i) {
         ret = string_table_get_str(&st, recs_arr[i].hash);
         ck_assert_msg(ret, "Failed to get string %z by hash", i);
         ck_assert_msg(rf_string_equal(ret, &recs_arr[i].s),
                   "Failed to get string %z by hash", i);
     }
+
+    string_table_deinit(&st);
+} END_TEST
+
+struct iter_cb_ctx {
+    struct st_test_record *recs_arr;
+    size_t size;
+};
+
+static void string_table_iterate_callback(const struct RFstring *s, void *user)
+{
+    unsigned int i;
+    struct iter_cb_ctx *ctx = user;
+    for (i = 0; i < ctx->size; ++i) {
+        if (rf_string_equal(s, &recs_arr[i].s)) {
+            return;
+        }
+    }
+    ck_abort_msg("Could not find a string in the table during iteration");
+}
+
+START_TEST(test_string_table_iterate) {
+    struct string_table st;
+    struct iter_cb_ctx ctx;
+    size_t i;
+    ctx.size = sizeof(recs_arr) / sizeof(struct st_test_record);
+
+    string_table_init(&st);
+
+    for (i = 0; i < ctx.size; ++i) {
+        ck_assert_msg(
+            string_table_add_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
+            "Failed to add string number %z to the string table", i);
+    }
+    string_table_iterate(&st, string_table_iterate_callback, &ctx);
 
     string_table_deinit(&st);
 } END_TEST
@@ -692,7 +727,7 @@ Suite *analyzer_stringtable_suite_create(void)
     tcase_add_test(st1, test_string_table_add_existing);
     tcase_add_test(st1, test_string_table_get_non_existing);
     tcase_add_test(st1, test_string_table_add_many);
-
+    tcase_add_test(st1, test_string_table_iterate);
 
     suite_add_tcase(s, st1);
     return s;

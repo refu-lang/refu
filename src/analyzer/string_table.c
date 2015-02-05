@@ -111,4 +111,7 @@ const struct RFstring *string_table_get_str(const struct string_table *t,
     return &rec->string;
 }
 
-
+void string_table_iterate(struct string_table *t, string_table_cb cb, void* user_arg)
+{
+    htable_iterate_values(&t->table, (htable_iter_cb)cb, user_arg);
+}

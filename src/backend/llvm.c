@@ -19,10 +19,12 @@
 
 
 static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
+                                           struct rir *rir,
                                            struct compiler_args *args)
 {
     ctx->mod = NULL;
     ctx->current_st = NULL;
+    ctx->rir = rir;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
@@ -35,7 +37,7 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     LLVMDisposeModule(ctx->mod);
 }
 
-static bool backend_llvm_ir_generate(struct rir_module *module,
+static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
                                      struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
@@ -47,7 +49,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module,
     LLVMLinkInJIT();
     LLVMInitializeNativeTarget();
 
-    llvm_traversal_ctx_init(&ctx, args);
+    llvm_traversal_ctx_init(&ctx, rir, args);
     llvm_module = backend_llvm_create_module(module, &ctx);
     if (!llvm_module) {
         ERROR("Failed to form the LLVM IR ast");
@@ -128,10 +130,10 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool backend_llvm_generate(struct rir_module *module, struct compiler_args *args)
+bool backend_llvm_generate(struct rir_module *module, struct rir *r, struct compiler_args *args)
 {
 
-    if (!backend_llvm_ir_generate(module, args)) {
+    if (!backend_llvm_ir_generate(module, r, args)) {
         return false;
     }
 

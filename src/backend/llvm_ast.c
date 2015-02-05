@@ -23,7 +23,10 @@
 #include <types/type_function.h>
 #include <types/type_elementary.h>
 
+#include <analyzer/string_table.h>
+
 #include <ir/elements.h>
+#include <ir/rir.h>
 
 #include <backend/llvm.h>
 
@@ -120,6 +123,8 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
         return LLVMBuildMul(ctx->builder, left, right, "left * right");
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
+    case BINARYOP_ASSIGN:
+        break; // TODO
     default:
         RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
         break;
@@ -157,6 +162,15 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
         //       if we are going to be returning it anyway?
         ctx->current_value = LLVMConstInt(LLVMInt32Type(), val, 0);
         return ctx->current_value;
+    case AST_STRING_LITERAL:
+        // TODO
+        break;
+    case AST_IDENTIFIER:
+        // TODO
+        break;
+    case AST_VARIABLE_DECLARATION:
+        // TODO
+        break;
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");
         break;
@@ -252,18 +266,42 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     return llvm_fn;
 }
 
+static void backend_llvm_create_const_strings(const struct RFstring *s,
+                                              struct llvm_traversal_ctx *ctx)
+{
+    unsigned int length = rf_string_length_bytes(s);
+    LLVMValueRef stringbuff = LLVMConstString(rf_string_data(s), length, true);
+    LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), stringbuff };
+    LLVMValueRef string_decl = LLVMConstNamedStruct(ctx->string_type, string_struct_layout, 2);
+    RFS_buffer_push();
+    LLVMValueRef global_var = LLVMAddGlobal(ctx->mod, ctx->string_type, rf_string_cstr_from_buff(s));
+    RFS_buffer_pop();
+    LLVMValueRef indices [] = { LLVMConstInt(LLVMInt32Type(), 1, 0) };
+    LLVMValueRef gep1 = LLVMConstGEP(global_var, indices, 1);
+    LLVMValueRef gep2 = LLVMConstGEP(string_decl, indices, 1);
+    LLVMSetInitializer(gep1, gep2);
+    /* LLVMSetInitializer(global_var, final_string); */
+
+}
+
 static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
 {
-    // TODO Put all global/special functions here. e.g. print() e.t.c.
+    // TODO: If possible in llvm these globals creation would be in the beginning
+    //       before any module is created or in a global module which would be a
+    //       parent of all submodules.
     llvm_traversal_ctx_reset_params(ctx);
 
-    llvm_traversal_ctx_add_param(ctx, LLVMPointerType(LLVMInt8Type(), DEFAULT_PTR_ADDRESS_SPACE));
     llvm_traversal_ctx_add_param(ctx, LLVMInt32Type());
-    LLVMAddGlobal(ctx->mod,
-                  LLVMStructType(llvm_traversal_ctx_get_params(ctx),
-                                 llvm_traversal_ctx_get_param_count(ctx), true),
-                  "string");
+    llvm_traversal_ctx_add_param(ctx, LLVMPointerType(LLVMInt8Type(), DEFAULT_PTR_ADDRESS_SPACE));
+    LLVMTypeRef string_type = LLVMStructType(llvm_traversal_ctx_get_params(ctx),
+                                             llvm_traversal_ctx_get_param_count(ctx),
+                                             true);
+    /* LLVMValueRef string_val = LLVMAddGlobal(ctx->mod, string_type, "string"); */
+    ctx->string_type = string_type;
     llvm_traversal_ctx_reset_params(ctx);
+
+    string_table_iterate(ctx->rir->string_literals_table,
+                         (string_table_cb)backend_llvm_create_const_strings, ctx);
     return true;
 }
 
