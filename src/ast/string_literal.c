@@ -12,8 +12,8 @@ struct ast_node *ast_string_literal_create(struct inplocation *loc)
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->string_literal.string, loc->start.p,
-                           loc->end.p - loc->start.p + 1);
+    RF_STRING_SHALLOW_INIT(&ret->string_literal.string, loc->start.p + 1,
+                           loc->end.p - loc->start.p - 1);
 
     return ret;
 }

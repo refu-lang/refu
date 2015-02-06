@@ -271,25 +271,27 @@ static void backend_llvm_create_const_strings(const struct RFstring *s,
                                               struct llvm_traversal_ctx *ctx)
 {
     unsigned int length = rf_string_length_bytes(s);
+    char *strbuff_name;
+    char *gstr_name;
 
+    RFS_buffer_push();
     LLVMValueRef stringbuff = LLVMConstString(rf_string_data(s), length, true);
-    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->mod, LLVMTypeOf(stringbuff), "strbuff");
+    strbuff_name = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_strbuff", RF_STR_PF_ARG(s)));
+    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->mod, LLVMTypeOf(stringbuff), strbuff_name);
     LLVMSetInitializer(global_stringbuff, stringbuff);
-    LLVMValueRef got_global = LLVMGetNamedGlobal(ctx->mod, "strbuff");
-    LLVMValueRef got_global_value = LLVMGetInitializer(got_global);
-    backend_llvm_val_debug(global_stringbuff, "normal global");
-    backend_llvm_val_debug(global_stringbuff, "normal global");
-    backend_llvm_val_debug(stringbuff, "stringbuff");
-    /* LLVMValueRef stringbuff_ptr = LLVMConstIntToPtr(stringbuff, LLVMPointerType(LLVMTypeOf(stringbuff), 0)); */
-    LLVMValueRef stringbuff_ptr = LLVMConstIntToPtr(got_global_value, LLVMPointerType(LLVMTypeOf(got_global_value), 0));
+    LLVMSetUnnamedAddr(global_stringbuff, true);
+    LLVMSetLinkage(global_stringbuff, LLVMPrivateLinkage);
+    LLVMSetGlobalConstant(global_stringbuff, true);
+
     LLVMValueRef indices_0 [] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(stringbuff_ptr, indices_0, 2);
+    LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(global_stringbuff, indices_0, 2);
     LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), gep_to_string_buff };
     LLVMValueRef string_decl = LLVMConstNamedStruct(ctx->string_type, string_struct_layout, 2);
-    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMTypeOf(string_decl), "str_struct");
-    LLVMSetInitializer(global_val, string_decl);
-    backend_llvm_val_debug(string_decl, "string_decl");
 
+    gstr_name = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_gstr", RF_STR_PF_ARG(s)));
+    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, ctx->string_type, gstr_name);
+    RFS_buffer_pop();
+    LLVMSetInitializer(global_val, string_decl);
 }
 
 static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)

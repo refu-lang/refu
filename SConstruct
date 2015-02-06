@@ -135,6 +135,7 @@ unit_tests_files = [
     'parser/test_parser_operators.c',
     'parser/test_parser_block.c',
     'parser/test_parser_ifexpr.c',
+    'parser/test_parser_expressions.c',
 
     'analyzer/testsupport_analyzer.c',
     'analyzer/test_symbol_table.c',
