@@ -94,7 +94,8 @@ linker_exec = 'gcc'
 if local_env['LANG_BACKEND'] == 'LLVM':
     refu_src += [
         'backend/llvm.c',
-        'backend/llvm_ast.c'
+        'backend/llvm_ast.c',
+        'backend/llvm_utils.c'
     ]
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'

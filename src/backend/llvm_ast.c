@@ -29,6 +29,7 @@
 #include <ir/rir.h>
 
 #include <backend/llvm.h>
+#include "llvm_utils.h"
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
@@ -270,17 +271,24 @@ static void backend_llvm_create_const_strings(const struct RFstring *s,
                                               struct llvm_traversal_ctx *ctx)
 {
     unsigned int length = rf_string_length_bytes(s);
+
     LLVMValueRef stringbuff = LLVMConstString(rf_string_data(s), length, true);
-    LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), stringbuff };
+    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->mod, LLVMTypeOf(stringbuff), "strbuff");
+    LLVMSetInitializer(global_stringbuff, stringbuff);
+    LLVMValueRef got_global = LLVMGetNamedGlobal(ctx->mod, "strbuff");
+    LLVMValueRef got_global_value = LLVMGetInitializer(got_global);
+    backend_llvm_val_debug(global_stringbuff, "normal global");
+    backend_llvm_val_debug(global_stringbuff, "normal global");
+    backend_llvm_val_debug(stringbuff, "stringbuff");
+    /* LLVMValueRef stringbuff_ptr = LLVMConstIntToPtr(stringbuff, LLVMPointerType(LLVMTypeOf(stringbuff), 0)); */
+    LLVMValueRef stringbuff_ptr = LLVMConstIntToPtr(got_global_value, LLVMPointerType(LLVMTypeOf(got_global_value), 0));
+    LLVMValueRef indices_0 [] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+    LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(stringbuff_ptr, indices_0, 2);
+    LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), gep_to_string_buff };
     LLVMValueRef string_decl = LLVMConstNamedStruct(ctx->string_type, string_struct_layout, 2);
-    RFS_buffer_push();
-    LLVMValueRef global_var = LLVMAddGlobal(ctx->mod, ctx->string_type, rf_string_cstr_from_buff(s));
-    RFS_buffer_pop();
-    LLVMValueRef indices [] = { LLVMConstInt(LLVMInt32Type(), 1, 0) };
-    LLVMValueRef gep1 = LLVMConstGEP(global_var, indices, 1);
-    LLVMValueRef gep2 = LLVMConstGEP(string_decl, indices, 1);
-    LLVMSetInitializer(gep1, gep2);
-    /* LLVMSetInitializer(global_var, final_string); */
+    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMTypeOf(string_decl), "str_struct");
+    LLVMSetInitializer(global_val, string_decl);
+    backend_llvm_val_debug(string_decl, "string_decl");
 
 }
 
@@ -323,5 +331,8 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
         backend_llvm_function(fn, ctx);
     }
+
+    // temporary to see how module looks in llvm bitcode for debugging
+    backend_llvm_mod_debug(ctx->mod, mod_name);
     return ctx->mod;
 }
