@@ -87,7 +87,7 @@ static bool compiler_args_check_backend(struct compiler_args *args, int* i,
                                         int argc, char** argv, bool* consumed)
 {
     int len = strlen(argv[*i]);
-    if (!strstr(argv[*i], "--backend")) {
+    if (strcmp(argv[*i], "--backend") != 0) {
         return true;
     }
 

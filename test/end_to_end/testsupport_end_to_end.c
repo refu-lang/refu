@@ -86,13 +86,18 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
     if (args_number == 1) {
         args_cstrings[1] = args;
     } else {
+        // unfortunately compiler_pass_args needs normal c strings so we need to null terminate
         for (i = 1; i <= args_number; i++) {
-            args_cstrings[i] = args_strings[i].data;
+            size_t length = rf_string_length_bytes(&args_strings[i - 1]);
+            RF_MALLOC(args_cstrings[i], length + 1, goto free_strings_arr);
+            strncpy(args_cstrings[i], args_strings[i - 1].data, length);
+            args_cstrings[i][length] = '\0';
+            /* args_cstrings[i] = args_strings[i - 1].data; */
         }
     }
-    args_number += 1;
 
-    if (!compiler_pass_args(&d->compiler, args_number, args_cstrings)) {
+    // + 1 is for the initial argument of the executable name
+    if (!compiler_pass_args(&d->compiler, args_number + 1, args_cstrings)) {
         goto free_cstrings_arr;
     }
 
@@ -102,6 +107,9 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
 
     ret = true;
 free_cstrings_arr:
+    for (i = 1; i <= args_number; i++) {
+        free(args_cstrings[i]);
+    }
     free(args_cstrings);
 free_strings_arr:
     if (args_strings) {
