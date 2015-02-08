@@ -92,7 +92,6 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
             RF_MALLOC(args_cstrings[i], length + 1, goto free_strings_arr);
             strncpy(args_cstrings[i], args_strings[i - 1].data, length);
             args_cstrings[i][length] = '\0';
-            /* args_cstrings[i] = args_strings[i - 1].data; */
         }
     }
 
@@ -107,7 +106,7 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
 
     ret = true;
 free_cstrings_arr:
-    for (i = 1; i <= args_number; i++) {
+    for (i = 1; i < args_number; i++) {
         free(args_cstrings[i]);
     }
     free(args_cstrings);

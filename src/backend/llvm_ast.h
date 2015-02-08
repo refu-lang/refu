@@ -24,8 +24,6 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueValue *current_value;
     struct {darray(struct LLVMOpaqueType*);} params;
 
-    struct LLVMOpaqueType *string_type;
-
     struct compiler_args *args;
     struct rir *rir;
     struct symbol_table *current_st;

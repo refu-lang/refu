@@ -56,9 +56,7 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type, st
         return LLVMInt64Type();
 
     case ELEMENTARY_TYPE_STRING:
-        return ctx->string_type;
-        // TODO: this does not work :(, figure out how to create a type name properly
-        // return LLVMGetTypeByName(ctx->mod, "string");
+        return LLVMGetTypeByName(ctx->mod, "string");
 
     case ELEMENTARY_TYPE_NIL:
         return LLVMVoidType();
@@ -403,10 +401,10 @@ static void backend_llvm_create_const_strings(const struct RFstring *s,
     LLVMValueRef indices_0 [] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(global_stringbuff, indices_0, 2);
     LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), gep_to_string_buff };
-    LLVMValueRef string_decl = LLVMConstNamedStruct(ctx->string_type, string_struct_layout, 2);
+    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"), string_struct_layout, 2);
 
     gstr_name = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_gstr", RF_STR_PF_ARG(s)));
-    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, ctx->string_type, gstr_name);
+    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMGetTypeByName(ctx->mod, "string"), gstr_name);
     RFS_buffer_pop();
     LLVMSetInitializer(global_val, string_decl);
 }
@@ -427,7 +425,7 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
     LLVMValueRef llvm_fn;
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
-    LLVMTypeRef  args[] = { LLVMPointerType(ctx->string_type, 0) };
+    LLVMTypeRef  args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0) };
     llvm_fn = LLVMAddFunction(ctx->mod, "print",
                               LLVMFunctionType(LLVMVoidType(),
                                                args,
@@ -470,9 +468,7 @@ static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
     LLVMStructSetBody(string_type, llvm_traversal_ctx_get_params(ctx),
                       llvm_traversal_ctx_get_param_count(ctx), true);
 
-    ctx->string_type = string_type;
     llvm_traversal_ctx_reset_params(ctx);
-
     string_table_iterate(ctx->rir->string_literals_table,
                          (string_table_cb)backend_llvm_create_const_strings, ctx);
     if (!backend_llvm_create_global_functions(ctx)) {
