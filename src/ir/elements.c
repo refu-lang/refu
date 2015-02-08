@@ -7,6 +7,7 @@
 #include <ast/block.h>
 #include <ast/function.h>
 #include <ast/vardecl.h>
+#include <ast/operators.h>
 #include <String/rf_str_decl.h>
 #include <String/rf_str_core.h>
 
@@ -217,13 +218,40 @@ RF_STRUCT_DEINIT_SIG(rir_basic_block)
     (void)this;
 }
 
+void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b)
+{
+    struct rir_type *type;
+    struct ast_node *id;
+    struct symbol_table_record *rec;
+    switch(n->type) {
+    case AST_VARIABLE_DECLARATION:
+        // if it's a variable declaration get/create its rir type
+        type = rir_type_create(ast_expression_get_type(n), ast_vardecl_get_name(n));
+        id = n->vardecl.desc->typedesc.left;
+        AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
+        rec = symbol_table_lookup_record(b->symbols,
+                                         ast_identifier_str(id), NULL);
+        if (!rec) {
+            RF_ERROR("During RIR creation identifier was not found in block's symbol table");
+            return;
+        }
+        rec->rir_data = type;
+        break;
+    case AST_BINARY_OPERATOR:
+        rir_handle_block_expression(ast_binaryop_left(n), b);
+        rir_handle_block_expression(ast_binaryop_right(n), b);
+        rf_ilist_add_tail(&b->lh, &n->ln_for_rir_blocks);
+        break;
+    default:
+        rf_ilist_add_tail(&b->lh, &n->ln_for_rir_blocks);
+        break;
+    }
+}
+
 struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n)
 {
     struct ast_node *c;
-    struct ast_node *id;
     struct rir_basic_block *b;
-    struct rir_type *type;
-    struct symbol_table_record *rec;
 
     AST_NODE_ASSERT_TYPE(n, AST_BLOCK);
     b = rir_basic_block_create();
@@ -231,24 +259,7 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
     rf_ilist_for_each(&n->children, c, lh) {
         // TODO depending on the children create other blocks and connect them to
         // this one but for now just simply ignore branching
-        switch(c->type) {
-        case AST_VARIABLE_DECLARATION:
-            // if it's a variable declaration get/create its rir type
-            type = rir_type_create(ast_expression_get_type(c), ast_vardecl_get_name(c));
-            id = c->vardecl.desc->typedesc.left;
-            AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
-            rec = symbol_table_lookup_record(ast_block_symbol_table_get(n),
-                                             ast_identifier_str(id), NULL);
-            if (!rec) {
-                RF_ERROR("During RIR creation identifier was not found in block's symbol table");
-                return NULL;
-            }
-            rec->rir_data = type;
-
-        default:
-            rf_ilist_add_tail(&b->lh, &c->ln_for_rir_blocks);
-            break;
-        }
+        rir_handle_block_expression(c, b);
     }
 
     return b;

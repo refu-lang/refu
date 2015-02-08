@@ -109,6 +109,8 @@ struct rir_basic_block {
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
 struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n);
 
+void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b);
+
 /**
  * Represents a module in the IR
  *

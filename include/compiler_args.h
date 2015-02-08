@@ -20,6 +20,7 @@ struct compiler_args {
     int backend_connection;
     unsigned verbose_level;
     bool repl;
+    bool print_backend_debug;
     enum help_requested_choices help_requested;
     struct RFstring input;
     struct RFstring *output;

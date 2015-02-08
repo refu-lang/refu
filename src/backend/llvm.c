@@ -130,7 +130,8 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool backend_llvm_generate(struct rir_module *module, struct rir *r, struct compiler_args *args)
+bool backend_llvm_generate(struct rir_module *module, struct rir *r,
+                           struct compiler_args *args)
 {
 
     if (!backend_llvm_ir_generate(module, r, args)) {

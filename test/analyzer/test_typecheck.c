@@ -268,6 +268,19 @@ START_TEST(test_typecheck_valid_function_call2) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST(test_typecheck_valid_function_call_print) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "name:string = \"Francis\"\n"
+        "print(name)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 START_TEST(test_typecheck_invalid_function_call_arguments) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16) -> f32\n"
@@ -479,6 +492,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_val, test_typecheck_valid_function_call0);
     tcase_add_test(t_func_val, test_typecheck_valid_function_call1);
     tcase_add_test(t_func_val, test_typecheck_valid_function_call2);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call_print);
     tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
 
 

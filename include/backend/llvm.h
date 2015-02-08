@@ -18,6 +18,7 @@ struct rir_module;
  *
  * @return              true in succes and false for failure
  */
-bool backend_llvm_generate(struct rir_module *module, struct rir *rir, struct compiler_args *args);
+bool backend_llvm_generate(struct rir_module *module, struct rir *rir,
+                           struct compiler_args *args);
 
 #endif

@@ -1,6 +1,7 @@
 #include "testsupport_end_to_end.h"
 
 #include <check.h>
+#include CLIB_TEST_HELPERS
 
 #include <Utils/memory.h>
 #include <String/rf_str_core.h>
@@ -42,7 +43,7 @@ bool end_to_end_driver_create_file(struct end_to_end_driver *d,
     if (!d->file_name) {
         return false;
     }
-    
+
     f = fopen(file_name, "wb");
     if (!f) {
         return false;
@@ -114,18 +115,31 @@ free_strings_arr:
     return ret;
 }
 
-bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value)
+bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
+                           const struct RFstring *expected_output)
 {
+    char stdout_buff[1024];
     const struct RFstring* output = compiler_args_get_output(d->compiler.args);
     FILE *proc;
 
     RFS_buffer_push();
     proc = rf_popen(RFS_("./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output)), "r");
     RFS_buffer_pop();
-    
+
     if (!proc) {
         return false;
     }
+
+    if (expected_output) {
+        size_t output_length = rf_string_length_bytes(expected_output);
+        if (output_length != fread(stdout_buff, 1, output_length, proc)) {
+            ck_abort_msg("Expected output \""RF_STR_PF_FMT"\" could not be read"
+                         " from the program's stdout",
+                         RF_STR_PF_ARG(expected_output));
+        }
+        ck_assert_rf_str_eq_nntstr(expected_output, stdout_buff, output_length);
+    }
+
 
     *ret_value = WEXITSTATUS(rf_pclose(proc));
     return true;

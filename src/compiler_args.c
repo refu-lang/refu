@@ -30,6 +30,7 @@ static const char* help_message = ""
 "{-v --verbose-level} [0-4]         Set compiler verbosity level\n"
 "{-o --output}        filename      Set the name of the produced output\n"
 "--backend            [GCC|LLVM]    The backend connection the refu compiler will use\n"
+"--backend-debug                    If given then some debug information about the backend code will be printed\n"
 "";
 
 bool compiler_args_init(struct compiler_args *args)
@@ -37,6 +38,7 @@ bool compiler_args_init(struct compiler_args *args)
     args->backend_connection = BACKEND_DEFAULT;
     args->verbose_level = VERBOSE_LEVEL_DEFAULT;
     args->repl = false;
+    args->print_backend_debug = false;
     args->help_requested = HELP_NONE;
     args->output = NULL;
     rf_string_init(&args->input, "");
@@ -147,7 +149,7 @@ static bool compiler_args_check_verbosity(struct compiler_args *args,
 }
 
 static void compiler_args_check_repl(struct compiler_args *args,int* i,
-                                     int argc, char **argv, bool* consumed)
+                                     char **argv, bool* consumed)
 {
     if(strcmp(argv[*i], "-r") == 0 ||
        strcmp(argv[*i], "--repl") == 0)
@@ -155,6 +157,16 @@ static void compiler_args_check_repl(struct compiler_args *args,int* i,
         *consumed = true;
         args->repl = true;
         args->backend_connection = BACKEND_INTERPRETER;
+    }
+}
+
+static void compiler_args_check_backend_debug(struct compiler_args *args,int* i,
+                                              char **argv, bool* consumed)
+{
+    if(strcmp(argv[*i], "--backend-debug") == 0)
+    {
+        *consumed = true;
+        args->print_backend_debug = true;
     }
 }
 
@@ -223,7 +235,12 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
             }
         }
 
-        compiler_args_check_repl(args, &i, argc, argv, &consumed);
+        compiler_args_check_backend_debug(args, &i, argv, &consumed);
+        if (consumed) {
+            continue;
+        }
+
+        compiler_args_check_repl(args, &i, argv, &consumed);
         if (consumed) {
             continue;
         }
