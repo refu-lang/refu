@@ -106,8 +106,10 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
 
     ret = true;
 free_cstrings_arr:
-    for (i = 1; i < args_number; i++) {
-        free(args_cstrings[i]);
+    if (args_strings) {
+        for (i = 1; i <= args_number; ++i) {
+            free(args_cstrings[i]);
+        }
     }
     free(args_cstrings);
 free_strings_arr:

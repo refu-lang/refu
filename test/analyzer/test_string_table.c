@@ -28,9 +28,9 @@ START_TEST(test_string_table_add_some) {
 
     string_table_init(&st);
 
-    ck_assert(string_table_add_str(&st, &s1, &h1));
-    ck_assert(string_table_add_str(&st, &s2, &h2));
-    ck_assert(string_table_add_str(&st, &s3, &h3));
+    ck_assert(string_table_add_or_get_str(&st, &s1, &h1));
+    ck_assert(string_table_add_or_get_str(&st, &s2, &h2));
+    ck_assert(string_table_add_or_get_str(&st, &s3, &h3));
 
     ret = string_table_get_str(&st, h1);
     ck_assert(ret);
@@ -61,12 +61,12 @@ START_TEST(test_string_table_add_existing) {
 
     string_table_init(&st);
 
-    ck_assert(string_table_add_str(&st, &s1, &h1));
-    ck_assert(string_table_add_str(&st, &s2, &h2));
-    ck_assert(string_table_add_str(&st, &s2, &prev_hash));
+    ck_assert(string_table_add_or_get_str(&st, &s1, &h1));
+    ck_assert(string_table_add_or_get_str(&st, &s2, &h2));
+    ck_assert(string_table_add_or_get_str(&st, &s2, &prev_hash));
     ck_assert_uint_eq(h2, prev_hash);
-    ck_assert(string_table_add_str(&st, &s3, &h3));
-    ck_assert(string_table_add_str(&st, &s3, &prev_hash));
+    ck_assert(string_table_add_or_get_str(&st, &s3, &h3));
+    ck_assert(string_table_add_or_get_str(&st, &s3, &prev_hash));
     ck_assert_uint_eq(h3, prev_hash);
 
     ret = string_table_get_str(&st, h1);
@@ -94,7 +94,7 @@ START_TEST(test_string_table_get_non_existing) {
 
     string_table_init(&st);
 
-    ck_assert(string_table_add_str(&st, &s1, &h1));
+    ck_assert(string_table_add_or_get_str(&st, &s1, &h1));
 
     ret = string_table_get_str(&st, h1);
     ck_assert(ret);
@@ -665,7 +665,7 @@ START_TEST(test_string_table_add_many) {
 
     for (i = 0; i < str_num; ++i) {
         ck_assert_msg(
-            string_table_add_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
+            string_table_add_or_get_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
             "Failed to add string number %z to the string table", i);
     }
 
@@ -684,12 +684,12 @@ struct iter_cb_ctx {
     size_t size;
 };
 
-static void string_table_iterate_callback(const struct RFstring *s, void *user)
+static void string_table_iterate_callback(const struct string_table_record *rec, void *user)
 {
     unsigned int i;
     struct iter_cb_ctx *ctx = user;
     for (i = 0; i < ctx->size; ++i) {
-        if (rf_string_equal(s, &recs_arr[i].s)) {
+        if (rf_string_equal(&rec->string, &recs_arr[i].s)) {
             return;
         }
     }
@@ -706,7 +706,7 @@ START_TEST(test_string_table_iterate) {
 
     for (i = 0; i < ctx.size; ++i) {
         ck_assert_msg(
-            string_table_add_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
+            string_table_add_or_get_str(&st, &recs_arr[i].s, &recs_arr[i].hash),
             "Failed to add string number %z to the string table", i);
     }
     string_table_iterate(&st, string_table_iterate_callback, &ctx);

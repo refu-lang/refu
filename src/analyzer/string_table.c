@@ -5,11 +5,6 @@
 #include <Utils/memory.h>
 #include <String/rf_str_core.h>
 
-struct string_table_record {
-    struct RFstring string;
-    uint32_t hash;
-};
-
 
 static void string_table_record_destroy(void* record, void *user_arg)
 {
@@ -50,7 +45,7 @@ struct string_table *string_table_create()
 void string_table_deinit(struct string_table *t)
 {
     // free memory of all strings
-    htable_iterate_values(&t->table, string_table_record_destroy, NULL);
+    htable_iterate_records(&t->table, string_table_record_destroy, NULL);
     htable_clear(&t->table);
 }
 
@@ -60,9 +55,9 @@ void string_table_destroy(struct string_table *t)
     free(t);
 }
 
-bool string_table_add_str(struct string_table *t,
-                          const struct RFstring *input,
-                          uint32_t *out_hash)
+bool string_table_add_or_get_str(struct string_table *t,
+                                 const struct RFstring *input,
+                                 uint32_t *out_hash)
 {
     struct string_table_record *rec;
     uint32_t hash = rf_hash_str_stable(input, 0);
@@ -113,5 +108,5 @@ const struct RFstring *string_table_get_str(const struct string_table *t,
 
 void string_table_iterate(struct string_table *t, string_table_cb cb, void* user_arg)
 {
-    htable_iterate_values(&t->table, (htable_iter_cb)cb, user_arg);
+    htable_iterate_records(&t->table, (htable_iter_cb)cb, user_arg);
 }

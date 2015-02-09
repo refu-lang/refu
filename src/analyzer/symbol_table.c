@@ -317,7 +317,7 @@ struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
 
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 {
-    htable_iterate_values(&t->table, cb, user);
+    htable_iterate_records(&t->table, cb, user);
 }
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,

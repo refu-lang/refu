@@ -3,8 +3,12 @@
 
 #include <Data_Structures/htable.h>
 #include <Definitions/inline.h>
+#include <String/rf_str_core.h>
 
-struct RFstring;
+struct string_table_record {
+    struct RFstring string;
+    uint32_t hash;
+};
 
 struct string_table {
     struct htable table;
@@ -18,6 +22,7 @@ void string_table_destroy(struct string_table *t);
 
 /**
  * Allocates a string with the contents of @c input and stores it in the table.
+ * If string was already in the table just the hash is returned.
  *
  * @param[in] t                 The string table in question
  * @param[in] input             The string to attempt to input
@@ -25,9 +30,9 @@ void string_table_destroy(struct string_table *t);
  * @return                      True if all went okay. Also if the string is
  *                              already in the table. False if there was an error.
  */
-bool string_table_add_str(struct string_table *t,
-                          const struct RFstring *input,
-                          uint32_t *out_hash);
+bool string_table_add_or_get_str(struct string_table *t,
+                                 const struct RFstring *input,
+                                 uint32_t *out_hash);
 
 /**
  * Retrieves a string with with a specific hash from a string table
@@ -40,12 +45,12 @@ bool string_table_add_str(struct string_table *t,
 const struct RFstring *string_table_get_str(const struct string_table *t,
                                             uint32_t hash);
 
-typedef void (*string_table_cb) (const struct RFstring *s, void *user_arg);
+typedef void (*string_table_cb) (const struct string_table_record *rec, void *user_arg);
 /**
- * Provide a callback to iterate the string table and do something for each string
+ * Provide a callback to iterate the string table and do something for each string record
  *
  * @param[in] t                 The string table in question
- * @paran[in] cb                The callback to be called for each string value
+ * @paran[in] cb                The callback to be called for each string record
  * @param[in] user_arg          The user argument to provide to the callback
  */
 void string_table_iterate(struct string_table *t, string_table_cb cb, void *user_arg);

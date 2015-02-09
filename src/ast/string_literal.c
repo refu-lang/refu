@@ -20,7 +20,7 @@ struct ast_node *ast_string_literal_create(struct inplocation *loc)
 
 bool ast_string_literal_hash_create(struct ast_node *n, struct analyzer *a)
 {
-        return string_table_add_str(a->string_literals_table,
+        return string_table_add_or_get_str(a->string_literals_table,
                                     &n->string_literal.string,
                                     &n->string_literal.hash);
 }

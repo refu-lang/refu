@@ -53,9 +53,9 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
 
 bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
 {
-    return string_table_add_str(a->identifiers_table,
-                                &n->identifier.string,
-                                &n->identifier.hash);
+    return string_table_add_or_get_str(a->identifiers_table,
+                                       &n->identifier.string,
+                                       &n->identifier.hash);
 }
 
 uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a)

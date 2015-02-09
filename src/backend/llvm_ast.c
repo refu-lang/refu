@@ -221,9 +221,14 @@ LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
                                                             struct llvm_traversal_ctx *ctx)
 {
     // all unique string literals should have been declared as global strings
+    uint32_t hash;
     const struct RFstring *s = ast_string_literal_get_str(n);
-    const char *cstr = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_gstr", RF_STR_PF_ARG(s)));
+    if (!string_table_add_or_get_str(ctx->rir->string_literals_table, s, &hash)) {
+        RF_ERROR("Unable to retrieve string literal from table during LLVM compile");
+        return NULL;
+    }
     RFS_buffer_push();
+    const char *cstr = rf_string_cstr_from_buff(RFS_("gstr_%u", hash));
     LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->mod, cstr);
     RFS_buffer_pop();
     return global_str;
@@ -384,17 +389,17 @@ static LLVMValueRef backend_llvm_add_global_strbuff(char *str_data, size_t str_l
     return global_stringbuff;
 }
 
-static void backend_llvm_create_const_strings(const struct RFstring *s,
+static void backend_llvm_create_const_strings(const struct string_table_record *rec,
                                               struct llvm_traversal_ctx *ctx)
 {
-    unsigned int length = rf_string_length_bytes(s);
+    unsigned int length = rf_string_length_bytes(&rec->string);
     char *gstr_name;
     char *strbuff_name;
 
     RFS_buffer_push();
-    strbuff_name = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_strbuff", RF_STR_PF_ARG(s)));
-    LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(rf_string_cstr_from_buff(s),
-                                                                     rf_string_length_bytes(s),
+    strbuff_name = rf_string_cstr_from_buff(RFS_("strbuff_%u", rec->hash));
+    LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(rf_string_cstr_from_buff(&rec->string),
+                                                                     length,
                                                                      strbuff_name,
                                                                      ctx);
 
@@ -403,7 +408,7 @@ static void backend_llvm_create_const_strings(const struct RFstring *s,
     LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), gep_to_string_buff };
     LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"), string_struct_layout, 2);
 
-    gstr_name = rf_string_cstr_from_buff(RFS_(RF_STR_PF_FMT"_gstr", RF_STR_PF_ARG(s)));
+    gstr_name = rf_string_cstr_from_buff(RFS_("gstr_%u", rec->hash));
     LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMGetTypeByName(ctx->mod, "string"), gstr_name);
     RFS_buffer_pop();
     LLVMSetInitializer(global_val, string_decl);
@@ -486,10 +491,12 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     RFS_buffer_push();
     mod_name = rf_string_cstr_from_buff(&mod->name);
     ctx->mod = LLVMModuleCreateWithName(mod_name);
-    RFS_buffer_pop();
+
     if (!backend_llvm_create_globals(ctx)) {
         RF_ERROR("Failed to create global context for LLVM");
-        return NULL;
+        LLVMDisposeModule(ctx->mod);
+        ctx->mod = NULL;
+        goto end;
     }
 
     // for each function of the module create code
@@ -498,8 +505,13 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     }
 
     if (ctx->args->print_backend_debug) {
+        // would be much better if we could call llvm::Module::getModuleIdentifier()
+        // but that seems to not be exposed in the C-Api
+        mod_name = rf_string_cstr_from_buff(&mod->name);
         backend_llvm_mod_debug(ctx->mod, mod_name);
     }
 
+end:
+    RFS_buffer_pop();
     return ctx->mod;
 }
