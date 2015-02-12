@@ -15,13 +15,13 @@
                  file_, line_, __VA_ARGS__)
 
 static struct analyzer_testdriver i_analyzer_test_driver_;
-static bool analyzer_testdriver_init(struct analyzer_testdriver *d)
+ bool analyzer_testdriver_init(struct analyzer_testdriver *d)
 {
     darray_init(d->types);
     return true;
 }
 
-static void analyzer_testdriver_deinit(struct analyzer_testdriver *d)
+void analyzer_testdriver_deinit(struct analyzer_testdriver *d)
 {
     struct type **t;
     struct front_testdriver *fdriver = get_front_testdriver();

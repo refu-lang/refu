@@ -17,6 +17,8 @@ struct rir {
 
     //! A list of all composite types of the file
     struct RFilist_head composite_types;
+    //! A list of all rir types of the file
+    struct RFilist_head rir_types;
 
     //! The root of the ast node
     struct ast_node *root;

@@ -22,6 +22,9 @@ struct analyzer_testdriver {
 };
 struct analyzer_testdriver *get_analyzer_testdriver();
 
+bool analyzer_testdriver_init(struct analyzer_testdriver *d);
+void analyzer_testdriver_deinit(struct analyzer_testdriver *d);
+
 void setup_analyzer_tests();
 void setup_analyzer_tests_with_filelog();
 void teardown_analyzer_tests();

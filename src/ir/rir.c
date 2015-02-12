@@ -7,6 +7,7 @@
 #include <analyzer/analyzer.h>
 #include <analyzer/string_table.h>
 #include <ir/elements.h>
+#include <ir/rir_type.h>
 
 
 
@@ -46,11 +47,16 @@ struct rir *rir_create(struct analyzer *a)
 
 void rir_deinit(struct rir *r)
 {
+    struct rir_type *t;
     ast_node_destroy(r->root);
     rf_fixed_memorypool_destroy(r->symbol_table_records_pool);
     rf_fixed_memorypool_destroy(r->types_pool);
     string_table_destroy(r->identifiers_table);
     string_table_destroy(r->string_literals_table);
+
+    rf_ilist_for_each(&r->rir_types, t, ln) {
+        rir_type_destroy(t);
+    }
 }
 
 void rir_destroy(struct rir *r)
@@ -59,9 +65,9 @@ void rir_destroy(struct rir *r)
     free(r);
 }
 
-
 struct rir_module *rir_process(struct rir *r)
 {
+    rir_create_types(&r->rir_types, &r->composite_types);
     // TODO: When modules are actually introduced change temporary module name
     //       to the name of the actual module being processed
     const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");

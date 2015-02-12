@@ -3,53 +3,11 @@
 
 #include <Data_Structures/darray.h>
 #include <Utils/struct_utils.h>
-#include <types/type_decls.h>
+#include <Data_Structures/intrusive_list.h>
 
-struct type;
 struct RFstring;
 struct ast_node;
 struct symbol_table;
-
-/**
- * Representation of a type for the Refu IR
- *
- * It is much like @see struct type but with some constraints.
- * It is represented by an array of subtypes and not by a tree. A single
- * rir_type can only contain subtypes that are connected by the same type
- * operation.
- *
- * TODO: In order to achieve this all possible composite types need to be defined
- * somewhere. Figure out where and do it.
- */
-struct rir_type {
-    //! TODO: This should be an enum with all elementary types + 1 for composite type
-    //! In the case of composite type just define it somewhere else so that backends
-    //! like LLVM can have it as a struct
-    #define RIR_TYPE_COMPOSITE ELEMENTARY_TYPE_TYPES_COUNT
-    int type;
-    //! Array of types that may constitute this type. e.g: i64, u32, string
-    struct {darray(struct rir_type*);} subtypes;
-    //! Whether the @c subtypes are connected as product types (so by ,) or
-    //! as sum types (so by | )  TODO: Think if we will use this
-    bool are_product_type;
-    //! Name of the variable the type describes. TODO: Maybe move this somwhere
-    //! else. Separate the notion of type from parameter?
-    const struct RFstring *name;
-};
-struct rir_type *rir_type_alloc(const struct type *input);
-struct rir_type *rir_type_create(const struct type *input,
-                                 const struct RFstring *name);
-bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name);
-
-void rir_type_dealloc(struct rir_type *t);
-void rir_type_destroy(struct rir_type *t);
-void rir_type_deinit(struct rir_type *t);
-
-//! @return the name of the nth parameter of the type
-const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n);
-//! @return the type of the nth parameter of the type
-const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
 
 /**
  * Representation of a function for the Refu IR

@@ -28,6 +28,7 @@
 #include <analyzer/string_table.h>
 
 #include <ir/elements.h>
+#include <ir/rir_type.h>
 #include <ir/rir.h>
 
 #include <backend/llvm.h>
@@ -35,37 +36,37 @@
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
-static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type type, struct llvm_traversal_ctx *ctx)
+static LLVMTypeRef backend_llvm_elementary_to_type(enum rir_type_category type, struct llvm_traversal_ctx *ctx)
 {
     switch(type) {
         // LLVM does not differentiate between signed and unsigned
-    case ELEMENTARY_TYPE_INT:
-    case ELEMENTARY_TYPE_UINT:
+    case ELEMENTARY_RIR_TYPE_INT:
+    case ELEMENTARY_RIR_TYPE_UINT:
         return LLVMIntType(32);// TODO: Think of how to represent size agnostic
-    case ELEMENTARY_TYPE_INT_8:
-    case ELEMENTARY_TYPE_UINT_8:
+    case ELEMENTARY_RIR_TYPE_INT_8:
+    case ELEMENTARY_RIR_TYPE_UINT_8:
         return LLVMInt8Type();
-    case ELEMENTARY_TYPE_INT_16:
-    case ELEMENTARY_TYPE_UINT_16:
+    case ELEMENTARY_RIR_TYPE_INT_16:
+    case ELEMENTARY_RIR_TYPE_UINT_16:
         return LLVMInt16Type();
-    case ELEMENTARY_TYPE_INT_32:
-    case ELEMENTARY_TYPE_UINT_32:
+    case ELEMENTARY_RIR_TYPE_INT_32:
+    case ELEMENTARY_RIR_TYPE_UINT_32:
         return LLVMInt32Type();
-    case ELEMENTARY_TYPE_INT_64:
-    case ELEMENTARY_TYPE_UINT_64:
+    case ELEMENTARY_RIR_TYPE_INT_64:
+    case ELEMENTARY_RIR_TYPE_UINT_64:
         return LLVMInt64Type();
 
-    case ELEMENTARY_TYPE_STRING:
+    case ELEMENTARY_RIR_TYPE_STRING:
         return LLVMGetTypeByName(ctx->mod, "string");
 
-    case ELEMENTARY_TYPE_NIL:
+    case ELEMENTARY_RIR_TYPE_NIL:
         return LLVMVoidType();
 
     default:
         RF_ASSERT_OR_CRITICAL(false,
                               "Unsupported elementary type \""RF_STR_PF_FMT"\" "
                               "during LLVM conversion",
-                              RF_STR_PF_ARG(type_elementary_get_str(type)));
+                              RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)type)));
         break;
     }
     return NULL;
@@ -83,7 +84,7 @@ void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
 static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
                                      struct llvm_traversal_ctx *ctx)
 {
-    return backend_llvm_elementary_to_type(type->type, ctx);
+    return backend_llvm_elementary_to_type(type->category, ctx);
 }
 
 // return an array of arg types or NULL if our param type is nil
@@ -345,7 +346,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     const struct RFstring *param_name_str;
     struct symbol_table_record *rec;
 
-    if (fn->arg_type->type != ELEMENTARY_TYPE_NIL) {
+    if (fn->arg_type->category != ELEMENTARY_RIR_TYPE_NIL) {
         for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
 
             // for each argument of the function allocate an LLVM variable

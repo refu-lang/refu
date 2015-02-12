@@ -1,4 +1,5 @@
 #include <ir/elements.h>
+#include <ir/rir_type.h>
 #include <types/type.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
@@ -10,155 +11,6 @@
 #include <ast/operators.h>
 #include <String/rf_str_decl.h>
 #include <String/rf_str_core.h>
-
-static struct rir_type i_elementary_types[] = {
-#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                           \
-    [i_type] = {.type = i_type}
-
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_8),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_16),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_16),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_STRING),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_BOOL),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_NIL)
-#undef INIT_ELEMENTARY_TYPE_ARRAY_INDEX
-};
-
-
-
-static bool rir_type_init_iteration(struct rir_type *type, const struct type *input,
-                                    const struct RFstring *name)
-{
-    if (type->type != RIR_TYPE_COMPOSITE) {
-        return true;
-    }
-    // for now here we assume it's only product types
-    struct rir_type *new_type;
-    switch(input->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-        if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
-            new_type = rir_type_alloc(input);
-            new_type->name = name;
-            darray_append(type->subtypes, new_type);
-        }
-        break;
-    case TYPE_CATEGORY_DEFINED:
-        //TODO
-        RF_ASSERT(false, "Not implemented yet");
-        break;
-    case TYPE_CATEGORY_OPERATOR:
-        // TODO: make it work with sum types too
-        if (input->operator.type != TYPEOP_PRODUCT) {
-            RF_ASSERT(false, "Sum types not yet supported in the IR");
-        }
-
-        if (!rir_type_init_iteration(type, input->operator.left, NULL)) {
-            return false;
-        }
-        if (!rir_type_init_iteration(type, input->operator.right, NULL)) {
-            return false;
-        }
-        break;
-
-    case TYPE_CATEGORY_LEAF:
-        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id)) {
-            return false;
-        }
-        break;
-    case TYPE_CATEGORY_GENERIC:
-        RF_ASSERT(false, "Generic types not supported in the IR yet");
-        break;
-    }
-    return true;
-}
-
-bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name)
-{
-    darray_init(type->subtypes);
-
-    if (!rir_type_init_iteration(type, input, name)) {
-        return false;
-    }
-
-    return true;
-}
-
-struct rir_type *rir_type_alloc(const struct type *input)
-{
-    if (input->category == TYPE_CATEGORY_ELEMENTARY) {
-        return &i_elementary_types[type_elementary(input)];
-    }
-
-    // else
-    struct rir_type *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->type = RIR_TYPE_COMPOSITE;
-    return ret;
-
-}
-
-struct rir_type *rir_type_create(const struct type *input, const struct RFstring *name)
-{
-    struct rir_type *ret = rir_type_alloc(input);
-    if (!ret) {
-        RF_ERROR("Failed at rir_type allocation");
-        return NULL;
-    }
-    if (!rir_type_init(ret, input, name)) {
-        RF_ERROR("Failed at rir_type initialization");
-        rir_type_dealloc(ret);
-    }
-
-    return ret;
-}
-
-void rir_type_dealloc(struct rir_type *t)
-{
-    // TODO: If t is not elementary then free
-    (void)t;
-}
-void rir_type_destroy(struct rir_type *t)
-{
-    rir_type_deinit(t);
-    rir_type_dealloc(t);
-}
-void rir_type_deinit(struct rir_type *t)
-{
-    struct rir_type **subtype;
-    darray_foreach(subtype, t->subtypes) {
-        rir_type_destroy(*subtype);
-    }
-
-    darray_free(t->subtypes);
-}
-
-const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
-{
-    if (darray_size(t->subtypes) <= n) {
-        RF_ERROR("Requested rir_type name of subtype out of bounds");
-        return NULL;
-    }
-    return ((struct rir_type*)darray_item(t->subtypes, n))->name;
-}
-
-const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
-{
-    if (darray_size(t->subtypes) <= n) {
-        RF_ERROR("Requested rir_type type of subtype out of bounds");
-        return NULL;
-    }
-    return darray_item(t->subtypes, n);
-}
 
 /* -- rir_function -- */
 RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_function, struct ast_node*, fn_impl)
@@ -282,16 +134,20 @@ RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name)
     this->symbols = &n->root.st;
     rf_ilist_head_init(&this->functions);
     rf_ilist_for_each(&n->children, c, lh) {
-        // for now any non function children trigger failure
-        if (c->type != AST_FUNCTION_IMPLEMENTATION) {
+        switch (c->type) {
+        case AST_FUNCTION_IMPLEMENTATION:
+            fn = rir_function_create(c);
+            if (!fn) {
+                goto fail;
+            }
+            rf_ilist_add_tail(&this->functions, &fn->ln_for_module);
+            break;
+        default:
+            RF_ASSERT(false, "Unexpected ast node \""RF_STR_PF_FMT"\" at the"
+                      " top level of a module", RF_STR_PF_ARG(ast_node_str(c)));
             goto fail;
+            break;
         }
-
-        fn = rir_function_create(c);
-        if (!fn) {
-            goto fail;
-        }
-        rf_ilist_add_tail(&this->functions, &fn->ln_for_module);
     }
 
     return true;
