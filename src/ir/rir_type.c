@@ -86,7 +86,7 @@ bool rir_type_init(struct rir_type *type, const struct type *input,
                    const struct RFstring *name)
 {
     darray_init(type->subtypes);
-
+    type->name = NULL;
     // for elementary types there is nothing to inialize
     if (rir_type_is_elementary(type)) {
         return true;
@@ -150,6 +150,112 @@ void rir_type_deinit(struct rir_type *t)
     darray_free(t->subtypes);
 }
 
+bool rir_type_equals(struct rir_type *a, struct rir_type *b)
+{
+    struct rir_type **subtype_a;
+    unsigned int i = 0;
+    if (a->category != b->category) {
+        return false;
+    }
+
+    if (a->name != b->name) {
+        return false;
+    }
+
+    if (darray_size(a->subtypes) != darray_size(b->subtypes)) {
+        return false;
+    }
+
+    darray_foreach(subtype_a, a->subtypes) {
+        if (!rir_type_equals(*subtype_a, darray_item(b->subtypes, i))) {
+            return false;
+        }
+        ++i;
+    }
+
+    return true;
+}
+
+static bool rir_type_equals_typeop_type_do(struct rir_type *r_type,
+                                           unsigned int *index,
+                                           struct type *op_type)
+{
+    unsigned int old_index;
+    if (op_type->category == TYPE_CATEGORY_OPERATOR) {
+        switch (op_type->operator.type) {
+        case TYPEOP_PRODUCT:
+            if (r_type->category != COMPOSITE_PRODUCT_RIR_TYPE) {
+                return false;
+            }
+            break;
+        case TYPEOP_SUM:
+            if (r_type->category != COMPOSITE_SUM_RIR_TYPE) {
+                return false;
+            }
+            break;
+        case TYPEOP_IMPLICATION:
+            if (r_type->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
+                return false;
+            }
+            break;
+        default:
+            RF_ASSERT(false, "Illegal type operation encountered");
+            return false;
+            break;
+        }
+
+
+        if (darray_size(r_type->subtypes) >= (*index) + 1) {
+            return false;
+        }
+        old_index = *index;
+        *index = *index + 1;
+        if (rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.left)) {
+            return false;
+        }
+
+        if (darray_size(r_type->subtypes) >= (*index) + 1) {
+            return false;
+        }
+        old_index = *index;
+        *index = *index + 1;
+        if (rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.right)) {
+            return false;
+        }
+    }
+
+    RF_ASSERT(false, "Should never get here");
+    return false;
+}
+
+bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type)
+{
+    unsigned int index = 0;
+    return rir_type_with_index_equals_type(r_type, &index, n_type);
+}
+
+bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type)
+{
+    if (rir_type_is_elementary(r_type)) {
+        if (n_type->category == TYPE_CATEGORY_LEAF) {
+            if (r_type->name == n_type->leaf.id &&
+                rir_type_with_index_equals_type(r_type, index, n_type->leaf.type)) {
+                return true;
+            }
+        }
+        if (n_type->category != TYPE_CATEGORY_ELEMENTARY) {
+            return false;
+        }
+        return (enum elementary_type)r_type->category == type_elementary(n_type);
+    }
+
+    if (n_type->category != TYPE_CATEGORY_OPERATOR) {
+        return false;
+    }
+
+    return rir_type_equals_typeop_type_do(r_type, index, n_type);
+}
+
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
 {
     if (darray_size(t->subtypes) <= n) {
@@ -171,10 +277,24 @@ const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
 bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *composite_types)
 {
     struct type *t;
+    struct rir_type *iter_rir_type;
     struct rir_type *created_rir_type;
+    bool found;
     rf_ilist_head_init(rir_types);
 
     rf_ilist_for_each(composite_types, t, lh) {
+        // first of all see if this composite type already has an equivalent rir type
+        found = false;
+        rf_ilist_for_each(rir_types, iter_rir_type, ln) {
+            if (rir_type_equals_type(iter_rir_type, t)) {
+                found = true;
+            }
+        }
+        // if it does don't bother with it anymore
+        if (found) {
+            continue;
+        }
+
         created_rir_type = rir_type_create(t, NULL);
         if (!created_rir_type) {
             RF_ERROR("Failed to create a rir type during transition Refu IR.");
