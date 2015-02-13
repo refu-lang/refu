@@ -1,6 +1,7 @@
 #include "testsupport_rir.h"
 
 #include <ir/rir.h>
+#include <ir/elements.h>
 
 static struct rir_testdriver i_rir_test_driver_;
 
@@ -24,6 +25,9 @@ static void rir_testdriver_deinit(struct rir_testdriver *d)
 {
     if (d->rir) {
         rir_destroy(d->rir);
+    }
+    if (d->module) {
+        rir_module_destroy(d->module);
     }
 }
 

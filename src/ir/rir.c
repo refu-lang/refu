@@ -48,13 +48,14 @@ struct rir *rir_create(struct analyzer *a)
 void rir_deinit(struct rir *r)
 {
     struct rir_type *t;
+    struct rir_type *tmp;
     ast_node_destroy(r->root);
     rf_fixed_memorypool_destroy(r->symbol_table_records_pool);
     rf_fixed_memorypool_destroy(r->types_pool);
     string_table_destroy(r->identifiers_table);
     string_table_destroy(r->string_literals_table);
 
-    rf_ilist_for_each(&r->rir_types, t, ln) {
+    rf_ilist_for_each_safe(&r->rir_types, t, tmp, ln) {
         rir_type_destroy(t);
     }
 }
