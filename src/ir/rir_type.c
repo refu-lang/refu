@@ -1,32 +1,10 @@
 #include <ir/rir_type.h>
 
+#include <String/rf_str_core.h>
+
 #include <types/type.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
-
-static struct rir_type i_elementary_types[] = {
-#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                           \
-    [i_type] = {.category = i_type}
-
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_INT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_UINT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_INT_8),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_UINT_8),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_INT_16),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_UINT_16),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_INT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_UINT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_INT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_UINT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_FLOAT_32),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_FLOAT_64),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_STRING),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_BOOL),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_RIR_TYPE_NIL)
-#undef INIT_ELEMENTARY_TYPE_ARRAY_INDEX
-};
-
-
 
 static bool rir_type_init_iteration(struct rir_type *type, const struct type *input,
                                     const struct RFstring *name)
@@ -36,8 +14,10 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
-            new_type = rir_type_alloc(input);
-            new_type->name = name;
+            new_type = rir_type_create(input, name);
+            /* new_type = rir_type_alloc(); */
+            /* new_type->category = (enum rir_type_category) type_elementary(input); */
+            /* new_type->name = name; */
             darray_append(type->subtypes, new_type);
         }
         break;
@@ -86,9 +66,19 @@ bool rir_type_init(struct rir_type *type, const struct type *input,
                    const struct RFstring *name)
 {
     darray_init(type->subtypes);
-    type->name = NULL;
+    type->name = name;
+    type->indexed = false;
+
     // for elementary types there is nothing to inialize
-    if (rir_type_is_elementary(type)) {
+    if (input->category == TYPE_CATEGORY_ELEMENTARY) {
+        type->category = (enum rir_type_category) type_elementary(input);
+        return true;
+    }
+
+    if (input->category == TYPE_CATEGORY_LEAF &&
+        input->leaf.type->category == TYPE_CATEGORY_ELEMENTARY) {
+        type->category = (enum rir_type_category) type_elementary(input->leaf.type);
+        type->name = input->leaf.id;
         return true;
     }
 
@@ -99,24 +89,16 @@ bool rir_type_init(struct rir_type *type, const struct type *input,
     return true;
 }
 
-struct rir_type *rir_type_alloc(const struct type *input)
+struct rir_type *rir_type_alloc()
 {
-    if (input->category == TYPE_CATEGORY_ELEMENTARY) {
-        return &i_elementary_types[type_elementary(input)];
-    }
-
-    // else
     struct rir_type *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    // will not necessarily be a product type but this definitely marks it as a composite type
-    ret->category = COMPOSITE_PRODUCT_RIR_TYPE;
     return ret;
-
 }
 
 struct rir_type *rir_type_create(const struct type *input, const struct RFstring *name)
 {
-    struct rir_type *ret = rir_type_alloc(input);
+    struct rir_type *ret = rir_type_alloc();
     if (!ret) {
         RF_ERROR("Failed at rir_type allocation");
         return NULL;
@@ -131,9 +113,7 @@ struct rir_type *rir_type_create(const struct type *input, const struct RFstring
 
 void rir_type_dealloc(struct rir_type *t)
 {
-    if (!rir_type_is_elementary(t)) {
-        free(t);
-    }
+    free(t);
 }
 void rir_type_destroy(struct rir_type *t)
 {
@@ -144,7 +124,9 @@ void rir_type_deinit(struct rir_type *t)
 {
     struct rir_type **subtype;
     darray_foreach(subtype, t->subtypes) {
-        rir_type_destroy(*subtype);
+        if (!(*subtype)->indexed) {
+            rir_type_destroy(*subtype);
+        }
     }
 
     darray_free(t->subtypes);
@@ -152,13 +134,17 @@ void rir_type_deinit(struct rir_type *t)
 
 bool rir_type_equals(struct rir_type *a, struct rir_type *b)
 {
-    struct rir_type **subtype_a;
+    struct rir_type **subtype_a = NULL;
     unsigned int i = 0;
     if (a->category != b->category) {
         return false;
     }
 
-    if (a->name != b->name) {
+    if ((a->name == NULL &&  b->name != NULL) ||
+        (a->name != NULL && b->name == NULL)) {
+        return false;
+    } else if (a->name != NULL && b->name != NULL &&
+               !rf_string_equal(a->name, b->name)) {
         return false;
     }
 
@@ -301,6 +287,7 @@ bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *compo
             return false;
         }
         rf_ilist_add_tail(rir_types, &created_rir_type->ln);
+        created_rir_type->indexed = true;
     }
 
     return true;

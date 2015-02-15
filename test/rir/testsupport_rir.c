@@ -18,17 +18,25 @@ static bool rir_testdriver_init(struct rir_testdriver *d,
     d->analyzer_driver = analyzer_driver;
     d->rir = NULL;
     d->module = NULL;
+    darray_init(d->rir_types);
     return true;
 }
 
 static void rir_testdriver_deinit(struct rir_testdriver *d)
 {
+    struct rir_type **t;
     if (d->rir) {
         rir_destroy(d->rir);
     }
     if (d->module) {
         rir_module_destroy(d->module);
     }
+
+    // free the driver's own types
+    darray_foreach(t, d->rir_types) {
+        rir_type_destroy(*t);
+    }
+    darray_free(d->rir_types);
 }
 
 void setup_rir_tests()
@@ -66,5 +74,51 @@ bool rir_testdriver_process(struct rir_testdriver *d)
         return false;
     }
 
+    return true;
+}
+
+struct rir_type *testsupport_rir_type_create(struct rir_testdriver *d,
+                                             enum rir_type_category category,
+                                             const struct RFstring *name)
+{
+    struct rir_type *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->category = category;
+    darray_init(ret->subtypes);
+    ret->name = name;
+    darray_append(d->rir_types, ret);
+    ret->indexed = true;
+    return ret;
+}
+
+void testsupport_rir_type_add_subtype(struct rir_type *type, struct rir_type *subtype)
+{
+    darray_append(type->subtypes, subtype);
+}
+
+bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
+                                    struct rir_type **expected_types,
+                                    unsigned int expected_num,
+                                    const char* filename,
+                                    unsigned int line)
+{
+    unsigned int i;
+    struct rir_type *t;
+    bool found;
+    rf_ilist_for_each(&d->rir->rir_types, t, ln) {
+        found = false;
+        for (i = 0; i < expected_num; ++i) {
+            if (rir_type_equals(t, expected_types[i])) {
+                found = true;
+                break;
+            }
+        }
+        ck_assert_msg(found, "An expected rir type was not found in the types "
+                      "list from: %s:%u", filename, line);
+    }
+
+    ck_assert_msg(expected_num == i + 1, "Number of expected rir types (%u) does not "
+                  "match the number of created type (%u) from %s:%u", expected_num,
+                  i + 1, filename, line);
     return true;
 }

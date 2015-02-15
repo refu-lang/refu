@@ -10,10 +10,12 @@
 
 #include CLIB_TEST_HELPERS
 
+
+
 START_TEST(test_types_list_simple1) {
-    struct rir_type *t;
+
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn foo(a:u64) -> u64 {\n"
+        "fn foo(a:u32) -> u64 {\n"
         "return 45 + a\n"
         "}"
     );
@@ -21,11 +23,17 @@ START_TEST(test_types_list_simple1) {
     rir_testdriver_assign(d, &s);
     testsupport_rir_process(d);
 
-    unsigned int i = 0;
-    rf_ilist_for_each(&d->rir->rir_types, t, ln) {
-        i ++;
-    }
-    ck_assert_uint_eq(i, 2);
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    struct rir_type *fn = testsupport_rir_type_create(d, COMPOSITE_IMPLICATION_RIR_TYPE, NULL);
+    struct rir_type *fn_arg = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_32, &id_a);
+    testsupport_rir_type_add_subtype(fn, fn_arg);
+    // fn ret
+    testsupport_rir_type_add_subtype(
+        fn,
+        testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_64, NULL));
+
+    struct rir_type *expected_types[] = {fn, fn_arg};
+    rir_testdriver_compare_lists(d, expected_types, 2);
 } END_TEST
 
 Suite *rir_creation_suite_create(void)

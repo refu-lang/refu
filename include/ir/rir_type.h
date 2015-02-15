@@ -53,16 +53,19 @@ struct rir_type {
     const struct RFstring *name;
     //! Control to input into the rir types list
     struct RFilist_node ln;
+    //! Denotes if the type is indexed in the rir types list (or some other list)
+    //! that takes care of destruction. If so then it's not destroyed when it's found
+    //! as a child of another type. TODO: This is kind of ugly .. if possible fix
+    bool indexed;
 };
 
 /**
- * Allocates a new rir_type equivalent of @c input. If @c input is elementary
- * it's simply a pointer to preallocated elementary type.
+ * Allocates a new rir_type equivalent of @c input.
  *
  * @param input                The type from which to allocate the rir_type
  * @return                     The allocated type
  */
-struct rir_type *rir_type_alloc(const struct type *input);
+struct rir_type *rir_type_alloc();
 /**
  * Create a new allocated rir_type
  */
