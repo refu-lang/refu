@@ -30,7 +30,10 @@ enum rir_type_category {
 
     COMPOSITE_PRODUCT_RIR_TYPE,
     COMPOSITE_SUM_RIR_TYPE,
-    COMPOSITE_IMPLICATION_RIR_TYPE
+    COMPOSITE_IMPLICATION_RIR_TYPE,
+    COMPOSITE_RIR_DEFINED,
+
+    RIR_TYPE_CATEGORY_COUNT
 };
 
 /**
@@ -117,7 +120,21 @@ const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
 bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *composite_types);
 
 
-i_INLINE_DECL bool rir_type_is_elementary(struct rir_type *t)
+/**
+ * Gets a string representation of the rir_type
+ *
+ * Before this function you need to execute use @ref RFS_buffer_push() in order
+ * to remember the temporary string buffer position and after it you need to
+ * pop it with @ref RFS_buffer_pop().
+ *
+ * @param t                 The type whose string representation to get
+ * @return                  Returns a pointer to the the string representation.
+ *                          If there is an error returns NULL.
+ */
+const struct RFstring *rir_type_str(const struct rir_type *t);
+
+
+i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
 {
     return t->category < COMPOSITE_PRODUCT_RIR_TYPE;
 }

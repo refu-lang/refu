@@ -42,8 +42,9 @@ struct rir_type *testsupport_rir_type_create(struct rir_testdriver *d,
                                              const struct RFstring *name);
 void testsupport_rir_type_add_subtype(struct rir_type *type, struct rir_type *subtype);
 
-#define rir_testdriver_compare_lists(driver_, expected_types_, expected_types_num_) \
-    i_rir_testdriver_compare_lists(driver_, expected_types_, expected_types_num_, \
+#define rir_testdriver_compare_lists(driver_, expected_types_)          \
+    i_rir_testdriver_compare_lists(driver_, expected_types_,            \
+                                   sizeof(expected_types)/sizeof(struct rir_type*), \
                                    __FILE__, __LINE__);
 bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                                     struct rir_type **expected_types,

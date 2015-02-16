@@ -113,8 +113,11 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                 break;
             }
         }
-        ck_assert_msg(found, "An expected rir type was not found in the types "
-                      "list from: %s:%u", filename, line);
+        RFS_buffer_push();
+        ck_assert_msg(found, "Encountered rir type ["RF_STR_PF_FMT"] was not found in the "
+                      "expected types list from  %s:%u",
+                      RF_STR_PF_ARG(rir_type_str(t)), filename, line);
+        RFS_buffer_pop();
     }
 
     ck_assert_msg(expected_num == i + 1, "Number of expected rir types (%u) does not "
