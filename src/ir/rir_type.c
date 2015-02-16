@@ -10,21 +10,22 @@
 
 static bool rir_type_init_iteration(struct rir_type *type, const struct type *input,
                                     const struct RFstring *name,
-                                    enum rir_type_category previous_type_op)
+                                    enum rir_type_category *previous_type_op,
+                                    struct rir_type **newly_created_type)
 {
     // for now here we assume it's only product types
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
-            new_type = rir_type_create(input, name);
+            new_type = rir_type_create(input, name, NULL);
             darray_append(type->subtypes, new_type);
         }
         break;
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
         type->name = input->defined.name;
-        if (!rir_type_init_iteration(type, input->defined.type, NULL, previous_type_op)) {
+        if (!rir_type_init_iteration(type, input->defined.type, NULL, previous_type_op, newly_created_type)) {
             return false;
         }
         break;
@@ -44,28 +45,44 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
             return false;
         }
 
-        if (previous_type_op == RIR_TYPE_CATEGORY_COUNT) {
-            previous_type_op = type->category;
-        } else if (previous_type_op != type->category) {
-            // create new type, stop adding to this type
-            new_type = rir_type_create(input, NULL);
+        if (*previous_type_op == RIR_TYPE_CATEGORY_COUNT) {
+            *previous_type_op = type->category;
+            new_type = type;
+        } else if (*previous_type_op != type->category) {
+            new_type = rir_type_alloc();
             if (!new_type) {
                 return false;
             }
-            darray_append(type->subtypes, new_type);
-            return true;
+            if (!rir_type_init_before_iteration(new_type, input, name)) {
+                darray_append(type->subtypes, new_type);
+                return true;
+            }
+        } else {
+            new_type = type;
         }
 
-        if (!rir_type_init_iteration(type, input->operator.left, NULL, previous_type_op)) {
+        if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op, newly_created_type)) {
             return false;
         }
-        if (!rir_type_init_iteration(type, input->operator.right, NULL, previous_type_op)) {
+
+        if (*previous_type_op != type->category) {
+            new_type = rir_type_alloc();
+            if (!new_type) {
+                return false;
+            }
+            if (!rir_type_init_before_iteration(new_type, input, name)) {
+                darray_append(type->subtypes, new_type);
+                return true;
+            }
+        }
+
+        if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op, newly_created_type)) {
             return false;
         }
         break;
 
     case TYPE_CATEGORY_LEAF:
-        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id, previous_type_op)) {
+        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id, previous_type_op, newly_created_type)) {
             return false;
         }
         break;
@@ -76,8 +93,9 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     return true;
 }
 
-bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name)
+bool rir_type_init_before_iteration(struct rir_type *type,
+                                    const struct type *input,
+                                    const struct RFstring *name)
 {
     darray_init(type->subtypes);
     type->name = name;
@@ -86,19 +104,28 @@ bool rir_type_init(struct rir_type *type, const struct type *input,
     // for elementary types there is nothing to inialize
     if (input->category == TYPE_CATEGORY_ELEMENTARY) {
         type->category = (enum rir_type_category) type_elementary(input);
-        return true;
-    }
-
-    // for leafs, that are elementary types, just create a named elementary rir type
-    if (input->category == TYPE_CATEGORY_LEAF &&
+        return false;
+    } else if (input->category == TYPE_CATEGORY_LEAF &&
         input->leaf.type->category == TYPE_CATEGORY_ELEMENTARY) {
+        // for leafs, that are elementary types, just create a named elementary rir type
         type->category = (enum rir_type_category) type_elementary(input->leaf.type);
         type->name = input->leaf.id;
-        return true;
+        return false;
     }
+    return true;
+}
 
+bool rir_type_init(struct rir_type *type, const struct type *input,
+                   const struct RFstring *name,
+                   struct rir_type **newly_created_type)
+{
+
+    if (!rir_type_init_before_iteration(type, input, name)) {
+        return true; // no need to iterate children of input type
+    }
     // iterate the subtypes
-    if (!rir_type_init_iteration(type, input, name, RIR_TYPE_CATEGORY_COUNT)) {
+    enum rir_type_category previous_type_op = RIR_TYPE_CATEGORY_COUNT;
+    if (!rir_type_init_iteration(type, input, name, &previous_type_op, newly_created_type)) {
         return false;
     }
 
@@ -112,14 +139,16 @@ struct rir_type *rir_type_alloc()
     return ret;
 }
 
-struct rir_type *rir_type_create(const struct type *input, const struct RFstring *name)
+struct rir_type *rir_type_create(const struct type *input,
+                                 const struct RFstring *name,
+                                 struct rir_type **newly_created_type)
 {
     struct rir_type *ret = rir_type_alloc();
     if (!ret) {
         RF_ERROR("Failed at rir_type allocation");
         return NULL;
     }
-    if (!rir_type_init(ret, input, name)) {
+    if (!rir_type_init(ret, input, name, newly_created_type)) {
         RF_ERROR("Failed at rir_type initialization");
         rir_type_dealloc(ret);
     }
@@ -297,7 +326,7 @@ bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *compo
             continue;
         }
 
-        created_rir_type = rir_type_create(t, NULL);
+        created_rir_type = rir_type_create(t, NULL, NULL);
         if (!created_rir_type) {
             RF_ERROR("Failed to create a rir type during transition Refu IR.");
             return false;
@@ -326,10 +355,17 @@ static inline const struct RFstring *rir_type_op_to_str(const struct rir_type *t
     return NULL;
 }
 
+static const struct RFstring rir_op_names[] = {
+    [COMPOSITE_PRODUCT_RIR_TYPE] = RF_STRING_STATIC_INIT("product_type"),
+    [COMPOSITE_SUM_RIR_TYPE] = RF_STRING_STATIC_INIT("sum_type"),
+    [COMPOSITE_IMPLICATION_RIR_TYPE] = RF_STRING_STATIC_INIT("implication_type"),
+};
+
 const struct RFstring *rir_type_str(const struct rir_type *t)
 {
-    struct RFstring *s = RFS_("");
+    struct RFstring *s;
     struct rir_type **subtype;
+    unsigned int count = 1;
     if (rir_type_is_elementary(t)) {
         return t->name
             ? RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT,
@@ -338,18 +374,23 @@ const struct RFstring *rir_type_str(const struct rir_type *t)
             : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
     }
 
-
     switch(t->category) {
     case COMPOSITE_PRODUCT_RIR_TYPE:
     case COMPOSITE_SUM_RIR_TYPE:
     case COMPOSITE_IMPLICATION_RIR_TYPE:
+        s = RFS_(RF_STR_PF_FMT"( ", RF_STR_PF_ARG(&rir_op_names[t->category]));
         darray_foreach(subtype, t->subtypes) {
-            s = RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                     RF_STR_PF_ARG(s),
-                     RF_STR_PF_ARG(rir_type_str(*subtype)),
-                     RF_STR_PF_ARG(rir_type_op_to_str(t)));
+            s = darray_size(t->subtypes) == count
+                ? RFS_(RF_STR_PF_FMT RF_STR_PF_FMT,
+                       RF_STR_PF_ARG(s),
+                       RF_STR_PF_ARG(rir_type_str(*subtype)))
+                : RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                       RF_STR_PF_ARG(s),
+                       RF_STR_PF_ARG(rir_type_str(*subtype)),
+                       RF_STR_PF_ARG(rir_type_op_to_str(t)));
+            ++ count;
         }
-        return s;
+        return RFS_(RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));
     case COMPOSITE_RIR_DEFINED:
 
         return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT " }",

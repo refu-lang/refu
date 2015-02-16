@@ -73,12 +73,23 @@ struct rir_type *rir_type_alloc();
  * Create a new allocated rir_type
  */
 struct rir_type *rir_type_create(const struct type *input,
-                                 const struct RFstring *name);
+                                 const struct RFstring *name,
+                                 struct rir_type **newly_created_type);
 /**
  * Initialize a rir_type
  */
 bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name);
+                   const struct RFstring *name,
+                   struct rir_type **newly_created_type);
+/**
+ * Initialize a rir_type without proceeding to initialize its children
+ *
+ * @return If we need to iterate the children of @c input the function will
+ *         return true. Else it will return false
+ */
+bool rir_type_init_before_iteration(struct rir_type *type,
+                                    const struct type *input,
+                                    const struct RFstring *name);
 
 void rir_type_dealloc(struct rir_type *t);
 void rir_type_destroy(struct rir_type *t);

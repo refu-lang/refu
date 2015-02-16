@@ -28,13 +28,13 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl)
         return false;
     }
 
-    this->arg_type = rir_type_create(type_function_get_argtype(fn_type), NULL);
+    this->arg_type = rir_type_create(type_function_get_argtype(fn_type), NULL, NULL);
     if (!this->arg_type) {
         RF_ERROR("Failed to create rir_function argument type");
         return false;
     }
 
-    this->ret_type = rir_type_create(type_function_get_rettype(fn_type), NULL);
+    this->ret_type = rir_type_create(type_function_get_rettype(fn_type), NULL, NULL);
     if (!this->ret_type) {
         RF_ERROR("Failed to create rir_function return type");
         return false;
@@ -78,7 +78,7 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b)
     switch(n->type) {
     case AST_VARIABLE_DECLARATION:
         // if it's a variable declaration get/create its rir type
-        type = rir_type_create(ast_expression_get_type(n), ast_vardecl_get_name(n));
+        type = rir_type_create(ast_expression_get_type(n), ast_vardecl_get_name(n), NULL);
         id = n->vardecl.desc->typedesc.left;
         AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
         rec = symbol_table_lookup_record(b->symbols,
