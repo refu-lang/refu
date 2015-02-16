@@ -156,6 +156,54 @@ START_TEST(test_composite_types_list_population2) {
     ck_assert_type_lists_equal(expected_types, d->front.analyzer);
 } END_TEST
 
+START_TEST(test_composite_types_list_population3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, false);
+
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+    static const struct RFstring id_e = RF_STRING_STATIC_INIT("e");
+    
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
+
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_leaf_i8 = testsupport_analyzer_type_create_leaf(&id_c, t_i8);
+
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_leaf_f32 = testsupport_analyzer_type_create_leaf(&id_d, t_f32);
+
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_leaf_string = testsupport_analyzer_type_create_leaf(&id_e, t_string);
+
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_leaf_i64,
+                                                                      t_leaf_f64);
+    struct type *t_prod_2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_prod_1,
+                                                                      t_leaf_i8);
+    struct type *t_prod_3 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_prod_2,
+                                                                      t_leaf_f32);
+    struct type *t_prod_4 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_prod_3,
+                                                                      t_leaf_string);
+
+    const struct type *expected_types [] = { t_leaf_i64, t_leaf_f64, t_leaf_i8,
+                                             t_leaf_f32, t_leaf_string, t_prod_1,
+                                             t_prod_2, t_prod_3, t_prod_4};
+    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+} END_TEST
+
 
 Suite *types_suite_create(void)
 {
@@ -169,6 +217,7 @@ Suite *types_suite_create(void)
     tcase_add_checked_fixture(st2, setup_analyzer_tests, teardown_analyzer_tests);
     tcase_add_test(st2, test_composite_types_list_population);
     tcase_add_test(st2, test_composite_types_list_population2);
+    tcase_add_test(st2, test_composite_types_list_population3);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
