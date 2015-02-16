@@ -103,6 +103,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                                     unsigned int line)
 {
     unsigned int i;
+    unsigned int count = 1;
     struct rir_type *t;
     bool found;
     rf_ilist_for_each(&d->rir->rir_types, t, ln) {
@@ -113,15 +114,14 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                 break;
             }
         }
-        RFS_buffer_push();
         ck_assert_msg(found, "Encountered rir type ["RF_STR_PF_FMT"] was not found in the "
                       "expected types list from  %s:%u",
                       RF_STR_PF_ARG(rir_type_str(t)), filename, line);
-        RFS_buffer_pop();
+        count ++;
     }
 
-    ck_assert_msg(expected_num == i + 1, "Number of expected rir types (%u) does not "
-                  "match the number of created type (%u) from %s:%u", expected_num,
-                  i + 1, filename, line);
+    ck_assert_msg(expected_num == count, "Number of expected rir types (%u) does not "
+                  "match the number of created types (%u) from %s:%u", expected_num,
+                  count, filename, line);
     return true;
 }

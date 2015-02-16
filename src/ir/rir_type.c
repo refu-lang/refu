@@ -13,7 +13,7 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
                                     enum rir_type_category *previous_type_op,
                                     struct rir_type **newly_created_type)
 {
-    // for now here we assume it's only product types
+    enum rir_type_category op_category;
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
@@ -32,13 +32,13 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     case TYPE_CATEGORY_OPERATOR:
         switch (input->operator.type) {
         case TYPEOP_PRODUCT:
-            type->category = COMPOSITE_PRODUCT_RIR_TYPE;
+            op_category = COMPOSITE_PRODUCT_RIR_TYPE;
             break;
         case TYPEOP_SUM:
-            type->category = COMPOSITE_SUM_RIR_TYPE;
+            op_category = COMPOSITE_SUM_RIR_TYPE;
             break;
         case TYPEOP_IMPLICATION:
-            type->category = COMPOSITE_IMPLICATION_RIR_TYPE;
+            op_category = COMPOSITE_IMPLICATION_RIR_TYPE;
             break;
         default:
             RF_ASSERT(false, "Illegal type operation encountered");
@@ -46,34 +46,29 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
         }
 
         if (*previous_type_op == RIR_TYPE_CATEGORY_COUNT) {
-            *previous_type_op = type->category;
+            *previous_type_op = op_category;
             new_type = type;
-        } else if (*previous_type_op != type->category) {
-            new_type = rir_type_alloc();
-            if (!new_type) {
-                return false;
-            }
-            if (!rir_type_init_before_iteration(new_type, input, name)) {
-                darray_append(type->subtypes, new_type);
-                return true;
-            }
+            new_type->category = op_category;
+        } else if (*previous_type_op != op_category) {
+            new_type = rir_type_create(input, NULL, NULL);
+            new_type->category = op_category;
+            *previous_type_op = op_category;
+            darray_append(type->subtypes, new_type);
+            return true;
         } else {
             new_type = type;
+            new_type->category = op_category;
         }
 
         if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op, newly_created_type)) {
             return false;
         }
 
-        if (*previous_type_op != type->category) {
-            new_type = rir_type_alloc();
-            if (!new_type) {
-                return false;
-            }
-            if (!rir_type_init_before_iteration(new_type, input, name)) {
-                darray_append(type->subtypes, new_type);
-                return true;
-            }
+        if (*previous_type_op != op_category) {
+            new_type = rir_type_create(input->operator.right, NULL, NULL);
+            *previous_type_op = op_category;
+            darray_append(type->subtypes, new_type);
+            return true;
         }
 
         if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op, newly_created_type)) {
@@ -312,8 +307,12 @@ bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *compo
     struct rir_type *created_rir_type;
     bool found;
     rf_ilist_head_init(rir_types);
-
     rf_ilist_for_each(composite_types, t, lh) {
+#if TEMP_RIR_DEBUG
+        RFS_buffer_push();
+        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        fflush(stdout);
+#endif
         // first of all see if this composite type already has an equivalent rir type
         found = false;
         rf_ilist_for_each(rir_types, iter_rir_type, ln) {
@@ -327,6 +326,11 @@ bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *compo
         }
 
         created_rir_type = rir_type_create(t, NULL, NULL);
+#if TEMP_RIR_DEBUG
+        printf("created rir type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rir_type_str(created_rir_type)));
+        fflush(stdout);
+        RFS_buffer_pop();
+#endif
         if (!created_rir_type) {
             RF_ERROR("Failed to create a rir type during transition Refu IR.");
             return false;

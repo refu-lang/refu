@@ -249,7 +249,6 @@ struct type *type_create(struct ast_node *node,
         return type_create_from_typedesc(node, a, st, genrdecl);
     case AST_FUNCTION_DECLARATION:
         return type_create_from_fndecl(node, a, st);
-        break;
     default:
         RF_ASSERT_OR_CRITICAL(false, "Attempted to create a type "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
