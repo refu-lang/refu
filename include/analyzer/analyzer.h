@@ -58,19 +58,21 @@ void analyzer_destroy(struct analyzer *a);
 
 /**
  * If existing, retrieve the type and if not existing create the type
- * for ast node @c desc.
+ * for ast node @c desc if @c add_type is true.
  *
  * @param a          The analyzer instance from which to retrieve the type
  * @param desc       The node whose type to check
  * @param st         The symbol table to check for type existence
  * @param genrdecl   Optional generic delcation that accompanied @c desc.
  *                   Can be NULL.
+ * @param add_type   If true add the type if it does not exist in the types list.
  * @return           The retrieved or created type, or NULL in error.
  */
 struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *desc,
                                          struct symbol_table *st,
-                                         struct ast_node *genrdecl);
+                                         struct ast_node *genrdecl,
+                                         bool add_type);
 
 struct inpfile *analyzer_get_file(struct analyzer *a);
 

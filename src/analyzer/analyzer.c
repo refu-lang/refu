@@ -98,7 +98,8 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
 struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *desc,
                                          struct symbol_table *st,
-                                         struct ast_node *genrdecl)
+                                         struct ast_node *genrdecl,
+                                         bool add_type)
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
@@ -109,14 +110,16 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     }
 
     // else we have to create a new type
-    t = type_create(desc, a, st, genrdecl);
+    t = type_create(desc, a, st, genrdecl, false);
     if (!t) {
         RF_ERROR("Failure to create an composite type");
         return NULL;
     }
 
     // add it to the list
-    rf_ilist_add(&a->composite_types, &t->lh);
+    if (add_type) {
+        rf_ilist_add(&a->composite_types, &t->lh);
+    }
     return t;
 }
 

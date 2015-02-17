@@ -21,7 +21,8 @@ void type_free(struct type *t, struct analyzer *a);
 
 struct type *type_create(struct ast_node *n, struct analyzer *a,
                          struct symbol_table *st,
-                         struct ast_node *genrdecl);
+                         struct ast_node *genrdecl,
+                         bool lookup);
 
 struct type *type_create_from_typedecl(struct ast_node *n,
                                        struct analyzer *a,
@@ -38,12 +39,14 @@ struct type *type_function_create(struct analyzer *a,
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
-                                       struct ast_node *genrdecl);
+                                       struct ast_node *genrdecl,
+                                       bool lookup);
 
 struct type *type_operator_create(struct ast_node *n,
                                   struct analyzer *a,
                                   struct symbol_table *st,
-                                  struct ast_node *genrdecl);
+                                  struct ast_node *genrdecl,
+                                  bool lookup);
 
 struct type *type_leaf_create(struct analyzer *a,
                               const struct RFstring *id,
@@ -52,7 +55,7 @@ struct type *type_leaf_create(struct analyzer *a,
 
 /**
  * Attempts to retrieve the type for ast node @c n and if it does not exist
- * it creates it.
+ * it creates it and if @c add_type is true is adds it to the types list.
  *
  * @note: If @c n is an ast description of a single type_leaf say a:f64 this is
  *        the kind of type this should return
@@ -66,13 +69,16 @@ struct type *type_leaf_create(struct analyzer *a,
  *                     type_leaf say a:f64 then this will return a type leaf.
  *                     If false then this will just return the right part of the
  *                     description
+ * @param add_type     If @c true and the created type is not already in the list
+ *                     then add it
  * @return             Return either the type of @c n or NULL if there was an error
  */
 struct type *type_lookup_or_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl,
-                                   bool make_leaf);
+                                   bool make_leaf,
+                                   bool add_type_to_list);
 
 /**
  * Applies a type operator to 2 types and returns the result

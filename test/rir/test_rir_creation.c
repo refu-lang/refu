@@ -38,7 +38,6 @@ START_TEST(test_types_list_simple2) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:u32, b:u16, c:i8, d:f32, e:string}"
-
     );
     struct rir_testdriver *d = get_rir_testdriver();
     rir_testdriver_assign(d, &s);
@@ -52,33 +51,20 @@ START_TEST(test_types_list_simple2) {
     static const struct RFstring id_e = RF_STRING_STATIC_INIT("e");
 
     struct rir_type *t_foo = testsupport_rir_type_create(d, COMPOSITE_RIR_DEFINED, &id_foo);
-    struct rir_type *t_prod2 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL);
-    struct rir_type *t_prod3 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL);
-    struct rir_type *t_prod4 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL);
     struct rir_type *t_prod5 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL);
     testsupport_rir_type_add_subtype(t_foo, t_prod5);
     struct rir_type *t_a = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_32, &id_a);
-    testsupport_rir_type_add_subtype(t_prod2, t_a);
-    testsupport_rir_type_add_subtype(t_prod3, t_a);
-    testsupport_rir_type_add_subtype(t_prod4, t_a);
     testsupport_rir_type_add_subtype(t_prod5, t_a);
     struct rir_type *t_b = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_16, &id_b);
-    testsupport_rir_type_add_subtype(t_prod2, t_b);
-    testsupport_rir_type_add_subtype(t_prod3, t_b);
-    testsupport_rir_type_add_subtype(t_prod4, t_b);
     testsupport_rir_type_add_subtype(t_prod5, t_b);
     struct rir_type *t_c = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_c);
-    testsupport_rir_type_add_subtype(t_prod3, t_c);
-    testsupport_rir_type_add_subtype(t_prod4, t_c);
     testsupport_rir_type_add_subtype(t_prod5, t_c);
     struct rir_type *t_d = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_32, &id_d);
-    testsupport_rir_type_add_subtype(t_prod4, t_d);
     testsupport_rir_type_add_subtype(t_prod5, t_d);
     struct rir_type *t_e = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_e);
     testsupport_rir_type_add_subtype(t_prod5, t_e);
 
-    struct rir_type *expected_types[] = {t_a, t_b, t_c, t_d, t_e, t_foo,
-                                         t_prod5, t_prod4, t_prod3, t_prod2};
+    struct rir_type *expected_types[] = {t_a, t_b, t_c, t_d, t_e, t_foo, t_prod5};
     rir_testdriver_compare_lists(d, expected_types);
 } END_TEST
 
@@ -131,9 +117,9 @@ Suite *rir_creation_suite_create(void)
     tcase_add_checked_fixture(st_basic,
                               setup_rir_tests,
                               teardown_rir_tests);
-    tcase_add_test(st_basic, test_types_list_simple1);
+    /* tcase_add_test(st_basic, test_types_list_simple1); */
     tcase_add_test(st_basic, test_types_list_simple2);
-    tcase_add_test(st_basic, test_types_list_type_reuse);
+    /* tcase_add_test(st_basic, test_types_list_type_reuse); */
 
     suite_add_tcase(s, st_basic);
 

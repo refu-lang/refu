@@ -16,8 +16,8 @@
 
 /* -- forward declarations of functions -- */
 static bool type_operator_init(struct type_operator *t, struct ast_node *n,
-                                struct analyzer *a, struct symbol_table *st,
-                                struct ast_node *genrdecl);
+                               struct analyzer *a, struct symbol_table *st,
+                               struct ast_node *genrdecl, bool add_type_to_list);
 
 /* -- miscellaneous type functions used internally (static) -- */
 struct function_args_ctx {
@@ -60,7 +60,8 @@ static bool type_leaf_init_from_typedesc(struct type_leaf *leaf,
                                          struct ast_node *typedesc,
                                          struct analyzer *a,
                                          struct symbol_table *st,
-                                         struct ast_node *genrdecl)
+                                         struct ast_node *genrdecl,
+                                         bool add_type_to_list)
 {
     struct ast_node *right;
     struct ast_node *left;
@@ -80,7 +81,7 @@ static bool type_leaf_init_from_typedesc(struct type_leaf *leaf,
 
     } else if (right->type == AST_TYPE_DESCRIPTION ||
                right->type == AST_TYPE_OPERATOR) {
-        leaf->type = analyzer_get_or_create_type(a, right, st, genrdecl);
+        leaf->type = analyzer_get_or_create_type(a, right, st, genrdecl, add_type_to_list);
         if (!leaf->type) {
             return false;
         }
@@ -98,7 +99,8 @@ static bool type_leaf_init_from_typedesc(struct type_leaf *leaf,
 static struct type *type_leaf_create_from_typedesc(struct ast_node *typedesc,
                                                    struct analyzer *a,
                                                    struct symbol_table *st,
-                                                   struct ast_node *genrdecl)
+                                                   struct ast_node *genrdecl,
+                                                   bool add_type_to_list)
 {
     struct type *ret;
     ret = type_alloc(a);
@@ -108,7 +110,7 @@ static struct type *type_leaf_create_from_typedesc(struct ast_node *typedesc,
     }
 
     ret->category = TYPE_CATEGORY_LEAF;
-    if (!type_leaf_init_from_typedesc(&ret->leaf, typedesc, a, st, genrdecl)) {
+    if (!type_leaf_init_from_typedesc(&ret->leaf, typedesc, a, st, genrdecl, add_type_to_list)) {
         type_free(ret, a);
         return NULL;
     }
@@ -120,23 +122,25 @@ static struct type *type_leaf_create_from_typedesc(struct ast_node *typedesc,
 
 static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
                                     struct analyzer *a, struct symbol_table *st,
-                                    struct ast_node *genrdecl)
+                                    struct ast_node *genrdecl,
+                                    bool add_type_to_list)
 {
     if (ast_types_left(typedesc)->type == AST_IDENTIFIER) {
         AST_NODE_ASSERT_TYPE(typedesc, AST_TYPE_DESCRIPTION);
 
         t->category = TYPE_CATEGORY_LEAF;
-        return type_leaf_init_from_typedesc(&t->leaf, typedesc, a, st, genrdecl);
+        return type_leaf_init_from_typedesc(&t->leaf, typedesc, a, st, genrdecl, add_type_to_list);
     } else {
         t->category = TYPE_CATEGORY_OPERATOR;
-        return type_operator_init(&t->operator, typedesc, a, st, genrdecl);
+        return type_operator_init(&t->operator, typedesc, a, st, genrdecl, add_type_to_list);
     }
 }
 
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
-                                       struct ast_node *genrdecl)
+                                       struct ast_node *genrdecl,
+                                       bool add_type_to_list)
 {
     struct type *ret;
     ret = type_alloc(a);
@@ -144,7 +148,7 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
         RF_ERROR("Type allocation failed");
         return NULL;
     }
-    if (!type_init_from_typedesc(ret, typedesc, a, st, genrdecl)) {
+    if (!type_init_from_typedesc(ret, typedesc, a, st, genrdecl, add_type_to_list)) {
         type_free(ret, a);
         return NULL;
     }
@@ -154,18 +158,19 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
 
 static bool type_operator_init(struct type_operator *t, struct ast_node *n,
                                struct analyzer *a, struct symbol_table *st,
-                               struct ast_node *genrdecl)
+                               struct ast_node *genrdecl,
+                               bool add_type_to_list)
 {
     struct type *left;
     struct type *right;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
 
     t->type = ast_typeop_op(n);
-    left = type_lookup_or_create(ast_typeop_left(n), a, st, genrdecl, true);
+    left = type_lookup_or_create(ast_typeop_left(n), a, st, genrdecl, true, add_type_to_list);
     if (!left) {
         return false;
     }
-    right = type_lookup_or_create(ast_typeop_right(n), a, st, genrdecl, true);
+    right = type_lookup_or_create(ast_typeop_right(n), a, st, genrdecl, true, add_type_to_list);
     if (!right) {
         return false;
     }
@@ -180,7 +185,8 @@ struct type *type_lookup_or_create(struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl,
-                                   bool make_leaf)
+                                   bool make_leaf,
+                                   bool add_type_to_list)
 {
     switch (n->type) {
     case AST_XIDENTIFIER:
@@ -192,16 +198,16 @@ struct type *type_lookup_or_create(struct ast_node *n,
             ast_typedesc_right(n)->type == AST_XIDENTIFIER) {
 
             if (make_leaf) {
-                return type_leaf_create_from_typedesc(n, a, st, genrdecl);
+                return type_leaf_create_from_typedesc(n, a, st, genrdecl, add_type_to_list);
             } else {
                 return type_lookup_xidentifier(ast_typedesc_right(n), a, st, genrdecl);
             }
         }
         // else fall through case, same as type operator
     case AST_TYPE_OPERATOR:
-        return analyzer_get_or_create_type(a, n, st, genrdecl);
+        return analyzer_get_or_create_type(a, n, st, genrdecl, add_type_to_list);
     case AST_VARIABLE_DECLARATION:
-        return type_lookup_or_create(ast_vardecl_desc_get(n), a, st, genrdecl, false);
+        return type_lookup_or_create(ast_vardecl_desc_get(n), a, st, genrdecl, false, add_type_to_list);
     default:
         RF_ASSERT_OR_CRITICAL(false,"Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
@@ -239,14 +245,15 @@ struct type *type_create_from_operation(enum typeop_type type,
 
 struct type *type_create(struct ast_node *node,
                          struct analyzer *a, struct symbol_table *st,
-                         struct ast_node *genrdecl)
+                         struct ast_node *genrdecl,
+                         bool add_type_to_list)
 {
     switch (node->type) {
     case AST_TYPE_DECLARATION:
         return type_create_from_typedecl(node, a, st);
     case AST_TYPE_DESCRIPTION:
     case AST_TYPE_OPERATOR:
-        return type_create_from_typedesc(node, a, st, genrdecl);
+        return type_create_from_typedesc(node, a, st, genrdecl, add_type_to_list);
     case AST_FUNCTION_DECLARATION:
         return type_create_from_fndecl(node, a, st);
     default:
@@ -275,13 +282,16 @@ struct type *type_create_from_typedecl(struct ast_node *n,
     t->defined.type = type_lookup_or_create(ast_typedecl_typedesc_get(n),
                                             a,
                                             st,
-                                            ast_typedecl_genrdecl_get(n), true);
+                                            ast_typedecl_genrdecl_get(n),
+                                            true,
+                                            true);
     if (!t->defined.type) {
         RF_ERROR("Failed to create type for typedecl's typedescription");
         type_free(t, a);
         t = NULL;
     }
-
+    // add it to the types list
+    rf_ilist_add(&a->composite_types, &t->lh);
     return t;
 }
 
@@ -299,7 +309,9 @@ static bool type_init_from_fndecl(struct type *t,
     // set argument type (left part of the operand)
     if (args) {
         arg_type = type_lookup_or_create(args, a, st,
-                                         ast_fndecl_genrdecl_get(n), true);
+                                         ast_fndecl_genrdecl_get(n),
+                                         true,
+                                         true);
         if (!arg_type) {
             return false;
         }
@@ -311,7 +323,9 @@ static bool type_init_from_fndecl(struct type *t,
 
     if (ret) {
         ret_type = type_lookup_or_create(ret, a, st,
-                                         ast_fndecl_genrdecl_get(n), true);
+                                         ast_fndecl_genrdecl_get(n),
+                                         true,
+                                         true);
         if (!ret_type) {
             return false;
         }
@@ -380,7 +394,8 @@ struct type *type_leaf_create(struct analyzer *a,
 struct type *type_operator_create(struct ast_node *n,
                                   struct analyzer *a,
                                   struct symbol_table *st,
-                                  struct ast_node *genrdecl)
+                                  struct ast_node *genrdecl,
+                                  bool add_type_to_list)
 {
     struct type *t;
     t = type_alloc(a);
@@ -390,7 +405,7 @@ struct type *type_operator_create(struct ast_node *n,
     }
 
     t->category = TYPE_CATEGORY_OPERATOR;
-    if (!type_operator_init(&t->operator, n, a, st, genrdecl)) {
+    if (!type_operator_init(&t->operator, n, a, st, genrdecl, add_type_to_list)) {
         type_free(t, a);
         t = NULL;
     }
