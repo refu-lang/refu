@@ -25,9 +25,11 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
         type->name = input->defined.name;
-        if (!rir_type_init_iteration(type, input->defined.type, NULL, previous_type_op, newly_created_type)) {
+        new_type = rir_type_create(input->defined.type, NULL, NULL);
+        if (!new_type) {
             return false;
         }
+        darray_append(type->subtypes, new_type);
         break;
     case TYPE_CATEGORY_OPERATOR:
         switch (input->operator.type) {
@@ -260,6 +262,23 @@ bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type)
     return rir_type_with_index_equals_type(r_type, &index, n_type);
 }
 
+bool rir_type_is_subtype_of_other(struct rir_type *t,
+                                  struct rir_type *other)
+{
+    struct rir_type **subtype;
+    darray_foreach(subtype, other->subtypes) {
+        if (*subtype == t) {
+            return true;
+        }
+        if (darray_size((*subtype)->subtypes) != 0) {
+            if (rir_type_is_subtype_of_other(t, *subtype)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type)
 {
     if (rir_type_is_elementary(r_type)) {
@@ -382,16 +401,19 @@ const struct RFstring *rir_type_str(const struct rir_type *t)
     case COMPOSITE_PRODUCT_RIR_TYPE:
     case COMPOSITE_SUM_RIR_TYPE:
     case COMPOSITE_IMPLICATION_RIR_TYPE:
-        s = RFS_(RF_STR_PF_FMT"( ", RF_STR_PF_ARG(&rir_op_names[t->category]));
+        s = t->name
+            ? RFS_(RF_STR_PF_FMT ":" RF_STR_PF_FMT"( ", RF_STR_PF_ARG(t->name),
+                   RF_STR_PF_ARG(&rir_op_names[t->category]))
+            : RFS_(RF_STR_PF_FMT"( ", RF_STR_PF_ARG(&rir_op_names[t->category]));
         darray_foreach(subtype, t->subtypes) {
             s = darray_size(t->subtypes) == count
-                ? RFS_(RF_STR_PF_FMT RF_STR_PF_FMT,
-                       RF_STR_PF_ARG(s),
-                       RF_STR_PF_ARG(rir_type_str(*subtype)))
-                : RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                       RF_STR_PF_ARG(s),
-                       RF_STR_PF_ARG(rir_type_str(*subtype)),
-                       RF_STR_PF_ARG(rir_type_op_to_str(t)));
+              ? RFS_(RF_STR_PF_FMT RF_STR_PF_FMT,
+                     RF_STR_PF_ARG(s),
+                     RF_STR_PF_ARG(rir_type_str(*subtype)))
+              : RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                     RF_STR_PF_ARG(s),
+                     RF_STR_PF_ARG(rir_type_str(*subtype)),
+                     RF_STR_PF_ARG(rir_type_op_to_str(t)));
             ++ count;
         }
         return RFS_(RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));

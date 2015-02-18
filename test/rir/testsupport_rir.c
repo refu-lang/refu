@@ -77,23 +77,64 @@ bool rir_testdriver_process(struct rir_testdriver *d)
     return true;
 }
 
-struct rir_type *testsupport_rir_type_create(struct rir_testdriver *d,
-                                             enum rir_type_category category,
-                                             const struct RFstring *name)
+static void rir_testdriver_add_type(struct rir_testdriver *d,
+                                    struct rir_type *type,
+                                    const char* filename,
+                                    unsigned int line)
+{
+    struct rir_type **subtype;
+    RFS_buffer_push();
+    // just a check that the type is not already added
+    darray_foreach(subtype, d->rir_types) {
+        ck_assert_msg(*subtype != type,
+                      "Attempted to re-add rir type ["RF_STR_PF_FMT"] in the "
+                      "rir types list of the test driver from %s:%u",
+                      RF_STR_PF_ARG(rir_type_str(type)), filename, line);
+    }
+    RFS_buffer_pop();
+
+    // if adding type depends on any other type on the list add it before all
+    darray_foreach(subtype, d->rir_types) {
+        if (rir_type_is_subtype_of_other(*subtype, type)) {
+            darray_prepend(d->rir_types, type);
+            return;
+        }
+    }
+
+    // else just append at the end
+    darray_append(d->rir_types, type);
+}
+
+struct rir_type *i_testsupport_rir_type_create(struct rir_testdriver *d,
+                                               enum rir_type_category category,
+                                               const struct RFstring *name,
+                                               bool add_to_drivers_list,
+                                               const char* filename,
+                                               unsigned int line)
 {
     struct rir_type *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     ret->category = category;
     darray_init(ret->subtypes);
     ret->name = name;
-    darray_append(d->rir_types, ret);
     ret->indexed = true;
+    if (add_to_drivers_list) {
+        rir_testdriver_add_type(d, ret, filename, line);
+    }
     return ret;
 }
 
-void testsupport_rir_type_add_subtype(struct rir_type *type, struct rir_type *subtype)
+void i_testsupport_rir_type_add_subtype(struct rir_testdriver *d,
+                                        struct rir_type *type,
+                                        struct rir_type *subtype,
+                                        bool add_to_drivers_list,
+                                        const char* filename,
+                                        unsigned int line)
 {
     darray_append(type->subtypes, subtype);
+    if (add_to_drivers_list) {
+        rir_testdriver_add_type(d, type, filename, line);
+    }
 }
 
 bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
@@ -103,7 +144,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                                     unsigned int line)
 {
     unsigned int i;
-    unsigned int count = 1;
+    unsigned int count = 0;
     struct rir_type *t;
     bool found;
     rf_ilist_for_each(&d->rir->rir_types, t, ln) {

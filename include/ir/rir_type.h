@@ -106,6 +106,12 @@ bool rir_type_equals(struct rir_type *a, struct rir_type *b);
 bool rir_type_equals_type(struct rir_type *a, struct type *b);
 
 /**
+ * Checks if @c t is a subtype of @c other. Only checks for pointer equality
+ */
+bool rir_type_is_subtype_of_other(struct rir_type *t,
+                                  struct rir_type *other);
+
+/**
  * A form of @ref rir_type_equals_type for a specific index
  */
 bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type);

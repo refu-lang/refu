@@ -37,10 +37,24 @@ bool rir_testdriver_process(struct rir_testdriver *d);
     } while (0)
 
 
-struct rir_type *testsupport_rir_type_create(struct rir_testdriver *d,
-                                             enum rir_type_category category,
-                                             const struct RFstring *name);
-void testsupport_rir_type_add_subtype(struct rir_type *type, struct rir_type *subtype);
+struct rir_type *i_testsupport_rir_type_create(struct rir_testdriver *d,
+                                               enum rir_type_category category,
+                                               const struct RFstring *name,
+                                               bool add_to_drivers_list,
+                                               const char* filename,
+                                               unsigned int line);
+#define testsupport_rir_type_create(driver_, category_, name_, add_to_drivers_list_) \
+    i_testsupport_rir_type_create(driver_, category_, name_,            \
+                                  add_to_drivers_list_, __FILE__, __LINE__)
+void i_testsupport_rir_type_add_subtype(struct rir_testdriver *d,
+                                        struct rir_type *type,
+                                        struct rir_type *subtype,
+                                        bool add_to_drivers_list,
+                                        const char* filename,
+                                        unsigned int line);
+#define testsupport_rir_type_add_subtype(driver_, type_, subtype_, add_to_drivers_list) \
+    i_testsupport_rir_type_add_subtype(driver_, type_, subtype_,        \
+                                       add_to_drivers_list, __FILE__, __LINE__)
 
 #define rir_testdriver_compare_lists(driver_, expected_types_)          \
     i_rir_testdriver_compare_lists(driver_, expected_types_,            \
