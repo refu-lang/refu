@@ -54,6 +54,19 @@ START_TEST(test_print_string_literal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
 } END_TEST
 
+START_TEST(test_type_decl) {
+#if 0 // TODO: This won't work yet
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32, b:f32 }\n"
+        "fn main()->u32{\n"
+        "t:foo = foo(24, 0.222)\n"
+        "return f.a\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
+#endif
+} END_TEST
+
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -69,7 +82,14 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic, test_print_string);
     tcase_add_test(st_basic, test_print_string_literal);
 
+    TCase *st_basic_types = tcase_create("end_to_end_basic_types");
+    tcase_add_checked_fixture(st_basic_types,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_basic_types, test_type_decl);
+
     suite_add_tcase(s, st_basic);
+    suite_add_tcase(s, st_basic_types);
 
     return s;
 }

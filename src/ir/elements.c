@@ -143,7 +143,7 @@ RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name)
             rf_ilist_add_tail(&this->functions, &fn->ln_for_module);
             break;
         case AST_TYPE_DECLARATION:
-            //TODO
+            // all types should be in the global rir types list
             break;
         default:
             RF_ASSERT(false, "Unexpected ast node \""RF_STR_PF_FMT"\" at the"
