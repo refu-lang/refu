@@ -318,7 +318,8 @@ const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
     }
     return darray_item(t->subtypes, n);
 }
-
+// very very temporary macro to allow visualization of rir type creation. Will go away
+// #define TEMP_RIR_DEBUG 1
 bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *composite_types)
 {
     struct type *t;

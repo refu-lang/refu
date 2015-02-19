@@ -24,6 +24,25 @@
 #include "analyzer_pass1.h" // for analyzer symbol table change functions
 
 
+static inline enum comparison_reason binaryop_type_to_comparison_reason(enum binaryop_type operation)
+{
+    switch(operation) {
+    case BINARYOP_ASSIGN:
+        return COMPARISON_REASON_ASSIGNMENT;
+    case BINARYOP_ADD:
+        return COMPARISON_REASON_ADDITION;
+    case BINARYOP_SUB:
+        return COMPARISON_REASON_SUBTRACTION;
+    case BINARYOP_MUL:
+        return COMPARISON_REASON_MULTIPLICATION;
+    case BINARYOP_DIV:
+        return COMPARISON_REASON_DIVISION;
+
+    default:
+        return COMPARISON_REASON_GENERIC;
+    }
+}
+
 static bool typecheck_equal_or_convertible(struct ast_node *n,
                                            enum binaryop_type operation,
                                            const struct type *tleft,
@@ -35,7 +54,7 @@ static bool typecheck_equal_or_convertible(struct ast_node *n,
 
     RFS_buffer_push();
     // comparison reason and operation share common enum values and as such this cast is valid
-    type_comparison_ctx_init(&cmp_ctx, (enum comparison_reason)operation);
+    type_comparison_ctx_init(&cmp_ctx, binaryop_type_to_comparison_reason(operation));
 
     if (type_equals(tleft, tright, &cmp_ctx)) {
         if (ctx->a->warn_on_implicit_conversions) {

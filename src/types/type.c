@@ -419,6 +419,8 @@ struct type *type_operator_create(struct ast_node *n,
 
 i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
                                            enum comparison_reason reason);
+i_INLINE_INS enum comparison_reason type_comparison_ctx_reason(struct type_comparison_ctx *ctx);
+
 
 i_INLINE_INS bool type_category_equals(const struct type* t,
                                        enum type_category category);
@@ -427,7 +429,11 @@ static inline bool type_leaf_equals(const struct type_leaf *t1,
                                     const struct type_leaf *t2,
                                     struct type_comparison_ctx *ctx)
 {
-    return type_equals(t1->type, t2->type, ctx);
+    bool predicate = true;
+    if (type_comparison_ctx_reason(ctx) == COMPARISON_REASON_IDENTICAL) {
+        predicate = rf_string_equal(t1->id, t2->id);
+    }
+    return predicate && type_equals(t1->type, t2->type, ctx);
 }
 
 static bool type_operator_equals(const struct type_operator *t1,
@@ -460,8 +466,8 @@ static bool type_same_categories_equals(const struct type* t1,
     case TYPE_CATEGORY_LEAF:
             return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
     case TYPE_CATEGORY_DEFINED:
-        //TODO
-        RF_ASSERT(false, "Not yet implemented");
+        return rf_string_equal(t1->defined.name, t2->defined.name) &&
+               type_equals(t1->defined.type, t2->defined.type, ctx);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         RF_ASSERT(false, "Not yet implemented");
@@ -498,22 +504,25 @@ static inline enum type_initial_check_result type_category_check(const struct ty
         ret = TYPES_CHECK_CAN_CONTINUE;
     }
 
-    // A type should be equal to a leaf of the same type
-    if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
-        if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
-        if (type_same_categories_equals(t1->leaf.type, t2, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t1->category == TYPE_CATEGORY_DEFINED) {
-        if (type_equals(t1->defined.type, t2, ctx)) {
-            ret = TYPES_ARE_EQUAL;
-        }
-    } else if (t2->category == TYPE_CATEGORY_DEFINED) {
-        if (type_equals(t1, t2->defined.type, ctx)) {
-            ret = TYPES_ARE_EQUAL;
+    // A type should be equal to a leaf of the same type and to a defined of the same type
+    // but should not be considered identical to it
+    if (type_comparison_ctx_reason(ctx) != COMPARISON_REASON_IDENTICAL) {
+        if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
+            if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+        } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
+            if (type_same_categories_equals(t1->leaf.type, t2, ctx)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+        } else if (t1->category == TYPE_CATEGORY_DEFINED) {
+            if (type_equals(t1->defined.type, t2, ctx)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+        } else if (t2->category == TYPE_CATEGORY_DEFINED) {
+            if (type_equals(t1, t2->defined.type, ctx)) {
+                ret = TYPES_ARE_EQUAL;
+            }
         }
     }
 
@@ -546,6 +555,8 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
                           struct ast_node *genrdecl)
 {
     struct type *looked_up_t;
+    struct type_comparison_ctx cmp_ctx;
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
     switch(type_desc->type) {
     case AST_TYPE_OPERATOR:
         if (t->category != TYPE_CATEGORY_OPERATOR) {
@@ -563,9 +574,15 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
                                  ast_typeop_right(type_desc),
                                  a, st, genrdecl);
     case AST_TYPE_DESCRIPTION:
+    {
         AST_NODE_ASSERT_TYPE(ast_typedesc_left(type_desc), AST_IDENTIFIER);
-        return type_equals_ast_node(t, ast_typedesc_right(type_desc),
-                                    a, st, genrdecl);
+        bool predicate = true;
+        if (t->category == TYPE_CATEGORY_LEAF) {
+            predicate = rf_string_equal(t->leaf.id, ast_identifier_str(ast_typedesc_left(type_desc)));
+        }
+        return predicate && type_equals_ast_node(t, ast_typedesc_right(type_desc),
+                                                 a, st, genrdecl);
+    }
     case AST_TYPE_DECLARATION:
         return type_equals_ast_node(t, ast_typedecl_typedesc_get(type_desc),
                                     a, st, genrdecl);
@@ -576,7 +593,7 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
             return false;
         }
 
-        return type_equals(t, looked_up_t, NULL);
+        return type_equals(t, looked_up_t, &cmp_ctx);
     default:
         break;
     }

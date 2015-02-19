@@ -104,6 +104,14 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
 }
 
 /**
+ * Get the reason of the comparison from the context or generic reason if it's NULL
+ */
+i_INLINE_DECL enum comparison_reason type_comparison_ctx_reason(struct type_comparison_ctx *ctx)
+{
+    return ctx ? ctx->reason : COMPARISON_REASON_GENERIC;
+}
+
+/**
  * Check if a type belong to a certain category. If it's a leaf type it's actual
  * type category is compared.
  */

@@ -4,6 +4,8 @@
 #include <Utils/build_assert.h> // for BUILD_ASSERT
 #include <String/rf_str_core.h> // for RF_STRING_STATIC_INIT
 
+#include <types/type.h>
+
 #include "elementary_types_htable.h"
 
 // NOTE: preserve order
@@ -76,7 +78,11 @@ bool type_elementary_equals(const struct type_elementary *t1,
         return true;
     }
 
-    if (!ctx) {
+    if (!ctx) { // TODO: Is this really what we want here???
+        return false;
+    }
+
+    if (type_comparison_ctx_reason(ctx) == COMPARISON_REASON_IDENTICAL) {
         return false;
     }
 

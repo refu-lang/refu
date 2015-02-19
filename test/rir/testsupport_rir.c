@@ -147,6 +147,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
+    RFS_buffer_push();
     rf_ilist_for_each(&d->rir->rir_types, t, ln) {
         found = false;
         for (i = 0; i < expected_num; ++i) {
@@ -160,7 +161,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                       RF_STR_PF_ARG(rir_type_str(t)), filename, line);
         count ++;
     }
-
+    RFS_buffer_pop();
     ck_assert_msg(expected_num == count, "Number of expected rir types (%u) does not "
                   "match the number of created types (%u) from %s:%u", expected_num,
                   count, filename, line);
