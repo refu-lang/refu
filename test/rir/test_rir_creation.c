@@ -159,8 +159,7 @@ START_TEST(test_types_list_type_reuse_products_and_sums) {
 
     struct rir_type *expected_types[] = {t_a_i64, t_b_f64, t_a_i8, t_b_string,
                                          t_c_i8, t_d_string, t_prod_1, t_prod_2,
-                                         t_sum_1, t_foo, t_bar, t_foobar
-                                         /* t_prod_3, */ // TODO: We need this to be there too
+                                         t_sum_1, t_foo, t_bar, t_foobar, t_prod_3
     };
     rir_testdriver_compare_lists(d, expected_types);
 } END_TEST

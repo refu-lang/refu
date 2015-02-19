@@ -7,6 +7,7 @@
 #include <Utils/fixed_memory_pool.h>
 
 #include <ast/ast.h>
+#include <ast/type.h>
 #include <parser/parser.h>
 #include <types/type.h>
 #include <analyzer/typecheck.h>
@@ -95,6 +96,22 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
+// adds a type to the composite types list if it's not already there
+static void analyzer_types_list_add(struct analyzer *a, struct type *new_type)
+{
+    struct type *t;
+    struct type_comparison_ctx ctx;
+    type_comparison_ctx_init(&ctx, COMPARISON_REASON_IDENTICAL);
+
+    rf_ilist_for_each(&a->composite_types, t, lh) {
+        if (type_equals(t, new_type, &ctx)) {
+            return;
+        }
+    }
+
+    rf_ilist_add(&a->composite_types, &new_type->lh);
+}
+
 struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *desc,
                                          struct symbol_table *st,
@@ -117,7 +134,12 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     }
 
     // add it to the list
-    if (add_type) {
+    if (desc->type == AST_TYPE_OPERATOR && ast_typeop_op(desc) == TYPEOP_SUM) {
+        rf_ilist_add(&a->composite_types, &t->lh);
+        // if it's a sum type also add the left and the right operand type
+        analyzer_types_list_add(a, t->operator.left);
+        analyzer_types_list_add(a, t->operator.right);
+    } else if (add_type) {
         rf_ilist_add(&a->composite_types, &t->lh);
     }
     return t;

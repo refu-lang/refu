@@ -324,8 +324,7 @@ START_TEST(test_composite_types_list_population4) {
     const struct type *expected_types [] = { t_leaf_ai64, t_leaf_bf64, t_leaf_ai8,
                                              t_leaf_bstring, t_leaf_ci8, t_leaf_dstring,
                                              t_prod_1, t_prod_2, t_sum_1,
-                                             t_foo, t_bar, t_foobar
-                                             /* t_prod_3*/ // TODO: We need this to be there
+                                             t_foo, t_bar, t_foobar, t_prod_3
     };
     ck_assert_type_lists_equal(expected_types, d->front.analyzer);
 } END_TEST
