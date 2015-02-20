@@ -97,6 +97,8 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
 }
 
 // adds a type to the composite types list if it's not already there
+// TODO: Maybe move the types list into its own struct? Maybe also combine with
+//       the rir types list?
 static void analyzer_types_list_add(struct analyzer *a, struct type *new_type)
 {
     struct type *t;

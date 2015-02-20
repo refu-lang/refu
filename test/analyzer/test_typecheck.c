@@ -411,7 +411,7 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type person { name:string, age:u32}"
+        "type person { name:string, age:u32 }"
         "fn do_something(a:person) -> string\n"
         "{\n"
         "return \"something\""
@@ -426,7 +426,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type person { name:string, age:u32}"
+        "type person { name:string, age:u32 }"
         "fn do_something(a:person, b:u64) -> string\n"
         "{\n"
         "return \"something\" + a.name"
@@ -437,6 +437,47 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
     front_ctx_set_warn_on_implicit_conversions(&d->front, true);
 
     ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_valid_custom_type_constructor) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, age:u32 }"
+        "fn do_something() -> string\n"
+        "{\n"
+        "a:person = person(\"Celina\", 18)\n"
+        "return a.name"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_invalid_custom_type_constructor) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, age:u32 }\n"
+        "fn do_something() -> string\n"
+        "{\n"
+        "a:person = person(\"Celina\")\n"
+        "return a.name"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "constructor person() is called with argument type of "
+            "\"string\" which does not match the expected type of \"string,u32\"",
+            3, 11, 3, 26),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 Suite *analyzer_typecheck_suite_create(void)
@@ -505,12 +546,19 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 
-    TCase *t_custom_types = tcase_create("analyzer_typecheck_custom_types");
-    tcase_add_checked_fixture(t_custom_types,
+    TCase *t_custom_types_val = tcase_create("analyzer_typecheck_valid_custom_types");
+    tcase_add_checked_fixture(t_custom_types_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(t_custom_types, test_typecheck_valid_custom_type_and_fncall1);
-    tcase_add_test(t_custom_types, test_typecheck_valid_custom_type_and_fncall2);
+    tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall1);
+    tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall2);
+    tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_constructor);
+
+    TCase *t_custom_types_inv = tcase_create("analyzer_typecheck_invalid_custom_types");
+    tcase_add_checked_fixture(t_custom_types_inv,
+                              setup_analyzer_tests_with_filelog,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_custom_types_inv, test_typecheck_invalid_custom_type_constructor);
 
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
@@ -520,7 +568,8 @@ Suite *analyzer_typecheck_suite_create(void)
     suite_add_tcase(s, t_vardecl_val);
     suite_add_tcase(s, t_func_val);
     suite_add_tcase(s, t_func_inv);
-    suite_add_tcase(s, t_custom_types);
+    suite_add_tcase(s, t_custom_types_val);
+    suite_add_tcase(s, t_custom_types_inv);
     return s;
 }
 

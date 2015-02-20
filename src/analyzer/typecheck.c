@@ -418,7 +418,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     // check for existence of function
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
-    if (!fn_type || !type_is_function((fn_type))) {
+    if (!fn_type || !type_is_callable(fn_type)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
@@ -427,16 +427,17 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     }
 
     //check that the types of its arguments do indeed match
-    fn_declared_args_type = type_function_get_argtype(fn_type);
+    fn_declared_args_type = type_callable_get_argtype(fn_type);
     fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
                                         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
     if (!type_equals(fn_declared_args_type, fn_found_args_type, &cmp_ctx)) {
         RFS_buffer_push();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                     "function "RF_STR_PF_FMT"() is called with argument type of "
+                     RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
                      "\""RF_STR_PF_FMT"\" which does not match the expected "
                      "type of \""RF_STR_PF_FMT"\"",
+                     RF_STR_PF_ARG(type_callable_category_str(fn_type)),
                      RF_STR_PF_ARG(fn_name),
                      RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
                      RF_STR_PF_ARG(type_str(fn_declared_args_type, false)));
@@ -444,7 +445,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         ret = TRAVERSAL_CB_ERROR;
     }
 
-    n->expression_type = type_function_get_rettype(fn_type);
+    n->expression_type = type_callable_get_rettype(fn_type);
     return ret;
 }
 
