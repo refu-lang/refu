@@ -121,4 +121,16 @@ i_INLINE_DECL struct ast_node* ast_fncall_genr(struct ast_node *n)
     return n->fncall.genr;
 }
 
+typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);
+/**
+ * Function call arguments iteration callback.
+ *
+ * Should be called only after typechecking
+ *
+ * @param n            The function call ast node
+ * @param cb           The callback to execute for each argument expression
+ * @param user_arg     The extra argument to provide to the callback
+ */
+bool ast_fncall_for_each_arg(struct ast_node *n, fncall_args_cb cb, void *user_arg);
+
 #endif

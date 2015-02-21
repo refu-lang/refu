@@ -24,6 +24,7 @@
 
 #include <types/type_function.h>
 #include <types/type_elementary.h>
+#include <types/type.h>
 
 #include <analyzer/string_table.h>
 
@@ -143,18 +144,20 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
 
-static LLVMValueRef backend_llvm_expresion_compile_assign(struct ast_node *n,
-                                                          LLVMValueRef left,
-                                                          LLVMValueRef right,
-                                                          struct llvm_traversal_ctx *ctx)
+static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
+                                                LLVMValueRef left,
+                                                LLVMValueRef right,
+                                                struct llvm_traversal_ctx *ctx)
 {
-    // for now only assignments to string literals
-    AST_NODE_ASSERT_TYPE(ast_binaryop_right(n), AST_STRING_LITERAL);
-
-    LLVMValueRef length;
-    LLVMValueRef string_data;
-    backend_llvm_load_from_string(right, &length, &string_data, ctx);
-    backend_llvm_assign_to_string(left, length, string_data, ctx);
+    if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
+        AST_NODE_ASSERT_TYPE(ast_binaryop_right(n), AST_STRING_LITERAL);
+        LLVMValueRef length;
+        LLVMValueRef string_data;
+        backend_llvm_load_from_string(right, &length, &string_data, ctx);
+        backend_llvm_assign_to_string(left, length, string_data, ctx);
+    } else {
+        // TODO
+    }
 
     // hm what should compiling an assignment return?
     return NULL;
@@ -179,7 +182,7 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
     case BINARYOP_ASSIGN:
-        return backend_llvm_expresion_compile_assign(n, left, right, ctx);
+        return backend_llvm_compile_assign(n, left, right, ctx);
     default:
         RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
         break;
@@ -187,20 +190,90 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
     return NULL;
 }
 
+
+struct args_to_value_cb_ctx {
+    unsigned int index;
+    LLVMValueRef offset;
+    struct llvm_traversal_ctx *llvm_ctx;
+    LLVMValueRef alloca;
+    LLVMTypeRef *params;
+};
+
+static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
+                                      struct llvm_traversal_ctx *llvm_ctx,
+                                      LLVMValueRef alloca,
+                                      LLVMTypeRef *params)
+{
+    ctx->index = 0;
+    ctx->offset = LLVMConstInt(LLVMInt8Type(), 0, 0);
+    ctx->llvm_ctx = llvm_ctx;
+    ctx->alloca = alloca;
+    ctx->params = params;
+}
+
+static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)
+{
+    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx);
+    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), ctx->offset };
+    LLVMValueRef gep_to_strlen = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
+    LLVMBuildStore(ctx->llvm_ctx->builder, arg_value, gep_to_strlen);
+    ctx->offset = LLVMConstAdd(LLVMSizeOf(ctx->params[ctx->index]), ctx->offset);
+    ctx->index++;
+    return true;
+}
+
+static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
+                                                   const struct RFstring *type_name,
+                                                   struct llvm_traversal_ctx *ctx)
+{
+    struct args_to_value_cb_ctx cb_ctx;
+    char *name;
+
+    // alloca enough space in the stack for the type created by the constructor
+    RFS_buffer_push();
+    name = rf_string_cstr_from_buff(type_name);
+    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
+    LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
+    RFS_buffer_pop();
+
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->rir, type_name);
+    LLVMTypeRef *params = backend_llvm_fn_arg_types(defined_type, ctx);
+
+    args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
+    ast_fncall_for_each_arg(fn_call, (fncall_args_cb)args_to_value_cb, &cb_ctx);
+
+    return allocation;
+}
+
 LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
                                                 struct llvm_traversal_ctx *ctx)
 {
     // for now just deal with the built-in print() function
     static const struct RFstring s = RF_STRING_STATIC_INIT("print");
-    if (rf_string_equal(ast_fncall_name(n), &s)) {
-        struct ast_node *args = ast_fncall_args(n);
-        //for now should be only one arg so ...
+    const struct RFstring *fn_name = ast_fncall_name(n);
+    const struct type *fn_type;
+    struct ast_node *args = ast_fncall_args(n);
+    if (rf_string_equal(fn_name, &s)) {
+        // for now, print only accepts 1 argument
         LLVMValueRef compiled_args = backend_llvm_expression_compile(args, ctx);
         LLVMValueRef call_args[] = { compiled_args };
         LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "print"),
                       call_args,
                       1, "");
+    } else {
+        fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
+        if (type_is_function(fn_type)) {
+            // TODO
+            RF_ASSERT(false, "Not yet implemented");
+        } else {
+            RF_ASSERT(fn_type->category == TYPE_CATEGORY_DEFINED,
+                      "At this point the only possible type should be defined type");
+
+            return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
+        }
     }
+
+    // if function returns void. TODO: Maybe handle better
     return NULL;
 }
 
@@ -246,6 +319,22 @@ LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
     return rec->backend_handle;
 }
 
+void backend_llvm_compile_typedecl(struct ast_node *n,
+                                           struct llvm_traversal_ctx *ctx)
+{
+    char *new_type_name;
+    const struct RFstring *typedecl_name = ast_typedecl_name_str(n);
+    RFS_buffer_push();
+    new_type_name = rf_string_cstr_from_buff(typedecl_name);
+    RFS_buffer_pop();
+    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
+                                                 new_type_name);
+
+    struct rir_type *type = rir_types_list_get_defined(ctx->rir, typedecl_name);
+    LLVMTypeRef * types = backend_llvm_fn_arg_types(type, ctx);
+    LLVMStructSetBody(llvm_type, types, llvm_traversal_ctx_get_param_count(ctx), true);
+}
+
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
                                              struct llvm_traversal_ctx *ctx)
 {
@@ -273,6 +362,8 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
         return backend_llvm_expression_compile_identifier(n, ctx);
     case AST_VARIABLE_DECLARATION:
         return backend_llvm_expression_compile_vardecl(n, ctx);
+    case AST_TYPE_DECLARATION:
+        backend_llvm_compile_typedecl(n, ctx);
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");
         break;

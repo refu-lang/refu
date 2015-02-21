@@ -9,8 +9,8 @@
 struct type_comparison_ctx;
 
 bool type_elementary_equals(const struct type_elementary *t1,
-                         const struct type_elementary *t2,
-                         struct type_comparison_ctx *ctx);
+                            const struct type_elementary *t2,
+                            struct type_comparison_ctx *ctx);
 
 /**
  * Given a built-in type value, returns the type itself
@@ -26,6 +26,14 @@ const struct RFstring *type_elementary_get_str(enum elementary_type etype);
  * Check if @c id is an elementary identifier
  */
 int type_elementary_identifier_p(const struct RFstring *id);
+
+/**
+ * Given a type, check if it's a specific elementary type
+ */
+i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elementary_type etype)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.etype == etype;
+}
 
 /**
  * Gets the elementary type of a type provided it is indeed an elementary type

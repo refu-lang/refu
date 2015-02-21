@@ -74,3 +74,15 @@ struct rir_module *rir_process(struct rir *r)
     const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");
     return rir_module_create(r->root, &mod_name);
 }
+
+struct rir_type * rir_types_list_get_defined(struct rir* r,
+                                             const struct RFstring *name)
+{
+    struct rir_type *t;
+    rf_ilist_for_each(&r->rir_types, t, ln) {
+        if (t->category == COMPOSITE_RIR_DEFINED && rf_string_equal(t->name, name)) {
+            return t;
+        }
+    }
+    return NULL;
+}

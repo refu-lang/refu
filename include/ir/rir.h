@@ -5,6 +5,7 @@
 #include <Data_Structures/intrusive_list.h>
 
 struct analyzer;
+struct RFstring;
 
 struct rir {
     /* Memory pools */
@@ -31,4 +32,15 @@ void rir_deinit(struct rir *r);
 void rir_destroy(struct rir *r);
 
 struct rir_module *rir_process(struct rir *r);
+
+
+/* -- TODO Maybe move rir types list along with access functions into own struct -- */
+
+/**
+ * Searches the rir types list for a defined type called @c name
+ *
+ * @return The retrieved type or NULL if the type was not found
+ */
+struct rir_type * rir_types_list_get_defined(struct rir* r,
+                                             const struct RFstring *name);
 #endif
