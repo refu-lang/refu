@@ -228,10 +228,42 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
     return NULL;
 }
 
+static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
+                                                       struct llvm_traversal_ctx *ctx)
+{
+    struct symbol_table_record *rec;
+    const struct RFstring *owner_type_s = ast_identifier_str(ast_binaryop_left(n));
+    const struct RFstring *member_s = ast_identifier_str(ast_binaryop_right(n));
+    size_t offset = 0;
+    rec = symbol_table_lookup_record(ctx->current_st, owner_type_s, NULL);
+    struct rir_type *defined_type =  rec->rir_data;
+    RF_ASSERT(defined_type->category == COMPOSITE_RIR_DEFINED,
+    "a member access left hand type can only be a defined type");
+
+    struct rir_type **subtype;
+    darray_foreach(subtype, defined_type->subtypes.item[0]->subtypes) {
+        if (rf_string_equal(member_s, (*subtype)->name)) {
+            LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), offset, 0) };
+            LLVMValueRef gep_to_type = LLVMBuildGEP(ctx->builder, rec->backend_handle, indices, 2, "");
+            return LLVMBuildLoad(ctx->builder, gep_to_type, "");
+        }
+        //else
+        offset += 1; // TODO: this assumes all members are 4 bytes long. Change it
+    }
+
+    RF_ASSERT(false, "Typechecking should have made sure no invalid member access exists");
+    return NULL;
+}
+
 static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
                                                         struct llvm_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_BINARY_OPERATOR);
+
+    if (ast_binaryop_op(n) == BINARYOP_MEMBER_ACCESS) {
+        return backend_llvm_compile_member_access(n, ctx);
+    }
+
     LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx);
     LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
     switch(ast_binaryop_op(n)) {

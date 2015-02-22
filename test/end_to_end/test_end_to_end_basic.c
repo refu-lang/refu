@@ -60,10 +60,8 @@ START_TEST(test_type_decl) {
         "type foo {a:i32, b:f32 }\n"
         "fn main()->u32{\n"
         "t:foo = foo(24, 0.222)\n"
-        /* "return t.a\n" */
-        "return 24\n"
+        "return t.a\n"
         "}");
-    /* ck_end_to_end_run(d, "test_input_file.rf", &s, 24, NULL, "--backend-debug test_input_file.rf"); */
     ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
 } END_TEST
 

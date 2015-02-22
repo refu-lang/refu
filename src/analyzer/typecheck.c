@@ -222,6 +222,7 @@ static enum traversal_cb_res typecheck_member_access_iter_cb(const struct type_l
     // for now assuming all right parts of member access are identifiers
     if (rf_string_equal(t->id, ast_identifier_str(ctx->member_identifier))) {
         ctx->member_type = t->type;
+        ctx->member_identifier->expression_type = t->type;
         return TRAVERSAL_CB_OK_AND_STOP;
     }
 

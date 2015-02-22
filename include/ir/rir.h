@@ -41,6 +41,6 @@ struct rir_module *rir_process(struct rir *r);
  *
  * @return The retrieved type or NULL if the type was not found
  */
-struct rir_type * rir_types_list_get_defined(struct rir* r,
-                                             const struct RFstring *name);
+struct rir_type *rir_types_list_get_defined(struct rir* r,
+                                            const struct RFstring *name);
 #endif
