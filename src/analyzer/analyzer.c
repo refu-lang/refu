@@ -18,6 +18,8 @@
 
 i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
                                               struct analyzer *a);
+i_INLINE_INS void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *ctx);
+i_INLINE_INS struct ast_node *analyzer_traversal_ctx_get_current_parent(struct analyzer_traversal_ctx *ctx);
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {

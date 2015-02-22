@@ -55,16 +55,16 @@ START_TEST(test_print_string_literal) {
 } END_TEST
 
 START_TEST(test_type_decl) {
-#if 0 // TODO: This won't work yet
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i32, b:f32 }\n"
         "fn main()->u32{\n"
         "t:foo = foo(24, 0.222)\n"
-        "return f.a\n"
+        /* "return t.a\n" */
+        "return 24\n"
         "}");
+    /* ck_end_to_end_run(d, "test_input_file.rf", &s, 24, NULL, "--backend-debug test_input_file.rf"); */
     ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
-#endif
 } END_TEST
 
 

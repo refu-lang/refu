@@ -282,6 +282,7 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
 bool analyzer_handle_symbol_table_descending(struct ast_node *n,
                                              struct analyzer_traversal_ctx *ctx)
 {
+    darray_append(ctx->parent_nodes, n);
     switch(n->type) {
     case AST_ROOT:
         ctx->current_st = ast_root_symbol_table_get(n);
@@ -309,10 +310,13 @@ bool analyzer_first_pass(struct analyzer *a)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
 
-    return ast_traverse_tree(
+    bool ret = ast_traverse_tree(
         a->root,
         analyzer_first_pass_do,
         &ctx,
         (ast_node_cb)analyzer_handle_symbol_table_ascending,
         &ctx);
+
+    analyzer_traversal_ctx_deinit(&ctx);
+    return ret;
 }

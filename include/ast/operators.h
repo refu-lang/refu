@@ -25,6 +25,12 @@ i_INLINE_DECL enum binaryop_type ast_binaryop_op(struct ast_node *op)
     return op->binaryop.type;
 }
 
+i_INLINE_DECL bool ast_node_is_specific_binaryop(struct ast_node *n,
+                                                 enum binaryop_type optype)
+{
+    return n->type == AST_BINARY_OPERATOR && n->binaryop.type == optype;
+}
+
 const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op);
 const struct RFstring *ast_binaryop_opstr(struct ast_node *op);
 

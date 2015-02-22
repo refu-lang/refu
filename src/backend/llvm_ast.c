@@ -57,17 +57,21 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum rir_type_category type, 
     case ELEMENTARY_RIR_TYPE_UINT_64:
         return LLVMInt64Type();
 
+    case ELEMENTARY_RIR_TYPE_FLOAT_32:
+        return LLVMFloatType();
+    case ELEMENTARY_RIR_TYPE_FLOAT_64:
+        return LLVMDoubleType();
+
     case ELEMENTARY_RIR_TYPE_STRING:
         return LLVMGetTypeByName(ctx->mod, "string");
 
     case ELEMENTARY_RIR_TYPE_NIL:
         return LLVMVoidType();
-
     default:
-        RF_ASSERT_OR_CRITICAL(false,
-                              "Unsupported elementary type \""RF_STR_PF_FMT"\" "
-                              "during LLVM conversion",
-                              RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)type)));
+        RF_ASSERT(false,
+                  "Unsupported elementary type \""RF_STR_PF_FMT"\" "
+                  "during LLVM conversion",
+                  RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)type)));
         break;
     }
     return NULL;
@@ -85,7 +89,21 @@ void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
 static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
                                      struct llvm_traversal_ctx *ctx)
 {
-    return backend_llvm_elementary_to_type(type->category, ctx);
+    char *name;
+    LLVMTypeRef ret = NULL;
+    if (rir_type_is_elementary(type)) {
+        ret = backend_llvm_elementary_to_type(type->category, ctx);
+    } else if (type->category == COMPOSITE_RIR_DEFINED) {
+        RFS_buffer_push();
+        name = rf_string_cstr_from_buff(type->name);
+        ret = LLVMGetTypeByName(ctx->mod, name);
+        RFS_buffer_pop();
+    } else {
+        RF_ASSERT(false, "Not yet implemented type");
+    }
+
+    RF_ASSERT(ret, "The above functions should never fail");
+    return ret;
 }
 
 // return an array of arg types or NULL if our param type is nil
@@ -111,6 +129,32 @@ static LLVMTypeRef *backend_llvm_fn_arg_types(struct rir_type *type,
     return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
 }
 
+// return an array of member types of a defined type
+static LLVMTypeRef *backend_llvm_defined_member_types(struct rir_type *type,
+                                                      struct llvm_traversal_ctx *ctx)
+{
+    RF_ASSERT(type->category == COMPOSITE_RIR_DEFINED, "Called with non defined type");
+    struct rir_type **subtype;
+    RF_ASSERT(darray_size(type->subtypes) == 1,
+              "A defined type should always have 1 direct subtype");
+    struct rir_type *defined_content_type = darray_item(type->subtypes, 0);
+    LLVMTypeRef llvm_type;
+    llvm_traversal_ctx_reset_params(ctx);
+    if (darray_size(defined_content_type->subtypes) == 0) {
+        llvm_type = backend_llvm_type(type, ctx);
+        if (llvm_type != LLVMVoidType()) {
+            llvm_traversal_ctx_add_param(ctx, llvm_type);
+        }
+    } else {
+        darray_foreach(subtype, defined_content_type->subtypes) {
+            llvm_type = backend_llvm_type(*subtype, ctx);
+            if (llvm_type != LLVMVoidType()) {
+                llvm_traversal_ctx_add_param(ctx, llvm_type);
+            }
+        }
+    }
+    return llvm_traversal_ctx_get_params(ctx);
+}
 
 void backend_llvm_assign_to_string(LLVMValueRef string_alloca,
                                    LLVMValueRef length,
@@ -144,6 +188,25 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
 
+void backend_llvm_assign_defined_types(LLVMValueRef left,
+                                       LLVMValueRef right,
+                                       struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef left_cast = LLVMBuildBitCast(ctx->builder, left,
+                                              LLVMPointerType(LLVMInt8Type(), 0), "");
+    LLVMValueRef right_cast = LLVMBuildBitCast(ctx->builder, right,
+                                               LLVMPointerType(LLVMInt8Type(), 0), "");
+    LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
+    /* RF_ASSERT(LLVMIsAMemCpyInst(llvm_memcpy), "Should have retrieved llvm memcpy instance"); */
+
+    LLVMValueRef call_args[] = { left_cast, right_cast,
+                                 LLVMConstInt(LLVMInt64Type(), 8, 0),
+                                 LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                 LLVMConstInt(LLVMInt1Type(), 0, 0) };
+    LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
+}
+
+
 static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
                                                 LLVMValueRef left,
                                                 LLVMValueRef right,
@@ -155,8 +218,10 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
         LLVMValueRef string_data;
         backend_llvm_load_from_string(right, &length, &string_data, ctx);
         backend_llvm_assign_to_string(left, length, string_data, ctx);
+    } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
+        backend_llvm_assign_defined_types(left, right, ctx);
     } else {
-        // TODO
+        RF_ASSERT(false, "Not yet implemented");
     }
 
     // hm what should compiling an assignment return?
@@ -193,7 +258,7 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
 
 struct args_to_value_cb_ctx {
     unsigned int index;
-    LLVMValueRef offset;
+    unsigned int offset;
     struct llvm_traversal_ctx *llvm_ctx;
     LLVMValueRef alloca;
     LLVMTypeRef *params;
@@ -205,19 +270,39 @@ static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
                                       LLVMTypeRef *params)
 {
     ctx->index = 0;
-    ctx->offset = LLVMConstInt(LLVMInt8Type(), 0, 0);
+    ctx->offset = 0;
     ctx->llvm_ctx = llvm_ctx;
     ctx->alloca = alloca;
     ctx->params = params;
 }
 
+static void backend_llvm_store(LLVMValueRef val, LLVMValueRef ptr,
+                               struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef val_type = LLVMTypeOf(val);
+    LLVMTypeRef val_ptr_type = LLVMPointerType(LLVMTypeOf(val), 0);
+    LLVMTypeRef ptr_type = LLVMTypeOf(ptr);
+
+    if (val_ptr_type != ptr_type) {
+        // we have to do typecasts
+        if (val_type == LLVMDoubleType()) {
+            val = LLVMBuildFPCast(ctx->builder, val, LLVMFloatType(), "");
+        } else {
+            RF_ASSERT(false, "Unimplemented casts?");
+        }
+    }
+    LLVMBuildStore(ctx->builder, val, ptr);
+}
+
 static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)
 {
     LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx);
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), ctx->offset };
-    LLVMValueRef gep_to_strlen = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
-    LLVMBuildStore(ctx->llvm_ctx->builder, arg_value, gep_to_strlen);
-    ctx->offset = LLVMConstAdd(LLVMSizeOf(ctx->params[ctx->index]), ctx->offset);
+    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset/4, 0) };
+    LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
+
+    backend_llvm_store(arg_value, gep, ctx->llvm_ctx);
+    ctx->offset += LLVMStoreSizeOfType(ctx->llvm_ctx->target_data, ctx->params[ctx->index]);
+    RF_ASSERT(ctx->offset % 4 == 0, "For now we need everything aligned in 4 bytes");
     ctx->index++;
     return true;
 }
@@ -237,7 +322,7 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     RFS_buffer_pop();
 
     struct rir_type *defined_type = rir_types_list_get_defined(ctx->rir, type_name);
-    LLVMTypeRef *params = backend_llvm_fn_arg_types(defined_type, ctx);
+    LLVMTypeRef *params = backend_llvm_defined_member_types(defined_type, ctx);
 
     args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
     ast_fncall_for_each_arg(fn_call, (fncall_args_cb)args_to_value_cb, &cb_ctx);
@@ -319,26 +404,37 @@ LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
     return rec->backend_handle;
 }
 
-void backend_llvm_compile_typedecl(struct ast_node *n,
-                                           struct llvm_traversal_ctx *ctx)
+/**
+ * Compile a type declaration
+ *
+ * @param name        Provide the name of the type to create
+ * @param type        [optional] Can provide the rir_type to declare here.
+ *                    IF it's NULL then the type is searched for in the rir types list
+ * @param ctx         The llvm traversal context
+ */
+static void backend_llvm_compile_typedecl(const struct RFstring *name,
+                                          struct rir_type *type,
+                                          struct llvm_traversal_ctx *ctx)
 {
-    char *new_type_name;
-    const struct RFstring *typedecl_name = ast_typedecl_name_str(n);
+    char *name_cstr;
     RFS_buffer_push();
-    new_type_name = rf_string_cstr_from_buff(typedecl_name);
-    RFS_buffer_pop();
+    name_cstr = rf_string_cstr_from_buff(name);
     LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
-                                                 new_type_name);
+                                                 name_cstr);
+    RFS_buffer_pop();
 
-    struct rir_type *type = rir_types_list_get_defined(ctx->rir, typedecl_name);
-    LLVMTypeRef * types = backend_llvm_fn_arg_types(type, ctx);
-    LLVMStructSetBody(llvm_type, types, llvm_traversal_ctx_get_param_count(ctx), true);
+    if (!type) {
+        type = rir_types_list_get_defined(ctx->rir, name);
+    }
+    LLVMTypeRef *members = backend_llvm_defined_member_types(type, ctx);
+    LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
 }
 
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
                                              struct llvm_traversal_ctx *ctx)
 {
-    uint64_t val;
+    uint64_t int_val;
+    double float_val;
     LLVMValueRef llvm_val;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
@@ -349,12 +445,21 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_FUNCTION_CALL:
         return backend_llvm_function_call_compile(n, ctx);
     case AST_CONSTANT_NUMBER:
-        if (!ast_constantnum_get_integer(n, &val)) {
-            RF_ERROR("Failed to convert a constant num node to number for LLVM");
+        if (ast_constantnum_get_type(n) == CONSTANT_NUMBER_INTEGER) {
+            if (!ast_constantnum_get_integer(n, &int_val)) {
+                RF_ERROR("Failed to convert a constant num node to integer number for LLVM");
+            }
+            // TODO: This is not using rir_types ... also maybe get rid of ctx->current_value?
+            //       if we are going to be returning it anyway?
+            ctx->current_value = LLVMConstInt(LLVMInt32Type(), int_val, 0);
+        } else {
+            RF_ASSERT(ast_constantnum_get_type(n) == CONSTANT_NUMBER_FLOAT,
+                      "Only other choice for constant number type here should be float");
+            if (!ast_constantnum_get_float(n, &float_val)) {
+                RF_ERROR("Failed to convert a constant num node to float number for LLVM");
+            }
+            ctx->current_value = LLVMConstReal(LLVMDoubleType(), float_val);
         }
-        // TODO: This is not using rir_types ... also maybe get rid of ctx->current_value?
-        //       if we are going to be returning it anyway?
-        ctx->current_value = LLVMConstInt(LLVMInt32Type(), val, 0);
         return ctx->current_value;
     case AST_STRING_LITERAL:
         return backend_llvm_expression_compile_string_literal(n, ctx);
@@ -363,7 +468,8 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         return backend_llvm_expression_compile_vardecl(n, ctx);
     case AST_TYPE_DECLARATION:
-        backend_llvm_compile_typedecl(n, ctx);
+        backend_llvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx);
+        break;
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");
         break;
@@ -506,9 +612,27 @@ static void backend_llvm_create_const_strings(const struct string_table_record *
     LLVMSetInitializer(global_val, string_decl);
 }
 
+static void backend_llvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef args[] = { LLVMPointerType(LLVMInt8Type(), 0),
+                           LLVMPointerType(LLVMInt8Type(), 0),
+                           LLVMInt64Type(),
+                           LLVMInt32Type(),
+                           LLVMInt1Type() };
+    LLVMValueRef fn =  LLVMAddFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64",
+                                       LLVMFunctionType(LLVMVoidType(), args, 5, false));
+
+    // adding attributes to the arguments of memcpy as seen when generating llvm code via clang
+    //@llvm.memcpy(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
+    // TODO: Not sure if these attributes would always work correctly here.
+    LLVMAddAttribute(LLVMGetParam(fn, 0), LLVMNoCaptureAttribute);
+    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMNoCaptureAttribute);
+    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
+}
+
 static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 {
-    /* -- add print() -- */
+    /* -- add printf() declaration -- */
 
     // print() uses clib's printf so we need a declaration for it
     LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
@@ -518,7 +642,8 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                                                1,
                                                true));
 
-    // add print()
+    /* -- add print() -- */
+
     LLVMValueRef llvm_fn;
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
@@ -549,7 +674,20 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                   3, "printf_call");
 
     LLVMBuildRetVoid(ctx->builder);
+
+    /* -- add memcpy intrinsic declaration -- */
+    backend_llvm_create_global_memcpy_decl(ctx);
     return true;
+}
+
+static void backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
+{
+    struct rir_type *t;
+    rf_ilist_for_each(&ctx->rir->rir_types, t, ln) {
+        if (t->category == COMPOSITE_RIR_DEFINED) {
+            backend_llvm_compile_typedecl(t->name, t, ctx);
+        }
+    }
 }
 
 static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
@@ -568,6 +706,10 @@ static bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
     llvm_traversal_ctx_reset_params(ctx);
     string_table_iterate(ctx->rir->string_literals_table,
                          (string_table_cb)backend_llvm_create_const_strings, ctx);
+
+
+    backend_llvm_create_global_types(ctx);
+
     if (!backend_llvm_create_global_functions(ctx)) {
         RF_ERROR("Could not create global functions");
         return false;
@@ -583,6 +725,7 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     RFS_buffer_push();
     mod_name = rf_string_cstr_from_buff(&mod->name);
     ctx->mod = LLVMModuleCreateWithName(mod_name);
+    ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->mod));
 
     if (!backend_llvm_create_globals(ctx)) {
         RF_ERROR("Failed to create global context for LLVM");

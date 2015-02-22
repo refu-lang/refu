@@ -14,6 +14,7 @@ struct rir;
 struct rir_module;
 
 struct LLVMOpaqueModule;
+struct LLVMOpaqueTargetData;
 struct LLVMOpaqueBuilder;
 struct LLVMOpaqueValue;
 struct LLVMOpaqueType;
@@ -22,6 +23,7 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueModule *mod;
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;
+    struct LLVMOpaqueTargetData *target_data;
     struct {darray(struct LLVMOpaqueType*);} params;
 
     struct compiler_args *args;

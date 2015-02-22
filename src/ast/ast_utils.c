@@ -66,10 +66,10 @@ bool ast_traverse_tree(struct ast_node *n,
 }
 
 enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
-                                                           ast_node_cb pre_cb,
-                                                           void *pre_user_arg,
-                                                           ast_node_nostop_cb post_cb,
-                                                           void *post_user_arg)
+                                                       ast_node_cb pre_cb,
+                                                       void *pre_user_arg,
+                                                       ast_node_nostop_cb post_cb,
+                                                       void *post_user_arg)
 {
     struct ast_node *child;
     enum traversal_cb_res rc;

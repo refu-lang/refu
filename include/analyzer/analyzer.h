@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include <Data_Structures/darray.h>
 #include <Data_Structures/intrusive_list.h>
 #include <Definitions/inline.h>
 
@@ -15,6 +16,7 @@ struct analyzer;
 struct  analyzer_traversal_ctx {
     struct analyzer *a;
     struct symbol_table *current_st;
+    struct {darray(struct ast_node*);} parent_nodes;
 };
 
 i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
@@ -22,6 +24,17 @@ i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ct
 {
     ctx->a = a;
     ctx->current_st = NULL;
+    darray_init(ctx->parent_nodes);
+}
+
+i_INLINE_DECL void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *ctx)
+{
+    darray_free(ctx->parent_nodes);
+}
+
+i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_current_parent(struct analyzer_traversal_ctx *ctx)
+{
+    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2);
 }
 
 struct analyzer {

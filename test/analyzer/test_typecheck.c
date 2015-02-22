@@ -203,6 +203,40 @@ START_TEST(test_typecheck_invalid_member_access) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_invalid_member_access2) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person {name:string, age:u32}\n"
+        "{\n"
+        "p:person\n"
+        "a:u32 = 42\n"
+        "b:u32 = a + s.name\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Undeclared identifier \"s\" as left part of member access operator",
+            4, 12, 4, 12),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"+\" can not be determined",
+            4, 12, 4, 17),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            4, 8, 4, 17),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 START_TEST(test_typecheck_variable_declarations) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -331,6 +365,28 @@ START_TEST(test_typecheck_invalid_function_call_return) {
             "Assignment between incompatible types. Can't assign "
             "\"f32\" to \"u64\"",
             6, 0, 6, 32),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST(test_typecheck_invalid_function_call_return2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn do_something(name:string, age:u16) -> f32\n"
+        "{\n"
+        "return s\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Undeclared identifier \"s\"",
+            2, 7, 2, 7),
     };
 
     ck_assert_typecheck_with_messages(d, false, messages, true);
@@ -517,6 +573,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_access_inv, test_typecheck_invalid_member_access);
+    tcase_add_test(t_access_inv, test_typecheck_invalid_member_access2);
 
     TCase *t_vardecl_val = tcase_create("analyzer_typecheck_misc");
     tcase_add_checked_fixture(t_vardecl_val,
@@ -543,6 +600,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_arguments);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return2);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 

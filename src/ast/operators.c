@@ -25,7 +25,8 @@ struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
 
 i_INLINE_INS void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r);
 i_INLINE_INS enum binaryop_type ast_binaryop_op(struct ast_node *op);
-
+i_INLINE_INS bool ast_node_is_specific_binaryop(struct ast_node *n,
+                                                 enum binaryop_type optype);
 
 static const struct RFstring binaryop_operation_names[] = {
     [BINARYOP_ADD]               =   RF_STRING_STATIC_INIT("addition"),
