@@ -65,6 +65,17 @@ START_TEST(test_type_decl) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
 } END_TEST
 
+START_TEST(test_type_member_access) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:u8, b:u16, c:u32, d:u64 }\n"
+        "fn main()->u32{\n"
+        "t:foo = foo(24, 345, 96, 19234)\n"
+        "return t.c\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
+} END_TEST
+
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -85,6 +96,7 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_basic_types, test_type_decl);
+    tcase_add_test(st_basic_types, test_type_member_access);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);

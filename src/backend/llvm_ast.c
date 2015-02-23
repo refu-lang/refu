@@ -248,7 +248,7 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
             return LLVMBuildLoad(ctx->builder, gep_to_type, "");
         }
         //else
-        offset += 1; // TODO: this assumes all members are 4 bytes long. Change it
+        offset += 1;
     }
 
     RF_ASSERT(false, "Typechecking should have made sure no invalid member access exists");
@@ -312,14 +312,18 @@ static void backend_llvm_store(LLVMValueRef val, LLVMValueRef ptr,
                                struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef val_type = LLVMTypeOf(val);
-    LLVMTypeRef val_ptr_type = LLVMPointerType(LLVMTypeOf(val), 0);
-    LLVMTypeRef ptr_type = LLVMTypeOf(ptr);
+    LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
 
-    if (val_ptr_type != ptr_type) {
+    if (val_type != ptr_element_type) {
         // we have to do typecasts
         if (val_type == LLVMDoubleType()) {
-            val = LLVMBuildFPCast(ctx->builder, val, LLVMFloatType(), "");
+            val = LLVMBuildFPCast(ctx->builder, val, ptr_element_type, "");
+        } else if (val_type == LLVMInt8Type() || val_type == LLVMInt16Type() ||
+                   val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {
+            val = LLVMBuildIntCast(ctx->builder, val, ptr_element_type, "");
         } else {
+            backend_llvm_type_debug(val_type, "val_type");
+            backend_llvm_type_debug(ptr_element_type, "ptr_element_type");
             RF_ASSERT(false, "Unimplemented casts?");
         }
     }
@@ -329,12 +333,11 @@ static void backend_llvm_store(LLVMValueRef val, LLVMValueRef ptr,
 static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)
 {
     LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx);
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset/4, 0) };
+    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
     LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
 
     backend_llvm_store(arg_value, gep, ctx->llvm_ctx);
-    ctx->offset += LLVMStoreSizeOfType(ctx->llvm_ctx->target_data, ctx->params[ctx->index]);
-    RF_ASSERT(ctx->offset % 4 == 0, "For now we need everything aligned in 4 bytes");
+    ctx->offset += 1;
     ctx->index++;
     return true;
 }
