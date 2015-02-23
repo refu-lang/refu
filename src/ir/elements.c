@@ -87,7 +87,7 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
             RF_ERROR("During RIR creation identifier was not found in block's symbol table");
             return;
         }
-        rec->rir_data = rir_types_list_get_type(&rir->rir_types_list, rec->data, rec->id);
+        rec->rir_data = rir_types_list_get_type(&rir->rir_types_list, rec->data, NULL);
         if (!rec->rir_data) {
             RF_ERROR("During RIR creation rir type corresponding to a normal type was not found");
             return;

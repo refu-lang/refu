@@ -1,8 +1,32 @@
 #include <ir/rir_types_list.h>
 
+#include <stdio.h>
 #include <String/rf_str_core.h>
 
+#include <types/type_elementary.h>
+#include <types/type.h>
 #include <ir/rir_type.h>
+
+#define ELEMENTARY_RIR_TYPE_INIT(category_)        \
+    [ELEMENTARY_TYPE_ ## category_] = { .category = ELEMENTARY_RIR_TYPE_ ## category_, .indexed = true, .name = NULL }
+struct rir_type elementary_rir_types_[] = {
+    ELEMENTARY_RIR_TYPE_INIT(INT),
+    ELEMENTARY_RIR_TYPE_INIT(UINT),
+    ELEMENTARY_RIR_TYPE_INIT(INT_8),
+    ELEMENTARY_RIR_TYPE_INIT(UINT_8),
+    ELEMENTARY_RIR_TYPE_INIT(INT_16),
+    ELEMENTARY_RIR_TYPE_INIT(UINT_16),
+    ELEMENTARY_RIR_TYPE_INIT(INT_32),
+    ELEMENTARY_RIR_TYPE_INIT(UINT_32),
+    ELEMENTARY_RIR_TYPE_INIT(INT_64),
+    ELEMENTARY_RIR_TYPE_INIT(UINT_64),
+    ELEMENTARY_RIR_TYPE_INIT(FLOAT_32),
+    ELEMENTARY_RIR_TYPE_INIT(FLOAT_64),
+    ELEMENTARY_RIR_TYPE_INIT(STRING),
+    ELEMENTARY_RIR_TYPE_INIT(BOOL),
+    ELEMENTARY_RIR_TYPE_INIT(NIL)
+};
+#undef ELEMENTARY_RIR_TYPE_INIT
 
 void rir_types_list_init(struct rir_types_list *l)
 {
@@ -36,6 +60,10 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
                                          const struct RFstring *name)
 {
     struct rir_type *iter_rir_type;
+
+    if (!name && type->category == TYPE_CATEGORY_ELEMENTARY) {
+        return &elementary_rir_types_[type_elementary(type)];
+    }
     rf_ilist_for_each(&list->lh, iter_rir_type, ln) {
         if (rir_type_equals_type(iter_rir_type, type, name)) {
                 return iter_rir_type;

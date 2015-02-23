@@ -232,24 +232,24 @@ static bool rir_type_equals_typeop_type_do(struct rir_type *r_type,
             break;
         }
 
-
-        if (darray_size(r_type->subtypes) >= (*index) + 1) {
+        if ((*index) >= darray_size(r_type->subtypes)) {
             return false;
         }
         old_index = *index;
         *index = *index + 1;
-        if (rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.left)) {
+        if (!rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.left)) {
             return false;
         }
 
-        if (darray_size(r_type->subtypes) >= (*index) + 1) {
+        if ((*index) >= darray_size(r_type->subtypes)) {
             return false;
         }
         old_index = *index;
         *index = *index + 1;
-        if (rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.right)) {
+        if (!rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.right)) {
             return false;
         }
+        return true;
     }
 
     RF_ASSERT(false, "Should never get here");
@@ -295,6 +295,14 @@ bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *inde
             return false;
         }
         return (enum elementary_type)r_type->category == type_elementary(n_type);
+    }
+
+    if (r_type->category == COMPOSITE_RIR_DEFINED) {
+        if (n_type->category != TYPE_CATEGORY_DEFINED) {
+            return false;
+        }
+        return rf_string_equal(r_type->name, n_type->defined.name) &&
+               rir_type_equals_type(r_type->subtypes.item[0], n_type->defined.type, NULL);
     }
 
     if (n_type->category != TYPE_CATEGORY_OPERATOR) {

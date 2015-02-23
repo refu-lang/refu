@@ -35,6 +35,7 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     darray_free(ctx->params);
     LLVMDisposeBuilder(ctx->builder);
     LLVMDisposeModule(ctx->mod);
+    LLVMDisposeTargetData(ctx->target_data);
 }
 
 static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
