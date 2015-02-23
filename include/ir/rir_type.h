@@ -121,22 +121,6 @@ const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n);
 //! @return the type of the nth parameter of the type
 const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
 
-
-/**
- * Will create the rir types from the composite types
- *
- * RIR types are simply a non-tree form of types where each sum type is separated
- * into different types since in the backends we need to be able to easily distinguish
- * between sum types and their combinations.
- *
- * @param rir_types          The list of rir types to initialize and create
- * @param composite_types    The list of types from which to create it
- *
- * @return                   true in success and false in failure
- */
-bool rir_create_types(struct RFilist_head *rir_types, struct RFilist_head *composite_types);
-
-
 /**
  * Gets a string representation of the rir_type
  *

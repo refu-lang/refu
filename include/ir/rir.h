@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <Data_Structures/intrusive_list.h>
+#include "rir_types_list.h"
 
 struct analyzer;
 struct RFstring;
@@ -19,7 +20,7 @@ struct rir {
     //! A list of all composite types of the file
     struct RFilist_head composite_types;
     //! A list of all rir types of the file
-    struct RFilist_head rir_types;
+    struct rir_types_list rir_types_list;
 
     //! The root of the ast node
     struct ast_node *root;
@@ -33,14 +34,4 @@ void rir_destroy(struct rir *r);
 
 struct rir_module *rir_process(struct rir *r);
 
-
-/* -- TODO Maybe move rir types list along with access functions into own struct -- */
-
-/**
- * Searches the rir types list for a defined type called @c name
- *
- * @return The retrieved type or NULL if the type was not found
- */
-struct rir_type *rir_types_list_get_defined(struct rir* r,
-                                            const struct RFstring *name);
 #endif

@@ -56,6 +56,7 @@ refu_src = [
     'ir/rir.c',
     'ir/elements.c',
     'ir/rir_type.c',
+    'ir/rir_types_list.c',
 
     'serializer/serializer.c'
 ]

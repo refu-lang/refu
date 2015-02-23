@@ -2,6 +2,7 @@
 
 #include <ir/rir.h>
 #include <ir/elements.h>
+#include <ir/rir_types_list.h>
 
 static struct rir_testdriver i_rir_test_driver_;
 
@@ -148,7 +149,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
     struct rir_type *t;
     bool found;
     RFS_buffer_push();
-    rf_ilist_for_each(&d->rir->rir_types, t, ln) {
+    rir_types_list_for_each(&d->rir->rir_types_list, t) {
         found = false;
         for (i = 0; i < expected_num; ++i) {
             if (rir_type_equals(t, expected_types[i])) {

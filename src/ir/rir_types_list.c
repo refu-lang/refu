@@ -1,0 +1,75 @@
+#include <ir/rir_types_list.h>
+
+#include <String/rf_str_core.h>
+
+#include <ir/rir_type.h>
+
+void rir_types_list_init(struct rir_types_list *l)
+{
+    rf_ilist_head_init(&l->lh);
+}
+
+void rir_types_list_deinit(struct rir_types_list *l)
+{
+    struct rir_type *t;
+    struct rir_type *tmp;
+
+    rf_ilist_for_each_safe(&l->lh, t, tmp, ln) {
+        rir_type_destroy(t);
+    }
+}
+
+struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
+                                            const struct RFstring *name)
+{
+    struct rir_type *t;
+    rf_ilist_for_each(&list->lh, t, ln) {
+        if (t->category == COMPOSITE_RIR_DEFINED && rf_string_equal(t->name, name)) {
+            return t;
+        }
+    }
+    return NULL;
+}
+
+// very very temporary macro to allow visualization of rir type creation. Will go away
+// #define TEMP_RIR_DEBUG 1
+bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_head *composite_types)
+{
+    struct type *t;
+    struct rir_type *iter_rir_type;
+    struct rir_type *created_rir_type;
+    bool found;
+    rf_ilist_for_each(composite_types, t, lh) {
+#if TEMP_RIR_DEBUG
+        RFS_buffer_push();
+        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        fflush(stdout);
+#endif
+        // first of all see if this composite type already has an equivalent rir type
+        found = false;
+        rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
+            if (rir_type_equals_type(iter_rir_type, t)) {
+                found = true;
+            }
+        }
+        // if it does don't bother with it anymore
+        if (found) {
+            continue;
+        }
+
+        created_rir_type = rir_type_create(t, NULL, NULL);
+#if TEMP_RIR_DEBUG
+        printf("created rir type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rir_type_str(created_rir_type)));
+        fflush(stdout);
+        RFS_buffer_pop();
+#endif
+        if (!created_rir_type) {
+            RF_ERROR("Failed to create a rir type during transition Refu IR.");
+            return false;
+        }
+        rf_ilist_add_tail(&rir_types->lh, &created_rir_type->ln);
+        created_rir_type->indexed = true;
+    }
+
+    return true;
+}

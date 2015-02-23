@@ -356,7 +356,7 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_buffer_pop();
 
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->rir, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     LLVMTypeRef *params = backend_llvm_defined_member_types(defined_type, ctx);
 
     args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
@@ -459,7 +459,7 @@ static void backend_llvm_compile_typedecl(const struct RFstring *name,
     RFS_buffer_pop();
 
     if (!type) {
-        type = rir_types_list_get_defined(ctx->rir, name);
+        type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
     }
     LLVMTypeRef *members = backend_llvm_defined_member_types(type, ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
@@ -718,7 +718,7 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 static void backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *t;
-    rf_ilist_for_each(&ctx->rir->rir_types, t, ln) {
+    rir_types_list_for_each(&ctx->rir->rir_types_list, t) {
         if (t->category == COMPOSITE_RIR_DEFINED) {
             backend_llvm_compile_typedecl(t->name, t, ctx);
         }

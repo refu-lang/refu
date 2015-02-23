@@ -8,6 +8,7 @@
 #include <analyzer/string_table.h>
 #include <ir/elements.h>
 #include <ir/rir_type.h>
+#include <ir/rir_types_list.h>
 
 
 
@@ -28,6 +29,7 @@ bool rir_init(struct rir *r, struct analyzer *a)
     r->root = a->root;
     a->root = NULL;
 
+    rir_types_list_init(&r->rir_types_list);
     // copy composite types list
     rf_ilist_copy(&a->composite_types, &r->composite_types);
 
@@ -47,17 +49,12 @@ struct rir *rir_create(struct analyzer *a)
 
 void rir_deinit(struct rir *r)
 {
-    struct rir_type *t;
-    struct rir_type *tmp;
     ast_node_destroy(r->root);
     rf_fixed_memorypool_destroy(r->symbol_table_records_pool);
     rf_fixed_memorypool_destroy(r->types_pool);
     string_table_destroy(r->identifiers_table);
     string_table_destroy(r->string_literals_table);
-
-    rf_ilist_for_each_safe(&r->rir_types, t, tmp, ln) {
-        rir_type_destroy(t);
-    }
+    rir_types_list_deinit(&r->rir_types_list);
 }
 
 void rir_destroy(struct rir *r)
@@ -68,21 +65,9 @@ void rir_destroy(struct rir *r)
 
 struct rir_module *rir_process(struct rir *r)
 {
-    rir_create_types(&r->rir_types, &r->composite_types);
+    rir_types_list_populate(&r->rir_types_list, &r->composite_types);
     // TODO: When modules are actually introduced change temporary module name
     //       to the name of the actual module being processed
     const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");
     return rir_module_create(r->root, &mod_name);
-}
-
-struct rir_type * rir_types_list_get_defined(struct rir* r,
-                                             const struct RFstring *name)
-{
-    struct rir_type *t;
-    rf_ilist_for_each(&r->rir_types, t, ln) {
-        if (t->category == COMPOSITE_RIR_DEFINED && rf_string_equal(t->name, name)) {
-            return t;
-        }
-    }
-    return NULL;
 }
