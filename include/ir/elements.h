@@ -8,6 +8,7 @@
 struct RFstring;
 struct ast_node;
 struct symbol_table;
+struct rir;
 
 /**
  * Representation of a function for the Refu IR
@@ -23,7 +24,7 @@ struct rir_function {
     /*-- control for module list --*/
     struct RFilist_node ln_for_module;
 };
-RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct ast_node *fn_impl);
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct ast_node *fn_impl, struct rir *rir);
 
 
 struct rir_simple_branch {
@@ -65,9 +66,9 @@ struct rir_basic_block {
     struct rir_branch exit;
 };
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
-struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n);
+struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir);
 
-void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b);
+void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir);
 
 /**
  * Represents a module in the IR
@@ -82,6 +83,8 @@ struct rir_module {
     //! Name of a module
     struct RFstring name;
 };
-RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_module, struct ast_node *n, const struct RFstring *name);
+RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_module, struct ast_node *n,
+                               const struct RFstring *name,
+                               struct rir *rir);
 
 #endif

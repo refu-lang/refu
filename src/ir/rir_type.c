@@ -256,9 +256,12 @@ static bool rir_type_equals_typeop_type_do(struct rir_type *r_type,
     return false;
 }
 
-bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type)
+bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const struct RFstring *name)
 {
     unsigned int index = 0;
+    if (name && (!r_type->name || !rf_string_equal(name, r_type->name))) {
+        return false;
+    }
     return rir_type_with_index_equals_type(r_type, &index, n_type);
 }
 

@@ -101,9 +101,14 @@ void rir_type_deinit(struct rir_type *t);
 bool rir_type_equals(struct rir_type *a, struct rir_type *b);
 
 /**
- * Equality comparison for a rir and a normal type
+ * Equality comparison for a rir and a normal type and name combinarion
+ *
+ * @param a          The rir type to compare
+ * @param b          The normal type to compare to the rir type
+ * @param name       An optional name to check for along with the type @c b. Can be NULL
+ * @return           True if they are equal and false otherwise
  */
-bool rir_type_equals_type(struct rir_type *a, struct type *b);
+bool rir_type_equals_type(struct rir_type *a, struct type *b, const struct RFstring *name);
 
 /**
  * Checks if @c t is a subtype of @c other. Only checks for pointer equality

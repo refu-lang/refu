@@ -69,5 +69,5 @@ struct rir_module *rir_process(struct rir *r)
     // TODO: When modules are actually introduced change temporary module name
     //       to the name of the actual module being processed
     const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");
-    return rir_module_create(r->root, &mod_name);
+    return rir_module_create(r->root, &mod_name, r);
 }

@@ -31,6 +31,19 @@ struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
     return NULL;
 }
 
+struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
+                                         struct type *type,
+                                         const struct RFstring *name)
+{
+    struct rir_type *iter_rir_type;
+    rf_ilist_for_each(&list->lh, iter_rir_type, ln) {
+        if (rir_type_equals_type(iter_rir_type, type, name)) {
+                return iter_rir_type;
+            }
+    }
+    return NULL;
+}
+
 // very very temporary macro to allow visualization of rir type creation. Will go away
 // #define TEMP_RIR_DEBUG 1
 bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_head *composite_types)
@@ -48,7 +61,7 @@ bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_he
         // first of all see if this composite type already has an equivalent rir type
         found = false;
         rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
-            if (rir_type_equals_type(iter_rir_type, t)) {
+            if (rir_type_equals_type(iter_rir_type, t, NULL)) {
                 found = true;
             }
         }

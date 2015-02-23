@@ -1,5 +1,7 @@
 #include <ir/elements.h>
+#include <ir/rir.h>
 #include <ir/rir_type.h>
+#include <ir/rir_types_list.h>
 #include <types/type.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
@@ -13,8 +15,8 @@
 #include <String/rf_str_core.h>
 
 /* -- rir_function -- */
-RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_function, struct ast_node*, fn_impl)
-RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl)
+RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_function, struct ast_node*, fn_impl, struct rir*, rir)
+RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl, struct rir *rir)
 {
     AST_NODE_ASSERT_TYPE(fn_impl, AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *fn_decl = ast_fnimpl_fndecl_get(fn_impl);
@@ -40,7 +42,7 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl)
         return false;
     }
 
-    this->entry = rir_basic_blocks_create_from_ast_block(ast_fnimpl_body_get(fn_impl));
+    this->entry = rir_basic_blocks_create_from_ast_block(ast_fnimpl_body_get(fn_impl), rir);
     if (!this->entry) {
         RF_ERROR("Failed to create rir_basic_block for a function");
         return false;
@@ -70,15 +72,13 @@ RF_STRUCT_DEINIT_SIG(rir_basic_block)
     (void)this;
 }
 
-void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b)
+void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir)
 {
-    struct rir_type *type;
     struct ast_node *id;
     struct symbol_table_record *rec;
     switch(n->type) {
     case AST_VARIABLE_DECLARATION:
-        // if it's a variable declaration get/create its rir type
-        type = rir_type_create(ast_expression_get_type(n), ast_vardecl_get_name(n), NULL);
+        // if it's a variable declaration get its rir type
         id = n->vardecl.desc->typedesc.left;
         AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
         rec = symbol_table_lookup_record(b->symbols,
@@ -87,11 +87,15 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b)
             RF_ERROR("During RIR creation identifier was not found in block's symbol table");
             return;
         }
-        rec->rir_data = type;
+        rec->rir_data = rir_types_list_get_type(&rir->rir_types_list, rec->data, rec->id);
+        if (!rec->rir_data) {
+            RF_ERROR("During RIR creation rir type corresponding to a normal type was not found");
+            return;
+        }
         break;
     case AST_BINARY_OPERATOR:
-        rir_handle_block_expression(ast_binaryop_left(n), b);
-        rir_handle_block_expression(ast_binaryop_right(n), b);
+        rir_handle_block_expression(ast_binaryop_left(n), b, rir);
+        rir_handle_block_expression(ast_binaryop_right(n), b, rir);
         rf_ilist_add_tail(&b->lh, &n->ln_for_rir_blocks);
         break;
     default:
@@ -100,7 +104,7 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b)
     }
 }
 
-struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n)
+struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir)
 {
     struct ast_node *c;
     struct rir_basic_block *b;
@@ -111,15 +115,17 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
     rf_ilist_for_each(&n->children, c, lh) {
         // TODO depending on the children create other blocks and connect them to
         // this one but for now just simply ignore branching
-        rir_handle_block_expression(c, b);
+        rir_handle_block_expression(c, b, rir);
     }
 
     return b;
 }
 
 /* -- rir_module -- */
-RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_module, struct ast_node*, n, const struct RFstring*, name)
-RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name)
+RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_module, struct ast_node*, n,
+                               const struct RFstring*, name,
+                               struct rir *, rir)
+RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name, struct rir *rir)
 {
     struct ast_node *c;
     struct rir_function *fn;
@@ -136,7 +142,7 @@ RF_STRUCT_INIT_SIG(rir_module, struct ast_node *n, const struct RFstring *name)
     rf_ilist_for_each(&n->children, c, lh) {
         switch (c->type) {
         case AST_FUNCTION_IMPLEMENTATION:
-            fn = rir_function_create(c);
+            fn = rir_function_create(c, rir);
             if (!fn) {
                 goto fail;
             }

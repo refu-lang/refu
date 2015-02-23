@@ -5,7 +5,11 @@
 #include <Data_Structures/intrusive_list.h>
 
 struct RFstring;
+struct type;
 
+/**
+ * A global list of all rir types in a module
+ */
 struct rir_types_list {
     //! A list of all rir types of the file
     struct RFilist_head lh;
@@ -35,6 +39,16 @@ bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_he
  */
 struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
                                             const struct RFstring *name);
+
+/**
+ * Searches the rir_types list for a type equal to a given type
+ *
+ * @param list        The rir types list
+ * @param type        A normal type whose equivalent to search for in the list
+ */
+struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
+                                         struct type *type,
+                                         const struct RFstring *name);
 
 /**
  * Convenience macro allowing simple iteration of rir_types
