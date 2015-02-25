@@ -32,20 +32,7 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
         darray_append(type->subtypes, new_type);
         break;
     case TYPE_CATEGORY_OPERATOR:
-        switch (input->operator.type) {
-        case TYPEOP_PRODUCT:
-            op_category = COMPOSITE_PRODUCT_RIR_TYPE;
-            break;
-        case TYPEOP_SUM:
-            op_category = COMPOSITE_SUM_RIR_TYPE;
-            break;
-        case TYPEOP_IMPLICATION:
-            op_category = COMPOSITE_IMPLICATION_RIR_TYPE;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal type operation encountered");
-            return false;
-        }
+        op_category = rir_type_op_from_type(input);
 
         if (*previous_type_op == RIR_TYPE_CATEGORY_COUNT) {
             *previous_type_op = op_category;
@@ -174,6 +161,30 @@ void rir_type_deinit(struct rir_type *t)
     darray_free(t->subtypes);
 }
 
+enum rir_type_category rir_type_op_from_rir_type(const struct rir_type *t)
+{
+    if (t->category >= COMPOSITE_PRODUCT_RIR_TYPE && t->category <= COMPOSITE_IMPLICATION_RIR_TYPE) {
+        return t->category;
+    }
+    return RIR_TYPE_CATEGORY_COUNT;
+}
+
+enum rir_type_category rir_type_op_from_type(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_OPERATOR, "Invalid type");
+    switch (t->operator.type) {
+    case TYPEOP_PRODUCT:
+        return COMPOSITE_PRODUCT_RIR_TYPE;
+    case TYPEOP_SUM:
+        return COMPOSITE_SUM_RIR_TYPE;
+    case TYPEOP_IMPLICATION:
+        return COMPOSITE_IMPLICATION_RIR_TYPE;
+    default:
+        RF_ASSERT(false, "Illegal type operation encountered");
+        return -1;
+    }
+}
+
 bool rir_type_equals(struct rir_type *a, struct rir_type *b)
 {
     struct rir_type **subtype_a = NULL;
@@ -204,66 +215,6 @@ bool rir_type_equals(struct rir_type *a, struct rir_type *b)
     return true;
 }
 
-static bool rir_type_equals_typeop_type_do(struct rir_type *r_type,
-                                           unsigned int *index,
-                                           struct type *op_type)
-{
-    unsigned int old_index;
-    if (op_type->category == TYPE_CATEGORY_OPERATOR) {
-        switch (op_type->operator.type) {
-        case TYPEOP_PRODUCT:
-            if (r_type->category != COMPOSITE_PRODUCT_RIR_TYPE) {
-                return false;
-            }
-            break;
-        case TYPEOP_SUM:
-            if (r_type->category != COMPOSITE_SUM_RIR_TYPE) {
-                return false;
-            }
-            break;
-        case TYPEOP_IMPLICATION:
-            if (r_type->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
-                return false;
-            }
-            break;
-        default:
-            RF_ASSERT(false, "Illegal type operation encountered");
-            return false;
-            break;
-        }
-
-        if ((*index) >= darray_size(r_type->subtypes)) {
-            return false;
-        }
-        old_index = *index;
-        *index = *index + 1;
-        if (!rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.left)) {
-            return false;
-        }
-
-        if ((*index) >= darray_size(r_type->subtypes)) {
-            return false;
-        }
-        old_index = *index;
-        *index = *index + 1;
-        if (!rir_type_with_index_equals_type(darray_item(r_type->subtypes, old_index), index, op_type->operator.right)) {
-            return false;
-        }
-        return true;
-    }
-
-    RF_ASSERT(false, "Should never get here");
-    return false;
-}
-
-bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const struct RFstring *name)
-{
-    unsigned int index = 0;
-    if (name && (!r_type->name || !rf_string_equal(name, r_type->name))) {
-        return false;
-    }
-    return rir_type_with_index_equals_type(r_type, &index, n_type);
-}
 
 bool rir_type_is_subtype_of_other(struct rir_type *t,
                                   struct rir_type *other)
@@ -282,34 +233,122 @@ bool rir_type_is_subtype_of_other(struct rir_type *t,
     return false;
 }
 
-bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type)
+struct rir_type_cmp_ctx {
+    //! Current type operation while iterating the rir type to type comparison
+    enum rir_type_category current_rir_op;
+    //! A stack of the currently visited rir types
+    struct {darray(struct rir_type*);} rir_types;
+    //! A stack of the indices of the currently visited rir types
+    darray(unsigned int) indices;
+};
+
+static inline void rir_type_cmp_ctx_push_type(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
 {
-    if (rir_type_is_elementary(r_type)) {
-        if (n_type->category == TYPE_CATEGORY_LEAF) {
-            if (r_type->name == n_type->leaf.id &&
-                rir_type_with_index_equals_type(r_type, index, n_type->leaf.type)) {
-                return true;
+    darray_push(ctx->rir_types, rir_type);
+    darray_push(ctx->indices, 0);
+}
+
+static inline struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp_ctx *ctx)
+{
+    return darray_item(ctx->rir_types, darray_top(ctx->indices));
+}
+
+static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx)
+{
+    struct rir_type *curr_rir = rir_type_cmp_ctx_current_type(ctx);
+    enum rir_type_category next_op = rir_type_op_from_rir_type(curr_rir);
+    RF_ASSERT(next_op != RIR_TYPE_CATEGORY_COUNT, "We should always have an upwards operation here");
+    if (next_op != ctx->current_rir_op) {
+        (void)darray_pop(ctx->indices);
+        (void)darray_pop(ctx->rir_types);
+        ctx->current_rir_op = next_op;
+    }
+}
+
+void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
+{
+    darray_init(ctx->rir_types);
+    darray_init(ctx->indices);
+    rir_type_cmp_ctx_push_type(ctx, rir_type);
+    ctx->current_rir_op = RIR_TYPE_CATEGORY_COUNT;
+}
+
+void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
+{
+    darray_free(ctx->rir_types);
+}
+
+bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
+{
+    if (t->category == TYPE_CATEGORY_OPERATOR) {
+        enum rir_type_category next_op;
+        enum rir_type_category current_op = rir_type_op_from_type(t);
+        if (ctx->current_rir_op == RIR_TYPE_CATEGORY_COUNT) {
+            ctx->current_rir_op = current_op;
+        } else {
+            // attempt to go deeper into the rir type
+            struct rir_type *next_rir = rir_type_cmp_ctx_current_type(ctx);
+            next_op = rir_type_op_from_rir_type(next_rir);
+            if (next_op == RIR_TYPE_CATEGORY_COUNT) {
+                // mismatch in the type operator
+                return false;
+            }
+
+            if (current_op == next_op) {
+                darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
+            } else {
+                rir_type_cmp_ctx_push_type(ctx, next_rir);
             }
         }
-        if (n_type->category != TYPE_CATEGORY_ELEMENTARY) {
+    }
+    // for other type categories do nothing
+    return true;
+}
+
+bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
+{
+    struct rir_type *curr_rir = rir_type_cmp_ctx_current_type(ctx);
+    switch (t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+        return (enum elementary_type)curr_rir->category == type_elementary(t);
+
+    case TYPE_CATEGORY_DEFINED:
+        if (!rf_string_equal(curr_rir->name, t->defined.name)) {
             return false;
         }
-        return (enum elementary_type)r_type->category == type_elementary(n_type);
-    }
+        return rir_type_equals_type(curr_rir->subtypes.item[0], t->defined.type, NULL);
 
-    if (r_type->category == COMPOSITE_RIR_DEFINED) {
-        if (n_type->category != TYPE_CATEGORY_DEFINED) {
+    case TYPE_CATEGORY_OPERATOR:
+        rir_type_cmp_ctx_go_up(ctx);
+        break;
+
+    case TYPE_CATEGORY_LEAF:
+        if (!rf_string_equal(curr_rir->name, t->leaf.id)) {
             return false;
         }
-        return rf_string_equal(r_type->name, n_type->defined.name) &&
-               rir_type_equals_type(r_type->subtypes.item[0], n_type->defined.type, NULL);
-    }
+        return rir_type_equals_type(curr_rir, t->leaf.type, NULL);
 
-    if (n_type->category != TYPE_CATEGORY_OPERATOR) {
+    default:
+        RF_ASSERT(false, "Illegal type category for comparison");
+        return false;
+    }
+    return true;
+}
+
+bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const struct RFstring *name)
+{
+    struct rir_type_cmp_ctx ctx;
+    bool ret;
+
+    if (name && (!r_type->name || !rf_string_equal(name, r_type->name))) {
         return false;
     }
 
-    return rir_type_equals_typeop_type_do(r_type, index, n_type);
+    rir_type_cmp_ctx_init(&ctx, r_type);
+    ret = type_traverse(n_type, (type_iterate_cb)(rir_type_cmp_pre_cb),
+                        (type_iterate_cb)(rir_type_cmp_post_cb), &ctx);
+    rir_type_cmp_ctx_deinit(&ctx);
+    return ret;
 }
 
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)

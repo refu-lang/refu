@@ -33,7 +33,6 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
     ast_node_register_child(ret, fall_through_branch, ifexpr.fall_through_branch);
 
     return ret;    
-    
 }
 
 i_INLINE_INS void ast_ifexpr_add_fall_through_branch(struct ast_node *n,

@@ -83,15 +83,20 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
         AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
         rec = symbol_table_lookup_record(b->symbols,
                                          ast_identifier_str(id), NULL);
+
+        // TODO: These errors should never happen in production, but still think how to handle them better
         if (!rec) {
             RF_ERROR("During RIR creation identifier was not found in block's symbol table");
+            RF_ASSERT(false, "");
             return;
         }
         rec->rir_data = rir_types_list_get_type(&rir->rir_types_list, rec->data, NULL);
         if (!rec->rir_data) {
             RF_ERROR("During RIR creation rir type corresponding to a normal type was not found");
+            RF_ASSERT(false, "");
             return;
         }
+
         break;
     case AST_BINARY_OPERATOR:
         rir_handle_block_expression(ast_binaryop_left(n), b, rir);

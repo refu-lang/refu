@@ -191,6 +191,7 @@ const struct RFstring *type_defined_to_str(const struct type *t);
 
 /* -- type traversal functions -- */
 
+typedef bool (*type_iterate_cb) (struct type *t, void *user_arg);
 typedef bool (*leaf_type_cb) (struct type_leaf *t, void *user_arg);
 typedef enum traversal_cb_res (*leaf_type_nostop_cb) (const struct type_leaf *t, void *user_arg);
 
@@ -214,5 +215,30 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg);
  * @return true for success and false if the callback fails anywhere
  */
 enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_nostop_cb cb, void *user_arg);
+
+/**
+ * Post order iteration of a given type
+ * @param t            The type to traverse
+ * @param cb           The callback to execute in a post order fashion for each node
+ *                     of the type description
+ * @param user_arg     An extra argument to provide to the callbacks
+ *
+ * @return             true if all callbacks returned succesfully and false otherwise
+ */
+bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg);
+
+/**
+ * Tteration of a given type, with callbacks both for when going down and up
+ * @param t            The type to traverse
+ * @param pre_cb       The callback to execute in a pre order fashion for each node
+ *                     of the type description
+ * @param post_cb      The callback to execute in a post order fashion for each node
+ *                     of the type description
+ * @param user_arg     An extra argument to provide to the callbacks
+ *
+ * @return             true if all callbacks returned succesfully and false otherwise
+ */
+bool type_traverse(struct type *t, type_iterate_cb pre_cb,
+                   type_iterate_cb post_cb, void *user_arg);
 
 #endif

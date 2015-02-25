@@ -73,7 +73,7 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
 }
 
 // very very temporary macro to allow visualization of rir type creation. Will go away
-// #define TEMP_RIR_DEBUG 1
+ /* #define TEMP_RIR_DEBUG 1 */
 bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_head *composite_types)
 {
     struct type *t;

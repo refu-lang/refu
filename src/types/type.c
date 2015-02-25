@@ -765,3 +765,61 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
 
     return rc;
 }
+
+bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg)
+{
+    switch(t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+    case TYPE_CATEGORY_LEAF:
+        break;
+    case TYPE_CATEGORY_DEFINED:
+        if (!type_traverse_postorder(t->defined.type, cb, user_arg)) {
+            return false;
+        }
+        break;
+    case TYPE_CATEGORY_OPERATOR:
+        if (!type_traverse_postorder(t->operator.left, cb, user_arg)) {
+            return false;
+        }
+        if (!type_traverse_postorder(t->operator.right, cb, user_arg)) {
+            return false;
+        }
+        break;
+    default:
+        RF_ASSERT(false, "Not implemented type category for postorder iteration");
+        return false;
+    }
+
+    return cb(t, user_arg);
+}
+
+bool type_traverse(struct type *t, type_iterate_cb pre_cb,
+                   type_iterate_cb post_cb, void *user_arg)
+{
+    if (pre_cb(t, user_arg)) {
+        return false;
+    }
+    switch(t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+    case TYPE_CATEGORY_LEAF:
+        break;
+    case TYPE_CATEGORY_DEFINED:
+        if (!type_traverse(t->defined.type, pre_cb, post_cb, user_arg)) {
+            return false;
+        }
+        break;
+    case TYPE_CATEGORY_OPERATOR:
+        if (!type_traverse(t->operator.left, pre_cb, post_cb, user_arg)) {
+            return false;
+        }
+        if (!type_traverse(t->operator.right, pre_cb, post_cb, user_arg)) {
+            return false;
+        }
+        break;
+    default:
+        RF_ASSERT(false, "Not implemented type category for postorder iteration");
+        return false;
+    }
+
+    return post_cb(t, user_arg);    
+}

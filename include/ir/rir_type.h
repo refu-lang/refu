@@ -96,6 +96,21 @@ void rir_type_destroy(struct rir_type *t);
 void rir_type_deinit(struct rir_type *t);
 
 /**
+ * Returns the type_category of the rir type if it's an operator.
+ * @param t    The rir type in questions
+ * @return     The type category of the rir type if it's an operator.
+ *             If it's not an operator it returns @c RIR_TYPE_CATEGORY_COUNT
+ */
+enum rir_type_category rir_type_op_from_rir_type(const struct rir_type *t);
+/**
+ * Returns the rir type op equivalent of the given normal type
+ * @param t     A normal type whose rir type operator equivalent to get.
+ *              Must belong to category @c TYPE_CATEGORY_OPERATOR
+ * @return      The rir type op equivalent of the given normal type.
+ */
+enum rir_type_category rir_type_op_from_type(const struct type *t);
+
+/**
  * Equality comparison for two rir types
  */
 bool rir_type_equals(struct rir_type *a, struct rir_type *b);
