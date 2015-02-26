@@ -67,7 +67,7 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
     rf_ilist_for_each(&list->lh, iter_rir_type, ln) {
         if (rir_type_equals_type(iter_rir_type, type, name)) {
                 return iter_rir_type;
-            }
+        }
     }
     return NULL;
 }

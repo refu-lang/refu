@@ -239,30 +239,42 @@ struct rir_type_cmp_ctx {
     //! A stack of the currently visited rir types
     struct {darray(struct rir_type*);} rir_types;
     //! A stack of the indices of the currently visited rir types
-    darray(unsigned int) indices;
+    darray(int) indices;
 };
 
 static inline void rir_type_cmp_ctx_push_type(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
 {
     darray_push(ctx->rir_types, rir_type);
-    darray_push(ctx->indices, 0);
+    darray_push(ctx->indices, -1);
 }
 
 static inline struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp_ctx *ctx)
 {
-    return darray_item(ctx->rir_types, darray_top(ctx->indices));
+    if (darray_top(ctx->indices) == -1) {
+        return darray_top(ctx->rir_types);
+    }
+    /* RF_ASSERT(darray_top(ctx->indices) < (int)darray_size(darray_top(ctx->rir_types)->subtypes), */
+    /*           "Attempt to access subtype out of bounds. Should not happen at this point."); */
+    if (darray_top(ctx->indices) >= (int)darray_size(darray_top(ctx->rir_types)->subtypes)) {
+        return NULL;
+    }
+    return darray_item(darray_top(ctx->rir_types)->subtypes, darray_top(ctx->indices));
 }
 
-static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx)
+
+static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
 {
-    struct rir_type *curr_rir = rir_type_cmp_ctx_current_type(ctx);
-    enum rir_type_category next_op = rir_type_op_from_rir_type(curr_rir);
-    RF_ASSERT(next_op != RIR_TYPE_CATEGORY_COUNT, "We should always have an upwards operation here");
-    if (next_op != ctx->current_rir_op) {
+    enum rir_type_category op = rir_type_op_from_type(t);
+    if (op != ctx->current_rir_op) {
         (void)darray_pop(ctx->indices);
         (void)darray_pop(ctx->rir_types);
-        ctx->current_rir_op = next_op;
+        ctx->current_rir_op = op;
     }
+}
+
+static inline void rir_type_cmp_ctx_idx_plus1(struct rir_type_cmp_ctx *ctx)
+{
+    darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
 }
 
 void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
@@ -278,28 +290,57 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
     darray_free(ctx->rir_types);
 }
 
+
+// very temporary debugging macro
+#define TEMP_RIR_DEBUG 1
+#ifndef TEMP_RIR_DEBUG
+#define D(...)
+#else
+#define D(...) do {                             \
+        printf(__VA_ARGS__);                    \
+        fflush(stdout);} while(0)
+#endif
+
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
+    struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
+    D("Going down for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+    if (!current_rir) {
+        D("Out of bounds index access\n");
+        return false;
+    }
     if (t->category == TYPE_CATEGORY_OPERATOR) {
-        enum rir_type_category next_op;
-        enum rir_type_category current_op = rir_type_op_from_type(t);
+        enum rir_type_category n_type_op = rir_type_op_from_type(t);
         if (ctx->current_rir_op == RIR_TYPE_CATEGORY_COUNT) {
-            ctx->current_rir_op = current_op;
-        } else {
-            // attempt to go deeper into the rir type
-            struct rir_type *next_rir = rir_type_cmp_ctx_current_type(ctx);
-            next_op = rir_type_op_from_rir_type(next_rir);
-            if (next_op == RIR_TYPE_CATEGORY_COUNT) {
-                // mismatch in the type operator
+            ctx->current_rir_op = n_type_op;
+            if (rir_type_op_from_rir_type(current_rir) == RIR_TYPE_CATEGORY_COUNT) {
+                D("Rir equivalent not a type operation\n");
                 return false;
             }
-
-            if (current_op == next_op) {
-                darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
-            } else {
-                rir_type_cmp_ctx_push_type(ctx, next_rir);
+            // also go to the first index of the type
+            rir_type_cmp_ctx_idx_plus1(ctx);
+        } else {
+            // check if we need to go deeper into the rir type
+            if (n_type_op != ctx->current_rir_op) {
+                D("Pushing new rir type to stack\n");
+                rir_type_cmp_ctx_push_type(ctx, current_rir);
             }
         }
+
+    } else if (t->category == TYPE_CATEGORY_DEFINED) {
+        if (current_rir->category != COMPOSITE_RIR_DEFINED) {
+            D("Expected defined type but did not find it\n");
+            return false;
+        }
+
+        if (!rf_string_equal(current_rir->name, t->defined.name)) {
+            D("Two defined strings mismatch\n");
+            return false;
+        }
+
+        //go into the defined type
+        D("Go into defined type\n");
+        rir_type_cmp_ctx_push_type(ctx, current_rir->subtypes.item[0]);
     }
     // for other type categories do nothing
     return true;
@@ -307,27 +348,48 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 
 bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
-    struct rir_type *curr_rir = rir_type_cmp_ctx_current_type(ctx);
+    struct rir_type *curr_rir;
+
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
+        curr_rir = rir_type_cmp_ctx_current_type(ctx);
+        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        if (!curr_rir) {
+            D("Out of bounds index access in elementary");
+            return false;
+        }
+        if (!rir_type_is_elementary(curr_rir)) {
+        D("Elementary type without rir type being elementary\n");
+            return false;
+        }
         return (enum elementary_type)curr_rir->category == type_elementary(t);
 
     case TYPE_CATEGORY_DEFINED:
-        if (!rf_string_equal(curr_rir->name, t->defined.name)) {
-            return false;
-        }
-        return rir_type_equals_type(curr_rir->subtypes.item[0], t->defined.type, NULL);
+        break;
 
     case TYPE_CATEGORY_OPERATOR:
-        rir_type_cmp_ctx_go_up(ctx);
+        rir_type_cmp_ctx_go_up(ctx, t);
         break;
 
     case TYPE_CATEGORY_LEAF:
-        if (!rf_string_equal(curr_rir->name, t->leaf.id)) {
+        curr_rir = rir_type_cmp_ctx_current_type(ctx);
+        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        if (!curr_rir) {
+            D("Out of bounds index access in leaf");
             return false;
         }
-        return rir_type_equals_type(curr_rir, t->leaf.type, NULL);
+        if (!curr_rir->name || !rf_string_equal(curr_rir->name, t->leaf.id)) {
+        D("Leaf names mismatch\n");
+            return false;
+        }
+        if (!rir_type_equals_type(curr_rir, t->leaf.type, NULL)) {
+        D("Leaf type mismatch\n");
+            return false;
+        }
+        // also index + 1
+        rir_type_cmp_ctx_idx_plus1(ctx);
 
+        break;
     default:
         RF_ASSERT(false, "Illegal type category for comparison");
         return false;

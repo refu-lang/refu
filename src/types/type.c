@@ -796,7 +796,7 @@ bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg)
 bool type_traverse(struct type *t, type_iterate_cb pre_cb,
                    type_iterate_cb post_cb, void *user_arg)
 {
-    if (pre_cb(t, user_arg)) {
+    if (!pre_cb(t, user_arg)) {
         return false;
     }
     switch(t->category) {
