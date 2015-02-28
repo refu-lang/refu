@@ -288,11 +288,12 @@ void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_ty
 void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
 {
     darray_free(ctx->rir_types);
+    darray_free(ctx->indices);
 }
 
 
 // very temporary debugging macro
-#define TEMP_RIR_DEBUG 1
+/* #define TEMP_RIR_DEBUG 1 */
 #ifndef TEMP_RIR_DEBUG
 #define D(...)
 #else
