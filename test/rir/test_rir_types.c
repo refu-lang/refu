@@ -288,7 +288,7 @@ START_TEST(test_rir_type_equals_type3) {
     struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
     testsupport_rir_type_add_subtype(d, t_prod_2, t_d_string, true);
 
-    struct rir_type *t_e_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_e, false);
+    struct rir_type *t_e_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_e, true);
 
     struct rir_type *t_sum_1 = testsupport_rir_type_create(d, COMPOSITE_SUM_RIR_TYPE, NULL, false);
     testsupport_rir_type_add_subtype(d, t_sum_1, t_prod_1, false);
@@ -300,10 +300,7 @@ START_TEST(test_rir_type_equals_type3) {
     testsupport_rir_type_add_subtype(d, t_foobar, t_sum_1, true);
 
     // do the comparison
-    /* printf("== START CARING ==\n\n"); */
     ck_assert(rir_type_equals_type(t_foobar, t, NULL));
-    /* printf("== STOP CARING ==\n\n"); */
-    /* fflush(stdout); */
 } END_TEST
 
 
@@ -327,7 +324,7 @@ Suite *rir_types_suite_create(void)
                               teardown_rir_tests);
     tcase_add_test(type_comparison, test_rir_type_equals_type1);
     tcase_add_test(type_comparison, test_rir_type_equals_type2);
-    /* tcase_add_test(type_comparison, test_rir_type_equals_type3); */
+    tcase_add_test(type_comparison, test_rir_type_equals_type3);
 
     suite_add_tcase(s, type_lists);
     suite_add_tcase(s, type_comparison);

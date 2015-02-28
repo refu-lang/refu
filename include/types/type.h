@@ -228,7 +228,8 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
 bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg);
 
 /**
- * Tteration of a given type, with callbacks both for when going down and up
+ * Tteration of a given type, with callbacks both for when going down and up.
+ * Traversal should be in order.
  * @param t            The type to traverse
  * @param pre_cb       The callback to execute in a pre order fashion for each node
  *                     of the type description

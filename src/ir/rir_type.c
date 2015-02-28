@@ -297,8 +297,9 @@ static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct t
                   RF_STR_PF_ARG(rir_type_str(darray_top(ctx->rir_types))));
         (void)darray_pop(ctx->indices);
         (void)darray_pop(ctx->rir_types);
-        /* ctx->current_rir_op = op; */
+
         // also go to next index of the previous type
+        ctx->current_rir_op = op;
         rir_type_cmp_ctx_idx_plus1(ctx);
     } else {
         D("No need to pop a rir type while going up\n");
@@ -346,9 +347,8 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
                   RF_STR_PF_ARG(rir_type_str(current_rir)));
                 rir_type_cmp_ctx_push_type(ctx, current_rir);
 
-                /* ctx->current_rir_op = n_type_op; // <-- we should also change the current rir type op right? */
-
                 // also go to the first index of the new type
+                ctx->current_rir_op = n_type_op;
                 rir_type_cmp_ctx_idx_plus1(ctx);
             } else {
                 D("No need to go deeper\n");

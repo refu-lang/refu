@@ -812,9 +812,10 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
         if (!type_traverse(t->operator.left, pre_cb, post_cb, user_arg)) {
             return false;
         }
-        if (!type_traverse(t->operator.right, pre_cb, post_cb, user_arg)) {
+        if (!post_cb(t, user_arg)) {
             return false;
         }
+        return type_traverse(t->operator.right, pre_cb, post_cb, user_arg);
         break;
     default:
         RF_ASSERT(false, "Not implemented type category for postorder iteration");
