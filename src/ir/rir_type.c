@@ -262,19 +262,49 @@ static inline struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp
 }
 
 
-static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
-{
-    enum rir_type_category op = rir_type_op_from_type(t);
-    if (op != ctx->current_rir_op) {
-        (void)darray_pop(ctx->indices);
-        (void)darray_pop(ctx->rir_types);
-        ctx->current_rir_op = op;
-    }
-}
+// very temporary debugging macro
+/* #define TEMP_RIR_DEBUG 1 */
+#ifndef TEMP_RIR_DEBUG
+#define D(...)
+#else
+#define D(...) do {                             \
+        RFS_buffer_push();                      \
+        printf(__VA_ARGS__);                    \
+        fflush(stdout);                         \
+        RFS_buffer_pop();                       \
+    } while(0)
+#endif
 
 static inline void rir_type_cmp_ctx_idx_plus1(struct rir_type_cmp_ctx *ctx)
 {
     darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
+
+    struct rir_type *t = rir_type_cmp_ctx_current_type(ctx);
+    if (t) {
+        D("After index + 1 rir type is: "RF_STR_PF_FMT"\n",
+          RF_STR_PF_ARG(rir_type_str(t)));
+    } else {
+        D("After index + 1 we are at an invalid type\n");
+    }
+}
+
+static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
+{
+    D("Going up for operator type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+    enum rir_type_category op = rir_type_op_from_type(t);
+    if (op != ctx->current_rir_op) {
+                D("Popping rir type ["RF_STR_PF_FMT"] from stack\n",
+                  RF_STR_PF_ARG(rir_type_str(darray_top(ctx->rir_types))));
+        (void)darray_pop(ctx->indices);
+        (void)darray_pop(ctx->rir_types);
+        /* ctx->current_rir_op = op; */
+        // also go to next index of the previous type
+        rir_type_cmp_ctx_idx_plus1(ctx);
+    } else {
+        D("No need to pop a rir type while going up\n");
+    }
+    D("After go_up rir type is ["RF_STR_PF_FMT"]\n",
+      RF_STR_PF_ARG(rir_type_str(darray_top(ctx->rir_types))));
 }
 
 void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
@@ -290,17 +320,6 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
     darray_free(ctx->rir_types);
     darray_free(ctx->indices);
 }
-
-
-// very temporary debugging macro
-/* #define TEMP_RIR_DEBUG 1 */
-#ifndef TEMP_RIR_DEBUG
-#define D(...)
-#else
-#define D(...) do {                             \
-        printf(__VA_ARGS__);                    \
-        fflush(stdout);} while(0)
-#endif
 
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
@@ -323,8 +342,16 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         } else {
             // check if we need to go deeper into the rir type
             if (n_type_op != ctx->current_rir_op) {
-                D("Pushing new rir type to stack\n");
+                D("Pushing new rir type ["RF_STR_PF_FMT"] to stack\n",
+                  RF_STR_PF_ARG(rir_type_str(current_rir)));
                 rir_type_cmp_ctx_push_type(ctx, current_rir);
+
+                /* ctx->current_rir_op = n_type_op; // <-- we should also change the current rir type op right? */
+
+                // also go to the first index of the new type
+                rir_type_cmp_ctx_idx_plus1(ctx);
+            } else {
+                D("No need to go deeper\n");
             }
         }
 
@@ -360,7 +387,7 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
             return false;
         }
         if (!rir_type_is_elementary(curr_rir)) {
-        D("Elementary type without rir type being elementary\n");
+            D("Elementary type without rir type being elementary\n");
             return false;
         }
         return (enum elementary_type)curr_rir->category == type_elementary(t);
@@ -380,11 +407,16 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
             return false;
         }
         if (!curr_rir->name || !rf_string_equal(curr_rir->name, t->leaf.id)) {
-        D("Leaf names mismatch\n");
+            if (curr_rir->name) {
+                D("Leaf names mismatch with curr_rir->name: "RF_STR_PF_FMT"\n",
+                  RF_STR_PF_ARG(curr_rir->name));
+            } else {
+                D("Leaf names mismatch because curr_rir->name is NULL\n");
+            }
             return false;
         }
         if (!rir_type_equals_type(curr_rir, t->leaf.type, NULL)) {
-        D("Leaf type mismatch\n");
+            D("Leaf type mismatch\n");
             return false;
         }
         // also index + 1

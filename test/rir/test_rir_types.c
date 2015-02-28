@@ -164,21 +164,173 @@ START_TEST(test_types_list_type_reuse_products_and_sums) {
     rir_testdriver_compare_lists(d, expected_types);
 } END_TEST
 
+START_TEST(test_rir_type_equals_type1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foobar {a:i64, b:f64, c:i8, d:string}\n"
+    );
+    struct rir_testdriver *d = get_rir_testdriver();
+    rir_testdriver_assign(d, &s);
+    testsupport_rir_process(d);
 
-Suite *rir_creation_suite_create(void)
+    // search the normal types for the only defined type that should be there
+    struct type *t;
+    rf_ilist_for_each(&d->rir->composite_types, t, lh) {
+        if (t->category == TYPE_CATEGORY_DEFINED) {
+            break;
+        }
+    }
+    ck_assert_rf_str_eq_cstr(t->defined.name, "foobar");
+
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+
+    struct rir_type *t_prod_1 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL, false);
+    struct rir_type *t_a_i64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_64, &id_a, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_a_i64, false);
+    struct rir_type *t_b_f64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_64, &id_b, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_b_f64, false);
+    struct rir_type *t_c_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_c, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_c_i8, false);
+    struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_d_string, true);
+
+    static const struct RFstring id_foobar = RF_STRING_STATIC_INIT("foobar");
+    struct rir_type *t_foobar = testsupport_rir_type_create(d, COMPOSITE_RIR_DEFINED, &id_foobar, false);
+    testsupport_rir_type_add_subtype(d, t_foobar, t_prod_1, true);
+
+    // do the comparison
+    ck_assert(rir_type_equals_type(t_foobar, t, NULL));
+} END_TEST
+
+START_TEST(test_rir_type_equals_type2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
+    );
+    struct rir_testdriver *d = get_rir_testdriver();
+    rir_testdriver_assign(d, &s);
+    testsupport_rir_process(d);
+
+    // search the normal types for the only defined type that should be there
+    struct type *t;
+    rf_ilist_for_each(&d->rir->composite_types, t, lh) {
+        if (t->category == TYPE_CATEGORY_DEFINED) {
+            break;
+        }
+    }
+    ck_assert_rf_str_eq_cstr(t->defined.name, "foobar");
+
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+
+    struct rir_type *t_prod_1 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL, false);
+    struct rir_type *t_a_i64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_64, &id_a, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_a_i64, false);
+    struct rir_type *t_b_f64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_64, &id_b, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_b_f64, true);
+
+    struct rir_type *t_prod_2 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL, false);
+    struct rir_type *t_c_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_c, true);
+    testsupport_rir_type_add_subtype(d, t_prod_2, t_c_i8, false);
+    struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
+    testsupport_rir_type_add_subtype(d, t_prod_2, t_d_string, true);
+
+    struct rir_type *t_sum_1 = testsupport_rir_type_create(d, COMPOSITE_SUM_RIR_TYPE, NULL, false);
+    testsupport_rir_type_add_subtype(d, t_sum_1, t_prod_1, false);
+    testsupport_rir_type_add_subtype(d, t_sum_1, t_prod_2, true);
+
+    static const struct RFstring id_foobar = RF_STRING_STATIC_INIT("foobar");
+    struct rir_type *t_foobar = testsupport_rir_type_create(d, COMPOSITE_RIR_DEFINED, &id_foobar, false);
+    testsupport_rir_type_add_subtype(d, t_foobar, t_sum_1, true);
+
+    // do the comparison
+    ck_assert(rir_type_equals_type(t_foobar, t, NULL));
+} END_TEST
+
+START_TEST(test_rir_type_equals_type3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foobar {a:i64, b:f64, foo:i32 | c:i8, d:string | e:i8}\n"
+    );
+    struct rir_testdriver *d = get_rir_testdriver();
+    rir_testdriver_assign(d, &s);
+    testsupport_rir_process(d);
+
+    // search the normal types for the only defined type that should be there
+    struct type *t;
+    rf_ilist_for_each(&d->rir->composite_types, t, lh) {
+        if (t->category == TYPE_CATEGORY_DEFINED) {
+            break;
+        }
+    }
+    ck_assert_rf_str_eq_cstr(t->defined.name, "foobar");
+
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+    static const struct RFstring id_e = RF_STRING_STATIC_INIT("e");
+    static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
+
+    struct rir_type *t_prod_1 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL, false);
+    struct rir_type *t_a_i64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_64, &id_a, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_a_i64, false);
+    struct rir_type *t_b_f64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_64, &id_b, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_b_f64, false);
+    struct rir_type *t_foo_i32 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_32, &id_foo, true);
+    testsupport_rir_type_add_subtype(d, t_prod_1, t_foo_i32, true);
+
+    struct rir_type *t_prod_2 = testsupport_rir_type_create(d, COMPOSITE_PRODUCT_RIR_TYPE, NULL, false);
+    struct rir_type *t_c_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_c, true);
+    testsupport_rir_type_add_subtype(d, t_prod_2, t_c_i8, false);
+    struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
+    testsupport_rir_type_add_subtype(d, t_prod_2, t_d_string, true);
+
+    struct rir_type *t_e_i8 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_8, &id_e, false);
+
+    struct rir_type *t_sum_1 = testsupport_rir_type_create(d, COMPOSITE_SUM_RIR_TYPE, NULL, false);
+    testsupport_rir_type_add_subtype(d, t_sum_1, t_prod_1, false);
+    testsupport_rir_type_add_subtype(d, t_sum_1, t_prod_2, false);
+    testsupport_rir_type_add_subtype(d, t_sum_1, t_e_i8, true);
+
+    static const struct RFstring id_foobar = RF_STRING_STATIC_INIT("foobar");
+    struct rir_type *t_foobar = testsupport_rir_type_create(d, COMPOSITE_RIR_DEFINED, &id_foobar, false);
+    testsupport_rir_type_add_subtype(d, t_foobar, t_sum_1, true);
+
+    // do the comparison
+    /* printf("== START CARING ==\n\n"); */
+    ck_assert(rir_type_equals_type(t_foobar, t, NULL));
+    /* printf("== STOP CARING ==\n\n"); */
+    /* fflush(stdout); */
+} END_TEST
+
+
+Suite *rir_types_suite_create(void)
 {
-    Suite *s = suite_create("rir_creation");
+    Suite *s = suite_create("rir_types");
 
-    TCase *st_basic = tcase_create("rir_creation_types_list");
-    tcase_add_checked_fixture(st_basic,
+    TCase *type_lists = tcase_create("rir_types_list_creation");
+    tcase_add_checked_fixture(type_lists,
                               setup_rir_tests,
                               teardown_rir_tests);
-    tcase_add_test(st_basic, test_types_list_simple1);
-    tcase_add_test(st_basic, test_types_list_simple2);
-    tcase_add_test(st_basic, test_types_list_type_reuse);
-    tcase_add_test(st_basic, test_types_list_type_reuse_products_and_sums);
+    tcase_add_test(type_lists, test_types_list_simple1);
+    tcase_add_test(type_lists, test_types_list_simple2);
+    tcase_add_test(type_lists, test_types_list_type_reuse);
+    tcase_add_test(type_lists, test_types_list_type_reuse_products_and_sums);
 
-    suite_add_tcase(s, st_basic);
+
+    TCase *type_comparison = tcase_create("rir_types_comparison");
+    tcase_add_checked_fixture(type_comparison,
+                              setup_rir_tests,
+                              teardown_rir_tests);
+    tcase_add_test(type_comparison, test_rir_type_equals_type1);
+    tcase_add_test(type_comparison, test_rir_type_equals_type2);
+    /* tcase_add_test(type_comparison, test_rir_type_equals_type3); */
+
+    suite_add_tcase(s, type_lists);
+    suite_add_tcase(s, type_comparison);
 
     return s;
 }
