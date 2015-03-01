@@ -129,7 +129,7 @@ static bool analyzer_populate_symbol_table_typedesc(struct analyzer_traversal_ct
     }
 
     // should be a type operator
-    return analyzer_populate_symbol_table_typedesc(ctx,left) &&
+    return analyzer_populate_symbol_table_typedesc(ctx, left) &&
            analyzer_populate_symbol_table_typedesc(ctx, ast_typeop_right(n));
 }
 
