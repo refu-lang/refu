@@ -69,6 +69,7 @@ struct rir_type {
  * @return                     The allocated type
  */
 struct rir_type *rir_type_alloc();
+
 /**
  * Create a new allocated rir_type
  */

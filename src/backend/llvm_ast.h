@@ -6,12 +6,15 @@
 #include <Definitions/inline.h>
 #include <Data_Structures/darray.h>
 
+struct RFstring;
+
 struct ast_node;
 struct analyzer;
 struct symbol_table;
 struct compiler_args;
 struct rir;
 struct rir_module;
+struct rir_type;
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueTargetData;
@@ -64,4 +67,16 @@ void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
  */
 struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
                                                         struct llvm_traversal_ctx *ctx);
+
+/**
+ * Compile a type declaration
+ *
+ * @param name        Provide the name of the type to create
+ * @param type        [optional] Can provide the rir_type to declare here.
+ *                    IF it's NULL then the type is searched for in the rir types list
+ * @param ctx         The llvm traversal context
+ */
+void backend_llvm_compile_typedecl(const struct RFstring *name,
+                                   struct rir_type *type,
+                                   struct llvm_traversal_ctx *ctx);
 #endif
