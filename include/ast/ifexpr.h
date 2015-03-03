@@ -15,6 +15,18 @@ struct ast_node *ast_condbranch_create(struct inplocation_mark *start,
                                        struct ast_node *cond,
                                        struct ast_node *body);
 
+i_INLINE_DECL struct ast_node *ast_condbranch_condition_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_CONDITIONAL_BRANCH);
+    return n->condbranch.cond;
+}
+
+i_INLINE_DECL struct ast_node *ast_condbranch_body_get(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_CONDITIONAL_BRANCH);
+    return n->condbranch.body;
+}
+
 struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
                                    struct inplocation_mark *end,
                                    struct ast_node *taken_branch,
@@ -49,4 +61,24 @@ i_INLINE_DECL void ast_ifexpr_add_branch(struct ast_node *n,
             "Illegal token type for if expression branch addition");
     }
 }
+
+i_INLINE_DECL struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifexpr)
+{
+    AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
+    return ifexpr->ifexpr.taken_branch;
+}
+
+i_INLINE_DECL struct ast_node *ast_ifexpr_fallthrough_branch_get(struct ast_node *ifexpr)
+{
+    AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
+    return ifexpr->ifexpr.fall_through_branch;
+}
+
+size_t ast_ifexpr_branches_num_get(struct ast_node *ifexpr);
+
+#define ast_ifexpr_branches_for_each(ifexpr_, branch_)      \
+    AST_NODE_ASSERT_TYPE(ifexpr_, AST_IF_EXPRESSION);       \
+    rf_ilist_for_each(&ifexpr_->children, branch_, lh) {
+
+
 #endif

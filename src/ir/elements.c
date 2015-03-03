@@ -11,6 +11,7 @@
 #include <ast/function.h>
 #include <ast/vardecl.h>
 #include <ast/operators.h>
+#include <ast/ifexpr.h>
 #include <String/rf_str_decl.h>
 #include <String/rf_str_core.h>
 
@@ -57,6 +58,59 @@ RF_STRUCT_DEINIT_SIG(rir_function)
     rir_type_destroy(this->arg_type);
     rir_type_destroy(this->ret_type);
     rir_basic_block_destroy(this->entry);
+}
+
+/* -- rir_branch -- */
+
+static bool rir_cond_branch_init(struct ast_node *n, struct rir_cond_branch *rir_cond, struct rir *rir)
+{
+    enum state { AT_START = 0, AT_IF, AT_ELIF, AT_ELSE } state = AT_START;
+    struct ast_node *iter_node_branch;
+    struct rir_cond_branch *rir_branch = rir_cond;
+    ast_ifexpr_branches_for_each(n, iter_node_branch) {
+        if (iter_node_branch->type == AST_CONDITIONAL_BRANCH) {
+            if (state == AT_START) {
+                state = AT_IF;
+            } else {
+                state = AT_ELIF;
+            }
+        } else {
+            state = AT_ELSE;
+        }
+
+        switch (state) {
+        case AT_IF:
+            rir_branch->cond = ast_condbranch_condition_get(iter_node_branch);
+            rir_branch->true_br = rir_basic_blocks_create_from_ast_block(ast_condbranch_body_get(branch), rir);
+            break;
+        case AT_ELIF:
+            rir_branch->false_br = rir_basic_block_create();
+            rf_ilist_add_tail(&rir_branch->false_br->lh, &n->ln_for_rir_blocks);
+            break;
+        case AT_ELSE:
+            break;
+        }
+    }
+
+    return true;
+}
+
+struct rir_branch *rir_branch_create(struct ast_node *node,
+                                     bool is_conditional,
+                                     struct rir *rir)
+{
+    struct rir_branch *ret;
+    struct ast_node *branch;
+    RF_MALLOC(ret, sizeof(*ret), NULL);
+    ret->is_conditional = is_conditional;
+
+    if (ret->is_conditional) {
+        rir_cond_branch_init(node, ret->cond_branch, rir);
+    } else {
+        ret->simple_branch = rir_basic_blocks_create_from_ast_block(node, rir);
+    }
+
+    return ret;
 }
 
 /* -- rir_basic_block -- */

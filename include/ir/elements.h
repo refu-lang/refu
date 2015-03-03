@@ -9,6 +9,7 @@ struct RFstring;
 struct ast_node;
 struct symbol_table;
 struct rir;
+struct rir_basic_block;
 
 /**
  * Representation of a function for the Refu IR
@@ -26,14 +27,9 @@ struct rir_function {
 };
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct ast_node *fn_impl, struct rir *rir);
 
-
-struct rir_simple_branch {
-    struct rir_basic_block *dst;
-};
-
 struct rir_cond_branch {
-    struct rir_simple_branch true_br;
-    struct rir_simple_branch false_br;
+    struct rir_basic_block *true_br;
+    struct rir_basic_block *false_br;
     struct ast_expression *cond;
 };
 
@@ -47,9 +43,12 @@ struct rir_branch {
     bool is_conditional;
     union {
         struct rir_cond_branch cond_branch;
-        struct rir_simple_branch simple_branch;
+        struct rir_basic_block *simple_branch;
     };
 };
+
+struct rir_branch *rir_branch_create();
+void rir_branch_destroy();
 
 /**
  * Represents a basic block in the Refu IR.
