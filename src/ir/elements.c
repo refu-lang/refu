@@ -61,7 +61,7 @@ RF_STRUCT_DEINIT_SIG(rir_function)
 }
 
 /* -- rir_branch -- */
-
+#if 0 // TODO
 static bool rir_cond_branch_init(struct ast_node *n, struct rir_cond_branch *rir_cond, struct rir *rir)
 {
     enum state { AT_START = 0, AT_IF, AT_ELIF, AT_ELSE } state = AT_START;
@@ -112,21 +112,25 @@ struct rir_branch *rir_branch_create(struct ast_node *node,
 
     return ret;
 }
-
+#endif
 /* -- rir_basic_block -- */
 RF_STRUCT_COMMON_DEFS_NO_ALLOC(rir_basic_block)
 RF_STRUCT_INIT_SIG(rir_basic_block)
 {
-    rf_ilist_head_init(&this->lh);
+    rf_ilist_head_init(&this->expressions);
     return true;
 }
 
 RF_STRUCT_DEINIT_SIG(rir_basic_block)
 {
-    (void)this;
+    struct rir_expression *expr;
+    struct rir_expression *tmp;
+    rf_ilist_for_each_safe(&this->expressions, expr, tmp, ln) {
+        rir_expression_destroy(expr);
+    }
 }
 
-void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir)
+bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir)
 {
     struct ast_node *id;
     struct symbol_table_record *rec;
@@ -138,29 +142,30 @@ void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
         rec = symbol_table_lookup_record(b->symbols,
                                          ast_identifier_str(id), NULL);
 
-        // TODO: These errors should never happen in production, but still think how to handle them better
-        if (!rec) {
-            RF_ERROR("During RIR creation identifier was not found in block's symbol table");
-            RF_ASSERT(false, "");
-            return;
-        }
+        RF_ASSERT(rec, "During RIR creation identifier was not found in block's symbol table");
         rec->rir_data = rir_types_list_get_type(&rir->rir_types_list, rec->data, NULL);
-        if (!rec->rir_data) {
-            RF_ERROR("During RIR creation rir type corresponding to a normal type was not found");
-            RF_ASSERT(false, "");
-            return;
-        }
+        RF_ASSERT(rec->rir_data, "During RIR creation rir type corresponding to a normal type was not found");
 
         break;
     case AST_BINARY_OPERATOR:
-        rir_handle_block_expression(ast_binaryop_left(n), b, rir);
-        rir_handle_block_expression(ast_binaryop_right(n), b, rir);
-        rf_ilist_add_tail(&b->lh, &n->ln_for_rir_blocks);
+        if (!rir_handle_block_expression(ast_binaryop_left(n), b, rir)) {
+            return false;
+        }
+        if (!rir_handle_block_expression(ast_binaryop_right(n), b, rir)) {
+            return false;
+        }
+        if (!rir_expression_create(b, n)) {
+            return false;
+        }
         break;
     default:
-        rf_ilist_add_tail(&b->lh, &n->ln_for_rir_blocks);
+        if (!rir_expression_create(b, n)) {
+            return false;
+        }
         break;
     }
+
+    return true;
 }
 
 struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir)
@@ -174,10 +179,43 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
     rf_ilist_for_each(&n->children, c, lh) {
         // TODO depending on the children create other blocks and connect them to
         // this one but for now just simply ignore branching
-        rir_handle_block_expression(c, b, rir);
+        if (!rir_handle_block_expression(c, b, rir)) {
+            return NULL;
+        }
     }
 
     return b;
+}
+
+/* -- rir_expression -- */
+bool rir_expression_init(struct rir_expression *expr,
+                         struct rir_basic_block *parent,
+                         struct ast_node *node)
+{
+    expr->expr = node;
+    rf_ilist_add_tail(&parent->expressions, &expr->ln);
+    return true;
+}
+
+struct rir_expression *rir_expression_create(struct rir_basic_block *parent,
+                                             struct ast_node *node)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), NULL);
+    if (!rir_expression_init(ret, parent, node)) {
+        return NULL;
+    }
+    return ret;
+}
+
+void rir_expression_deinit(struct rir_expression *expr)
+{
+    (void)expr;// TODO: if nothing actually happens here we can get rid of this
+}
+void rir_expression_destroy(struct rir_expression *expr)
+{
+    rir_expression_deinit(expr);
+    free(expr);
 }
 
 /* -- rir_module -- */

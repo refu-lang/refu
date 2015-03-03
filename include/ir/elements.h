@@ -60,14 +60,33 @@ struct rir_basic_block {
     //! Block symbols
     struct symbol_table *symbols;
     //! List of expressions
-    struct RFilist_head lh;
+    struct RFilist_head expressions;
     //! exit branch
     struct rir_branch exit;
 };
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
 struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir);
 
-void rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir);
+bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir);
+
+/**
+ * Represents an expressions in the RIR
+ */
+struct rir_expression {
+    //! Pointer to the ast node
+    struct ast_node *expr;
+    //! Handler to be added to the block
+    struct RFilist_node ln;
+};
+
+bool rir_expression_init(struct rir_expression *expr,
+                         struct rir_basic_block *parent,
+                         struct ast_node *node);
+struct rir_expression *rir_expression_create(struct rir_basic_block *parent,
+                                             struct ast_node *node);
+
+void rir_expression_deinit(struct rir_expression *expr);
+void rir_expression_destroy(struct rir_expression *expr);
 
 /**
  * Represents a module in the IR

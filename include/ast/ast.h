@@ -76,7 +76,6 @@ struct ast_node {
     enum ast_owner owner;
     const struct type *expression_type;
     struct inplocation location;
-    struct RFilist_node ln_for_rir_blocks;
     struct RFilist_node lh;
     struct RFilist_head children;
     union {

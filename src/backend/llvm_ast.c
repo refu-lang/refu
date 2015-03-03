@@ -499,13 +499,13 @@ static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
 static void backend_llvm_basic_block(struct rir_basic_block *block,
                                      struct llvm_traversal_ctx *ctx)
 {
-    struct ast_node *expr;
+    struct rir_expression *rir_expr;
     struct symbol_table *prev = ctx->current_st;
     ctx->current_st = block->symbols;
 
     symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
-    rf_ilist_for_each(&block->lh, expr, ln_for_rir_blocks) {
-        backend_llvm_expression(expr, ctx);
+    rf_ilist_for_each(&block->expressions, rir_expr, ln) {
+        backend_llvm_expression(rir_expr->expr, ctx);
     }
 
     ctx->current_st = prev;
