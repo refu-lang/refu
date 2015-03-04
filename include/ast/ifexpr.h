@@ -32,34 +32,11 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
                                    struct ast_node *taken_branch,
                                    struct ast_node *fall_through_branch);
 
-i_INLINE_DECL void ast_ifexpr_add_fall_through_branch(struct ast_node *n,
-                                                      struct ast_node *branch)
+i_INLINE_DECL void ast_ifexpr_add_fallthrough_branch(struct ast_node *n,
+                                                     struct ast_node *branch)
 {
-    AST_NODE_ASSERT_TYPE(branch, AST_BLOCK);
-    ast_node_register_child(n, branch, ifexpr.fall_through_branch);
-}
-
-i_INLINE_DECL void ast_ifexpr_add_elif_branch(struct ast_node *n,
-                                              struct ast_node *branch)
-{
-    AST_NODE_ASSERT_TYPE(branch, AST_CONDITIONAL_BRANCH);
-    ast_node_add_child(n, branch);
-}
-
-i_INLINE_DECL void ast_ifexpr_add_branch(struct ast_node *n,
-                                         struct ast_node *branch,
-                                         enum token_type type)
-{
-    if (type == TOKEN_KW_ELIF) {
-        ast_ifexpr_add_elif_branch(n, branch);
-    } else if (type == TOKEN_KW_ELSE) {
-        ast_ifexpr_add_fall_through_branch(n, branch);
-    } else {
-        // should never happen
-        RF_ASSERT_OR_CRITICAL(
-            false,
-            "Illegal token type for if expression branch addition");
-    }
+    AST_NODE_ASSERT_TYPE(branch, AST_BLOCK || AST_IF_EXPRESSION);
+    ast_node_register_child(n, branch, ifexpr.fallthrough_branch);
 }
 
 i_INLINE_DECL struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifexpr)
@@ -71,7 +48,7 @@ i_INLINE_DECL struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifex
 i_INLINE_DECL struct ast_node *ast_ifexpr_fallthrough_branch_get(struct ast_node *ifexpr)
 {
     AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
-    return ifexpr->ifexpr.fall_through_branch;
+    return ifexpr->ifexpr.fallthrough_branch;
 }
 
 size_t ast_ifexpr_branches_num_get(struct ast_node *ifexpr);

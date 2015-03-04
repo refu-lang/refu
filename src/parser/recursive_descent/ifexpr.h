@@ -1,6 +1,9 @@
 #ifndef LFR_PARSER_IF_EXPRESSION_H
 #define LFR_PARSER_IF_EXPRESSION_H
 
+#include <stdbool.h>
+#include <lexer/tokens.h>
+
 struct parser;
 
 #define TOKEN_IS_POSSIBLE_IFEXPR(tok_) (tok_ && (tok_)->type == TOKEN_KW_IF)
@@ -17,6 +20,6 @@ struct parser;
  * if_expression' = TOKEN_KW_ELIF conditional_branch if_expression'
  *                / EMPTY
  */
-struct ast_node *parser_acc_ifexpr(struct parser *p);
+struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type);
 
 #endif

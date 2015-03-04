@@ -70,7 +70,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
-        n = parser_acc_ifexpr(p);
+        n = parser_acc_ifexpr(p, TOKEN_KW_IF);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected an if expression");

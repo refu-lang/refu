@@ -49,20 +49,22 @@ static struct ast_node *parser_acc_condbranch(struct parser *p,
     return n;
 }
 
-struct ast_node *parser_acc_ifexpr(struct parser *p)
+struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
 {
     struct ast_node *n;
     struct ast_node *branch;
     struct token *tok;
     struct inplocation_mark *start;
 
+    RF_ASSERT(if_type == TOKEN_KW_IF || if_type == TOKEN_KW_ELIF,
+              "parse_ifexp called with invalid token type");
     tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_KW_IF) {
+    if (!tok || tok->type != if_type) {
         return NULL;
     }
     start = token_get_start(tok);
 
-    // consume 'if'
+    // consume 'if' or 'elif'
     lexer_next_token(p->lexer);
 
     // parse the taken branch
@@ -70,7 +72,6 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
     if (!branch) {
         return NULL;
     }
-
 
     // create the if expression
     n = ast_ifexpr_create(start, ast_node_endmark(branch),
@@ -83,31 +84,31 @@ struct ast_node *parser_acc_ifexpr(struct parser *p)
 
     tok = lexer_lookahead(p->lexer, 1);
     while (tok && (tok->type == TOKEN_KW_ELIF || tok->type == TOKEN_KW_ELSE)) {
-        // consume 'elif' or 'else'
-        lexer_next_token(p->lexer);
 
         if (tok->type == TOKEN_KW_ELIF) {
-            branch = parser_acc_condbranch(p, tok);
+            branch = parser_acc_ifexpr(p, TOKEN_KW_ELIF);
             if (!branch) {
-                ast_node_destroy(n);
-                return NULL;
+                // error reporting should already happen in parser_acc_ifexpr()
+                goto fail;
             }
-            ast_ifexpr_add_elif_branch(n, branch);
-
         } else { //can only be an else
+            lexer_next_token(p->lexer); // consume it
             branch = parser_acc_block(p, true);
             if (!branch) {
                 parser_synerr(p, token_get_end(tok), NULL,
                               "Expected a block after 'else'");
-                ast_node_destroy(n);
-                return NULL;
+                goto fail;
             }
-            ast_ifexpr_add_fall_through_branch(n, branch);
         }
 
+        ast_ifexpr_add_fallthrough_branch(n, branch);
         ast_node_set_end(n, ast_node_endmark(branch));
         tok = lexer_lookahead(p->lexer, 1);
     }
 
     return n;
+
+fail:
+    ast_node_destroy(n);
+    return NULL;
 }

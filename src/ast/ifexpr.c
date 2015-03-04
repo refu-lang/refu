@@ -33,18 +33,13 @@ struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
     }
    
     ast_node_register_child(ret, taken_branch, ifexpr.taken_branch);
-    ast_node_register_child(ret, fall_through_branch, ifexpr.fall_through_branch);
+    ast_node_register_child(ret, fall_through_branch, ifexpr.fallthrough_branch);
 
     return ret;    
 }
 
-i_INLINE_INS void ast_ifexpr_add_fall_through_branch(struct ast_node *n,
+i_INLINE_INS void ast_ifexpr_add_fallthrough_branch(struct ast_node *n,
                                                      struct ast_node *branch);
-i_INLINE_INS void ast_ifexpr_add_elif_branch(struct ast_node *n,
-                                             struct ast_node *branch);
-i_INLINE_INS void ast_ifexpr_add_branch(struct ast_node *n,
-                                        struct ast_node *branch,
-                                        enum token_type type);
 
 i_INLINE_INS struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifexpr);
 i_INLINE_INS struct ast_node *ast_ifexpr_fallthrough_branch_get(struct ast_node *ifexpr);

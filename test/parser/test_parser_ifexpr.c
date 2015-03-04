@@ -55,7 +55,7 @@ START_TEST(test_acc_ifexpr_1) {
 
     testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 2, 0, cond, NULL);
 
-    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx);
+    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx, TOKEN_KW_IF);
 
     ast_node_destroy(n);
     ast_node_destroy(ifx);
@@ -108,7 +108,7 @@ START_TEST(test_acc_ifexpr_2) {
 
     testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 4, 0, cond1, bnode2);
 
-    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx);
+    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx, TOKEN_KW_IF);
 
     ast_node_destroy(n);
     ast_node_destroy(ifx);
@@ -182,13 +182,12 @@ START_TEST(test_acc_ifexpr_3) {
                                    BINARYOP_ADD, cnum3, cnum4);
     ast_node_add_child(bnode3, op3);
 
+    // the elif
+    testsupport_parser_node_create(if2, ifexpr, file, 2, 2, 6, 0, cond2, bnode3);
+    // the first if
+    testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 6, 0, cond1, if2);
 
-
-    testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 6, 0, cond1, NULL);
-    ast_node_add_child(ifx, cond2);
-    ast_ifexpr_add_fall_through_branch(ifx, bnode3); /* adding the else branch */
-
-    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx);
+    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx, TOKEN_KW_IF);
 
     ast_node_destroy(n);
     ast_node_destroy(ifx);
@@ -278,14 +277,15 @@ START_TEST(test_acc_ifexpr_4) {
                                    BINARYOP_ADD, cnum5, cnum6);
     ast_node_add_child(bnode4, op3);
 
+    // the second elif
+    testsupport_parser_node_create(if3, ifexpr, file, 4, 2, 8, 0, cond3, bnode4);
+    // the first elif
+    testsupport_parser_node_create(if2, ifexpr, file, 2, 2, 8, 0, cond2, if3);
+    // the first if
+    testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 8, 0, cond1, if2);
 
 
-    testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 8, 0, cond1, NULL);
-    ast_node_add_child(ifx, cond2);
-    ast_node_add_child(ifx, cond3);
-    ast_ifexpr_add_fall_through_branch(ifx, bnode4); /* adding the else branch */
-
-    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx);
+    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx, TOKEN_KW_IF);
 
     ast_node_destroy(n);
     ast_node_destroy(ifx);
@@ -303,7 +303,7 @@ START_TEST(test_acc_ifexpr_errors_1) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_ifexpr(d->front.parser);
+    n = parser_acc_ifexpr(d->front.parser, TOKEN_KW_IF);
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
@@ -327,7 +327,7 @@ START_TEST(test_acc_ifexpr_errors_2) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_ifexpr(d->front.parser);
+    n = parser_acc_ifexpr(d->front.parser, TOKEN_KW_IF);
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
@@ -351,7 +351,7 @@ START_TEST(test_acc_ifexpr_errors_3) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_ifexpr(d->front.parser);
+    n = parser_acc_ifexpr(d->front.parser, TOKEN_KW_IF);
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
@@ -382,7 +382,7 @@ START_TEST(test_acc_ifexpr_errors_4) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_ifexpr(d->front.parser);
+    n = parser_acc_ifexpr(d->front.parser, TOKEN_KW_IF);
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
@@ -410,7 +410,7 @@ START_TEST(test_acc_ifexpr_errors_5) {
     front_testdriver_assign(d, &s);
 
     ck_assert(lexer_scan(d->front.lexer));
-    n = parser_acc_ifexpr(d->front.parser);
+    n = parser_acc_ifexpr(d->front.parser, TOKEN_KW_IF);
     ck_assert_msg(n == NULL, "parsing if expression should fail");
 
     struct info_msg errors[] = {
