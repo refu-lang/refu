@@ -10,6 +10,7 @@ struct ast_node;
 struct symbol_table;
 struct rir;
 struct rir_basic_block;
+struct rir_branch;
 
 /**
  * Representation of a function for the Refu IR
@@ -29,9 +30,14 @@ RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_function, struct ast_node *fn_impl, struct ri
 
 struct rir_cond_branch {
     struct rir_basic_block *true_br;
-    struct rir_basic_block *false_br;
-    struct ast_expression *cond;
+    struct rir_branch *false_br;
+    struct ast_node *cond;
 };
+
+bool rir_cond_branch_init(struct rir_cond_branch *rir_cond, struct ast_node *n, struct rir *rir);
+struct rir_cond_branch *rir_cond_branch_create(struct ast_node *n, struct rir *rir);
+
+void rir_cond_branch_deinit(struct rir_cond_branch *rir_cond);
 
 /**
  * Represents a branching point in the Refu IR.
@@ -47,8 +53,10 @@ struct rir_branch {
     };
 };
 
-struct rir_branch *rir_branch_create();
-void rir_branch_destroy();
+struct rir_branch *rir_branch_create(struct ast_node *node,
+                                     bool is_conditional,
+                                     struct rir *rir);
+void rir_branch_destroy(struct rir_branch *branch);
 
 /**
  * Represents a basic block in the Refu IR.
@@ -63,6 +71,9 @@ struct rir_basic_block {
     struct RFilist_head expressions;
     //! exit branch
     struct rir_branch exit;
+    //! [optional] condition branch. If this is not NULL then this is
+    //! an else if block and this will be its rir condition
+    struct rir_branch *condition;
 };
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
 struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir);

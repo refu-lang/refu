@@ -78,7 +78,7 @@ size_t ast_ifexpr_branches_num_get(struct ast_node *ifexpr);
 
 #define ast_ifexpr_branches_for_each(ifexpr_, branch_)      \
     AST_NODE_ASSERT_TYPE(ifexpr_, AST_IF_EXPRESSION);       \
-    rf_ilist_for_each(&ifexpr_->children, branch_, lh) {
+    rf_ilist_for_each(&ifexpr_->children, branch_, lh)
 
 
 #endif
