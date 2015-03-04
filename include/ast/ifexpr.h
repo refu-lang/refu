@@ -39,6 +39,18 @@ i_INLINE_DECL void ast_ifexpr_add_fallthrough_branch(struct ast_node *n,
     ast_node_register_child(n, branch, ifexpr.fallthrough_branch);
 }
 
+i_INLINE_DECL struct ast_node *ast_ifexpr_condition_get(struct ast_node *ifexpr)
+{
+    AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
+    return ifexpr->ifexpr.taken_branch->condbranch.cond;
+}
+
+i_INLINE_DECL struct ast_node *ast_ifexpr_taken_block_get(struct ast_node *ifexpr)
+{
+    AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
+    return ifexpr->ifexpr.taken_branch->condbranch.body;
+}
+
 i_INLINE_DECL struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifexpr)
 {
     AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
@@ -50,12 +62,5 @@ i_INLINE_DECL struct ast_node *ast_ifexpr_fallthrough_branch_get(struct ast_node
     AST_NODE_ASSERT_TYPE(ifexpr, AST_IF_EXPRESSION);
     return ifexpr->ifexpr.fallthrough_branch;
 }
-
-size_t ast_ifexpr_branches_num_get(struct ast_node *ifexpr);
-
-#define ast_ifexpr_branches_for_each(ifexpr_, branch_)      \
-    AST_NODE_ASSERT_TYPE(ifexpr_, AST_IF_EXPRESSION);       \
-    rf_ilist_for_each(&ifexpr_->children, branch_, lh)
-
 
 #endif

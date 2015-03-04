@@ -61,29 +61,23 @@ RF_STRUCT_DEINIT_SIG(rir_function)
 }
 
 /* -- rir_branch -- */
-bool rir_cond_branch_init(struct rir_cond_branch *rir_cond, struct ast_node *n, struct rir *rir)
+bool rir_cond_branch_init(struct rir_cond_branch *rir_branch, struct ast_node *n, struct rir *rir)
 {
-    enum state { AT_START = 0, AT_IF, AFTER_IF } state = AT_START;
-    struct ast_node *iter_node_branch;
-    struct rir_cond_branch *rir_branch = rir_cond;
-    bool conditional = false;
-    ast_ifexpr_branches_for_each(n, iter_node_branch) {
+    struct ast_node *fallthrough;
 
-        switch (state) {
-        case AT_START:
-        case AT_IF:
-            rir_branch->cond = ast_condbranch_condition_get(iter_node_branch);
-            rir_branch->true_br = rir_basic_blocks_create_from_ast_block(
-                ast_condbranch_body_get(iter_node_branch), rir
-            );
-            state = AFTER_IF;
-            break;
-        case AFTER_IF:
-            if (iter_node_branch->type == AST_CONDITIONAL_BRANCH) {
-                conditional = true;
-            }
-            rir_branch->false_br = rir_branch_create(iter_node_branch, conditional, rir);
-            break;
+    rir_branch->cond = ast_ifexpr_condition_get(n);
+    rir_branch->true_br = rir_basic_blocks_create_from_ast_block(
+        ast_ifexpr_taken_block_get(n), rir
+    );
+
+    rir_branch->false_br = NULL;
+    fallthrough = ast_ifexpr_fallthrough_branch_get(n);
+    if (fallthrough) {
+        AST_NODE_ASSERT_TYPE(fallthrough, AST_CONDITIONAL_BRANCH || AST_BLOCK);
+        rir_branch->false_br = rir_branch_create(fallthrough, rir);
+        if (!rir_branch->false_br) {
+            RF_ERROR("Failed to create a RIR fallthrough branch");
+            return false;
         }
     }
 
@@ -109,14 +103,15 @@ void rir_cond_branch_deinit(struct rir_cond_branch *rir_cond)
 }
 
 struct rir_branch *rir_branch_create(struct ast_node *node,
-                                     bool is_conditional,
                                      struct rir *rir)
 {
     struct rir_branch *ret;
     RF_MALLOC(ret, sizeof(*ret), NULL);
-    ret->is_conditional = is_conditional;
+    ret->is_conditional = false;
 
-    if (ret->is_conditional) {
+    AST_NODE_ASSERT_TYPE(node, AST_CONDITIONAL_BRANCH || AST_BLOCK);
+    if (node->type == AST_CONDITIONAL_BRANCH) {
+        ret->is_conditional = true;
         rir_cond_branch_init(&ret->cond_branch, node, rir);
     } else {
         ret->simple_branch = rir_basic_blocks_create_from_ast_block(node, rir);

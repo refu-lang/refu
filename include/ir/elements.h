@@ -53,9 +53,7 @@ struct rir_branch {
     };
 };
 
-struct rir_branch *rir_branch_create(struct ast_node *node,
-                                     bool is_conditional,
-                                     struct rir *rir);
+struct rir_branch *rir_branch_create(struct ast_node *node, struct rir *rir);
 void rir_branch_destroy(struct rir_branch *branch);
 
 /**
