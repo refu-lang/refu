@@ -109,8 +109,8 @@ struct rir_branch *rir_branch_create(struct ast_node *node,
     RF_MALLOC(ret, sizeof(*ret), NULL);
     ret->is_conditional = false;
 
-    AST_NODE_ASSERT_TYPE(node, AST_CONDITIONAL_BRANCH || AST_BLOCK);
-    if (node->type == AST_CONDITIONAL_BRANCH) {
+    AST_NODE_ASSERT_TYPE(node, AST_IF_EXPRESSION || AST_BLOCK);
+    if (node->type == AST_IF_EXPRESSION) {
         ret->is_conditional = true;
         rir_cond_branch_init(&ret->cond_branch, node, rir);
     } else {
@@ -170,12 +170,16 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
         if (!rir_handle_block_expression(ast_binaryop_right(n), b, rir)) {
             return false;
         }
-        if (!rir_expression_create(b, n)) {
+        if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
             return false;
         }
         break;
+    case AST_IF_EXPRESSION:
+        if (!rir_expression_create(b, n, RIR_IF_EXPRESSION, rir)) {
+            return false;
+        }
     default:
-        if (!rir_expression_create(b, n)) {
+        if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
             return false;
         }
         break;
@@ -206,19 +210,36 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *
 /* -- rir_expression -- */
 bool rir_expression_init(struct rir_expression *expr,
                          struct rir_basic_block *parent,
-                         struct ast_node *node)
+                         struct ast_node *node,
+                         enum rir_expression_type type,
+                         struct rir *rir)
 {
-    expr->expr = node;
+    expr->type = type;
+
+    switch(expr->type) {
+    case RIR_SIMPLE_EXPRESSION:
+        expr->expr = node;
+        break;
+    case RIR_IF_EXPRESSION:
+        expr->branch = rir_branch_create(node, rir);
+        if (!expr->branch) {
+            return false;
+        }
+        break;
+    }
+
     rf_ilist_add_tail(&parent->expressions, &expr->ln);
     return true;
 }
 
 struct rir_expression *rir_expression_create(struct rir_basic_block *parent,
-                                             struct ast_node *node)
+                                             struct ast_node *node,
+                                             enum rir_expression_type type,
+                                             struct rir *rir)
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), NULL);
-    if (!rir_expression_init(ret, parent, node)) {
+    if (!rir_expression_init(ret, parent, node, type, rir)) {
         return NULL;
     }
     return ret;
@@ -226,7 +247,9 @@ struct rir_expression *rir_expression_create(struct rir_basic_block *parent,
 
 void rir_expression_deinit(struct rir_expression *expr)
 {
-    (void)expr;// TODO: if nothing actually happens here we can get rid of this
+    if (expr->type == RIR_IF_EXPRESSION) {
+        rir_branch_destroy(expr->branch);
+    }
 }
 void rir_expression_destroy(struct rir_expression *expr)
 {

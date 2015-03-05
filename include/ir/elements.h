@@ -82,17 +82,30 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
  * Represents an expressions in the RIR
  */
 struct rir_expression {
-    //! Pointer to the ast node
-    struct ast_node *expr;
+    enum rir_expression_type {
+        RIR_SIMPLE_EXPRESSION,
+        RIR_IF_EXPRESSION
+    } type;
+
+    union {
+        //! Pointer to the ast node
+        struct ast_node *expr;
+        struct rir_branch *branch;
+    };
     //! Handler to be added to the block
     struct RFilist_node ln;
 };
 
 bool rir_expression_init(struct rir_expression *expr,
                          struct rir_basic_block *parent,
-                         struct ast_node *node);
+                         struct ast_node *node,
+                         enum rir_expression_type type,
+                         struct rir *rir);
+
 struct rir_expression *rir_expression_create(struct rir_basic_block *parent,
-                                             struct ast_node *node);
+                                             struct ast_node *node,
+                                             enum rir_expression_type type,
+                                             struct rir *rir);
 
 void rir_expression_deinit(struct rir_expression *expr);
 void rir_expression_destroy(struct rir_expression *expr);
