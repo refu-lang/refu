@@ -24,6 +24,7 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
 {
     ctx->mod = NULL;
     ctx->current_st = NULL;
+    ctx->current_function = NULL;
     ctx->rir = rir;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();

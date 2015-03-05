@@ -426,6 +426,42 @@ void backend_llvm_compile_typedecl(const struct RFstring *name,
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
 }
 
+LLVMValueRef backend_llvm_ifexpr_compile(struct rir_branch *branch,
+                                         struct llvm_traversal_ctx *ctx)
+{
+    LLVMBasicBlockRef fallthrough_branch = NULL;
+    RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
+    struct rir_cond_branch *rir_if = &branch->cond_branch;
+
+    // create the condition
+    LLVMValueRef condition = backend_llvm_expression_compile(rir_if->cond, ctx);
+
+    // create the taken block
+    LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "");
+    LLVMPositionBuilderAtEnd(ctx->builder, taken_branch);
+    backend_llvm_compile_basic_block(rir_if->true_br, ctx);
+
+    // if there is a fall through block deal with it
+    if (rir_if->false_br) {
+        fallthrough_branch = LLVMValueAsBasicBlock(backend_llvm_branch_compile(rir_if->false_br, ctx));
+    }
+
+    return LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);
+}
+
+LLVMValueRef backend_llvm_branch_compile(struct rir_branch *branch,
+                                         struct llvm_traversal_ctx *ctx)
+{
+    if (branch->is_conditional) {
+        return backend_llvm_ifexpr_compile(branch, ctx);
+    } else {
+        LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "");
+        LLVMPositionBuilderAtEnd(ctx->builder, fallthrough_branch);
+        backend_llvm_compile_basic_block(branch->simple_branch, ctx);
+        return LLVMBasicBlockAsValue(fallthrough_branch);
+    }
+}
+
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
                                              struct llvm_traversal_ctx *ctx)
 {
@@ -473,11 +509,19 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     return NULL;
 }
 
-static void backend_llvm_expression(struct ast_node *n,
+static void backend_llvm_expression(struct rir_expression *expr,
                                     struct llvm_traversal_ctx *ctx)
 {
     ctx->current_value = NULL;
-    backend_llvm_expression_compile(n, ctx);
+    switch(expr->type) {
+    case RIR_SIMPLE_EXPRESSION:
+        backend_llvm_expression_compile(expr->expr, ctx);
+        break;
+    case RIR_IF_EXPRESSION:
+        backend_llvm_ifexpr_compile(expr->branch, ctx);
+        break;
+    }
+
     ctx->current_value = NULL;
 }
 
@@ -496,8 +540,8 @@ static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
     RFS_buffer_pop();
 }
 
-static void backend_llvm_basic_block(struct rir_basic_block *block,
-                                     struct llvm_traversal_ctx *ctx)
+void backend_llvm_compile_basic_block(struct rir_basic_block *block,
+                                      struct llvm_traversal_ctx *ctx)
 {
     struct rir_expression *rir_expr;
     struct symbol_table *prev = ctx->current_st;
@@ -505,7 +549,7 @@ static void backend_llvm_basic_block(struct rir_basic_block *block,
 
     symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     rf_ilist_for_each(&block->expressions, rir_expr, ln) {
-        backend_llvm_expression(rir_expr->expr, ctx);
+        backend_llvm_expression(rir_expr, ctx);
     }
 
     ctx->current_st = prev;
@@ -514,7 +558,6 @@ static void backend_llvm_basic_block(struct rir_basic_block *block,
 static LLVMValueRef backend_llvm_function(struct rir_function *fn,
                                           struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef llvm_fn;
     char *fn_name;
     char *param_name;
     RFS_buffer_push();
@@ -523,15 +566,16 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     // a function's arguments and this does have sideffects we read from
     // llvm_traversal_ctx_get_param_count()
     LLVMTypeRef * types = backend_llvm_fn_arg_types(fn->arg_type, ctx);
-    llvm_fn = LLVMAddFunction(ctx->mod, fn_name,
-                              LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
-                                               types,
-                                               llvm_traversal_ctx_get_param_count(ctx),
-                                               false)); // never variadic for now
+    ctx->current_function = LLVMAddFunction(
+        ctx->mod, fn_name,
+        LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
+                         types,
+                         llvm_traversal_ctx_get_param_count(ctx),
+                         false)); // never variadic for now
     RFS_buffer_pop();
 
     // now handle function body
-    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(llvm_fn, "entry");
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(ctx->current_function, "entry");
     LLVMPositionBuilderAtEnd(ctx->builder, entry);
     // place function's argument in the stack
     unsigned int i = 0;
@@ -540,7 +584,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     struct symbol_table_record *rec;
 
     if (fn->arg_type->category != ELEMENTARY_RIR_TYPE_NIL) {
-        for (i = 0; i <LLVMCountParams(llvm_fn); ++i) {
+        for (i = 0; i < LLVMCountParams(ctx->current_function); ++i) {
 
             // for each argument of the function allocate an LLVM variable
             // in the stack with alloca
@@ -552,7 +596,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
                                          param_name);
             RFS_buffer_pop();
             // and assign to it the argument value
-            LLVMBuildStore(ctx->builder, LLVMGetParam(llvm_fn, i) ,allocation);
+            LLVMBuildStore(ctx->builder, LLVMGetParam(ctx->current_function, i) ,allocation);
             // also note the alloca in the symbol table
             rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
             RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did "
@@ -562,8 +606,8 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     }
 
     // now handle function entry block
-    backend_llvm_basic_block(fn->entry, ctx);
-    return llvm_fn;
+    backend_llvm_compile_basic_block(fn->entry, ctx);
+    return ctx->current_function;
 }
 
 

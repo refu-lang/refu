@@ -15,6 +15,8 @@ struct compiler_args;
 struct rir;
 struct rir_module;
 struct rir_type;
+struct rir_basic_block;
+struct rir_branch;
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueTargetData;
@@ -26,6 +28,7 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueModule *mod;
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;
+    struct LLVMOpaqueValue *current_function;
     struct LLVMOpaqueTargetData *target_data;
     struct {darray(struct LLVMOpaqueType*);} params;
 
@@ -79,4 +82,15 @@ struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
 void backend_llvm_compile_typedecl(const struct RFstring *name,
                                    struct rir_type *type,
                                    struct llvm_traversal_ctx *ctx);
+
+
+void backend_llvm_compile_basic_block(struct rir_basic_block *block,
+                                      struct llvm_traversal_ctx *ctx);
+
+
+struct LLVMOpaqueValue *backend_llvm_ifexpr_compile(struct rir_branch *branch,
+                                                    struct llvm_traversal_ctx *ctx);
+
+struct LLVMOpaqueValue *backend_llvm_branch_compile(struct rir_branch *branch,
+                                                    struct llvm_traversal_ctx *ctx);
 #endif
