@@ -52,6 +52,7 @@ refu_src = [
     'types/type.c',
     'types/type_function.c',
     'types/type_elementary.c',
+    'types/type_utils.c',
 
     'ir/rir.c',
     'ir/elements.c',

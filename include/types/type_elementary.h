@@ -36,6 +36,14 @@ i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elemen
 }
 
 /**
+ * Given a type check if it's any elementary type except string
+ */
+i_INLINE_DECL bool type_is_simple_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.etype != ELEMENTARY_TYPE_STRING;
+}
+
+/**
  * Gets the elementary type of a type provided it is indeed an elementary type
  */
 i_INLINE_DECL enum elementary_type type_elementary(const struct type *t)

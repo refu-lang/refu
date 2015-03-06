@@ -24,6 +24,7 @@
 
 #include <types/type_function.h>
 #include <types/type_elementary.h>
+#include <types/type_utils.h>
 #include <types/type.h>
 
 #include <analyzer/string_table.h>
@@ -175,20 +176,23 @@ void backend_llvm_assign_defined_types(LLVMValueRef left,
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
 }
 
-
 static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
-                                                LLVMValueRef left,
-                                                LLVMValueRef right,
                                                 struct llvm_traversal_ctx *ctx)
 {
+    struct ast_node *left = ast_binaryop_left(n);
+    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx);
+    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
+
     if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
         AST_NODE_ASSERT_TYPE(ast_binaryop_right(n), AST_STRING_LITERAL);
         LLVMValueRef length;
         LLVMValueRef string_data;
         backend_llvm_load_from_string(right, &length, &string_data, ctx);
-        backend_llvm_assign_to_string(left, length, string_data, ctx);
+        backend_llvm_assign_to_string(llvm_left, length, string_data, ctx);
     } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
-        backend_llvm_assign_defined_types(left, right, ctx);
+        backend_llvm_assign_defined_types(llvm_left, right, ctx);
+    } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
+        LLVMBuildStore(ctx->builder, right, llvm_left);
     } else {
         RF_ASSERT(false, "Not yet implemented");
     }
@@ -224,6 +228,31 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
     return NULL;
 }
 
+static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
+                                                    struct llvm_traversal_ctx *ctx)
+{
+    struct ast_node *left = ast_binaryop_left(n);
+    struct ast_node *right = ast_binaryop_right(n);
+    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx);
+    if (ast_node_is_elementary_identifier(left)) {
+        // then we actually need to load the value from memory
+        llvm_left = LLVMBuildLoad(ctx->builder, llvm_left, "");
+    }
+    LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx);
+    if (ast_node_is_elementary_identifier(right)) {
+        llvm_right = LLVMBuildLoad(ctx->builder, llvm_right, "");
+    }
+    switch(ast_binaryop_op(n)) {
+    case BINARYOP_CMP_GT:
+        return LLVMBuildICmp(ctx->builder, LLVMIntUGE, llvm_left, llvm_right, "");
+    default:
+        RF_ASSERT(false, "Illegal binary operation type at comparison code generation");
+        break;
+    }
+
+    return NULL;
+}
+
 static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
                                                         struct llvm_traversal_ctx *ctx)
 {
@@ -249,10 +278,14 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
     case BINARYOP_ASSIGN:
-        return backend_llvm_compile_assign(n, left, right, ctx);
-
+        return backend_llvm_compile_assign(n, ctx);
+    case BINARYOP_CMP_EQ:
+    case BINARYOP_CMP_NEQ:
     case BINARYOP_CMP_GT:
-        return LLVMBuildICmp(ctx->builder, LLVMIntUGE, left, right, "left > right");
+    case BINARYOP_CMP_GTEQ:
+    case BINARYOP_CMP_LT:
+    case BINARYOP_CMP_LTEQ:
+        return backend_llvm_compile_comparison(n, ctx);
     default:
         RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
         break;
@@ -407,8 +440,9 @@ LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
     struct symbol_table_record *rec;
     const struct RFstring *s = ast_identifier_str(n);
     rec = symbol_table_lookup_record(ctx->current_st, s, NULL);
-    RF_ASSERT(rec->backend_handle, "No LLVMValue was determined for "
+    RF_ASSERT(rec && rec->backend_handle, "No LLVMValue was determined for "
               "identifier \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(s));
+
     return rec->backend_handle;
 }
 
@@ -466,10 +500,7 @@ void backend_llvm_branch_compile(struct rir_branch *branch,
     if (branch->is_conditional) {
         backend_llvm_ifexpr_compile(branch, ctx);
     } else {
-        LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "");
-        LLVMPositionBuilderAtEnd(ctx->builder, fallthrough_branch);
         backend_llvm_compile_basic_block(branch->simple_branch, ctx);
-        LLVMBasicBlockAsValue(fallthrough_branch);
     }
 }
 

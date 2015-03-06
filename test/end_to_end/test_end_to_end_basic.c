@@ -89,6 +89,42 @@ START_TEST(test_simple_if) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST(test_simple_if_else) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:u32\n"
+        "a = 15\n"
+        "if a > 100 {\n"
+        "    print(\"yes\")\n"
+        "} else {\n"
+        "    print(\"no\")\n"
+        "}\n"
+        "return 1\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("no");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST(test_simple_if_elif_else) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:u32\n"
+        "a = 63\n"
+        "if a > 100 {\n"
+        "    print(\"in if\")\n"
+        "} elif a > 50 {\n"
+        "    print(\"in elif\")\n"
+        "} else {\n"
+        "    print(\"in else\")\n"
+        "}\n"
+        "return 1\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("in elif");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -116,6 +152,8 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_control_flow, test_simple_if);
+    tcase_add_test(st_control_flow, test_simple_if_else);
+    tcase_add_test(st_control_flow, test_simple_if_elif_else);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
