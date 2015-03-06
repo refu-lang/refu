@@ -84,7 +84,7 @@ enum token_type {
      (tok_)->type <= TOKEN_OP_DEC)
 
 #define TOKEN_IS_NUMERIC_CONSTANT(tok_)         \
-    ((tok_)->type == TOKEN_CONSTANT_INTEGER ||   \
+    ((tok_)->type == TOKEN_CONSTANT_INTEGER ||  \
      (tok_)->type == TOKEN_CONSTANT_FLOAT)
 
 const struct RFstring *tokentype_to_str(enum token_type type);

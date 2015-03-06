@@ -76,6 +76,19 @@ START_TEST(test_type_member_access) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
 } END_TEST
 
+START_TEST(test_simple_if) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "if (2 > 1) {\n"
+        "    print(\"yes\")\n"
+        "}\n"
+        "return 1\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -98,8 +111,15 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic_types, test_type_decl);
     tcase_add_test(st_basic_types, test_type_member_access);
 
+    TCase *st_control_flow = tcase_create("end_to_end_control_flow");
+    tcase_add_checked_fixture(st_control_flow,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_control_flow, test_simple_if);
+
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
+    suite_add_tcase(s, st_control_flow);
 
     return s;
 }

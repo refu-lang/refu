@@ -61,3 +61,10 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     LLVMValueRef gep_to_strdata = LLVMBuildGEP(ctx->builder, string_alloca, indices_1, 2, "gep_to_strdata");
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
+
+void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
+                              struct LLVMOpaqueBasicBlock *block)
+{
+    LLVMPositionBuilderAtEnd(ctx->builder, block);
+    ctx->current_block = block;
+}

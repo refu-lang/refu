@@ -127,6 +127,7 @@ void rir_branch_destroy(struct rir_branch *branch)
     } else {
         rir_basic_block_destroy(branch->simple_branch);
     }
+    free(branch);
 }
 
 /* -- rir_basic_block -- */
@@ -178,6 +179,7 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
         if (!rir_expression_create(b, n, RIR_IF_EXPRESSION, rir)) {
             return false;
         }
+        break;
     default:
         if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
             return false;

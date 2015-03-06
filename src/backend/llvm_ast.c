@@ -237,8 +237,9 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
     LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
     switch(ast_binaryop_op(n)) {
         // arithmetic
-        // note: There are different LLVMBuild Arithmetic functions. See if some should
-        //       be used in special situations
+        // TODO: This will not be okay for all situations. There are different
+        //       functions for different LLVM Types (Floats, Ints, Signed, Unsigned e.t.c.)
+        //       Deal with it properly ...
     case BINARYOP_ADD:
         return LLVMBuildAdd(ctx->builder, left, right, "left + right");
     case BINARYOP_SUB:
@@ -249,6 +250,9 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
     case BINARYOP_ASSIGN:
         return backend_llvm_compile_assign(n, left, right, ctx);
+
+    case BINARYOP_CMP_GT:
+        return LLVMBuildICmp(ctx->builder, LLVMIntUGE, left, right, "left > right");
     default:
         RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
         break;
@@ -426,39 +430,46 @@ void backend_llvm_compile_typedecl(const struct RFstring *name,
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
 }
 
-LLVMValueRef backend_llvm_ifexpr_compile(struct rir_branch *branch,
+void backend_llvm_ifexpr_compile(struct rir_branch *branch,
                                          struct llvm_traversal_ctx *ctx)
 {
-    LLVMBasicBlockRef fallthrough_branch = NULL;
     RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
     struct rir_cond_branch *rir_if = &branch->cond_branch;
+
+    LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "taken_branch");
+    LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "fallthrough_branch");
+    LLVMBasicBlockRef if_end = LLVMAppendBasicBlock(ctx->current_function, "if_end");
 
     // create the condition
     LLVMValueRef condition = backend_llvm_expression_compile(rir_if->cond, ctx);
 
+    // Build the If conditional branch
+    LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);
+
     // create the taken block
-    LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "");
-    LLVMPositionBuilderAtEnd(ctx->builder, taken_branch);
+    backend_llvm_enter_block(ctx, taken_branch);
     backend_llvm_compile_basic_block(rir_if->true_br, ctx);
+    LLVMBuildBr(ctx->builder, if_end);
 
     // if there is a fall through block deal with it
+    backend_llvm_enter_block(ctx, fallthrough_branch);
     if (rir_if->false_br) {
-        fallthrough_branch = LLVMValueAsBasicBlock(backend_llvm_branch_compile(rir_if->false_br, ctx));
+        backend_llvm_branch_compile(rir_if->false_br, ctx);
     }
-
-    return LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);
+    LLVMBuildBr(ctx->builder, if_end);
+    backend_llvm_enter_block(ctx, if_end);
 }
 
-LLVMValueRef backend_llvm_branch_compile(struct rir_branch *branch,
-                                         struct llvm_traversal_ctx *ctx)
+void backend_llvm_branch_compile(struct rir_branch *branch,
+                                 struct llvm_traversal_ctx *ctx)
 {
     if (branch->is_conditional) {
-        return backend_llvm_ifexpr_compile(branch, ctx);
+        backend_llvm_ifexpr_compile(branch, ctx);
     } else {
         LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "");
         LLVMPositionBuilderAtEnd(ctx->builder, fallthrough_branch);
         backend_llvm_compile_basic_block(branch->simple_branch, ctx);
-        return LLVMBasicBlockAsValue(fallthrough_branch);
+        LLVMBasicBlockAsValue(fallthrough_branch);
     }
 }
 
@@ -576,7 +587,7 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
 
     // now handle function body
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(ctx->current_function, "entry");
-    LLVMPositionBuilderAtEnd(ctx->builder, entry);
+    backend_llvm_enter_block(ctx, entry);
     // place function's argument in the stack
     unsigned int i = 0;
     LLVMValueRef allocation;

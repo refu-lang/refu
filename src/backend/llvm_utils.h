@@ -2,6 +2,7 @@
 #define LFR_BACKEND_LLVM_UTILS_H
 
 struct LLVMOpaqueModule;
+struct LLVMOpaqueBasicBlock;
 struct LLVMOpaqueValue;
 struct LLVMOpaqueType;
 
@@ -20,4 +21,13 @@ void backend_llvm_load_from_string(struct LLVMOpaqueValue *string_alloca,
                                    struct LLVMOpaqueValue **length,
                                    struct LLVMOpaqueValue **string_data,
                                    struct llvm_traversal_ctx *ctx);
+
+/**
+ * Positions the builder at end of @c block and makes it current
+ *
+ * @param ctx             The llvm traversal context
+ * @param block           The block to enter
+ */
+void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
+                              struct LLVMOpaqueBasicBlock *block);
 #endif
