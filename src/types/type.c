@@ -534,11 +534,17 @@ bool type_equals(const struct type* t1, const struct type *t2,
 {
     // first check if we refer to the same type (elementary or composite)
     if (t1 == t2) {
+        if (ctx) {
+            ctx->common_type = t1;
+        }
         return true;
     }
 
     switch (type_category_check(t1, t2, ctx)) {
     case TYPES_ARE_EQUAL:
+        if (ctx) {
+            ctx->common_type = t1;
+        }
         return true;
     case TYPES_ARE_NOT_EQUAL:
         return false;

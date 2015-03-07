@@ -48,6 +48,22 @@ i_INLINE_DECL struct ast_node *ast_binaryop_right(struct ast_node *op)
     return op->binaryop.right;
 }
 
+/**
+ * Returns the common type that both operands of a binary operation can have
+ *
+ * This function should only be invoked after typechecking and particularly
+ * from the backend in order to find common type of a binary operation to cast
+ * both operands to.
+ *
+ * @param op        The binary operator node
+ * @return          The common type of both operands
+ */
+i_INLINE_DECL const struct type *ast_binaryop_common_type(struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
+    return op->binaryop.common_type;
+}
+
 /* -- unary operator functions -- */
 
 struct ast_node *ast_unaryop_create(struct inplocation_mark *start,

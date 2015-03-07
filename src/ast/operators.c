@@ -131,6 +131,7 @@ const struct RFstring *ast_binaryop_opstr(struct ast_node *op)
 
 i_INLINE_INS struct ast_node *ast_binaryop_left(struct ast_node *op);
 i_INLINE_INS struct ast_node *ast_binaryop_right(struct ast_node *op);
+i_INLINE_INS const struct type *ast_binaryop_common_type(struct ast_node *op);
 
 /* -- unary operator related functions -- */
 

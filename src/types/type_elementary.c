@@ -75,6 +75,9 @@ bool type_elementary_equals(const struct type_elementary *t1,
                             struct type_comparison_ctx *ctx)
 {
     if (t1->etype == t2->etype) {
+        if (ctx) {
+            ctx->common_type = type_elementary_get_type(t1->etype);
+        }
         return true;
     }
 
@@ -88,7 +91,7 @@ bool type_elementary_equals(const struct type_elementary *t1,
 
     if (t1->etype <= ELEMENTARY_TYPE_UINT_64 &&
         t2->etype <= ELEMENTARY_TYPE_UINT_64) {
-
+        struct type *largest_type = type_elementary_get_type(t1->etype);;
 
         if (type_elementary_int_is_unsigned(t1) &&
             !type_elementary_is_unsigned(t2)) {
@@ -103,7 +106,10 @@ bool type_elementary_equals(const struct type_elementary *t1,
             }
             // else
             RF_BITFLAG_SET(ctx->conversion, LARGER_TO_SMALLER);
+            largest_type = type_elementary_get_type(t2->etype);
         }
+
+        ctx->common_type = largest_type;
         return true;
     }
 
@@ -116,11 +122,13 @@ bool type_elementary_equals(const struct type_elementary *t1,
         }
 
         //TODO: warn/disallow implicit conversions to float here
+        ctx->common_type = type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
         return true;
     }
 
     if (t1->etype >= ELEMENTARY_TYPE_FLOAT_32 && t1->etype <= ELEMENTARY_TYPE_FLOAT_64 &&
         t2->etype >= ELEMENTARY_TYPE_FLOAT_32 && t2->etype <= ELEMENTARY_TYPE_FLOAT_64) {
+        ctx->common_type = type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
         // they are both floats, we can work with it
         return true;
     }

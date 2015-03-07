@@ -1,5 +1,7 @@
 #include "llvm_utils.h"
 
+#include <Utils/sanity.h>
+
 #include <stdio.h>
 #include <llvm-c/Core.h>
 
@@ -60,6 +62,36 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     LLVMValueRef indices_1[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
     LLVMValueRef gep_to_strdata = LLVMBuildGEP(ctx->builder, string_alloca, indices_1, 2, "gep_to_strdata");
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
+}
+
+LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
+                                                   LLVMTypeRef type,
+                                                   struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef val_type = LLVMTypeOf(val);
+    if (val_type != type) {
+        // we have to do typecasts
+        if (val_type == LLVMDoubleType()) {
+            val = LLVMBuildFPCast(ctx->builder, val, type, "");
+        } else if (val_type == LLVMInt8Type() || val_type == LLVMInt16Type() ||
+                   val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {
+            val = LLVMBuildIntCast(ctx->builder, val, type, "");
+        } else {
+            backend_llvm_type_debug(val_type, "val_type");
+            backend_llvm_type_debug(type, "to_cast_type");
+            RF_ASSERT(false, "Unimplemented casts?");
+        }
+    }
+    return val;
+}
+
+void backend_llvm_store(LLVMValueRef val,
+                        LLVMValueRef ptr,
+                        struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
+    val = backend_llvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
+    LLVMBuildStore(ctx->builder, val, ptr);
 }
 
 void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,

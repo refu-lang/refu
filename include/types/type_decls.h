@@ -101,5 +101,7 @@ struct type_comparison_ctx {
     enum conversion_type conversion;
     //! If any conversion happened this should point to the converted type
     struct type *converted_type;
+    //! If we have a binary operation this shold point to the common type
+    const struct type *common_type;
 };
 #endif

@@ -22,6 +22,14 @@ void backend_llvm_load_from_string(struct LLVMOpaqueValue *string_alloca,
                                    struct LLVMOpaqueValue **string_data,
                                    struct llvm_traversal_ctx *ctx);
 
+struct LLVMOpaqueValue *backend_llvm_cast_value_to_type_maybe(
+    struct LLVMOpaqueValue *val,
+    struct LLVMOpaqueType *type,
+    struct llvm_traversal_ctx *ctx);
+
+void backend_llvm_store(struct LLVMOpaqueValue *val, struct LLVMOpaqueValue *ptr,
+                        struct llvm_traversal_ctx *ctx);
+
 /**
  * Positions the builder at end of @c block and makes it current
  *

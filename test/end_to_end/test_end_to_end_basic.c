@@ -125,6 +125,31 @@ START_TEST(test_simple_if_elif_else) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST(test_greater_than) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "if a > 100 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a > 5000 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b > 938345 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b > 2938349 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -155,9 +180,17 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_control_flow, test_simple_if_else);
     tcase_add_test(st_control_flow, test_simple_if_elif_else);
 
+    TCase *st_comparisons = tcase_create("end_to_end_comparisons");
+    tcase_add_checked_fixture(st_comparisons,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_comparisons, test_greater_than);
+
+
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_control_flow);
+    suite_add_tcase(s, st_comparisons);
 
     return s;
 }

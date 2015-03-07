@@ -2,6 +2,7 @@
 #define LFR_AST_OPERATORS_DECLS_H
 
 struct ast_node;
+struct type;
 
 enum binaryop_type {
     BINARYOP_ADD,
@@ -31,9 +32,15 @@ enum binaryop_type {
 };
 
 struct ast_binaryop {
+    //! The type of binary operation performed
     enum binaryop_type type;
+    //! The left opeand ast node
     struct ast_node *left;
+    //! The right operand ast node
     struct ast_node *right;
+    //! [Optional] May only exist after typechecking
+    //! The common type to which both operands can be typecast in the backend
+    const struct type *common_type;
 };
 
 enum unaryop_type {

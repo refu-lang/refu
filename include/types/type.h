@@ -101,6 +101,7 @@ i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
     ctx->reason = reason;
     ctx->conversion = NO_CONVERSION;
     ctx->converted_type = NULL;
+    ctx->common_type = NULL;
 }
 
 /**
@@ -125,6 +126,10 @@ i_INLINE_DECL bool type_category_equals(const struct type* t,
 /**
  * Compare two types and see if they are equal or if one can be promoted to
  * the other.
+ *
+ * @todo TODO: Context being optionally NULL introduces a lot of problems and
+ *             additional checks in every step of the way. Maybe make it mandatory?
+ *
  * @warning For many comparison reasons type position does matter. So you may
  *          get different results if you do type_equals(A,B) and type_equals(B,A)
  *          Such reasons include assignment where for example u64 = u16 is ok but

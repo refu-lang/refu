@@ -37,7 +37,50 @@
 #include "llvm_utils.h"
 #include "llvm_globals.h"
 
-static LLVMTypeRef backend_llvm_elementary_to_type(enum rir_type_category type, struct llvm_traversal_ctx *ctx)
+static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
+                                                   struct llvm_traversal_ctx *ctx)
+{
+    switch(etype) {
+        // LLVM does not differentiate between signed and unsigned
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
+        return LLVMIntType(32);// TODO: Think of how to represent size agnostic
+    case ELEMENTARY_TYPE_INT_8:
+    case ELEMENTARY_TYPE_UINT_8:
+        return LLVMInt8Type();
+    case ELEMENTARY_TYPE_INT_16:
+    case ELEMENTARY_TYPE_UINT_16:
+        return LLVMInt16Type();
+    case ELEMENTARY_TYPE_INT_32:
+    case ELEMENTARY_TYPE_UINT_32:
+        return LLVMInt32Type();
+    case ELEMENTARY_TYPE_INT_64:
+    case ELEMENTARY_TYPE_UINT_64:
+        return LLVMInt64Type();
+
+    case ELEMENTARY_TYPE_FLOAT_32:
+        return LLVMFloatType();
+    case ELEMENTARY_TYPE_FLOAT_64:
+        return LLVMDoubleType();
+
+    case ELEMENTARY_RIR_TYPE_STRING:
+        return LLVMGetTypeByName(ctx->mod, "string");
+
+    case ELEMENTARY_RIR_TYPE_NIL:
+        return LLVMVoidType();
+
+    default:
+        RF_ASSERT(false,
+                  "Unsupported elementary type \""RF_STR_PF_FMT"\" "
+                  "during LLVM conversion",
+                  RF_STR_PF_ARG(type_elementary_get_str(etype)));
+        break;
+    }
+    return NULL;
+}
+
+static LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category type,
+                                                       struct llvm_traversal_ctx *ctx)
 {
     switch(type) {
         // LLVM does not differentiate between signed and unsigned
@@ -92,7 +135,7 @@ static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
     char *name;
     LLVMTypeRef ret = NULL;
     if (rir_type_is_elementary(type)) {
-        ret = backend_llvm_elementary_to_type(type->category, ctx);
+        ret = backend_llvm_rir_elementary_to_type(type->category, ctx);
     } else if (type->category == COMPOSITE_RIR_DEFINED) {
         RFS_buffer_push();
         name = rf_string_cstr_from_buff(type->name);
@@ -192,7 +235,8 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
     } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
         backend_llvm_assign_defined_types(llvm_left, right, ctx);
     } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
-        LLVMBuildStore(ctx->builder, right, llvm_left);
+        /* LLVMBuildStore(ctx->builder, right, llvm_left); */
+        backend_llvm_store(right, llvm_left, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
     }
@@ -228,6 +272,19 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
     return NULL;
 }
 
+/**
+ * Will typecast @a val if needed to a specific elementary type
+ */
+static LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
+                                                                const struct type *t,
+                                                                struct llvm_traversal_ctx *ctx)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_ELEMENTARY,
+              "Casting only to elementary types supported for now");
+    LLVMTypeRef common_type = backend_llvm_elementary_to_type(type_elementary(t), ctx);
+    return backend_llvm_cast_value_to_type_maybe(val, common_type, ctx);
+}
+
 static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
                                                     struct llvm_traversal_ctx *ctx)
 {
@@ -238,10 +295,17 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
         // then we actually need to load the value from memory
         llvm_left = LLVMBuildLoad(ctx->builder, llvm_left, "");
     }
+    llvm_left = backend_llvm_cast_value_to_elementary_maybe(llvm_left,
+                                                            ast_binaryop_common_type(n),
+                                                            ctx);
     LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx);
     if (ast_node_is_elementary_identifier(right)) {
         llvm_right = LLVMBuildLoad(ctx->builder, llvm_right, "");
     }
+    llvm_right = backend_llvm_cast_value_to_elementary_maybe(llvm_right,
+                                                             ast_binaryop_common_type(n),
+                                                             ctx);
+
     switch(ast_binaryop_op(n)) {
     case BINARYOP_CMP_GT:
         return LLVMBuildICmp(ctx->builder, LLVMIntUGE, llvm_left, llvm_right, "");
@@ -312,28 +376,6 @@ static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
     ctx->llvm_ctx = llvm_ctx;
     ctx->alloca = alloca;
     ctx->params = params;
-}
-
-static void backend_llvm_store(LLVMValueRef val, LLVMValueRef ptr,
-                               struct llvm_traversal_ctx *ctx)
-{
-    LLVMTypeRef val_type = LLVMTypeOf(val);
-    LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
-
-    if (val_type != ptr_element_type) {
-        // we have to do typecasts
-        if (val_type == LLVMDoubleType()) {
-            val = LLVMBuildFPCast(ctx->builder, val, ptr_element_type, "");
-        } else if (val_type == LLVMInt8Type() || val_type == LLVMInt16Type() ||
-                   val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {
-            val = LLVMBuildIntCast(ctx->builder, val, ptr_element_type, "");
-        } else {
-            backend_llvm_type_debug(val_type, "val_type");
-            backend_llvm_type_debug(ptr_element_type, "ptr_element_type");
-            RF_ASSERT(false, "Unimplemented casts?");
-        }
-    }
-    LLVMBuildStore(ctx->builder, val, ptr);
 }
 
 static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)

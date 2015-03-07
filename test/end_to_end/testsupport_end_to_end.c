@@ -141,10 +141,10 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
 
     if (expected_output) {
         size_t output_length = rf_string_length_bytes(expected_output);
-        if (output_length != fread(stdout_buff, 1, output_length, proc)) {
-            ck_abort_msg("Expected output \""RF_STR_PF_FMT"\" could not be read"
-                         " from the program's stdout",
-                         RF_STR_PF_ARG(expected_output));
+        size_t actual_length = fread(stdout_buff, 1, output_length, proc);
+        if (output_length != actual_length) {
+            ck_abort_msg("Expected \""RF_STR_PF_FMT"\" in stdout but got:\n\"%.*s\"",
+                         RF_STR_PF_ARG(expected_output), actual_length, stdout_buff);
         }
         ck_assert_rf_str_eq_nntstr(expected_output, stdout_buff, output_length);
     }
