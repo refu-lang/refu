@@ -5,12 +5,12 @@
 #include <ast/constant_num.h>
 #include <ast/string_literal.h>
 
-static bool tokens_cmp(struct token *expected,
-                       struct token *got,
-                       unsigned int index,
-                       struct inpfile *f,
-                       const char *filename,
-                       unsigned int line)
+bool test_tokens_cmp(struct token *expected,
+                     struct token *got,
+                     unsigned int index,
+                     struct inpfile *f,
+                     const char *filename,
+                     unsigned int line)
 {
 
     if (expected->type != got->type) {
@@ -104,7 +104,7 @@ void check_lexer_tokens_impl(struct lexer *l,
 
 
     darray_foreach(t, l->tokens) {
-        tokens_cmp(&tokens[i], t, i, l->file, filename, line);
+        test_tokens_cmp(&tokens[i], t, i, l->file, filename, line);
         i ++;
     }
 }

@@ -490,6 +490,164 @@ START_TEST(test_lexer_scan_integer_close_to_member_access) {
     check_lexer_tokens(lex, expected);
 } END_TEST
 
+START_TEST(test_lexer_push_pop) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_KW_IF,
+            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        {
+            .type=TOKEN_OP_LT,
+            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+        },
+        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+        },
+        {
+            .type=TOKEN_SM_CCBRACE,
+            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+        },
+    };
+    ck_assert(lexer_scan(lex));
+
+    // check that simple push/pop does not affect anything
+    struct token *tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[0], tok, 0);
+    lexer_push(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[1], tok, 1);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[2], tok, 2);
+    lexer_pop(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[3], tok, 3);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[4], tok, 4);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[5], tok, 5);
+    tok = lexer_next_token(lex);
+    ck_assert_msg(!tok, "Last token should be NULL");
+} END_TEST
+
+START_TEST(test_lexer_push_rollback) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_KW_IF,
+            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        {
+            .type=TOKEN_OP_LT,
+            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+        },
+        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+        },
+        {
+            .type=TOKEN_SM_CCBRACE,
+            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+        },
+    };
+    ck_assert(lexer_scan(lex));
+
+    struct token *tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[0], tok, 0);
+    lexer_push(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[1], tok, 1);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[2], tok, 2);
+    lexer_rollback(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[1], tok, 1);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[2], tok, 2);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[3], tok, 3);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[4], tok, 4);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[5], tok, 5);
+    tok = lexer_next_token(lex);
+    ck_assert_msg(!tok, "Last token should be NULL");
+} END_TEST
+
+START_TEST(test_lexer_many_push_rollback) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        {
+            .type=TOKEN_KW_IF,
+            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+        },
+        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        {
+            .type=TOKEN_OP_LT,
+            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+        },
+        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+        },
+        {
+            .type=TOKEN_SM_CCBRACE,
+            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+        },
+    };
+    ck_assert(lexer_scan(lex));
+
+    struct token *tok = lexer_next_token(lex);
+    lexer_push(lex);
+    ck_assert_tokens_eq(lex, &expected[0], tok, 0);
+    lexer_push(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[1], tok, 1);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[2], tok, 2);
+    lexer_rollback(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[1], tok, 1);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[2], tok, 2);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[3], tok, 3);
+    lexer_push(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[4], tok, 4);
+    lexer_rollback(lex);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[4], tok, 4);
+    tok = lexer_next_token(lex);
+    ck_assert_tokens_eq(lex, &expected[5], tok, 5);
+    tok = lexer_next_token(lex);
+    ck_assert_msg(!tok, "Last token should be NULL");
+} END_TEST
+
 Suite *lexer_suite_create(void)
 {
     Suite *s = suite_create("lexer");
@@ -517,8 +675,18 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan_edge, test_lexer_scan_float_with_tokens_in_between);
     tcase_add_test(scan_edge, test_lexer_scan_integer_close_to_member_access);
 
+    TCase *lexer_utils = tcase_create("lexer_utilities");
+    tcase_add_checked_fixture(lexer_utils,
+                              setup_front_tests,
+                              teardown_front_tests);
+    tcase_add_test(lexer_utils, test_lexer_push_pop);
+    tcase_add_test(lexer_utils, test_lexer_push_rollback);
+    tcase_add_test(lexer_utils, test_lexer_many_push_rollback);
+    
+
     suite_add_tcase(s, scan);
     suite_add_tcase(s, scan_edge);
+    suite_add_tcase(s, lexer_utils);
     return s;
 }
 

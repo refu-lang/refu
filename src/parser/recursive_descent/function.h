@@ -83,6 +83,6 @@ enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
 /**
  * identifier [genrattr] TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */
-struct ast_node *parser_acc_fncall(struct parser *p);
+struct ast_node *parser_acc_fncall(struct parser *p, bool expect_it);
 
 #endif

@@ -291,6 +291,36 @@ START_TEST(test_acc_ifexpr_4) {
     ast_node_destroy(ifx);
 }END_TEST
 
+START_TEST(test_acc_ifexpr_ambiguous_less_than_or_generic) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "if a < 42 {\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *id1 = testsupport_parser_identifier_create(file,
+                                                                0, 3, 0, 3);
+    testsupport_parser_constant_create(cnum, file,
+                                       0, 7, 0, 8, integer, 42);
+    testsupport_parser_node_create(cmp_exp, binaryop, file, 0, 3, 0, 8,
+                                   BINARYOP_CMP_LT, id1, cnum);
+
+
+    testsupport_parser_block_create(bnode, file, 0, 10, 1, 0);
+    testsupport_parser_node_create(cond, condbranch, file, 0, 3, 1, 0,
+                                   cmp_exp, bnode);
+
+    testsupport_parser_node_create(ifx, ifexpr, file, 0, 0, 1, 0, cond, NULL);
+
+    ck_test_parse_as(n, ifexpr, d, "if_expression", ifx, TOKEN_KW_IF);
+
+    ast_node_destroy(n);
+    ast_node_destroy(ifx);
+}END_TEST
 
 START_TEST(test_acc_ifexpr_errors_1) {
     struct ast_node *n;
@@ -433,6 +463,7 @@ Suite *parser_ifexpr_suite_create(void)
     tcase_add_test(ifp, test_acc_ifexpr_2);
     tcase_add_test(ifp, test_acc_ifexpr_3);
     tcase_add_test(ifp, test_acc_ifexpr_4);
+    tcase_add_test(ifp, test_acc_ifexpr_ambiguous_less_than_or_generic);
 
     TCase *iferr = tcase_create("if_expression_parsing_errors");
     tcase_add_checked_fixture(iferr, setup_front_tests, teardown_front_tests);

@@ -67,8 +67,9 @@ enum ast_type {
 };
 
 enum ast_owner {
-    AST_OWNEDBY_PARSER = 0,
-    AST_OWNEDBY_ANALYZER_PASS1 = 1,
+    AST_OWNEDBY_LEXER = 0, /*!< The node is at the lexing and parsing phase */
+    AST_OWNEDBY_PARSER,    /*!< The node has gone through parsing succesfully */
+    AST_OWNEDBY_ANALYZER_PASS1, /*!< The node is at the first phase of the analyzer */
 };
 
 struct ast_node {

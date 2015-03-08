@@ -16,6 +16,7 @@ struct info_ctx *info_ctx_create(struct inpfile *f)
 
     RF_MALLOC(ctx, sizeof(*ctx), return NULL);
     rf_ilist_head_init(&ctx->msg_list);
+    ctx->msg_num = 0;
     if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_SIZE, "")) {
         free(ctx);
         RF_ERRNOMEM();
@@ -72,7 +73,22 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
     }
 
     rf_ilist_add_tail(&ctx->msg_list, &msg->ln);
+    ctx->msg_num++;
     return true;
+}
+
+void info_ctx_rem_messages(struct info_ctx *ctx, size_t num)
+{
+    struct info_msg *m;
+    struct info_msg *tmp;
+    size_t i = 0;
+    rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
+        if (ctx->msg_num - i <= num) {
+            rf_ilist_delete_from(&ctx->msg_list, &m->ln);
+            info_msg_destroy(m);
+        }
+        ++i;
+    }
 }
 
 bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type)

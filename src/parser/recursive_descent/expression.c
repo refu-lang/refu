@@ -60,14 +60,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
         return n;
-    } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2)) {
-        // function call
-        n = parser_acc_fncall(p);
-        if (!n) {
-            parser_synerr(p, token_get_start(tok), NULL,
-                          "expected function call");
-            return NULL;
-        }
+    } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2) && (n = parser_acc_fncall(p, false))) {
         return n;
     } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
         n = parser_acc_ifexpr(p, TOKEN_KW_IF);

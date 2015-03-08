@@ -89,4 +89,14 @@ void check_lexer_tokens_impl(struct lexer *l,
         }                                                               \
     } while(0)
 
+bool test_tokens_cmp(struct token *expected,
+                     struct token *got,
+                     unsigned int index,
+                     struct inpfile *f,
+                     const char *filename,
+                     unsigned int line);
+
+#define ck_assert_tokens_eq(lexer_, expected_, got_, index_)            \
+    test_tokens_cmp((expected_), (got_), index_, (lexer_)->file, __FILE__, __LINE__)
+
 #endif

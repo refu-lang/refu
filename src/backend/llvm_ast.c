@@ -312,6 +312,36 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
 
     elementary_type = type_elementary_get_category(ast_binaryop_common_type(n));
     switch(ast_binaryop_op(n)) {
+    case BINARYOP_CMP_EQ:
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntEQ;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealOEQ;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at equality comparison code generation");
+            return NULL;
+        }
+        break;
+
+    case BINARYOP_CMP_NEQ:
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntNE;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealONE;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at unequality comparison code generation");
+            return NULL;
+        }
+        break;
+        
     case BINARYOP_CMP_GT:
         switch (elementary_type) {
         case ELEMENTARY_TYPE_CATEGORY_SIGNED:
@@ -325,6 +355,57 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
             break;
         default:
             RF_ASSERT(false, "Illegal operand types at greater than comparison code generation");
+            return NULL;
+        }
+        break;
+
+    case BINARYOP_CMP_GTEQ:
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+            llvm_int_compare_type = LLVMIntSGE;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntUGE;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealOGE;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at greater than or equal comparison code generation");
+            return NULL;
+        }
+        break;
+
+    case BINARYOP_CMP_LT:
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+            llvm_int_compare_type = LLVMIntSLT;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntULT;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealOLT;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at less than comparison code generation");
+            return NULL;
+        }
+        break;
+
+    case BINARYOP_CMP_LTEQ:
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+            llvm_int_compare_type = LLVMIntSLE;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntULE;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealOLE;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at less than or equal comparison code generation");
             return NULL;
         }
         break;

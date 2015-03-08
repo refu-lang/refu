@@ -39,7 +39,7 @@ static const struct RFstring ast_type_strings[] = {
 
 void ast_node_init(struct ast_node * n, enum ast_type type)
 {
-    n->owner = AST_OWNEDBY_PARSER;
+    n->owner = AST_OWNEDBY_LEXER;
     n->type = type;
     n->expression_type = NULL;
     rf_ilist_head_init(&n->children);
@@ -125,7 +125,10 @@ void ast_node_destroy(struct ast_node *n)
         ast_node_destroy(child);
     }
 
-    free(n);
+    // free node unless it's an identifier still at lexing/parsing phase
+    if (n->owner != AST_OWNEDBY_LEXER && n->type != AST_IDENTIFIER) {
+        free(n);
+    }
 }
 
 void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start)

@@ -367,7 +367,7 @@ START_TEST(test_acc_fncall_1) {
                                    args,
                                    NULL
     );
-    ck_test_parse_as(n, fncall, d, "function_call", fc);
+    ck_test_parse_as(n, fncall, d, "function_call", fc, true);
 
     ast_node_destroy(n);
     ast_node_destroy(fc);
@@ -408,7 +408,7 @@ START_TEST(test_acc_fncall_2) {
                                    NULL
     );
 
-    ck_test_parse_as(n, fncall, d, "function_call", fc);
+    ck_test_parse_as(n, fncall, d, "function_call", fc, true);
 
     ast_node_destroy(n);
     ast_node_destroy(fc);
@@ -457,7 +457,7 @@ START_TEST(test_acc_fncall_3) {
                                    args,
                                    gnattr);
 
-    ck_test_parse_as(n, fncall, d, "function_call", fc);
+    ck_test_parse_as(n, fncall, d, "function_call", fc, true);
 
     ast_node_destroy(n);
     ast_node_destroy(fc);

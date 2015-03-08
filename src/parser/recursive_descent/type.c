@@ -19,7 +19,7 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
     tok = lexer_lookahead(p->lexer, 1);
 
     if (!tok) {
-        return NULL;
+        goto err;
     }
 
     if (tok->type == TOKEN_SM_OPAREN) {
@@ -56,7 +56,7 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
                 goto err;
             }
 
-            right = parser_acc_xidentifier(p);
+            right = parser_acc_xidentifier(p, true);
             if (!right) {
                 parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                               "expected "XIDENTIFIER_START_STR" after ':'");
@@ -71,10 +71,10 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
                 goto err;
             }
         } else { // last expansion of type_element rule, just an xidentifier
-            n = parser_acc_xidentifier(p);
+            n = parser_acc_xidentifier(p, true);
         }
     } else {
-        return NULL;
+        goto err;
     }
 
     lexer_pop(p->lexer);
@@ -100,8 +100,6 @@ static struct ast_node *parser_acc_typefactor_prime(
     }
     //consume 'IMPL'
     lexer_next_token(p->lexer);
-
-    lexer_push(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_PRODUCT, left_hand_side, NULL);
@@ -162,8 +160,6 @@ static struct ast_node *parser_acc_typeterm_prime(
     //consume TYPESUM
     lexer_next_token(p->lexer);
 
-    lexer_push(p->lexer);
-
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_SUM, left_hand_side, NULL);
     if (!op) {
@@ -222,8 +218,6 @@ static struct ast_node *parser_acc_typedesc_prime(
     }
     //consume comma
     lexer_next_token(p->lexer);
-
-    lexer_push(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_IMPLICATION, left_hand_side, NULL);

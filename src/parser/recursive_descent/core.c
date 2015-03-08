@@ -3,6 +3,7 @@
 #include <inpfile.h>
 #include <inpstr.h>
 #include <ast/ast.h>
+#include <ast/ast_utils.h>
 #include <lexer/lexer.h>
 
 #include "common.h"
@@ -13,6 +14,11 @@
 
 static struct ast_node *parser_acc_stmt(struct parser *p);
 
+static bool finalize_parsing(struct ast_node *n, void *user_arg)
+{
+    n->owner = AST_OWNEDBY_PARSER;
+    return true;
+}
 
 bool parser_process_file(struct parser *p)
 {
@@ -29,6 +35,8 @@ bool parser_process_file(struct parser *p)
         return false;
     }
 
+    // at the end of parsing let's signify that all of the nodes are owned by the parser
+    ast_pre_traverse_tree(p->root, finalize_parsing, NULL);
     return true;
 }
 

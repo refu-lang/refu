@@ -195,48 +195,53 @@ enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
    return PARSER_FNIMPL_LIST_SUCCESS;
 }
 
-struct ast_node *parser_acc_fncall(struct parser *p)
+struct ast_node *parser_acc_fncall(struct parser *p, bool expect_it)
 {
     struct ast_node *n;
     struct token *tok;
     struct ast_node *name;
     struct ast_node *genr = NULL;
     struct ast_node *args = NULL;
+    lexer_push(p->lexer);
 
     name = parser_acc_identifier(p);
     if (!name) {
-        return NULL;
+        goto err;
     }
 
-    genr = parser_acc_genrattr(p);
+    genr = parser_acc_genrattr(p, false);
     if (!genr && parser_has_syntax_error(p)) {
-        goto err_free_name;
+        // name is an identifier and even in failure does not need to get destroyed here
+        goto err;
     }
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_SM_OPAREN) {
-        parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
-                      "Expected '('");
+        if (expect_it) {
+            parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+                          "Expected '('");
+        }
         goto err_free_genr;
     }
     //consume '('
     lexer_next_token(p->lexer);
 
-
     args = parser_acc_expression(p);
     if (!args) {
         if (parser_has_syntax_error(p)) {
-            parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
-                          "Expected argument expression for function call");
+                parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+                              "Expected argument expression for function call");
             goto err_free_genr;
         }
     }
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_SM_CPAREN) {
-        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                      "Expected ')' at end of "RF_STR_PF_FMT" function call",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        if (expect_it) {
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                          "Expected ')' at end of "RF_STR_PF_FMT" function call",
+                          RF_STR_PF_ARG(ast_identifier_str(name)));
+        }
         goto err_free_args;
     }
     //consume ')'
@@ -249,6 +254,7 @@ struct ast_node *parser_acc_fncall(struct parser *p)
         goto err_free_args;
     }
 
+    lexer_pop(p->lexer);
     return n;
 
 err_free_args:
@@ -259,7 +265,7 @@ err_free_genr:
     if (genr) {
         ast_node_destroy(genr);
     }
-err_free_name:
-    ast_node_destroy(name);
+err:
+    lexer_rollback(p->lexer);
     return NULL;
 }

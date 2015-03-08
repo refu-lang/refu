@@ -31,5 +31,5 @@ i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
 /**
  * annotated_identifier = ["const"] identifier [generic_attributes]
  */
-struct ast_node *parser_acc_xidentifier(struct parser *p);
+struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it);
 #endif

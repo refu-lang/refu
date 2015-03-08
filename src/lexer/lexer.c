@@ -542,9 +542,10 @@ void lexer_pop(struct lexer *l)
 
 void lexer_rollback(struct lexer *l)
 {
+    // TODO: Must be able to change ownership of identifiers that got scanned back to the lexer
     unsigned int idx;
     RF_ASSERT(!darray_empty(l->indices),
-              "lexer_roolback called with empty array");
+              "lexer_rollback called with empty array");
     idx = darray_pop(l->indices);
     l->tok_index = idx;
 }

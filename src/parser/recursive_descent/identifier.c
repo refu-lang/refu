@@ -8,7 +8,7 @@
 #include "common.h"
 
 i_INLINE_INS struct ast_node *parser_acc_identifier(struct parser *p);
-struct ast_node *parser_acc_xidentifier(struct parser *p)
+struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
 {
     struct token *tok;
     struct ast_node *id;
@@ -18,7 +18,6 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     struct inplocation_mark *start;
     struct inplocation_mark *end;
 
-    lexer_push(p->lexer);
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {
         return NULL;
@@ -42,8 +41,10 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     }
 
     if (tok->type != TOKEN_IDENTIFIER) {
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected an identifier after const");
+        if (expect_it) {
+            parser_synerr(p, token_get_end(tok), NULL,
+                          "Expected an identifier");
+        }
         return NULL;
     }
     //consume identifier
@@ -52,11 +53,12 @@ struct ast_node *parser_acc_xidentifier(struct parser *p)
     end = ast_node_endmark(id);
 
     tok = lexer_lookahead(p->lexer, 1);
-    if (GENRATTR_START_COND(tok)) {
-        genr = parser_acc_genrattr(p);
-        end = token_get_end(tok);
-    } else {
-        genr = NULL;
+    genr = parser_acc_genrattr(p, false); // can be NULL for example in: if a < 15 { .. }
+    if (!genr && parser_has_syntax_error(p)) {
+        return NULL;
+    }
+    if (genr) {
+        end = ast_node_endmark(genr);
     }
 
     xid = ast_xidentifier_create(start, end, id, is_const, genr);

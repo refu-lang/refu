@@ -1,6 +1,8 @@
 #ifndef LFR_PARSER_GENERICS_H
 #define LFR_PARSER_GENERICS_H
 
+#include <stdbool.h>
+
 struct ast_node;
 struct parser;
 
@@ -36,5 +38,5 @@ struct ast_node *parser_acc_genrdecl(struct parser *p);
  *                          / annotated_identifier
  *
  */
-struct ast_node *parser_acc_genrattr(struct parser *p);
+struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it);
 #endif

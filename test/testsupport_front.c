@@ -565,9 +565,9 @@ bool check_ast_match_impl(struct ast_node *got,
                 !check_ast_match_impl(got_child, expect_child, ifile, file, line)) {
                 return false;
             }
-            j++;
+            ++j;
         }
-        i ++;
+        ++i;
     }
     return true;
 }

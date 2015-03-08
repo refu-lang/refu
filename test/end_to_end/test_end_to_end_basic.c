@@ -125,6 +125,66 @@ START_TEST(test_simple_if_elif_else) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST(test_equal) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
+        "if a == 1342 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a == 5000 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b == 938375 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b == 2938349 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "if c == 14.532 {\n"
+        "    print(\"nope\")\n"
+        "}"
+        "return 1\n"
+        "}"
+    );
+    // note: not comparing floats for equality in the test result since it's ambiguous
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST(test_not_equal) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
+        "if a != 5000 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a != 1342 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b != 1421 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b != 938375 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "if c != 14.532 {\n"
+        "    print(\"nope\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    // note: not comparing floats for uneequality in the test result since it's ambiguous
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 START_TEST(test_greater_than) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -156,6 +216,100 @@ START_TEST(test_greater_than) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST(test_greater_than_or_equal) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
+        "if a >= 1342 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a >= 5000 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b >= 938375 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b >= 2938349 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "if c > 14.532 {\n"
+        "    print(\"nope\")\n"
+        "} elif c >= 3.14 {\n"
+        "    print(\" here\")\n"
+        "} else {\n"
+        "    print(\"not here either\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST(test_less_than) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
+        "if a < 100002 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a < 100 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b < 9383450 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b < 23142 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "if c < 1.22 {\n"
+        "    print(\"nope\")\n"
+        "} else {\n"
+        "    print(\" here\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST(test_less_than_or_equal) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:i32 = 1342\n"
+        "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
+        "if a <= 1342 {\n"
+        "    print(\"expected\")\n"
+        "}\n"
+        "if a <= 123 {\n"
+        "    print(\"not expected\")\n"
+        "}\n"
+        "if b <= 938375 {\n"
+        "    print(\" output\")\n"
+        "}\n"
+        "if b <= 93829 {\n"
+        "    print(\"won't see me\")\n"
+        "}\n"
+        "if c <= 2.32 {\n"
+        "    print(\"nope\")\n"
+        "} else {\n"
+        "    print(\" here\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
 
 Suite *end_to_end_basic_suite_create(void)
 {
@@ -190,7 +344,12 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_checked_fixture(st_comparisons,
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
+    tcase_add_test(st_comparisons, test_equal);
+    tcase_add_test(st_comparisons, test_not_equal);
     tcase_add_test(st_comparisons, test_greater_than);
+    tcase_add_test(st_comparisons, test_greater_than_or_equal);
+    tcase_add_test(st_comparisons, test_less_than);
+    tcase_add_test(st_comparisons, test_less_than_or_equal);
 
 
     suite_add_tcase(s, st_basic);
