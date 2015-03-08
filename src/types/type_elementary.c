@@ -164,6 +164,26 @@ int type_elementary_identifier_p(const struct RFstring *id)
     return etype->type;
 }
 
+enum elementary_type_category type_elementary_get_category(const struct type *t)
+{
+    if (t->category != TYPE_CATEGORY_ELEMENTARY) {
+        return -1;
+    }
+    if (t->elementary.etype < 10) {
+        if (t->elementary.etype % 2 == 0) {
+            return ELEMENTARY_TYPE_CATEGORY_SIGNED;
+        }
+        // else
+        return ELEMENTARY_TYPE_CATEGORY_UNSIGNED;
+    } else if (t->elementary.etype < 12) {
+        return ELEMENTARY_TYPE_CATEGORY_FLOAT;
+    }
+    return ELEMENTARY_TYPE_CATEGORY_OTHER;
+}
+
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
 i_INLINE_INS enum elementary_type type_elementary(const struct type *t);
+i_INLINE_INS bool type_is_signed_elementary(const struct type *t);
+i_INLINE_INS bool type_is_unsigned_elementary(const struct type *t);
+i_INLINE_INS bool type_is_floating_elementary(const struct type *t);

@@ -6,7 +6,7 @@
 #include <ast/operators_decls.h> // for binary operations enum
 #include <Data_Structures/intrusive_list.h>
 
-// NOTE: preserve order
+// NOTE: preserve order, some functions depend on it
 enum elementary_type {
     ELEMENTARY_TYPE_INT = 0,
     ELEMENTARY_TYPE_UINT,

@@ -15,7 +15,7 @@
                  file_, line_, __VA_ARGS__)
 
 static struct analyzer_testdriver i_analyzer_test_driver_;
- bool analyzer_testdriver_init(struct analyzer_testdriver *d)
+bool analyzer_testdriver_init(struct analyzer_testdriver *d)
 {
     darray_init(d->types);
     return true;

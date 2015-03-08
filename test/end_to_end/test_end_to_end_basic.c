@@ -131,6 +131,7 @@ START_TEST(test_greater_than) {
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
+        "c:f32 = 3.14\n"
         "if a > 100 {\n"
         "    print(\"expected\")\n"
         "}\n"
@@ -143,10 +144,15 @@ START_TEST(test_greater_than) {
         "if b > 2938349 {\n"
         "    print(\"won't see me\")\n"
         "}\n"
+        "if c > 14.532 {\n"
+        "    print(\"nope\")\n"
+        "} else {\n"
+        "    print(\" here\")\n"
+        "}\n"
         "return 1\n"
         "}"
     );
-    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 

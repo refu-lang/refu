@@ -71,7 +71,7 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
     LLVMTypeRef val_type = LLVMTypeOf(val);
     if (val_type != type) {
         // we have to do typecasts
-        if (val_type == LLVMDoubleType()) {
+        if (val_type == LLVMDoubleType() || val_type == LLVMFloatType()) {
             val = LLVMBuildFPCast(ctx->builder, val, type, "");
         } else if (val_type == LLVMInt8Type() || val_type == LLVMInt16Type() ||
                    val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {

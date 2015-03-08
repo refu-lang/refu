@@ -291,6 +291,9 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
     LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx);
+    enum elementary_type_category elementary_type;
+    LLVMIntPredicate llvm_int_compare_type;
+    LLVMRealPredicate llvm_real_compare_type;
     if (ast_node_is_elementary_identifier(left)) {
         // then we actually need to load the value from memory
         llvm_left = LLVMBuildLoad(ctx->builder, llvm_left, "");
@@ -306,15 +309,37 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
                                                              ast_binaryop_common_type(n),
                                                              ctx);
 
+
+    elementary_type = type_elementary_get_category(ast_binaryop_common_type(n));
     switch(ast_binaryop_op(n)) {
     case BINARYOP_CMP_GT:
-        return LLVMBuildICmp(ctx->builder, LLVMIntUGE, llvm_left, llvm_right, "");
+        switch (elementary_type) {
+        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
+            llvm_int_compare_type = LLVMIntSGT;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
+            llvm_int_compare_type = LLVMIntUGT;
+            break;
+        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
+            llvm_real_compare_type = LLVMRealOGT;
+            break;
+        default:
+            RF_ASSERT(false, "Illegal operand types at greater than comparison code generation");
+            return NULL;
+        }
+        break;
+
     default:
         RF_ASSERT(false, "Illegal binary operation type at comparison code generation");
-        break;
+        return NULL;
     }
 
-    return NULL;
+    if (elementary_type == ELEMENTARY_TYPE_CATEGORY_FLOAT) {
+        // note: All FCMP operations are ordered for now
+        return LLVMBuildFCmp(ctx->builder, llvm_real_compare_type, llvm_left, llvm_right, "");
+    }
+    // else
+    return LLVMBuildICmp(ctx->builder, llvm_int_compare_type, llvm_left, llvm_right, "");
 }
 
 static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
