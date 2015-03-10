@@ -125,10 +125,17 @@ void ast_node_destroy(struct ast_node *n)
         ast_node_destroy(child);
     }
 
-    // free node unless it's an identifier still at lexing/parsing phase
-    if (n->owner != AST_OWNEDBY_LEXER && n->type != AST_IDENTIFIER) {
+    // free node unless it's a value node still at lexing/parsing phase
+    /* if (!(n->owner == AST_OWNEDBY_LEXER && n->type == AST_IDENTIFIER)) { */
+    if (!(n->owner == AST_OWNEDBY_LEXER && ast_node_has_value(n))) {
         free(n);
     }
+}
+
+void ast_node_destroy_from_lexer(struct ast_node *n)
+{
+    n->owner = AST_OWNEDBY_PARSER;
+    ast_node_destroy(n);
 }
 
 void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start)
@@ -174,6 +181,7 @@ i_INLINE_INS struct inplocation *ast_node_location(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
 i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
 i_INLINE_INS enum ast_type ast_node_type(struct ast_node *n);
+i_INLINE_INS bool ast_node_has_value(const struct ast_node *n);
 i_INLINE_INS const struct type *ast_expression_get_type(struct ast_node *expr);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)

@@ -117,6 +117,11 @@ struct ast_node *ast_node_create_ptrs(enum ast_type type,
                                       char *sp, char *ep);
 
 void ast_node_destroy(struct ast_node *n);
+/**
+ * Destroy node if it's a token generated ast node and needs
+ * to be destroyed during lexer destruction.
+ */
+void ast_node_destroy_from_lexer(struct ast_node *n);
 
 void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start);
 void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
@@ -188,6 +193,13 @@ i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
 i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
 {
     return n->type;
+}
+
+i_INLINE_DECL bool ast_node_has_value(const struct ast_node *n)
+{
+    return n->type == AST_IDENTIFIER ||
+        n->type == AST_STRING_LITERAL ||
+        n->type == AST_CONSTANT_NUMBER;
 }
 
 i_INLINE_DECL const struct type *ast_expression_get_type(struct ast_node *expr)

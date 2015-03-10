@@ -16,13 +16,13 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
     struct ast_node *genr = NULL;
     struct inplocation_mark *start;
     enum parser_fndecl_list_err err;
-
+    
     tok = lexer_lookahead(p->lexer, 1);
-
     if (!tok || tok->type != TOKEN_KW_TYPECLASS) {
         return NULL;
     }
     start = token_get_start(tok);
+    lexer_push(p->lexer);
 
     //consume typeclass keyword
     lexer_next_token(p->lexer);
@@ -86,8 +86,9 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
                       RF_STR_PF_ARG(ast_identifier_str(name)));
         goto err_free_typeclass;
     }
-    ast_node_set_end(n, token_get_end(tok));
 
+    ast_node_set_end(n, token_get_end(tok));
+    lexer_pop(p->lexer);
     return n;
 
 err_free_genr:
@@ -101,6 +102,7 @@ err_free_typeclass:
         ast_node_destroy(n);
     }
 err:
+    lexer_rollback(p->lexer);
     return NULL;
 }
 

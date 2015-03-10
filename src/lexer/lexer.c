@@ -121,7 +121,7 @@ void lexer_deinit(struct lexer *l)
         case TOKEN_CONSTANT_INTEGER:
         case TOKEN_CONSTANT_FLOAT:
             if (tok->value.owned_by_lexer) {
-                ast_node_destroy(tok->value.v);
+                ast_node_destroy_from_lexer(tok->value.v);
             }
             break;
         default: //do nothing
@@ -542,10 +542,21 @@ void lexer_pop(struct lexer *l)
 
 void lexer_rollback(struct lexer *l)
 {
-    // TODO: Must be able to change ownership of identifiers that got scanned back to the lexer
     unsigned int idx;
+    unsigned int i;
+    struct token *tok;
     RF_ASSERT(!darray_empty(l->indices),
               "lexer_rollback called with empty array");
     idx = darray_pop(l->indices);
+    RF_ASSERT(l->tok_index >= idx, "asked to rollback to a token ahead of us?");
+    // make sure that all tokens in between now and rollback belong to the lexer
+    i = darray_size(l->tokens) - 1;
+    darray_foreach_reverse(tok, l->tokens) {
+        if (i <= l->tok_index && i >= idx) {
+            tok->value.owned_by_lexer = true;
+        }
+        --i;
+    }
+    // set new token index
     l->tok_index = idx;
 }

@@ -14,10 +14,16 @@
 
 static struct ast_node *parser_acc_stmt(struct parser *p);
 
-static bool finalize_parsing(struct ast_node *n, void *user_arg)
+static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
 {
+    (void) user_arg;
     n->owner = AST_OWNEDBY_PARSER;
     return true;
+}
+
+void parser_finalize_parsing(struct ast_node *n)
+{
+    ast_pre_traverse_tree(n, do_finalize_parsing, NULL);
 }
 
 bool parser_process_file(struct parser *p)
@@ -36,7 +42,7 @@ bool parser_process_file(struct parser *p)
     }
 
     // at the end of parsing let's signify that all of the nodes are owned by the parser
-    ast_pre_traverse_tree(p->root, finalize_parsing, NULL);
+    parser_finalize_parsing(p->root);
     return true;
 }
 

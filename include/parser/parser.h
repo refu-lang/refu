@@ -60,4 +60,9 @@ i_INLINE_DECL void parser_inject_input_file(struct parser *p, struct inpfile *f)
     p->file = f;
 }
 
+/**
+ * Mark all children of node @a n as finalized after parsing
+ */
+void parser_finalize_parsing(struct ast_node *n);
+
 #endif

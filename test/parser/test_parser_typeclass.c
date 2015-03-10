@@ -343,7 +343,7 @@ START_TEST(test_acc_typeclass_err6) {
             MESSAGE_SYNTAX_ERROR,
             "Expected a proper function declaration "
             "inside typeclass \"pointers\"",
-            2, 0),
+            1, 1),
 
     };
     ck_assert_parser_errors(d->front.info, errors);

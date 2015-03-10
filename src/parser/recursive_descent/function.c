@@ -23,12 +23,11 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     struct inplocation_mark *end;
 
     tok = lexer_lookahead(p->lexer, 1);
-
     if (!tok || tok->type != TOKEN_KW_FUNCTION) {
         return NULL;
     }
     start = token_get_start(tok);
-
+    lexer_push(p->lexer);
     //consume function keyword
     lexer_next_token(p->lexer);
 
@@ -96,6 +95,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
         RF_ERRNOMEM();
         goto err_free_rettype;
     }
+    lexer_pop(p->lexer);
     return n;
 
 err_free_rettype:
@@ -113,6 +113,7 @@ err_free_genr:
 err_free_name:
     ast_node_destroy(name);
 err:
+    lexer_rollback(p->lexer);
     return NULL;
 }
 

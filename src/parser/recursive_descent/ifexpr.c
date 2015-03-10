@@ -63,14 +63,14 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
         return NULL;
     }
     start = token_get_start(tok);
-
     // consume 'if' or 'elif'
     lexer_next_token(p->lexer);
+    lexer_push(p->lexer);
 
     // parse the taken branch
     branch = parser_acc_condbranch(p, tok);
     if (!branch) {
-        return NULL;
+        goto err;
     }
 
     // create the if expression
@@ -79,7 +79,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
     if (!n) {
         ast_node_destroy(branch);
         RF_ERRNOMEM();
-        return NULL;
+        goto err;
     }
 
     tok = lexer_lookahead(p->lexer, 1);
@@ -89,7 +89,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
             branch = parser_acc_ifexpr(p, TOKEN_KW_ELIF);
             if (!branch) {
                 // error reporting should already happen in parser_acc_ifexpr()
-                goto fail;
+                goto err_free;
             }
         } else { //can only be an else
             lexer_next_token(p->lexer); // consume it
@@ -97,7 +97,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
             if (!branch) {
                 parser_synerr(p, token_get_end(tok), NULL,
                               "Expected a block after 'else'");
-                goto fail;
+                goto err_free;
             }
         }
 
@@ -106,9 +106,12 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
         tok = lexer_lookahead(p->lexer, 1);
     }
 
+    lexer_pop(p->lexer);
     return n;
 
-fail:
+err_free:
     ast_node_destroy(n);
+err:
+    lexer_rollback(p->lexer);
     return NULL;
 }

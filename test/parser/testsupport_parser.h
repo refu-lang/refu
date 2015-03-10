@@ -21,6 +21,7 @@ struct inpfile;
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,\
                                      &temp_location_.end, __VA_ARGS__);  \
+        node_->owner = AST_OWNEDBY_PARSER;                              \
     } while(0)
 
 #define i_testsupport_parser_node_create0(node_, type_,                 \
@@ -30,6 +31,7 @@ struct inpfile;
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,             \
                                      &temp_location_.end);              \
+        node_->owner = AST_OWNEDBY_PARSER;                              \
     } while(0)
 
 /**
@@ -42,6 +44,7 @@ struct inpfile;
     do {                                                                \
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_constantnum_create_##type_(&temp_location_, value_); \
+        node_->owner = AST_OWNEDBY_PARSER;                              \
     } while (0)
 
 /**
@@ -54,6 +57,7 @@ struct inpfile;
     do {                                                                \
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
         node_ = ast_string_literal_create(&temp_location_);             \
+        node_->owner = AST_OWNEDBY_PARSER;                              \
     } while (0)
 
 /**
@@ -68,6 +72,7 @@ struct inpfile;
             node_ = ast_block_create();                                 \
             ast_node_set_start(node_, &temp_location_.start);           \
             ast_node_set_end(node_, &temp_location_.end);               \
+            node_->owner = AST_OWNEDBY_PARSER;                          \
         } while (0)
 
 /**
@@ -110,6 +115,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             node_ = parser_acc_##type_((driver_)->front.parser, __VA_ARGS__); \
             ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
             check_ast_match(n, target_, (driver_)->front.file);        \
+            parser_finalize_parsing(node_);                            \
         } while (0)
 
 #define i_ck_test_parse_as0(node_, type_, driver_,  node_name, target_)    \
@@ -118,6 +124,7 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             node_ = parser_acc_##type_((driver_)->front.parser);        \
             ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
             check_ast_match(n, target_, (driver_)->front.file);        \
+            parser_finalize_parsing(node_);                            \
         } while (0)
 
 

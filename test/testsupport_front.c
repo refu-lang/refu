@@ -198,7 +198,10 @@ static inline struct ast_node *front_testdriver_node_from_loc(
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
 {
     struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
-    return ast_node_create_loc(type, &temp_loc);
+    struct ast_node *ret = ast_node_create_loc(type, &temp_loc);
+    // since this is testing code change owner so that it gets properly freed
+    ret->owner = AST_OWNEDBY_PARSER;
+    return ret;
 }
 
 struct ast_node *front_testdriver_generate_identifier(
@@ -231,6 +234,7 @@ struct ast_node *front_testdriver_generate_string_literal(
     if (!ret) {
         return NULL;
     }
+    ret->owner = AST_OWNEDBY_PARSER;
     darray_append(d->nodes, ret);
     return ret;
 }
@@ -246,6 +250,7 @@ struct ast_node *front_testdriver_generate_constant_float(
     if (!ret) {
         return NULL;
     }
+    ret->owner = AST_OWNEDBY_PARSER;
     darray_append(d->nodes, ret);
     return ret;
 }
@@ -261,6 +266,7 @@ struct ast_node *front_testdriver_generate_constant_integer(
     if (!ret) {
         return NULL;
     }
+    ret->owner = AST_OWNEDBY_PARSER;
     darray_append(d->nodes, ret);
     return ret;
 }
