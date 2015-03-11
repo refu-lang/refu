@@ -317,14 +317,12 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
                       "Expected data description for data declaration "
                       "of \""RF_STR_PF_FMT"\"",
                       RF_STR_PF_ARG(ast_identifier_str(name)));
-        ast_node_destroy(name);
         goto not_found;
     }
 
     /* from here and on we throw syntax errors if something goes wrong */
     data_decl = ast_typedecl_create(start, NULL, name, desc);
     if (!data_decl) {//memory error
-        ast_node_destroy(name);
         ast_node_destroy(desc);
         goto not_found;
     }

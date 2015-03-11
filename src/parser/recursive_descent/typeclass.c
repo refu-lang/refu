@@ -41,7 +41,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
                       "Expected a generic declaration for typeclass \""
                       RF_STR_PF_FMT"\" after identifier",
                       RF_STR_PF_ARG(ast_identifier_str(name)));
-        goto err_free_name;
+        goto err_free_genr;
     }
 
     tok = lexer_next_token(p->lexer);
@@ -95,8 +95,6 @@ err_free_genr:
     if (genr) {
         ast_node_destroy(genr);
     }
-err_free_name:
-    ast_node_destroy(name);
 err_free_typeclass:
     if (n) {
         ast_node_destroy(n);
@@ -140,7 +138,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
                       "Expected an identifier for the name of \""RF_STR_PF_FMT"\" "
                       "typeclass instance",
                       RF_STR_PF_ARG(ast_identifier_str(class_name)));
-        goto err_free_classname;
+        goto err;
     }
 
     genr = parser_acc_genrdecl(p);
@@ -150,7 +148,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
                       RF_STR_PF_FMT"\" after type name \""RF_STR_PF_FMT"\"",
                       RF_STR_PF_ARG(ast_identifier_str(class_name)),
                       RF_STR_PF_ARG(ast_identifier_str(type_name)));
-        goto err_free_typename;
+        goto err;
     }
 
     tok = lexer_next_token(p->lexer);
@@ -209,10 +207,6 @@ err_free_genr:
     if (genr) {
         ast_node_destroy(genr);
     }
-err_free_typename:
-    ast_node_destroy(type_name);
-err_free_classname:
-    ast_node_destroy(class_name);
 err_free_typeinstance:
     if (n) {
         ast_node_destroy(n);

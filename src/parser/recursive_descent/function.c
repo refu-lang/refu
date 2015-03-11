@@ -42,7 +42,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     if (GENRDECL_START_COND(tok)) {
         genr = parser_acc_genrdecl(p);
         if (!genr) {
-            goto err_free_name;
+            goto err;
         }
     }
 
@@ -110,8 +110,6 @@ err_free_genr:
     if (genr) {
         ast_node_destroy(genr);
     }
-err_free_name:
-    ast_node_destroy(name);
 err:
     lexer_rollback(p->lexer);
     return NULL;
