@@ -56,8 +56,8 @@ void info_print_cond(int vlevel, const char *fmt, ...)
 
 bool i_info_ctx_add_msg(struct info_ctx *ctx,
                         enum info_msg_type type,
-                        struct inplocation_mark *start,
-                        struct inplocation_mark *end,
+                        const struct inplocation_mark *start,
+                        const struct inplocation_mark *end,
                         const char *fmt,
                         ...)
 {

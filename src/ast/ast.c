@@ -39,7 +39,7 @@ static const struct RFstring ast_type_strings[] = {
 
 void ast_node_init(struct ast_node * n, enum ast_type type)
 {
-    n->owner = AST_OWNEDBY_LEXER;
+    n->state = AST_NODE_STATE_CREATED;
     n->type = type;
     n->expression_type = NULL;
     rf_ilist_head_init(&n->children);
@@ -66,8 +66,8 @@ struct ast_node *ast_node_create_loc(enum ast_type type,
 }
 
 struct ast_node *ast_node_create_marks(enum ast_type type,
-                                       struct inplocation_mark *start,
-                                       struct inplocation_mark *end)
+                                       const struct inplocation_mark *start,
+                                       const struct inplocation_mark *end)
 {
 
     struct ast_node *ret;
@@ -101,7 +101,7 @@ void ast_node_destroy(struct ast_node *n)
     struct ast_node *tmp;
 
     /* type specific destruction  -- only if owned by analyzer and after */
-    if (n->owner >= AST_OWNEDBY_ANALYZER_PASS1) {
+    if (n->state >= AST_NODE_STATE_ANALYZER_PASS1) {
         switch(n->type) {
         case AST_ROOT:
             symbol_table_deinit(ast_root_symbol_table_get(n));
@@ -126,24 +126,25 @@ void ast_node_destroy(struct ast_node *n)
     }
 
     // free node unless it's a value node still at lexing/parsing phase
-    /* if (!(n->owner == AST_OWNEDBY_LEXER && n->type == AST_IDENTIFIER)) { */
-    if (!(n->owner == AST_OWNEDBY_LEXER && ast_node_has_value(n))) {
+    /* if (!(n->state == AST_NODE_STATE_CREATED && ast_node_has_value(n))) { */
+    if (!(n->state <= AST_NODE_STATE_VALUE_OWNED_BY_PARSER && ast_node_has_value(n))) {
         free(n);
     }
 }
 
 void ast_node_destroy_from_lexer(struct ast_node *n)
 {
-    n->owner = AST_OWNEDBY_PARSER;
+    RF_ASSERT(ast_node_has_value(n), "Requested to destroy a non value node from lexer");
+    n->state = AST_NODE_STATE_AFTER_PARSING;
     ast_node_destroy(n);
 }
 
-void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start)
+void ast_node_set_start(struct ast_node *n, const struct inplocation_mark *start)
 {
     inplocation_set_start(&n->location, start);
 }
 
-void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end)
+void ast_node_set_end(struct ast_node *n, const struct inplocation_mark *end)
 {
     inplocation_set_end(&n->location, end);
 }

@@ -19,8 +19,8 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     struct ast_node *genr = NULL;
     struct ast_node *args = NULL;
     struct ast_node *ret_type = NULL;
-    struct inplocation_mark *start;
-    struct inplocation_mark *end;
+    const struct inplocation_mark *start;
+    const struct inplocation_mark *end;
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || tok->type != TOKEN_KW_FUNCTION) {

@@ -14,7 +14,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
     struct token *tok;
     struct ast_node *name;
     struct ast_node *genr = NULL;
-    struct inplocation_mark *start;
+    const struct inplocation_mark *start;
     enum parser_fndecl_list_err err;
     
     tok = lexer_lookahead(p->lexer, 1);
@@ -111,7 +111,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
     struct ast_node *class_name;
     struct ast_node *type_name;
     struct ast_node *genr = NULL;
-    struct inplocation_mark *start;
+    const struct inplocation_mark *start;
     enum parser_fnimpl_list_err err;
 
     tok = lexer_lookahead(p->lexer, 1);

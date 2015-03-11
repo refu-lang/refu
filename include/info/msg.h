@@ -28,8 +28,8 @@ i_INLINE_DECL bool info_msg_has_end_mark(struct info_msg *msg)
 }
 
 struct info_msg *info_msg_create(enum info_msg_type type,
-                                 struct inplocation_mark *start,
-                                 struct inplocation_mark *end,
+                                 const struct inplocation_mark *start,
+                                 const struct inplocation_mark *end,
                                  const char *fmt,
                                  va_list args);
 void info_msg_destroy(struct info_msg *m);

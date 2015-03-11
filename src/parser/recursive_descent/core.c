@@ -17,7 +17,7 @@ static struct ast_node *parser_acc_stmt(struct parser *p);
 static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
 {
     (void) user_arg;
-    n->owner = AST_OWNEDBY_PARSER;
+    n->state = AST_NODE_STATE_AFTER_PARSING;
     return true;
 }
 

@@ -3,8 +3,8 @@
 #include <lexer/tokens.h>
 #include <lexer/lexer.h>
 
-struct ast_node *ast_binaryop_create(struct inplocation_mark *start,
-                                     struct inplocation_mark *end,
+struct ast_node *ast_binaryop_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end,
                                      enum binaryop_type type,
                                      struct ast_node *left,
                                      struct ast_node *right)
@@ -135,8 +135,8 @@ i_INLINE_INS const struct type *ast_binaryop_common_type(struct ast_node *op);
 
 /* -- unary operator related functions -- */
 
-struct ast_node *ast_unaryop_create(struct inplocation_mark *start,
-                                    struct inplocation_mark *end,
+struct ast_node *ast_unaryop_create(const struct inplocation_mark *start,
+                                    const struct inplocation_mark *end,
                                     enum unaryop_type type,
                                     struct ast_node *operand)
 {

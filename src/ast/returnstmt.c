@@ -1,7 +1,7 @@
 #include <ast/returnstmt.h>
 
-struct ast_node *ast_returnstmt_create(struct inplocation_mark *start,
-                                       struct inplocation_mark *end,
+struct ast_node *ast_returnstmt_create(const struct inplocation_mark *start,
+                                       const struct inplocation_mark *end,
                                        struct ast_node *expr)
 {
     struct ast_node *ret;

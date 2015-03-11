@@ -41,7 +41,7 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
                                                    const struct analyzer *a)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER || AST_XIDENTIFIER);
-    RF_ASSERT(n->owner >= AST_OWNEDBY_ANALYZER_PASS1,
+    RF_ASSERT(n->state >= AST_NODE_STATE_ANALYZER_PASS1,
               "calling function at wrong part of processing pipeline");
 
     if (n->type == AST_IDENTIFIER) {
@@ -61,7 +61,7 @@ bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
 uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    if (n->owner == AST_OWNEDBY_PARSER) {
+    if (n->state == AST_NODE_STATE_AFTER_PARSING) {
         ast_identifier_hash_create(n, a);
     }
     return n->identifier.hash;
@@ -70,8 +70,8 @@ uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *
 
 /* -- xidentifier functions -- */
 
-struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
-                                        struct inplocation_mark *end,
+struct ast_node *ast_xidentifier_create(const struct inplocation_mark *start,
+                                        const struct inplocation_mark *end,
                                         struct ast_node *id,
                                         bool is_constant,
                                         struct ast_node *genr)

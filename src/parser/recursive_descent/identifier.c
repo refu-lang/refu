@@ -15,8 +15,8 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
     struct ast_node *xid;
     struct ast_node *genr;
     bool is_const = false;
-    struct inplocation_mark *start;
-    struct inplocation_mark *end;
+    const struct inplocation_mark *start;
+    const struct inplocation_mark *end;
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {

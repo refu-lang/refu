@@ -69,6 +69,12 @@ static struct RFstring strings_[] = {
 
 };
 
+i_INLINE_INS const struct inplocation *token_get_loc(const struct token *tok);
+i_INLINE_INS const struct inplocation_mark *token_get_start(const struct token *tok);
+i_INLINE_INS const struct inplocation_mark *token_get_end(const struct token *tok);
+i_INLINE_INS bool token_has_value(const struct token *tok);
+i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
+
 const struct RFstring *tokentype_to_str(enum token_type type)
 {
     BUILD_ASSERT(sizeof(strings_) / sizeof(struct RFstring) == TOKENS_MAX);

@@ -10,8 +10,8 @@
 struct ast_node;
 struct inplocation_mark;
 
-struct ast_node *ast_condbranch_create(struct inplocation_mark *start,
-                                       struct inplocation_mark *end,
+struct ast_node *ast_condbranch_create(const struct inplocation_mark *start,
+                                       const struct inplocation_mark *end,
                                        struct ast_node *cond,
                                        struct ast_node *body);
 
@@ -27,8 +27,8 @@ i_INLINE_DECL struct ast_node *ast_condbranch_body_get(struct ast_node *n)
     return n->condbranch.body;
 }
 
-struct ast_node *ast_ifexpr_create(struct inplocation_mark *start,
-                                   struct inplocation_mark *end,
+struct ast_node *ast_ifexpr_create(const struct inplocation_mark *start,
+                                   const struct inplocation_mark *end,
                                    struct ast_node *taken_branch,
                                    struct ast_node *fall_through_branch);
 

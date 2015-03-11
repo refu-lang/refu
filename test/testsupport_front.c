@@ -200,7 +200,7 @@ static inline struct ast_node *front_testdriver_node_from_loc(
     struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
     struct ast_node *ret = ast_node_create_loc(type, &temp_loc);
     // since this is testing code change owner so that it gets properly freed
-    ret->owner = AST_OWNEDBY_PARSER;
+    ret->state = AST_NODE_STATE_AFTER_PARSING;
     return ret;
 }
 
@@ -214,6 +214,7 @@ struct ast_node *front_testdriver_generate_identifier(
     if (!ret) {
         return NULL;
     }
+    ret->state = AST_NODE_STATE_AFTER_PARSING;
     RF_STRING_SHALLOW_INIT(&ret->identifier.string, (char*)s, strlen(s));
     darray_append(d->nodes, ret);
     return ret;
@@ -234,7 +235,7 @@ struct ast_node *front_testdriver_generate_string_literal(
     if (!ret) {
         return NULL;
     }
-    ret->owner = AST_OWNEDBY_PARSER;
+    ret->state = AST_NODE_STATE_AFTER_PARSING;
     darray_append(d->nodes, ret);
     return ret;
 }
@@ -250,7 +251,7 @@ struct ast_node *front_testdriver_generate_constant_float(
     if (!ret) {
         return NULL;
     }
-    ret->owner = AST_OWNEDBY_PARSER;
+    ret->state = AST_NODE_STATE_AFTER_PARSING;
     darray_append(d->nodes, ret);
     return ret;
 }
@@ -266,7 +267,7 @@ struct ast_node *front_testdriver_generate_constant_integer(
     if (!ret) {
         return NULL;
     }
-    ret->owner = AST_OWNEDBY_PARSER;
+    ret->state = AST_NODE_STATE_AFTER_PARSING;
     darray_append(d->nodes, ret);
     return ret;
 }

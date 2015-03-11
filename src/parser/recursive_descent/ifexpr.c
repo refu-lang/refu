@@ -54,7 +54,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
     struct ast_node *n;
     struct ast_node *branch;
     struct token *tok;
-    struct inplocation_mark *start;
+    const struct inplocation_mark *start;
 
     RF_ASSERT(if_type == TOKEN_KW_IF || if_type == TOKEN_KW_ELIF,
               "parse_ifexp called with invalid token type");

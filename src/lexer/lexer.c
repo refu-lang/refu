@@ -4,15 +4,11 @@
 #include <ast/constant_num.h>
 #include <ast/string_literal.h>
 
+#include <lexer/tokens.h>
 #include "tokens_htable.h" /* include the gperf generated hash table */
 #include "common.h"
 
 static struct inplocation_mark i_file_start_loc_ = LOCMARK_INIT_ZERO();
-
-i_INLINE_INS struct inplocation *token_get_loc(struct token *tok);
-i_INLINE_INS struct inplocation_mark *token_get_start(struct token *tok);
-i_INLINE_INS struct inplocation_mark *token_get_end(struct token *tok);
-i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
 
 static inline bool token_init(struct token *t,
                               enum token_type type,
@@ -115,17 +111,9 @@ void lexer_deinit(struct lexer *l)
     struct token *tok;
 
     darray_foreach(tok, l->tokens) {
-        switch (tok->type) {
-        case TOKEN_IDENTIFIER:
-        case TOKEN_STRING_LITERAL:
-        case TOKEN_CONSTANT_INTEGER:
-        case TOKEN_CONSTANT_FLOAT:
-            if (tok->value.owned_by_lexer) {
-                ast_node_destroy_from_lexer(tok->value.v);
-            }
-            break;
-        default: //do nothing
-            break;
+        /* if (token_has_value(tok) && tok->value.v->state == AST_NODE_STATE_CREATED) { */
+        if (token_has_value(tok) && tok->value.owned_by_lexer) {
+            ast_node_destroy_from_lexer(tok->value.v);
         }
     }
 
@@ -139,7 +127,7 @@ void lexer_destroy(struct lexer *l)
     free(l);
 }
 
-static struct inplocation_mark *lexer_get_last_token_loc_start(struct lexer *l)
+static const struct inplocation_mark *lexer_get_last_token_loc_start(struct lexer *l)
 {
     if (darray_empty(l->tokens)) {
         return &i_file_start_loc_;
@@ -549,11 +537,12 @@ void lexer_rollback(struct lexer *l)
               "lexer_rollback called with empty array");
     idx = darray_pop(l->indices);
     RF_ASSERT(l->tok_index >= idx, "asked to rollback to a token ahead of us?");
-    // make sure that all tokens in between now and rollback belong to the lexer
+    // make sure that all value tokens in between now and rollback belong to the lexer
     i = darray_size(l->tokens) - 1;
     darray_foreach_reverse(tok, l->tokens) {
-        if (i <= l->tok_index && i >= idx) {
+        if (i <= l->tok_index && i >= idx && token_has_value(tok)) {
             tok->value.owned_by_lexer = true;
+            tok->value.v->state = AST_NODE_STATE_CREATED;
         }
         --i;
     }

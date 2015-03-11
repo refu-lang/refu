@@ -4,8 +4,8 @@
 
 /* -- function declaration functions -- */
 
-struct ast_node *ast_fndecl_create(struct inplocation_mark *start,
-                                   struct inplocation_mark *end,
+struct ast_node *ast_fndecl_create(const struct inplocation_mark *start,
+                                   const struct inplocation_mark *end,
                                    enum fndecl_position pos,
                                    struct ast_node *name,
                                    struct ast_node *genr,
@@ -71,8 +71,8 @@ i_INLINE_INS struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *n
 
 /* -- function call functions -- */
 
-struct ast_node *ast_fncall_create(struct inplocation_mark *start,
-                                   struct inplocation_mark *end,
+struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
+                                   const struct inplocation_mark *end,
                                    struct ast_node *name,
                                    struct ast_node *args,
                                    struct ast_node *genr)

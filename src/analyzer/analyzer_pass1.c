@@ -220,7 +220,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         break;
     case AST_IDENTIFIER:
         // create identifier hash and dissasociate from the file
-        RF_ASSERT(n->owner == AST_OWNEDBY_PARSER,
+        RF_ASSERT(n->state == AST_NODE_STATE_AFTER_PARSING,
                   "Attempting to create identifier hash for node in a wrong "
                   "state of processing");
         if (!ast_identifier_hash_create(n, ctx->a)) {
@@ -229,7 +229,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         break;
     case AST_STRING_LITERAL:
         // create literal hash and dissasociate from the file
-        RF_ASSERT(n->owner == AST_OWNEDBY_PARSER,
+        RF_ASSERT(n->state == AST_NODE_STATE_AFTER_PARSING,
                   "Attempting to create literal hash for node in a wrong state "
                   "of processing");
         if (!ast_string_literal_hash_create(n, ctx->a)) {
@@ -243,7 +243,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
 
     // since this is the very first pass of the analyzer and should happen
     // only once, change node ownership here
-    n->owner = AST_OWNEDBY_ANALYZER_PASS1;
+    n->state = AST_NODE_STATE_ANALYZER_PASS1;
     return true;
 }
 

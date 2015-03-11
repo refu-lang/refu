@@ -90,7 +90,6 @@ local_env.Append(CPPDEFINES={
 local_env.Append(CPPPATH=[os.path.abspath('include')])
 local_env.Append(LIBS=[clib_static, 'pthread'])
 local_env.Append(LIBPATH=local_env['CLIB_DIR'])
-local_env.Append(CCFLAGS=['-Wall'])
 
 # compile with LLVM support
 linker_exec = 'gcc'

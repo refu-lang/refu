@@ -43,8 +43,8 @@ i_INLINE_DECL struct ast_node *ast_types_right(struct ast_node *n)
 
 /* -- type operator functions -- */
 
-struct ast_node *ast_typeop_create(struct inplocation_mark *start,
-                                   struct inplocation_mark *end,
+struct ast_node *ast_typeop_create(const struct inplocation_mark *start,
+                                   const struct inplocation_mark *end,
                                    enum typeop_type type,
                                    struct ast_node *left,
                                    struct ast_node *right);
@@ -79,8 +79,8 @@ i_INLINE_DECL struct ast_node *ast_typeop_right(struct ast_node *n)
 
 /* -- type description functions -- */
 
-struct ast_node *ast_typedesc_create(struct inplocation_mark *start,
-                                     struct inplocation_mark *end,
+struct ast_node *ast_typedesc_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end,
                                      struct ast_node *left,
                                      struct ast_node *right);
 
@@ -133,8 +133,8 @@ i_INLINE_DECL bool ast_typedesc_type_is_composite(struct ast_node *n)
 
 /* -- type declaration functions -- */
 
-struct ast_node *ast_typedecl_create(struct inplocation_mark *start,
-                                     struct inplocation_mark *end,
+struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end,
                                      struct ast_node *name,
                                      struct ast_node *desc);
 

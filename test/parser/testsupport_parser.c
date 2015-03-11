@@ -80,6 +80,6 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
                                                  ecol);
     struct ast_node *n = ast_identifier_create(&temp_location_);
     // since this is testing make sure it's owned by the parser for proper freeing
-    n->owner = AST_OWNEDBY_PARSER;
+    n->state = AST_NODE_STATE_AFTER_PARSING;
     return n;
 }

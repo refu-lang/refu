@@ -15,7 +15,7 @@ static struct ast_node *parser_acc_return_statement(struct parser *p)
     struct token *tok;
     struct ast_node *expr;
     struct ast_node *n = NULL;
-    struct inplocation_mark *start;
+    const struct inplocation_mark *start;
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {
@@ -84,8 +84,8 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     struct ast_node *n;
     struct token *tok;
     struct ast_node *element;
-    struct inplocation_mark *start = NULL;
-    struct inplocation_mark *end = NULL;
+    const struct inplocation_mark *start = NULL;
+    const struct inplocation_mark *end = NULL;
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok) {

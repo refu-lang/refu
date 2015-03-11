@@ -66,15 +66,16 @@ enum ast_type {
     AST_TYPES_COUNT /* always last */
 };
 
-enum ast_owner {
-    AST_OWNEDBY_LEXER = 0, /*!< The node is at the lexing and parsing phase */
-    AST_OWNEDBY_PARSER,    /*!< The node has gone through parsing succesfully */
-    AST_OWNEDBY_ANALYZER_PASS1, /*!< The node is at the first phase of the analyzer */
+enum ast_node_state {
+    AST_NODE_STATE_CREATED = 0,
+    AST_NODE_STATE_VALUE_OWNED_BY_PARSER,
+    AST_NODE_STATE_AFTER_PARSING,
+    AST_NODE_STATE_ANALYZER_PASS1
 };
 
 struct ast_node {
     enum ast_type type;
-    enum ast_owner owner;
+    enum ast_node_state state;
     const struct type *expression_type;
     struct inplocation location;
     struct RFilist_node lh;
@@ -110,8 +111,8 @@ struct ast_node *ast_node_create(enum ast_type type);
 struct ast_node *ast_node_create_loc(enum ast_type type,
                                      struct inplocation *loc);
 struct ast_node *ast_node_create_marks(enum ast_type type,
-                                       struct inplocation_mark *start,
-                                       struct inplocation_mark *end);
+                                       const struct inplocation_mark *start,
+                                       const struct inplocation_mark *end);
 struct ast_node *ast_node_create_ptrs(enum ast_type type,
                                       struct inpfile *f,
                                       char *sp, char *ep);
@@ -123,8 +124,8 @@ void ast_node_destroy(struct ast_node *n);
  */
 void ast_node_destroy_from_lexer(struct ast_node *n);
 
-void ast_node_set_start(struct ast_node *n, struct inplocation_mark *start);
-void ast_node_set_end(struct ast_node *n, struct inplocation_mark *end);
+void ast_node_set_start(struct ast_node *n, const struct inplocation_mark *start);
+void ast_node_set_end(struct ast_node *n, const struct inplocation_mark *end);
 
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child);

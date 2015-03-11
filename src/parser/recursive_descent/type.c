@@ -291,7 +291,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
     struct ast_node *data_decl;
     struct ast_node *name;
     struct ast_node *desc;
-    struct inplocation_mark *start;
+    const struct inplocation_mark *start;
 
     lexer_push(p->lexer);
 

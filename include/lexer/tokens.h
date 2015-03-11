@@ -1,7 +1,15 @@
 #ifndef LFR_LEXER_TOKENS_H
 #define LFR_LEXER_TOKENS_H
 
+#include <Definitions/inline.h>
+#include <Utils/sanity.h>
+
+#include <inplocation.h>
+#include <ast/ast.h>
+
 struct RFstring;
+struct token;
+
 enum token_type {
     TOKEN_IDENTIFIER = 0,
     TOKEN_CONSTANT_INTEGER,
@@ -86,6 +94,55 @@ enum token_type {
 #define TOKEN_IS_NUMERIC_CONSTANT(tok_)         \
     ((tok_)->type == TOKEN_CONSTANT_INTEGER ||  \
      (tok_)->type == TOKEN_CONSTANT_FLOAT)
+
+
+/*
+ * A token's value. Only for tokens that form a full ast_node.
+ * Also contains memory ownership semantics
+ */
+struct tok_value {
+    struct ast_node *v;
+    bool owned_by_lexer;
+};
+
+struct token {
+    enum token_type type;
+    struct inplocation location;
+    struct tok_value value;
+};
+
+i_INLINE_DECL const struct inplocation *token_get_loc(const struct token *tok)
+{
+    return &tok->location;
+}
+
+i_INLINE_DECL const struct inplocation_mark *token_get_start(const struct token *tok)
+{
+    return &tok->location.start;
+}
+
+i_INLINE_DECL const struct inplocation_mark *token_get_end(const struct token *tok)
+{
+    return &tok->location.end;
+}
+
+i_INLINE_DECL bool token_has_value(const struct token *tok)
+{
+    return tok->type == TOKEN_IDENTIFIER ||
+        tok->type == TOKEN_STRING_LITERAL ||
+        tok->type == TOKEN_CONSTANT_INTEGER ||
+        tok->type == TOKEN_CONSTANT_FLOAT;
+}
+
+// gets the value from a token. Use only after a tok->type check
+i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
+{
+    // makes sense only for these tokens
+    RF_ASSERT(token_has_value(tok), "Requesting value of illegal token type");
+    tok->value.owned_by_lexer = false;
+    tok->value.v->state = AST_NODE_STATE_VALUE_OWNED_BY_PARSER;
+    return tok->value.v;
+}
 
 const struct RFstring *tokentype_to_str(enum token_type type);
 

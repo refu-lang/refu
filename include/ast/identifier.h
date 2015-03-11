@@ -50,8 +50,8 @@ struct ast_xidentifier {
 };
 
 
-struct ast_node *ast_xidentifier_create(struct inplocation_mark *start,
-                                        struct inplocation_mark *end,
+struct ast_node *ast_xidentifier_create(const struct inplocation_mark *start,
+                                        const struct inplocation_mark *end,
                                         struct ast_node *id,
                                         bool is_constant,
                                         struct ast_node *genr);

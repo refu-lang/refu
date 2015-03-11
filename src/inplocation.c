@@ -24,15 +24,15 @@ bool inplocation_init(struct inplocation *loc,
     return true;
 }
 i_INLINE_INS void inplocation_init_marks(struct inplocation *loc,
-                                          struct inplocation_mark *start,
-                                          struct inplocation_mark *end);
+                                         const struct inplocation_mark *start,
+                                         const struct inplocation_mark *end);
 
 void inplocation_set_start(struct inplocation *loc,
-                           struct inplocation_mark *start)
+                           const struct inplocation_mark *start)
 {
     loc->start = *start;
 }
-void inplocation_set_end(struct inplocation *loc, struct inplocation_mark *end)
+void inplocation_set_end(struct inplocation *loc, const struct inplocation_mark *end)
 {
     loc->end = *end;
 }
@@ -54,9 +54,9 @@ bool inplocation_from_file(struct inplocation *loc,
 }
 
 
-i_INLINE_INS bool inplocation_mark_equal(struct inplocation_mark *m1,
-                                         struct inplocation_mark *m2);
+i_INLINE_INS bool inplocation_mark_equal(const struct inplocation_mark *m1,
+                                         const struct inplocation_mark *m2);
 i_INLINE_INS void inplocation_copy(struct inplocation *l1,
-                                   struct inplocation *l2);
-i_INLINE_INS bool inplocation_equal(struct inplocation *l1,
-                                    struct inplocation *l2);
+                                   const struct inplocation *l2);
+i_INLINE_INS bool inplocation_equal(const struct inplocation *l1,
+                                    const struct inplocation *l2);

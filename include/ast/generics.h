@@ -20,8 +20,8 @@ i_INLINE_DECL const struct RFstring *ast_genrtype_id_str(struct ast_node *n)
 
 /* -- genrdecl functions -- */
 
-struct ast_node *ast_genrdecl_create(struct inplocation_mark *start,
-                                     struct inplocation_mark *end);
+struct ast_node *ast_genrdecl_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end);
 
 /**
  * Check if an identifier string is a generic type in the declaration
@@ -35,6 +35,6 @@ struct ast_node *ast_genrdecl_string_is_genr(struct ast_node *n,
 
 /* -- genrattr functions -- */
 
-struct ast_node *ast_genrattr_create(struct inplocation_mark *start,
-                                     struct inplocation_mark *end);
+struct ast_node *ast_genrattr_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end);
 #endif
