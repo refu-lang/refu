@@ -126,7 +126,7 @@ void ast_node_destroy(struct ast_node *n)
     }
 
     // free node unless it's a value node still at lexing/parsing phase
-    if (!(n->state <= AST_NODE_STATE_VALUE_OWNED_BY_PARSER && ast_node_has_value(n))) {
+    if (!(n->state == AST_NODE_STATE_CREATED && ast_node_has_value(n))) {
         free(n);
     }
 }
@@ -134,7 +134,7 @@ void ast_node_destroy(struct ast_node *n)
 void ast_node_destroy_from_lexer(struct ast_node *n)
 {
     RF_ASSERT(ast_node_has_value(n), "Requested to destroy a non value node from lexer");
-    n->state = AST_NODE_STATE_AFTER_PARSING;
+    n->state = AST_NODE_STATE_AFTER_PARSING; // just make sure it's deleteable
     ast_node_destroy(n);
 }
 

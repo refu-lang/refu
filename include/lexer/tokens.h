@@ -137,10 +137,8 @@ i_INLINE_DECL bool token_has_value(const struct token *tok)
 // gets the value from a token. Use only after a tok->type check
 i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
 {
-    // makes sense only for these tokens
     RF_ASSERT(token_has_value(tok), "Requesting value of illegal token type");
     tok->value.owned_by_lexer = false;
-    tok->value.v->state = AST_NODE_STATE_VALUE_OWNED_BY_PARSER;
     return tok->value.v;
 }
 
