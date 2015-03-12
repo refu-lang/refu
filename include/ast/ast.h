@@ -66,11 +66,11 @@ enum ast_type {
     AST_TYPES_COUNT /* always last */
 };
 
+//! States that an ast node goes through during its lifetime
 enum ast_node_state {
-    AST_NODE_STATE_CREATED = 0,
-    AST_NODE_STATE_VALUE_OWNED_BY_PARSER,
-    AST_NODE_STATE_AFTER_PARSING,
-    AST_NODE_STATE_ANALYZER_PASS1
+    AST_NODE_STATE_CREATED = 0,   /*!< State node is in at initial creation */
+    AST_NODE_STATE_AFTER_PARSING, /*!< State after parsing has been succesfull */
+    AST_NODE_STATE_ANALYZER_PASS1 /*!< State after the first pass of the analyzer */
 };
 
 struct ast_node {

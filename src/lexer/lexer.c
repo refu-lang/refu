@@ -111,7 +111,6 @@ void lexer_deinit(struct lexer *l)
     struct token *tok;
 
     darray_foreach(tok, l->tokens) {
-        /* if (token_has_value(tok) && tok->value.v->state == AST_NODE_STATE_CREATED) { */
         if (token_has_value(tok) && tok->value.owned_by_lexer) {
             ast_node_destroy_from_lexer(tok->value.v);
         }
