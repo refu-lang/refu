@@ -6,21 +6,17 @@
 #include <RFsystem.h>
 #include <Utils/memory.h>
 
-//temporary to compile
+//temporary to compile, TODO: Remove if not used anymore
 #define BACKEND_DEFAULT 1
 #define BACKEND_INTERPRETER 2
 #define BACKEND_GCC 3
 #define BACKEND_LLVM 4
 
-//TODO: probably move the version defines elsewhere
-#define MAJOR_VERSION 0
-#define MINOR_VERSION 0
-#define PATCH_VERSION 1
+
 #define i_eval(_def) #_def
 #define i_str(_def) i_eval(_def)
-
 static const char* version_message = ""
-    "Refu language compiler ver"i_str(MAJOR_VERSION)"." i_str(MINOR_VERSION) "." i_str(PATCH_VERSION) "\n";
+    "Refu language compiler ver"i_str(RF_LANG_MAJOR_VERSION)"." i_str(RF_LANG_MINOR_VERSION) "." i_str(RF_LANG_PATCH_VERSION) "\n";
 #undef i_str
 #undef i_eval
 

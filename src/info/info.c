@@ -7,9 +7,6 @@
 #include <inplocation.h>
 #include <inpfile.h>
 
-
-#define INFO_CTX_BUFF_SIZE 512 //TODO: move somewhere else
-
 struct info_ctx *info_ctx_create(struct inpfile *f)
 {
     struct info_ctx *ctx;
@@ -17,7 +14,7 @@ struct info_ctx *info_ctx_create(struct inpfile *f)
     RF_MALLOC(ctx, sizeof(*ctx), return NULL);
     rf_ilist_head_init(&ctx->msg_list);
     ctx->msg_num = 0;
-    if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_SIZE, "")) {
+    if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_INITIAL_SIZE, "")) {
         free(ctx);
         RF_ERRNOMEM();
         return NULL;

@@ -86,7 +86,14 @@ local_env.Append(CPPDEFINES=[
     "RF_MODULE_IO",
     "RF_MODULE_IO_TEXTFILE"])
 local_env.Append(CPPDEFINES={
-    'VERBOSE_LEVEL_DEFAULT': local_env['VERBOSE_LEVEL_DEFAULT']})
+    'RF_LANG_MAJOR_VERSION': 0,
+    'RF_LANG_MINOR_VERSION': 0,
+    'RF_LANG_PATCH_VERSION': 1,
+    'VERBOSE_LEVEL_DEFAULT': local_env['VERBOSE_LEVEL_DEFAULT'],
+    'INFO_CTX_BUFF_INITIAL_SIZE': local_env['INFO_CTX_BUFF_INITIAL_SIZE'],
+    'INPUT_FILE_BUFF_INITIAL_SIZE': local_env['INPUT_FILE_BUFF_INITIAL_SIZE'],
+    'INPUT_STRING_STARTING_LINES': local_env['INPUT_STRING_STARTING_LINES']
+})
 local_env.Append(CPPPATH=[os.path.abspath('include')])
 local_env.Append(LIBS=[clib_static, 'pthread'])
 local_env.Append(LIBPATH=local_env['CLIB_DIR'])

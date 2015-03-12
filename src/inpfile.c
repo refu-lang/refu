@@ -5,9 +5,6 @@
 #include <ast/ast.h>
 #include <inpstr.h>
 
-#define INPUT_STRING_STARTING_LINES 256 // TODO: move somewhere else?
-#define FILE_BUFFER_INITIAL_SIZE 1024
-
 bool inpfile_init(struct inpfile* f,
                   const struct RFstring *name)
 {
@@ -20,7 +17,7 @@ bool inpfile_init(struct inpfile* f,
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
 
 
-    if (!rf_stringx_init_buff(&file_str, FILE_BUFFER_INITIAL_SIZE, "")) {
+    if (!rf_stringx_init_buff(&file_str, INPUT_FILE_BUFF_INITIAL_SIZE, "")) {
         RF_ERRNOMEM();
         return false;
     }
