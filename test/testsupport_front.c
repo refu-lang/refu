@@ -547,11 +547,13 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         {
             bool expect_v = ast_constant_get_bool(expect);
             bool got_v = ast_constant_get_bool(got);
-            ck_astcheck_abort(
-                filename, line,
-                "constant boolean mismatch: Got \"%s\" but expected \"%s\"",
-                got_v ? "true" : "false",
-                expect_v ? "true" : "false");
+            if (expect_v != got_v) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "constant boolean mismatch: Got \"%s\" but expected \"%s\"",
+                    got_v ? "true" : "false",
+                    expect_v ? "true" : "false");
+            }
         }
         break;
         default:
