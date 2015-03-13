@@ -54,7 +54,7 @@ struct ast_node *ast_node_create(enum ast_type type)
 }
 
 struct ast_node *ast_node_create_loc(enum ast_type type,
-                                     struct inplocation *loc)
+                                     const struct inplocation *loc)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);

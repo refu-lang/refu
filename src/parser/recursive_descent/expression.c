@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <ast/identifier.h>
 #include <ast/operators.h>
+#include <ast/constants.h>
 #include <info/info.h>
 #include <parser/parser.h>
 
@@ -70,6 +71,12 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
         return n;
+    } else if (tok->type == TOKEN_KW_TRUE || tok->type == TOKEN_KW_FALSE) {
+        n = ast_constant_create_boolean_from_tok(tok);
+        if (!n) {
+            RF_ERROR("Failure to create a constan boolean node");
+            return NULL;
+        }
     } else if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {

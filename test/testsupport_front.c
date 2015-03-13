@@ -5,7 +5,7 @@
 
 #include <ast/type.h>
 #include <ast/string_literal.h>
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/operators.h>
 #include <ast/vardecl.h>
 #include <ast/block.h>
@@ -247,7 +247,7 @@ struct ast_node *front_testdriver_generate_constant_float(
 {
     struct ast_node *ret;
     struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
-    ret = ast_constantnum_create_float(&temp_loc, val);
+    ret = ast_constant_create_float(&temp_loc, val);
     if (!ret) {
         return NULL;
     }
@@ -263,7 +263,7 @@ struct ast_node *front_testdriver_generate_constant_integer(
 {
     struct ast_node *ret;
     struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
-    ret = ast_constantnum_create_integer(&temp_loc, val);
+    ret = ast_constant_create_integer(&temp_loc, val);
     if (!ret) {
         return NULL;
     }
@@ -504,20 +504,22 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 RF_STR_PF_ARG(ast_string_literal_get_str(expect)));
         }
         break;
-    case AST_CONSTANT_NUMBER:
-        ctype = ast_constantnum_get_type(got);
-        if (ctype != ast_constantnum_get_type(expect)) {
+    case AST_CONSTANT:
+        ctype = ast_constant_get_type(got);
+        if (ctype != ast_constant_get_type(expect)) {
             ck_astcheck_abort(filename, line,
                               "constant number type mismatch for token at "
                               INPLOCATION_FMT2,
                               INPLOCATION_ARG2(ifile, &got->location));
         }
 
-        if (ctype == CONSTANT_NUMBER_INTEGER) {
+        switch (ctype) {
+        case CONSTANT_NUMBER_INTEGER:
+        {
             uint64_t expect_v;
             uint64_t got_v;
-            ck_assert(ast_constantnum_get_integer(expect, &expect_v));
-            ck_assert(ast_constantnum_get_integer(got, &got_v));
+            ck_assert(ast_constant_get_integer(expect, &expect_v));
+            ck_assert(ast_constant_get_integer(got, &got_v));
             if (expect_v != got_v) {
                 ck_astcheck_abort(
                     filename, line,
@@ -525,18 +527,34 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                     "%"PRIu64"\"",
                     got_v, expect_v);
             }
-        } else if (ctype == CONSTANT_NUMBER_FLOAT) {
+        }
+        break;
+        case CONSTANT_NUMBER_FLOAT:
+        {
             double expect_v;
             double got_v;
-            ck_assert(ast_constantnum_get_float(expect, &expect_v));
-            ck_assert(ast_constantnum_get_float(got, &got_v));
+            ck_assert(ast_constant_get_float(expect, &expect_v));
+            ck_assert(ast_constant_get_float(got, &got_v));
             if (!DBLCMP_EQ(expect_v, got_v)) {
                 ck_astcheck_abort(
                     filename, line,
                     "constant float mismatch: Got \"%f\" != expected \"%f\"",
                     got_v, expect_v);
             }
-        } else {
+        }
+        break;
+        case CONSTANT_BOOLEAN:
+        {
+            bool expect_v = ast_constant_get_bool(expect);
+            bool got_v = ast_constant_get_bool(got);
+            ck_astcheck_abort(
+                filename, line,
+                "constant boolean mismatch: Got \"%s\" but expected \"%s\"",
+                got_v ? "true" : "false",
+                expect_v ? "true" : "false");
+        }
+        break;
+        default:
             ck_astcheck_abort(filename, line, "unexpected constant number "
                               "type for token at "INPLOCATION_FMT2,
                               INPLOCATION_ARG2(ifile, &got->location));

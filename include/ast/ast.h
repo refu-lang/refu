@@ -12,7 +12,7 @@
 #include <ast/function_decls.h>
 #include <ast/string_literal_decls.h>
 #include <ast/identifier.h>
-#include <ast/constant_num_decls.h>
+#include <ast/constants_decls.h>
 #include <ast/operators_decls.h>
 #include <ast/ifexpr_decls.h>
 #include <ast/block_decls.h>
@@ -61,7 +61,7 @@ enum ast_type {
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
-    AST_CONSTANT_NUMBER,
+    AST_CONSTANT,
 
     AST_TYPES_COUNT /* always last */
 };
@@ -100,7 +100,7 @@ struct ast_node {
         struct ast_binaryop binaryop;
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;
-        struct ast_constantnum constantnum;
+        struct ast_constant constant;
         struct ast_returnstmt returnstmt;
     };
 };
@@ -109,7 +109,7 @@ void ast_node_init(struct ast_node *n, enum ast_type type);
 struct ast_node *ast_node_create(enum ast_type type);
 
 struct ast_node *ast_node_create_loc(enum ast_type type,
-                                     struct inplocation *loc);
+                                     const struct inplocation *loc);
 struct ast_node *ast_node_create_marks(enum ast_type type,
                                        const struct inplocation_mark *start,
                                        const struct inplocation_mark *end);
@@ -196,11 +196,18 @@ i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
     return n->type;
 }
 
+/**
+ * Returns true if the node has a value associated with it.
+ * Is used in the parser-lexer connection to deal with memory ownership.
+ * 
+ * The constant boolean is an exception of a node that DOES NOT return true here
+ * since the lexer does not create it
+ */
 i_INLINE_DECL bool ast_node_has_value(const struct ast_node *n)
 {
     return n->type == AST_IDENTIFIER ||
         n->type == AST_STRING_LITERAL ||
-        n->type == AST_CONSTANT_NUMBER;
+        (n->type == AST_CONSTANT && n->constant.type != CONSTANT_BOOLEAN);
 }
 
 i_INLINE_DECL const struct type *ast_expression_get_type(struct ast_node *expr)

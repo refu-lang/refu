@@ -1,7 +1,7 @@
 #include <lexer/lexer.h>
 #include <inpfile.h>
 
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/string_literal.h>
 
 #include <lexer/tokens.h>
@@ -45,7 +45,7 @@ static inline bool token_init_constant_int(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_INTEGER, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_constantnum_create_integer(&t->location, value);
+    t->value.v = ast_constant_create_integer(&t->location, value);
     t->value.owned_by_lexer = true;
     if (!t->value.v) {
         return false;
@@ -61,7 +61,7 @@ static inline bool token_init_constant_float(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_FLOAT, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_constantnum_create_float(&t->location, value);
+    t->value.v = ast_constant_create_float(&t->location, value);
     t->value.owned_by_lexer = true;
     if (!t->value.v) {
         return false;

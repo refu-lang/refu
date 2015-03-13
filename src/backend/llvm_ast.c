@@ -17,7 +17,7 @@
 #include <ast/type.h>
 #include <ast/block.h>
 #include <ast/returnstmt.h>
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/operators.h>
 #include <ast/vardecl.h>
 #include <ast/string_literal.h>
@@ -666,21 +666,28 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
         return LLVMBuildRet(ctx->builder, llvm_val);
     case AST_FUNCTION_CALL:
         return backend_llvm_function_call_compile(n, ctx);
-    case AST_CONSTANT_NUMBER:
-        if (ast_constantnum_get_type(n) == CONSTANT_NUMBER_INTEGER) {
-            if (!ast_constantnum_get_integer(n, &int_val)) {
+    case AST_CONSTANT:
+        switch (ast_constant_get_type(n)) {
+        case CONSTANT_NUMBER_INTEGER:
+            if (!ast_constant_get_integer(n, &int_val)) {
                 RF_ERROR("Failed to convert a constant num node to integer number for LLVM");
             }
             // TODO: This is not using rir_types ... also maybe get rid of ctx->current_value?
             //       if we are going to be returning it anyway?
             ctx->current_value = LLVMConstInt(LLVMInt32Type(), int_val, 0);
-        } else {
-            RF_ASSERT(ast_constantnum_get_type(n) == CONSTANT_NUMBER_FLOAT,
-                      "Only other choice for constant number type here should be float");
-            if (!ast_constantnum_get_float(n, &float_val)) {
+            break;
+        case CONSTANT_NUMBER_FLOAT:
+            if (!ast_constant_get_float(n, &float_val)) {
                 RF_ERROR("Failed to convert a constant num node to float number for LLVM");
             }
             ctx->current_value = LLVMConstReal(LLVMDoubleType(), float_val);
+            break;
+        case CONSTANT_BOOLEAN:
+            ctx->current_value = LLVMConstInt(LLVMInt1Type(), ast_constant_get_bool(n), 0);
+            break;
+        default:
+            RF_ASSERT(false, "Invalid constant type");
+            break;
         }
         return ctx->current_value;
     case AST_STRING_LITERAL:

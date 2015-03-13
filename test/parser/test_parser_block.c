@@ -12,7 +12,7 @@
 #include <ast/type.h>
 #include <ast/vardecl.h>
 #include <ast/string_literal.h>
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/returnstmt.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>

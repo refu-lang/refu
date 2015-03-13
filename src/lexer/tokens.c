@@ -19,6 +19,8 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("elif"),
     RF_STRING_STATIC_INIT("else"),
     RF_STRING_STATIC_INIT("return"),
+    RF_STRING_STATIC_INIT("true"),
+    RF_STRING_STATIC_INIT("false"),
 
     /* symbols */
     RF_STRING_STATIC_INIT(":"),
@@ -77,6 +79,7 @@ i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
 
 const struct RFstring *tokentype_to_str(enum token_type type)
 {
+    // helps make sure that the strings array is in sync with the tokens
     BUILD_ASSERT(sizeof(strings_) / sizeof(struct RFstring) == TOKENS_MAX);
 
     return &strings_[type];

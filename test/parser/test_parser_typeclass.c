@@ -12,7 +12,7 @@
 #include <ast/generics.h>
 #include <ast/block.h>
 #include <ast/operators.h>
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
 

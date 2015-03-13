@@ -35,7 +35,7 @@ struct inpfile;
     } while(0)
 
 /**
- * A utility testing macro to generate a constant number at a location
+ * A utility testing macro to generate a constant node at a location
  */
 #define testsupport_parser_constant_create(node_, file_,                \
                                            sl_, sc_, el_,               \
@@ -43,7 +43,7 @@ struct inpfile;
     struct ast_node *node_;                                             \
     do {                                                                \
         struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
-        node_ = ast_constantnum_create_##type_(&temp_location_, value_); \
+        node_ = ast_constant_create_##type_(&temp_location_, value_); \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
 

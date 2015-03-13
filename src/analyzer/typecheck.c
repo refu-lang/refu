@@ -9,7 +9,7 @@
 #include <ast/operators.h>
 #include <ast/function.h>
 #include <ast/block.h>
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/vardecl.h>
 #include <ast/ast_utils.h>
 #include <ast/returnstmt.h>
@@ -295,9 +295,9 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_constantnum(struct ast_node *n)
+static enum traversal_cb_res typecheck_constant(struct ast_node *n)
 {
-    n->expression_type = ast_constantnum_get_storagetype(n);
+    n->expression_type = ast_constant_get_storagetype(n);
     return (n->expression_type) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
 }
 
@@ -659,8 +659,8 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     case AST_TYPE_DESCRIPTION:
         ret = typecheck_typedesc(n, ctx);
         break;
-    case AST_CONSTANT_NUMBER:
-        ret = typecheck_constantnum(n);
+    case AST_CONSTANT:
+        ret = typecheck_constant(n);
         break;
     case AST_STRING_LITERAL:
         n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_STRING);

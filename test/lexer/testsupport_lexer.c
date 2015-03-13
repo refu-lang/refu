@@ -2,7 +2,7 @@
 
 #include <Utils/constcmp.h>
 
-#include <ast/constant_num.h>
+#include <ast/constants.h>
 #include <ast/string_literal.h>
 
 bool test_tokens_cmp(struct token *expected,
@@ -47,8 +47,8 @@ bool test_tokens_cmp(struct token *expected,
     } else if (expected->type == TOKEN_CONSTANT_INTEGER) {
         uint64_t expect_v;
         uint64_t got_v;
-        ck_assert(ast_constantnum_get_integer(expected->value.v, &expect_v));
-        ck_assert(ast_constantnum_get_integer(got->value.v, &got_v));
+        ck_assert(ast_constant_get_integer(expected->value.v, &expect_v));
+        ck_assert(ast_constant_get_integer(got->value.v, &got_v));
         if (expect_v != got_v) {
                 ck_lexer_abort(
                     filename, line,
@@ -60,8 +60,8 @@ bool test_tokens_cmp(struct token *expected,
     } else if (expected->type == TOKEN_CONSTANT_FLOAT) {
         double expect_v;
         double got_v;
-        ck_assert(ast_constantnum_get_float(expected->value.v, &expect_v));
-        ck_assert(ast_constantnum_get_float(got->value.v, &got_v));
+        ck_assert(ast_constant_get_float(expected->value.v, &expect_v));
+        ck_assert(ast_constant_get_float(got->value.v, &got_v));
         if (!DBLCMP_EQ(expect_v, got_v)) {
                 ck_lexer_abort(
                     filename, line,
@@ -83,7 +83,6 @@ bool test_tokens_cmp(struct token *expected,
             RF_STR_PF_ARG(ast_string_literal_get_str(expected->value.v)),
             RF_STR_PF_ARG(ast_string_literal_get_str(got->value.v)));
     }
-
 
     return true;
 }
