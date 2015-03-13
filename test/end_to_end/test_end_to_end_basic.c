@@ -311,6 +311,29 @@ START_TEST(test_less_than_or_equal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST(test_if_with_boolean) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:bool = false\n"
+        "b:bool = true\n"
+        "if (a) {\n"
+        "    print(\"yin\")"
+        "} else {\n"
+        "    print(\"yang\")\n"
+        "}\n"
+        "if (b) {\n"
+        "    print(\" yin\")"
+        "} else {\n"
+        "    print(\" yang\")\n"
+        "}\n"
+        "return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("yang yin");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -350,6 +373,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_comparisons, test_greater_than_or_equal);
     tcase_add_test(st_comparisons, test_less_than);
     tcase_add_test(st_comparisons, test_less_than_or_equal);
+    tcase_add_test(st_comparisons, test_if_with_boolean);
 
 
     suite_add_tcase(s, st_basic);

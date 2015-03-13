@@ -29,15 +29,51 @@ START_TEST(test_typecheck_assignment_simple) {
         "{a:u64\n"
         "name:string\n"
         "b:f64\n"
+        "c:bool\n"
         "a = 456\n"
         "name = \"Lefteris\"\n"
         "b = 0.231\n"
+        "c = false\n"
+        "c = true\n"
+        "c = a > 100\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
 
     ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_assignment_from_bool_to_int) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:int = true\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_assignment_from_int_to_bool) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:bool = 13\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. "
+            "Can't assign \"u8\" to \"bool\"",
+            1, 0, 1, 10)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_storage_size) {
@@ -545,6 +581,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_val, test_typecheck_assignment_simple);
+    tcase_add_test(t_assign_val, test_typecheck_assignment_from_bool_to_int);
 
     TCase *t_assign_inv = tcase_create("analyzer_typecheck_invalid_assignments");
     tcase_add_checked_fixture(t_assign_inv,
@@ -552,6 +589,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_storage_size);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_from_int_to_bool);
 
     TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(t_bop_val,

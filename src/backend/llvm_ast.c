@@ -63,10 +63,12 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
     case ELEMENTARY_TYPE_FLOAT_64:
         return LLVMDoubleType();
 
-    case ELEMENTARY_RIR_TYPE_STRING:
+    case ELEMENTARY_TYPE_STRING:
         return LLVMGetTypeByName(ctx->mod, "string");
 
-    case ELEMENTARY_RIR_TYPE_NIL:
+    case ELEMENTARY_TYPE_BOOL:
+        return LLVMInt1Type();
+    case ELEMENTARY_TYPE_NIL:
         return LLVMVoidType();
 
     default:
@@ -108,8 +110,11 @@ static LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category ty
     case ELEMENTARY_RIR_TYPE_STRING:
         return LLVMGetTypeByName(ctx->mod, "string");
 
+    case ELEMENTARY_RIR_TYPE_BOOL:
+        return LLVMInt1Type();
     case ELEMENTARY_RIR_TYPE_NIL:
         return LLVMVoidType();
+
     default:
         RF_ASSERT(false,
                   "Unsupported elementary type \""RF_STR_PF_FMT"\" "
@@ -210,7 +215,6 @@ void backend_llvm_assign_defined_types(LLVMValueRef left,
     LLVMValueRef right_cast = LLVMBuildBitCast(ctx->builder, right,
                                                LLVMPointerType(LLVMInt8Type(), 0), "");
     LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
-    /* RF_ASSERT(LLVMIsAMemCpyInst(llvm_memcpy), "Should have retrieved llvm memcpy instance"); */
 
     LLVMValueRef call_args[] = { left_cast, right_cast,
                                  LLVMConstInt(LLVMInt64Type(), 8, 0),
@@ -235,7 +239,6 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
     } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
         backend_llvm_assign_defined_types(llvm_left, right, ctx);
     } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
-        /* LLVMBuildStore(ctx->builder, right, llvm_left); */
         backend_llvm_store(right, llvm_left, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
@@ -613,7 +616,7 @@ void backend_llvm_compile_typedecl(const struct RFstring *name,
 }
 
 void backend_llvm_ifexpr_compile(struct rir_branch *branch,
-                                         struct llvm_traversal_ctx *ctx)
+                                 struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
     struct rir_cond_branch *rir_if = &branch->cond_branch;
@@ -624,6 +627,10 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
 
     // create the condition
     LLVMValueRef condition = backend_llvm_expression_compile(rir_if->cond, ctx);
+    // if condition is an elementary type we need its value
+    if (ast_node_is_elementary_identifier(rir_if->cond)) {
+        condition = LLVMBuildLoad(ctx->builder, condition, "");
+    }
 
     // Build the If conditional branch
     LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);

@@ -126,6 +126,16 @@ bool type_elementary_equals(const struct type_elementary *t1,
         return true;
     }
 
+    // from bool to int it's okay
+    if (type_elementary_is_int(t1) && t2->etype == ELEMENTARY_TYPE_BOOL) {
+        return true;
+    }
+
+    // from int to bool is not allowed
+    if (t1->etype == ELEMENTARY_TYPE_BOOL && type_elementary_is_int(t2)) {
+        return false;
+    }
+
     if (t1->etype >= ELEMENTARY_TYPE_FLOAT_32 && t1->etype <= ELEMENTARY_TYPE_FLOAT_64 &&
         t2->etype >= ELEMENTARY_TYPE_FLOAT_32 && t2->etype <= ELEMENTARY_TYPE_FLOAT_64) {
         ctx->common_type = type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
