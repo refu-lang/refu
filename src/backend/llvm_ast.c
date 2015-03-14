@@ -1,14 +1,15 @@
 #include "llvm_ast.h"
 
-#include <String/rf_str_common.h>
-#include <String/rf_str_conversion.h>
-#include <Utils/sanity.h>
-
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
+
+#include <String/rf_str_common.h>
+#include <String/rf_str_conversion.h>
+#include <Utils/sanity.h>
+#include <Utils/bits.h>
 
 #include <compiler_args.h>
 
@@ -227,8 +228,10 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
                                                 struct llvm_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
+    // For left side we want the memory location if it's a simple identifier hence options = 0
+    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx, 0);
+    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n),
+                                                         ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
 
     if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
         AST_NODE_ASSERT_TYPE(ast_binaryop_right(n), AST_STRING_LITERAL);
@@ -293,21 +296,16 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx);
+    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx,
+                                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx,
+                                                              RFLLVM_OPTION_IDENTIFIER_VALUE);
     enum elementary_type_category elementary_type;
     LLVMIntPredicate llvm_int_compare_type;
     LLVMRealPredicate llvm_real_compare_type;
-    if (ast_node_is_elementary_identifier(left)) {
-        // then we actually need to load the value from memory
-        llvm_left = LLVMBuildLoad(ctx->builder, llvm_left, "");
-    }
     llvm_left = backend_llvm_cast_value_to_elementary_maybe(llvm_left,
                                                             ast_binaryop_common_type(n),
                                                             ctx);
-    LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx);
-    if (ast_node_is_elementary_identifier(right)) {
-        llvm_right = LLVMBuildLoad(ctx->builder, llvm_right, "");
-    }
     llvm_right = backend_llvm_cast_value_to_elementary_maybe(llvm_right,
                                                              ast_binaryop_common_type(n),
                                                              ctx);
@@ -435,8 +433,8 @@ static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
         return backend_llvm_compile_member_access(n, ctx);
     }
 
-    LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx);
+    LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     switch(ast_binaryop_op(n)) {
         // arithmetic
         // TODO: This will not be okay for all situations. There are different
@@ -489,7 +487,7 @@ static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
 
 static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)
 {
-    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx);
+    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx, 0);
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
     LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
 
@@ -532,7 +530,10 @@ LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
     struct ast_node *args = ast_fncall_args(n);
     if (rf_string_equal(fn_name, &s)) {
         // for now, print only accepts 1 argument
-        LLVMValueRef compiled_args = backend_llvm_expression_compile(args, ctx);
+        LLVMValueRef compiled_args = backend_llvm_expression_compile(
+            args,
+            ctx,
+            RFLLVM_OPTION_IDENTIFIER_VALUE);
         LLVMValueRef call_args[] = { compiled_args };
         LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "print"),
                       call_args,
@@ -586,14 +587,19 @@ LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
 }
 
 LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
-                                                        struct llvm_traversal_ctx *ctx)
+                                                        struct llvm_traversal_ctx *ctx,
+                                                        int options)
 {
     struct symbol_table_record *rec;
     const struct RFstring *s = ast_identifier_str(n);
     rec = symbol_table_lookup_record(ctx->current_st, s, NULL);
     RF_ASSERT(rec && rec->backend_handle, "No LLVMValue was determined for "
               "identifier \""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(s));
-
+    if (RF_BITFLAG_ON(options, RFLLVM_OPTION_IDENTIFIER_VALUE) &&
+        ast_node_is_elementary_identifier(n)) {
+        // then we actually need to load the value from memory
+        return LLVMBuildLoad(ctx->builder, rec->backend_handle, "");
+    }
     return rec->backend_handle;
 }
 
@@ -626,11 +632,10 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
     LLVMBasicBlockRef if_end = LLVMAppendBasicBlock(ctx->current_function, "if_end");
 
     // create the condition
-    LLVMValueRef condition = backend_llvm_expression_compile(rir_if->cond, ctx);
-    // if condition is an elementary type we need its value
-    if (ast_node_is_elementary_identifier(rir_if->cond)) {
-        condition = LLVMBuildLoad(ctx->builder, condition, "");
-    }
+    LLVMValueRef condition = backend_llvm_expression_compile(
+        rir_if->cond,
+        ctx,
+        RFLLVM_OPTION_IDENTIFIER_VALUE);
 
     // Build the If conditional branch
     LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);
@@ -660,7 +665,8 @@ void backend_llvm_branch_compile(struct rir_branch *branch,
 }
 
 LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
-                                             struct llvm_traversal_ctx *ctx)
+                                             struct llvm_traversal_ctx *ctx,
+                                             int options)
 {
     uint64_t int_val;
     double float_val;
@@ -669,7 +675,7 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_BINARY_OPERATOR:
         return backend_llvm_expression_compile_bop(n, ctx);
     case AST_RETURN_STATEMENT:
-        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n), ctx);
+        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n), ctx, options);
         return LLVMBuildRet(ctx->builder, llvm_val);
     case AST_FUNCTION_CALL:
         return backend_llvm_function_call_compile(n, ctx);
@@ -700,7 +706,7 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_STRING_LITERAL:
         return backend_llvm_expression_compile_string_literal(n, ctx);
     case AST_IDENTIFIER:
-        return backend_llvm_expression_compile_identifier(n, ctx);
+        return backend_llvm_expression_compile_identifier(n, ctx, options);
     case AST_VARIABLE_DECLARATION:
         return backend_llvm_expression_compile_vardecl(n, ctx);
     case AST_TYPE_DECLARATION:
@@ -714,12 +720,13 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
 }
 
 static void backend_llvm_expression(struct rir_expression *expr,
-                                    struct llvm_traversal_ctx *ctx)
+                                    struct llvm_traversal_ctx *ctx,
+                                    int options)
 {
     ctx->current_value = NULL;
     switch(expr->type) {
     case RIR_SIMPLE_EXPRESSION:
-        backend_llvm_expression_compile(expr->expr, ctx);
+        backend_llvm_expression_compile(expr->expr, ctx, options);
         break;
     case RIR_IF_EXPRESSION:
         backend_llvm_ifexpr_compile(expr->branch, ctx);
@@ -753,7 +760,7 @@ void backend_llvm_compile_basic_block(struct rir_basic_block *block,
 
     symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     rf_ilist_for_each(&block->expressions, rir_expr, ln) {
-        backend_llvm_expression(rir_expr, ctx);
+        backend_llvm_expression(rir_expr, ctx, 0);
     }
 
     ctx->current_st = prev;

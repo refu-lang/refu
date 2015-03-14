@@ -67,11 +67,22 @@ i_INLINE_DECL void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ct
 void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
                                   struct LLVMOpaqueType *type);
 
+enum llvm_expression_compile_options {
+    //! If the node is a simple elementary identifier return its value and not the Alloca
+    RFLLVM_OPTION_IDENTIFIER_VALUE = 0x1,
+};
+
 /**
  * Compile an AST node expression to LLVMValueRef
+ *
+ * @param n        The ast node to compile
+ * @param ctx      The llvm traversal context
+ * @param options  [Optional] Options to provide for the compilations. For defaults
+ *                 just give 0. Possible options are described at @ref llvm_expression_compile_options
  */
 struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
-                                                        struct llvm_traversal_ctx *ctx);
+                                                        struct llvm_traversal_ctx *ctx,
+                                                        int options);
 
 /**
  * Compile a type declaration
