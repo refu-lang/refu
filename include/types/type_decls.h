@@ -43,7 +43,10 @@ enum type_category {
 };
 
 struct type_elementary {
+    //! What kind of elementary type this is
     enum elementary_type etype;
+    //! If this is a type of a constant literal
+    bool is_constant;
 };
 
 struct type_leaf {

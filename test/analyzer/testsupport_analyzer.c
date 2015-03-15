@@ -58,7 +58,8 @@ void teardown_analyzer_tests()
 }
 
 
-struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype)
+struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype,
+                                                         bool constant)
 {
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
@@ -68,6 +69,7 @@ struct type *testsupport_analyzer_type_create_elementary(enum elementary_type et
 
     t->category = TYPE_CATEGORY_ELEMENTARY;
     t->elementary.etype = etype;
+    t->elementary.is_constant = constant;
 
     darray_append(adriver->types, t);
     return t;

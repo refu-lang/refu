@@ -33,66 +33,6 @@ static inline void traversal_node_set_type(struct ast_node *n,
     ctx->last_node_type = t;
 }
 
-static inline enum comparison_reason
-binaryop_type_to_comparison_reason(enum binaryop_type operation)
-{
-    switch(operation) {
-    case BINARYOP_ASSIGN:
-        return COMPARISON_REASON_ASSIGNMENT;
-    case BINARYOP_ADD:
-        return COMPARISON_REASON_ADDITION;
-    case BINARYOP_SUB:
-        return COMPARISON_REASON_SUBTRACTION;
-    case BINARYOP_MUL:
-        return COMPARISON_REASON_MULTIPLICATION;
-    case BINARYOP_DIV:
-        return COMPARISON_REASON_DIVISION;
-
-    default:
-        return COMPARISON_REASON_GENERIC;
-    }
-}
-
-static bool typecheck_equal_or_convertible(struct ast_node *n,
-                                           enum binaryop_type operation,
-                                           const struct type *tleft,
-                                           const struct type *tright,
-                                           struct analyzer_traversal_ctx *ctx,
-                                           struct type_comparison_ctx *cmp_ctx)
-{
-    bool ret = false;
-
-    RFS_buffer_push();
-    // comparison reason and operation share common enum values and as such this cast is valid
-    type_comparison_ctx_init(cmp_ctx, binaryop_type_to_comparison_reason(operation));
-
-    if (type_equals(tleft, tright, cmp_ctx)) {
-        if (ctx->a->warn_on_implicit_conversions) {
-            if (RF_BITFLAG_ON(cmp_ctx->conversion, SIGNED_TO_UNSIGNED)) {
-                analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                              RF_STR_PF_FMT" from a signed to an unsigned type."
-                              "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                              ast_binaryop_operation_name_str(operation),
-                              RF_STR_PF_ARG(type_str(tright, false)),
-                              RF_STR_PF_ARG(type_str(tleft, false)));
-            }
-
-            if (RF_BITFLAG_ON(cmp_ctx->conversion, LARGER_TO_SMALLER)) {
-                analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                              RF_STR_PF_FMT" from a larger to a smaller elementary type."
-                              "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
-                              ast_binaryop_operation_name_str(operation),
-                              RF_STR_PF_ARG(type_str(tright, false)),
-                              RF_STR_PF_ARG(type_str(tleft, false)));
-            }
-        }
-        ret = true;
-    }
-
-    RFS_buffer_pop();
-    return ret;
-}
-
 static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node *left,
                                             const struct type **tleft,
                                             struct ast_node *right, const struct type **tright,
@@ -141,14 +81,19 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
+    const struct type *final_type = NULL;
     enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
-    struct type_comparison_ctx cmp_ctx;
     RFS_buffer_push();
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
         goto end;
     }
 
-    if (!typecheck_equal_or_convertible(n, operation, tleft, tright, ctx, &cmp_ctx)) {
+    // try to see if either side can be implicitly converted to another
+    if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) {
+        final_type = tright;
+    } else if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
+        final_type = tleft;
+    } else {
         if (!operator_applicable_cb(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
@@ -157,9 +102,9 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
             goto end;
         }
     }
-
+    n->binaryop.common_type = final_type;
     // set the type of the operation as the type of either of its operands
-    traversal_node_set_type(n, tright, ctx);
+    traversal_node_set_type(n, final_type, ctx);
     ret = TRAVERSAL_CB_OK;
 end:
     RFS_buffer_pop();
@@ -178,15 +123,20 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
+    const struct type *final_type = NULL;
     enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
-    struct type_comparison_ctx cmp_ctx;
 
     RFS_buffer_push();
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
         goto end;
     }
 
-    if (!typecheck_equal_or_convertible(n, operation, tleft, tright, ctx, &cmp_ctx)) {
+    // try to see if either side can be implicitly converted to another
+    if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) {
+        final_type = tright;
+    } else if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
+        final_type = tleft;
+    } else {
         if (!operator_applicable_cb(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
@@ -195,10 +145,7 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
             goto end;
         }
     }
-
-    RF_ASSERT(cmp_ctx.common_type, "After comparison bop there should be a common type");
-    n->binaryop.common_type = cmp_ctx.common_type;
-
+    n->binaryop.common_type = final_type;
     traversal_node_set_type(n, type_elementary_get_type(ELEMENTARY_TYPE_BOOL), ctx);
     ret = TRAVERSAL_CB_OK;
 end:
@@ -377,8 +324,8 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
 {
     const struct type *tright;
     const struct type *tleft;
+    const struct type *final_type = NULL;
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
-    struct type_comparison_ctx cmp_ctx;
 
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
@@ -395,20 +342,27 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
         goto end;
     }
-    if (!typecheck_equal_or_convertible(n, BINARYOP_ASSIGN, tleft, tright, ctx, &cmp_ctx)) {
+
+    /* if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) { */
+    /*     final_type = tright; */
+    if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
+        final_type = tleft;
+    } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
-                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"",
+                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"."
+                         ""RF_STR_PF_FMT,
                          RF_STR_PF_ARG(type_str(tright, false)),
-                         RF_STR_PF_ARG(type_str(tleft, false)));
+                         RF_STR_PF_ARG(type_str(tleft, false)),
+                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
             ret = TRAVERSAL_CB_ERROR;
             goto end;
         }
     }
 
     // set the type of assignment as the type of the left operand
-    traversal_node_set_type(n, tleft, ctx);
+    traversal_node_set_type(n, final_type, ctx);
 
 end:
     RFS_buffer_pop();
@@ -452,7 +406,6 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     const struct type *fn_type;
     const struct type *fn_declared_args_type;
     const struct type *fn_found_args_type;
-    struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_call_args = ast_fncall_args(n);
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
@@ -471,17 +424,17 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     fn_declared_args_type = type_callable_get_argtype(fn_type);
     fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
                                         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_FUNCTION_CALL);
-    if (!type_equals(fn_declared_args_type, fn_found_args_type, &cmp_ctx)) {
+    if (!type_compare(fn_found_args_type, fn_declared_args_type, TYPECMP_IMPLICIT_CONVERSION)) {
         RFS_buffer_push();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
                      "\""RF_STR_PF_FMT"\" which does not match the expected "
-                     "type of \""RF_STR_PF_FMT"\"",
+                     "type of \""RF_STR_PF_FMT"\"."RF_STR_PF_FMT,
                      RF_STR_PF_ARG(type_callable_category_str(fn_type)),
                      RF_STR_PF_ARG(fn_name),
                      RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
-                     RF_STR_PF_ARG(type_str(fn_declared_args_type, false)));
+                     RF_STR_PF_ARG(type_str(fn_declared_args_type, false)),
+                     RF_STR_PF_ARG(typecmp_ctx_get_error()));
         RFS_buffer_pop();
         ret = TRAVERSAL_CB_ERROR;
     }
@@ -493,7 +446,6 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
 static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
                                                    struct analyzer_traversal_ctx *ctx)
 {
-    struct type_comparison_ctx cmp_ctx;
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
     const struct type *fn_type;
@@ -519,8 +471,7 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
-    if (!type_equals(fn_ret_type, found_ret_type, &cmp_ctx)) {
+    if (!type_compare(fn_ret_type, found_ret_type, TYPECMP_IMPLICIT_CONVERSION)) {
         RFS_buffer_push();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement type \""RF_STR_PF_FMT"\" does not match "
@@ -673,7 +624,7 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_STRING_LITERAL:
         traversal_node_set_type(n,
-                                type_elementary_get_type(ELEMENTARY_TYPE_STRING),
+                                type_elementary_get_type_constant(ELEMENTARY_TYPE_STRING),
                                 ctx);
         break;
     case AST_VARIABLE_DECLARATION:

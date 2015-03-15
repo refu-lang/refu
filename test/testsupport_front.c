@@ -10,6 +10,7 @@
 #include <ast/vardecl.h>
 #include <ast/block.h>
 #include <ast/function.h>
+#include <types/type_comparisons.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <analyzer/analyzer.h>
@@ -123,9 +124,13 @@ bool front_testdriver_init(struct front_testdriver *d)
         goto free_nodes;
     }
 
+    if (!typecmp_ctx_init()) {
+        goto free_buff;
+    }
+
     d->front.info = info_ctx_create(d->front.file);
     if (!d->front.info) {
-        goto free_buff;
+        goto free_typecmp;
     }
 
     d->front.lexer = lexer_create(d->front.file, d->front.info);
@@ -153,6 +158,8 @@ free_lexer:
     lexer_destroy(d->front.lexer);
 free_info:
     info_ctx_destroy(d->front.info);
+free_typecmp:
+    typecmp_ctx_deinit();
 free_buff:
     rf_stringx_deinit(&d->buffstr);
 free_nodes:

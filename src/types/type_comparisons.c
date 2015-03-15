@@ -1,7 +1,9 @@
 #include <types/type_comparisons.h>
 
 #include <Utils/sanity.h>
-#include <String/rf_str_core.h>
+#include <Definitions/threadspecific.h>
+#include <String/rf_str_common.h>
+#include <String/rf_str_corex.h>
 
 #include <ast/ast.h>
 #include <ast/type.h>
@@ -9,57 +11,158 @@
 #include <types/type.h>
 #include <types/type_elementary.h>
 
-i_INLINE_INS void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
-                                           enum comparison_reason reason);
-i_INLINE_INS enum comparison_reason type_comparison_ctx_reason(struct type_comparison_ctx *ctx);
+/* -- typecmp_ctx functions -- */
 
+struct typecmp_ctx {
+    bool needs_reset;
+    struct RFstringx buffer;
+};
+
+i_THREAD__ struct typecmp_ctx g_typecmp_ctx;
+
+#define TYPECMP_RETURN(i_retvalue_)                   \
+    g_typecmp_ctx.needs_reset = true;                 \
+    return i_retvalue_
+
+
+bool typecmp_ctx_init()
+{
+    g_typecmp_ctx.needs_reset = false;
+    return rf_stringx_init_buff(&g_typecmp_ctx.buffer, 1024, "");
+}
+
+static inline void typecmp_ctx_reset()
+{
+    if (g_typecmp_ctx.needs_reset) {
+        g_typecmp_ctx.needs_reset = false;
+        rf_stringx_assignv(&g_typecmp_ctx.buffer, "");
+    }
+}
+
+void typecmp_ctx_deinit()
+{
+    rf_stringx_deinit(&g_typecmp_ctx.buffer);
+}
+
+struct RFstring *typecmp_ctx_get_error()
+{
+    return &g_typecmp_ctx.buffer.INH_String;
+}
+
+/* -- type comparison functions -- */
 
 i_INLINE_INS bool type_category_equals(const struct type* t,
                                        enum type_category category);
-
-static inline bool type_leaf_equals(const struct type_leaf *t1,
-                                    const struct type_leaf *t2,
-                                    struct type_comparison_ctx *ctx)
+static inline bool type_leaf_compare(const struct type_leaf *from,
+                                     const struct type_leaf *to,
+                                     enum comparison_reason reason)
 {
     bool predicate = true;
-    if (type_comparison_ctx_reason(ctx) == COMPARISON_REASON_IDENTICAL) {
-        predicate = rf_string_equal(t1->id, t2->id);
+    if (reason == TYPECMP_IDENTICAL) {
+        predicate = rf_string_equal(from->id, to->id);
     }
-    return predicate && type_equals(t1->type, t2->type, ctx);
+    return predicate && type_compare(from->type, to->type, reason);
 }
 
-static bool type_operator_equals(const struct type_operator *t1,
-                                 const struct type_operator *t2,
-                                 struct type_comparison_ctx *ctx)
+static bool type_operator_compare(const struct type_operator *from,
+                                  const struct type_operator *to,
+                                  enum comparison_reason reason)
 {
-    if (t1 == t2) {
-        return true;
+    if (from == to) {
+        TYPECMP_RETURN(true);
     }
 
-    if (t1->type != t2->type) {
-        return false;
+    if (from->type != to->type) {
+        TYPECMP_RETURN(false);
     }
 
-    return type_equals(t1->left, t2->left, ctx) &&
-           type_equals(t1->right, t2->right, ctx);
+    return type_compare(from->left, to->left, reason) &&
+           type_compare(from->right, to->right, reason);
 }
 
-static bool type_same_categories_equals(const struct type* t1,
-                                        const struct type *t2,
-                                        struct type_comparison_ctx *ctx)
+static bool type_elementary_compare(const struct type_elementary *from,
+                                    const struct type_elementary *to,
+                                    enum comparison_reason reason)
 {
-    RF_ASSERT(t1->category == t2->category, "type_same_categories_equals() called "
+    if (from->etype == to->etype) {
+        TYPECMP_RETURN(true);
+    }
+
+    if (reason == TYPECMP_IDENTICAL) {
+        goto end;
+    }
+
+    // we must then be looking at implicit conversion
+    // TODO: should there be some warning between smaller to bigger or signed to unsigned types?
+    switch (from->etype) {
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
+    case ELEMENTARY_TYPE_INT_8:
+    case ELEMENTARY_TYPE_UINT_8:
+    case ELEMENTARY_TYPE_INT_16:
+    case ELEMENTARY_TYPE_UINT_16:
+    case ELEMENTARY_TYPE_INT_32:
+    case ELEMENTARY_TYPE_UINT_32:
+    case ELEMENTARY_TYPE_INT_64:
+    case ELEMENTARY_TYPE_UINT_64:
+        // int to int is okay
+        if (type_elementary_is_int(to)) {
+            TYPECMP_RETURN(true);
+        }
+
+        if (type_elementary_is_float(to)) {// an int is convertible to a float
+            TYPECMP_RETURN(true);
+        }
+
+        if (to->etype == ELEMENTARY_TYPE_BOOL) { // we can convert from int to bool
+            TYPECMP_RETURN(true);
+        }
+        break;
+    case ELEMENTARY_TYPE_FLOAT_32:
+    case ELEMENTARY_TYPE_FLOAT_64:
+        // float to float is okay
+        if (type_elementary_is_float(to)) {
+            TYPECMP_RETURN(true);
+        }
+        break;
+    case ELEMENTARY_TYPE_BOOL:
+        if (type_elementary_is_int(to)) { // we can convert from bool to int
+            TYPECMP_RETURN(true);
+        }
+        break;
+    case ELEMENTARY_TYPE_STRING:
+    case ELEMENTARY_TYPE_NIL:
+        break;
+    default:
+        RF_ASSERT(false, "Invalid elementary type at comparisons");
+        break;
+    }
+
+end:
+    rf_stringx_assignv(&g_typecmp_ctx.buffer,
+                       " Unable to convert from \""RF_STR_PF_FMT"\" to \""
+                       RF_STR_PF_FMT"\".",
+                       RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
+                       RF_STR_PF_ARG(type_elementary_get_str(to->etype)));
+    TYPECMP_RETURN(false);
+}
+
+static bool type_same_categories_compare(const struct type *from,
+                                         const struct type *to,
+                                         enum comparison_reason reason)
+{
+    RF_ASSERT(from->category == to->category, "type_same_categories_equals() called "
               "with types of different categories");
-    switch (t1->category) {
+    switch (from->category) {
     case TYPE_CATEGORY_OPERATOR:
-        return type_operator_equals(&t1->operator, &t2->operator, ctx);
+        return type_operator_compare(&from->operator, &to->operator, reason);
     case TYPE_CATEGORY_ELEMENTARY:
-        return type_elementary_equals(&t1->elementary, &t2->elementary, ctx);
+        return type_elementary_compare(&from->elementary, &to->elementary, reason);
     case TYPE_CATEGORY_LEAF:
-            return type_leaf_equals(&t1->leaf, &t2->leaf, ctx);
+        return type_leaf_compare(&from->leaf, &to->leaf, reason);
     case TYPE_CATEGORY_DEFINED:
-        return rf_string_equal(t1->defined.name, t2->defined.name) &&
-               type_equals(t1->defined.type, t2->defined.type, ctx);
+        return rf_string_equal(from->defined.name, to->defined.name) &&
+            type_compare(from->defined.type, to->defined.type, reason);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         RF_ASSERT(false, "Not yet implemented");
@@ -68,7 +171,8 @@ static bool type_same_categories_equals(const struct type* t1,
         RF_ASSERT(false, "Illegal type category");
         break;
     }
-    return false;
+
+    TYPECMP_RETURN(false);
 }
 
 //! Possible resuls of @see type_initial_check()
@@ -86,33 +190,33 @@ enum type_initial_check_result {
  *  * @c TYPES_CHECK_CAN_CONTINUE:     Made sure compared types are of same category
  *                                     and type equality comparison can proceed.
  */
-static inline enum type_initial_check_result type_category_check(const struct type *t1,
-                                                                 const struct type *t2,
-                                                                 struct type_comparison_ctx *ctx)
+static inline enum type_initial_check_result type_category_check(const struct type *from,
+                                                                 const struct type *to,
+                                                                 enum comparison_reason reason)
 {
     enum type_initial_check_result ret = TYPES_ARE_NOT_EQUAL;
 
-    if (t1->category == t2->category) {
+    if (from->category == to->category) {
         ret = TYPES_CHECK_CAN_CONTINUE;
     }
 
-    // A type should be equal to a leaf of the same type and to a defined of the same type
-    // but should not be considered identical to it
-    if (type_comparison_ctx_reason(ctx) != COMPARISON_REASON_IDENTICAL) {
-        if (t1->category == TYPE_CATEGORY_ELEMENTARY && t2->category == TYPE_CATEGORY_LEAF) {
-            if (type_same_categories_equals(t1, t2->leaf.type, ctx)) {
+    // A type can be compared to a leaf of the same type and to
+    // a defined of the same type but should not be considered identical to it
+    if (reason != TYPECMP_IDENTICAL) {
+        if (from->category == TYPE_CATEGORY_ELEMENTARY && to->category == TYPE_CATEGORY_LEAF) {
+            if (type_same_categories_compare(from, to->leaf.type, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
-        } else if (t2->category == TYPE_CATEGORY_ELEMENTARY && t1->category == TYPE_CATEGORY_LEAF) {
-            if (type_same_categories_equals(t1->leaf.type, t2, ctx)) {
+        } else if (to->category == TYPE_CATEGORY_ELEMENTARY && from->category == TYPE_CATEGORY_LEAF) {
+            if (type_same_categories_compare(from->leaf.type, to, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
-        } else if (t1->category == TYPE_CATEGORY_DEFINED) {
-            if (type_equals(t1->defined.type, t2, ctx)) {
+        } else if (from->category == TYPE_CATEGORY_DEFINED) {
+            if (type_compare(from->defined.type, to, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
-        } else if (t2->category == TYPE_CATEGORY_DEFINED) {
-            if (type_equals(t1, t2->defined.type, ctx)) {
+        } else if (to->category == TYPE_CATEGORY_DEFINED) {
+            if (type_compare(from, to->defined.type, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
         }
@@ -121,31 +225,27 @@ static inline enum type_initial_check_result type_category_check(const struct ty
     return ret;
 }
 
-bool type_equals(const struct type* t1, const struct type *t2,
-                 struct type_comparison_ctx *ctx)
+bool type_compare(const struct type *from,
+                  const struct type *to,
+                  enum comparison_reason reason)
 {
+    typecmp_ctx_reset();
     // first check if we refer to the same type (elementary or composite)
-    if (t1 == t2) {
-        if (ctx) {
-            ctx->common_type = t1;
-        }
-        return true;
+    if (from == to) {
+        TYPECMP_RETURN(true);
     }
 
-    switch (type_category_check(t1, t2, ctx)) {
+    switch (type_category_check(from, to, reason)) {
     case TYPES_ARE_EQUAL:
-        if (ctx) {
-            ctx->common_type = t1;
-        }
         return true;
     case TYPES_ARE_NOT_EQUAL:
-        return false;
+        TYPECMP_RETURN(false);
     case TYPES_CHECK_CAN_CONTINUE:
         break;
     }
 
     // from here and on we must have same categories of types
-    return type_same_categories_equals(t1, t2, ctx);
+    return type_same_categories_compare(from, to, reason);
 }
 
 bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
@@ -153,8 +253,6 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
                           struct ast_node *genrdecl)
 {
     struct type *looked_up_t;
-    struct type_comparison_ctx cmp_ctx;
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_GENERIC);
     switch(type_desc->type) {
     case AST_TYPE_OPERATOR:
         if (t->category != TYPE_CATEGORY_OPERATOR) {
@@ -191,7 +289,7 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
             return false;
         }
 
-        return type_equals(t, looked_up_t, &cmp_ctx);
+        return type_compare(t, looked_up_t, TYPECMP_GENERIC);
     default:
         break;
     }

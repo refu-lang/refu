@@ -84,11 +84,14 @@ void teardown_analyzer_tests();
 
 #define testsupport_types_equal(t1_, t2_)                               \
     do {                                                                \
-        ck_assert_msg(type_equals(t1_, t2_, NULL), "expected type mismatch"); \
+        ck_assert_msg(type_compare(t1_, t2_, TYPECMP_GENERIC),          \
+                      "expected type mismatch."RF_STR_PF_FMT,            \
+                      RF_STR_PF_ARG(typecmp_ctx_get_error()));          \
     } while(0)
 
 
-struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype);
+struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype,
+                                                         bool constant);
 
 struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
                                                        struct type *left,

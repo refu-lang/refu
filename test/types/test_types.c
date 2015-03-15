@@ -15,13 +15,6 @@
 
 #include CLIB_TEST_HELPERS
 
-static bool test_types_are_identical(const struct type *t1, const struct type *t2)
-{
-    struct type_comparison_ctx cmp_ctx;
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_IDENTICAL);
-    return type_equals(t1, t2, &cmp_ctx);
-}
-
 static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
                                             size_t expected_types_size,
                                             struct analyzer *a,
@@ -39,7 +32,7 @@ static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
     rf_ilist_for_each(&a->composite_types, t, lh) {
         found = false;
         for (i = 0; i < expected_types_size; ++i) {
-            if (test_types_are_identical(t, expected_types[i])) {
+            if (type_compare(t, expected_types[i], TYPECMP_IDENTICAL)) {
                 found = true;
                 ck_assert_msg(!found_indexes[i],
                               "Found a duplicate type entry in the list. Type: "
@@ -77,15 +70,15 @@ static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
 
 START_TEST (test_type_to_str) {
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     struct type *t_leaf_u32 = testsupport_analyzer_type_create_leaf(&id_foo, t_u32);
 
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_boo, t_f64);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     static const struct RFstring id_goo =  RF_STRING_STATIC_INIT("goo");
     struct type *t_leaf_string = testsupport_analyzer_type_create_leaf(&id_goo, t_string);
 
@@ -117,54 +110,51 @@ START_TEST (test_type_comparison_identical) {
     static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
     static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *t_leaf_ai8 = testsupport_analyzer_type_create_leaf(&id_a, t_i8);
     struct type *t_leaf_ai64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
     struct type *t_leaf_ci8 = testsupport_analyzer_type_create_leaf(&id_c, t_i8);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *t_leaf_bstring = testsupport_analyzer_type_create_leaf(&id_b, t_string);
     struct type *t_leaf_dstring = testsupport_analyzer_type_create_leaf(&id_d, t_string);
 
-    struct type_comparison_ctx cmp_ctx;
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_IDENTICAL);
 
     // normal type comparison should work
-    ck_assert(type_equals(t_leaf_ai8, t_leaf_ci8, NULL));
-    ck_assert(type_equals(t_leaf_bstring, t_leaf_dstring, NULL));
+    ck_assert(type_compare(t_leaf_ai8, t_leaf_ci8, TYPECMP_IMPLICIT_CONVERSION));
+    ck_assert(type_compare(t_leaf_bstring, t_leaf_dstring, TYPECMP_IMPLICIT_CONVERSION));
 
     // detect identical types
-    ck_assert(type_equals(t_leaf_ai8, t_leaf_ai8, &cmp_ctx));
-    ck_assert(type_equals(t_leaf_dstring, t_leaf_dstring, &cmp_ctx));
+    ck_assert(type_compare(t_leaf_ai8, t_leaf_ai8, TYPECMP_IDENTICAL));
+    ck_assert(type_compare(t_leaf_dstring, t_leaf_dstring, TYPECMP_IDENTICAL));
 
     // detect equal but not identical types
-    ck_assert(!type_equals(t_leaf_ai8, t_leaf_ci8, &cmp_ctx));
-    ck_assert(!type_equals(t_leaf_bstring, t_leaf_dstring, &cmp_ctx));
+    ck_assert(!type_compare(t_leaf_ai8, t_leaf_ci8, TYPECMP_IDENTICAL));
+    ck_assert(!type_compare(t_leaf_bstring, t_leaf_dstring, TYPECMP_IDENTICAL));
 
-    // make sure that if only name is same we consider it neither equal nor identical
-    ck_assert(!type_equals(t_leaf_ai8, t_leaf_ai64, NULL));
-    ck_assert(!type_equals(t_leaf_ai8, t_leaf_ai64, &cmp_ctx));
+    // make sure that if only name is same we don't consider it equal
+    ck_assert(!type_compare(t_leaf_ai8, t_leaf_ai64, TYPECMP_IDENTICAL));
 
 } END_TEST
 
 START_TEST (test_elementary_get_category) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT, false);
+    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT, false);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16, false);
+    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
+    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
 
     ck_assert_int_eq(type_elementary_get_category(t_i), ELEMENTARY_TYPE_CATEGORY_SIGNED);
     ck_assert_int_eq(type_elementary_get_category(t_u), ELEMENTARY_TYPE_CATEGORY_UNSIGNED);
@@ -185,21 +175,21 @@ START_TEST (test_elementary_get_category) {
 
 START_TEST (test_is_signed_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT, false);
+    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT, false);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16, false);
+    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
+    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
 
     ck_assert(type_is_signed_elementary(t_i));
     ck_assert(!type_is_signed_elementary(t_u));
@@ -220,21 +210,21 @@ START_TEST (test_is_signed_elementary) {
 
 START_TEST (test_is_unsigned_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT, false);
+    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT, false);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16, false);
+    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
+    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
 
     ck_assert(!type_is_unsigned_elementary(t_i));
     ck_assert(type_is_unsigned_elementary(t_u));
@@ -255,21 +245,21 @@ START_TEST (test_is_unsigned_elementary) {
 
 START_TEST (test_is_floating_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT, false);
+    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT, false);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16, false);
+    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
+    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
 
     ck_assert(!type_is_floating_elementary(t_i));
     ck_assert(!type_is_floating_elementary(t_u));
@@ -302,19 +292,19 @@ START_TEST(test_composite_types_list_population) {
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
 
     static const struct RFstring id_b =  RF_STRING_STATIC_INIT("b");
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
 
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_leaf_i64,
                                                                       t_leaf_f64);
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
     struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
                                                                       t_nil,
                                                                       t_u32);
@@ -343,18 +333,18 @@ START_TEST(test_composite_types_list_population2) {
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
 
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
 
     static const struct RFstring id_b =  RF_STRING_STATIC_INIT("b");
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
 
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_leaf_i64,
                                                                       t_leaf_f64);
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
     struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
                                                                       t_prod_1,
                                                                       t_u32);
@@ -382,19 +372,19 @@ START_TEST(test_composite_types_list_population3) {
     static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
     static const struct RFstring id_e = RF_STRING_STATIC_INIT("e");
 
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *t_leaf_i64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
 
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     struct type *t_leaf_i8 = testsupport_analyzer_type_create_leaf(&id_c, t_i8);
 
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
     struct type *t_leaf_f32 = testsupport_analyzer_type_create_leaf(&id_d, t_f32);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *t_leaf_string = testsupport_analyzer_type_create_leaf(&id_e, t_string);
 
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
@@ -435,17 +425,17 @@ START_TEST(test_composite_types_list_population4) {
     static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
     static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
 
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *t_leaf_ai64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
 
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     struct type *t_leaf_bf64 = testsupport_analyzer_type_create_leaf(&id_b, t_f64);
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     struct type *t_leaf_ai8 = testsupport_analyzer_type_create_leaf(&id_a, t_i8);
     struct type *t_leaf_ci8 = testsupport_analyzer_type_create_leaf(&id_c, t_i8);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *t_leaf_bstring = testsupport_analyzer_type_create_leaf(&id_b, t_string);
     struct type *t_leaf_dstring = testsupport_analyzer_type_create_leaf(&id_d, t_string);
 
@@ -486,11 +476,11 @@ START_TEST(test_determine_block_type1) {
     front_testdriver_assign(d, &s);
     ck_assert_typecheck_ok(d, true);
 
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     block = ast_node_get_child(front_testdriver_get_ast_root(d), 0);
     ck_assert_msg(block, "Block should be the first child of the root");
     ck_assert_msg(block->expression_type, "Block should have a type");
-    ck_assert_msg(test_types_are_identical(block->expression_type, t_f64),
+    ck_assert_msg(type_compare(block->expression_type, t_f64, TYPECMP_IDENTICAL),
                   "Expected the block's type to be an f64");
 } END_TEST
 
@@ -506,11 +496,11 @@ START_TEST(test_determine_block_type2) {
     front_testdriver_assign(d, &s);
     ck_assert_typecheck_ok(d, true);
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
     struct type *t_leaf_ai8 = testsupport_analyzer_type_create_leaf(&id_a, t_i8);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
     struct type *t_leaf_bstring = testsupport_analyzer_type_create_leaf(&id_b, t_string);
 
@@ -523,7 +513,7 @@ START_TEST(test_determine_block_type2) {
     block = ast_node_get_child(front_testdriver_get_ast_root(d), 1);
     ck_assert_msg(block, "Block should be the second child of the root");
     ck_assert_msg(block->expression_type, "Block should have a type");
-    ck_assert_msg(test_types_are_identical(block->expression_type, t_foo),
+    ck_assert_msg(type_compare(block->expression_type, t_foo, TYPECMP_IDENTICAL),
                   "Expected the block's type to be an f64");
 } END_TEST
 

@@ -52,7 +52,6 @@ START_TEST(test_typecheck_assignment_from_bool_to_int) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
@@ -64,39 +63,7 @@ START_TEST(test_typecheck_assignment_from_int_to_bool) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Assignment between incompatible types. "
-            "Can't assign \"u8\" to \"bool\"",
-            1, 0, 1, 10)
-    };
-
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_invalid_storage_size) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u8\n"
-        "a = 456\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Assignment between incompatible types. "
-            "Can't assign \"u16\" to \"u8\"",
-            1, 0, 1, 6)
-    };
-
-    // set conversion warnings on
-    front_ctx_set_warn_on_implicit_conversions(&d->front, false);
-
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_ok(d, true);
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_string_to_int) {
@@ -115,7 +82,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"string\" to \"u64\"",
+            "\"string\" to \"u64\". Unable to convert from \"string\" to \"u64\".",
             4, 0, 4, 7)
     };
 
@@ -372,7 +339,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"u32,string\" which does not match the expected type of "
-            "\"string,u16\"",
+            "\"string,u16\". Unable to convert from \"u32\" to \"string\".",
             6, 0, 6, 24),
     };
 
@@ -399,7 +366,7 @@ START_TEST(test_typecheck_invalid_function_call_return) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"f32\" to \"u64\"",
+            "\"f32\" to \"u64\". Unable to convert from \"f32\" to \"u64\".",
             6, 0, 6, 32),
     };
 
@@ -448,12 +415,13 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
-            "\"string,u32\" which does not match the expected type of \"nil\"",
+            "\"string,u32\" which does not match the expected type of \"nil\".",
             6, 8, 6, 32),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
-            "Assignment between incompatible types. Can't assign \"nil\" to \"u64\"",
+            "Assignment between incompatible types. Can't assign \"nil\" to \"u64\"."
+            " Unable to convert from \"nil\" to \"u64\".",
             6, 0, 6, 32)
     };
 
@@ -565,7 +533,7 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "constructor person() is called with argument type of "
-            "\"string\" which does not match the expected type of \"string,u32\"",
+            "\"string\" which does not match the expected type of \"string,u32\".",
             3, 11, 3, 26),
     };
 
@@ -626,7 +594,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block1) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"u32\" to \"string\"",
+            "\"u32\" to \"string\". Unable to convert from \"u32\" to \"string\".",
             1, 4, 5, 4),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);
@@ -652,7 +620,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"foo\" to \"string\"",
+            "\"foo\" to \"string\".",
             2, 4, 6, 4),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);
@@ -668,14 +636,13 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_val, test_typecheck_assignment_simple);
     tcase_add_test(t_assign_val, test_typecheck_assignment_from_bool_to_int);
+    tcase_add_test(t_assign_val, test_typecheck_assignment_from_int_to_bool);
 
     TCase *t_assign_inv = tcase_create("analyzer_typecheck_invalid_assignments");
     tcase_add_checked_fixture(t_assign_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_storage_size);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_from_int_to_bool);
 
     TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(t_bop_val,

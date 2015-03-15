@@ -4,6 +4,7 @@
 #include <Utils/memory.h>
 
 #include <info/info.h>
+#include <types/type_comparisons.h>
 #include <compiler_args.h>
 #include <front_ctx.h>
 #include <ir/rir.h>
@@ -20,6 +21,10 @@ bool compiler_init(struct compiler *c)
 
     // initialize an error buffer string
     if (!rf_stringx_init_buff(&c->err_buff, 1024, "")) {
+        return false;
+    }
+    // initialize the type comparison thread local context
+    if (!typecmp_ctx_init()) {
         return false;
     }
 
@@ -41,6 +46,7 @@ void compiler_deinit(struct compiler *c)
     }
 
     compiler_args_destroy(c->args);
+    typecmp_ctx_deinit();
     rf_stringx_deinit(&c->err_buff);
     rf_deinit();
 }

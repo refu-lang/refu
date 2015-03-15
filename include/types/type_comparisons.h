@@ -8,52 +8,15 @@
 struct symbol_table;
 struct analyzer;
 
-enum conversion_type {
-    NO_CONVERSION = 0x0,
-    SIGNED_TO_UNSIGNED = 0x1,
-    LARGER_TO_SMALLER = 0X2,
-};
-
 enum comparison_reason {
-    COMPARISON_REASON_GENERIC,   /*!< General type equality comparison */
-    COMPARISON_REASON_IDENTICAL, /*!< Compare types not just for equality but for identical. Checks leaf names too. */
-
-    COMPARISON_REASON_ASSIGNMENT,
-    COMPARISON_REASON_ADDITION,
-    COMPARISON_REASON_SUBTRACTION,
-    COMPARISON_REASON_MULTIPLICATION,
-    COMPARISON_REASON_DIVISION,
-
-    COMPARISON_REASON_FUNCTION_CALL,
+    //! General type equality comparison
+    TYPECMP_GENERIC = 0,
+    //! Compare types not just for equality but for identical. Checks leaf names too
+    TYPECMP_IDENTICAL,
+    //! Compare types to check if implicit conversion is allowed
+    TYPECMP_IMPLICIT_CONVERSION,
 };
 
-struct type_comparison_ctx {
-    //! The reason for the request of
-    enum comparison_reason reason;
-    //! Query to see what conversions happened. Can contain multiple bitflags
-    enum conversion_type conversion;
-    //! If any conversion happened this should point to the converted type
-    struct type *converted_type;
-    //! If we have a binary operation this shold point to the common type
-    const struct type *common_type;
-};
-
-i_INLINE_DECL void type_comparison_ctx_init(struct type_comparison_ctx *ctx,
-                                            enum comparison_reason reason)
-{
-    ctx->reason = reason;
-    ctx->conversion = NO_CONVERSION;
-    ctx->converted_type = NULL;
-    ctx->common_type = NULL;
-}
-
-/**
- * Get the reason of the comparison from the context or generic reason if it's NULL
- */
-i_INLINE_DECL enum comparison_reason type_comparison_ctx_reason(struct type_comparison_ctx *ctx)
-{
-    return ctx ? ctx->reason : COMPARISON_REASON_GENERIC;
-}
 
 /**
  * Check if a type belong to a certain category. If it's a leaf type it's actual
@@ -67,29 +30,21 @@ i_INLINE_DECL bool type_category_equals(const struct type* t,
 }
 
 /**
- * Compare two types and see if they are equal or if one can be promoted to
- * the other.
- *
- * @todo TODO: Context being optionally NULL introduces a lot of problems and
- *             additional checks in every step of the way. Maybe make it mandatory?
+ * Compare two types for a given reason.
  *
  * @warning For many comparison reasons type position does matter. So you may
  *          get different results if you do type_equals(A,B) and type_equals(B,A)
  *          Such reasons include assignment where for example u64 = u16 is ok but
  *          u16 = u64 is not allowed.
  *
- * @param t1        Type 1 for comparison
- * @param t2        Type 2 for comparison
- * @param ctx       Type comparison context passed by the user of the function.
- *                  Should be initialized with type_comparison_ctx_init().
- *                  Check @c type_comparison_ctx for description.
- *                  Can be NULL if all we want is a simple type check.
- * @return          True if they are perfectly equal or if they can be equal
- *                  through conversions. In the second case @c ctx is set
- *                  accordingly. False for mismatch.
+ * @param from      The "From" Type is always the left part of the comparison.
+ * @param to        The "To" Type is always the right part of the comparison.
+ * @param reason    The reason for the comparison. @see enum comparison_reason
+ * @return          True or false if comparisons succeeds or not.
  */
-bool type_equals(const struct type* t1, const struct type *t2,
-                 struct type_comparison_ctx *ctx);
+bool type_compare(const struct type *t1,
+                  const struct type *t2,
+                  enum comparison_reason reason);
 
 /**
  * Compare a type and an AST node that describes a type.
@@ -98,12 +53,28 @@ bool type_equals(const struct type* t1, const struct type *t2,
  * @param a         The analyzer instance
  * @param st        The symbol table to use in the comparison
  * @param genrdecl  An optional generic declaration that describes @c n.
- *                     Can be NULL.
+ *                  Can be NULL.
  * @return          true if the type and the node describe the same type.
  *                  false otherwise.
  */
 bool type_equals_ast_node(struct type *t, struct ast_node *n,
                           struct analyzer *a, struct symbol_table *st,
                           struct ast_node *genrdecl);
+
+
+/**
+ * Will initialize all thread local data required to perform type comparisons
+ */
+bool typecmp_ctx_init();
+
+/**
+ * Will deinitialize all thread local data required to perform type comparisons
+ */
+void typecmp_ctx_deinit();
+
+/**
+ * @returns String explanation of the reason the last comparison error happened
+ */
+struct RFstring *typecmp_ctx_get_error();
 
 #endif

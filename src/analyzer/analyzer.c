@@ -105,11 +105,8 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
 static void analyzer_types_list_add(struct analyzer *a, struct type *new_type)
 {
     struct type *t;
-    struct type_comparison_ctx ctx;
-    type_comparison_ctx_init(&ctx, COMPARISON_REASON_IDENTICAL);
-
     rf_ilist_for_each(&a->composite_types, t, lh) {
-        if (type_equals(t, new_type, &ctx)) {
+        if (type_compare(t, new_type, TYPECMP_IDENTICAL)) {
             return;
         }
     }

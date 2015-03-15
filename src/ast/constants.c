@@ -61,22 +61,22 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
         }
 
         if (n->constant.value.integer > UINT32_MAX) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_64);
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_64);
         }
 
         if (n->constant.value.integer > UINT16_MAX) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_32);
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_32);
         }
 
         if (n->constant.value.integer > UINT8_MAX) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_16);
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_16);
         }
 
-        return type_elementary_get_type(ELEMENTARY_TYPE_UINT_8);
+        return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_8);
     case CONSTANT_NUMBER_FLOAT:
-        return type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
+        return type_elementary_get_type_constant(ELEMENTARY_TYPE_FLOAT_32);
     case CONSTANT_BOOLEAN:
-        return type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
+        return type_elementary_get_type_constant(ELEMENTARY_TYPE_BOOL);
     default:
         RF_ASSERT(false, "Invalid constant type");
         break;
