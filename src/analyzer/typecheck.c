@@ -16,6 +16,7 @@
 #include <ast/type.h>
 
 #include <types/type.h>
+#include <types/type_comparisons.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
 

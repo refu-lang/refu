@@ -10,6 +10,7 @@
 #include <lexer/lexer.h>
 
 #include <types/type.h>
+#include <types/type_comparisons.h>
 #include <analyzer/typecheck.h>
 
 

@@ -74,34 +74,4 @@ struct type {
     };
 };
 
-/* -- type conversion declarations -- */
-enum conversion_type {
-    NO_CONVERSION = 0x0,
-    SIGNED_TO_UNSIGNED = 0x1,
-    LARGER_TO_SMALLER = 0X2,
-};
-
-enum comparison_reason {
-    COMPARISON_REASON_GENERIC,   /*!< General type equality comparison */
-    COMPARISON_REASON_IDENTICAL, /*!< Compare types not just for equality but for identical. Checks leaf names too. */
-
-    COMPARISON_REASON_ASSIGNMENT,
-    COMPARISON_REASON_ADDITION,
-    COMPARISON_REASON_SUBTRACTION,
-    COMPARISON_REASON_MULTIPLICATION,
-    COMPARISON_REASON_DIVISION,
-
-    COMPARISON_REASON_FUNCTION_CALL,
-};
-
-struct type_comparison_ctx {
-    //! The reason for the request of
-    enum comparison_reason reason;
-    //! Query to see what conversions happened. Can contain multiple bitflags
-    enum conversion_type conversion;
-    //! If any conversion happened this should point to the converted type
-    struct type *converted_type;
-    //! If we have a binary operation this shold point to the common type
-    const struct type *common_type;
-};
 #endif

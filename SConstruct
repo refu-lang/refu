@@ -50,6 +50,7 @@ refu_src = [
     'analyzer/global_context.c',
 
     'types/type.c',
+    'types/type_comparisons.c',
     'types/type_function.c',
     'types/type_elementary.c',
     'types/type_utils.c',

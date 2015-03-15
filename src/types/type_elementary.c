@@ -5,6 +5,7 @@
 #include <String/rf_str_core.h> // for RF_STRING_STATIC_INIT
 
 #include <types/type.h>
+#include <types/type_comparisons.h>
 
 #include "elementary_types_htable.h"
 

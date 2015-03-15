@@ -10,6 +10,7 @@
 #include <ast/type.h>
 #include <parser/parser.h>
 #include <types/type.h>
+#include <types/type_comparisons.h>
 #include <analyzer/typecheck.h>
 #include <analyzer/string_table.h>
 

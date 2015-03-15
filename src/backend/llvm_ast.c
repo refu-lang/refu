@@ -26,6 +26,7 @@
 #include <types/type_function.h>
 #include <types/type_elementary.h>
 #include <types/type_utils.h>
+#include <types/type_comparisons.h>
 #include <types/type.h>
 
 #include <analyzer/string_table.h>
