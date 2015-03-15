@@ -572,6 +572,92 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST (test_typecheck_valid_assignment_from_block1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    a:string = \n"
+        "    {\n"
+        "        b:u32 = 13 + 25\n"
+        "        \"a_string_literal\"\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_assignment_from_block2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo { a:u64, b:string }\n"
+        "{\n"
+        "    a:foo = \n"
+        "    {\n"
+        "        b:u32 = 13 + 25\n"
+        "        c:foo = foo(565, \"Berlin\")\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_assignment_from_block1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    a:string = \n"
+        "    {\n"
+        "        \"a_string_literal\"\n"
+        "        b:u32 = 13 + 25\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign "
+            "\"u32\" to \"string\"",
+            1, 4, 5, 4),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_assignment_from_block2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo { a:u64, b:string }\n"
+        "{\n"
+        "    a:string = \n"
+        "    {\n"
+        "        b:u32 = 13 + 25\n"
+        "        c:foo = foo(565, \"Berlin\")\n"
+        "    }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign "
+            "\"foo\" to \"string\"",
+            2, 4, 6, 4),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -656,6 +742,22 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_custom_types_inv, test_typecheck_invalid_custom_type_constructor);
 
+    TCase *t_block_val = tcase_create("analyzer_typecheck_valid_blocks");
+    tcase_add_checked_fixture(t_block_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_block_val, test_typecheck_valid_assignment_from_block1);
+    tcase_add_test(t_block_val, test_typecheck_valid_assignment_from_block2);
+
+
+    TCase *t_block_inv = tcase_create("analyzer_typecheck_invalid_blocks");
+    tcase_add_checked_fixture(t_block_inv,
+                              setup_analyzer_tests_with_filelog,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block1);
+    tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block2);
+
+
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
     suite_add_tcase(s, t_bop_val);
@@ -666,6 +768,8 @@ Suite *analyzer_typecheck_suite_create(void)
     suite_add_tcase(s, t_func_inv);
     suite_add_tcase(s, t_custom_types_val);
     suite_add_tcase(s, t_custom_types_inv);
+    suite_add_tcase(s, t_block_val);
+    suite_add_tcase(s, t_block_inv);
     return s;
 }
 

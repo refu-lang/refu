@@ -13,6 +13,7 @@
 #include "vardecl.h"
 #include "function.h"
 #include "ifexpr.h"
+#include "block.h"
 
 #define MAX_LEVEL_OP_PRECEDENCE 13
 
@@ -62,6 +63,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2) && (n = parser_acc_fncall(p, false))) {
+        return n;
+    } else if (tok->type == TOKEN_SM_OCBRACE) {
+        n = parser_acc_block(p, true);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected a block");
+            return NULL;
+        }
         return n;
     } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
         n = parser_acc_ifexpr(p, TOKEN_KW_IF);

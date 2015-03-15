@@ -37,7 +37,7 @@ bool parser_process_file(struct parser *p)
 
     if (NULL != lexer_next_token(p->lexer)) {
         parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
-                      "Expected a statement");
+                      "Expected an outermost statement");
         return false;
     }
 

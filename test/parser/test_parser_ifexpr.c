@@ -325,9 +325,7 @@ START_TEST(test_acc_ifexpr_ambiguous_less_than_or_generic) {
 START_TEST(test_acc_ifexpr_errors_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "if {\n"
-        " do_sth()\n"
-        "}"
+        "if "
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
@@ -404,9 +402,7 @@ START_TEST(test_acc_ifexpr_errors_4) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "if a > 25 {\n"
         " do_sth()\n"
-        "} elif {\n"
-        "  10 + 231\n"
-        "}\n"
+        "} elif "
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
