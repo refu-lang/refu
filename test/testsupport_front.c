@@ -28,6 +28,12 @@ struct inpfile *front_testdriver_get_file(struct front_testdriver *d)
     return d->front.file;
 }
 
+struct ast_node *front_testdriver_get_ast_root(const struct front_testdriver *d)
+{
+    return d->front.parser->root ? d->front.parser->root :
+        d->front.analyzer->root;
+}
+
 static struct inpfile *inpfile_dummy_create(struct info_ctx *info)
 {
     struct inpfile *f;

@@ -15,7 +15,12 @@ struct analyzer;
 
 struct  analyzer_traversal_ctx {
     struct analyzer *a;
+    //! Remembers the current symbol table during ast traversal
     struct symbol_table *current_st;
+    //! Remembers the type of the previous node during the typechecking
+    //! Used for assigning types to blocks
+    const struct type *last_node_type;
+    //! A queue of nodes to remember the current parent of a node during traversal
     struct {darray(struct ast_node*);} parent_nodes;
 };
 
@@ -24,6 +29,7 @@ i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ct
 {
     ctx->a = a;
     ctx->current_st = NULL;
+    ctx->last_node_type = NULL;
     darray_init(ctx->parent_nodes);
 }
 

@@ -23,8 +23,17 @@
 #include <analyzer/symbol_table.h>
 #include "analyzer_pass1.h" // for analyzer symbol table change functions
 
+// convenience function to set the type of a node and remember last node type during traversal
+static inline void traversal_node_set_type(struct ast_node *n,
+                                           const struct type *t,
+                                           struct analyzer_traversal_ctx *ctx)
+{
+    n->expression_type = t;
+    ctx->last_node_type = t;
+}
 
-static inline enum comparison_reason binaryop_type_to_comparison_reason(enum binaryop_type operation)
+static inline enum comparison_reason
+binaryop_type_to_comparison_reason(enum binaryop_type operation)
 {
     switch(operation) {
     case BINARYOP_ASSIGN:
@@ -149,7 +158,7 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
     }
 
     // set the type of the operation as the type of either of its operands
-    n->expression_type = tright;
+    traversal_node_set_type(n, tright, ctx);
     ret = TRAVERSAL_CB_OK;
 end:
     RFS_buffer_pop();
@@ -189,7 +198,7 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
     RF_ASSERT(cmp_ctx.common_type, "After comparison bop there should be a common type");
     n->binaryop.common_type = cmp_ctx.common_type;
 
-    n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_BOOL);
+    traversal_node_set_type(n, type_elementary_get_type(ELEMENTARY_TYPE_BOOL), ctx);
     ret = TRAVERSAL_CB_OK;
 end:
     RFS_buffer_pop();
@@ -289,15 +298,16 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
-    n->expression_type = member_access_iter_ctx.member_type;
+    traversal_node_set_type(n, member_access_iter_ctx.member_type, ctx);
 
     RFS_buffer_pop();
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_constant(struct ast_node *n)
+static enum traversal_cb_res typecheck_constant(struct ast_node *n,
+                                                struct analyzer_traversal_ctx *ctx)
 {
-    n->expression_type = ast_constant_get_storagetype(n);
+    traversal_node_set_type(n, ast_constant_get_storagetype(n), ctx);
     return (n->expression_type) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
 }
 
@@ -305,8 +315,10 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                   struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *parent = analyzer_traversal_ctx_get_current_parent(ctx);
-    n->expression_type = type_lookup_identifier_string(ast_identifier_str(n),
-                                                       ctx->current_st);
+    traversal_node_set_type(n,
+                            type_lookup_identifier_string(ast_identifier_str(n),
+                                                          ctx->current_st),
+                            ctx);
 
     // for some identifiers, like for the right part of a member access it's
     // impossible to determmine type at this stage, for the rest it's an error
@@ -325,24 +337,22 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
 static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
                                                    struct analyzer_traversal_ctx *ctx)
 {
-    (void)ctx;
-    n->expression_type = n->xidentifier.id->expression_type;
+    traversal_node_set_type(n, n->xidentifier.id->expression_type, ctx);
     return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
-    (void)ctx;
-    n->expression_type = ast_typedesc_right(n)->expression_type;
+    // a type descriptions's type is the type of the right part of the description
+    traversal_node_set_type(n, ast_typedesc_right(n)->expression_type, ctx);
     return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
-    (void)ctx;
-    n->expression_type = ast_typedecl_typedesc_get(n)->expression_type;
+    traversal_node_set_type(n, ast_typedecl_typedesc_get(n)->expression_type, ctx);
     return TRAVERSAL_CB_OK;
 }
 
@@ -397,7 +407,7 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     }
 
     // set the type of assignment as the type of the left operand
-    n->expression_type = tleft;
+    traversal_node_set_type(n, tleft, ctx);
 
 end:
     RFS_buffer_pop();
@@ -419,11 +429,13 @@ static enum traversal_cb_res typecheck_comma(struct ast_node *n,
     // for now at least let's assume that all types can have the comma
     // operator applied to them
 
-    // set the type of assignment as the type of the left operand
-    n->expression_type = type_create_from_operation(TYPEOP_PRODUCT,
-                                                    (struct type*)tleft,
-                                                    (struct type*)tright,
-                                                    ctx->a);
+    // create the comma type
+    traversal_node_set_type(n,
+                            type_create_from_operation(TYPEOP_PRODUCT,
+                                                       (struct type*)tleft,
+                                                       (struct type*)tright,
+                                                       ctx->a),
+                            ctx);
     if (!n->expression_type) {
         RF_ERROR("Could not create a type as a product of 2 other types.");
         return TRAVERSAL_CB_FATAL_ERROR;
@@ -473,7 +485,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         ret = TRAVERSAL_CB_ERROR;
     }
 
-    n->expression_type = type_callable_get_rettype(fn_type);
+    traversal_node_set_type(n, type_callable_get_rettype(fn_type), ctx);
     return ret;
 }
 
@@ -517,19 +529,15 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         RFS_buffer_pop();
         ret = TRAVERSAL_CB_ERROR;
     }
-    n->expression_type = found_ret_type;
+    traversal_node_set_type(n, found_ret_type, ctx);
     return ret;
 }
 
 static enum traversal_cb_res typecheck_block(struct ast_node *n,
                                              struct analyzer_traversal_ctx *ctx)
 {
-    // TODO: Here somehow find the type of the block, it should all depend on its
-    // last expression/expression/statement or it can also be a sum product if it
-    // has conditional exits from the block
-    n->expression_type = NULL;
-
-
+    // a block's type is the type of it's last expression
+    n->expression_type = ctx->last_node_type;
     return TRAVERSAL_CB_OK;
 }
 
@@ -634,7 +642,7 @@ static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
         RF_ERROR("Function declaration name not found in the symbol table at impossible point");
         return TRAVERSAL_CB_ERROR;
     }
-    n->expression_type = t;
+    traversal_node_set_type(n, t, ctx);
     return TRAVERSAL_CB_OK;
 }
 
@@ -660,15 +668,19 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_typedesc(n, ctx);
         break;
     case AST_CONSTANT:
-        ret = typecheck_constant(n);
+        ret = typecheck_constant(n, ctx);
         break;
     case AST_STRING_LITERAL:
-        n->expression_type = type_elementary_get_type(ELEMENTARY_TYPE_STRING);
+        traversal_node_set_type(n,
+                                type_elementary_get_type(ELEMENTARY_TYPE_STRING),
+                                ctx);
         break;
     case AST_VARIABLE_DECLARATION:
         // for a variable definition, the variable's type description should be
         // the type of the expression
-        n->expression_type = ast_vardecl_desc_get(n)->expression_type;
+        traversal_node_set_type(n,
+                                ast_vardecl_desc_get(n)->expression_type,
+                                ctx);
         break;
     case AST_FUNCTION_CALL:
         ret = typecheck_function_call(n, ctx);
@@ -677,7 +689,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_fndecl(n, ctx);
         break;
     case AST_FUNCTION_IMPLEMENTATION:
-        n->expression_type = ast_expression_get_type(ast_fnimpl_fndecl_get(n));
+        traversal_node_set_type(n,
+                                ast_expression_get_type(ast_fnimpl_fndecl_get(n)),
+                                ctx);
         break;
     case AST_RETURN_STATEMENT:
         ret = typecheck_return_stmt(n, ctx);

@@ -15,26 +15,31 @@
 
 #include CLIB_TEST_HELPERS
 
-void ck_assert_type_lists_equal_impl(const struct type **expected_types,
-                                     size_t expected_types_size,
-                                     struct analyzer *a,
-                                     const char *filename,
-                                     unsigned int line)
+static bool test_types_are_identical(const struct type *t1, const struct type *t2)
+{
+    struct type_comparison_ctx cmp_ctx;
+    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_IDENTICAL);
+    return type_equals(t1, t2, &cmp_ctx);
+}
+
+static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
+                                            size_t expected_types_size,
+                                            struct analyzer *a,
+                                            const char *filename,
+                                            unsigned int line)
 {
     struct type *t;
     unsigned int i;
-    struct type_comparison_ctx cmp_ctx;
     bool found;
     unsigned int found_types_size = 0;
     bool *found_indexes;
     RF_CALLOC(found_indexes, expected_types_size, sizeof(*found_indexes), return);
 
     RFS_buffer_push();
-    type_comparison_ctx_init(&cmp_ctx, COMPARISON_REASON_IDENTICAL);
     rf_ilist_for_each(&a->composite_types, t, lh) {
         found = false;
         for (i = 0; i < expected_types_size; ++i) {
-            if (type_equals(t, expected_types[i], &cmp_ctx)) {
+            if (test_types_are_identical(t, expected_types[i])) {
                 found = true;
                 ck_assert_msg(!found_indexes[i],
                               "Found a duplicate type entry in the list. Type: "
@@ -470,6 +475,57 @@ START_TEST(test_composite_types_list_population4) {
     ck_assert_type_lists_equal(expected_types, d->front.analyzer);
 } END_TEST
 
+START_TEST(test_determine_block_type1) {
+    struct ast_node *block;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "d:f64 = 3.14 * 0.14\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    block = ast_node_get_child(front_testdriver_get_ast_root(d), 0);
+    ck_assert_msg(block, "Block should be the first child of the root");
+    ck_assert_msg(block->expression_type, "Block should have a type");
+    ck_assert_msg(test_types_are_identical(block->expression_type, t_f64),
+                  "Expected the block's type to be an f64");
+} END_TEST
+
+START_TEST(test_determine_block_type2) {
+    struct ast_node *block;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string}\n"
+        "{\n"
+        "a:foo\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    struct type *t_leaf_ai8 = testsupport_analyzer_type_create_leaf(&id_a, t_i8);
+
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    struct type *t_leaf_bstring = testsupport_analyzer_type_create_leaf(&id_b, t_string);
+
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_leaf_ai8,
+                                                                      t_leaf_bstring);
+    static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
+    struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
+    
+    block = ast_node_get_child(front_testdriver_get_ast_root(d), 1);
+    ck_assert_msg(block, "Block should be the second child of the root");
+    ck_assert_msg(block->expression_type, "Block should have a type");
+    ck_assert_msg(test_types_are_identical(block->expression_type, t_foo),
+                  "Expected the block's type to be an f64");
+} END_TEST
 
 Suite *types_suite_create(void)
 {
@@ -494,8 +550,14 @@ Suite *types_suite_create(void)
     tcase_add_test(st3, test_composite_types_list_population3);
     tcase_add_test(st3, test_composite_types_list_population4);
 
+    TCase *st4 = tcase_create("type_determination");
+    tcase_add_checked_fixture(st4, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_test(st4, test_determine_block_type1);
+    tcase_add_test(st4, test_determine_block_type2);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
+    suite_add_tcase(s, st4);
     return s;
 }

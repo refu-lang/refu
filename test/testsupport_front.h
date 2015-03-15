@@ -27,6 +27,7 @@ bool front_testdriver_init(struct front_testdriver *p);
 void front_testdriver_deinit(struct front_testdriver *p);
 
 struct inpfile *front_testdriver_get_file(struct front_testdriver *d);
+struct ast_node *front_testdriver_get_ast_root(const struct front_testdriver *d);
 
 /**
  * Assign a string to the  file of the driver
