@@ -333,7 +333,6 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     const struct type *tright;
     const struct type *tleft;
     const struct type *final_type = NULL;
-    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
@@ -343,20 +342,24 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
                      "as left part of the assignment "
                      "but found a \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(ast_node_str(left)));
-        ret = TRAVERSAL_CB_ERROR;
+        return TRAVERSAL_CB_ERROR;
     }
 
-    RFS_buffer_push();
+
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
-        goto end;
+        return TRAVERSAL_CB_ERROR;
     }
 
-    /* if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) { */
-    /*     final_type = tright; */
     if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
         final_type = tleft;
+        if (typecmp_ctx_have_warning()) {
+            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                          RF_STR_PF_FMT" during assignment.",
+                          RF_STR_PF_ARG(typecmp_ctx_get_warning()));
+        }
     } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
+            RFS_buffer_push();
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"."
@@ -364,17 +367,16 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
                          RF_STR_PF_ARG(type_str(tright, false)),
                          RF_STR_PF_ARG(type_str(tleft, false)),
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
-            ret = TRAVERSAL_CB_ERROR;
-            goto end;
+            RFS_buffer_pop();
+            return TRAVERSAL_CB_ERROR;
         }
+        // temporary
+        RF_ASSERT(false, "analyzer_types_assignable() should never return true for now");
     }
 
     // set the type of assignment as the type of the left operand
     traversal_node_set_type(n, final_type, ctx);
-
-end:
-    RFS_buffer_pop();
-    return ret;
+    return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_comma(struct ast_node *n,

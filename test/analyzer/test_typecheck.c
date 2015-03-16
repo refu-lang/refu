@@ -89,6 +89,66 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_assignment_inv_big_to_small_conversion1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u64 = 9999\n"
+        "b:u8\n"
+        "b = a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit conversion from \"u64\" to \"u8\" during assignment.",
+            2, 0, 2, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
+START_TEST(test_typecheck_assignment_inv_big_to_small_conversion2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u32 = 9999\n"
+        "b:u8\n"
+        "b = a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit conversion from \"u32\" to \"u8\" during assignment.",
+            2, 0, 2, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
+START_TEST(test_typecheck_assignment_inv_big_to_small_conversion3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:u16 = 9999\n"
+        "b:u8\n"
+        "b = a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit conversion from \"u16\" to \"u8\" during assignment.",
+            2, 0, 2, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
 START_TEST(test_typecheck_valid_addition_simple) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
@@ -643,6 +703,9 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion1);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion2);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion3);
 
     TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(t_bop_val,

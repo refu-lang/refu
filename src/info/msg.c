@@ -2,6 +2,7 @@
 
 #include <Utils/memory.h>
 #include <Utils/sanity.h>
+#include <Utils/build_assert.h>
 #include <inpfile.h>
 
 #define INFO_WARNING_STR "warning"
@@ -173,4 +174,39 @@ bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
     }
 
     return true;
+}
+
+// keep in sync with enum info_msg_type in info.h
+static const struct RFstring info_msg_type_strings[] = {
+    RF_STRING_STATIC_INIT("any"),
+    RF_STRING_STATIC_INIT("semantic warning"),
+    RF_STRING_STATIC_INIT("syntax warning"),
+    RF_STRING_STATIC_INIT("semantic error"),
+    RF_STRING_STATIC_INIT("syntax error")
+};
+
+const struct RFstring *info_msg_type_to_str(enum info_msg_type type)
+{
+    int i = 0;
+    switch (type) {
+    case MESSAGE_ANY:
+        i = 0;
+        break;
+    case MESSAGE_SEMANTIC_WARNING:
+        i = 1;
+        break;
+    case MESSAGE_SYNTAX_WARNING:
+        i = 2;
+        break;
+    case MESSAGE_SEMANTIC_ERROR:
+        i = 3;
+        break;
+    case MESSAGE_SYNTAX_ERROR:
+        i = 4;
+        break;
+    default:
+        RF_ASSERT(false, "Illegal info_msg_type");
+        return NULL;
+    }
+    return &info_msg_type_strings[i];
 }

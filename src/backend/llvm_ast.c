@@ -44,9 +44,6 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
 {
     switch(etype) {
         // LLVM does not differentiate between signed and unsigned
-    case ELEMENTARY_TYPE_INT:
-    case ELEMENTARY_TYPE_UINT:
-        return LLVMIntType(32);// TODO: Think of how to represent size agnostic
     case ELEMENTARY_TYPE_INT_8:
     case ELEMENTARY_TYPE_UINT_8:
         return LLVMInt8Type();
@@ -56,6 +53,8 @@ static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
     case ELEMENTARY_TYPE_INT_32:
     case ELEMENTARY_TYPE_UINT_32:
         return LLVMInt32Type();
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
     case ELEMENTARY_TYPE_INT_64:
     case ELEMENTARY_TYPE_UINT_64:
         return LLVMInt64Type();
@@ -88,9 +87,6 @@ static LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category ty
 {
     switch(type) {
         // LLVM does not differentiate between signed and unsigned
-    case ELEMENTARY_RIR_TYPE_INT:
-    case ELEMENTARY_RIR_TYPE_UINT:
-        return LLVMIntType(32);// TODO: Think of how to represent size agnostic
     case ELEMENTARY_RIR_TYPE_INT_8:
     case ELEMENTARY_RIR_TYPE_UINT_8:
         return LLVMInt8Type();
@@ -102,6 +98,8 @@ static LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category ty
         return LLVMInt32Type();
     case ELEMENTARY_RIR_TYPE_INT_64:
     case ELEMENTARY_RIR_TYPE_UINT_64:
+    case ELEMENTARY_RIR_TYPE_INT:
+    case ELEMENTARY_RIR_TYPE_UINT:
         return LLVMInt64Type();
 
     case ELEMENTARY_RIR_TYPE_FLOAT_32:

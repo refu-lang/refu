@@ -11,6 +11,7 @@ enum info_msg_type {
     MESSAGE_SEMANTIC_ERROR = 0x8,
     MESSAGE_SYNTAX_ERROR = 0x10
 };
+#define INFO_MESSAGE_TYPES_NUM 5
 
 struct inplocation;
 struct inplocation_mark;

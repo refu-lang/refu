@@ -141,8 +141,6 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
     return t;
 }
 
-
-
 bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
                                     struct info_msg *exp_errors,
                                     unsigned num,
@@ -198,7 +196,11 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
         if (msg->type != exp_errors[i].type) {
             ck_analyzer_check_abort(
                 filename, line,
-                "For analyzer error number %u got different message types", i);
+                "For analyzer error number %u got different message types. Got:\n"
+                "\""RF_STR_PF_FMT"\" but expected: \"" RF_STR_PF_FMT"\"",
+                i,
+                RF_STR_PF_ARG(info_msg_type_to_str(msg->type)),
+                RF_STR_PF_ARG(info_msg_type_to_str(exp_errors[i].type)));
             return false;
         }
 

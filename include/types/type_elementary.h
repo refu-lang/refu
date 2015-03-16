@@ -49,7 +49,7 @@ i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elemen
 
 i_INLINE_DECL bool type_elementary_is_int(const struct type_elementary *t)
 {
-    return t->etype <= ELEMENTARY_TYPE_UINT_64;
+    return t->etype <= ELEMENTARY_TYPE_UINT;
 }
 
 i_INLINE_DECL bool type_elementary_int_is_unsigned(const struct type_elementary *t)
@@ -71,6 +71,37 @@ i_INLINE_DECL bool type_elementary_is_float(const struct type_elementary *t)
 {
     return t->etype >= ELEMENTARY_TYPE_FLOAT_32 && t->etype <= ELEMENTARY_TYPE_FLOAT_64;
 }
+
+i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
+{
+    switch (t->etype) {
+    case ELEMENTARY_TYPE_INT_8:
+    case ELEMENTARY_TYPE_UINT_8:
+        return 1;
+    case ELEMENTARY_TYPE_INT_16:
+    case ELEMENTARY_TYPE_UINT_16:
+        return 2;
+    case ELEMENTARY_TYPE_INT_32:
+    case ELEMENTARY_TYPE_UINT_32:
+        return 4;
+    case ELEMENTARY_TYPE_INT_64:
+    case ELEMENTARY_TYPE_UINT_64:
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
+        return 8;
+    case ELEMENTARY_TYPE_FLOAT_32:
+        return 4;
+    case ELEMENTARY_TYPE_FLOAT_64:
+        return 8;
+    case ELEMENTARY_TYPE_BOOL:
+        return 1;
+    case ELEMENTARY_TYPE_NIL:
+        return 0;
+    default: // for strings and invalid type
+        return -1;
+    }
+}
+
 
 /**
  * Given a type check if it's any elementary type except string
@@ -109,7 +140,7 @@ i_INLINE_DECL bool type_is_unsigned_elementary(const struct type *t)
 }
 
 /**
- * Check if the type is an floating elementary type
+ * Check if the type is a floating elementary type
  */
 i_INLINE_DECL bool type_is_floating_elementary(const struct type *t)
 {

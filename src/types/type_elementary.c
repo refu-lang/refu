@@ -11,8 +11,6 @@
 
 // NOTE: preserve order
 static const struct RFstring elementary_type_strings[] = {
-    RF_STRING_STATIC_INIT("int"),
-    RF_STRING_STATIC_INIT("uint"),
     RF_STRING_STATIC_INIT("i8"),
     RF_STRING_STATIC_INIT("u8"),
     RF_STRING_STATIC_INIT("i16"),
@@ -21,6 +19,8 @@ static const struct RFstring elementary_type_strings[] = {
     RF_STRING_STATIC_INIT("u32"),
     RF_STRING_STATIC_INIT("i64"),
     RF_STRING_STATIC_INIT("u64"),
+    RF_STRING_STATIC_INIT("int"),
+    RF_STRING_STATIC_INIT("uint"),
     RF_STRING_STATIC_INIT("f32"),
     RF_STRING_STATIC_INIT("f64"),
     RF_STRING_STATIC_INIT("string"),
@@ -33,8 +33,6 @@ static struct type i_elementary_types[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                        \
     [i_type] = {.category = TYPE_CATEGORY_ELEMENTARY, .elementary = {.etype=i_type, \
                                                                      .is_constant = false}}
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_16),
@@ -43,6 +41,8 @@ static struct type i_elementary_types[] = {
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_32),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_64),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_64),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_32),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_64),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_STRING),
@@ -54,8 +54,6 @@ static struct type i_elementary_types_constant[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(i_type)                        \
     [i_type] = {.category = TYPE_CATEGORY_ELEMENTARY, .elementary = {.etype=i_type, \
                                                                      .is_constant = true}}
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT),
-    INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_16),
@@ -64,6 +62,8 @@ static struct type i_elementary_types_constant[] = {
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT_32),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_64),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT_64),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_FLOAT_32),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_FLOAT_64),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_STRING),
@@ -110,13 +110,13 @@ enum elementary_type_category type_elementary_get_category(const struct type *t)
     if (t->category != TYPE_CATEGORY_ELEMENTARY) {
         return -1;
     }
-    if (t->elementary.etype < 10) {
+    if (t->elementary.etype <= ELEMENTARY_TYPE_UINT) {
         if (t->elementary.etype % 2 == 0) {
             return ELEMENTARY_TYPE_CATEGORY_SIGNED;
         }
         // else
         return ELEMENTARY_TYPE_CATEGORY_UNSIGNED;
-    } else if (t->elementary.etype < 12) {
+    } else if (t->elementary.etype < ELEMENTARY_TYPE_STRING) {
         return ELEMENTARY_TYPE_CATEGORY_FLOAT;
     }
     return ELEMENTARY_TYPE_CATEGORY_OTHER;
@@ -127,6 +127,7 @@ i_INLINE_INS bool type_elementary_int_is_unsigned(const struct type_elementary *
 i_INLINE_INS bool type_elementary_is_unsigned(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_signed(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_float(const struct type_elementary *t);
+i_INLINE_INS int type_elementary_bytesize(const struct type_elementary *t);
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
 i_INLINE_INS enum elementary_type type_elementary(const struct type *t);

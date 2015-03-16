@@ -37,4 +37,6 @@ void info_msg_print(struct info_msg *m, FILE *f, struct inpfile *input_file);
 
 bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
                             struct inpfile *input_file);
+
+const struct RFstring *info_msg_type_to_str(enum info_msg_type type);
 #endif
