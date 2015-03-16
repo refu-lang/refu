@@ -68,6 +68,29 @@ static bool i_should_be_changed(struct ast_node *left,
     return false;
 }
 
+static const struct type *typecheck_do_type_conversion(const struct type *left,
+                                                       const struct type *right,
+                                                       struct analyzer_traversal_ctx *ctx)
+{
+    // if both are elementary always try to convert the smaller to the bigger size
+    if (left->category == TYPE_CATEGORY_ELEMENTARY &&
+        right->category == TYPE_CATEGORY_ELEMENTARY) {
+        if (right->elementary.etype >= left->elementary.etype &&
+            type_compare(left, right, TYPECMP_IMPLICIT_CONVERSION)) {
+            return right;
+        } else if (type_compare(right, left, TYPECMP_IMPLICIT_CONVERSION)) {
+            return left;
+        }
+    //  else try to see if either side can be implicitly converted to another
+    } else if (type_compare(left, right, TYPECMP_IMPLICIT_CONVERSION)) {
+        return right;
+    } else if (type_compare(right, left, TYPECMP_IMPLICIT_CONVERSION)) {
+        return left;
+    }
+
+    return NULL;
+}
+
 // Generic typecheck function for binary operations. If special functionality
 // needs to be implemented for an operator do that in a separate function
 static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
@@ -82,33 +105,25 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
     const struct type *tright;
     const struct type *tleft;
     const struct type *final_type = NULL;
-    enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
-    RFS_buffer_push();
+
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
-        goto end;
+        return TRAVERSAL_CB_ERROR;
     }
 
-    // try to see if either side can be implicitly converted to another
-    if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) {
-        final_type = tright;
-    } else if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
-        final_type = tleft;
-    } else {
-        if (!operator_applicable_cb(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                         error_intro, RF_STR_PF_ARG(type_str(tright, false)),
-                         error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
-            goto end;
-        }
+    final_type = typecheck_do_type_conversion(tleft, tright, ctx);
+    if (!final_type && !operator_applicable_cb(left, right, ctx)) {
+        RFS_buffer_push();
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                     error_intro, RF_STR_PF_ARG(type_str(tright, false)),
+                     error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
+        RFS_buffer_pop();
+        return TRAVERSAL_CB_ERROR;
     }
+
     n->binaryop.common_type = final_type;
-    // set the type of the operation as the type of either of its operands
     traversal_node_set_type(n, final_type, ctx);
-    ret = TRAVERSAL_CB_OK;
-end:
-    RFS_buffer_pop();
-    return ret;
+    return TRAVERSAL_CB_OK;
 }
 
 // Generic typecheck function for binary operations whose type should be a boolean
@@ -124,33 +139,26 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
     const struct type *tright;
     const struct type *tleft;
     const struct type *final_type = NULL;
-    enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
 
-    RFS_buffer_push();
     if (!typecheck_binaryop_get_operands(n, left, &tleft, right, &tright, ctx)) {
-        goto end;
+        return TRAVERSAL_CB_ERROR;
     }
 
-    // try to see if either side can be implicitly converted to another
-    if (type_compare(tleft, tright, TYPECMP_IMPLICIT_CONVERSION)) {
-        final_type = tright;
-    } else if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
-        final_type = tleft;
-    } else {
-        if (!operator_applicable_cb(left, right, ctx)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                         "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                         error_intro, RF_STR_PF_ARG(type_str(tright, false)),
-                         error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
-            goto end;
-        }
+    final_type = typecheck_do_type_conversion(tleft, tright, ctx);
+    if (!final_type && !operator_applicable_cb(left, right, ctx)) {
+        RFS_buffer_push();
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                     error_intro, RF_STR_PF_ARG(type_str(tright, false)),
+                     error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
+        RFS_buffer_pop();
+        return TRAVERSAL_CB_ERROR;
     }
+
     n->binaryop.common_type = final_type;
     traversal_node_set_type(n, type_elementary_get_type(ELEMENTARY_TYPE_BOOL), ctx);
-    ret = TRAVERSAL_CB_OK;
-end:
-    RFS_buffer_pop();
-    return ret;
+
+    return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_arrayref(struct ast_node *n,

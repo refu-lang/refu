@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <llvm-c/Core.h>
+#include <llvm-c/Target.h>
 
 #include "llvm_ast.h"
 
@@ -15,10 +16,13 @@ void backend_llvm_val_debug(LLVMValueRef v, const char *val_name)
     LLVMDisposeMessage(str);
 }
 
-void backend_llvm_type_debug(LLVMTypeRef t, const char *type_name)
+void backend_llvm_type_debug(LLVMTypeRef t, const char *type_name, struct llvm_traversal_ctx *ctx)
 {
     char *str = LLVMPrintTypeToString(t);
-    printf("[DEBUG]: Type \"%s\" is %s\n", type_name, str);
+    printf("[DEBUG]: Type \"%s\" is %s with store size %llu \n",
+        type_name,
+        str,
+        LLVMStoreSizeOfType(ctx->target_data, t));
     fflush(stdout);
     LLVMDisposeMessage(str);
 }
@@ -77,8 +81,8 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
                    val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {
             val = LLVMBuildIntCast(ctx->builder, val, type, "");
         } else {
-            backend_llvm_type_debug(val_type, "val_type");
-            backend_llvm_type_debug(type, "to_cast_type");
+            backend_llvm_type_debug(val_type, "val_type", ctx);
+            backend_llvm_type_debug(type, "to_cast_type", ctx);
             RF_ASSERT(false, "Unimplemented casts?");
         }
     }

@@ -170,6 +170,7 @@ void front_testdriver_deinit(struct front_testdriver *d)
 {
     struct ast_node **n;
     rf_stringx_deinit(&d->buffstr);
+    typecmp_ctx_deinit();
     darray_foreach(n, d->nodes) {
         ast_node_destroy(*n);
     }
