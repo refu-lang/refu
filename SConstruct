@@ -109,7 +109,7 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     ]
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
-                          ' executionengine jit interpreter native')
+                          ' executionengine interpreter native')
     linker_exec = 'g++'
 
 # add path before the sources
