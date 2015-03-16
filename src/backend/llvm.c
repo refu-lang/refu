@@ -48,7 +48,6 @@ static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
     char *error = NULL; // Used to retrieve messages from functions
 
     LLVMInitializeCore(LLVMGetGlobalPassRegistry());
-    LLVMLinkInJIT();
     LLVMInitializeNativeTarget();
 
     llvm_traversal_ctx_init(&ctx, rir, args);
