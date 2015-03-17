@@ -75,13 +75,14 @@ void typecmp_ctx_deinit();
 /**
  * @returns String explanation of the reason the last comparison error happened
  */
-struct RFstring *typecmp_ctx_get_error();
+const struct RFstring *typecmp_ctx_get_error();
 
 /**
- * @returns String containing text of the possible warnings the last comparison had.
- *          To check if the last comparison had any warning at all @see typecmp_ctx_have_warning()
+ * If there are any warning this will return the next one.
+ *
+ * @returns A string describing the next warning or NULL if there are no more warnings
  */
-struct RFstring *typecmp_ctx_get_warning();
+const struct RFstring *typecmp_ctx_get_next_warning();
 
 /**
  * @returns if we had a warning in the last comparison

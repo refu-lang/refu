@@ -4,6 +4,7 @@
 #include <Definitions/threadspecific.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
+#include <Data_Structures/darray.h>
 
 #include <ast/ast.h>
 #include <ast/type.h>
@@ -17,6 +18,7 @@ struct typecmp_ctx {
     bool needs_reset;
     struct RFstringx err_buff;
     struct RFstringx warn_buff;
+    struct {darray(struct RFstring);} warning_indices;
 };
 
 i_THREAD__ struct typecmp_ctx g_typecmp_ctx;
@@ -28,6 +30,7 @@ i_THREAD__ struct typecmp_ctx g_typecmp_ctx;
 
 bool typecmp_ctx_init()
 {
+    darray_init(g_typecmp_ctx.warning_indices);
     g_typecmp_ctx.needs_reset = false;
     return rf_stringx_init_buff(&g_typecmp_ctx.err_buff, 1024, "") &&
         rf_stringx_init_buff(&g_typecmp_ctx.warn_buff, 1024, "");
@@ -39,23 +42,31 @@ static inline void typecmp_ctx_reset()
         g_typecmp_ctx.needs_reset = false;
         rf_stringx_assignv(&g_typecmp_ctx.err_buff, "");
         rf_stringx_assignv(&g_typecmp_ctx.warn_buff, "");
+        while (g_typecmp_ctx.warning_indices.size != 0) {
+            (void)darray_pop(g_typecmp_ctx.warning_indices);
+        }
     }
 }
 
 void typecmp_ctx_deinit()
 {
+    darray_free(g_typecmp_ctx.warning_indices);
     rf_stringx_deinit(&g_typecmp_ctx.err_buff);
     rf_stringx_deinit(&g_typecmp_ctx.warn_buff);
 }
 
-struct RFstring *typecmp_ctx_get_error()
+const struct RFstring *typecmp_ctx_get_error()
 {
     return &g_typecmp_ctx.err_buff.INH_String;
 }
 
-struct RFstring *typecmp_ctx_get_warning()
+const struct RFstring *typecmp_ctx_get_next_warning()
 {
-    return &g_typecmp_ctx.warn_buff.INH_String;
+    if (g_typecmp_ctx.warning_indices.size == 0) {
+        return NULL;
+    }
+
+    return &darray_pop(g_typecmp_ctx.warning_indices);
 }
 
 bool typecmp_ctx_have_warning()
@@ -65,12 +76,13 @@ bool typecmp_ctx_have_warning()
 
 static inline void typecmp_ctx_add_warning(struct RFstring *s)
 {
-    if (rf_string_is_empty(&g_typecmp_ctx.warn_buff)) {
-        rf_stringx_append(&g_typecmp_ctx.warn_buff, s);
-    } else {
-        rf_stringx_append(&g_typecmp_ctx.warn_buff, RFS_(". "RF_STR_PF_FMT,
-                                                         RF_STR_PF_ARG(s)));
-    }
+    darray_resize(g_typecmp_ctx.warning_indices, g_typecmp_ctx.warning_indices.size + 1);
+    RF_STRING_SHALLOW_INIT(
+        &darray_top(g_typecmp_ctx.warning_indices),
+        (rf_string_is_empty(&g_typecmp_ctx.warn_buff)) ? g_typecmp_ctx.warn_buff.INH_String.data :
+            g_typecmp_ctx.warn_buff.INH_String.data + g_typecmp_ctx.warn_buff.INH_String.length,
+        rf_string_length_bytes(s));
+    rf_stringx_append(&g_typecmp_ctx.warn_buff, s);
 }
 
 /* -- type comparison functions -- */
@@ -131,17 +143,29 @@ static bool type_elementary_compare(const struct type_elementary *from,
     case ELEMENTARY_TYPE_UINT_64:
         // int to int
         if (type_elementary_is_int(to)) {
-            // warn about conversion from bigger to smaller type
-            if (!from->is_constant &&
-                type_elementary_bytesize(from) >= type_elementary_bytesize(to)) {
-                RFS_buffer_push();
-                typecmp_ctx_add_warning(
-                    RFS_(
-                        "Implicit conversion from \""RF_STR_PF_FMT"\" to \""
-                        RF_STR_PF_FMT"\"",
-                        RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-                        RF_STR_PF_ARG(type_elementary_get_str(to->etype))));
-                RFS_buffer_pop();
+            if (!from->is_constant) {
+                // warn about conversion from bigger to smaller type
+                if (type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
+                    RFS_buffer_push();
+                    typecmp_ctx_add_warning(
+                        RFS_(
+                            "Implicit conversion from \""RF_STR_PF_FMT"\" to \""
+                            RF_STR_PF_FMT"\"",
+                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
+                            RF_STR_PF_ARG(type_elementary_get_str(to->etype))));
+                    RFS_buffer_pop();
+                }
+                // warn about conversion from signed to unsigned
+                if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to)) {
+                    RFS_buffer_push();
+                    typecmp_ctx_add_warning(
+                        RFS_(
+                            "Implicit signed to unsigned conversion from \""RF_STR_PF_FMT"\" "
+                            "to \""RF_STR_PF_FMT"\"",
+                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
+                            RF_STR_PF_ARG(type_elementary_get_str(to->etype))));
+                    RFS_buffer_pop();
+                }
             }
             TYPECMP_RETURN(true);
         }

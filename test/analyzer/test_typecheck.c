@@ -149,6 +149,51 @@ START_TEST(test_typecheck_assignment_inv_big_to_small_conversion3) {
     ck_assert_typecheck_with_messages(d, true, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_assignment_inv_signed_to_unsigned_conversion1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i16 = 9999\n"
+        "b:u16\n"
+        "b = a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit signed to unsigned conversion from \"i16\" to \"u16\" during assignment.",
+            2, 0, 2, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
+START_TEST(test_typecheck_assignment_inv_conversion) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64 = 9009999\n"
+        "b:u16\n"
+        "b = a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit signed to unsigned conversion from \"i64\" to \"u16\" during assignment.",
+            2, 0, 2, 4),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_WARNING,
+            "Implicit conversion from \"i64\" to \"u16\" during assignment.",
+            2, 0, 2, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
 START_TEST(test_typecheck_valid_addition_simple) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
@@ -706,6 +751,8 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion1);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion2);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion3);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_signed_to_unsigned_conversion1);
+    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_conversion);
 
     TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(t_bop_val,

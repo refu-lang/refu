@@ -353,9 +353,12 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
         final_type = tleft;
         if (typecmp_ctx_have_warning()) {
-            analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                          RF_STR_PF_FMT" during assignment.",
-                          RF_STR_PF_ARG(typecmp_ctx_get_warning()));
+            const struct RFstring *warning;
+            while ((warning = typecmp_ctx_get_next_warning())) {
+                analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                              RF_STR_PF_FMT" during assignment.",
+                              RF_STR_PF_ARG(warning));
+            }
         }
     } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
