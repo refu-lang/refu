@@ -69,6 +69,11 @@ const struct RFstring *typecmp_ctx_get_next_warning()
     return &darray_pop(g_typecmp_ctx.warning_indices);
 }
 
+bool typecmp_ctx_have_error()
+{
+    return !rf_string_is_empty(&g_typecmp_ctx.err_buff);
+}
+
 bool typecmp_ctx_have_warning()
 {
     return !rf_string_is_empty(&g_typecmp_ctx.warn_buff);
@@ -128,8 +133,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
         goto end;
     }
 
-    // we must then be looking at implicit conversion
-    // TODO: should there be some warning between smaller to bigger or signed to unsigned types?
+    // we must then be looking at either implicit or explicit conversion
     switch (from->etype) {
     case ELEMENTARY_TYPE_INT:
     case ELEMENTARY_TYPE_UINT:
@@ -145,7 +149,9 @@ static bool type_elementary_compare(const struct type_elementary *from,
         if (type_elementary_is_int(to)) {
             if (!from->is_constant) {
                 // warn about conversion from bigger to smaller type
-                if (type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
+                if (reason != TYPECMP_EXPLICIT_CONVERSION &&
+                    type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
+
                     RFS_buffer_push();
                     typecmp_ctx_add_warning(
                         RFS_(
@@ -156,7 +162,10 @@ static bool type_elementary_compare(const struct type_elementary *from,
                     RFS_buffer_pop();
                 }
                 // warn about conversion from signed to unsigned
-                if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to)) {
+                if (reason != TYPECMP_EXPLICIT_CONVERSION &&
+                    !type_elementary_int_is_unsigned(from) &&
+                    type_elementary_int_is_unsigned(to)) {
+
                     RFS_buffer_push();
                     typecmp_ctx_add_warning(
                         RFS_(
@@ -177,11 +186,32 @@ static bool type_elementary_compare(const struct type_elementary *from,
         if (to->etype == ELEMENTARY_TYPE_BOOL) { // we can convert from int to bool
             TYPECMP_RETURN(true);
         }
+
+        // explicit conversion from int constant numeric literal to string is ok
+        if (to->etype == ELEMENTARY_TYPE_STRING &&
+            from->is_constant &&
+            reason == TYPECMP_EXPLICIT_CONVERSION) {
+            
+            TYPECMP_RETURN(true);
+        }
         break;
     case ELEMENTARY_TYPE_FLOAT_32:
     case ELEMENTARY_TYPE_FLOAT_64:
         // float to float is okay
         if (type_elementary_is_float(to)) {
+            TYPECMP_RETURN(true);
+        }
+
+        // only explicit float to int
+        if (type_elementary_is_int(to) && reason == TYPECMP_EXPLICIT_CONVERSION) {
+            TYPECMP_RETURN(true);
+        }
+
+        // explicit conversion from float constant numeric literal to string is ok
+        if (to->etype == ELEMENTARY_TYPE_STRING &&
+            from->is_constant &&
+            reason == TYPECMP_EXPLICIT_CONVERSION) {
+            
             TYPECMP_RETURN(true);
         }
         break;
@@ -200,8 +230,8 @@ static bool type_elementary_compare(const struct type_elementary *from,
 
 end:
     rf_stringx_assignv(&g_typecmp_ctx.err_buff,
-                       " Unable to convert from \""RF_STR_PF_FMT"\" to \""
-                       RF_STR_PF_FMT"\".",
+                       "Unable to convert from \""RF_STR_PF_FMT"\" to \""
+                       RF_STR_PF_FMT"\"",
                        RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
                        RF_STR_PF_ARG(type_elementary_get_str(to->etype)));
     TYPECMP_RETURN(false);

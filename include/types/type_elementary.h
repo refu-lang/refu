@@ -52,6 +52,11 @@ i_INLINE_DECL bool type_elementary_is_int(const struct type_elementary *t)
     return t->etype <= ELEMENTARY_TYPE_UINT;
 }
 
+i_INLINE_DECL bool type_elementary_has_explicit_conversion(const struct type_elementary *t)
+{
+    return t->etype <= ELEMENTARY_TYPE_BOOL;
+}
+
 i_INLINE_DECL bool type_elementary_int_is_unsigned(const struct type_elementary *t)
 {
     return t->etype % 2 != 0;
@@ -146,5 +151,14 @@ i_INLINE_DECL bool type_is_floating_elementary(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_ELEMENTARY &&
         type_elementary_is_float(&t->elementary);
+}
+
+/**
+ * Check if a type is an explicitly convertable elementary type
+ */
+i_INLINE_DECL bool type_is_explicitly_convertable_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY &&
+        type_elementary_has_explicit_conversion(&t->elementary);
 }
 #endif

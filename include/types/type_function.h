@@ -5,6 +5,7 @@
 #include <Utils/sanity.h>
 
 #include <types/type_decls.h>
+#include <types/type_elementary.h>
 
 i_INLINE_DECL bool type_is_function(const struct type *t)
 {
@@ -15,12 +16,15 @@ i_INLINE_DECL bool type_is_function(const struct type *t)
 /**
  * Returns true if the type can be called.
  *
- * Callable types are functions and also custom user defined types since
- * they can have a constructor
+ * Callable types are functions, custom user defined types since
+ * they can have a constructor and almost all elementary types for
+ * explicit conversion
  */
 i_INLINE_DECL bool type_is_callable(const struct type *t)
 {
-    return type_is_function(t) || t->category == TYPE_CATEGORY_DEFINED;
+    return type_is_function(t) ||
+        t->category == TYPE_CATEGORY_DEFINED ||
+        type_is_explicitly_convertable_elementary(t);
 }
 
 //! Gets the type descriptions of the arguments of the function
@@ -33,7 +37,8 @@ i_INLINE_DECL struct type *type_function_get_argtype(const struct type *t)
 //! Gets the type description of the arguments of a callable type
 i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
 {
-    RF_ASSERT(type_is_callable(t), "Non callable type detected");
+    RF_ASSERT(type_is_callable(t) && !type_is_explicitly_convertable_elementary(t),
+              "Function should be called for callable types and not conversions");
     if (type_is_function(t)) {
         return type_function_get_argtype(t);
     }
@@ -59,7 +64,8 @@ i_INLINE_DECL struct type *type_callable_get_rettype(const struct type *t)
     if (type_is_function(t)) {
         return type_function_get_rettype(t);
     }
-    // else it's a constructor of a defined type, so returned type is actually t
+    // else it's either a constructor of a defined type or explicit conversion,
+    // so returned type is actually t
     return (struct type*)t;
 }
 

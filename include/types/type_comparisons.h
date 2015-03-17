@@ -15,6 +15,8 @@ enum comparison_reason {
     TYPECMP_IDENTICAL,
     //! Compare types to check if implicit conversion is allowed
     TYPECMP_IMPLICIT_CONVERSION,
+    //! Compare types to check if explicit conversion is allowed
+    TYPECMP_EXPLICIT_CONVERSION,
 };
 
 
@@ -71,6 +73,12 @@ bool typecmp_ctx_init();
  * Will deinitialize all thread local data required to perform type comparisons
  */
 void typecmp_ctx_deinit();
+
+/**
+ * @returns if we had an error string generated in the last failed comparison.
+ *          Note that a comparison may fail without an error string generated.
+ */
+bool typecmp_ctx_have_error();
 
 /**
  * @returns String explanation of the reason the last comparison error happened

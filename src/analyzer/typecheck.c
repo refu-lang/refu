@@ -365,10 +365,11 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
             RFS_buffer_push();
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
-                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\"."
-                         ""RF_STR_PF_FMT,
+                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\""
+                         "%s"RF_STR_PF_FMT".",
                          RF_STR_PF_ARG(type_str(tright, false)),
                          RF_STR_PF_ARG(type_str(tleft, false)),
+                         typecmp_ctx_have_error() ? ". " : "",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             RFS_buffer_pop();
             return TRAVERSAL_CB_ERROR;
@@ -420,7 +421,6 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     const struct type *fn_declared_args_type;
     const struct type *fn_found_args_type;
     struct ast_node *fn_call_args = ast_fncall_args(n);
-    enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
     // check for existence of function
     fn_name = ast_fncall_name(n);
@@ -430,30 +430,56 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
-        return TRAVERSAL_CB_ERROR;
+        goto fail;
     }
 
-    //check that the types of its arguments do indeed match
-    fn_declared_args_type = type_callable_get_argtype(fn_type);
     fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
-                                        : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
-    if (!type_compare(fn_found_args_type, fn_declared_args_type, TYPECMP_IMPLICIT_CONVERSION)) {
-        RFS_buffer_push();
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
-                     RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
-                     "\""RF_STR_PF_FMT"\" which does not match the expected "
-                     "type of \""RF_STR_PF_FMT"\"."RF_STR_PF_FMT,
-                     RF_STR_PF_ARG(type_callable_category_str(fn_type)),
-                     RF_STR_PF_ARG(fn_name),
-                     RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
-                     RF_STR_PF_ARG(type_str(fn_declared_args_type, false)),
-                     RF_STR_PF_ARG(typecmp_ctx_get_error()));
-        RFS_buffer_pop();
-        ret = TRAVERSAL_CB_ERROR;
+        : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
+    if (type_is_explicitly_convertable_elementary(fn_type)) {
+        // silly way to check if it's only 1 argument. Maybe figure out safer way?
+        if (!fn_call_args || fn_found_args_type->category == TYPE_CATEGORY_OPERATOR) {
+            analyzer_err(ctx->a, ast_node_startmark(n),
+                         ast_node_endmark(n),
+                         "Invalid arguments for explicit conversion to \""
+                         RF_STR_PF_FMT"\".",
+                         RF_STR_PF_ARG(fn_name));
+            goto fail;
+        }
+
+        // check if the explicit conversion is valid
+        if (!type_compare(fn_found_args_type, fn_type, TYPECMP_EXPLICIT_CONVERSION)) {
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         "Invalid explicit conversion. "RF_STR_PF_FMT".",
+                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
+            goto fail;
+        }
+        
+    } else {
+        //check that the types of its arguments do indeed match
+        fn_declared_args_type = type_callable_get_argtype(fn_type);
+        if (!type_compare(fn_found_args_type, fn_declared_args_type, TYPECMP_IMPLICIT_CONVERSION)) {
+            RFS_buffer_push();
+            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                         RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
+                         "\""RF_STR_PF_FMT"\" which does not match the expected "
+                         "type of \""RF_STR_PF_FMT"\"%s"RF_STR_PF_FMT".",
+                         RF_STR_PF_ARG(type_callable_category_str(fn_type)),
+                         RF_STR_PF_ARG(fn_name),
+                         RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
+                         RF_STR_PF_ARG(type_str(fn_declared_args_type, false)),
+                         typecmp_ctx_have_error() ? ". " : "",
+                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
+            RFS_buffer_pop();
+            goto fail;
+        }
     }
 
     traversal_node_set_type(n, type_callable_get_rettype(fn_type), ctx);
-    return ret;
+    return TRAVERSAL_CB_OK;
+
+fail:
+    traversal_node_set_type(n, NULL, ctx);
+    return TRAVERSAL_CB_ERROR;
 }
 
 static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
