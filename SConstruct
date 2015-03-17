@@ -151,6 +151,7 @@ unit_tests_files = [
     'analyzer/testsupport_analyzer.c',
     'analyzer/test_symbol_table.c',
     'analyzer/test_typecheck.c',
+    'analyzer/test_typecheck_conversion.c',
     'analyzer/test_string_table.c',
 
     'types/test_types.c',

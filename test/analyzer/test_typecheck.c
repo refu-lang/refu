@@ -44,28 +44,6 @@ START_TEST(test_typecheck_assignment_simple) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST(test_typecheck_assignment_from_bool_to_int) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:int = true\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_from_int_to_bool) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:bool = 13\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
 START_TEST(test_typecheck_assignment_invalid_string_to_int) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64\n"
@@ -86,220 +64,6 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
             4, 0, 4, 7)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_inv_big_to_small_conversion1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64 = 9999\n"
-        "b:u8\n"
-        "b = a\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit conversion from \"u64\" to \"u8\" during assignment.",
-            2, 0, 2, 4)
-    };
-
-    ck_assert_typecheck_with_messages(d, true, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_inv_big_to_small_conversion2) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u32 = 9999\n"
-        "b:u8\n"
-        "b = a\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit conversion from \"u32\" to \"u8\" during assignment.",
-            2, 0, 2, 4)
-    };
-
-    ck_assert_typecheck_with_messages(d, true, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_inv_big_to_small_conversion3) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u16 = 9999\n"
-        "b:u8\n"
-        "b = a\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit conversion from \"u16\" to \"u8\" during assignment.",
-            2, 0, 2, 4)
-    };
-
-    ck_assert_typecheck_with_messages(d, true, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_inv_signed_to_unsigned_conversion1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:i16 = 9999\n"
-        "b:u16\n"
-        "b = a\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit signed to unsigned conversion from \"i16\" to \"u16\" during assignment.",
-            2, 0, 2, 4)
-    };
-
-    ck_assert_typecheck_with_messages(d, true, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_inv_conversion) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:i64 = 9009999\n"
-        "b:u16\n"
-        "b = a\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit signed to unsigned conversion from \"i64\" to \"u16\" during assignment.",
-            2, 0, 2, 4),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_WARNING,
-            "Implicit conversion from \"i64\" to \"u16\" during assignment.",
-            2, 0, 2, 4)
-    };
-
-    ck_assert_typecheck_with_messages(d, true, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_explicit_conversion1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64 = 9009999\n"
-        "b:u8\n"
-        "b = u8(a)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_explicit_conversion2) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:i64 = 9009999\n"
-        "b:u8\n"
-        "b = u8(a)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_explicit_conversion3) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:f64 = 4.234\n"
-        "b:u8\n"
-        "b = u8(a)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_explicit_conversion4) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:string\n"
-        "a = string(32)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_explicit_conversion5) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:string\n"
-        "a = string(0.2342)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_invalid_explicit_conversion1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:u64\n"
-        "a = u64()\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Invalid arguments for explicit conversion to \"u64\".",
-            2, 4, 2, 8),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            2, 4, 2, 8),
-    };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_invalid_explicit_conversion2) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{\n"
-        "a:string\n"
-        "b:u64 = 23412\n"
-        "a = string(b)\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Invalid explicit conversion. Unable to convert from \"u64\" to \"string\".",
-            3, 4, 3, 12),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            3, 4, 3, 12),
-    };
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
@@ -851,37 +615,12 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_val, test_typecheck_assignment_simple);
-    tcase_add_test(t_assign_val, test_typecheck_assignment_from_bool_to_int);
-    tcase_add_test(t_assign_val, test_typecheck_assignment_from_int_to_bool);
 
     TCase *t_assign_inv = tcase_create("analyzer_typecheck_invalid_assignments");
     tcase_add_checked_fixture(t_assign_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion1);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion2);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_big_to_small_conversion3);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_signed_to_unsigned_conversion1);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_inv_conversion);
-
-    TCase *t_explicit_conversion_val = tcase_create("analyzer_typecheck_valid_explicit_conversion");
-    tcase_add_checked_fixture(t_explicit_conversion_val,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion1);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion2);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion3);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion4);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion5);
-
-    TCase *t_explicit_conversion_inv = tcase_create("analyzer_typecheck_invalid_explicit_conversion");
-    tcase_add_checked_fixture(t_explicit_conversion_inv,
-                              setup_analyzer_tests_with_filelog,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion1);
-    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion2);
-
 
     TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
     tcase_add_checked_fixture(t_bop_val,
@@ -966,8 +705,6 @@ Suite *analyzer_typecheck_suite_create(void)
 
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
-    suite_add_tcase(s, t_explicit_conversion_val);
-    suite_add_tcase(s, t_explicit_conversion_inv);
     suite_add_tcase(s, t_bop_val);
     suite_add_tcase(s, t_access_val);
     suite_add_tcase(s, t_access_inv);
