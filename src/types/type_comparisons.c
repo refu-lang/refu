@@ -219,6 +219,10 @@ static bool type_elementary_compare(const struct type_elementary *from,
         if (type_elementary_is_int(to)) { // we can convert from bool to int
             TYPECMP_RETURN(true);
         }
+        // we can explicitly convert from bool to string
+        if (to->etype == ELEMENTARY_TYPE_STRING && reason == TYPECMP_EXPLICIT_CONVERSION) {
+            TYPECMP_RETURN(true);
+        }
         break;
     case ELEMENTARY_TYPE_STRING:
     case ELEMENTARY_TYPE_NIL:

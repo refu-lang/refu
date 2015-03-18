@@ -2,6 +2,7 @@
 #define LFR_AST_CONSTANTS_DECLS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 enum constant_type {
     CONSTANT_NUMBER_FLOAT,

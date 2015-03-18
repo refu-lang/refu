@@ -254,6 +254,7 @@ START_TEST(test_lexer_scan_constant_numbers) {
         "03452623\n"
         "1.0e-10\n"
         "3.9265E+2\n"
+        "0\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -267,6 +268,7 @@ START_TEST(test_lexer_scan_constant_numbers) {
         TESTLEX_INTEGER_INIT(d, 4, 0, 4, 7, 939411),
         TESTLEX_FLOAT_INIT(d, 5, 0, 5, 6, 1.0e-10),
         TESTLEX_FLOAT_INIT(d, 6, 0, 6, 8, 3.9265e+2),
+        TESTLEX_INTEGER_INIT(d, 7, 0, 7, 0, 0),
     };
     ck_assert(lexer_scan(lex));
     check_lexer_tokens(lex, expected);
@@ -490,6 +492,24 @@ START_TEST(test_lexer_scan_integer_close_to_member_access) {
     check_lexer_tokens(lex, expected);
 } END_TEST
 
+START_TEST(test_lexer_scan_zero_at_eof) {
+    struct front_ctx *front;
+    struct lexer *lex;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "0"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file ");
+    lex = front->lexer;
+    struct token expected[] = {
+        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 0, 0),
+    };
+    ck_assert(lexer_scan(lex));
+    check_lexer_tokens(lex, expected);
+
+} END_TEST
+
 START_TEST(test_lexer_push_pop) {
     struct front_ctx *front;
     struct lexer *lex;
@@ -674,6 +694,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan_edge, test_lexer_scan_integer_with_tokens_in_between);
     tcase_add_test(scan_edge, test_lexer_scan_float_with_tokens_in_between);
     tcase_add_test(scan_edge, test_lexer_scan_integer_close_to_member_access);
+    tcase_add_test(scan_edge, test_lexer_scan_zero_at_eof);
 
     TCase *lexer_utils = tcase_create("lexer_utilities");
     tcase_add_checked_fixture(lexer_utils,

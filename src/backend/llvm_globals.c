@@ -1,5 +1,6 @@
 #include "llvm_globals.h"
 
+#include <Utils/hash.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_conversion.h>
 
@@ -47,29 +48,55 @@ static LLVMValueRef backend_llvm_add_global_strbuff(char *str_data, size_t str_l
     return global_stringbuff;
 }
 
-static void backend_llvm_create_const_strings(const struct string_table_record *rec,
-                                              struct llvm_traversal_ctx *ctx)
+LLVMValueRef backend_llvm_create_global_const_string_with_hash(
+    const struct RFstring *string,
+    uint32_t hash,
+    struct llvm_traversal_ctx *ctx)
 {
-    unsigned int length = rf_string_length_bytes(&rec->string);
+    unsigned int length = rf_string_length_bytes(string);
     char *gstr_name;
     char *strbuff_name;
 
     RFS_buffer_push();
-    strbuff_name = rf_string_cstr_from_buff(RFS_("strbuff_%u", rec->hash));
-    LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(rf_string_cstr_from_buff(&rec->string),
-                                                                     length,
-                                                                     strbuff_name,
-                                                                     ctx);
+    strbuff_name = rf_string_cstr_from_buff(RFS_("strbuff_%u", hash));
+    LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(
+        rf_string_cstr_from_buff(string),
+        length,
+        strbuff_name,
+        ctx);
 
-    LLVMValueRef indices_0 [] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+    LLVMValueRef indices_0 [] = {
+        LLVMConstInt(LLVMInt32Type(), 0, 0),
+        LLVMConstInt(LLVMInt32Type(), 0, 0)
+    };
     LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(global_stringbuff, indices_0, 2);
-    LLVMValueRef string_struct_layout[] = { LLVMConstInt(LLVMInt32Type(), length, 0), gep_to_string_buff };
-    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"), string_struct_layout, 2);
+    LLVMValueRef string_struct_layout[] = {
+        LLVMConstInt(LLVMInt32Type(), length, 0),
+        gep_to_string_buff
+    };
+    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"),
+                                                    string_struct_layout, 2);
 
-    gstr_name = rf_string_cstr_from_buff(RFS_("gstr_%u", rec->hash));
+    gstr_name = rf_string_cstr_from_buff(RFS_("gstr_%u", hash));
     LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMGetTypeByName(ctx->mod, "string"), gstr_name);
     RFS_buffer_pop();
     LLVMSetInitializer(global_val, string_decl);
+    return global_val;
+}
+
+LLVMValueRef backend_llvm_create_global_const_string(const struct RFstring *string,
+                                                     struct llvm_traversal_ctx *ctx)
+{
+    return backend_llvm_create_global_const_string_with_hash(
+        string,
+        rf_hash_str_stable(string, 0),
+        ctx);
+}
+
+static void backend_llvm_const_string_creation_cb(const struct string_table_record *rec,
+                                                  struct llvm_traversal_ctx *ctx)
+{
+    backend_llvm_create_global_const_string_with_hash(&rec->string, rec->hash, ctx);
 }
 
 static void backend_llvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
@@ -155,7 +182,7 @@ bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
 
     llvm_traversal_ctx_reset_params(ctx);
     string_table_iterate(ctx->rir->string_literals_table,
-                         (string_table_cb)backend_llvm_create_const_strings, ctx);
+                         (string_table_cb)backend_llvm_const_string_creation_cb, ctx);
 
 
     backend_llvm_create_global_types(ctx);

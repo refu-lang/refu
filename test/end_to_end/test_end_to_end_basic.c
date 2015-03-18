@@ -10,19 +10,19 @@
 
 #include CLIB_TEST_HELPERS
 
-START_TEST(test_smoke) {
+START_TEST (test_smoke) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 42}");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 42);
 } END_TEST
 
-START_TEST(test_addition) {
+START_TEST (test_addition) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 12 + 22}");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 34);
 } END_TEST
 
-START_TEST(test_multiple_real_arithmetic) {
+START_TEST (test_multiple_real_arithmetic) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -31,7 +31,7 @@ START_TEST(test_multiple_real_arithmetic) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 30);
 } END_TEST
 
-START_TEST(test_print_string) {
+START_TEST (test_print_string) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -43,7 +43,7 @@ START_TEST(test_print_string) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
 } END_TEST
 
-START_TEST(test_print_string_literal) {
+START_TEST (test_print_string_literal) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -54,7 +54,7 @@ START_TEST(test_print_string_literal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
 } END_TEST
 
-START_TEST(test_type_decl) {
+START_TEST (test_type_decl) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i32, b:f32 }\n"
@@ -65,7 +65,7 @@ START_TEST(test_type_decl) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
 } END_TEST
 
-START_TEST(test_type_member_access) {
+START_TEST (test_type_member_access) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:u8, b:u16, c:u32, d:u64 }\n"
@@ -76,7 +76,7 @@ START_TEST(test_type_member_access) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
 } END_TEST
 
-START_TEST(test_simple_if) {
+START_TEST (test_simple_if) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -89,7 +89,7 @@ START_TEST(test_simple_if) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_simple_if_else) {
+START_TEST (test_simple_if_else) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -106,7 +106,7 @@ START_TEST(test_simple_if_else) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_simple_if_elif_else) {
+START_TEST (test_simple_if_elif_else) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -125,7 +125,7 @@ START_TEST(test_simple_if_elif_else) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_equal) {
+START_TEST (test_equal) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -155,7 +155,7 @@ START_TEST(test_equal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_not_equal) {
+START_TEST (test_not_equal) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -185,7 +185,7 @@ START_TEST(test_not_equal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_greater_than) {
+START_TEST (test_greater_than) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -216,7 +216,7 @@ START_TEST(test_greater_than) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_greater_than_or_equal) {
+START_TEST (test_greater_than_or_equal) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -249,7 +249,7 @@ START_TEST(test_greater_than_or_equal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_less_than) {
+START_TEST (test_less_than) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -280,7 +280,7 @@ START_TEST(test_less_than) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_less_than_or_equal) {
+START_TEST (test_less_than_or_equal) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -311,7 +311,7 @@ START_TEST(test_less_than_or_equal) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
-START_TEST(test_if_with_boolean) {
+START_TEST (test_if_with_boolean) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
@@ -331,6 +331,56 @@ START_TEST(test_if_with_boolean) {
         "}"
     );
     static const struct RFstring output = RF_STRING_STATIC_INIT("yang yin");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST (test_explicit_conversion_to_u8) {
+    // TODO: refactor this test when print can output ints
+    //       and when missing return in outer block works
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:u64 = 4294967294\n"
+        "    b:u8 = u8(a)\n"
+        "    if b == 254 { print(\"yes\") } else { print(\"no\") }\n"
+        "    return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST (test_explicit_conversion_to_u16) {
+    // TODO: refactor this test when print can output ints
+    //       and when missing return in outer block works
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:u64 = 4294967294\n"
+        "    b:u16 = u8(a)\n"
+        "    if b == 65534 { print(\"yes\") } else { print(\"no\") }\n"
+        "    return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST (test_explicit_conversion_to_string) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:string = string(42)\n"
+        "    b:string = string(1.61803399)\n"        
+        "    c:string = string(true)\n"        
+        "    d:string = string(false)\n"        
+        "    print(a) print(\" \") print(b)\n"
+        "    print(\" \") print(c)\n"
+        "    print(\" \") print(d)\n"
+        "    return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("42 1.6180 true false");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
@@ -375,11 +425,20 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_comparisons, test_less_than_or_equal);
     tcase_add_test(st_comparisons, test_if_with_boolean);
 
+    TCase *st_explicit_conversions = tcase_create("end_to_end_explicit_conversions");
+    tcase_add_checked_fixture(st_explicit_conversions,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_u8);
+    tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_u16);
+    tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_string);
+
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_control_flow);
     suite_add_tcase(s, st_comparisons);
+    suite_add_tcase(s, st_explicit_conversions);
 
     return s;
 }

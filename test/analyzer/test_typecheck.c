@@ -606,6 +606,20 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST (test_typecheck_valid_if_stmt) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    a:u64 = 1453\n"
+        "    b:u64"
+        "    if a == 1453 { b = 1 } else { b = 0 }\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -702,6 +716,12 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block1);
     tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block2);
 
+    TCase *t_if_val = tcase_create("analyzer_typecheck_valid_if");
+    tcase_add_checked_fixture(t_if_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_if_val, test_typecheck_valid_if_stmt);
+
 
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
@@ -715,6 +735,7 @@ Suite *analyzer_typecheck_suite_create(void)
     suite_add_tcase(s, t_custom_types_inv);
     suite_add_tcase(s, t_block_val);
     suite_add_tcase(s, t_block_inv);
+    suite_add_tcase(s, t_if_val);
     return s;
 }
 

@@ -332,20 +332,22 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
                               char *lim, char **ret_p)
 {
     char *sp = p;
-    char *sp_1 = p + 1;
-    if (*sp == '0' && *sp_1 != '.') {
-        if (*sp_1 == 'x') {
-            return lexer_get_constant_uint(l, p, lim, ret_p,
-                                           rf_string_to_uint_hex);
-        } else if (*sp_1 == 'b') {
-            return lexer_get_constant_uint(l, p, lim, ret_p,
-                                           rf_string_to_uint_bin);
-        }
-        // else oct
-        return lexer_get_constant_uint(l, p, lim, ret_p,
-                                       rf_string_to_uint_oct);
-    }
 
+    if (sp < lim) {
+        char *sp_1 = p + 1;
+        if (*sp == '0' && *sp_1 != '.' && !COND_WS(*sp_1)) {
+                if (*sp_1 == 'x') {
+                    return lexer_get_constant_uint(l, p, lim, ret_p,
+                                                   rf_string_to_uint_hex);
+                } else if (*sp_1 == 'b') {
+                    return lexer_get_constant_uint(l, p, lim, ret_p,
+                                                   rf_string_to_uint_bin);
+                }
+                // else oct
+                return lexer_get_constant_uint(l, p, lim, ret_p,
+                                               rf_string_to_uint_oct);
+        }
+    }
     return lexer_get_constant_int_or_float(l, p, lim, ret_p);
 }
 
@@ -418,10 +420,18 @@ bool lexer_scan(struct lexer *l)
 
         if (COND_IDENTIFIER_BEGIN(*p)) {
             if (!lexer_get_identifier(l, p, lim, &p)) {
+                lexer_synerr(
+                    l, lexer_get_last_token_loc_start(l),
+                    NULL,
+                    "Failed to scan identifier");
                 return false;
             }
         } else if (COND_NUMERIC(*p)) {
             if (!lexer_get_numeric(l, p, lim, &p)) {
+                lexer_synerr(
+                    l, lexer_get_last_token_loc_start(l),
+                    NULL,
+                    "Failed to scan numeric literal");
                 return false;
             }
         } else { // see if it's a token
@@ -457,6 +467,7 @@ bool lexer_scan(struct lexer *l)
                         }
                     }
                     if (!lexer_add_token(l, itoken->type, toksp, p + len - 1)) {
+                        RF_ERROR("Failed to add a new token");
                         return false;
                     }
                     p += len;

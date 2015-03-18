@@ -13,6 +13,7 @@
 
 #include <compiler_args.h>
 
+#include <lexer/tokens.h>
 #include <ast/ast_utils.h>
 #include <ast/function.h>
 #include <ast/type.h>
@@ -233,7 +234,6 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
                                                          ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
 
     if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
-        AST_NODE_ASSERT_TYPE(ast_binaryop_right(n), AST_STRING_LITERAL);
         LLVMValueRef length;
         LLVMValueRef string_data;
         backend_llvm_load_from_string(right, &length, &string_data, ctx);
@@ -542,11 +542,46 @@ LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
         if (type_is_function(fn_type)) {
             // TODO
             RF_ASSERT(false, "Not yet implemented");
-        } else {
-            RF_ASSERT(fn_type->category == TYPE_CATEGORY_DEFINED,
-                      "At this point the only possible type should be defined type");
-
+        } else if (fn_type->category == TYPE_CATEGORY_DEFINED) {
             return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
+        } else {
+            RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
+                      "At this point the only possible call should be explicit cast");
+
+            // special work for cast to a string
+            if (fn_type->elementary.etype == ELEMENTARY_TYPE_STRING) {
+                const struct RFstring *temps;
+                LLVMValueRef ret_str;
+                RFS_buffer_push();
+                AST_NODE_ASSERT_TYPE(args, AST_CONSTANT);
+                switch (ast_constant_get_type(args)) {
+                case CONSTANT_NUMBER_INTEGER:
+                    temps = RFS_("%"PRIu64, args->constant.value.integer);
+                    break;
+                case CONSTANT_NUMBER_FLOAT:
+                    // for now float conversion to string will use 4 decimal digits precision
+                    temps = RFS_("%.4f", args->constant.value.floating);
+                    break;
+                case CONSTANT_BOOLEAN:
+                    temps = args->constant.value.boolean ?
+                        tokentype_to_str(TOKEN_KW_TRUE) : tokentype_to_str(TOKEN_KW_FALSE);
+                    break;
+                default:
+                    RF_ASSERT(false,
+                              "Illegal constant number type encountered at code generation");
+                    
+                }
+                ret_str = backend_llvm_create_global_const_string(temps, ctx);
+                RFS_buffer_pop();
+                return ret_str;
+            }
+            
+            // else other casts should only have 1 argument, enforced during typechecking
+            LLVMValueRef cast_value = backend_llvm_expression_compile(
+                args,
+                ctx,
+                RFLLVM_OPTION_IDENTIFIER_VALUE);
+            return backend_llvm_cast_value_to_elementary_maybe(cast_value, fn_type, ctx);
         }
     }
 

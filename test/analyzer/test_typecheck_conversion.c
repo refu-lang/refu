@@ -187,7 +187,7 @@ START_TEST (test_typecheck_valid_explicit_conversion3) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST (test_typecheck_valid_explicit_conversion4) {
+START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:string\n"
@@ -199,11 +199,23 @@ START_TEST (test_typecheck_valid_explicit_conversion4) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST (test_typecheck_valid_explicit_conversion5) {
+START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:string\n"
         "a = string(0.2342)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:string\n"
+        "a = string(true)\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
@@ -235,7 +247,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion1) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
-START_TEST (test_typecheck_invalid_explicit_conversion2) {
+START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:string\n"
@@ -288,15 +300,16 @@ Suite *analyzer_typecheck_conversion_suite_create(void)
     tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion1);
     tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion2);
     tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion3);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion4);
-    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion5);
+    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion_int_literal_to_string);
+    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion_float_literal_to_string);
+    tcase_add_test(t_explicit_conversion_val, test_typecheck_valid_explicit_conversion_bool_to_string);
 
     TCase *t_explicit_conversion_inv = tcase_create("analyzer_typecheck_invalid_explicit_conversion");
     tcase_add_checked_fixture(t_explicit_conversion_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion1);
-    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion2);
+    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion_int_to_string);
 
 
     suite_add_tcase(s, t_implicit_val);
