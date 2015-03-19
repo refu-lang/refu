@@ -234,10 +234,7 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
                                                          ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
 
     if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
-        LLVMValueRef length;
-        LLVMValueRef string_data;
-        backend_llvm_load_from_string(right, &length, &string_data, ctx);
-        backend_llvm_assign_to_string(llvm_left, length, string_data, ctx);
+        backend_llvm_copy_string(right, llvm_left, ctx);
     } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
         backend_llvm_assign_defined_types(llvm_left, right, ctx);
     } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
@@ -519,6 +516,80 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     return allocation;
 }
 
+static LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
+                                                       struct ast_node *args,
+                                                       struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef cast_value = backend_llvm_expression_compile(
+        args,
+        ctx,
+        RFLLVM_OPTION_IDENTIFIER_VALUE);
+    // at the moment only cast to string requires special work
+    if (cast_type->elementary.etype != ELEMENTARY_TYPE_STRING) {
+        return backend_llvm_cast_value_to_elementary_maybe(cast_value, cast_type, ctx);
+    }
+
+    // from here and down it's a cast to string
+    if (args->type == AST_CONSTANT) {
+        RFS_buffer_push();
+        LLVMValueRef ret_str;
+        const struct RFstring *temps;
+        switch (ast_constant_get_type(args)) {
+        case CONSTANT_NUMBER_INTEGER:
+            temps = RFS_("%"PRIu64, args->constant.value.integer);
+            break;
+        case CONSTANT_NUMBER_FLOAT:
+            // for now float conversion to string will use 4 decimal digits precision
+            temps = RFS_("%.4f", args->constant.value.floating);
+            break;
+        case CONSTANT_BOOLEAN:
+            /* temps = args->constant.value.boolean ? */
+            /*     tokentype_to_str(TOKEN_KW_TRUE) : tokentype_to_str(TOKEN_KW_FALSE); */
+            /* break; */
+            return args->constant.value.boolean
+                ? backend_llvm_get_boolean_str(true, ctx)
+                : backend_llvm_get_boolean_str(false, ctx);
+        default:
+            RF_ASSERT(false,
+                      "Illegal constant number type encountered at code generation");
+                    
+        }
+
+        ret_str = backend_llvm_create_global_const_string(temps, ctx);
+        RFS_buffer_pop();
+        return ret_str;
+    }
+
+    if (type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_BOOL)) {
+        RFS_buffer_push();
+        LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "taken_branch");
+        LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "fallthrough_branch");
+        LLVMBasicBlockRef if_end = LLVMAppendBasicBlock(ctx->current_function, "if_end");
+        LLVMValueRef string_alloca = LLVMBuildAlloca(ctx->builder, LLVMGetTypeByName(ctx->mod, "string"), "");
+        LLVMBuildCondBr(ctx->builder, cast_value, taken_branch, fallthrough_branch);
+
+        // if true
+        backend_llvm_enter_block(ctx, taken_branch);
+        backend_llvm_copy_string(backend_llvm_get_boolean_str(true, ctx),
+                                 string_alloca,
+                                 ctx);
+        LLVMBuildBr(ctx->builder, if_end);
+        // else false
+        backend_llvm_enter_block(ctx, fallthrough_branch);
+        backend_llvm_copy_string(backend_llvm_get_boolean_str(false, ctx),
+                                 string_alloca,
+                                 ctx);
+        LLVMBuildBr(ctx->builder, if_end);
+        backend_llvm_enter_block(ctx, if_end);
+        RFS_buffer_pop();
+        return string_alloca;
+    }
+
+    // else
+    RF_ASSERT(false, "Illegal cast, should not get here");
+    return NULL;
+}
+
 LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
                                                 struct llvm_traversal_ctx *ctx)
 {
@@ -547,44 +618,9 @@ LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
         } else {
             RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
                       "At this point the only possible call should be explicit cast");
-
-            // special work for cast to a string
-            if (fn_type->elementary.etype == ELEMENTARY_TYPE_STRING) {
-                const struct RFstring *temps;
-                LLVMValueRef ret_str;
-                RFS_buffer_push();
-                AST_NODE_ASSERT_TYPE(args, AST_CONSTANT);
-                switch (ast_constant_get_type(args)) {
-                case CONSTANT_NUMBER_INTEGER:
-                    temps = RFS_("%"PRIu64, args->constant.value.integer);
-                    break;
-                case CONSTANT_NUMBER_FLOAT:
-                    // for now float conversion to string will use 4 decimal digits precision
-                    temps = RFS_("%.4f", args->constant.value.floating);
-                    break;
-                case CONSTANT_BOOLEAN:
-                    temps = args->constant.value.boolean ?
-                        tokentype_to_str(TOKEN_KW_TRUE) : tokentype_to_str(TOKEN_KW_FALSE);
-                    break;
-                default:
-                    RF_ASSERT(false,
-                              "Illegal constant number type encountered at code generation");
-                    
-                }
-                ret_str = backend_llvm_create_global_const_string(temps, ctx);
-                RFS_buffer_pop();
-                return ret_str;
-            }
-            
-            // else other casts should only have 1 argument, enforced during typechecking
-            LLVMValueRef cast_value = backend_llvm_expression_compile(
-                args,
-                ctx,
-                RFLLVM_OPTION_IDENTIFIER_VALUE);
-            return backend_llvm_cast_value_to_elementary_maybe(cast_value, fn_type, ctx);
+            return backend_llvm_explicit_cast_compile(fn_type, args, ctx);
         }
     }
-
     // if function returns void. TODO: Maybe handle better
     return NULL;
 }

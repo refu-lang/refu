@@ -15,4 +15,10 @@ struct LLVMOpaqueValue *backend_llvm_create_global_const_string_with_hash(
     const struct RFstring *string,
     uint32_t hash,
     struct llvm_traversal_ctx *ctx);
+
+/**
+ * @returns the global string for "true" or "false"
+ */
+struct LLVMOpaqueValue *backend_llvm_get_boolean_str(bool boolean,
+                                                     struct llvm_traversal_ctx *ctx);
 #endif

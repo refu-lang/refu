@@ -384,6 +384,20 @@ START_TEST (test_explicit_conversion_to_string) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST (test_explicit_conversion_to_string_from_nonconst_bool) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:string = string(42 == 42)\n"
+        "    b:string = string(1 == 3)\n"
+        "    print(a) print(\" \") print(b)\n"
+        "    return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("true false");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -432,6 +446,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_u8);
     tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_u16);
     tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_string);
+    tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_string_from_nonconst_bool);
 
 
     suite_add_tcase(s, st_basic);

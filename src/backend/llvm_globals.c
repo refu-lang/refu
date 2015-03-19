@@ -11,7 +11,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <analyzer/string_table.h>
-
+#include <lexer/tokens.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
 #include <ir/rir.h>
@@ -183,6 +183,9 @@ bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
     llvm_traversal_ctx_reset_params(ctx);
     string_table_iterate(ctx->rir->string_literals_table,
                          (string_table_cb)backend_llvm_const_string_creation_cb, ctx);
+    // also add "true" and "false" as global constant string literals
+    backend_llvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);
+    backend_llvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
 
 
     backend_llvm_create_global_types(ctx);
@@ -192,4 +195,12 @@ bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
         return false;
     }
     return true;
+}
+
+LLVMValueRef backend_llvm_get_boolean_str(bool boolean, struct llvm_traversal_ctx *ctx)
+{
+    // this depends on the string hash being stable and same across all
+    // implementations (which it should be)
+    return boolean ? LLVMGetNamedGlobal(ctx->mod, "gstr_706834940")
+        : LLVMGetNamedGlobal(ctx->mod, "gstr_3855993015");
 }

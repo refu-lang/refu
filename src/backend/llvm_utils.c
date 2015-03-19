@@ -68,6 +68,16 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
 
+void backend_llvm_copy_string(LLVMValueRef from,
+                              LLVMValueRef to,
+                              struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef length;
+    LLVMValueRef string_data;
+    backend_llvm_load_from_string(from, &length, &string_data, ctx);
+    backend_llvm_assign_to_string(to, length, string_data, ctx);
+}
+
 LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
                                                    LLVMTypeRef type,
                                                    struct llvm_traversal_ctx *ctx)

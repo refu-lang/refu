@@ -23,6 +23,14 @@ void backend_llvm_load_from_string(struct LLVMOpaqueValue *string_alloca,
                                    struct LLVMOpaqueValue **length,
                                    struct LLVMOpaqueValue **string_data,
                                    struct llvm_traversal_ctx *ctx);
+/**
+ * A combination of a @ref backend_llvm_load_from_string() and a
+ * @ref backend_llvm_assign_to_string() to achieve a shallow copy
+ * of a string.
+ */
+void backend_llvm_copy_string(struct LLVMOpaqueValue *from,
+                              struct LLVMOpaqueValue *to,
+                              struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueValue *backend_llvm_cast_value_to_type_maybe(
     struct LLVMOpaqueValue *val,
