@@ -403,6 +403,26 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:string = \"a\"\n"
+        "    print(b)\n"
+        "    return 1\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Undeclared identifier \"b\"",
+            2, 10, 2, 10),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 START_TEST(test_typecheck_valid_function_impl) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
@@ -685,6 +705,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return2);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_undeclared_identifier);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 
     TCase *t_custom_types_val = tcase_create("analyzer_typecheck_valid_custom_types");
@@ -721,7 +742,6 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_if_val, test_typecheck_valid_if_stmt);
-
 
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);

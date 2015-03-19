@@ -277,7 +277,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                             ctx);
 
     // for some identifiers, like for the right part of a member access it's
-    // impossible to determmine type at this stage, for the rest it's an error
+    // impossible to determine type at this stage, for the rest it's an error
     if (!n->expression_type &&
         !ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
@@ -435,6 +435,11 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
 
     fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
+
+    if (!fn_found_args_type) { // argument typechecking failed
+        goto fail;
+    }
+    
     if (type_is_explicitly_convertable_elementary(fn_type)) {
         // silly way to check if it's only 1 argument. Maybe figure out safer way?
         if (!fn_call_args || fn_found_args_type->category == TYPE_CATEGORY_OPERATOR) {
