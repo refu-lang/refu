@@ -456,6 +456,52 @@ START_TEST(test_acc_operator_precedence_3) {
     ast_node_destroy(bop3);
 }END_TEST
 
+START_TEST(test_acc_subtract_negative_constant_literal) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "214 - -5651");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    testsupport_parser_constant_create(cnum1, file,
+                                       0, 0, 0, 2, integer, 214);
+    testsupport_parser_constant_create(cnum2, file,
+                                       0, 6, 0, 10, integer, -5651);
+    testsupport_parser_node_create(bop, binaryop, file, 0, 0, 0, 10,
+                                   BINARYOP_SUB,
+                                   cnum1, cnum2);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop);
+}END_TEST
+
+START_TEST(test_acc_assign_negative_constant_literal) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a = -5651");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 0);
+    testsupport_parser_constant_create(cnum2, file,
+                                       0, 4, 0, 8, integer, -5651);
+    testsupport_parser_node_create(bop, binaryop, file, 0, 0, 0, 8,
+                                   BINARYOP_ASSIGN,
+                                   id_a, cnum2);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop);
+}END_TEST
+
 Suite *parser_operators_suite_create(void)
 {
     Suite *s = suite_create("parser_operators");
@@ -480,6 +526,8 @@ Suite *parser_operators_suite_create(void)
     tcase_add_test(op_predence, test_acc_operator_precedence_1);
     tcase_add_test(op_predence, test_acc_operator_precedence_2);
     tcase_add_test(op_predence, test_acc_operator_precedence_3);
+    tcase_add_test(op_predence, test_acc_subtract_negative_constant_literal);
+    tcase_add_test(op_predence, test_acc_assign_negative_constant_literal);
 
     suite_add_tcase(s, sbop);
     suite_add_tcase(s, cbop);

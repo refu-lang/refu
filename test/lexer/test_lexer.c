@@ -255,6 +255,8 @@ START_TEST(test_lexer_scan_constant_numbers) {
         "1.0e-10\n"
         "3.9265E+2\n"
         "0\n"
+        "-13\n"
+        "-2.1234\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -269,6 +271,8 @@ START_TEST(test_lexer_scan_constant_numbers) {
         TESTLEX_FLOAT_INIT(d, 5, 0, 5, 6, 1.0e-10),
         TESTLEX_FLOAT_INIT(d, 6, 0, 6, 8, 3.9265e+2),
         TESTLEX_INTEGER_INIT(d, 7, 0, 7, 0, 0),
+        TESTLEX_INTEGER_INIT(d, 8, 0, 8, 2, -13),
+        TESTLEX_FLOAT_INIT(d, 9, 0, 9, 6, -2.1234),
     };
     ck_assert(lexer_scan(lex));
     check_lexer_tokens(lex, expected);

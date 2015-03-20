@@ -242,20 +242,21 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
 #define COND_WS(p_)                                               \
     ((p_) == ' ' || (p_) == '\t' || (p_) == '\n' || (p_) == '\r')
 static bool lexer_get_constant_int_or_float(struct lexer *l, char *p,
-                                            char *lim, char **ret_p)
+                                            char *lim, bool negative,
+                                            char **ret_p)
 {
-    char *sp = p;
-    bool is_float = false;
     struct RFstring tmps;
     double float_val;
     uint64_t int_val;
     size_t len;
+    bool is_float = false;
+    char *sp = negative ? p - 1 : p;
 
     while (p < lim) {
-        if (COND_NUMERIC(*p) && *(p+1) == '.') {
+        if (COND_NUMERIC(*p) && *(p + 1) == '.') {
             is_float = true;
             p ++;
-        } else if (COND_WS(*(p+1))) {
+        } else if (COND_WS(*(p + 1))) {
             break;
         } else {
             p ++;
@@ -291,15 +292,16 @@ static bool lexer_get_constant_int_or_float(struct lexer *l, char *p,
     return true;
 }
 
-static bool lexer_get_constant_uint(
+static bool lexer_get_constant_int(
     struct lexer *l, char *p,
     char *lim, char **ret_p,
+    bool negative,
     bool (*conv_fun)(const void*, uint64_t*, size_t *))
 {
-    char *sp = p;
     struct RFstring tmps;
     uint64_t int_val;
     size_t len;
+    char *sp = negative ? p - 1 : p;
 
     while (p < lim) {
         if (COND_WS(*(p+1))) {
@@ -329,7 +331,7 @@ static bool lexer_get_constant_uint(
 }
 
 static bool lexer_get_numeric(struct lexer *l, char *p,
-                              char *lim, char **ret_p)
+                              char *lim, bool negative, char **ret_p)
 {
     char *sp = p;
 
@@ -337,18 +339,18 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
         char *sp_1 = p + 1;
         if (*sp == '0' && *sp_1 != '.' && !COND_WS(*sp_1)) {
                 if (*sp_1 == 'x') {
-                    return lexer_get_constant_uint(l, p, lim, ret_p,
-                                                   rf_string_to_uint_hex);
+                    return lexer_get_constant_int(l, p, lim, ret_p, negative,
+                                                  rf_string_to_uint_hex);
                 } else if (*sp_1 == 'b') {
-                    return lexer_get_constant_uint(l, p, lim, ret_p,
+                    return lexer_get_constant_int(l, p, lim, ret_p, negative,
                                                    rf_string_to_uint_bin);
                 }
                 // else oct
-                return lexer_get_constant_uint(l, p, lim, ret_p,
-                                               rf_string_to_uint_oct);
+                return lexer_get_constant_int(l, p, lim, ret_p, negative,
+                                              rf_string_to_uint_oct);
         }
     }
-    return lexer_get_constant_int_or_float(l, p, lim, ret_p);
+    return lexer_get_constant_int_or_float(l, p, lim, negative, ret_p);
 }
 
 static bool lexer_get_string_literal(struct lexer *l, char *p,
@@ -427,7 +429,7 @@ bool lexer_scan(struct lexer *l)
                 return false;
             }
         } else if (COND_NUMERIC(*p)) {
-            if (!lexer_get_numeric(l, p, lim, &p)) {
+            if (!lexer_get_numeric(l, p, lim, false, &p)) {
                 lexer_synerr(
                     l, lexer_get_last_token_loc_start(l),
                     NULL,
@@ -439,12 +441,12 @@ bool lexer_scan(struct lexer *l)
             const struct internal_token *itoken;
             const struct internal_token *itoken2;
             bool got_token = false;
-            char * toksp = p;
+            char *toksp = p;
 
             while (len <= MAX_WORD_LENGTH) {
                 itoken = lexer_lexeme_is_token(p, len);
                 if (itoken) {
-                    /* if it's the start of a string literal */
+                    // if it's the start of a string literal
                     if (itoken->type == TOKEN_SM_DBLQUOTE) {
                         if (!lexer_get_string_literal(l, p, lim, &p)) {
                             lexer_synerr(
@@ -453,10 +455,24 @@ bool lexer_scan(struct lexer *l)
                                 "Failed to scan string literal");
                             return false;
                         }
-                        got_token=true;
+                        got_token = true;
                         break;
                     }
-                    /* if more than 1 tokens may start with that character */
+                    // if it's a negative numeric literal
+                    if (itoken->type == TOKEN_OP_MINUS &&
+                        p + 1 <= lim &&
+                        COND_NUMERIC(*(p + 1))) {
+                        if (!lexer_get_numeric(l, p + 1, lim, true, &p)) {
+                            lexer_synerr(
+                                l, lexer_get_last_token_loc_start(l),
+                                NULL,
+                                "Failed to scan numeric literal");
+                            return false;
+                        }
+                        got_token = true;
+                        break;
+                    }
+                    // if more than 1 tokens may start with that character
                     if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
                         len = 2;
                         itoken2 = lexer_lexeme_is_token(p, len);

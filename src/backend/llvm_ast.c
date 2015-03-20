@@ -745,7 +745,9 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_BINARY_OPERATOR:
         return backend_llvm_expression_compile_bop(n, ctx);
     case AST_RETURN_STATEMENT:
-        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n), ctx, options);
+        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n),
+                                                   ctx,
+                                                   RFLLVM_OPTION_IDENTIFIER_VALUE);
         return LLVMBuildRet(ctx->builder, llvm_val);
     case AST_FUNCTION_CALL:
         return backend_llvm_function_call_compile(n, ctx);
