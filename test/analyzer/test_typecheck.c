@@ -24,198 +24,6 @@
 
 #include CLIB_TEST_HELPERS
 
-START_TEST(test_typecheck_assignment_simple) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "name:string\n"
-        "b:f64\n"
-        "c:bool\n"
-        "a = 456\n"
-        "name = \"Lefteris\"\n"
-        "b = 0.231\n"
-        "c = false\n"
-        "c = true\n"
-        "c = a > 100\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_assignment_invalid_string_to_int) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "name:string\n"
-        "a = 456\n"
-        "name = \"Celina\"\n"
-        "a = name\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Assignment between incompatible types. Can't assign "
-            "\"string\" to \"u64\". Unable to convert from \"string\" to \"u64\".",
-            4, 0, 4, 7)
-    };
-
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_addition_simple) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "b:u64\n"
-        "c:u64\n"
-        "name:string\n"
-        "a = b + c + 321 + 234\n"
-        "name = \"foo\" + \"bar\""
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_subtraction_simple) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "b:u64\n"
-        "c:u64\n"
-        "foo:string\n"
-        "foo = \"FooBar\" - \"Bar\"\n"
-        "a = b - c - 321 - 234\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_multiplication_simple) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "b:u64\n"
-        "c:u64\n"
-        "a = b * c * 234\n"
-        "d:f64\n"
-        "d = 3.14 * 0.14\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_division_simple) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "{a:u64\n"
-        "b:u64\n"
-        "c:u64\n"
-        "a = b / c\n"
-        "d:f64\n"
-        "d = 3.14 / 0.14\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_valid_member_access) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type person {name:string, age:u32}\n"
-        "{\n"
-        "p:person\n"
-        "a:u32 = 42\n"
-        "b:u32 = a + p.age\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    ck_assert_typecheck_ok(d, true);
-} END_TEST
-
-START_TEST(test_typecheck_invalid_member_access) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type person {name:string, age:u32}\n"
-        "{\n"
-        "p:person\n"
-        "a:u32 = 42\n"
-        "b:u32 = a + p.craze\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Could not find member \"craze\" in type \"person\"",
-            4, 12, 4, 18),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"+\" can not be determined",
-            4, 12, 4, 18),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            4, 8, 4, 18),
-    };
-
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
-START_TEST(test_typecheck_invalid_member_access2) {
-
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type person {name:string, age:u32}\n"
-        "{\n"
-        "p:person\n"
-        "a:u32 = 42\n"
-        "b:u32 = a + s.name\n"
-        "}"
-    );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-
-    struct info_msg messages[] = {
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Undeclared identifier \"s\" as left part of member access operator",
-            4, 12, 4, 12),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"+\" can not be determined",
-            4, 12, 4, 17),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            4, 8, 4, 17),
-    };
-
-    ck_assert_typecheck_with_messages(d, false, messages, true);
-} END_TEST
-
 START_TEST(test_typecheck_variable_declarations) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -644,49 +452,15 @@ Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
 
-    TCase *t_assign_val = tcase_create("analyzer_typecheck_assignments");
-    tcase_add_checked_fixture(t_assign_val,
+    TCase *t_typecheck_misc = tcase_create("typecheck_misc");
+    tcase_add_checked_fixture(t_typecheck_misc,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    tcase_add_test(t_assign_val, test_typecheck_assignment_simple);
-
-    TCase *t_assign_inv = tcase_create("analyzer_typecheck_invalid_assignments");
-    tcase_add_checked_fixture(t_assign_inv,
-                              setup_analyzer_tests_with_filelog,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_assign_inv, test_typecheck_assignment_invalid_string_to_int);
-
-    TCase *t_bop_val = tcase_create("analyzer_typecheck_binary_operations");
-    tcase_add_checked_fixture(t_bop_val,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_bop_val, test_typecheck_valid_addition_simple);
-    tcase_add_test(t_bop_val, test_typecheck_valid_subtraction_simple);
-    tcase_add_test(t_bop_val, test_typecheck_valid_multiplication_simple);
-    tcase_add_test(t_bop_val, test_typecheck_valid_division_simple);
-
-    TCase *t_access_val = tcase_create("analyzer_typecheck_valid_access_operations");
-    tcase_add_checked_fixture(t_access_val,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_access_val, test_typecheck_valid_member_access);
-
-    TCase *t_access_inv = tcase_create("analyzer_typecheck_invalid_access_operations");
-    tcase_add_checked_fixture(t_access_inv,
-                              setup_analyzer_tests_with_filelog,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_access_inv, test_typecheck_invalid_member_access);
-    tcase_add_test(t_access_inv, test_typecheck_invalid_member_access2);
-
-    TCase *t_vardecl_val = tcase_create("analyzer_typecheck_misc");
-    tcase_add_checked_fixture(t_vardecl_val,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
-    tcase_add_test(t_vardecl_val, test_typecheck_variable_declarations);
+    tcase_add_test(t_typecheck_misc, test_typecheck_variable_declarations);
     // TODO: Test where there are errors in two different parts of the code
     //       to assert the continuation of the traversal works
 
-    TCase *t_func_val = tcase_create("analyzer_typecheck_functions");
+    TCase *t_func_val = tcase_create("typecheck_functions");
     tcase_add_checked_fixture(t_func_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
@@ -697,7 +471,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
 
 
-    TCase *t_func_inv = tcase_create("analyzer_typecheck_invalid_functions");
+    TCase *t_func_inv = tcase_create("typecheck_invalid_functions");
     tcase_add_checked_fixture(t_func_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
@@ -708,7 +482,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_undeclared_identifier);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 
-    TCase *t_custom_types_val = tcase_create("analyzer_typecheck_valid_custom_types");
+    TCase *t_custom_types_val = tcase_create("typecheck_valid_custom_types");
     tcase_add_checked_fixture(t_custom_types_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
@@ -716,13 +490,13 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall2);
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_constructor);
 
-    TCase *t_custom_types_inv = tcase_create("analyzer_typecheck_invalid_custom_types");
+    TCase *t_custom_types_inv = tcase_create("typecheck_invalid_custom_types");
     tcase_add_checked_fixture(t_custom_types_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_custom_types_inv, test_typecheck_invalid_custom_type_constructor);
 
-    TCase *t_block_val = tcase_create("analyzer_typecheck_valid_blocks");
+    TCase *t_block_val = tcase_create("typecheck_valid_blocks");
     tcase_add_checked_fixture(t_block_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
@@ -730,25 +504,20 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_block_val, test_typecheck_valid_assignment_from_block2);
 
 
-    TCase *t_block_inv = tcase_create("analyzer_typecheck_invalid_blocks");
+    TCase *t_block_inv = tcase_create("typecheck_invalid_blocks");
     tcase_add_checked_fixture(t_block_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block1);
     tcase_add_test(t_block_inv, test_typecheck_invalid_assignment_from_block2);
 
-    TCase *t_if_val = tcase_create("analyzer_typecheck_valid_if");
+    TCase *t_if_val = tcase_create("typecheck_valid_if");
     tcase_add_checked_fixture(t_if_val,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_if_val, test_typecheck_valid_if_stmt);
 
-    suite_add_tcase(s, t_assign_val);
-    suite_add_tcase(s, t_assign_inv);
-    suite_add_tcase(s, t_bop_val);
-    suite_add_tcase(s, t_access_val);
-    suite_add_tcase(s, t_access_inv);
-    suite_add_tcase(s, t_vardecl_val);
+    suite_add_tcase(s, t_typecheck_misc);
     suite_add_tcase(s, t_func_val);
     suite_add_tcase(s, t_func_inv);
     suite_add_tcase(s, t_custom_types_val);
