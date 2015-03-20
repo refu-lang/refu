@@ -86,7 +86,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             RF_ERROR("Failure to create a constan boolean node");
             return NULL;
         }
-    } else if (TOKEN_IS_NUMERIC_CONSTANT(tok) ||
+    } else if (token_is_numeric_constant(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {
         n = token_get_value(tok);
@@ -100,15 +100,6 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
     return n;
 }
 
-#define TOKEN_IS_PREFIX_UNARY_OP(tok_)              \
-    (tok && ((tok_)->type == TOKEN_OP_AMPERSAND ||  \
-             (tok_)->type == TOKEN_OP_INC ||        \
-             (tok_)->type == TOKEN_OP_DEC))
-
-#define TOKEN_IS_POSTFIX_UNARY_OP(tok_)         \
-    (tok && ((tok_)->type == TOKEN_OP_INC ||    \
-             (tok_)->type == TOKEN_OP_DEC))
-
 static struct ast_node *parser_acc_exprfactor(struct parser *p)
 {
     struct ast_node *element;
@@ -118,7 +109,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
 
     //check for prefix unary operators
     tok = lexer_lookahead(p->lexer, 1);
-    if (TOKEN_IS_PREFIX_UNARY_OP(tok)) {
+    if (tok && token_is_prefix_unaryop(tok)) {
         prefix = tok;
         //consume the prefix unary operator
         lexer_next_token(p->lexer);
@@ -147,7 +138,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
 
     //check for a postfix unary operator
     tok = lexer_lookahead(p->lexer, 1);
-    if (TOKEN_IS_POSTFIX_UNARY_OP(tok)) {
+    if (tok && token_is_postfix_unaryop(tok)) {
         //consume the prefix unary operator
         lexer_next_token(p->lexer);
 

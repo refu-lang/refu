@@ -10,6 +10,18 @@
 struct RFstring;
 struct token;
 
+/**
+ * The tokens of the language
+ *
+ * Note that the groups they are grouped in are not necessarily
+ * correct. For example some tokens can be both binary and unary operators.
+ * For correct checking of whethere a token belongs to a certain group we have
+ * the family of TOKEN_IS_XX macros. For example:
+ *
+ * TOKEN_IS_BINARY_OP()
+ * TOKEN_IS_UNARY_OP()
+ * TOKEN_IS_NUMERIC_CONSTANT()
+ */
 enum token_type {
     TOKEN_IDENTIFIER = 0,
     TOKEN_CONSTANT_INTEGER,
@@ -80,23 +92,6 @@ enum token_type {
 };
 
 
-#define TOKEN_IS_BINARY_OP(tok_)                \
-    (((tok_)->type >= TOKEN_OP_PLUS &&          \
-      (tok_)->type <= TOKEN_OP_BITWISE_XOR) ||  \
-     (tok_)->type == TOKEN_OP_AMPERSAND ||      \
-     (tok_)->type == TOKEN_OP_COMMA     ||      \
-     (tok_)->type == TOKEN_OP_TYPESUM   ||      \
-     (tok_)->type == TOKEN_SM_OSBRACE)
-
-#define TOKEN_IS_UNARY_OP(tok_)                \
-    ((tok_)->type >= TOKEN_OP_AMPERSAND &&     \
-     (tok_)->type <= TOKEN_OP_DEC)
-
-#define TOKEN_IS_NUMERIC_CONSTANT(tok_)         \
-    ((tok_)->type == TOKEN_CONSTANT_INTEGER ||  \
-     (tok_)->type == TOKEN_CONSTANT_FLOAT)
-
-
 /*
  * A token's value. Only for tokens that form a full ast_node.
  * Also contains memory ownership semantics
@@ -112,6 +107,8 @@ struct token {
     struct tok_value value;
 };
 
+const struct RFstring *tokentype_to_str(enum token_type type);
+
 i_INLINE_DECL const struct inplocation *token_get_loc(const struct token *tok)
 {
     return &tok->location;
@@ -125,6 +122,39 @@ i_INLINE_DECL const struct inplocation_mark *token_get_start(const struct token 
 i_INLINE_DECL const struct inplocation_mark *token_get_end(const struct token *tok)
 {
     return &tok->location.end;
+}
+
+i_INLINE_DECL bool token_is_binaryop(const struct token *tok)
+{
+    return ((tok->type >= TOKEN_OP_PLUS && tok->type <= TOKEN_OP_BITWISE_XOR) ||
+            tok->type == TOKEN_OP_AMPERSAND ||
+            tok->type == TOKEN_OP_COMMA     ||
+            tok->type == TOKEN_OP_TYPESUM   ||
+            tok->type == TOKEN_SM_OSBRACE);
+}
+
+i_INLINE_DECL bool token_is_unaryop(const struct token *tok)
+{
+
+    return ((tok->type >= TOKEN_OP_AMPERSAND && tok->type <= TOKEN_OP_DEC) ||
+            tok->type == TOKEN_OP_MINUS || tok->type == TOKEN_OP_PLUS);
+}
+
+i_INLINE_DECL bool token_is_prefix_unaryop(const struct token *tok)
+{
+
+    return token_is_unaryop(tok);
+}
+
+i_INLINE_DECL bool token_is_postfix_unaryop(const struct token *tok)
+{
+
+    return tok->type == TOKEN_OP_INC || tok->type == TOKEN_OP_DEC;
+}
+
+i_INLINE_DECL bool token_is_numeric_constant(const struct token *tok)
+{
+    return tok->type == TOKEN_CONSTANT_INTEGER || tok->type == TOKEN_CONSTANT_FLOAT;
 }
 
 i_INLINE_DECL bool token_has_value(const struct token *tok)
@@ -143,6 +173,5 @@ i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
     return tok->value.v;
 }
 
-const struct RFstring *tokentype_to_str(enum token_type type);
 
 #endif

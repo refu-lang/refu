@@ -71,12 +71,6 @@ static struct RFstring strings_[] = {
 
 };
 
-i_INLINE_INS const struct inplocation *token_get_loc(const struct token *tok);
-i_INLINE_INS const struct inplocation_mark *token_get_start(const struct token *tok);
-i_INLINE_INS const struct inplocation_mark *token_get_end(const struct token *tok);
-i_INLINE_INS bool token_has_value(const struct token *tok);
-i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
-
 const struct RFstring *tokentype_to_str(enum token_type type)
 {
     // helps make sure that the strings array is in sync with the tokens
@@ -84,3 +78,17 @@ const struct RFstring *tokentype_to_str(enum token_type type)
 
     return &strings_[type];
 }
+
+i_INLINE_INS const struct inplocation *token_get_loc(const struct token *tok);
+i_INLINE_INS const struct inplocation_mark *token_get_start(const struct token *tok);
+i_INLINE_INS const struct inplocation_mark *token_get_end(const struct token *tok);
+
+i_INLINE_INS bool token_is_binaryop(const struct token *tok);
+i_INLINE_INS bool token_is_unaryop(const struct token *tok);
+i_INLINE_INS bool token_is_prefix_unaryop(const struct token *tok);
+i_INLINE_INS bool token_is_postfix_unaryop(const struct token *tok);
+i_INLINE_INS bool token_is_numeric_constant(const struct token *tok);
+
+i_INLINE_INS bool token_has_value(const struct token *tok);
+i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
+

@@ -47,6 +47,8 @@ enum unaryop_type {
     UNARYOP_AMPERSAND,
     UNARYOP_INC,
     UNARYOP_DEC,
+    UNARYOP_MINUS,
+    UNARYOP_PLUS,
 };
 
 struct ast_unaryop {

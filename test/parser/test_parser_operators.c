@@ -140,6 +140,58 @@ START_TEST(test_acc_assignment) {
     ast_node_destroy(bop);
 }END_TEST
 
+START_TEST(test_acc_minus) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("a = -b");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 0);
+    struct ast_node *id_b = testsupport_parser_identifier_create(file,
+                                                                 0, 5, 0, 5);
+    testsupport_parser_node_create(uop1, unaryop, file, 0, 4, 0, 5,
+                                   UNARYOP_MINUS,
+                                   id_b);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 0, 0, 5,
+                                   BINARYOP_ASSIGN,
+                                   id_a, uop1);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop1);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop1);
+}END_TEST
+
+START_TEST(test_acc_plus) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("a = +b");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 0);
+    struct ast_node *id_b = testsupport_parser_identifier_create(file,
+                                                                 0, 5, 0, 5);
+    testsupport_parser_node_create(uop1, unaryop, file, 0, 4, 0, 5,
+                                   UNARYOP_PLUS,
+                                   id_b);
+
+    testsupport_parser_node_create(bop1, binaryop, file, 0, 0, 0, 5,
+                                   BINARYOP_ASSIGN,
+                                   id_a, uop1);
+
+    ck_test_parse_as(n, expression, d, "binary operator", bop1);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bop1);
+}END_TEST
+
 START_TEST(test_acc_complex_binary_op_1) {
     struct ast_node *n;
     struct inpfile *file;
@@ -521,6 +573,11 @@ Suite *parser_operators_suite_create(void)
     tcase_add_test(cbop, test_acc_complex_binary_op_3);
     tcase_add_test(cbop, test_acc_complex_binary_op_4);
 
+    TCase *suop = tcase_create("parser_operators_simple_unary");
+    tcase_add_checked_fixture(suop, setup_front_tests, teardown_front_tests);
+    tcase_add_test(suop, test_acc_minus);
+    tcase_add_test(suop, test_acc_plus);
+
     TCase *op_predence = tcase_create("parser_operator_precedence");
     tcase_add_checked_fixture(op_predence, setup_front_tests, teardown_front_tests);
     tcase_add_test(op_predence, test_acc_operator_precedence_1);
@@ -531,6 +588,7 @@ Suite *parser_operators_suite_create(void)
 
     suite_add_tcase(s, sbop);
     suite_add_tcase(s, cbop);
+    suite_add_tcase(s, suop);
     suite_add_tcase(s, op_predence);
     return s;
 }

@@ -71,5 +71,8 @@ struct ast_node *ast_unaryop_create(const struct inplocation_mark *start,
                                     enum unaryop_type type,
                                     struct ast_node *operand);
 
+/**
+ * Given a token return its @ref unaryop_type
+ */
 enum unaryop_type unaryop_type_from_token(struct token *tok);
 #endif
