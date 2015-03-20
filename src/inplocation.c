@@ -56,6 +56,7 @@ bool inplocation_from_file(struct inplocation *loc,
 
 i_INLINE_INS bool inplocation_mark_equal(const struct inplocation_mark *m1,
                                          const struct inplocation_mark *m2);
+i_INLINE_INS bool inplocation_mark_empty(const struct inplocation_mark *m);
 i_INLINE_INS void inplocation_copy(struct inplocation *l1,
                                    const struct inplocation *l2);
 i_INLINE_INS bool inplocation_equal(const struct inplocation *l1,

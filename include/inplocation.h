@@ -27,6 +27,10 @@ i_INLINE_DECL bool inplocation_mark_equal(const struct inplocation_mark *m1,
     return true;
 }
 
+i_INLINE_DECL bool inplocation_mark_empty(const struct inplocation_mark *m)
+{
+    return m->p == 0;
+}
 
 struct inplocation {
     struct inplocation_mark start;
