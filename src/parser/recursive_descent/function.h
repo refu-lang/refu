@@ -77,9 +77,22 @@ enum parser_fnimpl_list_err {
 enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
                                                    struct ast_node *parent);
 
+/**
+ * Check if @a tok1_ and @a tok2_ could be a generic function call
+ */
 #define TOKENS_ARE_POSSIBLE_FNCALL(tok1_, tok2_)                        \
-    (tok1_ && tok2_ && (tok1_)->type == TOKEN_IDENTIFIER &&             \
-     ((tok2_)->type == TOKEN_SM_OPAREN || (tok2_)->type == TOKEN_OP_LT))
+    (tok1_ && tok2_ &&                                                  \
+     (tok1_)->type == TOKEN_IDENTIFIER &&                               \
+     (tok2_)->type == TOKEN_OP_LT)
+
+/**
+ * Check if @a tok1_ and @a tok2_ are id + ( so a definite function call
+ */
+#define TOKENS_ARE_FNCALL(tok1_, tok2_)                                 \
+    (tok1_ && tok2_ &&                                                  \
+     (tok1_)->type == TOKEN_IDENTIFIER &&                               \
+     (tok2_)->type == TOKEN_SM_OPAREN)
+
 /**
  * identifier [genrattr] TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */

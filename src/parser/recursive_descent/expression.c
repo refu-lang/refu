@@ -62,8 +62,11 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
         return n;
-    } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2) && (n = parser_acc_fncall(p, false))) {
+    } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2) && // check if is generic function call
+               (n = parser_acc_fncall(p, false))) {
         return n;
+    } else if (TOKENS_ARE_FNCALL(tok, tok2)) { //normal function call
+        return parser_acc_fncall(p, true);
     } else if (tok->type == TOKEN_SM_OCBRACE) {
         n = parser_acc_block(p, true);
         if (!n) {
@@ -261,6 +264,7 @@ static struct ast_node *parser_acc_expression_prime(
                       "Expected "EXPR_ELEMENT_START" after "
                       "\""RF_STR_PF_FMT"\"",
                       RF_STR_PF_ARG(tokentype_to_str(tok->type)));
+        ast_node_destroy(op);
         return NULL;
     }
     ast_binaryop_set_right(op, right_hand_side);

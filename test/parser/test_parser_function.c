@@ -463,6 +463,59 @@ START_TEST(test_acc_fncall_3) {
     ast_node_destroy(fc);
 }END_TEST
 
+START_TEST(test_acc_fncall_err1) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "foo(");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fncall(d->front.parser, true);
+    ck_assert_msg(n == NULL, "parsing function call should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected ')' at end of foo function call",
+            0, 3)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
+START_TEST(test_acc_fncall_err2) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "foo(a,");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_fncall(d->front.parser, true);
+    ck_assert_msg(n == NULL, "parsing function call should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a string literal, a numeric constant or an identifier after \",\"",
+            0, 5),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected argument expression for function call",
+            0, 5)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+}END_TEST
+
 START_TEST(test_acc_fnimpl_1) {
     struct ast_node *n;
     struct inpfile *file;
@@ -653,6 +706,11 @@ Suite *parser_function_suite_create(void)
     tcase_add_test(fcall, test_acc_fncall_2);
     tcase_add_test(fcall, test_acc_fncall_3);
 
+    TCase *fcall_f = tcase_create("parser_function_call_failures");
+    tcase_add_checked_fixture(fcall_f, setup_front_tests, teardown_front_tests);
+    tcase_add_test(fcall_f, test_acc_fncall_err1);
+    tcase_add_test(fcall_f, test_acc_fncall_err2);
+
     TCase *fimpl = tcase_create("parser_function_implementation");
     tcase_add_checked_fixture(fimpl, setup_front_tests, teardown_front_tests);
     tcase_add_test(fimpl, test_acc_fnimpl_1);
@@ -663,6 +721,7 @@ Suite *parser_function_suite_create(void)
     suite_add_tcase(s, fp);
     suite_add_tcase(s, fpf);
     suite_add_tcase(s, fcall);
+    suite_add_tcase(s, fcall_f);
     suite_add_tcase(s, fimpl);
     return s;
 }
