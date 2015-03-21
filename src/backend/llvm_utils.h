@@ -48,4 +48,14 @@ void backend_llvm_store(struct LLVMOpaqueValue *val, struct LLVMOpaqueValue *ptr
  */
 void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
                               struct LLVMOpaqueBasicBlock *block);
+
+/**
+ * Shallow copy/assignment of designed types
+ * @param dst        The destination llvm value to assign to
+ * @param src        The source llvm value to assign from
+ * @param ctx             The llvm traversal context
+ */
+void backend_llvm_assign_defined_types(struct LLVMOpaqueValue *dst,
+                                       struct LLVMOpaqueValue *src,
+                                       struct llvm_traversal_ctx *ctx);
 #endif

@@ -409,6 +409,46 @@ START_TEST (test_explicit_conversion_to_string_from_nonconst_bool) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
 } END_TEST
 
+START_TEST (test_unaryop_minus) {
+    // TODO: refactor this test when print can output ints
+    //       and when missing return in outer block works
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:u32 = 64\n"
+        "    b:i32 = -a\n"
+        "    if b == -64 { print(\"ok\") } else { print(\"no\") }\n"
+        "    return 1\n"
+        "}"
+    );
+    static const struct RFstring output = RF_STRING_STATIC_INIT("ok");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+
+START_TEST (test_unaryop_post_inc) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:u32 = 64\n"
+        "    b:u32 = ++a\n"
+        "    return b\n"
+        "}"
+    );
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 65);
+} END_TEST
+
+START_TEST (test_unaryop_post_dec) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "    a:u32 = 64\n"
+        "    b:u32 = --a\n"
+        "    return b\n"
+        "}"
+    );
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 63);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -460,12 +500,20 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_string);
     tcase_add_test(st_explicit_conversions, test_explicit_conversion_to_string_from_nonconst_bool);
 
+    TCase *st_unary_operations = tcase_create("end_to_end_unary_operations");
+    tcase_add_checked_fixture(st_unary_operations,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_unary_operations, test_unaryop_minus);
+    tcase_add_test(st_unary_operations, test_unaryop_post_inc);
+    tcase_add_test(st_unary_operations, test_unaryop_post_dec);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_control_flow);
     suite_add_tcase(s, st_comparisons);
     suite_add_tcase(s, st_explicit_conversions);
+    suite_add_tcase(s, st_unary_operations);
 
     return s;
 }

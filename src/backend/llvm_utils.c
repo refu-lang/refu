@@ -114,3 +114,20 @@ void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
     LLVMPositionBuilderAtEnd(ctx->builder, block);
     ctx->current_block = block;
 }
+
+void backend_llvm_assign_defined_types(LLVMValueRef dst,
+                                       LLVMValueRef src,
+                                       struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef dst_cast = LLVMBuildBitCast(ctx->builder, dst,
+                                             LLVMPointerType(LLVMInt8Type(), 0), "");
+    LLVMValueRef src_cast = LLVMBuildBitCast(ctx->builder, src,
+                                             LLVMPointerType(LLVMInt8Type(), 0), "");
+    LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
+
+    LLVMValueRef call_args[] = { dst_cast, src_cast,
+                                 LLVMConstInt(LLVMInt64Type(), 8, 0),
+                                 LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                 LLVMConstInt(LLVMInt1Type(), 0, 0) };
+    LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
+}

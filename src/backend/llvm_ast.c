@@ -39,6 +39,7 @@
 #include <backend/llvm.h>
 #include "llvm_utils.h"
 #include "llvm_globals.h"
+#include "llvm_operators.h"
 
 static LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
                                                    struct llvm_traversal_ctx *ctx)
@@ -205,261 +206,15 @@ static LLVMTypeRef *backend_llvm_defined_member_types(struct rir_type *type,
     return llvm_traversal_ctx_get_params(ctx);
 }
 
-
-
-void backend_llvm_assign_defined_types(LLVMValueRef left,
-                                       LLVMValueRef right,
-                                       struct llvm_traversal_ctx *ctx)
-{
-    LLVMValueRef left_cast = LLVMBuildBitCast(ctx->builder, left,
-                                              LLVMPointerType(LLVMInt8Type(), 0), "");
-    LLVMValueRef right_cast = LLVMBuildBitCast(ctx->builder, right,
-                                               LLVMPointerType(LLVMInt8Type(), 0), "");
-    LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
-
-    LLVMValueRef call_args[] = { left_cast, right_cast,
-                                 LLVMConstInt(LLVMInt64Type(), 8, 0),
-                                 LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                 LLVMConstInt(LLVMInt1Type(), 0, 0) };
-    LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
-}
-
-static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
-                                                struct llvm_traversal_ctx *ctx)
-{
-    struct ast_node *left = ast_binaryop_left(n);
-    // For left side we want the memory location if it's a simple identifier hence options = 0
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx, 0);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n),
-                                                         ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-
-    if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
-        backend_llvm_copy_string(right, llvm_left, ctx);
-    } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
-        backend_llvm_assign_defined_types(llvm_left, right, ctx);
-    } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
-        backend_llvm_store(right, llvm_left, ctx);
-    } else {
-        RF_ASSERT(false, "Not yet implemented");
-    }
-
-    // hm what should compiling an assignment return?
-    return NULL;
-}
-
-static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
-                                                       struct llvm_traversal_ctx *ctx)
-{
-    struct symbol_table_record *rec;
-    const struct RFstring *owner_type_s = ast_identifier_str(ast_binaryop_left(n));
-    const struct RFstring *member_s = ast_identifier_str(ast_binaryop_right(n));
-    size_t offset = 0;
-    rec = symbol_table_lookup_record(ctx->current_st, owner_type_s, NULL);
-    struct rir_type *defined_type =  rec->rir_data;
-    RF_ASSERT(defined_type->category == COMPOSITE_RIR_DEFINED,
-    "a member access left hand type can only be a defined type");
-
-    struct rir_type **subtype;
-    darray_foreach(subtype, defined_type->subtypes.item[0]->subtypes) {
-        if (rf_string_equal(member_s, (*subtype)->name)) {
-            LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), offset, 0) };
-            LLVMValueRef gep_to_type = LLVMBuildGEP(ctx->builder, rec->backend_handle, indices, 2, "");
-            return LLVMBuildLoad(ctx->builder, gep_to_type, "");
-        }
-        //else
-        offset += 1;
-    }
-
-    RF_ASSERT(false, "Typechecking should have made sure no invalid member access exists");
-    return NULL;
-}
-
-/**
- * Will typecast @a val if needed to a specific elementary type
- */
-static LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
-                                                                const struct type *t,
-                                                                struct llvm_traversal_ctx *ctx)
+LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
+                                                         const struct type *t,
+                                                         struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_ELEMENTARY,
               "Casting only to elementary types supported for now");
     LLVMTypeRef common_type = backend_llvm_elementary_to_type(type_elementary(t), ctx);
     return backend_llvm_cast_value_to_type_maybe(val, common_type, ctx);
 }
-
-static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
-                                                    struct llvm_traversal_ctx *ctx)
-{
-    struct ast_node *left = ast_binaryop_left(n);
-    struct ast_node *right = ast_binaryop_right(n);
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx,
-                                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx,
-                                                              RFLLVM_OPTION_IDENTIFIER_VALUE);
-    enum elementary_type_category elementary_type;
-    LLVMIntPredicate llvm_int_compare_type;
-    LLVMRealPredicate llvm_real_compare_type;
-    llvm_left = backend_llvm_cast_value_to_elementary_maybe(llvm_left,
-                                                            ast_binaryop_common_type(n),
-                                                            ctx);
-    llvm_right = backend_llvm_cast_value_to_elementary_maybe(llvm_right,
-                                                             ast_binaryop_common_type(n),
-                                                             ctx);
-
-
-    elementary_type = type_elementary_get_category(ast_binaryop_common_type(n));
-    switch(ast_binaryop_op(n)) {
-    case BINARYOP_CMP_EQ:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntEQ;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealOEQ;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at equality comparison code generation");
-            return NULL;
-        }
-        break;
-
-    case BINARYOP_CMP_NEQ:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntNE;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealONE;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at unequality comparison code generation");
-            return NULL;
-        }
-        break;
-        
-    case BINARYOP_CMP_GT:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-            llvm_int_compare_type = LLVMIntSGT;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntUGT;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealOGT;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at greater than comparison code generation");
-            return NULL;
-        }
-        break;
-
-    case BINARYOP_CMP_GTEQ:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-            llvm_int_compare_type = LLVMIntSGE;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntUGE;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealOGE;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at greater than or equal comparison code generation");
-            return NULL;
-        }
-        break;
-
-    case BINARYOP_CMP_LT:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-            llvm_int_compare_type = LLVMIntSLT;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntULT;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealOLT;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at less than comparison code generation");
-            return NULL;
-        }
-        break;
-
-    case BINARYOP_CMP_LTEQ:
-        switch (elementary_type) {
-        case ELEMENTARY_TYPE_CATEGORY_SIGNED:
-            llvm_int_compare_type = LLVMIntSLE;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_UNSIGNED:
-            llvm_int_compare_type = LLVMIntULE;
-            break;
-        case ELEMENTARY_TYPE_CATEGORY_FLOAT:
-            llvm_real_compare_type = LLVMRealOLE;
-            break;
-        default:
-            RF_ASSERT(false, "Illegal operand types at less than or equal comparison code generation");
-            return NULL;
-        }
-        break;
-
-    default:
-        RF_ASSERT(false, "Illegal binary operation type at comparison code generation");
-        return NULL;
-    }
-
-    if (elementary_type == ELEMENTARY_TYPE_CATEGORY_FLOAT) {
-        // note: All FCMP operations are ordered for now
-        return LLVMBuildFCmp(ctx->builder, llvm_real_compare_type, llvm_left, llvm_right, "");
-    }
-    // else
-    return LLVMBuildICmp(ctx->builder, llvm_int_compare_type, llvm_left, llvm_right, "");
-}
-
-static LLVMValueRef backend_llvm_expression_compile_bop(struct ast_node *n,
-                                                        struct llvm_traversal_ctx *ctx)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_BINARY_OPERATOR);
-
-    if (ast_binaryop_op(n) == BINARYOP_MEMBER_ACCESS) {
-        return backend_llvm_compile_member_access(n, ctx);
-    }
-
-    LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-    switch(ast_binaryop_op(n)) {
-        // arithmetic
-        // TODO: This will not be okay for all situations. There are different
-        //       functions for different LLVM Types (Floats, Ints, Signed, Unsigned e.t.c.)
-        //       Deal with it properly ...
-    case BINARYOP_ADD:
-        return LLVMBuildAdd(ctx->builder, left, right, "left + right");
-    case BINARYOP_SUB:
-        return LLVMBuildSub(ctx->builder, left, right, "left - right");
-    case BINARYOP_MUL:
-        return LLVMBuildMul(ctx->builder, left, right, "left * right");
-    case BINARYOP_DIV:
-        return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
-    case BINARYOP_ASSIGN:
-        return backend_llvm_compile_assign(n, ctx);
-    case BINARYOP_CMP_EQ:
-    case BINARYOP_CMP_NEQ:
-    case BINARYOP_CMP_GT:
-    case BINARYOP_CMP_GTEQ:
-    case BINARYOP_CMP_LT:
-    case BINARYOP_CMP_LTEQ:
-        return backend_llvm_compile_comparison(n, ctx);
-    default:
-        RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
-        break;
-    }
-    return NULL;
-}
-
 
 struct args_to_value_cb_ctx {
     unsigned int index;
@@ -743,7 +498,9 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     LLVMValueRef llvm_val;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
-        return backend_llvm_expression_compile_bop(n, ctx);
+        return backend_llvm_compile_bop(n, ctx);
+    case AST_UNARY_OPERATOR:
+        return backend_llvm_compile_uop(n, ctx);
     case AST_RETURN_STATEMENT:
         llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n),
                                                    ctx,

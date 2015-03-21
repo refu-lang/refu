@@ -17,6 +17,7 @@ struct rir_module;
 struct rir_type;
 struct rir_basic_block;
 struct rir_branch;
+struct type;
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueTargetData;
@@ -106,4 +107,12 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
 
 void backend_llvm_branch_compile(struct rir_branch *branch,
                                  struct llvm_traversal_ctx *ctx);
+
+/**
+ * Will typecast @a val if needed to a specific elementary type
+ */
+struct LLVMOpaqueValue *backend_llvm_cast_value_to_elementary_maybe(
+    struct LLVMOpaqueValue  *val,
+    const struct type *t,
+    struct llvm_traversal_ctx *ctx);
 #endif
