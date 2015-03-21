@@ -676,6 +676,10 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
         return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
     case UNARYOP_PLUS:
         return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
+    case UNARYOP_INC:
+        return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
+    case UNARYOP_DEC:
+        return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
     default:
         RF_ASSERT(false, "Typechecking for unimplemented unary "
                   "operator "RF_STR_PF_FMT,

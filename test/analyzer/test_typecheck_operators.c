@@ -154,6 +154,50 @@ START_TEST (test_typecheck_valid_uop_plus) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST (test_typecheck_valid_uop_inc_pre) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = ++a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_uop_inc_post) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = a++\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_uop_dec_pre) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = --a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_uop_dec_post) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = a--\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 START_TEST (test_typecheck_invalid_uop_minus) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
@@ -196,6 +240,52 @@ START_TEST (test_typecheck_invalid_uop_plus) {
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 9),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_uop_inc_pre) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "b:i64 = ++\"foo\"\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Can't apply \"++\" to \"string\"",
+            1, 8, 1, 14),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            1, 8, 1, 14),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_uop_dec_post) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "b:i64 = \"foo\"--\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Can't apply \"--\" to \"string\"",
+            1, 8, 1, 14),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            1, 8, 1, 14),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
@@ -315,6 +405,10 @@ Suite *analyzer_typecheck_operators_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_uop_val, test_typecheck_valid_uop_minus);
     tcase_add_test(t_uop_val, test_typecheck_valid_uop_plus);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_inc_pre);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_inc_post);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_dec_pre);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_dec_post);
 
     TCase *t_uop_inv = tcase_create("typecheck_invalid_unary_operations");
     tcase_add_checked_fixture(t_uop_inv,
@@ -322,6 +416,8 @@ Suite *analyzer_typecheck_operators_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_minus);
     tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_plus);
+    tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_inc_pre);
+    tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_dec_post);
 
     TCase *t_access_val = tcase_create("typecheck_valid_access_operations");
     tcase_add_checked_fixture(t_access_val,
