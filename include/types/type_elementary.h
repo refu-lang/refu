@@ -77,6 +77,11 @@ i_INLINE_DECL bool type_elementary_is_float(const struct type_elementary *t)
     return t->etype >= ELEMENTARY_TYPE_FLOAT_32 && t->etype <= ELEMENTARY_TYPE_FLOAT_64;
 }
 
+i_INLINE_DECL bool type_elementary_is_numeric(const struct type_elementary *t)
+{
+    return t->etype >= ELEMENTARY_TYPE_INT_8 && t->etype <= ELEMENTARY_TYPE_FLOAT_64;
+}
+
 i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
 {
     switch (t->etype) {
@@ -114,6 +119,15 @@ i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
 i_INLINE_DECL bool type_is_simple_elementary(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.etype != ELEMENTARY_TYPE_STRING;
+}
+
+/**
+ * Given a type check if it's a numeric elementary
+ */
+i_INLINE_DECL bool type_is_numeric_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY &&
+        type_elementary_is_numeric(&t->elementary);
 }
 
 /**

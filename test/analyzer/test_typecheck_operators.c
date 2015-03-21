@@ -132,6 +132,74 @@ START_TEST(test_typecheck_valid_division_simple) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST (test_typecheck_valid_uop_minus) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = -a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_uop_plus) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i64\n"
+        "b:i64 = +a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_uop_minus) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "b:string = -\"foo\"\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Can't apply \"-\" to \"string\"",
+            1, 11, 1, 16),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            1, 11, 1, 16),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_uop_plus) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:bool\n"
+        "b:i64 = +a\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Can't apply \"+\" to \"bool\"",
+            1, 8, 1, 9),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            1, 8, 1, 9),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+  
 START_TEST(test_typecheck_valid_member_access) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -241,6 +309,20 @@ Suite *analyzer_typecheck_operators_suite_create(void)
     tcase_add_test(t_bop_val, test_typecheck_valid_multiplication_simple);
     tcase_add_test(t_bop_val, test_typecheck_valid_division_simple);
 
+    TCase *t_uop_val = tcase_create("typecheck_valid_unary_operations");
+    tcase_add_checked_fixture(t_uop_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_minus);
+    tcase_add_test(t_uop_val, test_typecheck_valid_uop_plus);
+
+    TCase *t_uop_inv = tcase_create("typecheck_invalid_unary_operations");
+    tcase_add_checked_fixture(t_uop_inv,
+                              setup_analyzer_tests_with_filelog,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_minus);
+    tcase_add_test(t_uop_inv, test_typecheck_invalid_uop_plus);
+
     TCase *t_access_val = tcase_create("typecheck_valid_access_operations");
     tcase_add_checked_fixture(t_access_val,
                               setup_analyzer_tests,
@@ -258,6 +340,8 @@ Suite *analyzer_typecheck_operators_suite_create(void)
     suite_add_tcase(s, t_assign_val);
     suite_add_tcase(s, t_assign_inv);
     suite_add_tcase(s, t_bop_val);
+    suite_add_tcase(s, t_uop_val);
+    suite_add_tcase(s, t_uop_inv);
     suite_add_tcase(s, t_access_val);
     suite_add_tcase(s, t_access_inv);
 

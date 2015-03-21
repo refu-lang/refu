@@ -31,7 +31,13 @@ i_INLINE_DECL bool ast_node_is_specific_binaryop(struct ast_node *n,
     return n->type == AST_BINARY_OPERATOR && n->binaryop.type == optype;
 }
 
+/**
+ * Given a binary operation type return a string description of it
+ */
 const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op);
+/**
+ * Given a binary operation node return a string representation of the operation
+ */
 const struct RFstring *ast_binaryop_opstr(struct ast_node *op);
 
 enum binaryop_type binaryop_type_from_token(struct token *tok);
@@ -70,6 +76,27 @@ struct ast_node *ast_unaryop_create(const struct inplocation_mark *start,
                                     const struct inplocation_mark *end,
                                     enum unaryop_type type,
                                     struct ast_node *operand);
+
+i_INLINE_DECL enum unaryop_type ast_unaryop_op(const struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_UNARY_OPERATOR);
+    return op->unaryop.type;
+}
+
+i_INLINE_DECL struct ast_node *ast_unaryop_operand(struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_UNARY_OPERATOR);
+    return op->unaryop.operand;
+}
+
+/**
+ * Given a unary operation type return a string description of it
+ */
+const struct RFstring *ast_unaryop_operation_name_str(enum unaryop_type op);
+/**
+ * Given a unary operation type return a string representation of its type
+ */
+const struct RFstring *ast_unaryop_opstr(struct ast_node *op);
 
 /**
  * Given a token return its @ref unaryop_type

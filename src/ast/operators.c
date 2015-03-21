@@ -96,7 +96,7 @@ enum binaryop_type binaryop_type_from_token(struct token *tok)
     return bop_type_lookup[tok->type];
 }
 
-static const enum token_type  token_type_lookup[] = {
+static const enum token_type  token_type_from_bop_lookup[] = {
     [BINARYOP_ADD]                =   TOKEN_OP_PLUS,
     [BINARYOP_SUB]                =   TOKEN_OP_MINUS,
     [BINARYOP_MUL]                =   TOKEN_OP_MULTI,
@@ -126,7 +126,7 @@ static const enum token_type  token_type_lookup[] = {
 const struct RFstring *ast_binaryop_opstr(struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
-    return tokentype_to_str(token_type_lookup[op->binaryop.type]);
+    return tokentype_to_str(token_type_from_bop_lookup[op->binaryop.type]);
 }
 
 i_INLINE_INS struct ast_node *ast_binaryop_left(struct ast_node *op);
@@ -160,6 +160,36 @@ static const enum unaryop_type  uop_type_lookup[] = {
     [TOKEN_OP_MINUS]      =   UNARYOP_MINUS,
     [TOKEN_OP_PLUS]       =   UNARYOP_PLUS,
 };
+
+static const enum token_type  token_type_from_uop_lookup[] = {
+    [UNARYOP_AMPERSAND]          =   TOKEN_OP_AMPERSAND,
+    [UNARYOP_INC]                =   TOKEN_OP_INC,
+    [UNARYOP_DEC]                =   TOKEN_OP_DEC,
+    [UNARYOP_MINUS]              =   TOKEN_OP_MINUS,
+    [UNARYOP_PLUS]               =   TOKEN_OP_PLUS
+};
+
+i_INLINE_INS enum unaryop_type ast_unaryop_op(const struct ast_node *op);
+i_INLINE_INS struct ast_node *ast_unaryop_operand(struct ast_node *op);
+
+static const struct RFstring unaryop_operation_names[] = {
+    [UNARYOP_AMPERSAND]          =   RF_STRING_STATIC_INIT("addressof"),
+    [UNARYOP_INC]                =   RF_STRING_STATIC_INIT("increment"),
+    [UNARYOP_DEC]                =   RF_STRING_STATIC_INIT("decrement"),
+    [UNARYOP_MINUS]              =   RF_STRING_STATIC_INIT("negative"),
+    [UNARYOP_PLUS]               =   RF_STRING_STATIC_INIT("positive"),
+};
+
+const struct RFstring *ast_unaryop_operation_name_str(enum unaryop_type op)
+{
+    return &unaryop_operation_names[op];
+}
+
+const struct RFstring *ast_unaryop_opstr(struct ast_node *op)
+{
+    AST_NODE_ASSERT_TYPE(op, AST_UNARY_OPERATOR);
+    return tokentype_to_str(token_type_from_uop_lookup[op->unaryop.type]);
+}
 
 enum unaryop_type unaryop_type_from_token(struct token *tok)
 {

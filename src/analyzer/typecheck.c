@@ -91,6 +91,33 @@ static const struct type *typecheck_do_type_conversion(const struct type *left,
     return NULL;
 }
 
+static enum traversal_cb_res typecheck_unaryop_generic(struct ast_node *n,
+                                                       const struct type *operand_type,
+                                                       const char *error_intro,
+                                                       const char *error_conj,
+                                                       struct analyzer_traversal_ctx *ctx)
+{
+    const struct type *final_type = NULL;
+
+    // for now only applicable to numeric elementary types
+    if (!type_is_numeric_elementary(operand_type)) {
+        goto fail;
+    }
+    final_type = operand_type;
+    traversal_node_set_type(n, final_type, ctx);
+    return TRAVERSAL_CB_OK;
+
+fail:
+    n->expression_type = NULL;
+    RFS_buffer_push();
+    analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                 "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                 error_intro, RF_STR_PF_ARG(ast_unaryop_opstr(n)), 
+                 error_conj, RF_STR_PF_ARG(type_str(operand_type, false)));
+    RFS_buffer_pop();
+    return TRAVERSAL_CB_ERROR;
+}
+
 // Generic typecheck function for binary operations. If special functionality
 // needs to be implemented for an operator do that in a separate function
 static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
@@ -270,6 +297,7 @@ static enum traversal_cb_res typecheck_constant(struct ast_node *n,
 static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                   struct analyzer_traversal_ctx *ctx)
 {
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     struct ast_node *parent = analyzer_traversal_ctx_get_current_parent(ctx);
     traversal_node_set_type(n,
                             type_lookup_identifier_string(ast_identifier_str(n),
@@ -537,8 +565,8 @@ static enum traversal_cb_res typecheck_block(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_binary_op(struct ast_node *n,
-                                                 struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_binaryop(struct ast_node *n,
+                                                struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
@@ -629,6 +657,35 @@ static enum traversal_cb_res typecheck_binary_op(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
+static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
+                                               struct analyzer_traversal_ctx *ctx)
+{
+    enum unaryop_type uop_type = ast_unaryop_op(n);
+    const struct type *operand_type;
+
+    operand_type = ast_expression_get_type(ast_unaryop_operand(n));
+    if (!operand_type) {
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Type for operand of \""RF_STR_PF_FMT"\" can not be determined",
+                     RF_STR_PF_ARG(ast_unaryop_opstr(n)));
+        return TRAVERSAL_CB_ERROR;
+    }
+
+    switch (uop_type) {
+    case UNARYOP_MINUS:
+        return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
+    case UNARYOP_PLUS:
+        return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
+    default:
+        RF_ASSERT(false, "Typechecking for unimplemented unary "
+                  "operator "RF_STR_PF_FMT,
+                  RF_STR_PF_ARG(ast_unaryop_opstr(n)));
+        return TRAVERSAL_CB_FATAL_ERROR;
+    }
+
+    return TRAVERSAL_CB_OK;
+}
+
 static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
@@ -649,7 +706,10 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
-        ret = typecheck_binary_op(n, ctx);
+        ret = typecheck_binaryop(n, ctx);
+        break;
+    case AST_UNARY_OPERATOR:
+        ret = typecheck_unaryop(n, ctx);
         break;
     case AST_IDENTIFIER:
         ret = typecheck_identifier(n, ctx);

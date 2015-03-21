@@ -128,9 +128,11 @@ i_INLINE_INS bool type_elementary_int_is_unsigned(const struct type_elementary *
 i_INLINE_INS bool type_elementary_is_unsigned(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_signed(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_float(const struct type_elementary *t);
+i_INLINE_INS bool type_elementary_is_numeric(const struct type_elementary *t);
 i_INLINE_INS int type_elementary_bytesize(const struct type_elementary *t);
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
+i_INLINE_INS bool type_is_numeric_elementary(const struct type *t);
 i_INLINE_INS enum elementary_type type_elementary(const struct type *t);
 i_INLINE_INS bool type_is_signed_elementary(const struct type *t);
 i_INLINE_INS bool type_is_unsigned_elementary(const struct type *t);
