@@ -8,6 +8,11 @@
 struct symbol_table;
 struct analyzer;
 
+enum typecmp_flags {
+    //! If the next comparison is for a function call
+    TYPECMP_FLAG_FUNCTION_CALL = 0x1,
+};
+
 enum comparison_reason {
     //! General type equality comparison
     TYPECMP_GENERIC = 0,
@@ -15,6 +20,8 @@ enum comparison_reason {
     TYPECMP_IDENTICAL,
     //! Compare types to check if implicit conversion is allowed
     TYPECMP_IMPLICIT_CONVERSION,
+    //! Compare types inside a type after one implicit conversion has already happend
+    TYPECMP_AFTER_IMPLICIT_CONVERSION,
     //! Compare types to check if explicit conversion is allowed
     TYPECMP_EXPLICIT_CONVERSION,
 };
@@ -96,5 +103,12 @@ const struct RFstring *typecmp_ctx_get_next_warning();
  * @returns if we had a warning in the last comparison
  */
 bool typecmp_ctx_have_warning();
+
+/**
+ * Sets bit flags for the next type comparison. Will reset comparison context.
+ *
+ * For possible values @see enum typecmp_flags
+ */
+void typecmp_ctx_set_flags(int flags);
 
 #endif

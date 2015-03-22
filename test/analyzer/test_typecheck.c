@@ -89,7 +89,7 @@ START_TEST(test_typecheck_valid_function_call2) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST(test_typecheck_valid_function_call_print) {
+START_TEST(test_typecheck_valid_function_call_print_string) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "name:string = \"Francis\"\n"
@@ -98,7 +98,31 @@ START_TEST(test_typecheck_valid_function_call_print) {
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
 
+START_TEST(test_typecheck_valid_function_call_print_int) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u32 = 64\n"
+        "print(a)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_valid_function_call_with_sum_args) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn foo(a:i64 | b:string) { }\n"
+        "{\n"
+        "foo(45)\n"
+        "foo(\"s\")\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
@@ -227,6 +251,28 @@ START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
             MESSAGE_SEMANTIC_ERROR,
             "Undeclared identifier \"b\"",
             2, 10, 2, 10),
+    };
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
+START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn foo(a:u64 | b:string) { }\n"
+        "{\n"
+        "foo(45)\n"
+        "foo(true)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "function foo() is called with argument type of \"bool\" which does "
+            "not match the expected type of \"u64|string\". Unable to convert from "
+            "\"bool\" to \"string\". An implicit conversion already happened.",
+            3, 0, 3, 8),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
@@ -467,7 +513,9 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_val, test_typecheck_valid_function_call0);
     tcase_add_test(t_func_val, test_typecheck_valid_function_call1);
     tcase_add_test(t_func_val, test_typecheck_valid_function_call2);
-    tcase_add_test(t_func_val, test_typecheck_valid_function_call_print);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call_print_string);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call_print_int);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_call_with_sum_args);
     tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
 
 
@@ -480,6 +528,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_return2);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_undeclared_identifier);
+    tcase_add_test(t_func_inv, test_typecheck_invalid_function_call_with_sum_args);
     tcase_add_test(t_func_inv, test_typecheck_invalid_function_impl_return);
 
     TCase *t_custom_types_val = tcase_create("typecheck_valid_custom_types");

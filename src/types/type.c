@@ -15,9 +15,12 @@
 #include <types/type_function.h>
 
 /* -- forward declarations of functions -- */
-static bool type_operator_init(struct type_operator *t, struct ast_node *n,
-                               struct analyzer *a, struct symbol_table *st,
-                               struct ast_node *genrdecl, bool add_type_to_list);
+static bool type_operator_init_from_node(struct type_operator *t,
+                                         struct ast_node *n,
+                                         struct analyzer *a,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl,
+                                         bool add_type_to_list);
 
 /* -- miscellaneous type functions used internally (static) -- */
 struct function_args_ctx {
@@ -132,7 +135,12 @@ static bool type_init_from_typedesc(struct type *t, struct ast_node *typedesc,
         return type_leaf_init_from_typedesc(&t->leaf, typedesc, a, st, genrdecl, add_type_to_list);
     } else {
         t->category = TYPE_CATEGORY_OPERATOR;
-        return type_operator_init(&t->operator, typedesc, a, st, genrdecl, add_type_to_list);
+        return type_operator_init_from_node(&t->operator,
+                                            typedesc,
+                                            a,
+                                            st,
+                                            genrdecl,
+                                            add_type_to_list);
     }
 }
 
@@ -156,10 +164,12 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
     return ret;
 }
 
-static bool type_operator_init(struct type_operator *t, struct ast_node *n,
-                               struct analyzer *a, struct symbol_table *st,
-                               struct ast_node *genrdecl,
-                               bool add_type_to_list)
+static bool type_operator_init_from_node(struct type_operator *t,
+                                         struct ast_node *n,
+                                         struct analyzer *a,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl,
+                                         bool add_type_to_list)
 {
     struct type *left;
     struct type *right;
@@ -390,12 +400,29 @@ struct type *type_leaf_create(struct analyzer *a,
     return t;
 }
 
+struct type *type_operator_create(struct analyzer *a,
+                                  struct type *left_type,
+                                  struct type *right_type,
+                                  enum typeop_type type)
+{
+    struct type *t;
+    t = type_alloc(a);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    t->category = TYPE_CATEGORY_OPERATOR;
+    t->operator.type = type;
+    t->operator.left = left_type;
+    t->operator.right = right_type;
+    return t;
+}
 
-struct type *type_operator_create(struct ast_node *n,
-                                  struct analyzer *a,
-                                  struct symbol_table *st,
-                                  struct ast_node *genrdecl,
-                                  bool add_type_to_list)
+struct type *type_operator_create_from_node(struct ast_node *n,
+                                            struct analyzer *a,
+                                            struct symbol_table *st,
+                                            struct ast_node *genrdecl,
+                                            bool add_type_to_list)
 {
     struct type *t;
     t = type_alloc(a);
@@ -405,7 +432,7 @@ struct type *type_operator_create(struct ast_node *n,
     }
 
     t->category = TYPE_CATEGORY_OPERATOR;
-    if (!type_operator_init(&t->operator, n, a, st, genrdecl, add_type_to_list)) {
+    if (!type_operator_init_from_node(&t->operator, n, a, st, genrdecl, add_type_to_list)) {
         type_free(t, a);
         t = NULL;
     }

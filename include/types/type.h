@@ -43,11 +43,16 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct ast_node *genrdecl,
                                        bool lookup);
 
-struct type *type_operator_create(struct ast_node *n,
-                                  struct analyzer *a,
-                                  struct symbol_table *st,
-                                  struct ast_node *genrdecl,
-                                  bool lookup);
+struct type *type_operator_create(struct analyzer *a,
+                                  struct type *left_type,
+                                  struct type *right_type,
+                                  enum typeop_type type);
+
+struct type *type_operator_create_from_node(struct ast_node *n,
+                                            struct analyzer *a,
+                                            struct symbol_table *st,
+                                            struct ast_node *genrdecl,
+                                            bool lookup);
 
 struct type *type_leaf_create(struct analyzer *a,
                               const struct RFstring *id,

@@ -64,6 +64,19 @@ START_TEST (test_print_string_literal) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("Hello World");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
 } END_TEST
+#if 0
+START_TEST (test_print_integer) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main()->u32{\n"
+        "a:u32 = 56\n"
+        "print(a)\n"
+        "return 1\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("56");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+} END_TEST
+#endif
 
 START_TEST (test_type_decl) {
     struct end_to_end_driver *d = get_end_to_end_driver();
@@ -463,7 +476,10 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic, test_negative_integer_constants);
     tcase_add_test(st_basic, test_print_string);
     tcase_add_test(st_basic, test_print_string_literal);
-
+#if 0
+    tcase_add_test(st_basic, test_print_integer);
+#endif
+    
     TCase *st_basic_types = tcase_create("end_to_end_basic_types");
     tcase_add_checked_fixture(st_basic_types,
                               setup_end_to_end_tests,

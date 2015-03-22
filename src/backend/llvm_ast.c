@@ -354,11 +354,22 @@ LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
     const struct type *fn_type;
     struct ast_node *args = ast_fncall_args(n);
     if (rf_string_equal(fn_name, &s)) {
-        // for now, print only accepts 1 argument
-        LLVMValueRef compiled_args = backend_llvm_expression_compile(
-            args,
-            ctx,
-            RFLLVM_OPTION_IDENTIFIER_VALUE);
+        // print(string|int)
+        LLVMValueRef compiled_args;
+        // if not a string then it has to be an int (due to the current function signature of print)
+        if (!type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_STRING)) {
+            // TODO
+            // wanted to do an explicit cast here but won't work for non-constants at the moment
+            // it's better to implement this properly after all types of function calls have been implemented
+            compiled_args = NULL;
+            RF_ASSERT(false, "not yet implemented");
+        } else {
+        // it's a string
+            compiled_args = backend_llvm_expression_compile(
+                args,
+                ctx,
+                RFLLVM_OPTION_IDENTIFIER_VALUE);
+        }
         LLVMValueRef call_args[] = { compiled_args };
         LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "print"),
                       call_args,

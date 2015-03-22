@@ -1,6 +1,7 @@
 #include <types/type_comparisons.h>
 
 #include <Utils/sanity.h>
+#include <Utils/bits.h>
 #include <Definitions/threadspecific.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
@@ -16,6 +17,7 @@
 
 struct typecmp_ctx {
     bool needs_reset;
+    int flags;
     struct RFstringx err_buff;
     struct RFstringx warn_buff;
     struct {darray(struct RFstring);} warning_indices;
@@ -32,6 +34,7 @@ bool typecmp_ctx_init()
 {
     darray_init(g_typecmp_ctx.warning_indices);
     g_typecmp_ctx.needs_reset = false;
+    g_typecmp_ctx.flags = 0;
     return rf_stringx_init_buff(&g_typecmp_ctx.err_buff, 1024, "") &&
         rf_stringx_init_buff(&g_typecmp_ctx.warn_buff, 1024, "");
 }
@@ -40,6 +43,7 @@ static inline void typecmp_ctx_reset()
 {
     if (g_typecmp_ctx.needs_reset) {
         g_typecmp_ctx.needs_reset = false;
+        g_typecmp_ctx.flags = 0;
         rf_stringx_assignv(&g_typecmp_ctx.err_buff, "");
         rf_stringx_assignv(&g_typecmp_ctx.warn_buff, "");
         while (g_typecmp_ctx.warning_indices.size != 0) {
@@ -90,6 +94,12 @@ static inline void typecmp_ctx_add_warning(struct RFstring *s)
     rf_stringx_append(&g_typecmp_ctx.warn_buff, s);
 }
 
+void typecmp_ctx_set_flags(int flags)
+{
+	typecmp_ctx_reset();
+    g_typecmp_ctx.flags = flags;
+}
+
 /* -- type comparison functions -- */
 
 i_INLINE_INS bool type_category_equals(const struct type* t,
@@ -125,6 +135,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
                                     const struct type_elementary *to,
                                     enum comparison_reason reason)
 {
+    bool fail_due_to_second_implicit = false;
     if (from->etype == to->etype) {
         TYPECMP_RETURN(true);
     }
@@ -216,13 +227,18 @@ static bool type_elementary_compare(const struct type_elementary *from,
         }
         break;
     case ELEMENTARY_TYPE_BOOL:
-        if (type_elementary_is_int(to)) { // we can convert from bool to int
-            TYPECMP_RETURN(true);
+        if (reason == TYPECMP_AFTER_IMPLICIT_CONVERSION) {
+            // if we only had an implicit conversion bool is not convertable
+            fail_due_to_second_implicit = true;
+            break;
         }
-        // we can explicitly convert from bool to string
-        if (to->etype == ELEMENTARY_TYPE_STRING && reason == TYPECMP_EXPLICIT_CONVERSION) {
-            TYPECMP_RETURN(true);
-        }
+            if (type_elementary_is_int(to)) { // we can convert from bool to int
+                TYPECMP_RETURN(true);
+            }
+            // we can explicitly convert from bool to string
+            if (to->etype == ELEMENTARY_TYPE_STRING && reason == TYPECMP_EXPLICIT_CONVERSION) {
+                TYPECMP_RETURN(true);
+            }
         break;
     case ELEMENTARY_TYPE_STRING:
     case ELEMENTARY_TYPE_NIL:
@@ -235,9 +251,11 @@ static bool type_elementary_compare(const struct type_elementary *from,
 end:
     rf_stringx_assignv(&g_typecmp_ctx.err_buff,
                        "Unable to convert from \""RF_STR_PF_FMT"\" to \""
-                       RF_STR_PF_FMT"\"",
+                       RF_STR_PF_FMT"\"%s",
                        RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-                       RF_STR_PF_ARG(type_elementary_get_str(to->etype)));
+                       RF_STR_PF_ARG(type_elementary_get_str(to->etype)),
+                       fail_due_to_second_implicit ? ". An implicit conversion already happened" : ""
+    );
     TYPECMP_RETURN(false);
 }
 
@@ -267,6 +285,16 @@ static bool type_same_categories_compare(const struct type *from,
     }
 
     TYPECMP_RETURN(false);
+}
+
+static bool type_compare_to_operator(const struct type *from,
+									 const struct type_operator *to,
+                                     enum comparison_reason reason)
+{
+    if (to->type == TYPEOP_SUM) {
+        return type_compare(from, to->left, TYPECMP_AFTER_IMPLICIT_CONVERSION) || type_compare(from, to->right, TYPECMP_AFTER_IMPLICIT_CONVERSION);
+    }
+    return false;
 }
 
 //! Possible resuls of @see type_initial_check()
@@ -313,7 +341,12 @@ static inline enum type_initial_check_result type_category_check(const struct ty
             if (type_compare(from, to->defined.type, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
-        }
+        } else if (to->category == TYPE_CATEGORY_OPERATOR &&
+                   RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_FUNCTION_CALL)) {
+            if (type_compare_to_operator(from, &to->operator, reason)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+		}
     }
 
     return ret;
