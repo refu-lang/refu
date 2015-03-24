@@ -173,8 +173,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
         // int to int
         if (type_elementary_is_int(to)) {
             // conversion from bigger to smaller type
-            if (type_elementary_bytesize(from) > type_elementary_bytesize(to) &&
-                RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_ASSIGNMENT)) {
+            if (type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
 
                 if (from->is_constant) {
                     // error
@@ -194,8 +193,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
                 }
             }
             // conversion from signed to unsigned
-            if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to) &&
-                RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_ASSIGNMENT)) {
+            if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to)) {
 
                 if (from->is_constant) {
                     // error

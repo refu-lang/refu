@@ -244,7 +244,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST (test_typecheck_invalid_explicit_conversion1) {
+START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:u64\n"
@@ -331,7 +331,7 @@ Suite *analyzer_typecheck_conversion_suite_create(void)
     tcase_add_checked_fixture(t_explicit_conversion_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
-    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion1);
+    tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion_empty);
     tcase_add_test(t_explicit_conversion_inv, test_typecheck_invalid_explicit_conversion_int_to_string);
 
 
