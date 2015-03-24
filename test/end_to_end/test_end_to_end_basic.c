@@ -381,7 +381,7 @@ START_TEST (test_explicit_conversion_to_u16) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn main()->u32{\n"
         "    a:u64 = 4294967294\n"
-        "    b:u16 = u8(a)\n"
+        "    b:u16 = u16(a)\n"
         "    if b == 65534 { print(\"yes\") } else { print(\"no\") }\n"
         "    return 1\n"
         "}"

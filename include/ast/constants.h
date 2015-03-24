@@ -10,7 +10,7 @@
 struct ast_node;
 struct inplocation;
 
-struct ast_node *ast_constant_create_integer(struct inplocation *loc, uint64_t value);
+struct ast_node *ast_constant_create_integer(struct inplocation *loc, int64_t value);
 struct ast_node *ast_constant_create_float(struct inplocation *loc, double value);
 // TODO: Maybe just have 2 of those nodes inside the parser and point at them when needed?
 struct ast_node *ast_constant_create_boolean(const struct inplocation *loc, bool value);
@@ -44,7 +44,7 @@ i_INLINE_DECL bool ast_constant_get_float(struct ast_node *n, double *v)
     return true;
 }
 
-i_INLINE_DECL bool ast_constant_get_integer(struct ast_node *n, uint64_t *v)
+i_INLINE_DECL bool ast_constant_get_integer(struct ast_node *n, int64_t *v)
 {
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
 

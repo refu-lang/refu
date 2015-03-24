@@ -13,7 +13,7 @@ enum constant_type {
 struct ast_constant {
     enum constant_type type;
     union {
-        uint64_t integer;
+        int64_t integer;
         double floating;
         bool boolean;
     } value;

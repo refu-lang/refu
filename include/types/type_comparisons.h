@@ -8,9 +8,11 @@
 struct symbol_table;
 struct analyzer;
 
+//! Flags to generally describe next type comparison
 enum typecmp_flags {
     //! If the next comparison is for a function call
     TYPECMP_FLAG_FUNCTION_CALL = 0x1,
+    TYPECMP_FLAG_ASSIGNMENT = 0x2,
 };
 
 enum comparison_reason {

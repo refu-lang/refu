@@ -175,4 +175,12 @@ i_INLINE_DECL bool type_is_explicitly_convertable_elementary(const struct type *
     return t->category == TYPE_CATEGORY_ELEMENTARY &&
         type_elementary_has_explicit_conversion(&t->elementary);
 }
+
+/**
+ * Check if a type is an constant elementary type
+ */
+i_INLINE_DECL bool type_is_constant_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.is_constant;
+}
 #endif

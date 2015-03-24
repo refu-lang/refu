@@ -89,7 +89,13 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
             val = LLVMBuildFPCast(ctx->builder, val, type, "");
         } else if (val_type == LLVMInt8Type() || val_type == LLVMInt16Type() ||
                    val_type == LLVMInt32Type() || val_type == LLVMInt64Type()) {
-            val = LLVMBuildIntCast(ctx->builder, val, type, "");
+            uint32_t val_size = LLVMStoreSizeOfType(ctx->target_data, val_type);
+            uint32_t to_type_size =  LLVMStoreSizeOfType(ctx->target_data, type);
+            if (val_size < to_type_size) {
+                val = LLVMBuildZExt(ctx->builder, val, type, "");
+            } else { // greater or equal size
+                val = LLVMBuildTruncOrBitCast(ctx->builder, val, type, "");
+            }
         } else {
             backend_llvm_type_debug(val_type, "val_type", ctx);
             backend_llvm_type_debug(type, "to_cast_type", ctx);

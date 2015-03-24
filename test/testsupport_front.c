@@ -530,8 +530,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         switch (ctype) {
         case CONSTANT_NUMBER_INTEGER:
         {
-            uint64_t expect_v;
-            uint64_t got_v;
+            int64_t expect_v;
+            int64_t got_v;
             ck_assert(ast_constant_get_integer(expect, &expect_v));
             ck_assert(ast_constant_get_integer(got, &got_v));
             if (expect_v != got_v) {

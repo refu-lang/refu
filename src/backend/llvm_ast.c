@@ -504,7 +504,7 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
                                              struct llvm_traversal_ctx *ctx,
                                              int options)
 {
-    uint64_t int_val;
+    int64_t int_val;
     double float_val;
     LLVMValueRef llvm_val;
     switch(n->type) {
@@ -525,9 +525,9 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
             if (!ast_constant_get_integer(n, &int_val)) {
                 RF_ERROR("Failed to convert a constant num node to integer number for LLVM");
             }
-            // TODO: This is not using rir_types ... also maybe get rid of ctx->current_value?
-            //       if we are going to be returning it anyway?
-            ctx->current_value = LLVMConstInt(LLVMInt32Type(), int_val, 0);
+            ctx->current_value = (int_val >= 0)
+                ? LLVMConstInt(LLVMInt32Type(), int_val, 0) 
+                : LLVMConstNeg(LLVMConstInt(LLVMInt32Type(), (unsigned long long)-int_val, 0));
             break;
         case CONSTANT_NUMBER_FLOAT:
             if (!ast_constant_get_float(n, &float_val)) {

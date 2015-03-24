@@ -46,7 +46,7 @@ START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
-START_TEST (test_typecheck_inv_big_to_small_implicit_conversion1) {
+START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u64 = 9999\n"
         "b:u8\n"
@@ -66,7 +66,7 @@ START_TEST (test_typecheck_inv_big_to_small_implicit_conversion1) {
     ck_assert_typecheck_with_messages(d, true, messages, true);
 } END_TEST
 
-START_TEST (test_typecheck_inv_big_to_small_implicit_conversion2) {
+START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u32 = 9999\n"
         "b:u8\n"
@@ -86,7 +86,7 @@ START_TEST (test_typecheck_inv_big_to_small_implicit_conversion2) {
     ck_assert_typecheck_with_messages(d, true, messages, true);
 } END_TEST
 
-START_TEST (test_typecheck_inv_big_to_small_implicit_conversion3) {
+START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:u16 = 9999\n"
         "b:u8\n"
@@ -106,7 +106,7 @@ START_TEST (test_typecheck_inv_big_to_small_implicit_conversion3) {
     ck_assert_typecheck_with_messages(d, true, messages, true);
 } END_TEST
 
-START_TEST (test_typecheck_inv_signed_to_unsigned_implicit_conversion) {
+START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:i16 = 9999\n"
         "b:u16\n"
@@ -126,7 +126,7 @@ START_TEST (test_typecheck_inv_signed_to_unsigned_implicit_conversion) {
     ck_assert_typecheck_with_messages(d, true, messages, true);
 } END_TEST
 
-START_TEST (test_typecheck_inv_implicit_conversion) {
+START_TEST (test_typecheck_inv_implicit_conversion_warning) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{a:i64 = 9009999\n"
         "b:u16\n"
@@ -149,6 +149,27 @@ START_TEST (test_typecheck_inv_implicit_conversion) {
     };
 
     ck_assert_typecheck_with_messages(d, true, messages, true);
+} END_TEST
+
+START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "b:u8 = 999999999\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign \"u32\" to \"u8\". "
+            "Unable to convert from \"u32\" to \"u8\". "
+            "Attempting to assign larger constant to smaller variable.",
+            1, 0, 1, 15),
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion1) {
@@ -287,11 +308,13 @@ Suite *analyzer_typecheck_conversion_suite_create(void)
     tcase_add_checked_fixture(t_implicit_inv,
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
-    tcase_add_test(t_implicit_inv, test_typecheck_inv_big_to_small_implicit_conversion1);
-    tcase_add_test(t_implicit_inv, test_typecheck_inv_big_to_small_implicit_conversion2);
-    tcase_add_test(t_implicit_inv, test_typecheck_inv_big_to_small_implicit_conversion3);
-    tcase_add_test(t_implicit_inv, test_typecheck_inv_signed_to_unsigned_implicit_conversion);
-    tcase_add_test(t_implicit_inv, test_typecheck_inv_implicit_conversion);
+    tcase_add_test(t_implicit_inv, test_typecheck_u64_to_u8_implicit_conversion_warning);
+    tcase_add_test(t_implicit_inv, test_typecheck_u32_to_u8_implicit_conversion_warning);
+    tcase_add_test(t_implicit_inv, test_typecheck_u16_to_u8_implicit_conversion_warning);
+    tcase_add_test(t_implicit_inv, test_typecheck_signed_to_unsigned_implicit_conversion_warning);
+    tcase_add_test(t_implicit_inv, test_typecheck_inv_implicit_conversion_warning);
+    tcase_add_test(t_implicit_inv, test_typecheck_inv_implicit_conversion_u64_const_to_u8_error);
+
 
     TCase *t_explicit_conversion_val = tcase_create("analyzer_typecheck_valid_explicit_conversion");
     tcase_add_checked_fixture(t_explicit_conversion_val,

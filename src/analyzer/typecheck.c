@@ -77,9 +77,15 @@ static const struct type *typecheck_do_type_conversion(const struct type *left,
         right->category == TYPE_CATEGORY_ELEMENTARY) {
         if (right->elementary.etype >= left->elementary.etype &&
             type_compare(left, right, TYPECMP_IMPLICIT_CONVERSION)) {
-            return right;
+            // return right but without constant type
+            return
+                type_is_constant_elementary(right) ?
+                type_elementary_get_type(right->elementary.etype) : right;
         } else if (type_compare(right, left, TYPECMP_IMPLICIT_CONVERSION)) {
-            return left;
+            // return left but without constant type
+            return
+                type_is_constant_elementary(left) ?
+                type_elementary_get_type(left->elementary.etype) : left;
         }
     //  else try to see if either side can be implicitly converted to another
     } else if (type_compare(left, right, TYPECMP_IMPLICIT_CONVERSION)) {
@@ -378,6 +384,7 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
+    typecmp_ctx_set_flags(TYPECMP_FLAG_ASSIGNMENT);
     if (type_compare(tright, tleft, TYPECMP_IMPLICIT_CONVERSION)) {
         final_type = tleft;
         if (typecmp_ctx_have_warning()) {

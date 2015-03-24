@@ -138,3 +138,4 @@ i_INLINE_INS bool type_is_signed_elementary(const struct type *t);
 i_INLINE_INS bool type_is_unsigned_elementary(const struct type *t);
 i_INLINE_INS bool type_is_floating_elementary(const struct type *t);
 i_INLINE_INS bool type_is_explicitly_convertable_elementary(const struct type *t);
+i_INLINE_INS bool type_is_constant_elementary(const struct type *t);

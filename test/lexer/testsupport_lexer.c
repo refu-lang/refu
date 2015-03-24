@@ -45,8 +45,8 @@ bool test_tokens_cmp(struct token *expected,
             RF_STR_PF_ARG(ast_identifier_str(got->value.v)));
         return false;
     } else if (expected->type == TOKEN_CONSTANT_INTEGER) {
-        uint64_t expect_v;
-        uint64_t got_v;
+        int64_t expect_v;
+        int64_t got_v;
         ck_assert(ast_constant_get_integer(expected->value.v, &expect_v));
         ck_assert(ast_constant_get_integer(got->value.v, &got_v));
         if (expect_v != got_v) {

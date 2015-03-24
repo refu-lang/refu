@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 struct ast_node *ast_constant_create_integer(struct inplocation *loc,
-                                             uint64_t value)
+                                             int64_t value)
 {
     struct ast_node *ret;
     ret = ast_node_create_loc(AST_CONSTANT, loc);
@@ -53,26 +53,33 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
     switch (n->constant.type) {
     case CONSTANT_NUMBER_INTEGER:
-        if (n->constant.value.integer > UINT64_MAX) {
-            //TODO: How to handle a literal greater than U64 max?
+        if (n->constant.value.integer > INT64_MAX || n->constant.value.integer < INT64_MIN) {
+            //TODO: How to handle a literal greater than I64 max?
             RF_ASSERT_OR_CRITICAL(false, "Numeric constant literal value greater"
-                                  " than UINT64_MAX encountered");
+                                  " that does not fit in 64 bits encountered");
             return NULL;
         }
 
-        if (n->constant.value.integer > UINT32_MAX) {
+        // positive constants and zero
+        if (n->constant.value.integer > INT32_MAX) {
             return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_64);
-        }
-
-        if (n->constant.value.integer > UINT16_MAX) {
+        } else if (n->constant.value.integer > INT16_MAX) {
             return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_32);
-        }
-
-        if (n->constant.value.integer > UINT8_MAX) {
+        } else if (n->constant.value.integer > INT8_MAX) {
             return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_16);
+        } else if (n->constant.value.integer >= 0) {
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_8);
+        // negative constants
+        } else if (n->constant.value.integer < INT32_MIN) {
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_64);
+        } else if (n->constant.value.integer < INT16_MIN) {
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_32);
+        } else if (n->constant.value.integer < INT8_MIN) {
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_16);
+        } else {
+            return type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_8);
         }
 
-        return type_elementary_get_type_constant(ELEMENTARY_TYPE_UINT_8);
     case CONSTANT_NUMBER_FLOAT:
         return type_elementary_get_type_constant(ELEMENTARY_TYPE_FLOAT_32);
     case CONSTANT_BOOLEAN:
@@ -86,5 +93,5 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
 
 i_INLINE_INS enum constant_type ast_constant_get_type(struct ast_node *n);
 i_INLINE_INS bool ast_constant_get_float(struct ast_node *n, double *v);
-i_INLINE_INS bool ast_constant_get_integer(struct ast_node *n, uint64_t *v);
+i_INLINE_INS bool ast_constant_get_integer(struct ast_node *n, int64_t *v);
 i_INLINE_INS bool ast_constant_get_bool(const struct ast_node *n);

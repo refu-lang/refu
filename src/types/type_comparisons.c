@@ -131,11 +131,25 @@ static bool type_operator_compare(const struct type_operator *from,
            type_compare(from->right, to->right, reason);
 }
 
+
+
 static bool type_elementary_compare(const struct type_elementary *from,
                                     const struct type_elementary *to,
                                     enum comparison_reason reason)
 {
-    bool fail_due_to_second_implicit = false;
+    // keep the enum and the array synced
+    enum error_explanation_indices {
+        TYPECMP_ERRXPLAIN_NONE = 0,
+        TYPECMP_ERRXPLAIN_SECOND_IMPLICIT,
+        TYPECMP_ERRXPLAIN_LARGESMALL_CONSTANT,
+        TYPECMP_ERRXPLAIN_SIGNEDUNSIGNED_CONSTANT,
+    } current_error_type = 0;
+    static const char *error_explanations[] = {
+        "",
+        ". An implicit conversion already happened",
+        ". Attempting to assign larger constant to smaller variable",
+        ". Attempting to assign signed constant to unsigned variable",
+    };
     if (from->etype == to->etype) {
         TYPECMP_RETURN(true);
     }
@@ -158,11 +172,17 @@ static bool type_elementary_compare(const struct type_elementary *from,
     case ELEMENTARY_TYPE_UINT_64:
         // int to int
         if (type_elementary_is_int(to)) {
-            if (!from->is_constant) {
-                // warn about conversion from bigger to smaller type
-                if (reason != TYPECMP_EXPLICIT_CONVERSION &&
-                    type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
+            // conversion from bigger to smaller type
+            if (type_elementary_bytesize(from) > type_elementary_bytesize(to) &&
+                RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_ASSIGNMENT)) {
 
+                if (from->is_constant) {
+                    // error
+                    current_error_type = TYPECMP_ERRXPLAIN_LARGESMALL_CONSTANT;
+                    goto end;
+                }
+                if (reason != TYPECMP_EXPLICIT_CONVERSION) {
+                    // warning
                     RFS_buffer_push();
                     typecmp_ctx_add_warning(
                         RFS_(
@@ -172,11 +192,19 @@ static bool type_elementary_compare(const struct type_elementary *from,
                             RF_STR_PF_ARG(type_elementary_get_str(to->etype))));
                     RFS_buffer_pop();
                 }
-                // warn about conversion from signed to unsigned
-                if (reason != TYPECMP_EXPLICIT_CONVERSION &&
-                    !type_elementary_int_is_unsigned(from) &&
-                    type_elementary_int_is_unsigned(to)) {
+            }
+            // conversion from signed to unsigned
+            if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to) &&
+                RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_ASSIGNMENT)) {
 
+                if (from->is_constant) {
+                    // error
+                    current_error_type = TYPECMP_ERRXPLAIN_SIGNEDUNSIGNED_CONSTANT;
+                    goto end;
+                }
+                
+                if (reason != TYPECMP_EXPLICIT_CONVERSION) {
+                    // warning
                     RFS_buffer_push();
                     typecmp_ctx_add_warning(
                         RFS_(
@@ -229,7 +257,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
     case ELEMENTARY_TYPE_BOOL:
         if (reason == TYPECMP_AFTER_IMPLICIT_CONVERSION) {
             // if we only had an implicit conversion bool is not convertable
-            fail_due_to_second_implicit = true;
+            current_error_type = TYPECMP_ERRXPLAIN_SECOND_IMPLICIT;
             break;
         }
             if (type_elementary_is_int(to)) { // we can convert from bool to int
@@ -254,7 +282,7 @@ end:
                        RF_STR_PF_FMT"\"%s",
                        RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
                        RF_STR_PF_ARG(type_elementary_get_str(to->etype)),
-                       fail_due_to_second_implicit ? ". An implicit conversion already happened" : ""
+                       error_explanations[current_error_type]
     );
     TYPECMP_RETURN(false);
 }
