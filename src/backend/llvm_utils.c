@@ -114,6 +114,11 @@ void backend_llvm_store(LLVMValueRef val,
     LLVMBuildStore(ctx->builder, val, ptr);
 }
 
+LLVMBasicBlockRef backend_llvm_add_block_before_funcend(struct llvm_traversal_ctx *ctx)
+{
+    return LLVMInsertBasicBlock(LLVMGetLastBasicBlock(ctx->current_function), "");
+}
+
 void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
                               struct LLVMOpaqueBasicBlock *block)
 {
@@ -121,13 +126,21 @@ void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
     ctx->current_block = block;
 }
 
-void backend_llvm_assign_defined_types(LLVMValueRef dst,
-                                       LLVMValueRef src,
+LLVMValueRef backend_llvm_add_br(struct LLVMOpaqueBasicBlock *target,
+                                 struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef last_instruction = LLVMGetLastInstruction(ctx->current_block);
+    return (!last_instruction || !LLVMIsATerminatorInst(last_instruction))
+        ? LLVMBuildBr(ctx->builder, target) : NULL;
+}
+
+void backend_llvm_assign_defined_types(LLVMValueRef from,
+                                       LLVMValueRef to,
                                        struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef dst_cast = LLVMBuildBitCast(ctx->builder, dst,
+    LLVMValueRef dst_cast = LLVMBuildBitCast(ctx->builder, to,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
-    LLVMValueRef src_cast = LLVMBuildBitCast(ctx->builder, src,
+    LLVMValueRef src_cast = LLVMBuildBitCast(ctx->builder, from,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
     LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
 

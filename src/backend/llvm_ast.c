@@ -298,9 +298,6 @@ static LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_t
             temps = RFS_("%.4f", args->constant.value.floating);
             break;
         case CONSTANT_BOOLEAN:
-            /* temps = args->constant.value.boolean ? */
-            /*     tokentype_to_str(TOKEN_KW_TRUE) : tokentype_to_str(TOKEN_KW_FALSE); */
-            /* break; */
             return args->constant.value.boolean
                 ? backend_llvm_get_boolean_str(true, ctx)
                 : backend_llvm_get_boolean_str(false, ctx);
@@ -317,9 +314,9 @@ static LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_t
 
     if (type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_BOOL)) {
         RFS_buffer_push();
-        LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "taken_branch");
-        LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "fallthrough_branch");
-        LLVMBasicBlockRef if_end = LLVMAppendBasicBlock(ctx->current_function, "if_end");
+        LLVMBasicBlockRef taken_branch = backend_llvm_add_block_before_funcend(ctx);
+        LLVMBasicBlockRef fallthrough_branch = backend_llvm_add_block_before_funcend(ctx);
+        LLVMBasicBlockRef if_end = backend_llvm_add_block_before_funcend(ctx);
         LLVMValueRef string_alloca = LLVMBuildAlloca(ctx->builder, LLVMGetTypeByName(ctx->mod, "string"), "");
         LLVMBuildCondBr(ctx->builder, cast_value, taken_branch, fallthrough_branch);
 
@@ -463,9 +460,9 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
     RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
     struct rir_cond_branch *rir_if = &branch->cond_branch;
 
-    LLVMBasicBlockRef taken_branch = LLVMAppendBasicBlock(ctx->current_function, "taken_branch");
-    LLVMBasicBlockRef fallthrough_branch = LLVMAppendBasicBlock(ctx->current_function, "fallthrough_branch");
-    LLVMBasicBlockRef if_end = LLVMAppendBasicBlock(ctx->current_function, "if_end");
+    LLVMBasicBlockRef taken_branch = backend_llvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef fallthrough_branch = backend_llvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef if_end = backend_llvm_add_block_before_funcend(ctx);
 
     // create the condition
     LLVMValueRef condition = backend_llvm_expression_compile(
@@ -478,15 +475,17 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
 
     // create the taken block
     backend_llvm_enter_block(ctx, taken_branch);
-    backend_llvm_compile_basic_block(rir_if->true_br, ctx);
-    LLVMBuildBr(ctx->builder, if_end);
+    backend_llvm_compile_basic_block(rir_if->true_br, ctx);    
+    backend_llvm_add_br(if_end, ctx);
 
     // if there is a fall through block deal with it
     backend_llvm_enter_block(ctx, fallthrough_branch);
     if (rir_if->false_br) {
         backend_llvm_branch_compile(rir_if->false_br, ctx);
     }
-    LLVMBuildBr(ctx->builder, if_end);
+    backend_llvm_add_br(if_end, ctx);
+
+    // enter the if end block
     backend_llvm_enter_block(ctx, if_end);
 }
 
@@ -513,10 +512,16 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_UNARY_OPERATOR:
         return backend_llvm_compile_uop(n, ctx);
     case AST_RETURN_STATEMENT:
+        // assign the value to the function's return and jump to the final block
         llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n),
                                                    ctx,
                                                    RFLLVM_OPTION_IDENTIFIER_VALUE);
-        return LLVMBuildRet(ctx->builder, llvm_val);
+        backend_llvm_compile_assign_llvm(llvm_val,
+                                         ctx->current_function_return,
+                                         n->expression_type,
+                                         ctx);
+        LLVMBuildBr(ctx->builder, LLVMGetLastBasicBlock(ctx->current_function));
+        break;
     case AST_FUNCTION_CALL:
         return backend_llvm_function_call_compile(n, ctx);
     case AST_CONSTANT:
@@ -656,8 +661,30 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
         }
     }
 
-    // now handle function entry block
+    // if the function's got a return value alloc it here
+    ctx->current_function_return = NULL;
+    if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
+        ctx->current_function_return = LLVMBuildAlloca(
+            ctx->builder,
+            backend_llvm_type(fn->ret_type, ctx),
+            "function_return_value");
+    }
+
+    // this block should always stay at the end of the function
+    LLVMBasicBlockRef function_end = LLVMAppendBasicBlock(ctx->current_function, "function_end");
+    // now compile all parts of the function
     backend_llvm_compile_basic_block(fn->entry, ctx);
+    
+    // finally build the function return. Jump from whichever the second last block
+    // was to the return block and return
+    backend_llvm_add_br(function_end, ctx);
+    backend_llvm_enter_block(ctx, function_end);
+    if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
+        // I suppose in some case no load would be needed. Need to abstract these
+        // differentiations somehow
+        LLVMValueRef ret = LLVMBuildLoad(ctx->builder, ctx->current_function_return, "");
+        LLVMBuildRet(ctx->builder, ret);
+    }
     return ctx->current_function;
 }
 

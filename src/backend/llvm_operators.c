@@ -171,27 +171,37 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
     return NULL;
 }
 
-static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
-                                                struct llvm_traversal_ctx *ctx)
+LLVMValueRef backend_llvm_compile_assign_llvm(LLVMValueRef from,
+                                              LLVMValueRef to,
+                                              const struct type *type,
+                                              struct llvm_traversal_ctx *ctx)
 {
-    struct ast_node *left = ast_binaryop_left(n);
-    // For left side we want the memory location if it's a simple identifier hence options = 0
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx, 0);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n),
-                                                         ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-
-    if (type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_STRING)) {
-        backend_llvm_copy_string(right, llvm_left, ctx);
-    } else if (type_category_equals(n->expression_type, TYPE_CATEGORY_DEFINED)) {
-        backend_llvm_assign_defined_types(llvm_left, right, ctx);
-    } else if (n->expression_type->category == TYPE_CATEGORY_ELEMENTARY) {
-        backend_llvm_store(right, llvm_left, ctx);
+    if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
+        backend_llvm_copy_string(from, to, ctx);
+    } else if (type_category_equals(type, TYPE_CATEGORY_DEFINED)) {
+        backend_llvm_assign_defined_types(from, to, ctx);
+    } else if (type->category == TYPE_CATEGORY_ELEMENTARY) {
+        backend_llvm_store(from, to, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
     }
 
     // hm what should compiling an assignment return?
     return NULL;
+}
+
+LLVMValueRef backend_llvm_compile_assign(struct ast_node *from,
+                                         struct ast_node *to,
+                                         const struct type *common_type,
+                                         struct llvm_traversal_ctx *ctx)
+{
+    // For left side we want the memory location if it's a simple identifier hence options = 0
+    LLVMValueRef llvm_to = backend_llvm_expression_compile(to, ctx, 0);
+    LLVMValueRef llvm_from = backend_llvm_expression_compile(from,
+                                                              ctx,
+                                                              RFLLVM_OPTION_IDENTIFIER_VALUE);
+    
+    return backend_llvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, ctx);
 }
 
  LLVMValueRef backend_llvm_compile_bop(struct ast_node *n,
@@ -219,7 +229,10 @@ static LLVMValueRef backend_llvm_compile_assign(struct ast_node *n,
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
     case BINARYOP_ASSIGN:
-        return backend_llvm_compile_assign(n, ctx);
+        return backend_llvm_compile_assign(ast_binaryop_right(n),
+                                           ast_binaryop_left(n),
+                                           n->expression_type,
+                                           ctx);
     case BINARYOP_CMP_EQ:
     case BINARYOP_CMP_NEQ:
     case BINARYOP_CMP_GT:

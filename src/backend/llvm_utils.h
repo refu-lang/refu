@@ -41,6 +41,16 @@ void backend_llvm_store(struct LLVMOpaqueValue *val, struct LLVMOpaqueValue *ptr
                         struct llvm_traversal_ctx *ctx);
 
 /**
+ * Inserts a new block to a function, right before the last (the returning)
+ * block of said function.
+ *
+ * @param ctx             The llvm traversal context
+ * @return                The inserted block
+ */
+struct LLVMOpaqueBasicBlock *backend_llvm_add_block_before_funcend(
+    struct llvm_traversal_ctx *ctx);
+
+/**
  * Positions the builder at end of @c block and makes it current
  *
  * @param ctx             The llvm traversal context
@@ -50,12 +60,21 @@ void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
                               struct LLVMOpaqueBasicBlock *block);
 
 /**
+ * Add branch to label unless last instruction was already a branch command
+ *
+ * @param    The target block to jump to 
+ * @param    ctx the llvm context
+ */
+struct LLVMOpaqueValue *backend_llvm_add_br(struct LLVMOpaqueBasicBlock *target,
+                                            struct llvm_traversal_ctx *ctx);
+
+/**
  * Shallow copy/assignment of designed types
- * @param dst        The destination llvm value to assign to
- * @param src        The source llvm value to assign from
+ * @param from      The source llvm value to assign to
+ * @param to        The destination llvm value
  * @param ctx             The llvm traversal context
  */
-void backend_llvm_assign_defined_types(struct LLVMOpaqueValue *dst,
-                                       struct LLVMOpaqueValue *src,
+void backend_llvm_assign_defined_types(struct LLVMOpaqueValue *from,
+                                       struct LLVMOpaqueValue *to,
                                        struct llvm_traversal_ctx *ctx);
 #endif

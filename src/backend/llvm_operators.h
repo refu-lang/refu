@@ -6,8 +6,18 @@
 
 struct llvm_traversal_ctx;
 struct ast_node;
+struct type;
 struct LLVMOpaqueValue;
 
+struct LLVMOpaqueValue *backend_llvm_compile_assign_llvm(
+    struct LLVMOpaqueValue *from,
+    struct LLVMOpaqueValue *to,
+    const struct type *type,
+    struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *backend_llvm_compile_assign(struct ast_node *from,
+                                                    struct ast_node *to,
+                                                    const struct type *common_type,
+                                                    struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *backend_llvm_compile_bop(struct ast_node *n,
                                                  struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *backend_llvm_compile_uop(struct ast_node *n,

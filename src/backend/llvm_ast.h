@@ -31,6 +31,7 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;
     struct LLVMOpaqueValue *current_function;
+    struct LLVMOpaqueValue *current_function_return;
     struct LLVMOpaqueBasicBlock *current_block;
     struct LLVMOpaqueTargetData *target_data;
     struct {darray(struct LLVMOpaqueType*);} params;
