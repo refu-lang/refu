@@ -47,10 +47,9 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         rec->data = type_lookup_or_create(node, analyzer, st, NULL, false, false);
         break;
     default:
-        RF_ASSERT_OR_CRITICAL(false, "Attempted to create symbol table record "
+        RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
                               RF_STR_PF_ARG(ast_node_str(node)));
-        return false;
     }
 
     if (!rec->data) {
@@ -174,12 +173,10 @@ bool symbol_table_add_node(struct symbol_table *t,
     // this check may be redundant due to the way symbol tables are
     // created in symbol_table_creation.c BUT better safe than sorry
     rec = symbol_table_lookup_record(t, id, &at_first);
-    if (rec && at_first) {
-        // so .. we should not get here
-        RF_ASSERT_OR_CRITICAL(false, "Attempted to add an already existing node"
-                              " to a symol table");
-        return false;
-    }
+    RF_ASSERT_OR_CRITICAL(!(rec && at_first), return false,
+                          "Attempted to add an already existing node"
+                          " to a symol table");
+
 
     rec = symbol_table_record_create(t, analyzer, n, id);
     if (!rec) {

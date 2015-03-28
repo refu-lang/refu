@@ -655,7 +655,9 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
             LLVMBuildStore(ctx->builder, LLVMGetParam(ctx->current_function, i) ,allocation);
             // also note the alloca in the symbol table
             rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
-            RF_ASSERT_OR_CRITICAL(rec, "Symbol table of rir_function did "
+            RF_ASSERT_OR_CRITICAL(rec,
+                                  return NULL,
+                                  "Symbol table of rir_function did "
                                   "not contain expected parameter");
             symbol_table_record_set_backend_handle(rec, allocation);
         }

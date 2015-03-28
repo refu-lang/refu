@@ -53,12 +53,12 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
     switch (n->constant.type) {
     case CONSTANT_NUMBER_INTEGER:
-        if (n->constant.value.integer > INT64_MAX || n->constant.value.integer < INT64_MIN) {
-            //TODO: How to handle a literal greater than I64 max?
-            RF_ASSERT_OR_CRITICAL(false, "Numeric constant literal value greater"
-                                  " that does not fit in 64 bits encountered");
-            return NULL;
-        }
+        //TODO: How to handle a literal greater than I64 max?
+        RF_ASSERT_OR_CRITICAL(n->constant.value.integer <= INT64_MAX ||
+                              n->constant.value.integer >= INT64_MIN,
+                              return NULL,
+                              "Numeric constant literal value greater"
+                              " that does not fit in 64 bits encountered");
 
         // positive constants and zero
         if (n->constant.value.integer > INT32_MAX) {

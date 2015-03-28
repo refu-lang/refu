@@ -19,10 +19,9 @@ i_INLINE_DECL struct ast_node *ast_types_left(struct ast_node *n)
     case AST_TYPE_OPERATOR:
         return n->typeop.left;
     default:
-        RF_ASSERT_OR_CRITICAL(false, "Attempted to call accessor"
+        RF_ASSERT_OR_CRITICAL(false, return NULL, "Attempted to call accessor"
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
                               RF_STR_PF_ARG(ast_node_str(n)));
-        return NULL;
     }
 }
 
@@ -34,10 +33,9 @@ i_INLINE_DECL struct ast_node *ast_types_right(struct ast_node *n)
     case AST_TYPE_OPERATOR:
         return n->typeop.right;
     default:
-        RF_ASSERT_OR_CRITICAL(false, "Attempted to call accessor"
+        RF_ASSERT_OR_CRITICAL(false, return NULL, "Attempted to call accessor"
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
                               RF_STR_PF_ARG(ast_node_str(n)));
-        return NULL;
     }
 }
 

@@ -206,9 +206,8 @@ static inline bool check_operator_type(struct token *tok, int level)
     }
 
     // illegal expression parsing level, should never happen
-    RF_ASSERT_OR_CRITICAL(false,
+    RF_ASSERT_OR_CRITICAL(false, return false,
                           "Illegal level %d for expression parsing", level);
-    return false;
 }
 
 static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)

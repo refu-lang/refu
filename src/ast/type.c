@@ -63,9 +63,8 @@ const struct RFstring *type_op_str(enum typeop_type op)
     case TYPEOP_IMPLICATION:
         return &op_str_impl_;
     default:
-        RF_ASSERT_OR_CRITICAL(false,
+        RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "Unexpected type operator type encountered");
-        return NULL;
     }
 }
 

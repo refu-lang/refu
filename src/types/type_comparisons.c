@@ -447,8 +447,8 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
         break;
     }
 
-    RF_ASSERT_OR_CRITICAL(false, "Illegal ast node type \""RF_STR_PF_FMT"\""
+    RF_ASSERT_OR_CRITICAL(false, return false,
+                          "Illegal ast node type \""RF_STR_PF_FMT"\""
                           " detected instead of a type description",
                           RF_STR_PF_ARG(ast_node_str(type_desc)));
-    return false;
 }

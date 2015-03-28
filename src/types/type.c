@@ -90,10 +90,10 @@ static bool type_leaf_init_from_typedesc(struct type_leaf *leaf,
         }
 
     } else {
-        RF_ASSERT_OR_CRITICAL(false, "Illegal ast node type \""RF_STR_PF_FMT"\""
+        RF_ASSERT_OR_CRITICAL(false, return false,
+                              "Illegal ast node type \""RF_STR_PF_FMT"\""
                               " detected as the right part of a type description",
                               RF_STR_PF_ARG(ast_node_str(right)));
-        return false;
     }
 
     return true;
@@ -219,11 +219,9 @@ struct type *type_lookup_or_create(struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         return type_lookup_or_create(ast_vardecl_desc_get(n), a, st, genrdecl, false, add_type_to_list);
     default:
-        RF_ASSERT_OR_CRITICAL(false,"Unexpected ast node type "
+        RF_ASSERT_OR_CRITICAL(false, return false, "Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
                               RF_STR_PF_ARG(ast_node_str(n)));
-    break;
-
     }
 
     return NULL;
@@ -267,10 +265,9 @@ struct type *type_create(struct ast_node *node,
     case AST_FUNCTION_DECLARATION:
         return type_create_from_fndecl(node, a, st);
     default:
-        RF_ASSERT_OR_CRITICAL(false, "Attempted to create a type "
+        RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create a type "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
                               RF_STR_PF_ARG(ast_node_str(node)));
-        break;
     }
 
     return NULL;

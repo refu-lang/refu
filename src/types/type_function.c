@@ -47,11 +47,9 @@ static const struct type *do_type_function_get_argtype_n(const struct type_opera
         }
         return t->leaf.type;
     }
-
-    //it should be a product operator, since arguments should be comma separated
-    if (!type_is_product_op(t)) {
-        return NULL;
-    }
+    RF_ASSERT_OR_CRITICAL(type_is_product_op(t),
+                          return NULL,
+                          "function call arguments can only be comma separated");
 
     // continue recursion
     return do_type_function_get_argtype_n(&t->operator, n - 1);
@@ -72,11 +70,9 @@ const struct type *type_function_get_argtype_n(const struct type *t, unsigned in
     if (n == 0 && t->category == TYPE_CATEGORY_LEAF) {
         return t->operator.left->leaf.type;
     }
-
-    // else it should be a product operator, since arguments should be comma separated
-    if (!type_is_product_op(t)) {
-        return NULL;
-    }
+    RF_ASSERT_OR_CRITICAL(type_is_product_op(t),
+                          return NULL,
+                          "function call arguments can only be comma separated");
 
     return do_type_function_get_argtype_n(&t->operator, n);
 }

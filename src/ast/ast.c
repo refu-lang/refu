@@ -164,11 +164,10 @@ const struct RFstring * ast_node_get_name_str(const struct ast_node *n)
         return ast_xidentifier_str(n);
         break;
     default:
-        RF_ASSERT_OR_CRITICAL(false, "Requesting identifier string from illegal"
+        RF_ASSERT_OR_CRITICAL(false, return NULL,
+                              "Requesting identifier string from illegal"
                               "ast node type \""RF_STR_PF_FMT"\"",
                               RF_STR_PF_ARG(ast_node_str(n)));
-        return NULL;
-        break;
     }
 }
 
@@ -236,11 +235,10 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
     case AST_TYPE_DECLARATION:
         return ast_typedecl_symbol_table_get(n);
     default:
-        RF_ASSERT_OR_CRITICAL(false,
+        RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"
                               " is an illegal node for this action",
                               RF_STR_PF_ARG(ast_node_str(n)));
-        return NULL;
     }
 }
 
