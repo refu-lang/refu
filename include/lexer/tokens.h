@@ -51,6 +51,7 @@ enum token_type {
     TOKEN_SM_OPAREN,
     TOKEN_SM_CPAREN,
     TOKEN_SM_DBLQUOTE,
+    TOKEN_SM_THICKARROW,
 
     /* binary operators (keep grouped with all binary operators) */
     TOKEN_OP_PLUS,
