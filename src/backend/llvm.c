@@ -29,11 +29,13 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
+    darray_init(ctx->values);
 }
 
 static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
     darray_free(ctx->params);
+    darray_free(ctx->values);
     LLVMDisposeBuilder(ctx->builder);
     LLVMDisposeModule(ctx->mod);
     LLVMDisposeTargetData(ctx->target_data);

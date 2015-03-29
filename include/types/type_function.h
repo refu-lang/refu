@@ -86,9 +86,13 @@ const struct RFstring *type_callable_category_str(const struct type *t);
  */
 void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type);
 
-/** @return the type of a particular argument or NULL if there was a
- * malformed expression type or @n is out of bounds
+/** 
+ * Take a function call's argument type and return a particular argument out of it
+ * @param t        A function call's argument type
+ * @param n        The argument number, starting from 0.
+ * @return         the type of a particular argument or NULL if there was a
+ *                 malformed expression type or @n is out of bounds
  */
-const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n);
+const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int n);
 
 #endif

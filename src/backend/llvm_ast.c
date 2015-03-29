@@ -130,11 +130,10 @@ static LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category ty
 i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS unsigned llvm_traversal_ctx_get_param_count(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ctx);
-void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
-                                  struct LLVMOpaqueType *type)
-{
-    darray_append(ctx->params, type);
-}
+
+i_INLINE_INS struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_traversal_ctx *ctx);
+i_INLINE_INS unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx);
+i_INLINE_INS void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx);
 
 static LLVMTypeRef backend_llvm_type(const struct rir_type *type,
                                      struct llvm_traversal_ctx *ctx)
@@ -216,7 +215,7 @@ LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
     return backend_llvm_cast_value_to_type_maybe(val, common_type, ctx);
 }
 
-struct args_to_value_cb_ctx {
+struct ctor_args_to_value_cb_ctx {
     unsigned int index;
     unsigned int offset;
     struct llvm_traversal_ctx *llvm_ctx;
@@ -224,7 +223,7 @@ struct args_to_value_cb_ctx {
     LLVMTypeRef *params;
 };
 
-static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
+static void ctor_args_to_value_cb_ctx_init(struct ctor_args_to_value_cb_ctx *ctx,
                                       struct llvm_traversal_ctx *llvm_ctx,
                                       LLVMValueRef alloca,
                                       LLVMTypeRef *params)
@@ -236,7 +235,7 @@ static void args_to_value_cb_ctx_init(struct args_to_value_cb_ctx *ctx,
     ctx->params = params;
 }
 
-static bool args_to_value_cb(struct ast_node *n, struct args_to_value_cb_ctx *ctx)
+static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_cb_ctx *ctx)
 {
     LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx, 0);
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
@@ -252,7 +251,7 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
                                                    const struct RFstring *type_name,
                                                    struct llvm_traversal_ctx *ctx)
 {
-    struct args_to_value_cb_ctx cb_ctx;
+    struct ctor_args_to_value_cb_ctx cb_ctx;
     char *name;
 
     // alloca enough space in the stack for the type created by the constructor
@@ -265,8 +264,8 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     LLVMTypeRef *params = backend_llvm_defined_member_types(defined_type, ctx);
 
-    args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
-    ast_fncall_for_each_arg(fn_call, (fncall_args_cb)args_to_value_cb, &cb_ctx);
+    ctor_args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
+    ast_fncall_for_each_arg(fn_call, (fncall_args_cb)ctor_args_to_value_cb, &cb_ctx);
 
     return allocation;
 }
@@ -342,47 +341,43 @@ static LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_t
     return NULL;
 }
 
+static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx, 0);
+    llvm_traversal_ctx_add_value(ctx, arg_value);
+    return true;
+}
+
 LLVMValueRef backend_llvm_function_call_compile(struct ast_node *n,
                                                 struct llvm_traversal_ctx *ctx)
 {
     // for now just deal with the built-in print() function
-    static const struct RFstring s = RF_STRING_STATIC_INIT("print");
     const struct RFstring *fn_name = ast_fncall_name(n);
     const struct type *fn_type;
     struct ast_node *args = ast_fncall_args(n);
-    if (rf_string_equal(fn_name, &s)) {
-        // print(string|int)
-        LLVMValueRef compiled_args;
-        // if not a string then it has to be an int (due to the current function signature of print)
-        if (!type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_STRING)) {
-            // TODO
-            // wanted to do an explicit cast here but won't work for non-constants at the moment
-            // it's better to implement this properly after all types of function calls have been implemented
-            compiled_args = NULL;
-            RF_ASSERT(false, "not yet implemented");
-        } else {
-        // it's a string
-            compiled_args = backend_llvm_expression_compile(
-                args,
-                ctx,
-                RFLLVM_OPTION_IDENTIFIER_VALUE);
-        }
-        LLVMValueRef call_args[] = { compiled_args };
-        LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "print"),
-                      call_args,
-                      1, "");
+    fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
+    if (type_is_function(fn_type)) {
+        llvm_traversal_ctx_reset_values(ctx);
+        ast_fncall_for_each_arg(n, (fncall_args_cb)fncall_args_to_value_cb, ctx);
+        RFS_buffer_push();
+        char *fn_name_cstr = rf_string_cstr_from_buff(fn_name);
+        LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->mod, fn_name_cstr);
+        RFS_buffer_pop();
+        LLVMTypeRef llvm_fn_type = backend_llvm_function_type(llvm_fn);
+        RF_ASSERT(LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
+                  "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
+                  "arguments in backend code generation", RF_STR_PF_ARG(fn_name));
+        LLVMBuildCall(ctx->builder,
+                      LLVMGetNamedFunction(ctx->mod, fn_name_cstr),
+                      llvm_traversal_ctx_get_values(ctx),
+                      llvm_traversal_ctx_get_values_count(ctx),
+                      "");
+    } else if (fn_type->category == TYPE_CATEGORY_DEFINED) {
+        return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
     } else {
-        fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
-        if (type_is_function(fn_type)) {
-            // TODO
-            RF_ASSERT(false, "Not yet implemented");
-        } else if (fn_type->category == TYPE_CATEGORY_DEFINED) {
-            return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
-        } else {
-            RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
-                      "At this point the only possible call should be explicit cast");
-            return backend_llvm_explicit_cast_compile(fn_type, args, ctx);
-        }
+        RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
+                  "At this point the only possible call should be explicit cast");
+        return backend_llvm_explicit_cast_compile(fn_type, args, ctx);
     }
     // if function returns void. TODO: Maybe handle better
     return NULL;
@@ -681,7 +676,9 @@ static LLVMValueRef backend_llvm_function(struct rir_function *fn,
     // was to the return block and return
     backend_llvm_add_br(function_end, ctx);
     backend_llvm_enter_block(ctx, function_end);
-    if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
+    if (fn->ret_type->category == ELEMENTARY_RIR_TYPE_NIL) {
+        LLVMBuildRetVoid(ctx->builder);
+    } else { // if we got a return value
         // I suppose in some case no load would be needed. Need to abstract these
         // differentiations somehow
         LLVMValueRef ret = LLVMBuildLoad(ctx->builder, ctx->current_function_return, "");

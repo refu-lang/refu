@@ -28,8 +28,8 @@ static inline bool type_is_product_op(const struct type *t)
     return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_PRODUCT;
 }
 
-static const struct type *do_type_function_get_argtype_n(const struct type_operator *op,
-                                                         unsigned int n)
+static const struct type *do_type_fnargs_get_argtype_n(const struct type_operator *op,
+                                                             unsigned int n)
 {
     const struct type *t;
     if (n == 0) {
@@ -52,7 +52,7 @@ static const struct type *do_type_function_get_argtype_n(const struct type_opera
                           "function call arguments can only be comma separated");
 
     // continue recursion
-    return do_type_function_get_argtype_n(&t->operator, n - 1);
+    return do_type_fnargs_get_argtype_n(&t->operator, n - 1);
 }
 
 void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type)
@@ -64,7 +64,7 @@ void type_function_init(struct type *t, struct type *arg_type, struct type *ret_
     type_function_set_rettype(t, ret_type);
 }
 
-const struct type *type_function_get_argtype_n(const struct type *t, unsigned int n)
+const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int n)
 {
     // special case of 1 argument only
     if (n == 0 && t->category == TYPE_CATEGORY_LEAF) {
@@ -74,5 +74,5 @@ const struct type *type_function_get_argtype_n(const struct type *t, unsigned in
                           return NULL,
                           "function call arguments can only be comma separated");
 
-    return do_type_function_get_argtype_n(&t->operator, n);
+    return do_type_fnargs_get_argtype_n(&t->operator, n);
 }

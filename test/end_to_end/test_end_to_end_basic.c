@@ -101,6 +101,17 @@ START_TEST (test_type_member_access) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
 } END_TEST
 
+START_TEST (test_function_creation_and_call_noarg) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn foo() { print(\"foo\") }\n"
+        "fn main()->u32{\n"
+        "foo()\n"
+        "return 1\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, NULL);
+} END_TEST
+
 START_TEST (test_simple_if) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -497,6 +508,12 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic_types, test_type_decl);
     tcase_add_test(st_basic_types, test_type_member_access);
 
+    TCase *st_functions = tcase_create("end_to_end_functions");
+    tcase_add_checked_fixture(st_functions,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_functions, test_function_creation_and_call_noarg);
+
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,
                               setup_end_to_end_tests,
@@ -537,6 +554,7 @@ Suite *end_to_end_basic_suite_create(void)
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
+    suite_add_tcase(s, st_functions);
     suite_add_tcase(s, st_control_flow);
     suite_add_tcase(s, st_comparisons);
     suite_add_tcase(s, st_explicit_conversions);

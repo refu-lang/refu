@@ -35,6 +35,7 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueBasicBlock *current_block;
     struct LLVMOpaqueTargetData *target_data;
     struct {darray(struct LLVMOpaqueType*);} params;
+    struct {darray(struct LLVMOpaqueValue*);} values;
 
     struct compiler_args *args;
     struct rir *rir;
@@ -66,8 +67,39 @@ i_INLINE_DECL void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ct
     }
 }
 
-void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
-                                  struct LLVMOpaqueType *type);
+static inline void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
+                                                struct LLVMOpaqueType *type)
+{
+    darray_append(ctx->params, type);
+}
+
+/**
+ * Gets the values array from the llvm traversal ctx or NULL if
+ * there are none
+ */
+i_INLINE_DECL struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_traversal_ctx *ctx)
+{
+    return (darray_size(ctx->values) == 0) ? NULL : ctx->values.item;
+}
+
+i_INLINE_DECL unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx)
+{
+    return darray_size(ctx->values);
+}
+
+i_INLINE_DECL void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx)
+{
+    while (!darray_empty(ctx->values)) {
+        (void)darray_pop(ctx->values);
+    }
+}
+
+/* i_INLINE_DECL void llvm_traversal_ctx_add_value(struct llvm_traversal_ctx *ctx, */
+static inline void llvm_traversal_ctx_add_value(struct llvm_traversal_ctx *ctx,
+                                                struct LLVMOpaqueValue *value)
+{
+    darray_append(ctx->values, value);
+}
 
 enum llvm_expression_compile_options {
     //! If the node is a simple elementary identifier return its value and not the Alloca
