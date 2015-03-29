@@ -15,6 +15,7 @@
 #include <ast/constants_decls.h>
 #include <ast/operators_decls.h>
 #include <ast/ifexpr_decls.h>
+#include <ast/matchexpr_decls.h>
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
 
@@ -54,6 +55,8 @@ enum ast_type {
     AST_ARRAY_REFERENCE,
     AST_CONDITIONAL_BRANCH,
     AST_IF_EXPRESSION,
+    AST_MATCH_EXPRESSION,
+    AST_MATCH_CASE,
     AST_XIDENTIFIER,
     AST_BINARY_OPERATOR,
     AST_UNARY_OPERATOR,
@@ -97,6 +100,8 @@ struct ast_node {
         struct ast_fncall fncall;
         struct ast_condbranch condbranch;
         struct ast_ifexpr ifexpr;
+        struct ast_matchcase matchcase;
+        struct ast_matchexpr matchexpr;
         struct ast_binaryop binaryop;
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;

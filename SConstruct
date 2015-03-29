@@ -37,6 +37,7 @@ refu_src = [
     'ast/generics.c',
     'ast/operators.c',
     'ast/ifexpr.c',
+    'ast/matchexpr.c',
     'ast/returnstmt.c',
     'ast/ast_utils.c',
 
@@ -75,6 +76,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/block.c',
         'parser/recursive_descent/vardecl.c',
         'parser/recursive_descent/ifexpr.c',
+        'parser/recursive_descent/matchexpr.c',
     ]
 
 # add specific environment variables
