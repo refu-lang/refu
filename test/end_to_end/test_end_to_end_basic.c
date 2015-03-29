@@ -122,6 +122,16 @@ START_TEST (test_function_creation_and_call_1arg) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 20, NULL);
 } END_TEST
 
+START_TEST (test_function_creation_and_call_2arg) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn foo(a:u32, b:u32) -> u32 { return a + b + 10 }\n"
+        "fn main()->u32{\n"
+        "return foo(3, 7)\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 20, NULL);
+} END_TEST
+
 START_TEST (test_simple_if) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -524,6 +534,7 @@ Suite *end_to_end_basic_suite_create(void)
                               teardown_end_to_end_tests);
     tcase_add_test(st_functions, test_function_creation_and_call_noarg);
     tcase_add_test(st_functions, test_function_creation_and_call_1arg);
+    tcase_add_test(st_functions, test_function_creation_and_call_2arg);
 
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,
