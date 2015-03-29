@@ -5,6 +5,8 @@
 
 #include <Definitions/inline.h>
 #include <Data_Structures/darray.h>
+#include <types/type_decls.h>
+#include <ir/rir_type_decls.h>
 
 struct RFstring;
 
@@ -46,6 +48,13 @@ bool backend_llvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
 struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
                                                     struct llvm_traversal_ctx *ctx);
+
+struct LLVMOpaqueType *backend_llvm_elementary_to_type(enum elementary_type etype,
+                                                       struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *backend_llvm_rir_elementary_to_type(enum rir_type_category type,
+                                                struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *backend_llvm_type(const struct rir_type *type,
+                                         struct llvm_traversal_ctx *ctx);
 /**
  * Gets the parameters array from the llvm traversal ctx or NULL if
  * there are none
@@ -141,6 +150,10 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
 void backend_llvm_branch_compile(struct rir_branch *branch,
                                  struct llvm_traversal_ctx *ctx);
 
+struct LLVMOpaqueValue *backend_llvm_explicit_cast_compile(const struct type *cast_type,
+                                                           struct ast_node *args,
+                                                           struct llvm_traversal_ctx *ctx);
+
 /**
  * Will typecast @a val if needed to a specific elementary type
  */
@@ -148,4 +161,13 @@ struct LLVMOpaqueValue *backend_llvm_cast_value_to_elementary_maybe(
     struct LLVMOpaqueValue  *val,
     const struct type *t,
     struct llvm_traversal_ctx *ctx);
+
+/**
+ * Given a rir type get its defined member types as an array of LLVMTypeRefs
+ *
+ * @param type        The rir type whose members to get
+ * @param ctx         The llvm traversal context
+ */
+struct LLVMOpaqueType **backend_llvm_defined_member_types(struct rir_type *type,
+                                                          struct llvm_traversal_ctx *ctx);
 #endif

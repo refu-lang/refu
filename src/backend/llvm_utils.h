@@ -6,6 +6,7 @@ struct LLVMOpaqueBasicBlock;
 struct LLVMOpaqueValue;
 struct LLVMOpaqueType;
 
+struct rir_type;
 struct llvm_traversal_ctx;
 
 /* -- Some debugging functions to help in sticky situations -- */
@@ -77,9 +78,4 @@ struct LLVMOpaqueValue *backend_llvm_add_br(struct LLVMOpaqueBasicBlock *target,
 void backend_llvm_assign_defined_types(struct LLVMOpaqueValue *from,
                                        struct LLVMOpaqueValue *to,
                                        struct llvm_traversal_ctx *ctx);
-
-/**
- *  Returns the LLVMTypeRef of an LLVMValueRef that's a function
- */
-struct LLVMOpaqueType *backend_llvm_function_type(struct LLVMOpaqueValue *fn);
 #endif

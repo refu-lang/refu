@@ -150,8 +150,3 @@ void backend_llvm_assign_defined_types(LLVMValueRef from,
                                  LLVMConstInt(LLVMInt1Type(), 0, 0) };
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
 }
-
-LLVMTypeRef backend_llvm_function_type(LLVMValueRef fn)
-{
-    return LLVMGetElementType(LLVMTypeOf(fn));
-}

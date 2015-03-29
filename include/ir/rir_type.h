@@ -1,6 +1,7 @@
 #ifndef LFR_IR_TYPE_H
 #define LFR_IR_TYPE_H
 
+#include <ir/rir_type_decls.h>
 #include <Data_Structures/darray.h>
 #include <Utils/struct_utils.h>
 #include <types/type_decls.h>
@@ -9,58 +10,6 @@ struct type;
 struct RFstring;
 struct ast_node;
 struct symbol_table;
-
-//! Keep synced with @ref elementary_types at type_decls.h
-enum rir_type_category {
-    ELEMENTARY_RIR_TYPE_INT_8 = 0,
-    ELEMENTARY_RIR_TYPE_UINT_8,
-    ELEMENTARY_RIR_TYPE_INT_16,
-    ELEMENTARY_RIR_TYPE_UINT_16,
-    ELEMENTARY_RIR_TYPE_INT_32,
-    ELEMENTARY_RIR_TYPE_UINT_32,
-    ELEMENTARY_RIR_TYPE_INT_64,
-    ELEMENTARY_RIR_TYPE_UINT_64,
-    ELEMENTARY_RIR_TYPE_INT,
-    ELEMENTARY_RIR_TYPE_UINT,
-    ELEMENTARY_RIR_TYPE_FLOAT_32,
-    ELEMENTARY_RIR_TYPE_FLOAT_64,
-    ELEMENTARY_RIR_TYPE_STRING,
-    ELEMENTARY_RIR_TYPE_BOOL,
-    ELEMENTARY_RIR_TYPE_NIL,
-
-    COMPOSITE_PRODUCT_RIR_TYPE,
-    COMPOSITE_SUM_RIR_TYPE,
-    COMPOSITE_IMPLICATION_RIR_TYPE,
-    COMPOSITE_RIR_DEFINED,
-
-    RIR_TYPE_CATEGORY_COUNT
-};
-
-/**
- * Representation of a type for the Refu IR
- *
- * It is much like @see struct type but with some constraints.
- * It is represented by an array of subtypes and not by a tree. A single
- * rir_type can only contain subtypes that are connected by the same type
- * operation.
- *
- * TODO: In order to achieve this all possible composite types need to be defined
- * somewhere. Figure out where and do it.
- */
-struct rir_type {
-    enum rir_type_category category;
-    //! Array of types that may constitute this type. e.g: i64, u32, string
-    struct {darray(struct rir_type*);} subtypes;
-    //! Name of the variable the type describes. TODO: Maybe move this somwhere
-    //! else. Separate the notion of type from parameter?
-    const struct RFstring *name;
-    //! Control to input into the rir types list
-    struct RFilist_node ln;
-    //! Denotes if the type is indexed in the rir types list (or some other list)
-    //! that takes care of destruction. If so then it's not destroyed when it's found
-    //! as a child of another type. TODO: This is kind of ugly .. if possible fix
-    bool indexed;
-};
 
 /**
  * Allocates a new rir_type equivalent of @c input.
