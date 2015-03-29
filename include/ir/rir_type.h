@@ -4,6 +4,7 @@
 #include <ir/rir_type_decls.h>
 #include <Data_Structures/darray.h>
 #include <Utils/struct_utils.h>
+#include <Utils/sanity.h>
 #include <types/type_decls.h>
 
 struct type;
@@ -86,10 +87,32 @@ bool rir_type_is_subtype_of_other(struct rir_type *t,
  */
 bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type);
 
-//! @return the name of the nth parameter of the type
+/**
+ * Returns the name of the nth parameter of a type
+ * @param t        The type to query
+ * @param n        The index (starting from 0) of the parameter's whose name to get
+ * @return         The name as a string or NULL if the parameter is out of bounds
+ */
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n);
-//! @return the type of the nth parameter of the type
+i_INLINE_DECL const struct RFstring *rir_type_get_nth_name_or_die(struct rir_type *t, unsigned n)
+{
+    const struct RFstring *ret = rir_type_get_nth_name(t, n);
+    RF_ASSERT_OR_EXIT(ret, "rir_type_get_nth_name_or_die() index out of bounds");
+    return ret;
+}
+/**
+ * Returns the type of the nth parameter of a type
+ * @param t        The type to query
+ * @param n        The index (starting from 0) of the parameter's whose type to get
+ * @return         The type or NULL if the parameter is out of bounds
+ */
 const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
+i_INLINE_DECL const struct rir_type *rir_type_get_nth_type_or_die(struct rir_type *t, unsigned n)
+{
+    const struct rir_type *ret = rir_type_get_nth_type(t, n);
+    RF_ASSERT_OR_EXIT(ret, "rir_type_get_nth_type_or_die() index out of bounds");
+    return ret;
+}
 
 /**
  * Gets a string representation of the rir_type

@@ -93,8 +93,8 @@ void inpfile_move(struct inpfile *f,
     static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
     uint32_t lim = inpstr_len_from_beg(&f->str);
 
-    RF_CONDITIONAL_EXIT(off->bytes_moved + bytes > lim,
-                        "Requested parsed file move over limit");
+    RF_ASSERT_OR_EXIT(off->bytes_moved + bytes <= lim,
+                      "Requested parsed file move over limit");
 
     off->bytes_moved += bytes;
     off->chars_moved += chars;

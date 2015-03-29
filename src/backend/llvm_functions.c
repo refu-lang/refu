@@ -99,11 +99,11 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
         RF_ASSERT(LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
                   "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
                   "arguments in backend code generation", RF_STR_PF_ARG(fn_name));
-        LLVMBuildCall(ctx->builder,
-                      LLVMGetNamedFunction(ctx->mod, fn_name_cstr),
-                      llvm_traversal_ctx_get_values(ctx),
-                      llvm_traversal_ctx_get_values_count(ctx),
-                      "");
+        return LLVMBuildCall(ctx->builder,
+                             LLVMGetNamedFunction(ctx->mod, fn_name_cstr),
+                             llvm_traversal_ctx_get_values(ctx),
+                             llvm_traversal_ctx_get_values_count(ctx),
+                             "");
     } else if (fn_type->category == TYPE_CATEGORY_DEFINED) {
         return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
     } else {
@@ -111,7 +111,8 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
                   "At this point the only possible call should be explicit cast");
         return backend_llvm_explicit_cast_compile(fn_type, args, ctx);
     }
-    // if function returns void. TODO: Maybe handle better
+
+    RF_ASSERT_OR_EXIT(false, "should never get here");
     return NULL;
 }
 
@@ -171,12 +172,13 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
 
             // for each argument of the function allocate an LLVM variable
             // in the stack with alloca
-            param_name_str = rir_type_get_nth_name(fn->arg_type, i);
+            param_name_str = rir_type_get_nth_name_or_die(fn->arg_type, i);
             RFS_buffer_push();
             param_name = rf_string_cstr_from_buff(param_name_str);
-            allocation = LLVMBuildAlloca(ctx->builder,
-                                         backend_llvm_type(rir_type_get_nth_type(fn->arg_type, i), ctx),
-                                         param_name);
+            allocation = LLVMBuildAlloca(
+                ctx->builder,
+                backend_llvm_type(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
+                param_name);
             RFS_buffer_pop();
             // and assign to it the argument value
             LLVMBuildStore(ctx->builder, LLVMGetParam(ctx->current_function, i) ,allocation);

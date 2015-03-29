@@ -448,21 +448,30 @@ bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const st
 
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
 {
+    // if it's only 1 simple type and we want the first subtype's name it's this one
+    if (n == 0 && darray_size(t->subtypes) == 0) {
+        return t->name;
+    }
     if (darray_size(t->subtypes) <= n) {
-        RF_ERROR("Requested rir_type name of subtype out of bounds");
         return NULL;
     }
     return ((struct rir_type*)darray_item(t->subtypes, n))->name;
 }
+i_INLINE_INS const struct RFstring *rir_type_get_nth_name_or_die(struct rir_type *t, unsigned n);
 
 const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
 {
+    // if it's only 1 simple type and we want the first subtype's type it's this one
+    if (n == 0 && darray_size(t->subtypes) == 0) {
+        return t;
+    }
     if (darray_size(t->subtypes) <= n) {
         RF_ERROR("Requested rir_type type of subtype out of bounds");
         return NULL;
     }
     return darray_item(t->subtypes, n);
 }
+i_INLINE_INS const struct rir_type *rir_type_get_nth_type_or_die(struct rir_type *t, unsigned n);
 
 static inline const struct RFstring *rir_type_op_to_str(const struct rir_type *t)
 {
