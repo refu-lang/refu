@@ -60,6 +60,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         "return\n"
         "^\n"
         ".\n"
+        "match\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -205,6 +206,11 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_OP_MEMBER_ACCESS,
             .location=LOC_INIT(f, 16, 0, 16, 0)
+        },
+        /* 18th line */
+        {
+            .type=TOKEN_KW_MATCH,
+            .location=LOC_INIT(f, 17, 0, 17, 4)
         },
     };
     ck_assert(lexer_scan(lex));

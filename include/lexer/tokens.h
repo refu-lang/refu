@@ -40,6 +40,7 @@ enum token_type {
     TOKEN_KW_RETURN,
     TOKEN_KW_TRUE,
     TOKEN_KW_FALSE,
+    TOKEN_KW_MATCH,
 
     /* symbols */
     TOKEN_SM_COLON,

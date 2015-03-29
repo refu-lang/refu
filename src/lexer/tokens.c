@@ -21,6 +21,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("return"),
     RF_STRING_STATIC_INIT("true"),
     RF_STRING_STATIC_INIT("false"),
+    RF_STRING_STATIC_INIT("match"),
 
     /* symbols */
     RF_STRING_STATIC_INIT(":"),
