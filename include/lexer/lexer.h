@@ -39,7 +39,7 @@ struct token *lexer_last_token_valid(struct lexer *l);
 i_INLINE_DECL struct token *lexer_expect_token(struct lexer *l, enum token_type type)
 {
     struct token *tok = lexer_lookahead(l, 1);
-    return (tok && tok->type == type) ? tok : NULL;
+    return (tok && tok->type == type && lexer_next_token(l)) ? tok : NULL;
 }
 
 i_INLINE_DECL struct inplocation *lexer_last_token_location(struct lexer *l)

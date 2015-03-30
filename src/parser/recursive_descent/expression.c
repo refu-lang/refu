@@ -14,6 +14,7 @@
 #include "function.h"
 #include "ifexpr.h"
 #include "block.h"
+#include "matchexpr.h"
 
 #define MAX_LEVEL_OP_PRECEDENCE 13
 
@@ -80,6 +81,14 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected an if expression");
+            return NULL;
+        }
+        return n;
+    } else if (TOKEN_IS_POSSIBLE_MATCH_EXPRESSION(tok)) {
+        n = parser_acc_matchexpr(p, true);
+        if (!n) {
+            parser_synerr(p, token_get_start(tok), NULL,
+                          "expected a match expression");
             return NULL;
         }
         return n;

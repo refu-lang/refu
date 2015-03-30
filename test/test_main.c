@@ -14,6 +14,7 @@ Suite *parser_operators_suite_create(void);
 Suite *parser_block_suite_create(void);
 Suite *parser_ifexpr_suite_create(void);
 Suite *parser_expressions_suite_create(void);
+Suite *parser_matchexpr_suite_create(void);
 
 Suite *analyzer_symboltable_suite_create(void);
 Suite *analyzer_typecheck_suite_create(void);
@@ -84,6 +85,7 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, parser_block_suite_create());
     srunner_add_suite(sr, parser_ifexpr_suite_create());
     srunner_add_suite(sr, parser_expressions_suite_create());
+    srunner_add_suite(sr, parser_matchexpr_suite_create());
 
     srunner_add_suite(sr, analyzer_symboltable_suite_create());
     srunner_add_suite(sr, analyzer_typecheck_suite_create());
