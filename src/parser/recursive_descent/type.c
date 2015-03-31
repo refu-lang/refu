@@ -10,6 +10,35 @@
 #include "common.h"
 #include "identifier.h"
 
+/**
+ * Call to parse a parenthesized typedesc once you are sure that next token is '('
+ */
+static struct ast_node *parser_acc_parenthesized_typedesc(struct parser *p)
+{
+    struct ast_node *n;
+    //consume parentheses
+    struct token *tok = lexer_next_token(p->lexer);
+    n = parser_acc_typedesc(p);
+    if (!n) {
+        parser_synerr(p, token_get_end(tok), NULL,
+                      "Expected a type description after '('");
+        return NULL;
+    }
+
+    tok = lexer_expect_token(p->lexer, TOKEN_SM_CPAREN);
+    if (!tok) {
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                      "expected ')' after type description");
+        goto fail_free_desc;
+    }
+
+    return n;
+
+fail_free_desc:
+    ast_node_destroy(n);
+    return NULL;
+}
+
 static struct ast_node *parser_acc_typeelement(struct parser *p)
 {
     struct ast_node *n;
@@ -23,19 +52,7 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
     lexer_push(p->lexer);
 
     if (tok->type == TOKEN_SM_OPAREN) {
-        //consume parentheses
-        lexer_next_token(p->lexer);
-        n = parser_acc_typedesc(p);
-        if (!n) {
-            parser_synerr(p, token_get_end(tok), NULL,
-                          "Expected a type description after '('");
-            goto err;
-        }
-
-        tok = lexer_next_token(p->lexer);
-        if (!tok || tok->type != TOKEN_SM_CPAREN) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                          "expected ')' after type description");
+        if (!(n = parser_acc_parenthesized_typedesc(p))) {
             goto err;
         }
     } else if (XIDENTIFIER_START_COND(tok)){
@@ -50,16 +67,19 @@ static struct ast_node *parser_acc_typeelement(struct parser *p)
             lexer_next_token(p->lexer);
 
             tok = lexer_lookahead(p->lexer, 1);
-            if (!XIDENTIFIER_START_COND(tok)) {
+            if (tok->type == TOKEN_SM_OPAREN) {
+                right = parser_acc_parenthesized_typedesc(p);
+            } else if (XIDENTIFIER_START_COND(tok)) {
+                right = parser_acc_xidentifier(p, true);
+            } else {
                 parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                              "expected "XIDENTIFIER_START_STR" after ':'");
+                              "expected "XIDENTIFIER_START_STR" or '(' after ':'");
                 goto err;
             }
 
-            right = parser_acc_xidentifier(p, true);
             if (!right) {
                 parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                              "expected "XIDENTIFIER_START_STR" after ':'");
+                              "expected "XIDENTIFIER_START_STR" or '(' after ':'");
                 goto err;
             }
 

@@ -165,10 +165,21 @@ i_INLINE_DECL struct ast_node *ast_node_get_child(struct ast_node *n,
         if (num == 0) {
             return child;
         }
-        num --;
+        num--;
     }
 
     return NULL;
+}
+
+i_INLINE_DECL unsigned int ast_node_get_children_number(const struct ast_node *n)
+{
+    struct ast_node *child;
+    unsigned int num = 0;
+    rf_ilist_for_each(&n->children, child, lh) {
+        ++num;
+    }
+
+    return num;
 }
 
 i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)

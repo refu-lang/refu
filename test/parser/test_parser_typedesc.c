@@ -299,6 +299,28 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
     ast_node_destroy(op_impl);
 }END_TEST
 
+START_TEST(test_acc_typedesc_complex_right) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a:(i16|f32)");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 0, 0, 0);
+    testsupport_parser_xidentifier_create_simple(id_i16, file, 0, 3, 0, 5);
+    testsupport_parser_xidentifier_create_simple(id_f32, file, 0, 7, 0, 9);
+    testsupport_parser_node_create(op1, typeop, file, 0, 3, 0, 9,
+                                   TYPEOP_SUM, id_i16, id_f32);
+    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 9, id_a, op1);
+    
+    ck_test_parse_as(n, typedesc, d, "type description", t1);
+    ast_node_destroy(n);
+    ast_node_destroy(t1);
+}END_TEST
+
 Suite *parser_typedesc_suite_create(void)
 {
     Suite *s = suite_create("parser_type_description");
@@ -325,6 +347,7 @@ Suite *parser_typedesc_suite_create(void)
     tcase_add_checked_fixture(complex, setup_front_tests, teardown_front_tests);
     tcase_add_test(complex, test_acc_typedesc_sum_associativity);
     tcase_add_test(complex, test_acc_typedesc_sum_impl_associativity);
+    tcase_add_test(complex, test_acc_typedesc_complex_right);
 
     suite_add_tcase(s, simple);
     suite_add_tcase(s, ops);

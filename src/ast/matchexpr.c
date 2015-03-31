@@ -1,5 +1,4 @@
-#include <ast/ast.h>
-
+#include <ast/matchexpr.h>
 
 struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,
@@ -30,3 +29,5 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
     ast_node_register_child(ret, id, matchexpr.identifier);
     return ret;
 }
+
+i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
