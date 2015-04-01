@@ -48,6 +48,7 @@ refu_src = [
     'analyzer/analyzer_pass1.c',
     'analyzer/string_table.c',
     'analyzer/typecheck.c',
+    'analyzer/typecheck_matchexpr.c',
     'analyzer/global_context.c',
 
     'types/type.c',
@@ -158,6 +159,7 @@ unit_tests_files = [
     'analyzer/test_typecheck.c',
     'analyzer/test_typecheck_conversion.c',
     'analyzer/test_typecheck_operators.c',
+    'analyzer/test_typecheck_matchexpr.c',
     'analyzer/test_string_table.c',
 
     'types/test_types.c',

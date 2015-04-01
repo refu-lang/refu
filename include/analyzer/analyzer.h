@@ -43,6 +43,23 @@ i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_current_parent(struct 
     return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2);
 }
 
+typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *user);
+/**
+ * Traverse parents upwards and run a searc callback for each of them.
+ * 
+ * @param ctx        The analyzer contextx
+ * @param cb         The callback function. Should accept a node and an optional
+ *                   user argument. If we want to continue searching return false.
+ *                   If the callback found what it was looking for return true
+ * @param user_arg   An arbitrary argument to pass to the callback
+ * @return           Returns @c true if any callback returned succesfully and whatever
+ *                   it is we were searching for was found. If nothing is found
+ *                   return false
+ */
+bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
+                                             analyzer_traversal_parents_cb cb,
+                                             void *user_arg);
+
 struct analyzer {
     struct info_ctx *info;
     struct ast_node *root;

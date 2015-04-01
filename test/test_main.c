@@ -20,6 +20,7 @@ Suite *analyzer_symboltable_suite_create(void);
 Suite *analyzer_typecheck_suite_create(void);
 Suite *analyzer_typecheck_operators_suite_create(void);
 Suite *analyzer_typecheck_conversion_suite_create(void);
+Suite *analyzer_typecheck_matchexpr_suite_create(void);
 Suite *analyzer_stringtable_suite_create(void);
 Suite *types_suite_create(void);
 
@@ -91,6 +92,7 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, analyzer_typecheck_suite_create());
     srunner_add_suite(sr, analyzer_typecheck_operators_suite_create());
     srunner_add_suite(sr, analyzer_typecheck_conversion_suite_create());
+    srunner_add_suite(sr, analyzer_typecheck_matchexpr_suite_create());
     srunner_add_suite(sr, analyzer_stringtable_suite_create());
     srunner_add_suite(sr, types_suite_create());
 

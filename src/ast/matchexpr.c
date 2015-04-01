@@ -31,3 +31,4 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_matchexpr_identifier(const struct ast_node *n);

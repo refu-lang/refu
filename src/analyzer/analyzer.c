@@ -22,6 +22,20 @@ i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx
 i_INLINE_INS void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *ctx);
 i_INLINE_INS struct ast_node *analyzer_traversal_ctx_get_current_parent(struct analyzer_traversal_ctx *ctx);
 
+bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
+                                             analyzer_traversal_parents_cb cb,
+                                             void *user_arg)
+{
+    int index = darray_size(ctx->parent_nodes) - 2;
+    while (index >= 0) {
+        if (cb(darray_item(ctx->parent_nodes, index), user_arg)) {
+            return true;
+        }
+        --index;
+    }
+    return false;
+}
+
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
     a->info = info;

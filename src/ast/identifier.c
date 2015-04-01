@@ -67,6 +67,12 @@ uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *
     return n->identifier.hash;
 }
 
+bool ast_identifier_is_wildcard(const struct ast_node *n)
+{
+    static const struct RFstring wildcard_s = RF_STRING_STATIC_INIT("_");
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
+    return rf_string_equal(&n->identifier.string, &wildcard_s);
+}
 
 /* -- xidentifier functions -- */
 

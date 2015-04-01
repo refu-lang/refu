@@ -23,6 +23,7 @@
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include "analyzer_pass1.h" // for analyzer symbol table change functions
+#include "typecheck_matchexpr.h"
 
 // convenience function to set the type of a node and remember last node type during traversal
 static inline void traversal_node_set_type(struct ast_node *n,
@@ -300,11 +301,31 @@ static enum traversal_cb_res typecheck_constant(struct ast_node *n,
     return (n->expression_type) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
 }
 
+// figure out if any of the wildcard's close parents is a matchcase
+static bool wilcard_parent_is_matchcase(const struct ast_node *n, void *user_arg)
+{
+    return n->type == AST_MATCH_CASE;
+}
+
 static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                   struct analyzer_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     struct ast_node *parent = analyzer_traversal_ctx_get_current_parent(ctx);
+    if (ast_identifier_is_wildcard(n)) {
+        if (!analyzer_traversal_ctx_traverse_parents(ctx,
+                                                    wilcard_parent_is_matchcase,
+                                                    NULL)) {
+            analyzer_err(ctx->a, ast_node_startmark(n),
+                         ast_node_endmark(n),
+                         "Reserved wildcard identifier '_' used outside of "
+                         " a match expression");
+            return TRAVERSAL_CB_ERROR;
+        }
+        return TRAVERSAL_CB_OK;
+    }
+    
+
     traversal_node_set_type(n,
                             type_lookup_identifier_string(ast_identifier_str(n),
                                                           ctx->current_st),
@@ -711,6 +732,7 @@ static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
+
 static enum traversal_cb_res typecheck_do(struct ast_node *n,
                                           void *user_arg)
 {
@@ -766,6 +788,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_BLOCK:
         ret = typecheck_block(n, ctx);
+        break;
+    case AST_MATCH_EXPRESSION:
+        ret = typecheck_matchexpr(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

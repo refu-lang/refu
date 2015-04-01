@@ -26,4 +26,10 @@ i_INLINE_DECL bool ast_matchexpr_is_bodyless(const struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
     return ast_node_get_children_number(n) == 1;
 }
+
+i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    return n->matchexpr.identifier;
+}
 #endif
