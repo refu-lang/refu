@@ -251,10 +251,10 @@ struct type *type_create_from_operation(enum typeop_type type,
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create(struct ast_node *node,
-                         struct analyzer *a, struct symbol_table *st,
-                         struct ast_node *genrdecl,
-                         bool add_type_to_list)
+struct type *type_create_from_node(struct ast_node *node,
+                                   struct analyzer *a, struct symbol_table *st,
+                                   struct ast_node *genrdecl,
+                                   bool add_type_to_list)
 {
     switch (node->type) {
     case AST_TYPE_DECLARATION:
@@ -496,14 +496,6 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
-const struct RFstring *type_defined_to_str(const struct type *t)
-{
-    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Non user defined type provided");
-    return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT "}",
-                RF_STR_PF_ARG(t->defined.name),
-                RF_STR_PF_ARG(type_str(t->defined.type, true)));
-}
-
 const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
 {
     switch(t->category) {
@@ -532,6 +524,19 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
     return NULL;
 }
 
+const struct RFstring *type_defined_to_str(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Non user defined type provided");
+    return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT "}",
+                RF_STR_PF_ARG(t->defined.name),
+                RF_STR_PF_ARG(type_str(t->defined.type, true)));
+}
+
+static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDMARK};
+const struct type *type_get_wildcard()
+{
+    return &g_wildcard_type;
+}
 /* -- type traversal functions -- */
 
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
@@ -539,6 +544,7 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
+    case TYPE_CATEGORY_WILDMARK:
         // Do nothing
         break;
 
@@ -573,6 +579,7 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
+    case TYPE_CATEGORY_WILDMARK:
         // Do nothing
         break;
 
@@ -651,7 +658,6 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
             return false;
         }
         return type_traverse(t->operator.right, pre_cb, post_cb, user_arg);
-        break;
     default:
         RF_ASSERT(false, "Not implemented type category for postorder iteration");
         return false;

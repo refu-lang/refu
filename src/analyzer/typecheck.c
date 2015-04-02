@@ -322,10 +322,10 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                          " a match expression");
             return TRAVERSAL_CB_ERROR;
         }
+        traversal_node_set_type(n, type_get_wildcard(), ctx);
         return TRAVERSAL_CB_OK;
     }
     
-
     traversal_node_set_type(n,
                             type_lookup_identifier_string(ast_identifier_str(n),
                                                           ctx->current_st),

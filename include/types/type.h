@@ -20,10 +20,10 @@ void type_free(struct type *t, struct analyzer *a);
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create(struct ast_node *n, struct analyzer *a,
-                         struct symbol_table *st,
-                         struct ast_node *genrdecl,
-                         bool lookup);
+struct type *type_create_from_node(struct ast_node *n, struct analyzer *a,
+                                   struct symbol_table *st,
+                                   struct ast_node *genrdecl,
+                                   bool lookup);
 
 struct type *type_create_from_typedecl(struct ast_node *n,
                                        struct analyzer *a,
@@ -129,6 +129,11 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id);
  * of the type too.
  */
 const struct RFstring *type_defined_to_str(const struct type *t);
+
+/**
+ * @returns the wildcard type '_'
+ */
+const struct type *type_get_wildcard();
 
 /* -- type traversal functions -- */
 

@@ -39,6 +39,7 @@ enum type_category {
     TYPE_CATEGORY_LEAF,                 /* almost always part of another type */
     TYPE_CATEGORY_ELEMENTARY,           /* an elementary/builtin type */
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
+    TYPE_CATEGORY_WILDMARK,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
 };
 

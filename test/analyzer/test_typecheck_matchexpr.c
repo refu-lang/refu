@@ -21,7 +21,7 @@
 
 START_TEST(test_typecheck_matchexpr_simple) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i32, s:string}\n"
+        "type foo {a:i32 | s:string}\n"
         "{\n"
         "    a:foo\n"
         "    match a {\n"

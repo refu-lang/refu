@@ -73,6 +73,9 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
     case TYPE_CATEGORY_GENERIC:
         RF_ASSERT(false, "Generic types not supported in the IR yet");
         break;
+    case TYPE_CATEGORY_WILDMARK:
+        RF_ASSERT(false, "Wildmard type should not appear in the IR");
+                  break;
     }
     return true;
 }
