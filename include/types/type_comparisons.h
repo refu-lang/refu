@@ -26,6 +26,8 @@ enum comparison_reason {
     TYPECMP_AFTER_IMPLICIT_CONVERSION,
     //! Compare types to check if explicit conversion is allowed
     TYPECMP_EXPLICIT_CONVERSION,
+    //! Compare types for pattern matching. From is always the pattern type and to the match type
+    TYPECMP_PATTERN_MATCHING
 };
 
 
@@ -48,13 +50,13 @@ i_INLINE_DECL bool type_category_equals(const struct type* t,
  *          Such reasons include assignment where for example u64 = u16 is ok but
  *          u16 = u64 is not allowed.
  *
- * @param from      The "From" Type is always the left part of the comparison.
- * @param to        The "To" Type is always the right part of the comparison.
+ * @param from      The "from" Type is always the left part of the comparison.
+ * @param to        The "to" Type is always the right part of the comparison.
  * @param reason    The reason for the comparison. @see enum comparison_reason
  * @return          True or false if comparisons succeeds or not.
  */
-bool type_compare(const struct type *t1,
-                  const struct type *t2,
+bool type_compare(const struct type *from,
+                  const struct type *to,
                   enum comparison_reason reason);
 
 /**

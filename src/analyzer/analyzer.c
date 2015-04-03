@@ -20,7 +20,9 @@
 i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
                                               struct analyzer *a);
 i_INLINE_INS void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *ctx);
-i_INLINE_INS struct ast_node *analyzer_traversal_ctx_get_current_parent(struct analyzer_traversal_ctx *ctx);
+i_INLINE_INS struct ast_node *analyzer_traversal_ctx_get_nth_parent(
+    unsigned int num,
+    struct analyzer_traversal_ctx *ctx);
 
 bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
                                              analyzer_traversal_parents_cb cb,

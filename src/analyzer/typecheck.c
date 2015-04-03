@@ -311,7 +311,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                   struct analyzer_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    struct ast_node *parent = analyzer_traversal_ctx_get_current_parent(ctx);
+    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
     if (ast_identifier_is_wildcard(n)) {
         if (!analyzer_traversal_ctx_traverse_parents(ctx,
                                                     wilcard_parent_is_matchcase,
@@ -791,6 +791,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_MATCH_EXPRESSION:
         ret = typecheck_matchexpr(n, ctx);
+        break;
+    case AST_MATCH_CASE:
+        ret = typecheck_matchcase(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

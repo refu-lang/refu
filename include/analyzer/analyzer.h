@@ -6,6 +6,7 @@
 #include <Data_Structures/darray.h>
 #include <Data_Structures/intrusive_list.h>
 #include <Definitions/inline.h>
+#include <Utils/sanity.h>
 
 struct parser;
 struct inpfile;
@@ -38,14 +39,24 @@ i_INLINE_DECL void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *
     darray_free(ctx->parent_nodes);
 }
 
-i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_current_parent(struct analyzer_traversal_ctx *ctx)
+/**
+ * Gets the @a num parent going upwards from the node. Indexing starts from 0.
+ * e.g.: To get the direct parent give num == 0
+ *
+ * This is a volatile function. If you ask for non-existing parent behaviour is undefined.
+ */
+i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_nth_parent(
+    unsigned int num,
+    struct analyzer_traversal_ctx *ctx)
 {
-    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2);
+    RF_ASSERT(darray_size(ctx->parent_nodes) - 2 -  num >= 0,
+              "Non-existant parent requested");
+    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2 -  num);
 }
 
 typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *user);
 /**
- * Traverse parents upwards and run a searc callback for each of them.
+ * Traverse parents upwards and run a search callback for each of them.
  * 
  * @param ctx        The analyzer contextx
  * @param cb         The callback function. Should accept a node and an optional

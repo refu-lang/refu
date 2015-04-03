@@ -507,14 +507,15 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
                     RF_STR_PF_ARG(type_op_str(t->operator.type)),
                     RF_STR_PF_ARG(type_str(t->operator.right, print_leaf_id)));
     case TYPE_CATEGORY_LEAF:
-        if (print_leaf_id) {
-        return RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
-                    RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
-        } else {
-            return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
-        }
+        return print_leaf_id
+            ? RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
+                   RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)))
+            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
     case TYPE_CATEGORY_DEFINED:
-        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
+        return print_leaf_id
+            ? RFS_(RF_STR_PF_FMT" { " RF_STR_PF_FMT " }",
+                   RF_STR_PF_ARG(t->defined.name), type_str(t->defined.type, false))
+            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
 
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");

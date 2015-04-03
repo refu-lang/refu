@@ -116,7 +116,8 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
  * @param t                 The type whose string representation to get
  * @param print_leaf_id     If @c true will also print the identifier of a type
  *                          leaf such as: "age:u32, name:string" instead of
- *                          just "u32, string"
+ *                          just "u32, string". For defined types it will also
+ *                          print the contents of the types.
  * @return                  Returns a pointer to the the string representation.
  *                          If there is an error returns NULL.
  */

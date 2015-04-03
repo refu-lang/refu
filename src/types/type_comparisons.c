@@ -348,9 +348,20 @@ static inline enum type_initial_check_result type_category_check(const struct ty
         ret = TYPES_CHECK_CAN_CONTINUE;
     }
 
-    // A type can be compared to a leaf of the same type and to
-    // a defined of the same type but should not be considered identical to it
+    if (reason == TYPECMP_PATTERN_MATCHING) {
+        // wildmark equals everything
+        if (from->category == TYPE_CATEGORY_WILDMARK && to->category != TYPE_CATEGORY_OPERATOR) {
+            return TYPES_ARE_EQUAL;
+        }
+        // if match type is a defined type (as should be in most cases), compare to definition
+        if (to->category == TYPE_CATEGORY_DEFINED) {
+            ret = type_compare(from, to->defined.type, reason) ?
+                TYPES_ARE_EQUAL : TYPES_ARE_NOT_EQUAL;
+        }
+    }
     if (reason != TYPECMP_IDENTICAL) {
+        // A type can be compared to a leaf of the same type and to
+        // a defined of the same type but should not be considered identical to it
         if (from->category == TYPE_CATEGORY_ELEMENTARY && to->category == TYPE_CATEGORY_LEAF) {
             if (type_same_categories_compare(from, to->leaf.type, reason)) {
                 ret = TYPES_ARE_EQUAL;
@@ -368,7 +379,8 @@ static inline enum type_initial_check_result type_category_check(const struct ty
                 ret = TYPES_ARE_EQUAL;
             }
         } else if (to->category == TYPE_CATEGORY_OPERATOR &&
-                   RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_FUNCTION_CALL)) {
+                   (RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_FUNCTION_CALL) ||
+                    reason == TYPECMP_PATTERN_MATCHING)) {
             if (type_compare_to_operator(from, &to->operator, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
