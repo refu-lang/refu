@@ -318,7 +318,13 @@ static bool type_compare_to_operator(const struct type *from,
                                      enum comparison_reason reason)
 {
     if (to->type == TYPEOP_SUM) {
-        return type_compare(from, to->left, TYPECMP_AFTER_IMPLICIT_CONVERSION) || type_compare(from, to->right, TYPECMP_AFTER_IMPLICIT_CONVERSION);
+        // if we are during pattern matching persist the reason, else state
+        // that one implicit conversion already happened (due to taking
+        // one side of a sum operator)
+        enum comparison_reason new_reason = reason == TYPECMP_PATTERN_MATCHING
+            ? TYPECMP_PATTERN_MATCHING : TYPECMP_AFTER_IMPLICIT_CONVERSION;
+        return type_compare(from, to->left, new_reason) ||
+            type_compare(from, to->right, new_reason);
     }
     return false;
 }
@@ -350,12 +356,12 @@ static inline enum type_initial_check_result type_category_check(const struct ty
 
     if (reason == TYPECMP_PATTERN_MATCHING) {
         // wildmark equals everything
-        if (from->category == TYPE_CATEGORY_WILDMARK && to->category != TYPE_CATEGORY_OPERATOR) {
+        if (from->category == TYPE_CATEGORY_WILDCARD && to->category != TYPE_CATEGORY_OPERATOR) {
             return TYPES_ARE_EQUAL;
         }
         // if match type is a defined type (as should be in most cases), compare to definition
         if (to->category == TYPE_CATEGORY_DEFINED) {
-            ret = type_compare(from, to->defined.type, reason) ?
+            return type_compare(from, to->defined.type, reason) ?
                 TYPES_ARE_EQUAL : TYPES_ARE_NOT_EQUAL;
         }
     }
@@ -402,7 +408,7 @@ bool type_compare(const struct type *from,
 
     switch (type_category_check(from, to, reason)) {
     case TYPES_ARE_EQUAL:
-        return true;
+        TYPECMP_RETURN(true);
     case TYPES_ARE_NOT_EQUAL:
         TYPECMP_RETURN(false);
     case TYPES_CHECK_CAN_CONTINUE:

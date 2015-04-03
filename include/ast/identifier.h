@@ -34,6 +34,10 @@ const struct RFstring *ast_identifier_str(const struct ast_node *n);
 const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
                                                    const struct analyzer *a);
 /**
+ * Returns if the string is '_', which is a wildcard
+ */
+bool string_is_wildcard(const struct RFstring *s);
+/**
  * Returns if the identifier is '_', which is a wildcard
  */
 bool ast_identifier_is_wildcard(const struct ast_node *n);

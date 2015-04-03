@@ -367,6 +367,19 @@ static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
+static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
+                                              struct analyzer_traversal_ctx *ctx)
+{
+    if (n->expression_type ||
+        analyzer_traversal_ctx_get_nth_parent(0, ctx)->type != AST_MATCH_CASE) {
+        return TRAVERSAL_CB_OK;
+    }
+    // we need to do something here only if it's direct child of a matchcase, because
+    // all other cases are taken care of during addition of a node to a symbol table
+    n->expression_type = type_lookup_or_create(n, ctx->a, ctx->current_st, NULL, true, true);
+    RF_ASSERT_OR_EXIT(n->expression_type, "Could not determine type of matchase type operation");
+    return TRAVERSAL_CB_OK;
+}
 
 static bool analyzer_types_assignable(struct ast_node *left,
                                       struct ast_node *right,
@@ -756,6 +769,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_TYPE_DESCRIPTION:
         ret = typecheck_typedesc(n, ctx);
+        break;
+    case AST_TYPE_OPERATOR:
+        ret = typecheck_typeop(n, ctx);
         break;
     case AST_CONSTANT:
         ret = typecheck_constant(n, ctx);

@@ -12,6 +12,7 @@ struct analyzer;
 struct symbol_table;
 struct RFbuffer;
 
+extern const struct RFstring g_wildcard_s;
 
 /* -- type allocation functions -- */
 

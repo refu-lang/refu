@@ -10,9 +10,13 @@
 #include <ast/generics.h>
 #include <ast/vardecl.h>
 #include <ast/function.h>
+#include <ast/identifier.h>
 
 #include <types/type_elementary.h>
 #include <types/type_function.h>
+
+
+const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
 
 /* -- forward declarations of functions -- */
 static bool type_operator_init_from_node(struct type_operator *t,
@@ -481,6 +485,10 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     struct symbol_table_record *rec;
     int elementary_type;
 
+    if (string_is_wildcard(str)) {
+        return (struct type*)type_get_wildcard();
+    }
+
     // check if it's an elementary type
     elementary_type = type_elementary_identifier_p(str);
     if (elementary_type != -1) {
@@ -514,9 +522,11 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
     case TYPE_CATEGORY_DEFINED:
         return print_leaf_id
             ? RFS_(RF_STR_PF_FMT" { " RF_STR_PF_FMT " }",
-                   RF_STR_PF_ARG(t->defined.name), type_str(t->defined.type, false))
+                   RF_STR_PF_ARG(t->defined.name),
+                   RF_STR_PF_ARG(type_str(t->defined.type, false)))
             : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
-
+    case TYPE_CATEGORY_WILDCARD:
+        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
         break;
@@ -533,7 +543,7 @@ const struct RFstring *type_defined_to_str(const struct type *t)
                 RF_STR_PF_ARG(type_str(t->defined.type, true)));
 }
 
-static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDMARK};
+static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDCARD};
 const struct type *type_get_wildcard()
 {
     return &g_wildcard_type;
@@ -545,7 +555,7 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
-    case TYPE_CATEGORY_WILDMARK:
+    case TYPE_CATEGORY_WILDCARD:
         // Do nothing
         break;
 
@@ -580,7 +590,7 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
-    case TYPE_CATEGORY_WILDMARK:
+    case TYPE_CATEGORY_WILDCARD:
         // Do nothing
         break;
 

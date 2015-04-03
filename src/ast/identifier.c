@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/string_table.h>
+#include <types/type.h>
 
 #include <Utils/sanity.h>
 
@@ -67,11 +68,14 @@ uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *
     return n->identifier.hash;
 }
 
+bool string_is_wildcard(const struct RFstring *s)
+{
+    return rf_string_equal(s, &g_wildcard_s);
+}
 bool ast_identifier_is_wildcard(const struct ast_node *n)
 {
-    static const struct RFstring wildcard_s = RF_STRING_STATIC_INIT("_");
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    return rf_string_equal(&n->identifier.string, &wildcard_s);
+    return string_is_wildcard(&n->identifier.string);
 }
 
 /* -- xidentifier functions -- */

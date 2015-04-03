@@ -147,7 +147,7 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     // else we have to create a new type
     t = type_create_from_node(desc, a, st, genrdecl, false);
     if (!t) {
-        RF_ERROR("Failure to create an composite type");
+        RF_ERROR("Failure to create a composite type");
         return NULL;
     }
 
