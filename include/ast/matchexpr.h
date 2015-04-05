@@ -43,9 +43,39 @@ i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n
     return n->matchexpr.identifier;
 }
 
-typedef bool (*matchexpr_foreach_cb) (const struct ast_node *n, void *user_arg);
-bool ast_matchexpr_foreach_case(const struct ast_node *n,
-                                matchexpr_foreach_cb cb,
-                                void *user_arg);
+struct ast_matchexpr_it {
+    const struct RFilist_head *lh;
+    const struct RFilist_node *ln;
+};
+
+/**
+ * Get the first case of a match expression
+ * @param n    The match expression whose first case to get
+ * @param it   An uninitalized iterator to hold the values of the iteration
+ * @return     A pointer to the first match case node or NULL if there is none
+ */
+struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
+                                          struct ast_matchexpr_it *it);
+/**
+ * Get the next case of a match expression
+ * @param n    The match expression whose next case to get
+ * @param it   An iterator that has been successfully used in either an 
+ *             @ref ast_matchexpr_first_case() or an @ref ast_matchexpr_next_case()
+ *             previously
+ * @return     A pointer to the next match case node or NULL if all cases are exhausted
+ */
+struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
+                                         struct ast_matchexpr_it *it);
+
+/**
+ * Iterate all matchcases
+ * @param matchexpr_    The match expression whose cases to iterate
+ * @param iterator_     A matchexpr iterator to utilize for the iteration
+ * @param value_        An ast node pointer to hold the case value in each iteration
+ */
+#define ast_matchexpr_foreach(matchexpr_, iterator_, value_)            \
+    for (value_ = ast_matchexpr_first_case((matchexpr_), (iterator_));  \
+         value_;                                                        \
+         value_ = ast_matchexpr_next_case((matchexpr_), (iterator_)))
 
 #endif

@@ -36,21 +36,31 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
 i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchexpr_identifier(const struct ast_node *n);
 
-bool ast_matchexpr_foreach_case(const struct ast_node *n,
-                                matchexpr_foreach_cb cb,
-                                void *user_arg)
+struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
+                                          struct ast_matchexpr_it *it)
 {
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
     unsigned int i = 0;
     struct ast_node *child;
     rf_ilist_for_each(&n->children, child, lh) {
         if (i >= 1) {
-            AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
-            if (!cb(child, user_arg)) {
-                return false;
-            }
+            it->lh = &n->children;
+            it->ln = &child->lh;
+            return child;
         }
         ++i;
     }
-    return true;
+    return NULL;
+}
+
+struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
+                                         struct ast_matchexpr_it *it)
+{
+    struct ast_node *ret;
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    if (it->ln->next == &it->lh->n) {
+        return NULL;
+    }
+    it->ln = it->ln->next;
+    return rf_ilist_node_to_off(it->ln, rf_ilist_off_var(ret, lh));
 }
