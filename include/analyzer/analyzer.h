@@ -7,6 +7,7 @@
 #include <Data_Structures/intrusive_list.h>
 #include <Definitions/inline.h>
 #include <Utils/sanity.h>
+#include <analyzer/typecheck_matchexpr.h>
 
 struct parser;
 struct inpfile;
@@ -23,6 +24,8 @@ struct  analyzer_traversal_ctx {
     const struct type *last_node_type;
     //! A queue of nodes to remember the current parent of a node during traversal
     struct {darray(struct ast_node*);} parent_nodes;
+    //! Pattern matching related data
+    struct pattern_matching_ctx matching_ctx;
 };
 
 i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,

@@ -140,6 +140,33 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32        |\n"
+        "          b:u32, c:f32 |\n"
+        "          d:i8, e:f32, f:string}\n"
+        "{\n"
+        "    a:foo\n"
+        "    match a {\n"
+        "    i32    => \"number\"\n"
+        "    _, _   => \"product of 2\"\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Match expression does not match all cases for \"a\". Sum type "
+            "operand of \"i8,f32,string\" is not covered.",
+            5, 4, 8, 4)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 Suite *analyzer_typecheck_matchexpr_suite_create(void)
 {
     Suite *s = suite_create("typecheck_match_expressions");
@@ -159,6 +186,7 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_nonexisting_single_case);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_nonexisting_case_product_of_2);
+    tcase_add_test(t_inv, test_typecheck_matchexpr_inv_not_all_cases_covered);
 
     suite_add_tcase(s, t_simple);
     suite_add_tcase(s, t_inv);

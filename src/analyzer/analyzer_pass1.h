@@ -37,11 +37,14 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
 /**
  * A function to to be called for a node while traversing the AST
  * during analysis. Switches the traversal context's current symbol table to the
- * new symbol table of child @c n if it has one and if all conditions are met
+ * new symbol table of child @c n if it has one and if all conditions are met.
+ * Also creates a new pattern matching context if we are entering a match
+ * expression. The destruction of said context is taken care of during the
+ * end of typechecking phase of a match expression.
  *
  * @param n           The node the callback is called for
  * @param ctx         The traversal context
  */
-bool analyzer_handle_symbol_table_descending(struct ast_node *n,
-                                             struct analyzer_traversal_ctx *ctx);
+bool analyzer_handle_traversal_descending(struct ast_node *n,
+                                          struct analyzer_traversal_ctx *ctx);
 #endif

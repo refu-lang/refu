@@ -279,8 +279,8 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     return true;
 }
 
-bool analyzer_handle_symbol_table_descending(struct ast_node *n,
-                                             struct analyzer_traversal_ctx *ctx)
+bool analyzer_handle_traversal_descending(struct ast_node *n,
+                                          struct analyzer_traversal_ctx *ctx)
 {
     darray_append(ctx->parent_nodes, n);
     switch(n->type) {
@@ -298,6 +298,9 @@ bool analyzer_handle_symbol_table_descending(struct ast_node *n,
         break;
     case AST_TYPE_DECLARATION:
         ctx->current_st = ast_typedecl_symbol_table_get(n);
+        break;
+    case AST_MATCH_EXPRESSION:
+        pattern_matching_ctx_init(&ctx->matching_ctx);
         break;
     default:
         break;

@@ -22,13 +22,12 @@
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
+#include <analyzer/typecheck_matchexpr.h>
 #include "analyzer_pass1.h" // for analyzer symbol table change functions
-#include "typecheck_matchexpr.h"
 
-// convenience function to set the type of a node and remember last node type during traversal
-static inline void traversal_node_set_type(struct ast_node *n,
-                                           const struct type *t,
-                                           struct analyzer_traversal_ctx *ctx)
+void traversal_node_set_type(struct ast_node *n,
+                             const struct type *t,
+                             struct analyzer_traversal_ctx *ctx)
 {
     n->expression_type = t;
     ctx->last_node_type = t;
@@ -830,7 +829,7 @@ bool analyzer_typecheck(struct analyzer *a, struct ast_node *root)
 
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
                     root,
-                    (ast_node_cb)analyzer_handle_symbol_table_descending,
+                    (ast_node_cb)analyzer_handle_traversal_descending,
                     &ctx,
                     typecheck_do,
                     &ctx));
