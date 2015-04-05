@@ -211,8 +211,35 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
     if (!pattern_matching_ctx_compare(&ctx->matching_ctx, ctx->a, n)) {
         ret = TRAVERSAL_CB_ERROR;
     }
-   
-    // TODO: set the type of the match expression as a SUM type of all its cases
+
+    //set the type of the match expression as a SUM type of all its cases
+    struct ast_matchexpr_it it;
+    struct ast_node *mcase;
+    struct {OBJSET_MEMBERS(struct type*);} types;
+    rf_objset_init(&types);
+    ast_matchexpr_foreach(n, &it, mcase) {
+        RF_ASSERT(ast_matchcase_expression(mcase)->expression_type,
+                  "A match case's expression type is not determined");
+        rf_objset_add(&types, ast_matchcase_expression(mcase)->expression_type);
+    }
+
+    struct rf_objset_iter set_it;
+    struct type *iter_type;
+    struct type *matchexpr_type = NULL;
+    rf_objset_foreach(&types, &set_it, iter_type) {
+        if (matchexpr_type) {
+            matchexpr_type = type_create_from_operation(
+                TYPEOP_SUM,
+                matchexpr_type,
+                iter_type,
+                ctx->a);
+        } else {
+            matchexpr_type = iter_type;
+        }
+    }
+    rf_objset_clear(&types);
+    traversal_node_set_type(n, matchexpr_type, ctx);
+    
     pattern_matching_ctx_deinit(&ctx->matching_ctx);
     return ret;
 }

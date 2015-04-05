@@ -53,6 +53,19 @@ START_TEST(test_typecheck_negative_int_variable_declarations) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST(test_typecheck_complex_type_in_variable_declaration) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:(b:int | c:string)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 START_TEST(test_typecheck_valid_function_call0) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something() -> u32\n"
@@ -517,6 +530,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_typecheck_misc, test_typecheck_variable_declarations);
     tcase_add_test(t_typecheck_misc, test_typecheck_negative_int_variable_declarations);
+    tcase_add_test(t_typecheck_misc, test_typecheck_complex_type_in_variable_declaration);
     // TODO: Test where there are errors in two different parts of the code
     //       to assert the continuation of the traversal works
 

@@ -90,6 +90,40 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32, b:bool | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    s:string = match a {\n"
+        "    _       => \"case 1\"\n"
+        "    _, _    => \"case 2\"\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32, b:bool | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    s:(i32 | string) = match a {\n"
+        "    _       => \"string\"\n"
+        "    _, _    => 56\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {s:string}\n"
@@ -140,6 +174,32 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32, b:bool | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    match a {\n"
+        "    _       => \"case 1\"\n"
+        "    _, _    => \"case 2\"\n"
+        "    _, _, _ => \"case 3\"\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Match case \"_,_,_\" can not be matched to the type of \"a\" which "
+            "is of type \"foo { i32,bool|string }\".",
+            6, 4, 6, 22)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i32        |\n"
@@ -179,6 +239,8 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
     tcase_add_test(t_simple, test_typecheck_matchexpr_simple_product_of_2);
     tcase_add_test(t_simple, test_typecheck_matchexpr_simple_2_wildcards);
     tcase_add_test(t_simple, test_typecheck_matchexpr_simple_3_wildcards);
+    tcase_add_test(t_simple, test_typecheck_matchexpr_assign_to_check_type_single);
+    tcase_add_test(t_simple, test_typecheck_matchexpr_assign_to_check_type_sum_of_2);
 
     TCase *t_inv = tcase_create("invalid_match_expressions");
     tcase_add_checked_fixture(t_inv,
@@ -186,6 +248,7 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_nonexisting_single_case);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_nonexisting_case_product_of_2);
+    tcase_add_test(t_inv, test_typecheck_matchexpr_inv_too_many_wildcards);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_not_all_cases_covered);
 
     suite_add_tcase(s, t_simple);
