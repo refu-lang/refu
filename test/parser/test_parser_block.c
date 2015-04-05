@@ -57,7 +57,7 @@ START_TEST(test_acc_block_no_braces_1) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 1, 0, 1, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typedesc, file,
+    testsupport_parser_node_create(type1, typeleaf, file,
                                    1, 0, 1, 4, id1, id2);
     testsupport_parser_node_create(vardecl, vardecl, file,
                                    1, 0, 1, 4, type1);
@@ -137,7 +137,7 @@ START_TEST(test_acc_block_1) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 1, 0, 1, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typedesc, file,
+    testsupport_parser_node_create(type1, typeleaf, file,
                                    1, 0, 1, 4, id1, id2);
     testsupport_parser_node_create(vardecl, vardecl, file,
                                    1, 0, 1, 4, type1);
@@ -223,7 +223,7 @@ START_TEST(test_acc_block_value_without_return) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 1, 0, 1, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typedesc, file,
+    testsupport_parser_node_create(type1, typeleaf, file,
                                    1, 0, 1, 4, id1, id2);
     testsupport_parser_node_create(vardecl, vardecl, file,
                                    1, 0, 1, 4, type1);
@@ -267,7 +267,7 @@ START_TEST(test_acc_block_value_with_return) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 1, 0, 1, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typedesc, file,
+    testsupport_parser_node_create(type1, typeleaf, file,
                                    1, 0, 1, 4, id1, id2);
     testsupport_parser_node_create(vardecl, vardecl, file,
                                    1, 0, 1, 4, type1);

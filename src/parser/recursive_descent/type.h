@@ -16,6 +16,13 @@ struct parser;
      ((tok_)->type == TOKEN_SM_OPAREN || (tok_)->type == TOKEN_IDENTIFIER))
 
 /**
+ * type_leaf    = identifier TOKEN_SM_COLON annotated_identifier
+ *              / identifier TOKEN_SM_COLON TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
+ *              / annotated_identifier
+ */
+struct ast_node *parser_acc_typeleaf(struct parser *p);
+
+/**
  * type_description = type_term type_description'
  *
  * type_description' = TOKEN_OP_IMPL type_term type_description'
@@ -31,8 +38,7 @@ struct parser;
  * type_factor' =  TOKEN_OP_PRODUCT type_element type_factor'
  *              / EMPTY
  * type_element = TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
- *              / identifier TOKEN_SM_COLON annotated_identifier
- *              / annotated_identifier
+ *              / type_leaf
  *
  * Set of possible first tokens for a type description
  * FIRST(type_description) = { identifier, TOKEN_SM_OPAREN }

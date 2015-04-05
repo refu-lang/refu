@@ -12,15 +12,18 @@ struct ast_typeop {
     struct ast_node *left;
     struct ast_node *right;
 };
-#define ast_typeop_to_node(n_)                    \
-    container_of((n_), struct ast_node, typeop)
 
 struct ast_typedesc {
     struct ast_node *left;
     struct ast_node *right;
+    //! Symbol table of the identifiers inside the type declaration
+    struct symbol_table st;
 };
-#define ast_typedesc_to_node(n_)                  \
-    container_of((n_), struct ast_node, typedesc)
+
+struct ast_typeleaf {
+    struct ast_node *left;
+    struct ast_node *right;
+};
 
 struct ast_typedecl {
     //! identifier of the name

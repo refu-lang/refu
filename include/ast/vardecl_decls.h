@@ -4,8 +4,8 @@
 struct ast_node;
 
 struct ast_vardecl {
-    //! Type description of the variable declaration
-    struct ast_node *desc;
+    //! Type leaf of the type description
+    struct ast_node *leaf;
 };
 
 #endif

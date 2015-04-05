@@ -43,6 +43,7 @@ enum ast_type {
     AST_RETURN_STATEMENT,
     AST_TYPE_DECLARATION,
     AST_TYPE_OPERATOR,
+    AST_TYPE_LEAF,
     AST_TYPE_DESCRIPTION,
     AST_TYPECLASS_DECLARATION,
     AST_TYPECLASS_INSTANCE,
@@ -90,6 +91,7 @@ struct ast_node {
         struct ast_xidentifier xidentifier;
         struct ast_vardecl vardecl;
         struct ast_typedecl typedecl;
+        struct ast_typeleaf typeleaf;
         struct ast_typeop typeop;
         struct ast_typedesc typedesc;
         struct ast_typeclass typeclass;

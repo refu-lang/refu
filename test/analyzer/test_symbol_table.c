@@ -47,7 +47,7 @@ START_TEST(test_symbol_table_add) {
     front_testdriver_generate_node(tid1, d, 0, 2, 0, 4,
                                    AST_XIDENTIFIER, 1, "i32");
     front_testdriver_generate_node(t1, d, 0, 0, 0, 4,
-                                   AST_TYPE_DESCRIPTION, 2, id1, tid1);
+                                   AST_TYPE_LEAF, 2, id1, tid1);
     front_testdriver_generate_node(v1, d, 0, 0, 0, 4,
                                    AST_VARIABLE_DECLARATION, 1, t1);
 
@@ -57,7 +57,7 @@ START_TEST(test_symbol_table_add) {
     front_testdriver_generate_node(tid2, d, 1, 6, 1, 11,
                                    AST_XIDENTIFIER, 1, "string");
     front_testdriver_generate_node(t2, d, 1, 0, 1, 11,
-                                   AST_TYPE_DESCRIPTION, 2, id2, tid2);
+                                   AST_TYPE_LEAF, 2, id2, tid2);
     front_testdriver_generate_node(v2, d, 1, 0, 1, 11,
                                    AST_VARIABLE_DECLARATION, 1, t2);
 
@@ -94,7 +94,7 @@ START_TEST(test_symbol_table_add_existing) {
     front_testdriver_generate_node(tid1, d, 0, 2, 0, 4,
                                    AST_XIDENTIFIER, 1, "i32");
     front_testdriver_generate_node(t1, d, 0, 0, 0, 4,
-                                   AST_TYPE_DESCRIPTION, 2, id1, tid1);
+                                   AST_TYPE_LEAF, 2, id1, tid1);
     front_testdriver_generate_node(v1, d, 0, 0, 0, 4,
                                    AST_VARIABLE_DECLARATION, 1, t1);
 
@@ -104,7 +104,7 @@ START_TEST(test_symbol_table_add_existing) {
     front_testdriver_generate_node(tid2, d, 1, 6, 1, 11,
                                    AST_XIDENTIFIER, 1, "string");
     front_testdriver_generate_node(t2, d, 1, 0, 1, 11,
-                                   AST_TYPE_DESCRIPTION, 2, id2, tid2);
+                                   AST_TYPE_LEAF, 2, id2, tid2);
     front_testdriver_generate_node(v2, d, 1, 0, 1, 11,
                                    AST_VARIABLE_DECLARATION, 1, t2);
 
@@ -258,7 +258,7 @@ static struct ast_node *generate_test_vardecl(struct front_testdriver *d,
     front_testdriver_generate_node(xid, d, 0, 0, 0, 2,
                                    AST_XIDENTIFIER, 1, "u32");
     front_testdriver_generate_node(t, d, 1, 0, 1, 11,
-                                   AST_TYPE_DESCRIPTION, 2, id, xid);
+                                   AST_TYPE_LEAF, 2, id, xid);
     front_testdriver_generate_node(v, d, 1, 0, 1, 11,
                                    AST_VARIABLE_DECLARATION, 1, t);
     return v;

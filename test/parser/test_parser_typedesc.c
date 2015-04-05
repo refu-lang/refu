@@ -27,7 +27,7 @@ START_TEST(test_acc_typedesc_simple1) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
 
     ck_test_parse_as(n, typedesc, d, "type description", t1);
 
@@ -46,7 +46,7 @@ START_TEST(test_acc_typedesc_simple2) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 7, 0, 9);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 9, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 9, id1, id2);
 
     ck_test_parse_as(n, typedesc, d, "type description", t1);
 
@@ -65,7 +65,7 @@ START_TEST(test_acc_typedesc_no_colon) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
     testsupport_parser_xidentifier_create_simple(id3, file, 0, 9, 0, 11);
     testsupport_parser_node_create(op, typeop, file, 0, 0, 0, 11,
                                    TYPEOP_IMPLICATION, t1, id3);
@@ -138,7 +138,7 @@ static void test_simple_typeop(enum typeop_type op_type, char *str, int t2_start
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
 
     struct ast_node *id3 = testsupport_parser_identifier_create(
         file,
@@ -146,7 +146,7 @@ static void test_simple_typeop(enum typeop_type op_type, char *str, int t2_start
     testsupport_parser_xidentifier_create_simple(
         id4, file,
         0, t2_start + 2, 0, t2_start + 4);
-    testsupport_parser_node_create(t2, typedesc, file,
+    testsupport_parser_node_create(t2, typeleaf, file,
                                    0, t2_start, 0, t2_start + 4, id3, id4);
     testsupport_parser_node_create(op, typeop, file, 0, 0, 0, t2_start + 4,
                                    op_type, t1, t2);
@@ -181,12 +181,12 @@ START_TEST(test_acc_typedesc_prod2) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
     struct ast_node *id3 = testsupport_parser_identifier_create(
         file, 0, 7, 0, 7);
     testsupport_parser_xidentifier_create_simple(
         id4, file, 0, 9, 0, 11);
-    testsupport_parser_node_create(t2, typedesc, file,
+    testsupport_parser_node_create(t2, typeleaf, file,
                                    0, 7, 0, 11, id3, id4);
     testsupport_parser_node_create(op1, typeop, file, 0, 0, 0, 11,
                                    TYPEOP_PRODUCT, t1, t2);
@@ -195,7 +195,7 @@ START_TEST(test_acc_typedesc_prod2) {
     testsupport_parser_xidentifier_create_simple(
         id6, file,
         0, 16, 0, 18);
-    testsupport_parser_node_create(t3, typedesc, file,
+    testsupport_parser_node_create(t3, typeleaf, file,
                                    0, 14, 0, 18, id5, id6);
     testsupport_parser_node_create(op2, typeop, file, 0, 0, 0, 18,
                                    TYPEOP_PRODUCT, op1, t3);
@@ -217,12 +217,12 @@ START_TEST(test_acc_typedesc_sum_associativity) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
     struct ast_node *id3 = testsupport_parser_identifier_create(
         file, 0, 7, 0, 7);
     testsupport_parser_xidentifier_create_simple(
         id4, file, 0, 9, 0, 11);
-    testsupport_parser_node_create(t2, typedesc, file,
+    testsupport_parser_node_create(t2, typeleaf, file,
                                    0, 7, 0, 11, id3, id4);
     testsupport_parser_node_create(op1, typeop, file, 0, 0, 0, 11,
                                    TYPEOP_PRODUCT, t1, t2);
@@ -232,14 +232,14 @@ START_TEST(test_acc_typedesc_sum_associativity) {
     testsupport_parser_xidentifier_create_simple(
         id6, file,
         0, 17, 0, 19);
-    testsupport_parser_node_create(t3, typedesc, file,
+    testsupport_parser_node_create(t3, typeleaf, file,
                                    0, 15, 0, 19, id5, id6);
     struct ast_node *id7 = testsupport_parser_identifier_create(
         file, 0, 22, 0, 22);
     testsupport_parser_xidentifier_create_simple(
         id8, file,
         0, 24, 0, 26);
-    testsupport_parser_node_create(t4, typedesc, file,
+    testsupport_parser_node_create(t4, typeleaf, file,
                                    0, 22, 0, 26, id7, id8);
     testsupport_parser_node_create(op2, typeop, file, 0, 15, 0, 26,
                                    TYPEOP_PRODUCT, t3, t4);
@@ -264,12 +264,12 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
     struct ast_node *id1 = testsupport_parser_identifier_create(file,
                                                                 0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, file, 0, 2, 0, 4);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 4, id1, id2);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 4, id1, id2);
     struct ast_node *id3 = testsupport_parser_identifier_create(
         file, 0, 7, 0, 7);
     testsupport_parser_xidentifier_create_simple(
         id4, file, 0, 9, 0, 11);
-    testsupport_parser_node_create(t2, typedesc, file,
+    testsupport_parser_node_create(t2, typeleaf, file,
                                    0, 7, 0, 11, id3, id4);
     testsupport_parser_node_create(op1, typeop, file, 0, 0, 0, 11,
                                    TYPEOP_PRODUCT, t1, t2);
@@ -279,14 +279,14 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
     testsupport_parser_xidentifier_create_simple(
         id6, file,
         0, 19, 0, 21);
-    testsupport_parser_node_create(t3, typedesc, file,
+    testsupport_parser_node_create(t3, typeleaf, file,
                                    0, 17, 0, 21, id5, id6);
     struct ast_node *id7 = testsupport_parser_identifier_create(
         file, 0, 25, 0, 25);
     testsupport_parser_xidentifier_create_simple(
         id8, file,
         0, 27, 0, 29);
-    testsupport_parser_node_create(t4, typedesc, file,
+    testsupport_parser_node_create(t4, typeleaf, file,
                                    0, 25, 0, 29, id7, id8);
     testsupport_parser_node_create(op2, typeop, file, 0, 17, 0, 29,
                                    TYPEOP_SUM, t3, t4);
@@ -314,7 +314,7 @@ START_TEST(test_acc_typedesc_complex_right) {
     testsupport_parser_xidentifier_create_simple(id_f32, file, 0, 7, 0, 9);
     testsupport_parser_node_create(op1, typeop, file, 0, 3, 0, 9,
                                    TYPEOP_SUM, id_i16, id_f32);
-    testsupport_parser_node_create(t1, typedesc, file, 0, 0, 0, 9, id_a, op1);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 9, id_a, op1);
     
     ck_test_parse_as(n, typedesc, d, "type description", t1);
     ast_node_destroy(n);

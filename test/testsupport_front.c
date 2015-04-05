@@ -344,6 +344,12 @@ struct ast_node *do_front_testdriver_generate_node(
         n2 = va_arg(args, struct ast_node *);
         ret = ast_typedesc_create(smark, emark, n1, n2);
         break;
+    case AST_TYPE_LEAF:
+        ck_assert_uint_gt(args_num, 1);
+        n1 = va_arg(args, struct ast_node *);
+        n2 = va_arg(args, struct ast_node *);
+        ret = ast_typeleaf_create(smark, emark, n1, n2);
+        break;
     case AST_VARIABLE_DECLARATION:
         ck_assert_uint_gt(args_num, 0);
         n1 = va_arg(args, struct ast_node *);

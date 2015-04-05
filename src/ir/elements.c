@@ -154,7 +154,7 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
     switch(n->type) {
     case AST_VARIABLE_DECLARATION:
         // if it's a variable declaration get its rir type
-        id = n->vardecl.desc->typedesc.left;
+        id = ast_typeleaf_left(ast_vardecl_desc_get(n));
         AST_NODE_ASSERT_TYPE(id, AST_IDENTIFIER);
         rec = symbol_table_lookup_record(b->symbols,
                                          ast_identifier_str(id), NULL);

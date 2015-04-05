@@ -39,6 +39,24 @@ i_INLINE_DECL struct ast_node *ast_types_right(struct ast_node *n)
     }
 }
 
+/* -- type leaf functions -- */
+struct ast_node *ast_typeleaf_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end,
+                                     struct ast_node *left,
+                                     struct ast_node *right);
+
+i_INLINE_DECL struct ast_node *ast_typeleaf_left(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_LEAF);
+    return n->typeleaf.left;
+}
+
+i_INLINE_DECL struct ast_node *ast_typeleaf_right(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_LEAF);
+    return n->typeleaf.right;
+}
+
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(const struct inplocation_mark *start,

@@ -13,6 +13,29 @@ static const struct RFstring op_str_impl_  = RF_STRING_STATIC_INIT("->");
 i_INLINE_INS struct ast_node *ast_types_left(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_types_right(struct ast_node *n);
 
+/* -- type leaf functions -- */
+
+struct ast_node *ast_typeleaf_create(const struct inplocation_mark *start,
+                                     const struct inplocation_mark *end,
+                                     struct ast_node *left,
+                                     struct ast_node *right)
+{
+    struct ast_node *ret;
+    AST_NODE_ASSERT_TYPE(left, AST_IDENTIFIER);
+    ret = ast_node_create_marks(AST_TYPE_LEAF, start, end);
+    if (!ret) {
+        RF_ERRNOMEM();
+        return NULL;
+    }
+    ast_node_register_child(ret, left, typeleaf.left);
+    ast_node_register_child(ret, right, typeleaf.right);
+
+    return ret;
+}
+
+i_INLINE_INS struct ast_node *ast_typeleaf_left(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeleaf_right(struct ast_node *n);
+
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(const struct inplocation_mark *start,
