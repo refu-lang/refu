@@ -267,7 +267,7 @@ LLVMValueRef backend_llvm_expression_compile_vardecl(struct ast_node *n,
 {
     // all vardelcs should have had stack size allocated during block symbol iteration
     struct symbol_table_record *rec;
-    struct ast_node *left = ast_typedesc_left((ast_vardecl_desc_get(n)));
+    struct ast_node *left = ast_typeleaf_left((ast_vardecl_desc_get(n)));
     AST_NODE_ASSERT_TYPE(left, AST_IDENTIFIER);
 
     rec = symbol_table_lookup_record(ctx->current_st,

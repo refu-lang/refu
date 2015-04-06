@@ -112,7 +112,7 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
         "type foo {a:i32, b:bool | c:string }\n"
         "{\n"
         "    a:foo\n"
-        "    s:(i32 | string) = match a {\n"
+        "    s:(string | i32) = match a {\n"
         "    _       => \"string\"\n"
         "    _, _    => 56\n"
         "    }\n"

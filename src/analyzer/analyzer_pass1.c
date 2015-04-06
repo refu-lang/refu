@@ -15,8 +15,8 @@
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
 
-static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
-                                                  struct ast_node *n)
+static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
+                                                    struct ast_node *n)
 {
     struct ast_node *search_node;
     bool symbol_found_at_first_st;
@@ -44,12 +44,6 @@ static bool analyzer_create_symbol_table_typedecl(struct analyzer_traversal_ctx 
         return false;
     }
 
-    // also initialize the symbol table of the type declaration
-    if (!symbol_table_init(&n->typedecl.st, ctx->a)) {
-        RF_ERROR("Failed to initialize type declaration symbol table");
-        return false;
-    }
-
     return true;
 }
 
@@ -60,9 +54,9 @@ static bool analyzer_populate_symbol_table_typeleaf(struct analyzer_traversal_ct
     bool symbol_found_at_first_st;
     const struct RFstring *id_name;
     struct ast_node *left;
-    RF_ASSERT(n->type == AST_TYPE_DESCRIPTION &&
-              (left=ast_typedesc_left(n))->type == AST_IDENTIFIER,
-              "Called function for non typeleaf");
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_LEAF);
+
+    left = ast_typeleaf_left(n);
     id_name = ast_identifier_str(left);
     search_node = symbol_table_lookup_node(ctx->current_st,
                                            id_name,
@@ -95,8 +89,8 @@ static bool analyzer_populate_symbol_table_vardecl(struct analyzer_traversal_ctx
     AST_NODE_ASSERT_TYPE(n, AST_VARIABLE_DECLARATION);
 
     desc = ast_vardecl_desc_get(n);
-    left = ast_types_left(desc);
-    if (desc->type != AST_TYPE_DESCRIPTION || left->type != AST_IDENTIFIER) {
+    left = ast_typeleaf_left(desc);
+    if (left->type != AST_IDENTIFIER) {
         analyzer_err(ctx->a, ast_node_startmark(left),
                      ast_node_endmark(left),
                      "Expected an identifier in the left side of a variable's  "
@@ -108,29 +102,32 @@ static bool analyzer_populate_symbol_table_vardecl(struct analyzer_traversal_ctx
     return analyzer_populate_symbol_table_typeleaf(ctx, desc);
 }
 
-static bool analyzer_populate_symbol_table_typedesc(struct analyzer_traversal_ctx *ctx,
-                                                    struct ast_node *n)
+// populate for generic non-top level type element
+static bool analyzer_populate_symbol_table_typeelement(struct analyzer_traversal_ctx *ctx,
+                                                       struct ast_node *n)
 {
-    struct ast_node *left;
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
-    left = ast_types_left(n);
-    if (n->type == AST_TYPE_DESCRIPTION) {
-        if (left->type == AST_IDENTIFIER) {
-            return analyzer_populate_symbol_table_typeleaf(ctx, n);
-        } else {
-        analyzer_err(ctx->a, ast_node_startmark(left),
-                     ast_node_endmark(left),
-                     "Expected an identifier in the left side of a type "
-                     "description node but "
-                     "found a \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_node_str(left)));
-            return false;
-        }
+    switch (n->type) {
+    case AST_TYPE_LEAF:
+        return analyzer_populate_symbol_table_typeleaf(ctx, n);
+    case AST_TYPE_OPERATOR:
+        return analyzer_populate_symbol_table_typeelement(ctx, ast_typeop_left(n)) &&
+            analyzer_populate_symbol_table_typeelement(ctx, ast_typeop_right(n));
+    case AST_TYPE_DESCRIPTION:
+        // don't go further into a recursive top level typedesc. Should be handled by the
+        // main loop
+    case AST_XIDENTIFIER: //fallthrough
+        // don't do anything for right part of leaves that are simply identifiers
+        return true;
+    default:
+        RF_ASSERT(false, "Case should never happen");
+        return false;
     }
-
-    // should be a type operator
-    return analyzer_populate_symbol_table_typedesc(ctx, left) &&
-           analyzer_populate_symbol_table_typedesc(ctx, ast_typeop_right(n));
+}
+// populate for top level type description
+static inline bool analyzer_populate_symbol_table_typedesc(struct analyzer_traversal_ctx *ctx,
+                                                           struct ast_node *n)
+{
+    return analyzer_populate_symbol_table_typeelement(ctx, ast_typedesc_desc_get(n));
 }
 
 static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
@@ -201,13 +198,22 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         // function implementation symbol table should point to its decl table
         ast_fnimpl_symbol_table_set(n, ast_fndecl_symbol_table_get(n->fnimpl.decl));
         break;
-    case AST_TYPE_DECLARATION:
-        if (!analyzer_create_symbol_table_typedecl(ctx, n)) {
+    case AST_TYPE_DESCRIPTION:
+        // initialize the type description's symbol table
+        if (!symbol_table_init(&n->typedesc.st, ctx->a)) {
+            RF_ERROR("Could not initialize symbol table for top level type description node");
             return false;
         }
-        symbol_table_swap_current(&ctx->current_st, ast_typedecl_symbol_table_get(n));
-        // also populate the type declaration's symbol table
-        if (!analyzer_populate_symbol_table_typedesc(ctx, ast_typedecl_typedesc_get(n))) {
+        symbol_table_swap_current(&ctx->current_st, ast_typedesc_symbol_table_get(n));
+        // also populate the type description's symbol table
+        if (!analyzer_populate_symbol_table_typedesc(ctx, n)) {
+            RF_ERROR("Could not populate symbol table for top level type description node");
+            return false;
+        }
+        break;
+    case AST_TYPE_DECLARATION:
+        if (!analyzer_populate_symbol_table_typedecl(ctx, n)) {
+            RF_ERROR("Could not populate symbol table for type declaration");
             return false;
         }
         break;
@@ -215,6 +221,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     // nodes that only contribute records to symbol tables
     case AST_VARIABLE_DECLARATION:
         if (!analyzer_populate_symbol_table_vardecl(ctx, n)) {
+            RF_ERROR("Could not populate symbol table for variable declaration");
             return false;
         }
         break;
@@ -266,8 +273,8 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
             ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
         }
         break;
-    case AST_TYPE_DECLARATION:
-        ctx->current_st = ast_typedecl_symbol_table_get(n)->parent;
+    case AST_TYPE_DESCRIPTION:
+        ctx->current_st = ast_typedesc_symbol_table_get(n)->parent;
         break;
     default:
         // do nothing
@@ -296,8 +303,8 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
     case AST_FUNCTION_DECLARATION:
         ctx->current_st = ast_fndecl_symbol_table_get(n);
         break;
-    case AST_TYPE_DECLARATION:
-        ctx->current_st = ast_typedecl_symbol_table_get(n);
+    case AST_TYPE_DESCRIPTION:
+        ctx->current_st = ast_typedesc_symbol_table_get(n);
         break;
     case AST_MATCH_EXPRESSION:
         pattern_matching_ctx_init(&ctx->matching_ctx);

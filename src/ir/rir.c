@@ -30,8 +30,11 @@ bool rir_init(struct rir *r, struct analyzer *a)
     a->root = NULL;
 
     rir_types_list_init(&r->rir_types_list);
-    // copy composite types list
-    rf_ilist_copy(&a->composite_types, &r->composite_types);
+
+    // TODO: Probably rir types should also be a set. Just create a set out
+    //       of the list for the moment, but change it later
+    r->types_set = a->types_set;
+    a->types_set = NULL;
 
     return true;
 }
@@ -54,6 +57,10 @@ void rir_deinit(struct rir *r)
     rf_fixed_memorypool_destroy(r->types_pool);
     string_table_destroy(r->identifiers_table);
     string_table_destroy(r->string_literals_table);
+
+    rf_objset_clear(r->types_set);
+    free(r->types_set);
+
     rir_types_list_deinit(&r->rir_types_list);
 }
 
@@ -65,7 +72,7 @@ void rir_destroy(struct rir *r)
 
 struct rir_module *rir_process(struct rir *r)
 {
-    rir_types_list_populate(&r->rir_types_list, &r->composite_types);
+    rir_types_list_populate(&r->rir_types_list, r->types_set);
     // TODO: When modules are actually introduced change temporary module name
     //       to the name of the actual module being processed
     const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");

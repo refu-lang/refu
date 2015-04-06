@@ -339,10 +339,9 @@ struct ast_node *do_front_testdriver_generate_node(
         ret = ast_xidentifier_create(smark, emark, n1, is_constant, n2);
         break;
     case AST_TYPE_DESCRIPTION:
-        ck_assert_uint_gt(args_num, 1);
+        ck_assert_uint_gt(args_num, 0);
         n1 = va_arg(args, struct ast_node *);
-        n2 = va_arg(args, struct ast_node *);
-        ret = ast_typedesc_create(smark, emark, n1, n2);
+        ret = ast_typedesc_create(n1);
         break;
     case AST_TYPE_LEAF:
         ck_assert_uint_gt(args_num, 1);

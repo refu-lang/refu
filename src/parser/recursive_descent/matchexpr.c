@@ -15,7 +15,7 @@
 static struct ast_node *parser_accept_matchcase(struct parser *p)
 {
     struct token *tok;
-    struct ast_node *pattern = parser_acc_typedesc(p);
+    struct ast_node *pattern = parser_acc_typedesc_top(p);
     struct ast_node *expr;
     struct ast_node *n;
     if (!pattern) {

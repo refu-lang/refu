@@ -13,9 +13,11 @@ struct ast_typeop {
     struct ast_node *right;
 };
 
+/**
+ * Top level description of a type
+ */
 struct ast_typedesc {
-    struct ast_node *left;
-    struct ast_node *right;
+    struct ast_node *desc;
     //! Symbol table of the identifiers inside the type declaration
     struct symbol_table st;
 };
@@ -30,9 +32,6 @@ struct ast_typedecl {
     struct ast_node *name;
     //! Data description
     struct ast_node *desc;
-    //! Symbol table of the identifiers inside the type declaration
-    struct symbol_table st;
-
     //! Optional, generic declaration
     //! TODO: This is not yet implemented!
     struct ast_node *genrdecl;

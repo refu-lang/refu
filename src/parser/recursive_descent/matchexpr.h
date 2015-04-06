@@ -13,10 +13,8 @@ struct parser;
  */
 
 /**
- * match_pattern = _ / identifier
- * match_patterns = match_pattern
- *                / match_pattern TOKEN_SM_COMMA  match_patterns
- * match_case = TOKEN_SM_OPAREN match_patterns TOKEN_SM_CPAREN TOKEN_SM_THICKARROW expression
+ * match_pattern = type_description
+ * match_case = match_pattern TOKEN_SM_THICKARROW expression
  *            / NIL
  * match_cases = match_case match_cases
  * match_expression = TOKEN_KW_MATCH identifier TOKEN_SM_OCBRACE match_cases TOKEN_SM_CCBRACE

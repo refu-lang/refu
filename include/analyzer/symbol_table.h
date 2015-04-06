@@ -112,6 +112,9 @@ struct symbol_table {
 bool symbol_table_init(struct symbol_table *t, struct analyzer *a);
 void symbol_table_deinit(struct symbol_table *t);
 
+/**
+ * Add a node to the symbol table and also set its type
+ */
 bool symbol_table_add_node(struct symbol_table *t,
                            struct analyzer *analyzer,
                            const struct RFstring *id,

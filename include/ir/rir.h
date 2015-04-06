@@ -7,6 +7,7 @@
 
 struct analyzer;
 struct RFstring;
+struct type_set;
 
 struct rir {
     /* Memory pools */
@@ -17,8 +18,8 @@ struct rir {
     struct string_table *identifiers_table;
     struct string_table *string_literals_table;
 
-    //! A list of all composite types of the file
-    struct RFilist_head composite_types;
+    //! A set of all types encountered (moved over from analyzer)
+    struct type_set *types_set;
     //! A list of all rir types of the file
     struct rir_types_list rir_types_list;
 

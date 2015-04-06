@@ -115,8 +115,8 @@ void ast_node_destroy(struct ast_node *n)
         case AST_FUNCTION_IMPLEMENTATION:
             symbol_table_deinit(ast_fnimpl_symbol_table_get(n));
             break;
-        case AST_TYPE_DECLARATION:
-            symbol_table_deinit(ast_typedecl_symbol_table_get(n));
+        case AST_TYPE_DESCRIPTION:
+            symbol_table_deinit(ast_typedesc_symbol_table_get(n));
             break;
         default:
             // no type specific destruction for the rest
@@ -236,8 +236,8 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_block_symbol_table_get(n);
     case AST_FUNCTION_IMPLEMENTATION:
         return ast_fnimpl_symbol_table_get(n);
-    case AST_TYPE_DECLARATION:
-        return ast_typedecl_symbol_table_get(n);
+    case AST_TYPE_DESCRIPTION:
+        return ast_typedesc_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"

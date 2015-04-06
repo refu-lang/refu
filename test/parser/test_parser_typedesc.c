@@ -312,7 +312,7 @@ START_TEST(test_acc_typedesc_complex_right) {
                                                                  0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id_i16, file, 0, 3, 0, 5);
     testsupport_parser_xidentifier_create_simple(id_f32, file, 0, 7, 0, 9);
-    testsupport_parser_node_create(op1, typeop, file, 0, 3, 0, 9,
+    testsupport_parser_typedesc_create(op1, file, 0, 3, 0, 9, typeop,
                                    TYPEOP_SUM, id_i16, id_f32);
     testsupport_parser_node_create(t1, typeleaf, file, 0, 0, 0, 9, id_a, op1);
     

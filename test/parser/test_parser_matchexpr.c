@@ -29,8 +29,7 @@ START_TEST(test_acc_matchexpr_1case) {
     struct ast_node *id_a = testsupport_parser_identifier_create(file,
                                                                  0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, file, 0, 0, 2, 0, id_a);
-
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 1, 4, 1, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 1, 4, 1, 4);
     testsupport_parser_string_literal_create(sliteral1, file,
                                              1, 9, 1, 19);
     testsupport_parser_node_create(mcase, matchcase, file, 1, 4, 1, 19,
@@ -61,14 +60,14 @@ START_TEST(test_acc_matchexpr_2cases) {
 
     struct ast_node *id_ma = testsupport_parser_identifier_create(file, 1, 4, 1, 4);
     testsupport_parser_xidentifier_create_simple(id_i32, file, 1, 6, 1, 8);
-    testsupport_parser_node_create(ai32, typedesc, file, 1, 4, 1, 8, id_ma, id_i32);
+    testsupport_parser_typedesc_create(ai32, file, 1, 4, 1, 8, typeleaf, id_ma, id_i32);
     struct ast_node *id_c1a = testsupport_parser_identifier_create(file,
                                                                    1, 13, 1, 13);
     testsupport_parser_node_create(mcase1, matchcase, file, 1, 4, 1, 13,
                                    ai32, id_c1a);
     ast_node_add_child(mexpr, mcase1);
 
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 2, 4, 2, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 2, 4, 2, 4);
     testsupport_parser_string_literal_create(sliteral1, file,
                                              2, 13, 2, 25);
     testsupport_parser_node_create(mcase2, matchcase, file, 2, 4, 2, 25,
@@ -102,21 +101,21 @@ START_TEST(test_acc_matchexpr_3cases) {
 
     struct ast_node *id_ma = testsupport_parser_identifier_create(file, 1, 4, 1, 4);
     testsupport_parser_xidentifier_create_simple(id_i32, file, 1, 6, 1, 8);
-    testsupport_parser_node_create(ai32, typedesc, file, 1, 4, 1, 8, id_ma, id_i32);
+    testsupport_parser_typedesc_create(ai32, file, 1, 4, 1, 8, typeleaf, id_ma, id_i32);
     struct ast_node *id_c1a = testsupport_parser_identifier_create(file,
                                                                    1, 13, 1, 13);
     testsupport_parser_node_create(mcase1, matchcase, file, 1, 4, 1, 13,
                                    ai32, id_c1a);
     ast_node_add_child(mexpr, mcase1);
 
-    testsupport_parser_xidentifier_create_simple(id_f32, file, 2, 4, 2, 6);
+    testsupport_parser_typedesc_create_xidentifier(id_f32, file, 2, 4, 2, 6);
     testsupport_parser_string_literal_create(sliteral1, file,
                                              2, 13, 2, 19);
     testsupport_parser_node_create(mcase2, matchcase, file, 2, 4, 2, 19,
                                    id_f32, sliteral1);
     ast_node_add_child(mexpr, mcase2);
     
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 3, 4, 3, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 3, 4, 3, 4);
     testsupport_parser_string_literal_create(sliteral2, file,
                                              3, 13, 3, 26);
     testsupport_parser_node_create(mcase3, matchcase, file, 3, 4, 3, 26,
@@ -148,8 +147,8 @@ START_TEST(test_acc_matchexpr_product_op) {
 
     testsupport_parser_xidentifier_create_simple(id_string, file, 1, 4, 1, 9);
     testsupport_parser_xidentifier_create_simple(id_bool, file, 1, 12, 1, 15);
-    testsupport_parser_node_create(prodop, typeop, file, 1, 4, 1, 15,
-                                   TYPEOP_PRODUCT, id_string, id_bool);
+    testsupport_parser_typedesc_create(prodop, file, 1, 4, 1, 15, typeop,
+                                       TYPEOP_PRODUCT, id_string, id_bool);
     
     testsupport_parser_string_literal_create(sliteral1, file,
                                              1, 20, 1, 36);
@@ -157,7 +156,7 @@ START_TEST(test_acc_matchexpr_product_op) {
                                    prodop, sliteral1);
     ast_node_add_child(mexpr, mcase1);
 
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 2, 4, 2, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 2, 4, 2, 4);
     testsupport_parser_string_literal_create(sliteral2, file,
                                              2, 13, 2, 25);
     testsupport_parser_node_create(mcase2, matchcase, file, 2, 4, 2, 25,
@@ -189,7 +188,7 @@ START_TEST(test_acc_matchexpr_sum_op) {
 
     testsupport_parser_xidentifier_create_simple(id_string, file, 1, 4, 1, 9);
     testsupport_parser_xidentifier_create_simple(id_bool, file, 1, 13, 1, 16);
-    testsupport_parser_node_create(prodop, typeop, file, 1, 4, 1, 16,
+    testsupport_parser_typedesc_create(prodop, file, 1, 4, 1, 16, typeop,
                                    TYPEOP_SUM, id_string, id_bool);
     
     testsupport_parser_string_literal_create(sliteral1, file,
@@ -198,7 +197,7 @@ START_TEST(test_acc_matchexpr_sum_op) {
                                    prodop, sliteral1);
     ast_node_add_child(mexpr, mcase1);
 
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 2, 4, 2, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 2, 4, 2, 4);
     testsupport_parser_string_literal_create(sliteral2, file,
                                              2, 13, 2, 25);
     testsupport_parser_node_create(mcase2, matchcase, file, 2, 4, 2, 25,
@@ -232,23 +231,22 @@ START_TEST(test_acc_matchexpr_bind_to_typedesc) {
                                                                   1, 4, 1, 4);
     testsupport_parser_xidentifier_create_simple(id_string, file, 1, 7, 1, 12);
     testsupport_parser_xidentifier_create_simple(id_bool, file, 1, 16, 1, 19);
-    testsupport_parser_node_create(sumop, typeop, file, 1, 7, 1, 19,
+    testsupport_parser_typedesc_create(sumop, file, 1, 7, 1, 19, typeop,
                                    TYPEOP_SUM, id_string, id_bool);
-    testsupport_parser_node_create(t1, typedesc, file, 1, 4, 1, 19, id_pr, sumop);
+    testsupport_parser_typedesc_create(t1, file, 1, 4, 1, 19, typeleaf, id_pr, sumop);
     struct ast_node *id_r = testsupport_parser_identifier_create(file,
                                                                  1, 25, 1, 25);
     testsupport_parser_node_create(mcase1, matchcase, file, 1, 4, 1, 25,
                                    t1, id_r);
     ast_node_add_child(mexpr, mcase1);
 
-    testsupport_parser_xidentifier_create_simple(id_wildcard, file, 2, 4, 2, 4);
+    testsupport_parser_typedesc_create_xidentifier(id_wildcard, file, 2, 4, 2, 4);
     testsupport_parser_string_literal_create(sliteral2, file,
                                              2, 13, 2, 25);
     testsupport_parser_node_create(mcase2, matchcase, file, 2, 4, 2, 25,
                                    id_wildcard, sliteral2);
     ast_node_add_child(mexpr, mcase2);
     
-
     ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
 
     ast_node_destroy(n);
@@ -271,7 +269,7 @@ START_TEST(test_acc_matchexpr_recursive) {
                                                                  0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, file, 0, 0, 3, 0, id_a);
 
-    testsupport_parser_xidentifier_create_simple(id_nil, file, 1, 4, 1, 6);
+    testsupport_parser_typedesc_create_xidentifier(id_nil, file, 1, 4, 1, 6);
     testsupport_parser_constant_create(cnum_0, file,
                                        1, 15, 1, 15, integer, 0);
     testsupport_parser_node_create(mcase1, matchcase, file, 1, 4, 1, 15,
@@ -280,8 +278,8 @@ START_TEST(test_acc_matchexpr_recursive) {
 
     testsupport_parser_xidentifier_create_simple(id_wildcard, file, 2, 4, 2, 4);
     testsupport_parser_xidentifier_create_simple(id_tail, file, 2, 7, 2, 10);
-    testsupport_parser_node_create(prodop, typeop, file, 2, 4, 2, 10,
-                                   TYPEOP_PRODUCT, id_wildcard, id_tail);
+    testsupport_parser_typedesc_create(prodop, file, 2, 4, 2, 10, typeop,
+                                       TYPEOP_PRODUCT, id_wildcard, id_tail);
     testsupport_parser_constant_create(cnum_1, file,
                                        2, 15, 2, 15, integer, 1);
     struct ast_node *id_tail_arg = testsupport_parser_identifier_create(file,

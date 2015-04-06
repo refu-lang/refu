@@ -25,7 +25,11 @@ struct ast_fndecl {
 
     //! Position of function declaration. Basically where it's found in the code
     enum fndecl_position position;
-    //! Symbol table of the function's arguments. Only initialized in analyzer phase
+
+    //! Symbol table of the function's arguments and return values.
+    //! Only initialized in analyzer phase.
+    //! Not using top level type descriptions with their own symbol tables since
+    //! having it here makes it easier to combine symbol from both args and return
     struct symbol_table st;
 };
 

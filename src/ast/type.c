@@ -101,43 +101,21 @@ i_INLINE_INS struct ast_node *ast_typeop_right(struct ast_node *n);
 
 /* -- type description functions -- */
 
-struct ast_node *ast_typedesc_create(const struct inplocation_mark *start,
-                                     const struct inplocation_mark *end,
-                                     struct ast_node *left,
-                                     struct ast_node *right)
+struct ast_node *ast_typedesc_create(struct ast_node *desc)
 {
     struct ast_node *ret;
 
-    ret = ast_node_create_marks(AST_TYPE_DESCRIPTION, start, end);
+    ret = ast_node_create_loc(AST_TYPE_DESCRIPTION, ast_node_location(desc));
     if (!ret) {
         RF_ERRNOMEM();
         return NULL;
     }
 
-    if (left) {
-        ast_node_register_child(ret, left, typedesc.left);
-    }
-    if (right) {
-        ast_node_register_child(ret, right, typedesc.right);
-    }
-
+    ast_node_register_child(ret, desc, typedesc.desc);
     return ret;
 }
-
-void ast_typedesc_set_left(struct ast_node *n, struct ast_node *l)
-{
-    ast_node_add_child(n, l);
-    n->typedesc.left = l;
-}
-
-void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r)
-{
-    ast_node_add_child(n, r);
-    n->typedesc.right = r;
-}
-
-i_INLINE_INS struct ast_node *ast_typedesc_left(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_typedesc_right(struct ast_node *n);
+i_INLINE_INS struct symbol_table *ast_typedesc_symbol_table_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typedesc_desc_get(struct ast_node *n);
 
 /* -- type declaration functions -- */
 struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
@@ -163,4 +141,3 @@ struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
 i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_typedecl_typedesc_get(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n);
-i_INLINE_INS struct symbol_table *ast_typedecl_symbol_table_get(struct ast_node *n);

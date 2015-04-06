@@ -23,6 +23,10 @@ struct parser;
 struct ast_node *parser_acc_typeleaf(struct parser *p);
 
 /**
+ * For the parser accepting a type description is a generic function to insert
+ * into the parsing of types. The syntax rules can be seen below. This can return
+ * a node of either type_leaf or type_operator.
+ *
  * type_description = type_term type_description'
  *
  * type_description' = TOKEN_OP_IMPL type_term type_description'
@@ -44,6 +48,12 @@ struct ast_node *parser_acc_typeleaf(struct parser *p);
  * FIRST(type_description) = { identifier, TOKEN_SM_OPAREN }
  */
 struct ast_node *parser_acc_typedesc(struct parser *p);
+/**
+ * Simple wrapper over @ref parser_acc_typedesc() that will create
+ * a root type description node which corresponds to ast_typedesc. The main
+ * difference is that such a node has a symbol table
+ */
+struct ast_node *parser_acc_typedesc_top(struct parser *p);
 
 #define TOKEN_IS_TYPEDECL_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_TYPE)
 

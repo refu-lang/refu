@@ -56,7 +56,8 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
         RF_ERROR("Failed to initialize a fixed memory pool for types");
         return false;
     }
-    rf_ilist_head_init(&a->composite_types);
+    RF_MALLOC(a->types_set, sizeof(*a->types_set), return false);
+    rf_objset_init(a->types_set);
 
     if (!(a->identifiers_table = string_table_create())) {
         RF_ERROR("Failed to allocate a string table for identifiers");
@@ -102,6 +103,11 @@ void analyzer_deinit(struct analyzer *a)
     if (a->string_literals_table) {
         string_table_destroy(a->string_literals_table);
     }
+
+    if (a->types_set) {
+        rf_objset_clear(a->types_set);
+        free(a->types_set);
+    }
 }
 
 void analyzer_destroy(struct analyzer *a)
@@ -115,50 +121,46 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
-// adds a type to the composite types list if it's not already there
-// TODO: Maybe move the types list into its own struct? Maybe also combine with
-//       the rir types list?
-static void analyzer_types_list_add(struct analyzer *a, struct type *new_type)
+// TODO: Properly use the set itself for comparison of already existing types
+bool analyzer_types_set_add(struct analyzer *a, struct type *new_type)
 {
     struct type *t;
-    rf_ilist_for_each(&a->composite_types, t, lh) {
+    struct rf_objset_iter it;
+    rf_objset_foreach(a->types_set, &it, t) {
         if (type_compare(t, new_type, TYPECMP_IDENTICAL)) {
-            return;
+            return true;
         }
     }
-
-    rf_ilist_add(&a->composite_types, &new_type->lh);
+    return rf_objset_add(a->types_set, new_type);
 }
 
 struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *desc,
                                          struct symbol_table *st,
-                                         struct ast_node *genrdecl,
-                                         bool add_type)
+                                         struct ast_node *genrdecl)
 {
     struct type *t;
+    struct rf_objset_iter it;
     AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
-    rf_ilist_for_each(&a->composite_types, t, lh) {
+    rf_objset_foreach(a->types_set, &it, t) {
         if (type_equals_ast_node(t, desc, a, st, genrdecl)) {
             return t;
         }
     }
 
     // else we have to create a new type
-    t = type_create_from_node(desc, a, st, genrdecl, false);
+    t = type_create_from_node(desc, a, st, genrdecl);
     if (!t) {
         RF_ERROR("Failure to create a composite type");
         return NULL;
     }
 
     // add it to the list
+    analyzer_types_set_add(a, t);
     if (desc->type == AST_TYPE_OPERATOR && ast_typeop_op(desc) == TYPEOP_SUM) {
-        rf_ilist_add(&a->composite_types, &t->lh);
         // if it's a sum type also add the left and the right operand type
-        analyzer_types_list_add(a, t->operator.left);
-        analyzer_types_list_add(a, t->operator.right);
-    } else if (add_type) {
-        rf_ilist_add(&a->composite_types, &t->lh);
+        analyzer_types_set_add(a, t->operator.left);
+        analyzer_types_set_add(a, t->operator.right);
     }
     return t;
 }

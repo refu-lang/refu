@@ -440,16 +440,18 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
             type_equals_ast_node(t->operator.right,
                                  ast_typeop_right(type_desc),
                                  a, st, genrdecl);
-    case AST_TYPE_DESCRIPTION:
+    case AST_TYPE_LEAF:
     {
-        AST_NODE_ASSERT_TYPE(ast_typedesc_left(type_desc), AST_IDENTIFIER);
+        AST_NODE_ASSERT_TYPE(ast_typeleaf_left(type_desc), AST_IDENTIFIER);
         bool predicate = true;
         if (t->category == TYPE_CATEGORY_LEAF) {
-            predicate = rf_string_equal(t->leaf.id, ast_identifier_str(ast_typedesc_left(type_desc)));
+            predicate = rf_string_equal(t->leaf.id, ast_identifier_str(ast_typeleaf_left(type_desc)));
         }
-        return predicate && type_equals_ast_node(t, ast_typedesc_right(type_desc),
+        return predicate && type_equals_ast_node(t, ast_typeleaf_right(type_desc),
                                                  a, st, genrdecl);
     }
+    case AST_TYPE_DESCRIPTION:
+        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), a, st, genrdecl);
     case AST_TYPE_DECLARATION:
         return type_equals_ast_node(t, ast_typedecl_typedesc_get(type_desc),
                                     a, st, genrdecl);

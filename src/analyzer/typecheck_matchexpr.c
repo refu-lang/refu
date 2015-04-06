@@ -214,32 +214,45 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
 
     //set the type of the match expression as a SUM type of all its cases
     struct ast_matchexpr_it it;
+    struct rf_objset_iter set_it;
     struct ast_node *mcase;
-    struct {OBJSET_MEMBERS(struct type*);} types;
-    rf_objset_init(&types);
+    struct type_set case_types;
+    struct type *case_type;
+    struct type *iter_type;
+    struct type *matchexpr_type = NULL;
+    bool found;
+    rf_objset_init(&case_types);
     ast_matchexpr_foreach(n, &it, mcase) {
         RF_ASSERT(ast_matchcase_expression(mcase)->expression_type,
                   "A match case's expression type is not determined");
-        rf_objset_add(&types, ast_matchcase_expression(mcase)->expression_type);
-    }
-
-    struct rf_objset_iter set_it;
-    struct type *iter_type;
-    struct type *matchexpr_type = NULL;
-    rf_objset_foreach(&types, &set_it, iter_type) {
+        found = false;
+        case_type = (struct type*)ast_matchcase_expression(mcase)->expression_type;
+        // TODO: When the set becomes able to deal with arbitrary comparison do away with this
+        rf_objset_foreach(&case_types, &set_it, iter_type) {
+            if (type_compare(case_type, iter_type, TYPECMP_IDENTICAL)) {
+                found = true; // it's in the set so we need to skip it
+                break;
+            }
+        }
+        if (found) {
+            continue;
+        }
+        // add to set since it's not in there already. same TODO as above applies
+        rf_objset_add(&case_types, case_type);
+        // add to the type of the match expression itself
         if (matchexpr_type) {
             matchexpr_type = type_create_from_operation(
                 TYPEOP_SUM,
                 matchexpr_type,
-                iter_type,
+                case_type,
                 ctx->a);
         } else {
-            matchexpr_type = iter_type;
+            matchexpr_type = case_type;
         }
     }
-    rf_objset_clear(&types);
-    traversal_node_set_type(n, matchexpr_type, ctx);
-    
+
+    rf_objset_clear(&case_types);
+    traversal_node_set_type(n, matchexpr_type, ctx);    
     pattern_matching_ctx_deinit(&ctx->matching_ctx);
     return ret;
 }

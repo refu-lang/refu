@@ -351,11 +351,19 @@ static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
+static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
+                                                struct analyzer_traversal_ctx *ctx)
+{
+    // a type leaf's type is the type of the right part of the leaf
+    traversal_node_set_type(n, ast_typeleaf_right(n)->expression_type, ctx);
+    return TRAVERSAL_CB_OK;
+}
+
 static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
-    // a type descriptions's type is the type of the right part of the description
-    traversal_node_set_type(n, ast_typedesc_right(n)->expression_type, ctx);
+    // a type descriptions's type is the type of its description
+    traversal_node_set_type(n, ast_typedesc_desc_get(n)->expression_type, ctx);
     return TRAVERSAL_CB_OK;
 }
 
@@ -369,13 +377,15 @@ static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
 static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
-    if (n->expression_type ||
-        analyzer_traversal_ctx_get_nth_parent(0, ctx)->type != AST_MATCH_CASE) {
+    // during symbol table population, if the typeoperator is a child of some specific
+    // nodes there will be calls to analyzer_get_or_create_type() and the type will
+    // already exists. If so just return
+    if (n->expression_type) {
         return TRAVERSAL_CB_OK;
     }
-    // we need to do something here only if it's direct child of a matchcase, because
-    // all other cases are taken care of during addition of a node to a symbol table
-    n->expression_type = type_lookup_or_create(n, ctx->a, ctx->current_st, NULL, true, true);
+
+    // for the rest we need to create it here
+    n->expression_type = type_lookup_or_create(n, ctx->a, ctx->current_st, NULL, true);
     RF_ASSERT_OR_EXIT(n->expression_type, "Could not determine type of matchase type operation");
     return TRAVERSAL_CB_OK;
 }
@@ -771,6 +781,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_TYPE_OPERATOR:
         ret = typecheck_typeop(n, ctx);
+        break;
+    case AST_TYPE_LEAF:
+        ret = typecheck_typeleaf(n, ctx);
         break;
     case AST_CONSTANT:
         ret = typecheck_constant(n, ctx);

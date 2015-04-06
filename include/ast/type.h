@@ -14,8 +14,8 @@ struct analyzer;
 i_INLINE_DECL struct ast_node *ast_types_left(struct ast_node *n)
 {
     switch (n->type) {
-    case AST_TYPE_DESCRIPTION:
-        return n->typedesc.left;
+    case AST_TYPE_LEAF:
+        return n->typeleaf.left;
     case AST_TYPE_OPERATOR:
         return n->typeop.left;
     default:
@@ -29,8 +29,8 @@ i_INLINE_DECL struct ast_node *ast_types_right(struct ast_node *n)
 {
     switch (n->type) {
     case AST_TYPE_DESCRIPTION:
-        return n->typedesc.right;
-    case AST_TYPE_OPERATOR:
+        return n->typeleaf.right;
+    case AST_TYPE_LEAF:
         return n->typeop.right;
     default:
         RF_ASSERT_OR_CRITICAL(false, return NULL, "Attempted to call accessor"
@@ -95,24 +95,18 @@ i_INLINE_DECL struct ast_node *ast_typeop_right(struct ast_node *n)
 
 /* -- type description functions -- */
 
-struct ast_node *ast_typedesc_create(const struct inplocation_mark *start,
-                                     const struct inplocation_mark *end,
-                                     struct ast_node *left,
-                                     struct ast_node *right);
+struct ast_node *ast_typedesc_create(struct ast_node *desc);
 
-void ast_typedesc_set_left(struct ast_node *n, struct ast_node *l);
-void ast_typedesc_set_right(struct ast_node *n, struct ast_node *r);
-
-i_INLINE_DECL struct ast_node *ast_typedesc_left(struct ast_node *n)
+i_INLINE_DECL struct symbol_table *ast_typedesc_symbol_table_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
-    return n->typedesc.left;
+    return &n->typedesc.st;
 }
 
-i_INLINE_DECL struct ast_node *ast_typedesc_right(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_typedesc_desc_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION);
-    return n->typedesc.right;
+    return n->typedesc.desc;
 }
 
 /**
@@ -170,11 +164,5 @@ i_INLINE_DECL struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
     return n->typedecl.genrdecl;
-}
-
-i_INLINE_DECL struct symbol_table *ast_typedecl_symbol_table_get(struct ast_node *n)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
-    return &n->typedecl.st;
 }
 #endif

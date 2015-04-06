@@ -15,13 +15,14 @@
 
 #include CLIB_TEST_HELPERS
 
-static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
-                                            size_t expected_types_size,
-                                            struct analyzer *a,
-                                            const char *filename,
-                                            unsigned int line)
+static void ck_assert_type_set_equal_impl(const struct type **expected_types,
+                                          size_t expected_types_size,
+                                          struct analyzer *a,
+                                          const char *filename,
+                                          unsigned int line)
 {
     struct type *t;
+    struct rf_objset_iter it;
     unsigned int i;
     bool found;
     unsigned int found_types_size = 0;
@@ -29,7 +30,7 @@ static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
     RF_CALLOC(found_indexes, expected_types_size, sizeof(*found_indexes), return);
 
     RFS_buffer_push();
-    rf_ilist_for_each(&a->composite_types, t, lh) {
+    rf_objset_foreach(a->types_set, &it, t) {
         found = false;
         for (i = 0; i < expected_types_size; ++i) {
             if (type_compare(t, expected_types[i], TYPECMP_IDENTICAL)) {
@@ -62,10 +63,10 @@ static void ck_assert_type_lists_equal_impl(const struct type **expected_types,
     free(found_indexes);
 }
 
-#define ck_assert_type_lists_equal(i_expected_types_, i_analyzer_)      \
-    ck_assert_type_lists_equal_impl(i_expected_types_,                  \
-                                    sizeof(i_expected_types_) / sizeof(struct type*), \
-                                    i_analyzer_, __FILE__, __LINE__)
+#define ck_assert_type_set_equal(i_expected_types_, i_analyzer_)      \
+    ck_assert_type_set_equal_impl(i_expected_types_,                  \
+                                  sizeof(i_expected_types_) / sizeof(struct type*), \
+                                  i_analyzer_, __FILE__, __LINE__)
 
 
 START_TEST (test_type_to_str) {
@@ -313,7 +314,7 @@ START_TEST(test_composite_types_list_population) {
 
     const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64,
                                              t_func_1, t_foo };
-    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, d->front.analyzer);
 } END_TEST
 
 START_TEST(test_composite_types_list_population2) {
@@ -354,7 +355,7 @@ START_TEST(test_composite_types_list_population2) {
 
     const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64,
                                              t_func_1, t_foo, t_boo};
-    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, d->front.analyzer);
 } END_TEST
 
 START_TEST(test_composite_types_list_population3) {
@@ -402,9 +403,10 @@ START_TEST(test_composite_types_list_population3) {
     struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_4);
 
     const struct type *expected_types [] = { t_leaf_i64, t_leaf_f64, t_leaf_i8,
-                                             t_leaf_f32, t_leaf_string, t_prod_4,
+                                             t_leaf_f32, t_leaf_string, t_prod_1,
+                                             t_prod_2, t_prod_3, t_prod_4,
                                              t_foo};
-    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, d->front.analyzer);
 } END_TEST
 
 START_TEST(test_composite_types_list_population4) {
@@ -462,7 +464,7 @@ START_TEST(test_composite_types_list_population4) {
                                              t_prod_1, t_prod_2, t_sum_1,
                                              t_foo, t_bar, t_foobar, t_prod_3
     };
-    ck_assert_type_lists_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, d->front.analyzer);
 } END_TEST
 
 START_TEST(test_determine_block_type1) {

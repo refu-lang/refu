@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <check.h>
 #include <Preprocessor/rf_xmacro_argcount.h>
+#include <ast/identifier.h>
 
 struct inpfile;
 
@@ -12,7 +13,7 @@ struct inpfile;
  * a start and end location mark
  */
 #define testsupport_parser_node_create(...)                             \
-    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_node_create, 7, __VA_ARGS__) \
+    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_node_create, 7, __VA_ARGS__)
 
 #define i_testsupport_parser_node_create1(node_, type_,                 \
                                           file_, sl_, sc_, el_, ec_, ...) \
@@ -33,6 +34,51 @@ struct inpfile;
                                      &temp_location_.end);              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while(0)
+
+/**
+ * Utility testing macros to generate a typedesc node at location with its
+ * direct child description at the same line
+ */
+#define testsupport_parser_typedesc_create(...)                         \
+    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_typedesc_create, 7, __VA_ARGS__)
+#define testsupport_parser_typedesc_create_xidentifier(node_, file_,             \
+                                                       sl_, sc_, el_,   \
+                                                       ec_)             \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+    struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+    node_ = ast_typedesc_create(                                        \
+        ast_xidentifier_create(                                         \
+        &temp_location_.start, &temp_location_.end,                     \
+        testsupport_parser_identifier_create(file, sl_, sc_, el_,ec_),  \
+                                             false, NULL)               \
+        );                                                              \
+        node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
+    } while (0)
+    
+#define i_testsupport_parser_typedesc_create1(node_, file_,             \
+                                              sl_, sc_, el_,            \
+                                              ec_, type_, ...)          \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        node_ = ast_typedesc_create(                                    \
+            ast_##type_##_create(&temp_location_.start, &temp_location_.end, __VA_ARGS__) \
+        );                                                              \
+        node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
+    } while (0)
+
+#define i_testsupport_parser_typedesc_create0(node_, file_,             \
+                                              sl_, sc_, el_,            \
+                                              ec_, type_)               \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        node_ = ast_typedesc_create(                                    \
+            ast_##type_##_create(&temp_location_.start, &temp_location_.end) \
+        );                                                              \
+        node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
+    } while (0)
 
 /**
  * A utility testing macro to generate a constant node at a location

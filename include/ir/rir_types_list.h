@@ -3,9 +3,11 @@
 
 #include <stdbool.h>
 #include <Data_Structures/intrusive_list.h>
+#include <Data_Structures/objset.h>
 
 struct RFstring;
 struct type;
+struct type_set;
 
 /**
  * A global list of all rir types in a module
@@ -26,11 +28,12 @@ void rir_types_list_deinit(struct rir_types_list *t);
  * between sum types and their combinations.
  *
  * @param rir_types          The list of rir types to populate
- * @param composite_types    The list of types from which to create it
+ * @param types_set          The types set from which to create it
  *
  * @return                   true in success and false in failure
  */
-bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_head *composite_types);
+bool rir_types_list_populate(struct rir_types_list *rir_types,
+                             struct type_set *types_set);
 
 /**
  * Searches the rir types list for a defined type called @c name

@@ -44,7 +44,8 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         break;
     case AST_VARIABLE_DECLARATION:
     case AST_TYPE_DESCRIPTION:
-        rec->data = type_lookup_or_create(node, analyzer, st, NULL, false, false);
+    case AST_TYPE_LEAF:
+        rec->data = type_lookup_or_create(node, analyzer, st, NULL, false);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
@@ -188,7 +189,9 @@ bool symbol_table_add_node(struct symbol_table *t,
         symbol_table_record_destroy(rec, t);
         return false;
     }
-
+    // set the type in the node
+    n->expression_type = rec->data;
+    
     return true;
 }
 

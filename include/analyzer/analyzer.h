@@ -8,6 +8,7 @@
 #include <Definitions/inline.h>
 #include <Utils/sanity.h>
 #include <analyzer/typecheck_matchexpr.h>
+#include <analyzer/type_set.h>
 
 struct parser;
 struct inpfile;
@@ -82,8 +83,8 @@ struct analyzer {
     struct rf_fixed_memorypool *symbol_table_records_pool;
     struct rf_fixed_memorypool *types_pool;
 
-    //! A list of all composite types. Basically any non-elementary types.
-    struct RFilist_head composite_types;
+    //! A set of all types encountered
+    struct type_set *types_set;
 
     /* String tables containing identifiers and string literals found during parsing */
     struct string_table *identifiers_table;
@@ -108,21 +109,19 @@ void analyzer_destroy(struct analyzer *a);
 
 /**
  * If existing, retrieve the type and if not existing create the type
- * for ast node @c desc if @c add_type is true.
+ * for ast node @c desc
  *
  * @param a          The analyzer instance from which to retrieve the type
  * @param desc       The node whose type to check
  * @param st         The symbol table to check for type existence
  * @param genrdecl   Optional generic delcation that accompanied @c desc.
  *                   Can be NULL.
- * @param add_type   If true add the type if it does not exist in the types list.
  * @return           The retrieved or created type, or NULL in error.
  */
 struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *desc,
                                          struct symbol_table *st,
-                                         struct ast_node *genrdecl,
-                                         bool add_type);
+                                         struct ast_node *genrdecl);
 
 struct inpfile *analyzer_get_file(struct analyzer *a);
 
@@ -137,6 +136,9 @@ struct inpfile *analyzer_get_file(struct analyzer *a);
  */
 bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
                            bool with_global_context);
+
+// TODO: Properly use the set itself for comparison of already existing types
+bool analyzer_types_set_add(struct analyzer *a, struct type *new_type);
 
 i_INLINE_DECL void analyzer_set_semantic_error(struct analyzer *a)
 {

@@ -164,8 +164,8 @@ START_TEST(test_acc_fndecl_with_generics) {
                                                                 0, 56, 0, 57);
     testsupport_parser_xidentifier_create_simple(id12, file, 0, 59, 0, 60);
     testsupport_parser_node_create(t4, typeleaf, file, 0, 56, 0, 60, id11, id12);
-    testsupport_parser_node_create(op2, typeop, file, 0, 49, 0, 60,
-                                   TYPEOP_PRODUCT, t3, t4);
+    testsupport_parser_typedesc_create(op2, file, 0, 49, 0, 60, typeop,
+                                       TYPEOP_PRODUCT, t3, t4);
 
     testsupport_parser_node_create(fn, fndecl, file, 0, 0, 0, 60,
                                    FNDECL_STANDALONE,

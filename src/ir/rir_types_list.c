@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <String/rf_str_core.h>
 
+#include <analyzer/type_set.h>
 #include <types/type_elementary.h>
 #include <types/type.h>
 #include <ir/rir_type.h>
@@ -74,19 +75,21 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
 
 // very very temporary macro to allow visualization of rir type creation. Will go away
  /* #define TEMP_RIR_DEBUG 1 */
-bool rir_types_list_populate(struct rir_types_list *rir_types, struct RFilist_head *composite_types)
+bool rir_types_list_populate(struct rir_types_list *rir_types,
+                             struct type_set *types_set)
 {
     struct type *t;
+    struct rf_objset_iter it1;
     struct rir_type *iter_rir_type;
     struct rir_type *created_rir_type;
     bool found;
-    rf_ilist_for_each(composite_types, t, lh) {
+    rf_objset_foreach(types_set, &it1, t) {
 #if TEMP_RIR_DEBUG
         RFS_buffer_push();
         printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
         fflush(stdout);
 #endif
-        // first of all see if this composite type already has an equivalent rir type
+        // first of all see if this type already has an equivalent rir type
         found = false;
         rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
             if (rir_type_equals_type(iter_rir_type, t, NULL)) {

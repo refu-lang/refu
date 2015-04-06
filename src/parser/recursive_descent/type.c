@@ -16,13 +16,14 @@
 static struct ast_node *parser_acc_parenthesized_typedesc(struct parser *p)
 {
     struct ast_node *n;
+    lexer_push(p->lexer);
     //consume parentheses
     struct token *tok = lexer_next_token(p->lexer);
-    n = parser_acc_typedesc(p);
+    n = parser_acc_typedesc_top(p);
     if (!n) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected a type description after '('");
-        return NULL;
+        goto fail;
     }
 
     tok = lexer_expect_token(p->lexer, TOKEN_SM_CPAREN);
@@ -32,10 +33,13 @@ static struct ast_node *parser_acc_parenthesized_typedesc(struct parser *p)
         goto fail_free_desc;
     }
 
+    lexer_pop(p->lexer);
     return n;
 
 fail_free_desc:
     ast_node_destroy(n);
+fail:
+    lexer_rollback(p->lexer);
     return NULL;
 }
 
@@ -88,6 +92,7 @@ struct ast_node *parser_acc_typeleaf(struct parser *p)
         n = parser_acc_xidentifier(p, true);
     }
 
+    lexer_pop(p->lexer);
     return n;
 
 err:
@@ -323,6 +328,17 @@ fail:
     return NULL;
 }
 
+struct ast_node *parser_acc_typedesc_top(struct parser *p)
+{
+    struct ast_node *ret;
+    struct ast_node *desc = parser_acc_typedesc(p);
+    if (!desc) {
+        return NULL;
+    }
+    ret = ast_typedesc_create(desc);
+    return ret;
+}
+
 
 struct ast_node *parser_acc_typedecl(struct parser *p)
 {
@@ -350,7 +366,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
         goto not_found;
     }
 
-    desc = parser_acc_typedesc(p);
+    desc = parser_acc_typedesc_top(p);
     if (!desc) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected data description for data declaration "
