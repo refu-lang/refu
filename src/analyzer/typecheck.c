@@ -119,7 +119,7 @@ fail:
     analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                  "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
                  error_intro, RF_STR_PF_ARG(ast_unaryop_opstr(n)), 
-                 error_conj, RF_STR_PF_ARG(type_str(operand_type, false)));
+                 error_conj, RF_STR_PF_ARG(type_str(operand_type, TSTR_DEFAULT)));
     RFS_buffer_pop();
     return TRAVERSAL_CB_ERROR;
 }
@@ -148,8 +148,8 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
         RFS_buffer_push();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                     error_intro, RF_STR_PF_ARG(type_str(tright, false)),
-                     error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
+                     error_intro, RF_STR_PF_ARG(type_str(tright, TSTR_DEFAULT)),
+                     error_conj, RF_STR_PF_ARG(type_str(tleft, TSTR_DEFAULT)));
         RFS_buffer_pop();
         return TRAVERSAL_CB_ERROR;
     }
@@ -182,8 +182,8 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
         RFS_buffer_push();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                     error_intro, RF_STR_PF_ARG(type_str(tright, false)),
-                     error_conj, RF_STR_PF_ARG(type_str(tleft, false)));
+                     error_intro, RF_STR_PF_ARG(type_str(tright, TSTR_DEFAULT)),
+                     error_conj, RF_STR_PF_ARG(type_str(tleft, TSTR_DEFAULT)));
         RFS_buffer_pop();
         return TRAVERSAL_CB_ERROR;
     }
@@ -283,7 +283,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
                      "Could not find member \""RF_STR_PF_FMT"\" in type \""
                      RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(ast_identifier_str(right)),
-                     RF_STR_PF_ARG(type_str(tleft, false)));
+                     RF_STR_PF_ARG(type_str(tleft, TSTR_DEFAULT)));
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -445,8 +445,8 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
                          "Assignment between incompatible types. Can't assign "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\""
                          "%s"RF_STR_PF_FMT".",
-                         RF_STR_PF_ARG(type_str(tright, false)),
-                         RF_STR_PF_ARG(type_str(tleft, false)),
+                         RF_STR_PF_ARG(type_str(tright, TSTR_DEFAULT)),
+                         RF_STR_PF_ARG(type_str(tleft, TSTR_DEFAULT)),
                          typecmp_ctx_have_error() ? ". " : "",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             RFS_buffer_pop();
@@ -549,8 +549,8 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                          "type of \""RF_STR_PF_FMT"\"%s"RF_STR_PF_FMT".",
                          RF_STR_PF_ARG(type_callable_category_str(fn_type)),
                          RF_STR_PF_ARG(fn_name),
-                         RF_STR_PF_ARG(type_str(fn_found_args_type, false)),
-                         RF_STR_PF_ARG(type_str(fn_declared_args_type, false)),
+                         RF_STR_PF_ARG(type_str(fn_found_args_type, TSTR_DEFAULT)),
+                         RF_STR_PF_ARG(type_str(fn_declared_args_type, TSTR_DEFAULT)),
                          typecmp_ctx_have_error() ? ". " : "",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             RFS_buffer_pop();
@@ -599,8 +599,8 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement type \""RF_STR_PF_FMT"\" does not match "
                      "the expected return type of \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(type_str(found_ret_type, false)),
-                     RF_STR_PF_ARG(type_str(fn_ret_type, false)));
+                     RF_STR_PF_ARG(type_str(found_ret_type, TSTR_DEFAULT)),
+                     RF_STR_PF_ARG(type_str(fn_ret_type, TSTR_DEFAULT)));
         RFS_buffer_pop();
         ret = TRAVERSAL_CB_ERROR;
     }

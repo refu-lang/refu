@@ -57,7 +57,7 @@ bool analyzer_init(struct analyzer *a, struct info_ctx *info)
         return false;
     }
     RF_MALLOC(a->types_set, sizeof(*a->types_set), return false);
-    rf_objset_init(a->types_set);
+    rf_objset_init(a->types_set, type);
 
     if (!(a->identifiers_table = string_table_create())) {
         RF_ERROR("Failed to allocate a string table for identifiers");
@@ -121,17 +121,10 @@ struct inpfile *analyzer_get_file(struct analyzer *a)
     return a->info->file;
 }
 
-// TODO: Properly use the set itself for comparison of already existing types
+// TODO: Maybe delete this function and simply use rf_objset_add() ?
 bool analyzer_types_set_add(struct analyzer *a, struct type *new_type)
 {
-    struct type *t;
-    struct rf_objset_iter it;
-    rf_objset_foreach(a->types_set, &it, t) {
-        if (type_compare(t, new_type, TYPECMP_IDENTICAL)) {
-            return true;
-        }
-    }
-    return rf_objset_add(a->types_set, new_type);
+    return rf_objset_add(a->types_set, type, new_type);
 }
 
 struct type *analyzer_get_or_create_type(struct analyzer *a,

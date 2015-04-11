@@ -76,7 +76,7 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
 // very very temporary macro to allow visualization of rir type creation. Will go away
  /* #define TEMP_RIR_DEBUG 1 */
 bool rir_types_list_populate(struct rir_types_list *rir_types,
-                             struct type_set *types_set)
+                             struct rf_objset_type *types_set)
 {
     struct type *t;
     struct rf_objset_iter it1;
@@ -86,7 +86,7 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
     rf_objset_foreach(types_set, &it1, t) {
 #if TEMP_RIR_DEBUG
         RFS_buffer_push();
-        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
         fflush(stdout);
 #endif
         // first of all see if this type already has an equivalent rir type
@@ -103,7 +103,8 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
 
         created_rir_type = rir_type_create(t, NULL, NULL);
 #if TEMP_RIR_DEBUG
-        printf("created rir type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rir_type_str(created_rir_type)));
+        printf("created rir type: "RF_STR_PF_FMT"\n",
+               RF_STR_PF_ARG(rir_type_str(created_rir_type)));
         fflush(stdout);
         RFS_buffer_pop();
 #endif

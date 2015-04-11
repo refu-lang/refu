@@ -2,6 +2,7 @@
 
 #include <Persistent/buffers.h>
 #include <Utils/fixed_memory_pool.h>
+#include <Utils/bits.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
@@ -501,27 +502,23 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
-const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
+static const struct RFstring *type_str_do(const struct type *t, int options)
 {
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         return type_elementary_get_str(t->elementary.etype);
     case TYPE_CATEGORY_OPERATOR:
         return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                    RF_STR_PF_ARG(type_str(t->operator.left, print_leaf_id)),
+                    RF_STR_PF_ARG(type_str_do(t->operator.left, options)),
                     RF_STR_PF_ARG(type_op_str(t->operator.type)),
-                    RF_STR_PF_ARG(type_str(t->operator.right, print_leaf_id)));
+                    RF_STR_PF_ARG(type_str_do(t->operator.right, options)));
     case TYPE_CATEGORY_LEAF:
-        return print_leaf_id
+        return RF_BITFLAG_ON(options, TSTR_LEAF_ID)
             ? RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
-                   RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)))
-            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str(t->leaf.type, print_leaf_id)));
+                   RF_STR_PF_ARG(type_str_do(t->leaf.type, options)))
+            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str_do(t->leaf.type, options)));
     case TYPE_CATEGORY_DEFINED:
-        return print_leaf_id
-            ? RFS_(RF_STR_PF_FMT" { " RF_STR_PF_FMT " }",
-                   RF_STR_PF_ARG(t->defined.name),
-                   RF_STR_PF_ARG(type_str(t->defined.type, false)))
-            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
+        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
     case TYPE_CATEGORY_WILDCARD:
         return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
     default:
@@ -532,12 +529,28 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id)
     return NULL;
 }
 
-const struct RFstring *type_defined_to_str(const struct type *t)
+const struct RFstring *type_str(const struct type *t, int options)
 {
-    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Non user defined type provided");
-    return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT "}",
-                RF_STR_PF_ARG(t->defined.name),
-                RF_STR_PF_ARG(type_str(t->defined.type, true)));
+    if (t->category == TYPE_CATEGORY_DEFINED &&
+        RF_BITFLAG_ON(options, TSTR_DEFINED_CONTENTS)) {
+        RF_BITFLAG_UNSET(options, TSTR_DEFINED_CONTENTS);
+        return RFS_(RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
+                    RF_STR_PF_ARG(t->defined.name),
+                    RF_STR_PF_ARG(type_str_do(t->defined.type, options)));
+    } else {
+        return type_str_do(t, options);
+    }
+}
+
+size_t type_get_uid(const struct type *t)
+{
+    size_t ret;
+    RFS_buffer_push();
+    const struct RFstring *s = type_str(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS);
+    RF_ASSERT_OR_EXIT(s, "Type string could not be created");
+    ret = rf_hash_str_stable(s, 0);
+    RFS_buffer_pop();
+    return ret;
 }
 
 static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDCARD};

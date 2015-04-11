@@ -9,8 +9,8 @@
 #include <types/type.h>
 
 void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx) {
-    rf_objset_init(&ctx->parts);
-    rf_objset_init(&ctx->matched);
+    rf_objset_init(&ctx->parts, type);
+    rf_objset_init(&ctx->matched, type);
 }
 
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx) {
@@ -49,7 +49,7 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
                              "\""RF_STR_PF_FMT"\". Sum type operand of "
                              "\""RF_STR_PF_FMT"\" is not covered.",
                              RF_STR_PF_ARG(ast_identifier_str(ast_matchexpr_identifier(matchexpr))),
-                             RF_STR_PF_ARG(type_str(t1, false)));
+                             RF_STR_PF_ARG(type_str(t1, TSTR_DEFAULT)));
                 RFS_buffer_pop();
                 ret = false;
             }
@@ -61,13 +61,13 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
 static inline bool pattern_matching_ctx_add_part(struct pattern_matching_ctx *ctx,
                                                  const struct type *t)
 {
-    return rf_objset_add(&ctx->parts, t);
+    return rf_objset_add(&ctx->parts, type, t);
 }
 
 static inline bool pattern_matching_ctx_set_matched(struct pattern_matching_ctx *ctx,
                                                     const struct type *match_type)
 {
-    return rf_objset_add(&ctx->matched, match_type);
+    return rf_objset_add(&ctx->matched, type, match_type);
 }
 
 
@@ -192,9 +192,9 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Match case \""RF_STR_PF_FMT"\" can not be matched to the "
                      "type of \""RF_STR_PF_FMT"\" which is of type \""RF_STR_PF_FMT"\".",
-                     RF_STR_PF_ARG(type_str(case_pattern_type, false)),
+                     RF_STR_PF_ARG(type_str(case_pattern_type, TSTR_DEFAULT)),
                      RF_STR_PF_ARG(ast_identifier_str(parent_matchexpr_id)),
-                     RF_STR_PF_ARG(type_str(match_type, true)));
+                     RF_STR_PF_ARG(type_str(match_type, TSTR_DEFINED_CONTENTS)));
         RFS_buffer_pop();
         return TRAVERSAL_CB_ERROR;
     }
@@ -214,31 +214,20 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
 
     //set the type of the match expression as a SUM type of all its cases
     struct ast_matchexpr_it it;
-    struct rf_objset_iter set_it;
     struct ast_node *mcase;
-    struct type_set case_types;
+    struct rf_objset_type case_types;
     struct type *case_type;
-    struct type *iter_type;
     struct type *matchexpr_type = NULL;
-    bool found;
-    rf_objset_init(&case_types);
+    rf_objset_init(&case_types, type);
     ast_matchexpr_foreach(n, &it, mcase) {
         RF_ASSERT(ast_matchcase_expression(mcase)->expression_type,
                   "A match case's expression type is not determined");
-        found = false;
         case_type = (struct type*)ast_matchcase_expression(mcase)->expression_type;
-        // TODO: When the set becomes able to deal with arbitrary comparison do away with this
-        rf_objset_foreach(&case_types, &set_it, iter_type) {
-            if (type_compare(case_type, iter_type, TYPECMP_IDENTICAL)) {
-                found = true; // it's in the set so we need to skip it
-                break;
-            }
-        }
-        if (found) {
+        // Check if it's in the set. If yes skip this. If not add it
+        if (rf_objset_get(&case_types, type, case_type)) {
             continue;
         }
-        // add to set since it's not in there already. same TODO as above applies
-        rf_objset_add(&case_types, case_type);
+        rf_objset_add(&case_types, type, case_type);
         // add to the type of the match expression itself
         if (matchexpr_type) {
             matchexpr_type = type_create_from_operation(

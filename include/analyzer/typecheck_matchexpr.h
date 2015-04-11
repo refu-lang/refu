@@ -14,9 +14,9 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
 
 struct pattern_matching_ctx {
     //! A set of types that constitute discovered parts of the type
-    struct type_set parts;
+    struct rf_objset_type parts;
     //! A set of type parts that have been matched
-    struct type_set matched;
+    struct rf_objset_type matched;
 };
 void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx);
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx);

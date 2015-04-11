@@ -68,7 +68,8 @@ struct type_defined {
 
 struct type {
     enum type_category category;
-    /* list handler, to be added to either the types or the composite types list */
+    // TODO: deprecated member. Remove. No longer used.
+    // list handler, to be added to either the types or the composite types list
     struct RFilist_node lh;
     union {
         struct type_defined defined;

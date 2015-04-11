@@ -106,6 +106,12 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);
 
+//! Options for invoking type_str()
+enum type_str_options {
+    TSTR_DEFAULT = 0x0,
+    TSTR_LEAF_ID = 0x1,          /*!< Print the id of a leaves */
+    TSTR_DEFINED_CONTENTS = 0x2  /*!< Print the contents of a defined user type if first */
+};
 /**
  * Gets a string representation of the type
  *
@@ -114,14 +120,12 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
  * pop it with @ref RFS_buffer_pop().
  *
  * @param t                 The type whose string representation to get
- * @param print_leaf_id     If @c true will also print the identifier of a type
- *                          leaf such as: "age:u32, name:string" instead of
- *                          just "u32, string". For defined types it will also
- *                          print the contents of the types.
+ * @param options           Bitflags that can have any of the options defined at
+ *                          @ref type_str_options
  * @return                  Returns a pointer to the the string representation.
  *                          If there is an error returns NULL.
  */
-const struct RFstring *type_str(const struct type *t, bool print_leaf_id);
+const struct RFstring *type_str(const struct type *t, int options);
 
 /**
  * Gets a string representation of a type we know is a user defined type
@@ -130,6 +134,15 @@ const struct RFstring *type_str(const struct type *t, bool print_leaf_id);
  * of the type too.
  */
 const struct RFstring *type_defined_to_str(const struct type *t);
+
+/**
+ * Get a unique id for this type for use as a hash/key in data structures.
+ *
+ * TODO: Needs improvement
+ *
+ * @param t        The type whose unique key to get.
+ */
+size_t type_get_uid(const struct type *t);
 
 /**
  * @returns the wildcard type '_'

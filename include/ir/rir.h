@@ -7,7 +7,7 @@
 
 struct analyzer;
 struct RFstring;
-struct type_set;
+struct rf_objset_type;
 
 struct rir {
     /* Memory pools */
@@ -19,7 +19,7 @@ struct rir {
     struct string_table *string_literals_table;
 
     //! A set of all types encountered (moved over from analyzer)
-    struct type_set *types_set;
+    struct rf_objset_type *types_set;
     //! A list of all rir types of the file
     struct rir_types_list rir_types_list;
 

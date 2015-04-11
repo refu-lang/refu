@@ -293,7 +293,8 @@ static inline void rir_type_cmp_ctx_idx_plus1(struct rir_type_cmp_ctx *ctx)
 
 static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
 {
-    D("Going up for operator type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+    D("Going up for operator type: "RF_STR_PF_FMT"\n",
+      RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
     enum rir_type_category op = rir_type_op_from_type(t);
     if (op != ctx->current_rir_op) {
                 D("Popping rir type ["RF_STR_PF_FMT"] from stack\n",
@@ -328,7 +329,7 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
     struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
-    D("Going down for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+    D("Going down for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
     if (!current_rir) {
         D("Out of bounds index access\n");
         return false;
@@ -384,7 +385,7 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
-        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
         if (!curr_rir) {
             D("Out of bounds index access in elementary");
             return false;
@@ -404,7 +405,7 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 
     case TYPE_CATEGORY_LEAF:
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
-        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, true)));
+        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
         if (!curr_rir) {
             D("Out of bounds index access in leaf");
             return false;

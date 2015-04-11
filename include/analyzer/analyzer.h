@@ -84,7 +84,7 @@ struct analyzer {
     struct rf_fixed_memorypool *types_pool;
 
     //! A set of all types encountered
-    struct type_set *types_set;
+    struct rf_objset_type *types_set;
 
     /* String tables containing identifiers and string literals found during parsing */
     struct string_table *identifiers_table;

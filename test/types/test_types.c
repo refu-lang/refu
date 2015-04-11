@@ -38,7 +38,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
                 ck_assert_msg(!found_indexes[i],
                               "Found a duplicate type entry in the list. Type: "
                               RF_STR_PF_FMT,
-                              RF_STR_PF_ARG(type_str(expected_types[i], true)));
+                              RF_STR_PF_ARG(type_str(expected_types[i], TSTR_LEAF_ID)));
                 found_indexes[i] = true;
                 break;
             }
@@ -46,7 +46,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
         if (!found) {
             ck_abort_msg("Did not manage to find type "RF_STR_PF_FMT" "
                          "in the expected types list from %s:%u",
-                         RF_STR_PF_ARG(type_str(t, true)), filename, line);
+                         RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)), filename, line);
         }
         found_types_size ++;
     }
@@ -55,7 +55,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
             ck_assert_msg(found_indexes[i],
                           "Expected type "RF_STR_PF_FMT" was not found in the "
                           "composite types list from %s:%u",
-                          RF_STR_PF_ARG(type_str(expected_types[i], true)),
+                          RF_STR_PF_ARG(type_str(expected_types[i], TSTR_LEAF_ID)),
                           filename, line);
     }
 
@@ -96,11 +96,12 @@ START_TEST (test_type_to_str) {
                                                                         t_sum_1);
 
     RFS_buffer_push();
-    ck_assert_rf_str_eq_cstr(type_str(t_u32, true), "u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32, true), "foo:u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, true), "foo:u32,boo:f64");
-    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, false), "u32,f64");
-    ck_assert_rf_str_eq_cstr(type_str(t_defined_1, false), "person");
+    ck_assert_rf_str_eq_cstr(type_str(t_u32, TSTR_LEAF_ID), "u32");
+    ck_assert_rf_str_eq_cstr(type_str(t_u32, TSTR_DEFAULT), "u32");
+    ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32, TSTR_LEAF_ID), "foo:u32");
+    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, TSTR_LEAF_ID), "foo:u32,boo:f64");
+    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, TSTR_DEFAULT), "u32,f64");
+    ck_assert_rf_str_eq_cstr(type_str(t_defined_1, TSTR_DEFAULT), "person");
     RFS_buffer_pop();
 } END_TEST
 

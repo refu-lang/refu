@@ -142,7 +142,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"i32\" can not be matched to the type of \"a\" which is "
-            "of type \"foo { string }\".",
+            "of type \"foo {string}\".",
             4, 4, 4, 18)
     };
 
@@ -167,7 +167,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"_,i32\" can not be matched to the type of \"a\" which "
-            "is of type \"foo { i32,string }\".",
+            "is of type \"foo {i32,string}\".",
             4, 4, 4, 21)
     };
 
@@ -193,7 +193,7 @@ START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"_,_,_\" can not be matched to the type of \"a\" which "
-            "is of type \"foo { i32,bool|string }\".",
+            "is of type \"foo {i32,bool|string}\".",
             6, 4, 6, 22)
     };
 
