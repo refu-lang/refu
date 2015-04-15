@@ -27,39 +27,45 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
     bool found;
     unsigned int found_types_size = 0;
     bool *found_indexes;
+    struct RFstring *expected_type_s;
     RF_CALLOC(found_indexes, expected_types_size, sizeof(*found_indexes), return);
 
-    RFS_buffer_push();
     rf_objset_foreach(a->types_set, &it, t) {
         found = false;
         for (i = 0; i < expected_types_size; ++i) {
             if (type_compare(t, expected_types[i], TYPECMP_IDENTICAL)) {
                 found = true;
+
+                RFS_push();
+                ck_assert(type_str(&expected_type_s, expected_types[i], TSTR_LEAF_ID));
                 ck_assert_msg(!found_indexes[i],
                               "Found a duplicate type entry in the list. Type: "
                               RF_STR_PF_FMT,
-                              RF_STR_PF_ARG(type_str(expected_types[i], TSTR_LEAF_ID)));
+                              RF_STR_PF_ARG(expected_type_s));
                 found_indexes[i] = true;
+                RFS_pop();
                 break;
             }
         }
         if (!found) {
+            ck_assert(type_str(&expected_type_s, t, TSTR_LEAF_ID));
             ck_abort_msg("Did not manage to find type "RF_STR_PF_FMT" "
                          "in the expected types list from %s:%u",
-                         RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)), filename, line);
+                         RF_STR_PF_ARG(expected_type_s), filename, line);
         }
         found_types_size ++;
     }
 
     for (i = 0; i < expected_types_size; ++i) {
-            ck_assert_msg(found_indexes[i],
-                          "Expected type "RF_STR_PF_FMT" was not found in the "
-                          "composite types list from %s:%u",
-                          RF_STR_PF_ARG(type_str(expected_types[i], TSTR_LEAF_ID)),
-                          filename, line);
+        RFS_push();
+        ck_assert(type_str(&expected_type_s, expected_types[i], TSTR_LEAF_ID));
+        ck_assert_msg(found_indexes[i],
+                      "Expected type "RF_STR_PF_FMT" was not found in the "
+                      "composite types list from %s:%u",
+                      RF_STR_PF_ARG(expected_type_s),
+                      filename, line);
+        RFS_pop();
     }
-
-    RFS_buffer_pop();
     free(found_indexes);
 }
 
@@ -95,14 +101,21 @@ START_TEST (test_type_to_str) {
     struct type *t_defined_1 = testsupport_analyzer_type_create_defined(&id_person,
                                                                         t_sum_1);
 
-    RFS_buffer_push();
-    ck_assert_rf_str_eq_cstr(type_str(t_u32, TSTR_LEAF_ID), "u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_u32, TSTR_DEFAULT), "u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_leaf_u32, TSTR_LEAF_ID), "foo:u32");
-    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, TSTR_LEAF_ID), "foo:u32,boo:f64");
-    ck_assert_rf_str_eq_cstr(type_str(t_prod_1, TSTR_DEFAULT), "u32,f64");
-    ck_assert_rf_str_eq_cstr(type_str(t_defined_1, TSTR_DEFAULT), "person");
-    RFS_buffer_pop();
+    struct RFstring *ts;
+    RFS_push();
+    ck_assert(type_str(&ts, t_u32, TSTR_LEAF_ID));
+    ck_assert_rf_str_eq_cstr(ts, "u32");
+    ck_assert(type_str(&ts, t_u32, TSTR_DEFAULT));
+    ck_assert_rf_str_eq_cstr(ts, "u32");
+    ck_assert(type_str(&ts, t_leaf_u32, TSTR_LEAF_ID));
+    ck_assert_rf_str_eq_cstr(ts, "foo:u32");
+    ck_assert(type_str(&ts, t_prod_1, TSTR_LEAF_ID));
+    ck_assert_rf_str_eq_cstr(ts, "foo:u32,boo:f64");
+    ck_assert(type_str(&ts, t_prod_1, TSTR_DEFAULT));
+    ck_assert_rf_str_eq_cstr(ts, "u32,f64");
+    ck_assert(type_str(&ts, t_defined_1, TSTR_DEFAULT));
+    ck_assert_rf_str_eq_cstr(ts, "person");
+    RFS_pop();
 } END_TEST
 
 START_TEST (test_type_comparison_identical) {
@@ -512,7 +525,7 @@ START_TEST(test_determine_block_type2) {
                                                                       t_leaf_bstring);
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
-    
+
     block = ast_node_get_child(front_testdriver_get_ast_root(d), 1);
     ck_assert_msg(block, "Block should be the second child of the root");
     ck_assert_msg(block->expression_type, "Block should have a type");

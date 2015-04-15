@@ -128,12 +128,14 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
                            const struct RFstring *expected_output)
 {
     char stdout_buff[1024];
-    const struct RFstring* output = compiler_args_get_output(d->compiler.args);
     FILE *proc;
+    struct RFstring *s;
+    const struct RFstring* output = compiler_args_get_output(d->compiler.args);
 
-    RFS_buffer_push();
-    proc = rf_popen(RFS_("./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output)), "r");
-    RFS_buffer_pop();
+    RFS_push();
+    RFS(&s, "./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output));
+    proc = rf_popen(s, "r");
+    RFS_pop();
 
     if (!proc) {
         return false;

@@ -56,11 +56,13 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
     unsigned int length = rf_string_length_bytes(string);
     char *gstr_name;
     char *strbuff_name;
+    struct RFstring *s;
 
-    RFS_buffer_push();
-    strbuff_name = rf_string_cstr_from_buff(RFS_("strbuff_%u", hash));
+    RFS_push();
+    RFS(&s, "strbuff_%u", hash);
+    strbuff_name = rf_string_cstr_from_buff_or_die(s);
     LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(
-        rf_string_cstr_from_buff(string),
+        rf_string_cstr_from_buff_or_die(string),
         length,
         strbuff_name,
         ctx);
@@ -77,10 +79,11 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
     LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"),
                                                     string_struct_layout, 2);
 
-    gstr_name = rf_string_cstr_from_buff(RFS_("gstr_%u", hash));
+    RFS(&s, "gstr_%u", hash);
+    gstr_name = rf_string_cstr_from_buff_or_die(s);
     LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMGetTypeByName(ctx->mod, "string"), gstr_name);
-    RFS_buffer_pop();
     LLVMSetInitializer(global_val, string_decl);
+    RFS_pop();
     return global_val;
 }
 

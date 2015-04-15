@@ -135,10 +135,10 @@ LLVMTypeRef backend_llvm_type(const struct rir_type *type,
     if (rir_type_is_elementary(type)) {
         ret = backend_llvm_rir_elementary_to_type(type->category, ctx);
     } else if (type->category == COMPOSITE_RIR_DEFINED) {
-        RFS_buffer_push();
-        name = rf_string_cstr_from_buff(type->name);
+        RFS_push();
+        name = rf_string_cstr_from_buff_or_die(type->name);
         ret = LLVMGetTypeByName(ctx->mod, name);
-        RFS_buffer_pop();
+        RFS_pop();
     } else {
         RF_ASSERT(false, "Not yet implemented type");
     }
@@ -206,16 +206,16 @@ LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
 
     // from here and down it's a cast to string
     if (args->type == AST_CONSTANT) {
-        RFS_buffer_push();
+        RFS_push();
         LLVMValueRef ret_str;
-        const struct RFstring *temps;
+        struct RFstring *temps;
         switch (ast_constant_get_type(args)) {
         case CONSTANT_NUMBER_INTEGER:
-            temps = RFS_("%"PRIu64, args->constant.value.integer);
+            RFS(&temps, "%"PRIu64, args->constant.value.integer);
             break;
         case CONSTANT_NUMBER_FLOAT:
             // for now float conversion to string will use 4 decimal digits precision
-            temps = RFS_("%.4f", args->constant.value.floating);
+            RFS(&temps, "%.4f", args->constant.value.floating);
             break;
         case CONSTANT_BOOLEAN:
             return args->constant.value.boolean
@@ -228,12 +228,11 @@ LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
         }
 
         ret_str = backend_llvm_create_global_const_string(temps, ctx);
-        RFS_buffer_pop();
+        RFS_pop();
         return ret_str;
     }
 
     if (type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_BOOL)) {
-        RFS_buffer_push();
         LLVMBasicBlockRef taken_branch = backend_llvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef fallthrough_branch = backend_llvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef if_end = backend_llvm_add_block_before_funcend(ctx);
@@ -253,7 +252,6 @@ LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
                                  ctx);
         LLVMBuildBr(ctx->builder, if_end);
         backend_llvm_enter_block(ctx, if_end);
-        RFS_buffer_pop();
         return string_alloca;
     }
 
@@ -286,10 +284,12 @@ LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
         RF_ERROR("Unable to retrieve string literal from table during LLVM compile");
         return NULL;
     }
-    RFS_buffer_push();
-    const char *cstr = rf_string_cstr_from_buff(RFS_("gstr_%u", hash));
+    RFS_push();
+    struct RFstring *str;
+    RFS(&str, "gstr_%u", hash);
+    const char *cstr = rf_string_cstr_from_buff_or_die(str);
     LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->mod, cstr);
-    RFS_buffer_pop();
+    RFS_pop();
     return global_str;
 }
 
@@ -315,11 +315,11 @@ void backend_llvm_compile_typedecl(const struct RFstring *name,
                                    struct llvm_traversal_ctx *ctx)
 {
     char *name_cstr;
-    RFS_buffer_push();
-    name_cstr = rf_string_cstr_from_buff(name);
+    RFS_push();
+    name_cstr = rf_string_cstr_from_buff_or_die(name);
     LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
                                                  name_cstr);
-    RFS_buffer_pop();
+    RFS_pop();
 
     if (!type) {
         type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
@@ -461,13 +461,13 @@ static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
     char *name;
     // for each symbol, allocate an LLVM variable in the stack with alloca
     struct rir_type *type = symbol_table_record_rir_type(rec);
-    RFS_buffer_push();
-    name = rf_string_cstr_from_buff(symbol_table_record_id(rec));
+    RFS_push();
+    name = rf_string_cstr_from_buff_or_die(symbol_table_record_id(rec));
     // note: this simply creates the stack space but does not allocate it
     LLVMTypeRef llvm_type = backend_llvm_type(type, ctx);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, name);
     symbol_table_record_set_backend_handle(rec, allocation);
-    RFS_buffer_pop();
+    RFS_pop();
 }
 
 void backend_llvm_compile_basic_block(struct rir_basic_block *block,
@@ -490,8 +490,13 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
 {
     struct rir_function *fn;
     const char *mod_name;
-    RFS_buffer_push();
+    ctx->mod = NULL;
+    RFS_push();
     mod_name = rf_string_cstr_from_buff(&mod->name);
+    if (!mod_name) {
+        RF_ERROR("Failure to create null terminated cstring from RFstring");
+        goto end;
+    }
     ctx->mod = LLVMModuleCreateWithName(mod_name);
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->mod));
 
@@ -515,6 +520,6 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     }
 
 end:
-    RFS_buffer_pop();
+    RFS_pop();
     return ctx->mod;
 }

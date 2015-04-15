@@ -502,54 +502,88 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
-static const struct RFstring *type_str_do(const struct type *t, int options)
+static bool type_str_do(struct RFstring **ret, const struct type *t, int options)
 {
+
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        return type_elementary_get_str(t->elementary.etype);
+        *ret = (struct RFstring*)type_elementary_get_str(t->elementary.etype);
+        return true;
     case TYPE_CATEGORY_OPERATOR:
-        return RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                    RF_STR_PF_ARG(type_str_do(t->operator.left, options)),
-                    RF_STR_PF_ARG(type_op_str(t->operator.type)),
-                    RF_STR_PF_ARG(type_str_do(t->operator.right, options)));
+    {
+        struct RFstring *sleft;
+        struct RFstring *sright;
+        if (!type_str_do(&sleft, t->operator.left, options)) {
+            return false;
+        }
+        if (!type_str_do(&sright, t->operator.right, options)) {
+            return false;
+        }
+
+        RFS(ret, RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+            RF_STR_PF_ARG(sleft),
+            RF_STR_PF_ARG(type_op_str(t->operator.type)),
+            RF_STR_PF_ARG(sright));
+        return true;
+    }
     case TYPE_CATEGORY_LEAF:
-        return RF_BITFLAG_ON(options, TSTR_LEAF_ID)
-            ? RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT, RF_STR_PF_ARG(t->leaf.id),
-                   RF_STR_PF_ARG(type_str_do(t->leaf.type, options)))
-            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_str_do(t->leaf.type, options)));
+    {
+        struct RFstring *sleaf_type;
+        if (!type_str_do(&sleaf_type, t->leaf.type, options)) {
+            return false;
+        }
+        if (RF_BITFLAG_ON(options, TSTR_LEAF_ID)) {
+        RFS(ret, RF_STR_PF_FMT":"RF_STR_PF_FMT,
+            RF_STR_PF_ARG(t->leaf.id),
+            RF_STR_PF_ARG(sleaf_type));
+        } else {
+            RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(sleaf_type));
+        }
+        return true;
+    }
     case TYPE_CATEGORY_DEFINED:
-        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
+        RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
+        return true;
     case TYPE_CATEGORY_WILDCARD:
-        return RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
+        RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
+        return true;
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
         break;
     }
 
-    return NULL;
+    return false;
 }
 
-const struct RFstring *type_str(const struct type *t, int options)
+bool type_str(struct RFstring **ret, const struct type *t, int options)
 {
     if (t->category == TYPE_CATEGORY_DEFINED &&
         RF_BITFLAG_ON(options, TSTR_DEFINED_CONTENTS)) {
+
         RF_BITFLAG_UNSET(options, TSTR_DEFINED_CONTENTS);
-        return RFS_(RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
-                    RF_STR_PF_ARG(t->defined.name),
-                    RF_STR_PF_ARG(type_str_do(t->defined.type, options)));
+        struct RFstring *sdefined;
+        if (!type_str_do(&sdefined, t->defined.type, options)) {
+            return false;
+        }
+        RFS(ret, RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
+            RF_STR_PF_ARG(t->defined.name),
+            RF_STR_PF_ARG(sdefined));
+        return true;
     } else {
-        return type_str_do(t, options);
+        return type_str_do(ret, t, options);
     }
 }
 
 size_t type_get_uid(const struct type *t)
 {
     size_t ret;
-    RFS_buffer_push();
-    const struct RFstring *s = type_str(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS);
-    RF_ASSERT_OR_EXIT(s, "Type string could not be created");
-    ret = rf_hash_str_stable(s, 0);
-    RFS_buffer_pop();
+    struct RFstring *str;
+    RFS_push();
+    if (!type_str(&str, t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS)) {
+        RF_ASSERT_OR_EXIT(str, "Type string could not be created");
+    }
+    ret = rf_hash_str_stable(str, 0);
+    RFS_pop();
     return ret;
 }
 
@@ -684,5 +718,5 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
         return false;
     }
 
-    return post_cb(t, user_arg);    
+    return post_cb(t, user_arg);
 }

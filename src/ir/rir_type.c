@@ -264,52 +264,22 @@ static inline struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp
     return darray_item(darray_top(ctx->rir_types)->subtypes, darray_top(ctx->indices));
 }
 
-
-// very temporary debugging macro
-/* #define TEMP_RIR_DEBUG 1 */
-#ifndef TEMP_RIR_DEBUG
-#define D(...)
-#else
-#define D(...) do {                             \
-        RFS_buffer_push();                      \
-        printf(__VA_ARGS__);                    \
-        fflush(stdout);                         \
-        RFS_buffer_pop();                       \
-    } while(0)
-#endif
-
 static inline void rir_type_cmp_ctx_idx_plus1(struct rir_type_cmp_ctx *ctx)
 {
     darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
-
-    struct rir_type *t = rir_type_cmp_ctx_current_type(ctx);
-    if (t) {
-        D("After index + 1 rir type is: "RF_STR_PF_FMT"\n",
-          RF_STR_PF_ARG(rir_type_str(t)));
-    } else {
-        D("After index + 1 we are at an invalid type\n");
-    }
 }
 
 static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
 {
-    D("Going up for operator type: "RF_STR_PF_FMT"\n",
-      RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
     enum rir_type_category op = rir_type_op_from_type(t);
     if (op != ctx->current_rir_op) {
-                D("Popping rir type ["RF_STR_PF_FMT"] from stack\n",
-                  RF_STR_PF_ARG(rir_type_str(darray_top(ctx->rir_types))));
         (void)darray_pop(ctx->indices);
         (void)darray_pop(ctx->rir_types);
 
         // also go to next index of the previous type
         ctx->current_rir_op = op;
         rir_type_cmp_ctx_idx_plus1(ctx);
-    } else {
-        D("No need to pop a rir type while going up\n");
     }
-    D("After go_up rir type is ["RF_STR_PF_FMT"]\n",
-      RF_STR_PF_ARG(rir_type_str(darray_top(ctx->rir_types))));
 }
 
 void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
@@ -329,9 +299,7 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
     struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
-    D("Going down for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
     if (!current_rir) {
-        D("Out of bounds index access\n");
         return false;
     }
     if (t->category == TYPE_CATEGORY_OPERATOR) {
@@ -339,7 +307,6 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         if (ctx->current_rir_op == RIR_TYPE_CATEGORY_COUNT) {
             ctx->current_rir_op = n_type_op;
             if (rir_type_op_from_rir_type(current_rir) == RIR_TYPE_CATEGORY_COUNT) {
-                D("Rir equivalent not a type operation\n");
                 return false;
             }
             // also go to the first index of the type
@@ -347,31 +314,23 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         } else {
             // check if we need to go deeper into the rir type
             if (n_type_op != ctx->current_rir_op) {
-                D("Pushing new rir type ["RF_STR_PF_FMT"] to stack\n",
-                  RF_STR_PF_ARG(rir_type_str(current_rir)));
                 rir_type_cmp_ctx_push_type(ctx, current_rir);
 
                 // also go to the first index of the new type
                 ctx->current_rir_op = n_type_op;
                 rir_type_cmp_ctx_idx_plus1(ctx);
-            } else {
-                D("No need to go deeper\n");
             }
         }
 
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
         if (current_rir->category != COMPOSITE_RIR_DEFINED) {
-            D("Expected defined type but did not find it\n");
             return false;
         }
 
         if (!rf_string_equal(current_rir->name, t->defined.name)) {
-            D("Two defined strings mismatch\n");
             return false;
         }
 
-        //go into the defined type
-        D("Go into defined type\n");
         rir_type_cmp_ctx_push_type(ctx, current_rir->subtypes.item[0]);
     }
     // for other type categories do nothing
@@ -385,13 +344,10 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
-        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
         if (!curr_rir) {
-            D("Out of bounds index access in elementary");
             return false;
         }
         if (!rir_type_is_elementary(curr_rir)) {
-            D("Elementary type without rir type being elementary\n");
             return false;
         }
         return (enum elementary_type)curr_rir->category == type_elementary(t);
@@ -405,27 +361,17 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 
     case TYPE_CATEGORY_LEAF:
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
-        D("Going up for: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
         if (!curr_rir) {
-            D("Out of bounds index access in leaf");
             return false;
         }
         if (!curr_rir->name || !rf_string_equal(curr_rir->name, t->leaf.id)) {
-            if (curr_rir->name) {
-                D("Leaf names mismatch with curr_rir->name: "RF_STR_PF_FMT"\n",
-                  RF_STR_PF_ARG(curr_rir->name));
-            } else {
-                D("Leaf names mismatch because curr_rir->name is NULL\n");
-            }
             return false;
         }
         if (!rir_type_equals_type(curr_rir, t->leaf.type, NULL)) {
-            D("Leaf type mismatch\n");
             return false;
         }
         // also index + 1
         rir_type_cmp_ctx_idx_plus1(ctx);
-
         break;
     default:
         RF_ASSERT(false, "Illegal type category for comparison");
@@ -500,48 +446,80 @@ static const struct RFstring rir_op_names[] = {
     [COMPOSITE_IMPLICATION_RIR_TYPE] = RF_STRING_STATIC_INIT("implication_type"),
 };
 
-const struct RFstring *rir_type_str(const struct rir_type *t)
+bool rir_type_str(struct RFstring **ret, const struct rir_type *t)
 {
     struct RFstring *s;
     struct rir_type **subtype;
     unsigned int count = 1;
     if (rir_type_is_elementary(t)) {
-        return t->name
-            ? RFS_(RF_STR_PF_FMT":"RF_STR_PF_FMT,
-                   RF_STR_PF_ARG(t->name),
-                   RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)))
-            : RFS_(RF_STR_PF_FMT, RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
+        if (t->name) {
+            RFS(ret,
+                RF_STR_PF_FMT":"RF_STR_PF_FMT,
+                RF_STR_PF_ARG(t->name),
+                RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
+        } else {
+            RFS(ret,
+                RF_STR_PF_FMT,
+                RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
+        }
+        return true;
     }
 
     switch(t->category) {
     case COMPOSITE_PRODUCT_RIR_TYPE:
     case COMPOSITE_SUM_RIR_TYPE:
     case COMPOSITE_IMPLICATION_RIR_TYPE:
-        s = t->name
-            ? RFS_(RF_STR_PF_FMT ":" RF_STR_PF_FMT"( ", RF_STR_PF_ARG(t->name),
-                   RF_STR_PF_ARG(&rir_op_names[t->category]))
-            : RFS_(RF_STR_PF_FMT"( ", RF_STR_PF_ARG(&rir_op_names[t->category]));
+        if (t->name) {
+            RFS(&s,
+                RF_STR_PF_FMT ":" RF_STR_PF_FMT"( ",
+                RF_STR_PF_ARG(t->name),
+                RF_STR_PF_ARG(&rir_op_names[t->category]));
+        } else {
+            RFS(&s,
+                RF_STR_PF_FMT"( ",
+                RF_STR_PF_ARG(&rir_op_names[t->category]));
+        }
+
         darray_foreach(subtype, t->subtypes) {
-            s = darray_size(t->subtypes) == count
-              ? RFS_(RF_STR_PF_FMT RF_STR_PF_FMT,
-                     RF_STR_PF_ARG(s),
-                     RF_STR_PF_ARG(rir_type_str(*subtype)))
-              : RFS_(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                     RF_STR_PF_ARG(s),
-                     RF_STR_PF_ARG(rir_type_str(*subtype)),
-                     RF_STR_PF_ARG(rir_type_op_to_str(t)));
+#if 0
+        struct RFstring *subtypes;
+            if (!rir_type_str(&subtypes, *subtype)) {
+                goto fail;
+            }
+            if (darray_size(t->subtypes) == count) {
+                RFS(&s,
+                    RF_STR_PF_FMT RF_STR_PF_FMT,
+                    RF_STR_PF_ARG(s),
+                    RF_STR_PF_ARG(subtypes));
+            } else {
+                RFS(&s,
+                    RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                    RF_STR_PF_ARG(s),
+                    RF_STR_PF_ARG(subtypes),
+                    RF_STR_PF_ARG(rir_type_op_to_str(t)));
+            }
+#endif
             ++ count;
         }
-        return RFS_(RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));
-    case COMPOSITE_RIR_DEFINED:
+        RFS(ret, RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));
+        return true;
 
-        return RFS_("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT " }",
-                    RF_STR_PF_ARG(t->name),
-                    RF_STR_PF_ARG(rir_type_str(darray_item(t->subtypes, 0))));
+    case COMPOSITE_RIR_DEFINED:
+        if (!rir_type_str(&s, darray_item(t->subtypes, 0))) {
+            goto fail;
+        }
+        RFS(ret, "type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT " }",
+            RF_STR_PF_ARG(t->name),
+            RF_STR_PF_ARG(s));
+        return true;
     default:
         RF_ASSERT(false, "Invalid rir_type at rir_type_str()");
-        break;
+        return false;
     }
+
+fail:
+    RF_ERROR("RFS() failure");
+    return false;
 }
 
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);

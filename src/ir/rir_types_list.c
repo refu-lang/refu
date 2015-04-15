@@ -85,8 +85,10 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
     bool found;
     rf_objset_foreach(types_set, &it1, t) {
 #if TEMP_RIR_DEBUG
-        RFS_buffer_push();
-        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(t, TSTR_LEAF_ID)));
+        RFS_push();
+        struct RFstring *types;
+        RF_TYPESTR_CHECK(types, t, TSTR_LEAF_ID, goto fail);
+        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(types));
         fflush(stdout);
 #endif
         // first of all see if this type already has an equivalent rir type
@@ -106,7 +108,7 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
         printf("created rir type: "RF_STR_PF_FMT"\n",
                RF_STR_PF_ARG(rir_type_str(created_rir_type)));
         fflush(stdout);
-        RFS_buffer_pop();
+        RFS_pop();
 #endif
         if (!created_rir_type) {
             RF_ERROR("Failed to create a rir type during transition Refu IR.");
@@ -117,4 +119,10 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
     }
 
     return true;
+
+#if TEMP_RIR_DEBUG
+    fail:
+        RFS_pop();
+        return false;
+#endif
 }

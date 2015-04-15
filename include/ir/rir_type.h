@@ -117,15 +117,17 @@ i_INLINE_DECL const struct rir_type *rir_type_get_nth_type_or_die(struct rir_typ
 /**
  * Gets a string representation of the rir_type
  *
- * Before this function you need to execute use @ref RFS_buffer_push() in order
+ * Before this function you need to use @ref RFS_push() in order
  * to remember the temporary string buffer position and after it you need to
- * pop it with @ref RFS_buffer_pop().
+ * pop it with @ref RFS_pop().
  *
- * @param t                 The type whose string representation to get
- * @return                  Returns a pointer to the the string representation.
- *                          If there is an error returns NULL.
+ * @param[out] ret          Pass a pointer to a string by reference to get the
+ *                          resulting string representation of the rir type
+ * @param[in] t             The type whose string representation to get
+ * @return                  Returns true if @a ret contains the result and false
+ *                          if there was an error
  */
-const struct RFstring *rir_type_str(const struct rir_type *t);
+bool rir_type_str(struct RFstring **ret, const struct rir_type *t);
 
 
 i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
