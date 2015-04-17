@@ -481,7 +481,6 @@ bool rir_type_str(struct RFstring **ret, const struct rir_type *t)
         }
 
         darray_foreach(subtype, t->subtypes) {
-#if 0
         struct RFstring *subtypes;
             if (!rir_type_str(&subtypes, *subtype)) {
                 goto fail;
@@ -498,7 +497,6 @@ bool rir_type_str(struct RFstring **ret, const struct rir_type *t)
                     RF_STR_PF_ARG(subtypes),
                     RF_STR_PF_ARG(rir_type_op_to_str(t)));
             }
-#endif
             ++ count;
         }
         RFS(ret, RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));

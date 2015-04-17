@@ -84,17 +84,17 @@ static void rir_testdriver_add_type(struct rir_testdriver *d,
                                     unsigned int line)
 {
     struct rir_type **subtype;
-    RFS_push();
     // just a check that the type is not already added
     darray_foreach(subtype, d->rir_types) {
+    RFS_push();
         struct RFstring *type_s;
         ck_assert(rir_type_str(&type_s, type));
         ck_assert_msg(*subtype != type,
             "Attempted to re-add rir type ["RF_STR_PF_FMT"] in the "
             "rir types list of the test driver from %s:%u",
             RF_STR_PF_ARG(type_s), filename, line);
-    }
     RFS_pop();
+    }
 
     // if adding type depends on any other type on the list add it before all
     darray_foreach(subtype, d->rir_types) {
@@ -151,8 +151,8 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
     struct rir_type *t;
     struct RFstring *type_s;
     bool found;
-    RFS_push();
     rir_types_list_for_each(&d->rir->rir_types_list, t) {
+    RFS_push();
         found = false;
         for (i = 0; i < expected_num; ++i) {
             if (rir_type_equals(t, expected_types[i])) {
@@ -165,8 +165,8 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                       "expected types list from  %s:%u",
                       RF_STR_PF_ARG(type_s), filename, line);
         count ++;
-    }
     RFS_pop();
+    }
     ck_assert_msg(expected_num == count,
         "Number of expected rir types (%u) does not "
         "match the number of created types (%u) from %s:%u",
