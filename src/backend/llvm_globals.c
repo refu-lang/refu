@@ -54,17 +54,14 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
     struct llvm_traversal_ctx *ctx)
 {
     unsigned int length = rf_string_length_bytes(string);
-    char *gstr_name;
-    char *strbuff_name;
     struct RFstring *s;
 
     RFS_PUSH();
-    s = RFS("strbuff_%u", hash);
-    strbuff_name = rf_string_cstr_from_buff_or_die(s);
+    s = RFS_NT_OR_DIE("strbuff_%u", hash);
     LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(
         rf_string_cstr_from_buff_or_die(string),
         length,
-        strbuff_name,
+        rf_string_data(s),
         ctx);
 
     LLVMValueRef indices_0 [] = {
@@ -79,9 +76,10 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
     LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"),
                                                     string_struct_layout, 2);
 
-    s = RFS("gstr_%u", hash);
-    gstr_name = rf_string_cstr_from_buff_or_die(s);
-    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod, LLVMGetTypeByName(ctx->mod, "string"), gstr_name);
+    s = RFS_NT_OR_DIE("gstr_%u", hash);
+    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod,
+                                            LLVMGetTypeByName(ctx->mod, "string"),
+                                            rf_string_data(s));
     LLVMSetInitializer(global_val, string_decl);
     RFS_POP();
     return global_val;

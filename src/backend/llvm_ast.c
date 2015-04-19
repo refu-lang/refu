@@ -285,8 +285,8 @@ LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
         return NULL;
     }
     RFS_PUSH();
-    const char *cstr = rf_string_cstr_from_buff_or_die(RFS("gstr_%u", hash));
-    LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->mod, cstr);
+    struct RFstring *temps = RFS_NT_OR_DIE("gstr_%u", hash);
+    LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->mod, rf_string_data(temps));
     RFS_POP();
     return global_str;
 }

@@ -64,12 +64,11 @@ static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
     LLVMDisposeMessage(error); // Handler == LLVMAbortProcessAction -> No need to check errors
 
     RFS_PUSH();
-    struct RFstring *temp_string = RFS_OR_DIE(
+    
+    struct RFstring *temp_s = RFS_NT_OR_DIE(
         RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_output(args)));
-
-    const char *s = rf_string_cstr_from_buff(temp_string);
-    if (0 != LLVMPrintModuleToFile(ctx.mod, s, &error)) {
+    if (0 != LLVMPrintModuleToFile(ctx.mod, rf_string_data(temp_s), &error)) {
         ERROR("LLVM-error: %s", error);
         LLVMDisposeMessage(error);
         goto end;

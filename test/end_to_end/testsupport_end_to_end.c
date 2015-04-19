@@ -129,7 +129,6 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
 {
     char stdout_buff[1024];
     FILE *proc;
-    struct RFstring *s;
     const struct RFstring* output = compiler_args_get_output(d->compiler.args);
 
     RFS_PUSH();
@@ -149,7 +148,6 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
         }
         ck_assert_rf_str_eq_nntstr(expected_output, stdout_buff, output_length);
     }
-
 
     *ret_value = WEXITSTATUS(rf_pclose(proc));
     return true;
