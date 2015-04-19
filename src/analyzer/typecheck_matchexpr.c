@@ -42,20 +42,15 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
                 }
             }
             if (!found) {
-                struct RFstring *ts;
-                RFS_push();
-                if (type_str(&ts, t1, TSTR_DEFAULT)) {
-                    analyzer_err(analyzer, ast_node_startmark(matchexpr),
-                        ast_node_endmark(matchexpr),
-                        "Match expression does not match all cases for "
-                        "\""RF_STR_PF_FMT"\". Sum type operand of "
-                        "\""RF_STR_PF_FMT"\" is not covered.",
-                        RF_STR_PF_ARG(ast_identifier_str(ast_matchexpr_identifier(matchexpr))),
-                        RF_STR_PF_ARG(ts));
-                } else {
-                    RF_ERROR("Error at computing the string representation of a type");
-                }
-                RFS_pop();
+                RFS_PUSH();
+                analyzer_err(analyzer, ast_node_startmark(matchexpr),
+                             ast_node_endmark(matchexpr),
+                             "Match expression does not match all cases for "
+                             "\""RF_STR_PF_FMT"\". Sum type operand of "
+                             "\""RF_STR_PF_FMT"\" is not covered.",
+                             RF_STR_PF_ARG(ast_identifier_str(ast_matchexpr_identifier(matchexpr))),
+                             RF_STR_PF_ARG(type_str_or_die(t1, TSTR_DEFAULT)));
+                RFS_POP();
                 ret = false;
             }
         }
@@ -185,7 +180,6 @@ static bool pattern_match_type_operators(const struct type *pattern,
 
 enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_traversal_ctx* ctx)
 {
-    enum traversal_cb_res ret = TRAVERSAL_CB_ERROR;
     struct ast_node *parent_matchexpr_id = ast_matchexpr_identifier(
         analyzer_traversal_ctx_get_nth_parent(0, ctx)
     );
@@ -193,28 +187,21 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     const struct type *match_type = parent_matchexpr_id->expression_type;
     const struct type *res_type = ast_matchcase_expression(n)->expression_type;
     RF_ASSERT(case_pattern_type, "a type for the match case should have been determined");
-    RFS_push();
-    if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
-        struct RFstring *case_s;
-        struct RFstring *match_s;
-        RF_TYPESTR_CHECK(case_s, case_pattern_type, TSTR_DEFAULT, goto end);
-        RF_TYPESTR_CHECK(match_s, match_type, TSTR_DEFINED_CONTENTS, goto end);
 
+    if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
+        RFS_PUSH();
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Match case \""RF_STR_PF_FMT"\" can not be matched to the "
                      "type of \""RF_STR_PF_FMT"\" which is of type \""RF_STR_PF_FMT"\".",
-                     RF_STR_PF_ARG(case_s),
+                     RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
                      RF_STR_PF_ARG(ast_identifier_str(parent_matchexpr_id)),
-                     RF_STR_PF_ARG(match_s));
-        goto end;
+                     RF_STR_PF_ARG(type_str_or_die(match_type, TSTR_DEFINED_CONTENTS)));
+        RFS_POP();
+        return TRAVERSAL_CB_ERROR;
     }
     RF_ASSERT(res_type, "Type of a match case's expression was not determined.");
     traversal_node_set_type(n, res_type, ctx);
-    ret = TRAVERSAL_CB_OK;
-
-end:
-    RFS_pop();
-    return ret;
+    return TRAVERSAL_CB_OK;
 }
 
 enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,

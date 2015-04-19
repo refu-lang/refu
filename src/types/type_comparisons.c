@@ -182,15 +182,15 @@ static bool type_elementary_compare(const struct type_elementary *from,
                 }
                 if (reason != TYPECMP_EXPLICIT_CONVERSION) {
                     // warning
-					struct RFstring *warnings;
-                    RFS_push();
-					RFS(&warnings,
-						"Implicit conversion from \""RF_STR_PF_FMT"\" to \""
-						RF_STR_PF_FMT"\"",
-						RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-						RF_STR_PF_ARG(type_elementary_get_str(to->etype)));
-					typecmp_ctx_add_warning(warnings);
-                    RFS_pop();
+                    RFS_PUSH();
+					typecmp_ctx_add_warning(
+                        RFS_OR_DIE(
+                            "Implicit conversion from \""RF_STR_PF_FMT"\" to \""
+                            RF_STR_PF_FMT"\"",
+                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
+                            RF_STR_PF_ARG(type_elementary_get_str(to->etype)))
+                    );
+                    RFS_POP();
                 }
             }
             // conversion from signed to unsigned
@@ -204,15 +204,15 @@ static bool type_elementary_compare(const struct type_elementary *from,
                 
                 if (reason != TYPECMP_EXPLICIT_CONVERSION) {
                     // warning
-					struct RFstring *warnings;
-                    RFS_push();
-					RFS(&warnings,
-						"Implicit signed to unsigned conversion from \""RF_STR_PF_FMT"\" "
-						"to \""RF_STR_PF_FMT"\"",
-						RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-						RF_STR_PF_ARG(type_elementary_get_str(to->etype)));
-					typecmp_ctx_add_warning(warnings);
-                    RFS_pop();
+                    RFS_PUSH();
+					typecmp_ctx_add_warning(
+                        RFS_OR_DIE(
+                            "Implicit signed to unsigned conversion from \""RF_STR_PF_FMT"\" "
+                            "to \""RF_STR_PF_FMT"\"",
+                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
+                            RF_STR_PF_ARG(type_elementary_get_str(to->etype)))
+                    );
+                    RFS_POP();
                 }
             }
             TYPECMP_RETURN(true);

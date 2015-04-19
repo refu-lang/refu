@@ -63,9 +63,9 @@ static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
     LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error);
     LLVMDisposeMessage(error); // Handler == LLVMAbortProcessAction -> No need to check errors
 
-    RFS_push();
-    struct RFstring *temp_string;
-    RFS(&temp_string, RF_STR_PF_FMT".ll",
+    RFS_PUSH();
+    struct RFstring *temp_string = RFS_OR_DIE(
+        RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_output(args)));
 
     const char *s = rf_string_cstr_from_buff(temp_string);
@@ -77,7 +77,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
 
     ret = true;
 end:
-    RFS_pop();
+    RFS_POP();
     llvm_traversal_ctx_deinit(&ctx);
     LLVMShutdown();
     return ret;
@@ -94,14 +94,15 @@ static bool transformation_step_do(struct compiler_args *args,
     struct RFstring *cmd;
     const struct RFstring* output = compiler_args_get_output(args);
     bool ret = true;
-    RFS_push();
+    RFS_PUSH();
 
-    RFS(&inname, RF_STR_PF_FMT".%s",
-        RF_STR_PF_ARG(output), insuff);
-    RFS(&cmd,
+    inname = RFS(RF_STR_PF_FMT".%s", RF_STR_PF_ARG(output), insuff);
+    cmd = RFS(
         "%s "RF_STR_PF_FMT" -o "RF_STR_PF_FMT".%s",
-        executable, RF_STR_PF_ARG(inname),
-        RF_STR_PF_ARG(output), outsuff);
+        executable,
+        RF_STR_PF_ARG(inname),
+        RF_STR_PF_ARG(output),
+        outsuff);
     proc = rf_popen(cmd, "r");
 
     if (!proc) {
@@ -120,7 +121,7 @@ static bool transformation_step_do(struct compiler_args *args,
     rf_system_delete_file(inname);
     fflush(stdout);
 end:
-    RFS_pop();
+    RFS_POP();
     return ret;
 }
 

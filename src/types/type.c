@@ -502,88 +502,79 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     return NULL;
 }
 
-static bool type_str_do(struct RFstring **ret, const struct type *t, int options)
+static struct RFstring *type_str_do(const struct type *t, int options)
 {
 
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        *ret = (struct RFstring*)type_elementary_get_str(t->elementary.etype);
-        return true;
+        return (struct RFstring*)type_elementary_get_str(t->elementary.etype);
     case TYPE_CATEGORY_OPERATOR:
     {
         struct RFstring *sleft;
         struct RFstring *sright;
-        if (!type_str_do(&sleft, t->operator.left, options)) {
-            return false;
-        }
-        if (!type_str_do(&sright, t->operator.right, options)) {
-            return false;
+        sleft = type_str_do(t->operator.left, options);
+        sright = type_str_do(t->operator.right, options);
+        if (!sleft || !sright) {
+            return NULL;
         }
 
-        RFS(ret, RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-            RF_STR_PF_ARG(sleft),
-            RF_STR_PF_ARG(type_op_str(t->operator.type)),
-            RF_STR_PF_ARG(sright));
-        return true;
+        return RFS(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                   RF_STR_PF_ARG(sleft),
+                   RF_STR_PF_ARG(type_op_str(t->operator.type)),
+                   RF_STR_PF_ARG(sright));
     }
     case TYPE_CATEGORY_LEAF:
     {
         struct RFstring *sleaf_type;
-        if (!type_str_do(&sleaf_type, t->leaf.type, options)) {
-            return false;
+        sleaf_type = type_str_do(t->leaf.type, options);
+        if (!sleaf_type) {
+            return NULL;
         }
-        if (RF_BITFLAG_ON(options, TSTR_LEAF_ID)) {
-        RFS(ret, RF_STR_PF_FMT":"RF_STR_PF_FMT,
-            RF_STR_PF_ARG(t->leaf.id),
-            RF_STR_PF_ARG(sleaf_type));
-        } else {
-            RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(sleaf_type));
-        }
-        return true;
+        return RF_BITFLAG_ON(options, TSTR_LEAF_ID)
+                ? RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
+                      RF_STR_PF_ARG(t->leaf.id),
+                      RF_STR_PF_ARG(sleaf_type))
+                : RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(sleaf_type));
     }
     case TYPE_CATEGORY_DEFINED:
-        RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
-        return true;
+        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
     case TYPE_CATEGORY_WILDCARD:
-        RFS(ret, RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
-        return true;
+        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
     default:
         RF_ASSERT(false, "TODO: Not yet implemented");
         break;
     }
 
-    return false;
+    return NULL;
 }
 
-bool type_str(struct RFstring **ret, const struct type *t, int options)
+struct RFstring *type_str(const struct type *t, int options)
 {
     if (t->category == TYPE_CATEGORY_DEFINED &&
         RF_BITFLAG_ON(options, TSTR_DEFINED_CONTENTS)) {
 
         RF_BITFLAG_UNSET(options, TSTR_DEFINED_CONTENTS);
-        struct RFstring *sdefined;
-        if (!type_str_do(&sdefined, t->defined.type, options)) {
-            return false;
+        struct RFstring *sdefined = type_str_do(t->defined.type, options);
+        if (!sdefined) {
+            return NULL;
         }
-        RFS(ret, RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
-            RF_STR_PF_ARG(t->defined.name),
-            RF_STR_PF_ARG(sdefined));
-        return true;
+        return RFS(RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
+                   RF_STR_PF_ARG(t->defined.name),
+                   RF_STR_PF_ARG(sdefined));
     } else {
-        return type_str_do(ret, t, options);
+        return type_str_do(t, options);
     }
 }
+i_INLINE_INS struct RFstring *type_str_or_die(const struct type *t, int options);
 
 size_t type_get_uid(const struct type *t)
 {
     size_t ret;
     struct RFstring *str;
-    RFS_push();
-    if (!type_str(&str, t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS)) {
-        RF_ASSERT_OR_EXIT(str, "Type string could not be created");
-    }
+    RFS_PUSH();
+    str = type_str_or_die(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS);
     ret = rf_hash_str_stable(str, 0);
-    RFS_pop();
+    RFS_POP();
     return ret;
 }
 

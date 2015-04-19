@@ -446,78 +446,67 @@ static const struct RFstring rir_op_names[] = {
     [COMPOSITE_IMPLICATION_RIR_TYPE] = RF_STRING_STATIC_INIT("implication_type"),
 };
 
-bool rir_type_str(struct RFstring **ret, const struct rir_type *t)
+struct RFstring *rir_type_str(const struct rir_type *t)
 {
     struct RFstring *s;
     struct rir_type **subtype;
     unsigned int count = 1;
     if (rir_type_is_elementary(t)) {
-        if (t->name) {
-            RFS(ret,
-                RF_STR_PF_FMT":"RF_STR_PF_FMT,
-                RF_STR_PF_ARG(t->name),
+        return t->name
+            ? RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
+                  RF_STR_PF_ARG(t->name),
+                  RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)))
+            : RFS(RF_STR_PF_FMT,
                 RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
-        } else {
-            RFS(ret,
-                RF_STR_PF_FMT,
-                RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)t->category)));
-        }
-        return true;
     }
 
     switch(t->category) {
     case COMPOSITE_PRODUCT_RIR_TYPE:
     case COMPOSITE_SUM_RIR_TYPE:
     case COMPOSITE_IMPLICATION_RIR_TYPE:
-        if (t->name) {
-            RFS(&s,
-                RF_STR_PF_FMT ":" RF_STR_PF_FMT"( ",
-                RF_STR_PF_ARG(t->name),
-                RF_STR_PF_ARG(&rir_op_names[t->category]));
-        } else {
-            RFS(&s,
-                RF_STR_PF_FMT"( ",
-                RF_STR_PF_ARG(&rir_op_names[t->category]));
+        s = t->name
+            ? RFS(RF_STR_PF_FMT ":" RF_STR_PF_FMT"( ",
+                  RF_STR_PF_ARG(t->name),
+                  RF_STR_PF_ARG(&rir_op_names[t->category]))
+            : RFS(RF_STR_PF_FMT"( ",
+                  RF_STR_PF_ARG(&rir_op_names[t->category]));
+        if (!s) {
+            return NULL;
         }
 
         darray_foreach(subtype, t->subtypes) {
-        struct RFstring *subtypes;
-            if (!rir_type_str(&subtypes, *subtype)) {
-                goto fail;
+            struct RFstring *subtypes = rir_type_str(*subtype);
+            if (!subtypes) {
+                return NULL;
             }
-            if (darray_size(t->subtypes) == count) {
-                RFS(&s,
-                    RF_STR_PF_FMT RF_STR_PF_FMT,
-                    RF_STR_PF_ARG(s),
-                    RF_STR_PF_ARG(subtypes));
-            } else {
-                RFS(&s,
-                    RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                    RF_STR_PF_ARG(s),
-                    RF_STR_PF_ARG(subtypes),
-                    RF_STR_PF_ARG(rir_type_op_to_str(t)));
+            s = (darray_size(t->subtypes) == count)
+                ? RFS(RF_STR_PF_FMT RF_STR_PF_FMT,
+                      RF_STR_PF_ARG(s),
+                      RF_STR_PF_ARG(subtypes))
+            : RFS(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+                  RF_STR_PF_ARG(s),
+                  RF_STR_PF_ARG(subtypes),
+                  RF_STR_PF_ARG(rir_type_op_to_str(t)));
+            if (!s) {
+                return NULL;
             }
             ++ count;
         }
-        RFS(ret, RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));
-        return true;
+        return RFS(RF_STR_PF_FMT " )", RF_STR_PF_ARG(s));
 
     case COMPOSITE_RIR_DEFINED:
-        if (!rir_type_str(&s, darray_item(t->subtypes, 0))) {
-            goto fail;
-        }
-        RFS(ret, "type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT " }",
-            RF_STR_PF_ARG(t->name),
-            RF_STR_PF_ARG(s));
-        return true;
+        s = rir_type_str(darray_item(t->subtypes, 0));
+        return s
+            ? RFS("type "RF_STR_PF_FMT"{ " RF_STR_PF_FMT " }",
+                  RF_STR_PF_ARG(t->name),
+                  RF_STR_PF_ARG(s))
+            : NULL;
     default:
         RF_ASSERT(false, "Invalid rir_type at rir_type_str()");
-        return false;
+        break;
     }
-
-fail:
-    RF_ERROR("RFS() failure");
-    return false;
+    return NULL;
 }
+i_INLINE_INS struct RFstring *rir_type_str_or_die(const struct rir_type *t);
 
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);

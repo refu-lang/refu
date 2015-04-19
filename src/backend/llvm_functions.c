@@ -58,11 +58,11 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     char *name;
 
     // alloca enough space in the stack for the type created by the constructor
-    RFS_push();
+    RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(type_name);
     LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
-    RFS_pop();
+    RFS_POP();
 
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     LLVMTypeRef *params = backend_llvm_defined_member_types(defined_type, ctx);
@@ -91,10 +91,10 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
     if (type_is_function(fn_type)) {
         llvm_traversal_ctx_reset_values(ctx);
         ast_fncall_for_each_arg(n, (fncall_args_cb)fncall_args_to_value_cb, ctx);
-        RFS_push();
+        RFS_PUSH();
         char *fn_name_cstr = rf_string_cstr_from_buff_or_die(fn_name);
         LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->mod, fn_name_cstr);
-        RFS_pop();
+        RFS_POP();
         LLVMTypeRef llvm_fn_type = backend_llvm_function_type(llvm_fn);
         RF_ASSERT(LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
                   "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
@@ -144,7 +144,7 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
 {
     char *fn_name;
     char *param_name;
-    RFS_push();
+    RFS_PUSH();
     fn_name = rf_string_cstr_from_buff_or_die(&fn->name);
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
@@ -156,7 +156,7 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
                          types,
                          llvm_traversal_ctx_get_param_count(ctx),
                          false)); // never variadic for now
-    RFS_pop();
+    RFS_POP();
 
     // now handle function body
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(ctx->current_function, "entry");
@@ -173,13 +173,13 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
             // for each argument of the function allocate an LLVM variable
             // in the stack with alloca
             param_name_str = rir_type_get_nth_name_or_die(fn->arg_type, i);
-            RFS_push();
+            RFS_PUSH();
             param_name = rf_string_cstr_from_buff_or_die(param_name_str);
             allocation = LLVMBuildAlloca(
                 ctx->builder,
                 backend_llvm_type(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
                 param_name);
-            RFS_pop();
+            RFS_POP();
             // and assign to it the argument value
             LLVMBuildStore(ctx->builder, LLVMGetParam(ctx->current_function, i) ,allocation);
             // also note the alloca in the symbol table

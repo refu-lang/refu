@@ -373,8 +373,8 @@ void setup_front_tests()
     ck_assert_msg(rf_init(LOG_TARGET_STDOUT,
                           NULL,
                           LOG_WARNING,
-                          RF_DEFAULT_STRING_BUFFERS_SIZE,
-                          RF_DEFAULT_TS_WORKBUFF_SIZE),
+                          RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
+                          RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
                   "Failed to initialize refu library");
     ck_assert_msg(front_testdriver_init(&__front_testdriver),
                   "Failed to initialize front end test driver");
@@ -385,8 +385,8 @@ void setup_front_tests_with_file_log()
     ck_assert_msg(rf_init(LOG_TARGET_FILE,
                           "refu.log",
                           LOG_WARNING,
-                          RF_DEFAULT_STRING_BUFFERS_SIZE,
-                          RF_DEFAULT_TS_WORKBUFF_SIZE),
+                          RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
+                          RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
                   "Failed to initialize refu library");
     ck_assert_msg(front_testdriver_init(&__front_testdriver),
                   "Failed to initialize front end test driver");

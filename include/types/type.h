@@ -115,29 +115,27 @@ enum type_str_options {
 /**
  * Gets a string representation of the type
  *
- * Before this function you need to use @ref RFS_push() in order
+ * Before this function you need to use @ref RFS_PUSH() in order
  * to remember the temporary string buffer position and after it you need to
- * pop it with @ref RFS_pop().
+ * pop it with @ref RFS_POP().
  *
- * @param[out] ret          Pass a pointer to a string by reference to get the
- *                          resulting string representation of the type   
  * @param[in]  t            The type whose string representation to get
  * @param[in]  options      Bitflags that can have any of the options defined at
  *                          @ref type_str_options
- * @return                  Returns true if @a ret contains the result and false
- *                          if there was an error
+ * @return                  Returns a pointer to a temporary string containing
+ *                          the type's string representation or NULL in failure
  */
-bool type_str(struct RFstring **ret, const struct type *t, int options);
-/**
- * A convenience macro for saving ourselves of repetition when using type_str()
- */
-#define RF_TYPESTR_CHECK(ret_, type_, options_, stmt_)                  \
-    do {                                                                \
-        if (!type_str(&(ret_), type_, options_)) {                      \
-            RF_ERROR("Error at computing the string representation of a type"); \
-            stmt_;                                                      \
-        }                                                               \
-    } while (0)
+struct RFstring *type_str(const struct type *t, int options);
+i_INLINE_DECL struct RFstring *type_str_or_die(const struct type *t, int options)
+{
+    struct RFstring *ret = type_str(t, options);
+    if (!ret) {
+        RF_CRITICAL("type_str() failure");
+        exit(1);
+    }
+    return ret;
+}
+
 /**
  * Get a unique id for this type for use as a hash/key in data structures.
  *

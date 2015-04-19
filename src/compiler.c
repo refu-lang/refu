@@ -20,8 +20,8 @@ bool compiler_init(struct compiler *c)
     rf_init(LOG_TARGET_STDOUT,
             NULL,
             LOG_WARNING,
-            RF_DEFAULT_STRING_BUFFERS_SIZE,
-            RF_DEFAULT_TS_WORKBUFF_SIZE
+            RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
+            RF_DEFAULT_TS_SBUFF_INITIAL_SIZE
     );
 
     // initialize an error buffer string
