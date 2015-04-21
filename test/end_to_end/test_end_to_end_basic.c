@@ -101,6 +101,18 @@ START_TEST (test_type_member_access) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
 } END_TEST
 
+START_TEST (test_sum_type_creation) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | b:string }\n"
+        "fn main()->u32{\n"
+        "t1:foo = foo(234)\n"
+        "t2:foo = foo(\"hello\")\n"
+        "return 13\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 13);
+} END_TEST
+
 START_TEST (test_function_creation_and_call_noarg) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -503,6 +515,20 @@ START_TEST (test_unaryop_post_dec) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 63);
 } END_TEST
 
+START_TEST (test_matchexpr_1) {
+#if 0    // TODO
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | b:f32 }\n"
+        "fn main()->u32{\n"
+        "t1:foo = foo(0.222)\n"
+        "t2:foo = foo(123)\n"
+        "return 13\n"
+        "}");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 13);
+#endif
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -527,6 +553,7 @@ Suite *end_to_end_basic_suite_create(void)
                               teardown_end_to_end_tests);
     tcase_add_test(st_basic_types, test_type_decl);
     tcase_add_test(st_basic_types, test_type_member_access);
+    tcase_add_test(st_basic_types, test_sum_type_creation);
 
     TCase *st_functions = tcase_create("end_to_end_functions");
     tcase_add_checked_fixture(st_functions,
@@ -574,6 +601,12 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_unary_operations, test_unaryop_post_inc);
     tcase_add_test(st_unary_operations, test_unaryop_post_dec);
 
+    TCase *st_match_expr = tcase_create("end_to_end_match_expressions");
+    tcase_add_checked_fixture(st_match_expr,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_match_expr, test_matchexpr_1);
+
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_functions);
@@ -581,6 +614,7 @@ Suite *end_to_end_basic_suite_create(void)
     suite_add_tcase(s, st_comparisons);
     suite_add_tcase(s, st_explicit_conversions);
     suite_add_tcase(s, st_unary_operations);
+    suite_add_tcase(s, st_match_expr);
 
     return s;
 }

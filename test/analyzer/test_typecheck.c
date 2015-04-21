@@ -390,6 +390,22 @@ START_TEST(test_typecheck_valid_custom_type_constructor) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string | id:u32 }"
+        "fn do_something()\n"
+        "{\n"
+        "a:person = person(\"Celina\")\n"
+        "b:person = person(13)\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
 START_TEST(test_typecheck_invalid_custom_type_constructor) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type person { name:string, age:u32 }\n"
@@ -566,6 +582,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall1);
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall2);
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_constructor);
+    tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_sum_type_constructor);
 
     TCase *t_custom_types_inv = tcase_create("typecheck_invalid_custom_types");
     tcase_add_checked_fixture(t_custom_types_inv,
