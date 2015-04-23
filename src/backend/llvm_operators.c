@@ -198,8 +198,8 @@ LLVMValueRef backend_llvm_compile_assign(struct ast_node *from,
     // For left side we want the memory location if it's a simple identifier hence options = 0
     LLVMValueRef llvm_to = backend_llvm_expression_compile(to, ctx, 0);
     LLVMValueRef llvm_from = backend_llvm_expression_compile(from,
-                                                              ctx,
-                                                              RFLLVM_OPTION_IDENTIFIER_VALUE);
+                                                             ctx,
+                                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
     
     return backend_llvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, ctx);
 }

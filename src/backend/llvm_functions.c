@@ -92,28 +92,46 @@ static LLVMValueRef backend_llvm_sum_ctor_args_to_type(struct ast_node *fn_call,
         ast_fncall_params_type(fn_call),
         NULL
     );
+    // find out the index of the sum operand type in the defined type
+    size_t child_index = 0;
+    bool child_found = false;
+    struct rir_type **subtype;
+    darray_foreach(subtype, darray_item(defined_type->subtypes, 0)->subtypes) {
+        // TODO: pointer comparison fails here. Investigate why. Thought only had unique rir types
+        if (rir_type_equals(*subtype, params_type)) {
+            child_found = true;
+            break;
+        }
+        ++child_index;
+    }
+    RF_ASSERT(child_found, "LALALA");
+    RF_ASSERT_OR_CRITICAL(child_found,
+                          return NULL,
+                          "Type should have been found as child of defined type");
+    // get the LLVM struct type of the sum operand
     RFS_PUSH();
     LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
         ctx->mod,
         rf_string_cstr_from_buff_or_die(RFS_OR_DIE("internal_struct%u", rir_type_get_uid(params_type)))
     );
-    char *name;
     RFS_POP();
     RF_ASSERT(llvm_sum_type, "Internal struct was not created for sum operand");
+    // populate the sum operand's internal struct contents
     LLVMTypeRef *params = backend_llvm_type_to_subtype_array(params_type, ctx);
     LLVMValueRef populated_sum_type = backend_llvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
-
-
+    // now create the full struct and assign the contents and the selector
     RFS_PUSH();
-    name = rf_string_cstr_from_buff_or_die(type_name);
-    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
+    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod,
+                                              rf_string_cstr_from_buff_or_die(type_name));
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_POP();
-
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, allocation, indices, 2, "");
     backend_llvm_assign_defined_types(populated_sum_type, gep_to_main_contents, ctx);
     // TODO: here also set the second value of the struct (the alloca) which should be the selector
+    LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
+    LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, allocation, indices2, 2, "");
+    backend_llvm_store(LLVMConstInt(LLVMInt32Type(), 1, 0), gep_to_selector, ctx);    
     return allocation;
 }
 

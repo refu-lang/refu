@@ -107,10 +107,10 @@ START_TEST (test_sum_type_creation) {
         "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
         "t1:foo = foo(34)\n"
-        "t2:foo = foo(\"hello\")\n"
+        /* "t2:foo = foo(\"hello\")\n" */
         "return 13\n"
         "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 13);
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 13, NULL, "test_input_file.rf --backend-debug");
 } END_TEST
 
 START_TEST (test_function_creation_and_call_noarg) {

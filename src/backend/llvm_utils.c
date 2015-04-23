@@ -83,6 +83,8 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
                                                    struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef val_type = LLVMTypeOf(val);
+    unsigned long long val_size = LLVMStoreSizeOfType(ctx->target_data, val_type);
+    unsigned long long type_size = LLVMStoreSizeOfType(ctx->target_data, type);
     if (val_type != type) {
         // we have to do typecasts
         if (val_type == LLVMDoubleType() || val_type == LLVMFloatType()) {
@@ -96,6 +98,10 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
             } else { // greater or equal size
                 val = LLVMBuildTruncOrBitCast(ctx->builder, val, type, "");
             }
+        } else if (type_size >= val_size) {
+            // in this case if we got here it's probably an assignment to a sum type
+            val = LLVMBuildBitCast(ctx->builder, val, type, "");
+            /* val = LLVMBuildBitCast(ctx->builder, val, LLVMPointerType(type, 0), ""); */
         } else {
             backend_llvm_type_debug(val_type, "val_type", ctx);
             backend_llvm_type_debug(type, "to_cast_type", ctx);

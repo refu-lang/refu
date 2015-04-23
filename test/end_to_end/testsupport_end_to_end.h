@@ -80,7 +80,7 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
  *                                            an RFstring or NULL if there should be no stdout
  *                                            or we don't care to check. Default is NULL.
  * @param[optional] i_arguments               The arguments to provide to the compiler as a
- *                                            a cstrung. The default is only the filename.
+ *                                            a cstring. The default is only the filename.
  */
 #define ck_end_to_end_run(...)                                      \
     RF_SELECT_FUNC_IF_NARGGT(i_ck_end_to_end_run_with_stdout, 4, __VA_ARGS__)
