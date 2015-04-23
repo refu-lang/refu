@@ -57,7 +57,7 @@ struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
 }
 
 struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
-                                         struct type *type,
+                                         const struct type *type,
                                          const struct RFstring *name)
 {
     struct rir_type *iter_rir_type;

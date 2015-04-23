@@ -86,6 +86,7 @@ struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
         return NULL;
     }
 
+    ret->fncall.params_type = NULL;
     ast_node_register_child(ret, name, fncall.name);
     ast_node_register_child(ret, args, fncall.args);
     ast_node_register_child(ret, genr, fncall.genr);
@@ -96,6 +97,7 @@ struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
 i_INLINE_INS const struct RFstring* ast_fncall_name(struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_args(struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_genr(struct ast_node *n);
+i_INLINE_INS const struct type *ast_fncall_params_type(struct ast_node *n);
 
 static bool do_ast_fncall_for_each_arg(struct ast_node *arg, fncall_args_cb cb, void *user_arg)
 {

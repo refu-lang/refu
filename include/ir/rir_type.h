@@ -62,19 +62,26 @@ enum rir_type_category rir_type_op_from_rir_type(const struct rir_type *t);
 enum rir_type_category rir_type_op_from_type(const struct type *t);
 
 /**
+ * Returns whether a type is a combination of other types
+ */
+bool rir_type_is_sumtype(const struct rir_type *a);
+
+/**
  * Equality comparison for two rir types
  */
 bool rir_type_equals(struct rir_type *a, struct rir_type *b);
 
 /**
- * Equality comparison for a rir and a normal type and name combinarion
+ * Equality comparison for a rir and a normal type and name combination
  *
  * @param a          The rir type to compare
  * @param b          The normal type to compare to the rir type
  * @param name       An optional name to check for along with the type @c b. Can be NULL
  * @return           True if they are equal and false otherwise
  */
-bool rir_type_equals_type(struct rir_type *a, struct type *b, const struct RFstring *name);
+bool rir_type_equals_type(const struct rir_type *a,
+                          const struct type *b,
+                          const struct RFstring *name);
 
 /**
  * Checks if @c t is a subtype of @c other. Only checks for pointer equality
@@ -135,7 +142,6 @@ i_INLINE_DECL struct RFstring *rir_type_str_or_die(const struct rir_type *t)
     }
     return ret;
 }
-
 
 i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
 {

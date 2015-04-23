@@ -560,6 +560,11 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
             RFS_POP();
             goto fail;
         }
+        // the function call's matched type should be either a specific sum type
+        // that may have matched of the entirety of the called arguments
+        if (!(n->fncall.params_type = typemp_ctx_get_matched_type())) {
+            n->fncall.params_type = fn_found_args_type;
+        }
     }
 
     traversal_node_set_type(n, type_callable_get_rettype(fn_type), ctx);

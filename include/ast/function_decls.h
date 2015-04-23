@@ -5,6 +5,7 @@
 
 struct ast_node;
 struct inplocation_mark;
+struct type;
 
 //! The position in the code where a function declaration is found
 enum fndecl_position {
@@ -48,6 +49,9 @@ struct ast_fncall {
     struct ast_node *name;
     //! Expression describing the function arguments or NULL if there is no arguments
     struct ast_node *args;
+    //! Type that matched this particular function call's parameters
+    //! during typechecking.
+    const struct type *params_type;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

@@ -48,9 +48,12 @@ struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
  *
  * @param list        The rir types list
  * @param type        A normal type whose equivalent to search for in the list
+ * @param name        An optional name to pass to @ref rir_type_equals_type() 
+ *                    for the search
+ * @return            The rir type or NULL if it was not found in the list.
  */
 struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
-                                         struct type *type,
+                                         const struct type *type,
                                          const struct RFstring *name);
 
 /**

@@ -34,5 +34,4 @@ void rir_deinit(struct rir *r);
 void rir_destroy(struct rir *r);
 
 struct rir_module *rir_process(struct rir *r);
-
 #endif

@@ -30,10 +30,12 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
     darray_init(ctx->values);
+    rir_types_map_init(&ctx->types_map);
 }
 
 static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
+    rir_types_map_deinit(&ctx->types_map);
     darray_free(ctx->params);
     darray_free(ctx->values);
     LLVMDisposeBuilder(ctx->builder);

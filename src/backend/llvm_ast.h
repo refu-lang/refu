@@ -7,6 +7,7 @@
 #include <Data_Structures/darray.h>
 #include <types/type_decls.h>
 #include <ir/rir_type_decls.h>
+#include "llvm_types.h"
 
 struct RFstring;
 
@@ -38,6 +39,8 @@ struct llvm_traversal_ctx {
     struct LLVMOpaqueTargetData *target_data;
     struct {darray(struct LLVMOpaqueType*);} params;
     struct {darray(struct LLVMOpaqueValue*);} values;
+    //! Map from rir type to LLVM structs
+    struct rir_types_map types_map;
 
     struct compiler_args *args;
     struct rir *rir;
@@ -127,17 +130,7 @@ struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
                                                         struct llvm_traversal_ctx *ctx,
                                                         int options);
 
-/**
- * Compile a type declaration
- *
- * @param name        Provide the name of the type to create
- * @param type        [optional] Can provide the rir_type to declare here.
- *                    IF it's NULL then the type is searched for in the rir types list
- * @param ctx         The llvm traversal context
- */
-void backend_llvm_compile_typedecl(const struct RFstring *name,
-                                   struct rir_type *type,
-                                   struct llvm_traversal_ctx *ctx);
+
 
 
 void backend_llvm_compile_basic_block(struct rir_basic_block *block,
@@ -162,12 +155,4 @@ struct LLVMOpaqueValue *backend_llvm_cast_value_to_elementary_maybe(
     const struct type *t,
     struct llvm_traversal_ctx *ctx);
 
-/**
- * Given a rir type get its defined member types as an array of LLVMTypeRefs
- *
- * @param type        The rir type whose members to get
- * @param ctx         The llvm traversal context
- */
-struct LLVMOpaqueType **backend_llvm_defined_member_types(struct rir_type *type,
-                                                          struct llvm_traversal_ctx *ctx);
 #endif

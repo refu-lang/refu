@@ -113,6 +113,7 @@ if local_env['LANG_BACKEND'] == 'LLVM':
         'backend/llvm_globals.c',
         'backend/llvm_operators.c',
         'backend/llvm_functions.c',
+        'backend/llvm_types.c',
     ]
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'

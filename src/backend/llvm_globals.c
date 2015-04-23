@@ -21,14 +21,17 @@
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
-static void backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
+static bool backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *t;
     rir_types_list_for_each(&ctx->rir->rir_types_list, t) {
         if (t->category == COMPOSITE_RIR_DEFINED) {
-            backend_llvm_compile_typedecl(t->name, t, ctx);
+            if (!backend_llvm_compile_typedecl(t->name, t, ctx)) {
+                return false;
+            }
         }
     }
+    return true;
 }
 
 static LLVMValueRef backend_llvm_add_global_strbuff(char *str_data, size_t str_len,
@@ -189,7 +192,10 @@ bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
     backend_llvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
 
 
-    backend_llvm_create_global_types(ctx);
+    if (!backend_llvm_create_global_types(ctx)) {
+        RF_ERROR("Could not create global types");
+        return false;
+    }
 
     if (!backend_llvm_create_global_functions(ctx)) {
         RF_ERROR("Could not create global functions");

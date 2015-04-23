@@ -121,6 +121,12 @@ i_INLINE_DECL struct ast_node* ast_fncall_genr(struct ast_node *n)
     return n->fncall.genr;
 }
 
+i_INLINE_DECL const struct type *ast_fncall_params_type(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    return n->fncall.params_type;
+}
+
 typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);
 /**
  * Function call arguments iteration callback.

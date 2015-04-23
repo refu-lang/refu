@@ -188,6 +188,30 @@ enum rir_type_category rir_type_op_from_type(const struct type *t)
     }
 }
 
+
+static inline bool rir_type_op_is_sumtype(const struct rir_type *t)
+{
+    return darray_size(t->subtypes) && t->category == COMPOSITE_SUM_RIR_TYPE;
+}
+
+static inline bool rir_type_defined_is_sumtype(const struct rir_type *t)
+{
+    RF_ASSERT(t->category == COMPOSITE_RIR_DEFINED, "Called with non defined type");
+    RF_ASSERT(darray_size(t->subtypes) == 1,
+              "A defined type should always have 1 direct subtype");
+    
+    return rir_type_is_sumtype(darray_item(t->subtypes, 0));
+}
+
+bool rir_type_is_sumtype(const struct rir_type *t)
+{
+    if (t->category == COMPOSITE_RIR_DEFINED) {
+        return rir_type_defined_is_sumtype(t);
+    }
+    return rir_type_op_is_sumtype(t);
+}
+
+
 bool rir_type_equals(struct rir_type *a, struct rir_type *b)
 {
     struct rir_type **subtype_a = NULL;
@@ -240,18 +264,19 @@ struct rir_type_cmp_ctx {
     //! Current type operation while iterating the rir type to type comparison
     enum rir_type_category current_rir_op;
     //! A stack of the currently visited rir types
-    struct {darray(struct rir_type*);} rir_types;
+    struct {darray(const struct rir_type*);} rir_types;
     //! A stack of the indices of the currently visited rir types
     darray(int) indices;
 };
 
-static inline void rir_type_cmp_ctx_push_type(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
+static inline void rir_type_cmp_ctx_push_type(struct rir_type_cmp_ctx *ctx,
+                                              const struct rir_type *rir_type)
 {
     darray_push(ctx->rir_types, rir_type);
     darray_push(ctx->indices, -1);
 }
 
-static inline struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp_ctx *ctx)
+static inline const struct rir_type *rir_type_cmp_ctx_current_type(struct rir_type_cmp_ctx *ctx)
 {
     if (darray_top(ctx->indices) == -1) {
         return darray_top(ctx->rir_types);
@@ -282,7 +307,7 @@ static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct t
     }
 }
 
-void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, struct rir_type *rir_type)
+static void rir_type_cmp_ctx_init(struct rir_type_cmp_ctx *ctx, const struct rir_type *rir_type)
 {
     darray_init(ctx->rir_types);
     darray_init(ctx->indices);
@@ -298,7 +323,7 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
 
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
-    struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
+    const struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
     if (!current_rir) {
         return false;
     }
@@ -339,7 +364,7 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 
 bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
-    struct rir_type *curr_rir;
+    const struct rir_type *curr_rir;
 
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
@@ -380,7 +405,9 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
     return true;
 }
 
-bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const struct RFstring *name)
+bool rir_type_equals_type(const struct rir_type *r_type,
+                          const struct type *n_type,
+                          const struct RFstring *name)
 {
     struct rir_type_cmp_ctx ctx;
     bool ret;
@@ -390,8 +417,12 @@ bool rir_type_equals_type(struct rir_type *r_type, struct type *n_type, const st
     }
 
     rir_type_cmp_ctx_init(&ctx, r_type);
-    ret = type_traverse(n_type, (type_iterate_cb)(rir_type_cmp_pre_cb),
-                        (type_iterate_cb)(rir_type_cmp_post_cb), &ctx);
+    ret = type_traverse(
+        (struct type*)n_type,
+        (type_iterate_cb)(rir_type_cmp_pre_cb),
+        (type_iterate_cb)(rir_type_cmp_post_cb),
+        &ctx
+    );
     rir_type_cmp_ctx_deinit(&ctx);
     return ret;
 }

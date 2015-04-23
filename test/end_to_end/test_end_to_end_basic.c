@@ -106,7 +106,7 @@ START_TEST (test_sum_type_creation) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
-        "t1:foo = foo(234)\n"
+        "t1:foo = foo(34)\n"
         "t2:foo = foo(\"hello\")\n"
         "return 13\n"
         "}");

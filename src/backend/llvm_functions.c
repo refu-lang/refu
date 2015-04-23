@@ -64,9 +64,18 @@ static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_POP();
 
+    LLVMTypeRef *params;
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
-    LLVMTypeRef *params = backend_llvm_defined_member_types(defined_type, ctx);
-
+    if (rir_type_is_sumtype(defined_type)) {
+        struct rir_type *params_type = rir_types_list_get_type(
+            &ctx->rir->rir_types_list,
+            ast_fncall_params_type(fn_call),
+            NULL
+        );
+        params = backend_llvm_type_to_subtype_array(params_type, ctx);
+    } else {
+        params = backend_llvm_simple_defined_member_types(defined_type, ctx);
+    }
     ctor_args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
     ast_fncall_for_each_arg(fn_call, (fncall_args_cb)ctor_args_to_value_cb, &cb_ctx);
 
@@ -120,22 +129,7 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
 static LLVMTypeRef *backend_llvm_fn_arg_types(struct rir_type *type,
                                               struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type **subtype;
-    LLVMTypeRef llvm_type;
-    llvm_traversal_ctx_reset_params(ctx);
-    if (darray_size(type->subtypes) == 0) {
-        llvm_type = backend_llvm_type(type, ctx);
-        if (llvm_type != LLVMVoidType()) {
-            llvm_traversal_ctx_add_param(ctx, llvm_type);
-        }
-    } else {
-        darray_foreach(subtype, type->subtypes) {
-            llvm_type = backend_llvm_type(*subtype, ctx);
-            if (llvm_type != LLVMVoidType()) {
-                llvm_traversal_ctx_add_param(ctx, llvm_type);
-            }
-        }
-    }
+    backend_llvm_type_to_subtype_array(type, ctx);
     return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
 }
 

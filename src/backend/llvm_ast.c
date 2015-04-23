@@ -40,6 +40,7 @@
 #include "llvm_globals.h"
 #include "llvm_operators.h"
 #include "llvm_functions.h"
+#include "llvm_types.h"
 
 LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
                                             struct llvm_traversal_ctx *ctx)
@@ -154,32 +155,6 @@ i_INLINE_INS void llvm_traversal_ctx_reset_params(struct llvm_traversal_ctx *ctx
 i_INLINE_INS struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx);
-
-LLVMTypeRef *backend_llvm_defined_member_types(struct rir_type *type,
-                                               struct llvm_traversal_ctx *ctx)
-{
-    RF_ASSERT(type->category == COMPOSITE_RIR_DEFINED, "Called with non defined type");
-    struct rir_type **subtype;
-    RF_ASSERT(darray_size(type->subtypes) == 1,
-              "A defined type should always have 1 direct subtype");
-    struct rir_type *defined_content_type = darray_item(type->subtypes, 0);
-    LLVMTypeRef llvm_type;
-    llvm_traversal_ctx_reset_params(ctx);
-    if (darray_size(defined_content_type->subtypes) == 0) {
-        llvm_type = backend_llvm_type(type, ctx);
-        if (llvm_type != LLVMVoidType()) {
-            llvm_traversal_ctx_add_param(ctx, llvm_type);
-        }
-    } else {
-        darray_foreach(subtype, defined_content_type->subtypes) {
-            llvm_type = backend_llvm_type(*subtype, ctx);
-            if (llvm_type != LLVMVoidType()) {
-                llvm_traversal_ctx_add_param(ctx, llvm_type);
-            }
-        }
-    }
-    return llvm_traversal_ctx_get_params(ctx);
-}
 
 LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
                                                          const struct type *t,
@@ -308,24 +283,6 @@ LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
     return rec->backend_handle;
 }
 
-void backend_llvm_compile_typedecl(const struct RFstring *name,
-                                   struct rir_type *type,
-                                   struct llvm_traversal_ctx *ctx)
-{
-    char *name_cstr;
-    RFS_PUSH();
-    name_cstr = rf_string_cstr_from_buff_or_die(name);
-    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
-                                                 name_cstr);
-    RFS_POP();
-
-    if (!type) {
-        type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
-    }
-    LLVMTypeRef *members = backend_llvm_defined_member_types(type, ctx);
-    LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
-}
-
 void backend_llvm_ifexpr_compile(struct rir_branch *branch,
                                  struct llvm_traversal_ctx *ctx)
 {
@@ -427,7 +384,8 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         return backend_llvm_expression_compile_vardecl(n, ctx);
     case AST_TYPE_DECLARATION:
-        backend_llvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx);
+        RF_ASSERT(backend_llvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx),
+        "typedecl compile should never fail");
         break;
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");

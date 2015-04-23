@@ -18,6 +18,7 @@
 struct typecmp_ctx {
     bool needs_reset;
     int flags;
+    struct type *matched_type;
     struct RFstringx err_buff;
     struct RFstringx warn_buff;
     struct {darray(struct RFstring);} warning_indices;
@@ -35,6 +36,7 @@ bool typecmp_ctx_init()
     darray_init(g_typecmp_ctx.warning_indices);
     g_typecmp_ctx.needs_reset = false;
     g_typecmp_ctx.flags = 0;
+    g_typecmp_ctx.matched_type = NULL;
     return rf_stringx_init_buff(&g_typecmp_ctx.err_buff, 1024, "") &&
         rf_stringx_init_buff(&g_typecmp_ctx.warn_buff, 1024, "");
 }
@@ -43,6 +45,7 @@ static inline void typecmp_ctx_reset()
 {
     if (g_typecmp_ctx.needs_reset) {
         g_typecmp_ctx.needs_reset = false;
+        g_typecmp_ctx.matched_type = NULL;
         g_typecmp_ctx.flags = 0;
         rf_stringx_assignv(&g_typecmp_ctx.err_buff, "");
         rf_stringx_assignv(&g_typecmp_ctx.warn_buff, "");
@@ -98,6 +101,11 @@ void typecmp_ctx_set_flags(int flags)
 {
 	typecmp_ctx_reset();
     g_typecmp_ctx.flags = flags;
+}
+
+struct type *typemp_ctx_get_matched_type()
+{
+    return g_typecmp_ctx.matched_type;
 }
 
 /* -- type comparison functions -- */
@@ -325,8 +333,15 @@ static bool type_compare_to_operator(const struct type *from,
         // one side of a sum operator)
         enum comparison_reason new_reason = reason == TYPECMP_PATTERN_MATCHING
             ? TYPECMP_PATTERN_MATCHING : TYPECMP_AFTER_IMPLICIT_CONVERSION;
-        return type_compare(from, to->left, new_reason) ||
-            type_compare(from, to->right, new_reason);
+
+        if (type_compare(from, to->left, new_reason)) {
+            g_typecmp_ctx.matched_type = to->left;
+            return true;
+        }
+        if (type_compare(from, to->right, new_reason)) {
+            g_typecmp_ctx.matched_type = to->right;
+            return true;
+        }
     }
     return false;
 }
@@ -390,6 +405,9 @@ static inline enum type_initial_check_result type_category_check(const struct ty
                    (RF_BITFLAG_ON(g_typecmp_ctx.flags, TYPECMP_FLAG_FUNCTION_CALL) ||
                     reason == TYPECMP_PATTERN_MATCHING)) {
             if (type_compare_to_operator(from, &to->operator, reason)) {
+                // this is the only place (for now?) that a match to a sum
+                // type happens. So we also have to keep information as to which
+                // sum operand matched
                 ret = TYPES_ARE_EQUAL;
             }
 		}
