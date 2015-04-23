@@ -67,7 +67,7 @@ static LLVMTypeRef backend_llvm_compile_simple_typedecl(const struct RFstring *n
     LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
                                                   name_cstr);
     RFS_POP();
-    LLVMTypeRef *members = backend_llvm_simple_defined_member_types(type, ctx);
+    LLVMTypeRef *members = backend_llvm_simple_member_types(type, ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
     return llvm_type;
 }
@@ -76,8 +76,6 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
                                           struct rir_type *type,
                                           struct llvm_traversal_ctx *ctx)
 {
-    // temporary just to test if the string name even matters
-    static unsigned int count = 0;
     if (!type) {
         type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
     }
@@ -95,11 +93,10 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
         LLVMTypeRef subtype_llvm_type = rir_types_map_get(&ctx->types_map, *subtype);
         if (!subtype_llvm_type) {
             subtype_llvm_type = backend_llvm_compile_typedecl(
-                RFS_OR_DIE("internal_struct%u", count),
+                RFS_OR_DIE("internal_struct%u", rir_type_get_uid(*subtype)),
                 *subtype,
                 ctx
             );
-            ++count;
             if (!subtype_llvm_type) {
                 return NULL;
             }
@@ -107,10 +104,11 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
             rir_types_map_add(&ctx->types_map, *subtype, subtype_llvm_type);
         }
         unsigned long long this_size = LLVMStoreSizeOfType(ctx->target_data, subtype_llvm_type);
-        if (max_storage_size > this_size) {
+        if (this_size > max_storage_size) {
             max_storage_size = this_size;
         }
     }
+    RF_ASSERT(max_storage_size != 0, "Loop did not run?");
     // make an array to fit the biggest sum
     LLVMTypeRef body = LLVMArrayType(LLVMInt8Type(), max_storage_size);
     // TODO: This is identical to start of backend_llvm_compile_simple_typedecl()
@@ -154,12 +152,15 @@ struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type
 }
 
 
-LLVMTypeRef *backend_llvm_simple_defined_member_types(struct rir_type *type,
-                                                      struct llvm_traversal_ctx *ctx)
+LLVMTypeRef *backend_llvm_simple_member_types(struct rir_type *type,
+                                              struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(type->category == COMPOSITE_RIR_DEFINED, "Called with non defined type");
-    RF_ASSERT(darray_size(type->subtypes) == 1,
-              "A defined type should always have 1 direct subtype");
-    RF_ASSERT(!rir_type_is_sumtype(type), "Called with defined type with sum type contents");
-    return backend_llvm_type_to_subtype_array(darray_item(type->subtypes, 0), ctx);
+    struct rir_type *actual_type = type;
+    if (type->category == COMPOSITE_RIR_DEFINED) {
+        RF_ASSERT(darray_size(type->subtypes) == 1,
+                  "A defined type should always have 1 direct subtype");
+        actual_type = darray_item(type->subtypes, 0);
+    }
+    RF_ASSERT(!rir_type_is_sumtype(actual_type), "Called with sum type contents");
+    return backend_llvm_type_to_subtype_array(actual_type, ctx);
 }

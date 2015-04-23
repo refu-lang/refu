@@ -540,4 +540,15 @@ struct RFstring *rir_type_str(const struct rir_type *t)
 }
 i_INLINE_INS struct RFstring *rir_type_str_or_die(const struct rir_type *t);
 
+size_t rir_type_get_uid(const struct rir_type *t)
+{
+    size_t ret;
+    struct RFstring *s;
+    RFS_PUSH();
+    s = rir_type_str_or_die(t);
+    ret = rf_hash_str_stable(s, 0);
+    RFS_POP();
+    return ret;
+}
+
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);

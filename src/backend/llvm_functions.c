@@ -50,36 +50,82 @@ static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_
     return true;
 }
 
-static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
-                                                   const struct RFstring *type_name,
-                                                   struct llvm_traversal_ctx *ctx)
+
+static LLVMValueRef backend_llvm_assign_params_to_defined_type(struct ast_node *fn_call,
+                                                               LLVMTypeRef type,
+                                                               LLVMTypeRef *params,
+                                                               struct llvm_traversal_ctx *ctx)
 {
     struct ctor_args_to_value_cb_ctx cb_ctx;
-    char *name;
+    LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, type, "");
+    ctor_args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
+    ast_fncall_for_each_arg(fn_call, (fncall_args_cb)ctor_args_to_value_cb, &cb_ctx);
+    return allocation;
+}
 
+static LLVMValueRef backend_llvm_simple_ctor_args_to_type(struct ast_node *fn_call,
+                                                          const struct RFstring *type_name,
+                                                          struct llvm_traversal_ctx *ctx)
+{
+    char *name;
     // alloca enough space in the stack for the type created by the constructor
+    RFS_PUSH();
+    name = rf_string_cstr_from_buff_or_die(type_name);
+    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
+    RFS_POP();
+
+    LLVMTypeRef *params;
+    struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
+    RF_ASSERT(!rir_type_is_sumtype(defined_type), "Called with sum type");
+    params = backend_llvm_simple_member_types(defined_type, ctx);
+    return backend_llvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
+}
+
+static LLVMValueRef backend_llvm_sum_ctor_args_to_type(struct ast_node *fn_call,
+                                                       const struct RFstring *type_name,
+                                                       struct llvm_traversal_ctx *ctx)
+{
+    struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
+    RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
+    struct rir_type *params_type = rir_types_list_get_type(
+        &ctx->rir->rir_types_list,
+        ast_fncall_params_type(fn_call),
+        NULL
+    );
+    RFS_PUSH();
+    LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
+        ctx->mod,
+        rf_string_cstr_from_buff_or_die(RFS_OR_DIE("internal_struct%u", rir_type_get_uid(params_type)))
+    );
+    char *name;
+    RFS_POP();
+    RF_ASSERT(llvm_sum_type, "Internal struct was not created for sum operand");
+    LLVMTypeRef *params = backend_llvm_type_to_subtype_array(params_type, ctx);
+    LLVMValueRef populated_sum_type = backend_llvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
+
+
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(type_name);
     LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_POP();
 
-    LLVMTypeRef *params;
+    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+    LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, allocation, indices, 2, "");
+    backend_llvm_assign_defined_types(populated_sum_type, gep_to_main_contents, ctx);
+    // TODO: here also set the second value of the struct (the alloca) which should be the selector
+    return allocation;
+}
+
+static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
+                                                   const struct RFstring *type_name,
+                                                   struct llvm_traversal_ctx *ctx)
+{
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     if (rir_type_is_sumtype(defined_type)) {
-        struct rir_type *params_type = rir_types_list_get_type(
-            &ctx->rir->rir_types_list,
-            ast_fncall_params_type(fn_call),
-            NULL
-        );
-        params = backend_llvm_type_to_subtype_array(params_type, ctx);
-    } else {
-        params = backend_llvm_simple_defined_member_types(defined_type, ctx);
+        return backend_llvm_sum_ctor_args_to_type(fn_call, type_name, ctx);
     }
-    ctor_args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
-    ast_fncall_for_each_arg(fn_call, (fncall_args_cb)ctor_args_to_value_cb, &cb_ctx);
-
-    return allocation;
+    return backend_llvm_simple_ctor_args_to_type(fn_call, type_name, ctx);
 }
 
 static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ctx *ctx)

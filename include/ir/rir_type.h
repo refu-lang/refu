@@ -143,6 +143,15 @@ i_INLINE_DECL struct RFstring *rir_type_str_or_die(const struct rir_type *t)
     return ret;
 }
 
+/**
+ * Gets a unique id for the rir type.
+ *
+ * TODO: Make sure this is actually indeed unique
+ * 
+ * @param t        The rir type whose unique id to get
+ */
+size_t rir_type_get_uid(const struct rir_type *t);
+
 i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
 {
     return t->category < COMPOSITE_PRODUCT_RIR_TYPE;
