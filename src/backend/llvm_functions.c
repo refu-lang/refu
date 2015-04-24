@@ -27,9 +27,9 @@ struct ctor_args_to_value_cb_ctx {
 };
 
 static void ctor_args_to_value_cb_ctx_init(struct ctor_args_to_value_cb_ctx *ctx,
-                                      struct llvm_traversal_ctx *llvm_ctx,
-                                      LLVMValueRef alloca,
-                                      LLVMTypeRef *params)
+                                           struct llvm_traversal_ctx *llvm_ctx,
+                                           LLVMValueRef alloca,
+                                           LLVMTypeRef *params)
 {
     ctx->index = 0;
     ctx->offset = 0;
@@ -40,21 +40,21 @@ static void ctor_args_to_value_cb_ctx_init(struct ctor_args_to_value_cb_ctx *ctx
 
 static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_cb_ctx *ctx)
 {
-    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx->llvm_ctx, 0);
+    LLVMValueRef arg_value = bllvm_expression_compile(n, ctx->llvm_ctx, 0);
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
     LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
 
-    backend_llvm_store(arg_value, gep, ctx->llvm_ctx);
+    bllvm_store(arg_value, gep, ctx->llvm_ctx);
     ctx->offset += 1;
     ctx->index++;
     return true;
 }
 
 
-static LLVMValueRef backend_llvm_assign_params_to_defined_type(struct ast_node *fn_call,
-                                                               LLVMTypeRef type,
-                                                               LLVMTypeRef *params,
-                                                               struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_assign_params_to_defined_type(struct ast_node *fn_call,
+                                                        LLVMTypeRef type,
+                                                        LLVMTypeRef *params,
+                                                        struct llvm_traversal_ctx *ctx)
 {
     struct ctor_args_to_value_cb_ctx cb_ctx;
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, type, "");
@@ -63,9 +63,9 @@ static LLVMValueRef backend_llvm_assign_params_to_defined_type(struct ast_node *
     return allocation;
 }
 
-static LLVMValueRef backend_llvm_simple_ctor_args_to_type(struct ast_node *fn_call,
-                                                          const struct RFstring *type_name,
-                                                          struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_simple_ctor_args_to_type(struct ast_node *fn_call,
+                                                   const struct RFstring *type_name,
+                                                   struct llvm_traversal_ctx *ctx)
 {
     char *name;
     // alloca enough space in the stack for the type created by the constructor
@@ -77,13 +77,13 @@ static LLVMValueRef backend_llvm_simple_ctor_args_to_type(struct ast_node *fn_ca
     LLVMTypeRef *params;
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     RF_ASSERT(!rir_type_is_sumtype(defined_type), "Called with sum type");
-    params = backend_llvm_simple_member_types(defined_type, ctx);
-    return backend_llvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
+    params = bllvm_simple_member_types(defined_type, ctx);
+    return bllvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
 }
 
-static LLVMValueRef backend_llvm_sum_ctor_args_to_type(struct ast_node *fn_call,
-                                                       const struct RFstring *type_name,
-                                                       struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
+                                                const struct RFstring *type_name,
+                                                struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
@@ -117,8 +117,8 @@ static LLVMValueRef backend_llvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     RFS_POP();
     RF_ASSERT(llvm_sum_type, "Internal struct was not created for sum operand");
     // populate the sum operand's internal struct contents
-    LLVMTypeRef *params = backend_llvm_type_to_subtype_array(params_type, ctx);
-    LLVMValueRef populated_sum_type = backend_llvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
+    LLVMTypeRef *params = bllvm_type_to_subtype_array(params_type, ctx);
+    LLVMValueRef populated_sum_type = bllvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
     // now create the full struct and assign the contents and the selector
     RFS_PUSH();
     LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod,
@@ -127,34 +127,34 @@ static LLVMValueRef backend_llvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     RFS_POP();
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, allocation, indices, 2, "");
-    backend_llvm_assign_defined_types(populated_sum_type, gep_to_main_contents, ctx);
+    bllvm_assign_defined_types(populated_sum_type, gep_to_main_contents, ctx);
     // TODO: here also set the second value of the struct (the alloca) which should be the selector
     LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
     LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, allocation, indices2, 2, "");
-    backend_llvm_store(LLVMConstInt(LLVMInt32Type(), 1, 0), gep_to_selector, ctx);    
+    bllvm_store(LLVMConstInt(LLVMInt32Type(), 1, 0), gep_to_selector, ctx);    
     return allocation;
 }
 
-static LLVMValueRef backend_llvm_ctor_args_to_type(struct ast_node *fn_call,
-                                                   const struct RFstring *type_name,
-                                                   struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
+                                            const struct RFstring *type_name,
+                                            struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
     if (rir_type_is_sumtype(defined_type)) {
-        return backend_llvm_sum_ctor_args_to_type(fn_call, type_name, ctx);
+        return bllvm_sum_ctor_args_to_type(fn_call, type_name, ctx);
     }
-    return backend_llvm_simple_ctor_args_to_type(fn_call, type_name, ctx);
+    return bllvm_simple_ctor_args_to_type(fn_call, type_name, ctx);
 }
 
 static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef arg_value = backend_llvm_expression_compile(n, ctx, 0);
+    LLVMValueRef arg_value = bllvm_expression_compile(n, ctx, 0);
     llvm_traversal_ctx_add_value(ctx, arg_value);
     return true;
 }
 
-LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
-                                               struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_functioncall_compile(struct ast_node *n,
+                                        struct llvm_traversal_ctx *ctx)
 {
     // for now just deal with the built-in print() function
     const struct RFstring *fn_name = ast_fncall_name(n);
@@ -168,7 +168,7 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
         char *fn_name_cstr = rf_string_cstr_from_buff_or_die(fn_name);
         LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->mod, fn_name_cstr);
         RFS_POP();
-        LLVMTypeRef llvm_fn_type = backend_llvm_function_type(llvm_fn);
+        LLVMTypeRef llvm_fn_type = bllvm_function_type(llvm_fn);
         RF_ASSERT(LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
                   "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
                   "arguments in backend code generation", RF_STR_PF_ARG(fn_name));
@@ -178,11 +178,11 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
                              llvm_traversal_ctx_get_values_count(ctx),
                              "");
     } else if (fn_type->category == TYPE_CATEGORY_DEFINED) {
-        return backend_llvm_ctor_args_to_type(n, fn_name, ctx);
+        return bllvm_ctor_args_to_type(n, fn_name, ctx);
     } else {
         RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
                   "At this point the only possible call should be explicit cast");
-        return backend_llvm_explicit_cast_compile(fn_type, args, ctx);
+        return bllvm_explicit_cast_compile(fn_type, args, ctx);
     }
 
     RF_ASSERT_OR_EXIT(false, "should never get here");
@@ -190,15 +190,15 @@ LLVMValueRef backend_llvm_functioncall_compile(struct ast_node *n,
 }
 
 // return an array of arg types or NULL if our param type is nil
-static LLVMTypeRef *backend_llvm_fn_arg_types(struct rir_type *type,
-                                              struct llvm_traversal_ctx *ctx)
+static LLVMTypeRef *bllvm_fn_arg_types(struct rir_type *type,
+                                       struct llvm_traversal_ctx *ctx)
 {
-    backend_llvm_type_to_subtype_array(type, ctx);
+    bllvm_type_to_subtype_array(type, ctx);
     return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
 }
 
-LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
-                                           struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_function_compile(struct rir_function *fn,
+                                    struct llvm_traversal_ctx *ctx)
 {
     char *fn_name;
     char *param_name;
@@ -207,10 +207,10 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
     // llvm_traversal_ctx_get_param_count()
-    LLVMTypeRef * types = backend_llvm_fn_arg_types(fn->arg_type, ctx);
+    LLVMTypeRef * types = bllvm_fn_arg_types(fn->arg_type, ctx);
     ctx->current_function = LLVMAddFunction(
         ctx->mod, fn_name,
-        LLVMFunctionType(backend_llvm_type(fn->ret_type, ctx),
+        LLVMFunctionType(bllvm_type(fn->ret_type, ctx),
                          types,
                          llvm_traversal_ctx_get_param_count(ctx),
                          false)); // never variadic for now
@@ -218,7 +218,7 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
 
     // now handle function body
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(ctx->current_function, "entry");
-    backend_llvm_enter_block(ctx, entry);
+    bllvm_enter_block(ctx, entry);
     // place function's argument in the stack
     unsigned int i = 0;
     LLVMValueRef allocation;
@@ -235,7 +235,7 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
             param_name = rf_string_cstr_from_buff_or_die(param_name_str);
             allocation = LLVMBuildAlloca(
                 ctx->builder,
-                backend_llvm_type(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
+                bllvm_type(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
                 param_name);
             RFS_POP();
             // and assign to it the argument value
@@ -255,19 +255,19 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
     if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
         ctx->current_function_return = LLVMBuildAlloca(
             ctx->builder,
-            backend_llvm_type(fn->ret_type, ctx),
+            bllvm_type(fn->ret_type, ctx),
             "function_return_value");
     }
 
     // this block should always stay at the end of the function
     LLVMBasicBlockRef function_end = LLVMAppendBasicBlock(ctx->current_function, "function_end");
     // now compile all parts of the function
-    backend_llvm_compile_basic_block(fn->entry, ctx);
+    bllvm_compile_basic_block(fn->entry, ctx);
 
     // finally build the function return. Jump from whichever the second last block
     // was to the return block and return
-    backend_llvm_add_br(function_end, ctx);
-    backend_llvm_enter_block(ctx, function_end);
+    bllvm_add_br(function_end, ctx);
+    bllvm_enter_block(ctx, function_end);
     if (fn->ret_type->category == ELEMENTARY_RIR_TYPE_NIL) {
         LLVMBuildRetVoid(ctx->builder);
     } else { // if we got a return value
@@ -279,7 +279,7 @@ LLVMValueRef backend_llvm_function_compile(struct rir_function *fn,
     return ctx->current_function;
 }
 
-LLVMTypeRef backend_llvm_function_type(LLVMValueRef fn)
+LLVMTypeRef bllvm_function_type(LLVMValueRef fn)
 {
     return LLVMGetElementType(LLVMTypeOf(fn));
 }

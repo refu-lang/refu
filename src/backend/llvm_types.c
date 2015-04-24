@@ -52,7 +52,7 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
     return htable_get(&m->table, hash_pointer(rtype, 0), rir_types_map_eq_, rtype);
 }
 
-static LLVMTypeRef backend_llvm_compile_simple_typedecl(const struct RFstring *name,
+static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
                                                         struct rir_type *type,
                                                         struct llvm_traversal_ctx *ctx)
 {
@@ -67,12 +67,12 @@ static LLVMTypeRef backend_llvm_compile_simple_typedecl(const struct RFstring *n
     LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
                                                   name_cstr);
     RFS_POP();
-    LLVMTypeRef *members = backend_llvm_simple_member_types(type, ctx);
+    LLVMTypeRef *members = bllvm_simple_member_types(type, ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
     return llvm_type;
 }
 
-LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
+LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
                                           struct rir_type *type,
                                           struct llvm_traversal_ctx *ctx)
 {
@@ -80,7 +80,7 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
         type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
     }
     if (!rir_type_is_sumtype(type)) {
-        return backend_llvm_compile_simple_typedecl(name, type, ctx);
+        return bllvm_compile_simple_typedecl(name, type, ctx);
     }
     // TODO: if it's a sum type we have to add the selector variable to the
     // body and also create structures of all the possible subtypes and
@@ -92,7 +92,7 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
 
         LLVMTypeRef subtype_llvm_type = rir_types_map_get(&ctx->types_map, *subtype);
         if (!subtype_llvm_type) {
-            subtype_llvm_type = backend_llvm_compile_typedecl(
+            subtype_llvm_type = bllvm_compile_typedecl(
                 RFS_OR_DIE("internal_struct%u", rir_type_get_uid(*subtype)),
                 *subtype,
                 ctx
@@ -111,7 +111,7 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
     RF_ASSERT(max_storage_size != 0, "Loop did not run?");
     // make an array to fit the biggest sum
     LLVMTypeRef body = LLVMArrayType(LLVMInt8Type(), max_storage_size);
-    // TODO: This is identical to start of backend_llvm_compile_simple_typedecl()
+    // TODO: This is identical to start of bllvm_compile_simple_typedecl()
     //       abstract properly
     char *name_cstr;
     RFS_PUSH();
@@ -125,7 +125,7 @@ LLVMTypeRef backend_llvm_compile_typedecl(const struct RFstring *name,
     return llvm_type;
 }
 
-struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type *type,
+struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
                                                            struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
@@ -136,13 +136,13 @@ struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type
     struct rir_type **subtype;
     llvm_traversal_ctx_reset_params(ctx);
     if (darray_size(type->subtypes) == 0) {
-        llvm_type = backend_llvm_type(type, ctx);
+        llvm_type = bllvm_type(type, ctx);
         if (llvm_type != LLVMVoidType()) {
             llvm_traversal_ctx_add_param(ctx, llvm_type);
         }
     } else {
         darray_foreach(subtype, type->subtypes) {
-            llvm_type = backend_llvm_type(*subtype, ctx);
+            llvm_type = bllvm_type(*subtype, ctx);
             if (llvm_type != LLVMVoidType()) {
                 llvm_traversal_ctx_add_param(ctx, llvm_type);
             }
@@ -152,7 +152,7 @@ struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type
 }
 
 
-LLVMTypeRef *backend_llvm_simple_member_types(struct rir_type *type,
+LLVMTypeRef *bllvm_simple_member_types(struct rir_type *type,
                                               struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *actual_type = type;
@@ -162,5 +162,5 @@ LLVMTypeRef *backend_llvm_simple_member_types(struct rir_type *type,
         actual_type = darray_item(type->subtypes, 0);
     }
     RF_ASSERT(!rir_type_is_sumtype(actual_type), "Called with sum type contents");
-    return backend_llvm_type_to_subtype_array(actual_type, ctx);
+    return bllvm_type_to_subtype_array(actual_type, ctx);
 }

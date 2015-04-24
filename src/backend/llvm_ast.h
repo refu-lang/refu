@@ -47,17 +47,17 @@ struct llvm_traversal_ctx {
     struct symbol_table *current_st;
 };
 
-bool backend_llvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
+bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
-struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
-                                                    struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueModule *blvm_create_module(struct rir_module *mod,
+                                            struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueType *backend_llvm_elementary_to_type(enum elementary_type etype,
-                                                       struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *backend_llvm_rir_elementary_to_type(enum rir_type_category type,
+struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *backend_llvm_type(const struct rir_type *type,
-                                         struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *bllvm_rir_elementary_to_type(enum rir_type_category type,
+                                                           struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *bllvm_type(const struct rir_type *type,
+                                  struct llvm_traversal_ctx *ctx);
 /**
  * Gets the parameters array from the llvm traversal ctx or NULL if
  * there are none
@@ -126,31 +126,31 @@ enum llvm_expression_compile_options {
  * @param options  [Optional] Options to provide for the compilations. For defaults
  *                 just give 0. Possible options are described at @ref llvm_expression_compile_options
  */
-struct LLVMOpaqueValue *backend_llvm_expression_compile(struct ast_node *n,
+struct LLVMOpaqueValue *bllvm_expression_compile(struct ast_node *n,
                                                         struct llvm_traversal_ctx *ctx,
                                                         int options);
 
 
 
 
-void backend_llvm_compile_basic_block(struct rir_basic_block *block,
+void bllvm_compile_basic_block(struct rir_basic_block *block,
                                       struct llvm_traversal_ctx *ctx);
 
 
-void backend_llvm_ifexpr_compile(struct rir_branch *branch,
+void bllvm_ifexpr_compile(struct rir_branch *branch,
                                  struct llvm_traversal_ctx *ctx);
 
-void backend_llvm_branch_compile(struct rir_branch *branch,
+void bllvm_branch_compile(struct rir_branch *branch,
                                  struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueValue *backend_llvm_explicit_cast_compile(const struct type *cast_type,
+struct LLVMOpaqueValue *bllvm_explicit_cast_compile(const struct type *cast_type,
                                                            struct ast_node *args,
                                                            struct llvm_traversal_ctx *ctx);
 
 /**
  * Will typecast @a val if needed to a specific elementary type
  */
-struct LLVMOpaqueValue *backend_llvm_cast_value_to_elementary_maybe(
+struct LLVMOpaqueValue *bllvm_cast_value_to_elementary_maybe(
     struct LLVMOpaqueValue  *val,
     const struct type *t,
     struct llvm_traversal_ctx *ctx);

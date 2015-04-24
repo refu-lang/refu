@@ -21,12 +21,12 @@
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
-static bool backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
+static bool bllvm_create_global_types(struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *t;
     rir_types_list_for_each(&ctx->rir->rir_types_list, t) {
         if (t->category == COMPOSITE_RIR_DEFINED) {
-            if (!backend_llvm_compile_typedecl(t->name, t, ctx)) {
+            if (!bllvm_compile_typedecl(t->name, t, ctx)) {
                 return false;
             }
         }
@@ -34,9 +34,9 @@ static bool backend_llvm_create_global_types(struct llvm_traversal_ctx *ctx)
     return true;
 }
 
-static LLVMValueRef backend_llvm_add_global_strbuff(char *str_data, size_t str_len,
-                                                    char *optional_name,
-                                                    struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_add_global_strbuff(char *str_data, size_t str_len,
+                                             char *optional_name,
+                                             struct llvm_traversal_ctx *ctx)
 {
     if (!optional_name) {
         optional_name = str_data;
@@ -51,7 +51,7 @@ static LLVMValueRef backend_llvm_add_global_strbuff(char *str_data, size_t str_l
     return global_stringbuff;
 }
 
-LLVMValueRef backend_llvm_create_global_const_string_with_hash(
+LLVMValueRef bllvm_create_global_const_string_with_hash(
     const struct RFstring *string,
     uint32_t hash,
     struct llvm_traversal_ctx *ctx)
@@ -61,7 +61,7 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
 
     RFS_PUSH();
     s = RFS_NT_OR_DIE("strbuff_%u", hash);
-    LLVMValueRef global_stringbuff = backend_llvm_add_global_strbuff(
+    LLVMValueRef global_stringbuff = bllvm_add_global_strbuff(
         rf_string_cstr_from_buff_or_die(string),
         length,
         rf_string_data(s),
@@ -88,22 +88,22 @@ LLVMValueRef backend_llvm_create_global_const_string_with_hash(
     return global_val;
 }
 
-LLVMValueRef backend_llvm_create_global_const_string(const struct RFstring *string,
-                                                     struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string,
+                                              struct llvm_traversal_ctx *ctx)
 {
-    return backend_llvm_create_global_const_string_with_hash(
+    return bllvm_create_global_const_string_with_hash(
         string,
         rf_hash_str_stable(string, 0),
         ctx);
 }
 
-static void backend_llvm_const_string_creation_cb(const struct string_table_record *rec,
-                                                  struct llvm_traversal_ctx *ctx)
+static void bllvm_const_string_creation_cb(const struct string_table_record *rec,
+                                           struct llvm_traversal_ctx *ctx)
 {
-    backend_llvm_create_global_const_string_with_hash(&rec->string, rec->hash, ctx);
+    bllvm_create_global_const_string_with_hash(&rec->string, rec->hash, ctx);
 }
 
-static void backend_llvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
+static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef args[] = { LLVMPointerType(LLVMInt8Type(), 0),
                            LLVMPointerType(LLVMInt8Type(), 0),
@@ -121,20 +121,8 @@ static void backend_llvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ct
     LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
 }
 
-static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
+static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
 {
-    /* -- add printf() declaration -- */
-
-    // print() uses clib's printf so we need a declaration for it
-    LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
-    LLVMAddFunction(ctx->mod, "printf",
-                              LLVMFunctionType(LLVMInt32Type(),
-                                               printf_args,
-                                               1,
-                                               true));
-
-    /* -- add print() -- */
-
     LLVMValueRef llvm_fn;
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
@@ -153,11 +141,11 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
     LLVMValueRef loaded_str = LLVMBuildLoad(ctx->builder, alloca, "loaded_str");
     LLVMValueRef length;
     LLVMValueRef string_data;
-    backend_llvm_load_from_string(loaded_str, &length, &string_data, ctx);
+    bllvm_load_from_string(loaded_str, &length, &string_data, ctx);
 
     // add the "%.*s" global string used by printf to print RFstring
     LLVMValueRef indices_0[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef printf_str_lit = backend_llvm_add_global_strbuff("%.*s\0", 5, "printf_str_literal", ctx);
+    LLVMValueRef printf_str_lit = bllvm_add_global_strbuff("%.*s\0", 5, "printf_str_literal", ctx);
     LLVMValueRef gep_to_strlit = LLVMBuildGEP(ctx->builder, printf_str_lit, indices_0, 2, "gep_to_strlit");
     LLVMValueRef printf_call_args[] = { gep_to_strlit, length, string_data };
     LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "printf"),
@@ -165,13 +153,25 @@ static bool backend_llvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                   3, "printf_call");
 
     LLVMBuildRetVoid(ctx->builder);
+}
 
+static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
+{
+    /* -- add printf() declaration -- */
+    LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
+    LLVMAddFunction(ctx->mod, "printf",
+                    LLVMFunctionType(LLVMInt32Type(),
+                                     printf_args,
+                                     1,
+                                     true));
+    /* -- add print() -- */
+    bllvm_create_global_print_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */
-    backend_llvm_create_global_memcpy_decl(ctx);
+    bllvm_create_global_memcpy_decl(ctx);
     return true;
 }
 
-bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
+bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
 {
     // TODO: If possible in llvm these globals creation would be in the beginning
     //       before any module is created or in a global module which would be a
@@ -186,25 +186,25 @@ bool backend_llvm_create_globals(struct llvm_traversal_ctx *ctx)
 
     llvm_traversal_ctx_reset_params(ctx);
     string_table_iterate(ctx->rir->string_literals_table,
-                         (string_table_cb)backend_llvm_const_string_creation_cb, ctx);
+                         (string_table_cb)bllvm_const_string_creation_cb, ctx);
     // also add "true" and "false" as global constant string literals
-    backend_llvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);
-    backend_llvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
+    bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);
+    bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
 
 
-    if (!backend_llvm_create_global_types(ctx)) {
+    if (!bllvm_create_global_types(ctx)) {
         RF_ERROR("Could not create global types");
         return false;
     }
 
-    if (!backend_llvm_create_global_functions(ctx)) {
+    if (!bllvm_create_global_functions(ctx)) {
         RF_ERROR("Could not create global functions");
         return false;
     }
     return true;
 }
 
-LLVMValueRef backend_llvm_get_boolean_str(bool boolean, struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_get_boolean_str(bool boolean, struct llvm_traversal_ctx *ctx)
 {
     // this depends on the string hash being stable and same across all
     // implementations (which it should be)

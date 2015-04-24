@@ -42,8 +42,8 @@
 #include "llvm_functions.h"
 #include "llvm_types.h"
 
-LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
-                                            struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
+                                     struct llvm_traversal_ctx *ctx)
 {
     switch(etype) {
         // LLVM does not differentiate between signed and unsigned
@@ -85,8 +85,8 @@ LLVMTypeRef backend_llvm_elementary_to_type(enum elementary_type etype,
     return NULL;
 }
 
-LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category type,
-                                                struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_rir_elementary_to_type(enum rir_type_category type,
+                                         struct llvm_traversal_ctx *ctx)
 {
     switch(type) {
         // LLVM does not differentiate between signed and unsigned
@@ -128,13 +128,13 @@ LLVMTypeRef backend_llvm_rir_elementary_to_type(enum rir_type_category type,
     return NULL;
 }
 
-LLVMTypeRef backend_llvm_type(const struct rir_type *type,
-                              struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_type(const struct rir_type *type,
+                       struct llvm_traversal_ctx *ctx)
 {
     char *name;
     LLVMTypeRef ret = NULL;
     if (rir_type_is_elementary(type)) {
-        ret = backend_llvm_rir_elementary_to_type(type->category, ctx);
+        ret = bllvm_rir_elementary_to_type(type->category, ctx);
     } else if (type->category == COMPOSITE_RIR_DEFINED) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(type->name);
@@ -156,27 +156,27 @@ i_INLINE_INS struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_
 i_INLINE_INS unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx);
 
-LLVMValueRef backend_llvm_cast_value_to_elementary_maybe(LLVMValueRef val,
-                                                         const struct type *t,
-                                                         struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_cast_value_to_elementary_maybe(LLVMValueRef val,
+                                                  const struct type *t,
+                                                  struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_ELEMENTARY,
               "Casting only to elementary types supported for now");
-    LLVMTypeRef common_type = backend_llvm_elementary_to_type(type_elementary(t), ctx);
-    return backend_llvm_cast_value_to_type_maybe(val, common_type, ctx);
+    LLVMTypeRef common_type = bllvm_elementary_to_type(type_elementary(t), ctx);
+    return bllvm_cast_value_to_type_maybe(val, common_type, ctx);
 }
 
-LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
-                                                struct ast_node *args,
-                                                struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_explicit_cast_compile(const struct type *cast_type,
+                                         struct ast_node *args,
+                                         struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef cast_value = backend_llvm_expression_compile(
+    LLVMValueRef cast_value = bllvm_expression_compile(
         args,
         ctx,
         RFLLVM_OPTION_IDENTIFIER_VALUE);
     // at the moment only cast to string requires special work
     if (cast_type->elementary.etype != ELEMENTARY_TYPE_STRING) {
-        return backend_llvm_cast_value_to_elementary_maybe(cast_value, cast_type, ctx);
+        return bllvm_cast_value_to_elementary_maybe(cast_value, cast_type, ctx);
     }
 
     // from here and down it's a cast to string
@@ -194,39 +194,39 @@ LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
             break;
         case CONSTANT_BOOLEAN:
             return args->constant.value.boolean
-                ? backend_llvm_get_boolean_str(true, ctx)
-                : backend_llvm_get_boolean_str(false, ctx);
+                ? bllvm_get_boolean_str(true, ctx)
+                : bllvm_get_boolean_str(false, ctx);
         default:
             RF_ASSERT(false,
                       "Illegal constant number type encountered at code generation");
                     
         }
 
-        ret_str = backend_llvm_create_global_const_string(temps, ctx);
+        ret_str = bllvm_create_global_const_string(temps, ctx);
         RFS_POP();
         return ret_str;
     }
 
     if (type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_BOOL)) {
-        LLVMBasicBlockRef taken_branch = backend_llvm_add_block_before_funcend(ctx);
-        LLVMBasicBlockRef fallthrough_branch = backend_llvm_add_block_before_funcend(ctx);
-        LLVMBasicBlockRef if_end = backend_llvm_add_block_before_funcend(ctx);
+        LLVMBasicBlockRef taken_branch = bllvm_add_block_before_funcend(ctx);
+        LLVMBasicBlockRef fallthrough_branch = bllvm_add_block_before_funcend(ctx);
+        LLVMBasicBlockRef if_end = bllvm_add_block_before_funcend(ctx);
         LLVMValueRef string_alloca = LLVMBuildAlloca(ctx->builder, LLVMGetTypeByName(ctx->mod, "string"), "");
         LLVMBuildCondBr(ctx->builder, cast_value, taken_branch, fallthrough_branch);
 
         // if true
-        backend_llvm_enter_block(ctx, taken_branch);
-        backend_llvm_copy_string(backend_llvm_get_boolean_str(true, ctx),
-                                 string_alloca,
-                                 ctx);
+        bllvm_enter_block(ctx, taken_branch);
+        bllvm_copy_string(bllvm_get_boolean_str(true, ctx),
+                          string_alloca,
+                          ctx);
         LLVMBuildBr(ctx->builder, if_end);
         // else false
-        backend_llvm_enter_block(ctx, fallthrough_branch);
-        backend_llvm_copy_string(backend_llvm_get_boolean_str(false, ctx),
-                                 string_alloca,
-                                 ctx);
+        bllvm_enter_block(ctx, fallthrough_branch);
+        bllvm_copy_string(bllvm_get_boolean_str(false, ctx),
+                          string_alloca,
+                          ctx);
         LLVMBuildBr(ctx->builder, if_end);
-        backend_llvm_enter_block(ctx, if_end);
+        bllvm_enter_block(ctx, if_end);
         return string_alloca;
     }
 
@@ -235,8 +235,8 @@ LLVMValueRef backend_llvm_explicit_cast_compile(const struct type *cast_type,
     return NULL;
 }
 
-LLVMValueRef backend_llvm_expression_compile_vardecl(struct ast_node *n,
-                                                     struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_expression_compile_vardecl(struct ast_node *n,
+                                              struct llvm_traversal_ctx *ctx)
 {
     // all vardelcs should have had stack size allocated during block symbol iteration
     struct symbol_table_record *rec;
@@ -249,8 +249,8 @@ LLVMValueRef backend_llvm_expression_compile_vardecl(struct ast_node *n,
     return rec->backend_handle;
 }
 
-LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
-                                                            struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_expression_compile_string_literal(struct ast_node *n,
+                                                     struct llvm_traversal_ctx *ctx)
 {
     // all unique string literals should have been declared as global strings
     uint32_t hash;
@@ -266,9 +266,9 @@ LLVMValueRef backend_llvm_expression_compile_string_literal(struct ast_node *n,
     return global_str;
 }
 
-LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
-                                                        struct llvm_traversal_ctx *ctx,
-                                                        int options)
+LLVMValueRef bllvm_expression_compile_identifier(struct ast_node *n,
+                                                 struct llvm_traversal_ctx *ctx,
+                                                 int options)
 {
     struct symbol_table_record *rec;
     const struct RFstring *s = ast_identifier_str(n);
@@ -283,18 +283,18 @@ LLVMValueRef backend_llvm_expression_compile_identifier(struct ast_node *n,
     return rec->backend_handle;
 }
 
-void backend_llvm_ifexpr_compile(struct rir_branch *branch,
-                                 struct llvm_traversal_ctx *ctx)
+void bllvm_ifexpr_compile(struct rir_branch *branch,
+                          struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
     struct rir_cond_branch *rir_if = &branch->cond_branch;
 
-    LLVMBasicBlockRef taken_branch = backend_llvm_add_block_before_funcend(ctx);
-    LLVMBasicBlockRef fallthrough_branch = backend_llvm_add_block_before_funcend(ctx);
-    LLVMBasicBlockRef if_end = backend_llvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef taken_branch = bllvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef fallthrough_branch = bllvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef if_end = bllvm_add_block_before_funcend(ctx);
 
     // create the condition
-    LLVMValueRef condition = backend_llvm_expression_compile(
+    LLVMValueRef condition = bllvm_expression_compile(
         rir_if->cond,
         ctx,
         RFLLVM_OPTION_IDENTIFIER_VALUE);
@@ -303,56 +303,56 @@ void backend_llvm_ifexpr_compile(struct rir_branch *branch,
     LLVMBuildCondBr(ctx->builder, condition, taken_branch, fallthrough_branch);
 
     // create the taken block
-    backend_llvm_enter_block(ctx, taken_branch);
-    backend_llvm_compile_basic_block(rir_if->true_br, ctx);    
-    backend_llvm_add_br(if_end, ctx);
+    bllvm_enter_block(ctx, taken_branch);
+    bllvm_compile_basic_block(rir_if->true_br, ctx);    
+    bllvm_add_br(if_end, ctx);
 
     // if there is a fall through block deal with it
-    backend_llvm_enter_block(ctx, fallthrough_branch);
+    bllvm_enter_block(ctx, fallthrough_branch);
     if (rir_if->false_br) {
-        backend_llvm_branch_compile(rir_if->false_br, ctx);
+        bllvm_branch_compile(rir_if->false_br, ctx);
     }
-    backend_llvm_add_br(if_end, ctx);
+    bllvm_add_br(if_end, ctx);
 
     // enter the if end block
-    backend_llvm_enter_block(ctx, if_end);
+    bllvm_enter_block(ctx, if_end);
 }
 
-void backend_llvm_branch_compile(struct rir_branch *branch,
-                                 struct llvm_traversal_ctx *ctx)
+void bllvm_branch_compile(struct rir_branch *branch,
+                          struct llvm_traversal_ctx *ctx)
 {
     if (branch->is_conditional) {
-        backend_llvm_ifexpr_compile(branch, ctx);
+        bllvm_ifexpr_compile(branch, ctx);
     } else {
-        backend_llvm_compile_basic_block(branch->simple_branch, ctx);
+        bllvm_compile_basic_block(branch->simple_branch, ctx);
     }
 }
 
-LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
-                                             struct llvm_traversal_ctx *ctx,
-                                             int options)
+LLVMValueRef bllvm_expression_compile(struct ast_node *n,
+                                      struct llvm_traversal_ctx *ctx,
+                                      int options)
 {
     int64_t int_val;
     double float_val;
     LLVMValueRef llvm_val;
     switch(n->type) {
     case AST_BINARY_OPERATOR:
-        return backend_llvm_compile_bop(n, ctx);
+        return bllvm_compile_bop(n, ctx);
     case AST_UNARY_OPERATOR:
-        return backend_llvm_compile_uop(n, ctx);
+        return bllvm_compile_uop(n, ctx);
     case AST_RETURN_STATEMENT:
         // assign the value to the function's return and jump to the final block
-        llvm_val = backend_llvm_expression_compile(ast_returnstmt_expr_get(n),
-                                                   ctx,
-                                                   RFLLVM_OPTION_IDENTIFIER_VALUE);
-        backend_llvm_compile_assign_llvm(llvm_val,
-                                         ctx->current_function_return,
-                                         n->expression_type,
-                                         ctx);
+        llvm_val = bllvm_expression_compile(ast_returnstmt_expr_get(n),
+                                            ctx,
+                                            RFLLVM_OPTION_IDENTIFIER_VALUE);
+        bllvm_compile_assign_llvm(llvm_val,
+                                  ctx->current_function_return,
+                                  n->expression_type,
+                                  ctx);
         LLVMBuildBr(ctx->builder, LLVMGetLastBasicBlock(ctx->current_function));
         break;
     case AST_FUNCTION_CALL:
-        return backend_llvm_functioncall_compile(n, ctx);
+        return bllvm_functioncall_compile(n, ctx);
     case AST_CONSTANT:
         switch (ast_constant_get_type(n)) {
         case CONSTANT_NUMBER_INTEGER:
@@ -378,14 +378,14 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
         }
         return ctx->current_value;
     case AST_STRING_LITERAL:
-        return backend_llvm_expression_compile_string_literal(n, ctx);
+        return bllvm_expression_compile_string_literal(n, ctx);
     case AST_IDENTIFIER:
-        return backend_llvm_expression_compile_identifier(n, ctx, options);
+        return bllvm_expression_compile_identifier(n, ctx, options);
     case AST_VARIABLE_DECLARATION:
-        return backend_llvm_expression_compile_vardecl(n, ctx);
+        return bllvm_expression_compile_vardecl(n, ctx);
     case AST_TYPE_DECLARATION:
-        RF_ASSERT(backend_llvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx),
-        "typedecl compile should never fail");
+        RF_ASSERT(bllvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx),
+                  "typedecl compile should never fail");
         break;
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");
@@ -394,17 +394,17 @@ LLVMValueRef backend_llvm_expression_compile(struct ast_node *n,
     return NULL;
 }
 
-static void backend_llvm_expression(struct rir_expression *expr,
-                                    struct llvm_traversal_ctx *ctx,
-                                    int options)
+static void bllvm_expression(struct rir_expression *expr,
+                             struct llvm_traversal_ctx *ctx,
+                             int options)
 {
     ctx->current_value = NULL;
     switch(expr->type) {
     case RIR_SIMPLE_EXPRESSION:
-        backend_llvm_expression_compile(expr->expr, ctx, options);
+        bllvm_expression_compile(expr->expr, ctx, options);
         break;
     case RIR_IF_EXPRESSION:
-        backend_llvm_ifexpr_compile(expr->branch, ctx);
+        bllvm_ifexpr_compile(expr->branch, ctx);
         break;
     }
 
@@ -420,14 +420,14 @@ static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(symbol_table_record_id(rec));
     // note: this simply creates the stack space but does not allocate it
-    LLVMTypeRef llvm_type = backend_llvm_type(type, ctx);
+    LLVMTypeRef llvm_type = bllvm_type(type, ctx);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, name);
     symbol_table_record_set_backend_handle(rec, allocation);
     RFS_POP();
 }
 
-void backend_llvm_compile_basic_block(struct rir_basic_block *block,
-                                      struct llvm_traversal_ctx *ctx)
+void bllvm_compile_basic_block(struct rir_basic_block *block,
+                               struct llvm_traversal_ctx *ctx)
 {
     struct rir_expression *rir_expr;
     struct symbol_table *prev = ctx->current_st;
@@ -435,14 +435,14 @@ void backend_llvm_compile_basic_block(struct rir_basic_block *block,
 
     symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     rf_ilist_for_each(&block->expressions, rir_expr, ln) {
-        backend_llvm_expression(rir_expr, ctx, 0);
+        bllvm_expression(rir_expr, ctx, 0);
     }
 
     ctx->current_st = prev;
 }
 
-struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
-                                                    struct llvm_traversal_ctx *ctx)
+struct LLVMOpaqueModule *blvm_create_module(struct rir_module *mod,
+                                            struct llvm_traversal_ctx *ctx)
 {
     struct rir_function *fn;
     const char *mod_name;
@@ -456,7 +456,7 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
     ctx->mod = LLVMModuleCreateWithName(mod_name);
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->mod));
 
-    if (!backend_llvm_create_globals(ctx)) {
+    if (!bllvm_create_globals(ctx)) {
         RF_ERROR("Failed to create global context for LLVM");
         LLVMDisposeModule(ctx->mod);
         ctx->mod = NULL;
@@ -465,14 +465,14 @@ struct LLVMOpaqueModule *backend_llvm_create_module(struct rir_module *mod,
 
     // for each function of the module create code
     rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
-        backend_llvm_function_compile(fn, ctx);
+        bllvm_function_compile(fn, ctx);
     }
 
     if (ctx->args->print_backend_debug) {
         // would be much better if we could call llvm::Module::getModuleIdentifier()
         // but that seems to not be exposed in the C-Api
         mod_name = rf_string_cstr_from_buff(&mod->name);
-        backend_llvm_mod_debug(ctx->mod, mod_name);
+        bllvm_mod_debug(ctx->mod, mod_name);
     }
 
 end:

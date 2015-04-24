@@ -11,24 +11,24 @@
 #include "llvm_ast.h"
 #include "llvm_utils.h"
 
-static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
-                                                    struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
+                                             struct llvm_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
-    LLVMValueRef llvm_left = backend_llvm_expression_compile(left, ctx,
-                                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef llvm_right = backend_llvm_expression_compile(right, ctx,
-                                                              RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef llvm_left = bllvm_expression_compile(left, ctx,
+                                                      RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef llvm_right = bllvm_expression_compile(right, ctx,
+                                                       RFLLVM_OPTION_IDENTIFIER_VALUE);
     enum elementary_type_category elementary_type;
     LLVMIntPredicate llvm_int_compare_type;
     LLVMRealPredicate llvm_real_compare_type;
-    llvm_left = backend_llvm_cast_value_to_elementary_maybe(llvm_left,
-                                                            ast_binaryop_common_type(n),
-                                                            ctx);
-    llvm_right = backend_llvm_cast_value_to_elementary_maybe(llvm_right,
-                                                             ast_binaryop_common_type(n),
-                                                             ctx);
+    llvm_left = bllvm_cast_value_to_elementary_maybe(llvm_left,
+                                                     ast_binaryop_common_type(n),
+                                                     ctx);
+    llvm_right = bllvm_cast_value_to_elementary_maybe(llvm_right,
+                                                      ast_binaryop_common_type(n),
+                                                      ctx);
 
 
     elementary_type = type_elementary_get_category(ast_binaryop_common_type(n));
@@ -144,8 +144,8 @@ static LLVMValueRef backend_llvm_compile_comparison(struct ast_node *n,
     return LLVMBuildICmp(ctx->builder, llvm_int_compare_type, llvm_left, llvm_right, "");
 }
 
-static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
-                                                       struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_compile_member_access(struct ast_node *n,
+                                                struct llvm_traversal_ctx *ctx)
 {
     struct symbol_table_record *rec;
     const struct RFstring *owner_type_s = ast_identifier_str(ast_binaryop_left(n));
@@ -154,7 +154,7 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
     rec = symbol_table_lookup_record(ctx->current_st, owner_type_s, NULL);
     struct rir_type *defined_type =  rec->rir_data;
     RF_ASSERT(defined_type->category == COMPOSITE_RIR_DEFINED,
-    "a member access left hand type can only be a defined type");
+              "a member access left hand type can only be a defined type");
 
     struct rir_type **subtype;
     darray_foreach(subtype, defined_type->subtypes.item[0]->subtypes) {
@@ -171,17 +171,17 @@ static LLVMValueRef backend_llvm_compile_member_access(struct ast_node *n,
     return NULL;
 }
 
-LLVMValueRef backend_llvm_compile_assign_llvm(LLVMValueRef from,
-                                              LLVMValueRef to,
-                                              const struct type *type,
-                                              struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
+                                       LLVMValueRef to,
+                                       const struct type *type,
+                                       struct llvm_traversal_ctx *ctx)
 {
     if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
-        backend_llvm_copy_string(from, to, ctx);
+        bllvm_copy_string(from, to, ctx);
     } else if (type_category_equals(type, TYPE_CATEGORY_DEFINED)) {
-        backend_llvm_assign_defined_types(from, to, ctx);
+        bllvm_assign_defined_types(from, to, ctx);
     } else if (type->category == TYPE_CATEGORY_ELEMENTARY) {
-        backend_llvm_store(from, to, ctx);
+        bllvm_store(from, to, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
     }
@@ -190,31 +190,31 @@ LLVMValueRef backend_llvm_compile_assign_llvm(LLVMValueRef from,
     return NULL;
 }
 
-LLVMValueRef backend_llvm_compile_assign(struct ast_node *from,
-                                         struct ast_node *to,
-                                         const struct type *common_type,
-                                         struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_compile_assign(struct ast_node *from,
+                                  struct ast_node *to,
+                                  const struct type *common_type,
+                                  struct llvm_traversal_ctx *ctx)
 {
     // For left side we want the memory location if it's a simple identifier hence options = 0
-    LLVMValueRef llvm_to = backend_llvm_expression_compile(to, ctx, 0);
-    LLVMValueRef llvm_from = backend_llvm_expression_compile(from,
-                                                             ctx,
-                                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef llvm_to = bllvm_expression_compile(to, ctx, 0);
+    LLVMValueRef llvm_from = bllvm_expression_compile(from,
+                                                      ctx,
+                                                      RFLLVM_OPTION_IDENTIFIER_VALUE);
     
-    return backend_llvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, ctx);
+    return bllvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, ctx);
 }
 
- LLVMValueRef backend_llvm_compile_bop(struct ast_node *n,
-                                       struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_compile_bop(struct ast_node *n,
+                               struct llvm_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_BINARY_OPERATOR);
 
     if (ast_binaryop_op(n) == BINARYOP_MEMBER_ACCESS) {
-        return backend_llvm_compile_member_access(n, ctx);
+        return bllvm_compile_member_access(n, ctx);
     }
 
-    LLVMValueRef left = backend_llvm_expression_compile(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef right = backend_llvm_expression_compile(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef left = bllvm_expression_compile(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef right = bllvm_expression_compile(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     switch(ast_binaryop_op(n)) {
         // arithmetic
         // TODO: This will not be okay for all situations. There are different
@@ -229,17 +229,17 @@ LLVMValueRef backend_llvm_compile_assign(struct ast_node *from,
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
     case BINARYOP_ASSIGN:
-        return backend_llvm_compile_assign(ast_binaryop_right(n),
-                                           ast_binaryop_left(n),
-                                           n->expression_type,
-                                           ctx);
+        return bllvm_compile_assign(ast_binaryop_right(n),
+                                    ast_binaryop_left(n),
+                                    n->expression_type,
+                                    ctx);
     case BINARYOP_CMP_EQ:
     case BINARYOP_CMP_NEQ:
     case BINARYOP_CMP_GT:
     case BINARYOP_CMP_GTEQ:
     case BINARYOP_CMP_LT:
     case BINARYOP_CMP_LTEQ:
-        return backend_llvm_compile_comparison(n, ctx);
+        return bllvm_compile_comparison(n, ctx);
     default:
         RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
         break;
@@ -247,12 +247,12 @@ LLVMValueRef backend_llvm_compile_assign(struct ast_node *from,
     return NULL;
 }
 
-LLVMValueRef backend_llvm_compile_uop(struct ast_node *n,
-                                      struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_compile_uop(struct ast_node *n,
+                               struct llvm_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_UNARY_OPERATOR);
 
-    LLVMValueRef operand = backend_llvm_expression_compile(
+    LLVMValueRef operand = bllvm_expression_compile(
         ast_unaryop_operand(n),
         ctx,
         RFLLVM_OPTION_IDENTIFIER_VALUE);

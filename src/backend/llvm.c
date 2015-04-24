@@ -43,8 +43,8 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     LLVMDisposeTargetData(ctx->target_data);
 }
 
-static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
-                                     struct compiler_args *args)
+static bool bllvm_ir_generate(struct rir_module *module, struct rir *rir,
+                              struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
@@ -55,7 +55,7 @@ static bool backend_llvm_ir_generate(struct rir_module *module, struct rir *rir,
     LLVMInitializeNativeTarget();
 
     llvm_traversal_ctx_init(&ctx, rir, args);
-    llvm_module = backend_llvm_create_module(module, &ctx);
+    llvm_module = blvm_create_module(module, &ctx);
     if (!llvm_module) {
         ERROR("Failed to form the LLVM IR ast");
         goto end;
@@ -126,7 +126,7 @@ end:
     return ret;
 }
 
-static bool backend_llvm_ir_to_asm(struct compiler_args *args)
+static bool bllvm_ir_to_asm(struct compiler_args *args)
 {
     return transformation_step_do(args, "llc", "ll", "s");
 }
@@ -136,18 +136,18 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool backend_llvm_generate(struct rir_module *module, struct rir *r,
+bool bllvm_generate(struct rir_module *module, struct rir *r,
                            struct compiler_args *args)
 {
 
-    if (!backend_llvm_ir_generate(module, r, args)) {
+    if (!bllvm_ir_generate(module, r, args)) {
         return false;
     }
 
     // now it should be okay to free the module
     rir_module_destroy(module);
 
-    if (!backend_llvm_ir_to_asm(args)) {
+    if (!bllvm_ir_to_asm(args)) {
         ERROR("Failed to generate assembly from LLVM IR code");
         return false;
     }

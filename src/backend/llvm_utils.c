@@ -8,7 +8,7 @@
 
 #include "llvm_ast.h"
 
-void backend_llvm_val_debug(LLVMValueRef v, const char *val_name)
+void bllvm_val_debug(LLVMValueRef v, const char *val_name)
 {
     char *str = LLVMPrintValueToString(v);
     printf("[DEBUG]: Value of \"%s\" is %s\n", val_name, str);
@@ -16,18 +16,18 @@ void backend_llvm_val_debug(LLVMValueRef v, const char *val_name)
     LLVMDisposeMessage(str);
 }
 
-void backend_llvm_type_debug(LLVMTypeRef t, const char *type_name, struct llvm_traversal_ctx *ctx)
+void bllvm_type_debug(LLVMTypeRef t, const char *type_name, struct llvm_traversal_ctx *ctx)
 {
     char *str = LLVMPrintTypeToString(t);
     printf("[DEBUG]: Type \"%s\" is %s with store size %llu \n",
-        type_name,
-        str,
-        LLVMStoreSizeOfType(ctx->target_data, t));
+           type_name,
+           str,
+           LLVMStoreSizeOfType(ctx->target_data, t));
     fflush(stdout);
     LLVMDisposeMessage(str);
 }
 
-void backend_llvm_mod_debug(LLVMModuleRef m, const char *mod_name)
+void bllvm_mod_debug(LLVMModuleRef m, const char *mod_name)
 {
     char *str = LLVMPrintModuleToString(m);
     printf("[DEBUG]: Module \"%s\" is\n %s\n", mod_name, str);
@@ -36,10 +36,10 @@ void backend_llvm_mod_debug(LLVMModuleRef m, const char *mod_name)
 }
 
 
-void backend_llvm_assign_to_string(LLVMValueRef string_alloca,
-                                   LLVMValueRef length,
-                                   LLVMValueRef string_data,
-                                   struct llvm_traversal_ctx *ctx)
+void bllvm_assign_to_string(LLVMValueRef string_alloca,
+                            LLVMValueRef length,
+                            LLVMValueRef string_data,
+                            struct llvm_traversal_ctx *ctx)
 {
 
 
@@ -53,10 +53,10 @@ void backend_llvm_assign_to_string(LLVMValueRef string_alloca,
     LLVMBuildStore(ctx->builder, string_data, gep_to_strdata);
 }
 
-void backend_llvm_load_from_string(LLVMValueRef string_alloca,
-                                   LLVMValueRef *length,
-                                   LLVMValueRef *string_data,
-                                   struct llvm_traversal_ctx *ctx)
+void bllvm_load_from_string(LLVMValueRef string_alloca,
+                            LLVMValueRef *length,
+                            LLVMValueRef *string_data,
+                            struct llvm_traversal_ctx *ctx)
 {
     // load strlen
     LLVMValueRef indices_0[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
@@ -68,19 +68,19 @@ void backend_llvm_load_from_string(LLVMValueRef string_alloca,
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
 
-void backend_llvm_copy_string(LLVMValueRef from,
-                              LLVMValueRef to,
-                              struct llvm_traversal_ctx *ctx)
+void bllvm_copy_string(LLVMValueRef from,
+                       LLVMValueRef to,
+                       struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef length;
     LLVMValueRef string_data;
-    backend_llvm_load_from_string(from, &length, &string_data, ctx);
-    backend_llvm_assign_to_string(to, length, string_data, ctx);
+    bllvm_load_from_string(from, &length, &string_data, ctx);
+    bllvm_assign_to_string(to, length, string_data, ctx);
 }
 
-LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
-                                                   LLVMTypeRef type,
-                                                   struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_cast_value_to_type_maybe(LLVMValueRef val,
+                                            LLVMTypeRef type,
+                                            struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef val_type = LLVMTypeOf(val);
     unsigned long long val_size = LLVMStoreSizeOfType(ctx->target_data, val_type);
@@ -102,50 +102,50 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
             // in this case if we got here it's probably an assignment to a sum type
             val = LLVMBuildBitCast(ctx->builder, val, type, "");
         } else {
-            backend_llvm_type_debug(val_type, "val_type", ctx);
-            backend_llvm_type_debug(type, "to_cast_type", ctx);
+            bllvm_type_debug(val_type, "val_type", ctx);
+            bllvm_type_debug(type, "to_cast_type", ctx);
             RF_ASSERT(false, "Unimplemented casts?");
         }
     }
     return val;
 }
 
-void backend_llvm_store(LLVMValueRef val,
-                        LLVMValueRef ptr,
-                        struct llvm_traversal_ctx *ctx)
+void bllvm_store(LLVMValueRef val,
+                 LLVMValueRef ptr,
+                 struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
     if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
-        backend_llvm_copy_string(ptr, val, ctx);
+        bllvm_copy_string(ptr, val, ctx);
         return;
     }
-    val = backend_llvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
+    val = bllvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
     LLVMBuildStore(ctx->builder, val, ptr);
 }
 
-LLVMBasicBlockRef backend_llvm_add_block_before_funcend(struct llvm_traversal_ctx *ctx)
+LLVMBasicBlockRef bllvm_add_block_before_funcend(struct llvm_traversal_ctx *ctx)
 {
     return LLVMInsertBasicBlock(LLVMGetLastBasicBlock(ctx->current_function), "");
 }
 
-void backend_llvm_enter_block(struct llvm_traversal_ctx *ctx,
-                              struct LLVMOpaqueBasicBlock *block)
+void bllvm_enter_block(struct llvm_traversal_ctx *ctx,
+                       struct LLVMOpaqueBasicBlock *block)
 {
     LLVMPositionBuilderAtEnd(ctx->builder, block);
     ctx->current_block = block;
 }
 
-LLVMValueRef backend_llvm_add_br(struct LLVMOpaqueBasicBlock *target,
-                                 struct llvm_traversal_ctx *ctx)
+LLVMValueRef bllvm_add_br(struct LLVMOpaqueBasicBlock *target,
+                          struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef last_instruction = LLVMGetLastInstruction(ctx->current_block);
     return (!last_instruction || !LLVMIsATerminatorInst(last_instruction))
         ? LLVMBuildBr(ctx->builder, target) : NULL;
 }
 
-void backend_llvm_assign_defined_types(LLVMValueRef from,
-                                       LLVMValueRef to,
-                                       struct llvm_traversal_ctx *ctx)
+void bllvm_assign_defined_types(LLVMValueRef from,
+                                LLVMValueRef to,
+                                struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef dst_cast = LLVMBuildBitCast(ctx->builder, to,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");

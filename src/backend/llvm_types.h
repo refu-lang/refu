@@ -49,7 +49,7 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
  * @param ctx         The llvm traversal context
  * @return            The LLVM type for the compiled struct or NULL in error
  */
-struct LLVMOpaqueType *backend_llvm_compile_typedecl(const struct RFstring *name,
+struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
                                                      struct rir_type *type,
                                                      struct llvm_traversal_ctx *ctx);
 
@@ -62,7 +62,7 @@ struct LLVMOpaqueType *backend_llvm_compile_typedecl(const struct RFstring *name
  * @param ctx          The llvm traversal context
  * @return             An point to an array of LLVM Types held by the context
  */
-struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type *type,
+struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
                                                            struct llvm_traversal_ctx *ctx);
 
 /**
@@ -71,7 +71,7 @@ struct LLVMOpaqueType **backend_llvm_type_to_subtype_array(const struct rir_type
  * @param type        The rir type whose members to get. Must not be a sum type
  * @param ctx         The llvm traversal context
  */
-struct LLVMOpaqueType **backend_llvm_simple_member_types(struct rir_type *type,
+struct LLVMOpaqueType **bllvm_simple_member_types(struct rir_type *type,
                                                          struct llvm_traversal_ctx *ctx);
 
 #endif
