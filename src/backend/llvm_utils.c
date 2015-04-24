@@ -101,7 +101,6 @@ LLVMValueRef backend_llvm_cast_value_to_type_maybe(LLVMValueRef val,
         } else if (type_size >= val_size) {
             // in this case if we got here it's probably an assignment to a sum type
             val = LLVMBuildBitCast(ctx->builder, val, type, "");
-            /* val = LLVMBuildBitCast(ctx->builder, val, LLVMPointerType(type, 0), ""); */
         } else {
             backend_llvm_type_debug(val_type, "val_type", ctx);
             backend_llvm_type_debug(type, "to_cast_type", ctx);
@@ -116,6 +115,10 @@ void backend_llvm_store(LLVMValueRef val,
                         struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
+    if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
+        backend_llvm_copy_string(ptr, val, ctx);
+        return;
+    }
     val = backend_llvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
     LLVMBuildStore(ctx->builder, val, ptr);
 }
