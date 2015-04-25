@@ -21,4 +21,16 @@ OBJSET_DEFINE_TYPE(type,
                    type_objset_hashfn,
                    type_objset_eqfn)
 
+/**
+ * Check if a type can be converted to any type in the set
+ *
+ * @param set        The type set in question
+ * @param type       The type to check if can be converted to any other type
+ *                   in the set
+ * @return           True if @a type can be converted to a type in the set and
+ *                   false otherwise
+ */
+bool type_objset_has_convertable(const struct rf_objset_type *set,
+                                 const struct type *type);
+
 #endif

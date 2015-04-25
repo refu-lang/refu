@@ -15,3 +15,16 @@ bool type_objset_eqfn(const struct type *t1,
 {
     return type_compare(t1, t2, TYPECMP_IDENTICAL);
 }
+
+bool type_objset_has_convertable(const struct rf_objset_type *set, const struct type *type)
+{
+    struct rf_objset_iter it1;
+    struct type *t1;
+    
+    rf_objset_foreach(set, &it1, t1) {
+        if (type_compare(type, t1, TYPECMP_IMPLICIT_CONVERSION)) {
+            return true;
+        }
+    }
+    return false;
+}

@@ -19,6 +19,8 @@ struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
 
 i_INLINE_INS struct ast_node *ast_matchcase_pattern(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchcase_expression(const struct ast_node *n);
+i_INLINE_INS struct symbol_table *ast_matchcase_symbol_table_get(const struct ast_node *n);
+i_INLINE_INS void *ast_matchcase_symbol_table_set(struct ast_node *n, struct symbol_table *st);
 
 struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,

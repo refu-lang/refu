@@ -124,6 +124,54 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST (test_typecheck_access_field) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    s:i32 = match a {\n"
+        "    z:i32       => z\n"
+        "    _    => 0\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);    
+} END_TEST
+
+START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    s:i32 = match a {\n"
+        "    a:i32       => a\n"
+        "    _    => 0\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);    
+} END_TEST
+
+START_TEST (test_typecheck_access_fieldname_in_typeop) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32, b:f32 | c:string }\n"
+        "{\n"
+        "    a:foo\n"
+        "    s:f32 = match a {\n"
+        "    a:i32, b:f32       => b\n"
+        "    string    => 3.14   \n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    ck_assert_typecheck_ok(d, true);    
+} END_TEST
+
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {s:string}\n"
@@ -242,6 +290,14 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
     tcase_add_test(t_simple, test_typecheck_matchexpr_assign_to_check_type_single);
     tcase_add_test(t_simple, test_typecheck_matchexpr_assign_to_check_type_sum_of_2);
 
+    TCase *t_advanced = tcase_create("advanced_match_expressions");
+    tcase_add_checked_fixture(t_advanced,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_advanced, test_typecheck_access_field);
+    tcase_add_test(t_advanced, test_typecheck_access_field_same_name_as_parent_block);
+    tcase_add_test(t_advanced, test_typecheck_access_fieldname_in_typeop);
+
     TCase *t_inv = tcase_create("invalid_match_expressions");
     tcase_add_checked_fixture(t_inv,
                               setup_analyzer_tests_with_filelog,
@@ -252,6 +308,7 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_not_all_cases_covered);
 
     suite_add_tcase(s, t_simple);
+    suite_add_tcase(s, t_advanced);
     suite_add_tcase(s, t_inv);
     return s;
 }

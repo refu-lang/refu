@@ -181,7 +181,7 @@ static bool pattern_match_type_operators(const struct type *pattern,
 enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_traversal_ctx* ctx)
 {
     struct ast_node *parent_matchexpr_id = ast_matchexpr_identifier(
-        analyzer_traversal_ctx_get_nth_parent(0, ctx)
+        analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
     const struct type *case_pattern_type = ast_matchcase_pattern(n)->expression_type;
     const struct type *match_type = parent_matchexpr_id->expression_type;
@@ -224,10 +224,15 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
         RF_ASSERT(ast_matchcase_expression(mcase)->expression_type,
                   "A match case's expression type is not determined");
         case_type = (struct type*)ast_matchcase_expression(mcase)->expression_type;
-        // Check if it's in the set. If yes skip this. If not add it
+        // Check if it's in the set. If yes skip this.
         if (rf_objset_get(&case_types, type, case_type)) {
             continue;
         }
+        // also check if it can be converted to a type already in the set and skip
+        if (type_objset_has_convertable(&case_types, case_type)) {
+            continue;
+        }
+        // in other case we add it to the set
         rf_objset_add(&case_types, type, case_type);
         // add to the type of the match expression itself
         if (matchexpr_type) {

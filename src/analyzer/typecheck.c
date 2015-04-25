@@ -314,7 +314,6 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                   struct analyzer_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
     if (ast_identifier_is_wildcard(n)) {
         if (!analyzer_traversal_ctx_traverse_parents(ctx,
                                                     wilcard_parent_is_matchcase,
@@ -336,6 +335,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
 
     // for some identifiers, like for the right part of a member access it's
     // impossible to determine type at this stage, for the rest it's an error
+    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
     if (!n->expression_type &&
         !ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
@@ -836,9 +836,6 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         // do nothing. Think what to do for the remaining nodes if anything ...
         break;
     }
-
-    // go back to previous parent
-    (void)darray_pop(ctx->parent_nodes);
     // also change symbol table upwards if needed
     analyzer_handle_symbol_table_ascending(n, ctx);
     return ret;

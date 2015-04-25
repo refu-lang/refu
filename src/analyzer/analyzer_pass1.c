@@ -7,6 +7,7 @@
 #include <ast/type.h>
 #include <ast/vardecl.h>
 #include <ast/function.h>
+#include <ast/matchexpr.h>
 #include <ast/string_literal.h>
 #include <ast/ast_utils.h>
 
@@ -198,6 +199,10 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         // function implementation symbol table should point to its decl table
         ast_fnimpl_symbol_table_set(n, ast_fndecl_symbol_table_get(n->fnimpl.decl));
         break;
+    case AST_MATCH_CASE:
+        // match case symbol table should point to its pattern typedesc table
+        ast_matchcase_symbol_table_set(n, ast_typedesc_symbol_table_get(n->matchcase.pattern));
+        break;
     case AST_TYPE_DESCRIPTION:
         // initialize the type description's symbol table
         if (!symbol_table_init(&n->typedesc.st, ctx->a)) {
@@ -265,6 +270,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     case AST_FUNCTION_IMPLEMENTATION:
         ctx->current_st = ast_fnimpl_symbol_table_get(n)->parent;
         break;
+    case AST_MATCH_CASE:
+        ctx->current_st = ast_matchcase_symbol_table_get(n)->parent;
+        break;
     case AST_FUNCTION_DECLARATION:
         // When the function declaration is inside a function implementation it
         // should not go upwards here since it would mess up current symbol table
@@ -274,13 +282,24 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
         }
         break;
     case AST_TYPE_DESCRIPTION:
-        ctx->current_st = ast_typedesc_symbol_table_get(n)->parent;
+    {
+        struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
+        // If this is the type description of a match case pattern's then
+        // don't go to parent symbol table here, since when going downwards
+        // again for the match case expression we would be pointing to the 
+        // enclosing block's symbol table
+        if (!parent || parent->type != AST_MATCH_CASE) {
+            ctx->current_st = ast_typedesc_symbol_table_get(n)->parent;
+        }
+    }
         break;
     default:
         // do nothing
         break;
     }
 
+    // go back to previous parent
+    (void)darray_pop(ctx->parent_nodes);
     RF_ASSERT(ctx->current_st, "Symbol table movement to parent lead to "
               "a NULL table!");
     return true;
@@ -299,6 +318,9 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         ctx->current_st = ast_fnimpl_symbol_table_get(n);
+        break;
+    case AST_MATCH_CASE:
+        ctx->current_st = ast_matchcase_symbol_table_get(n);
         break;
     case AST_FUNCTION_DECLARATION:
         ctx->current_st = ast_fndecl_symbol_table_get(n);

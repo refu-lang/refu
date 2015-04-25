@@ -47,15 +47,24 @@ i_INLINE_DECL void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *
  * Gets the @a num parent going upwards from the node. Indexing starts from 0.
  * e.g.: To get the direct parent give num == 0
  *
- * This is a volatile function. If you ask for non-existing parent behaviour is undefined.
  */
 i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_nth_parent(
     unsigned int num,
     struct analyzer_traversal_ctx *ctx)
 {
-    RF_ASSERT(darray_size(ctx->parent_nodes) - 2 -  num >= 0,
+    if ((int)darray_size(ctx->parent_nodes) - 2 - (int)num < 0) {
+        return NULL;
+    }
+    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2 - num);
+}
+
+i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_nth_parent_or_die(
+    unsigned int num,
+    struct analyzer_traversal_ctx *ctx)
+{
+    RF_ASSERT(darray_size(ctx->parent_nodes) - 2 - num >= 0,
               "Non-existant parent requested");
-    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2 -  num);
+    return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2 - num);
 }
 
 typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *user);

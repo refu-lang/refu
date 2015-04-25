@@ -22,6 +22,18 @@ i_INLINE_DECL struct ast_node *ast_matchcase_expression(const struct ast_node *n
     return n->matchcase.expression;
 }
 
+i_INLINE_DECL struct symbol_table *ast_matchcase_symbol_table_get(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
+    return n->matchcase.st;
+}
+
+i_INLINE_DECL void *ast_matchcase_symbol_table_set(struct ast_node *n, struct symbol_table *st)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
+    return n->matchcase.st = st;
+}
+
 struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,
                                       struct ast_node *id);
