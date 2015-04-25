@@ -126,9 +126,9 @@ enum llvm_expression_compile_options {
  * @param options  [Optional] Options to provide for the compilations. For defaults
  *                 just give 0. Possible options are described at @ref llvm_expression_compile_options
  */
-struct LLVMOpaqueValue *bllvm_expression_compile(struct ast_node *n,
-                                                        struct llvm_traversal_ctx *ctx,
-                                                        int options);
+struct LLVMOpaqueValue *bllvm_compile_expression(struct ast_node *n,
+                                                 struct llvm_traversal_ctx *ctx,
+                                                 int options);
 
 
 
@@ -137,15 +137,15 @@ void bllvm_compile_basic_block(struct rir_basic_block *block,
                                       struct llvm_traversal_ctx *ctx);
 
 
-void bllvm_ifexpr_compile(struct rir_branch *branch,
-                                 struct llvm_traversal_ctx *ctx);
+void bllvm_compile_ifexpr(struct rir_branch *branch,
+                          struct llvm_traversal_ctx *ctx);
 
-void bllvm_branch_compile(struct rir_branch *branch,
-                                 struct llvm_traversal_ctx *ctx);
+void bllvm_compile_branch(struct rir_branch *branch,
+                          struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueValue *bllvm_explicit_cast_compile(const struct type *cast_type,
-                                                           struct ast_node *args,
-                                                           struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *bllvm_compile_explicit_cast(const struct type *cast_type,
+                                                    struct ast_node *args,
+                                                    struct llvm_traversal_ctx *ctx);
 
 /**
  * Will typecast @a val if needed to a specific elementary type

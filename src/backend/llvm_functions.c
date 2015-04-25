@@ -40,7 +40,7 @@ static void ctor_args_to_value_cb_ctx_init(struct ctor_args_to_value_cb_ctx *ctx
 
 static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_cb_ctx *ctx)
 {
-    LLVMValueRef arg_value = bllvm_expression_compile(n, ctx->llvm_ctx, 0);
+    LLVMValueRef arg_value = bllvm_compile_expression(n, ctx->llvm_ctx, 0);
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
     LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
 
@@ -148,12 +148,12 @@ static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
 
 static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef arg_value = bllvm_expression_compile(n, ctx, 0);
+    LLVMValueRef arg_value = bllvm_compile_expression(n, ctx, 0);
     llvm_traversal_ctx_add_value(ctx, arg_value);
     return true;
 }
 
-LLVMValueRef bllvm_functioncall_compile(struct ast_node *n,
+LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                                         struct llvm_traversal_ctx *ctx)
 {
     // for now just deal with the built-in print() function
@@ -182,7 +182,7 @@ LLVMValueRef bllvm_functioncall_compile(struct ast_node *n,
     } else {
         RF_ASSERT(type_is_explicitly_convertable_elementary(fn_type),
                   "At this point the only possible call should be explicit cast");
-        return bllvm_explicit_cast_compile(fn_type, args, ctx);
+        return bllvm_compile_explicit_cast(fn_type, args, ctx);
     }
 
     RF_ASSERT_OR_EXIT(false, "should never get here");
@@ -197,7 +197,7 @@ static LLVMTypeRef *bllvm_fn_arg_types(struct rir_type *type,
     return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
 }
 
-LLVMValueRef bllvm_function_compile(struct rir_function *fn,
+LLVMValueRef bllvm_compile_function(struct rir_function *fn,
                                     struct llvm_traversal_ctx *ctx)
 {
     char *fn_name;

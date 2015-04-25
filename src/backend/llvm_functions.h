@@ -10,11 +10,11 @@ struct ast_node;
 struct rir_function;
 struct llvm_traversal_ctx;
 
-struct LLVMOpaqueValue *bllvm_function_compile(struct rir_function *fn,
-                                                      struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *bllvm_compile_function(struct rir_function *fn,
+                                               struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueValue *bllvm_functioncall_compile(struct ast_node *n,
-                                                          struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *bllvm_compile_functioncall(struct ast_node *n,
+                                                   struct llvm_traversal_ctx *ctx);
 
 /**
  *  Returns the LLVMTypeRef of an LLVMValueRef that's a function

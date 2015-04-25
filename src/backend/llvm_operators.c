@@ -16,9 +16,9 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
-    LLVMValueRef llvm_left = bllvm_expression_compile(left, ctx,
+    LLVMValueRef llvm_left = bllvm_compile_expression(left, ctx,
                                                       RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef llvm_right = bllvm_expression_compile(right, ctx,
+    LLVMValueRef llvm_right = bllvm_compile_expression(right, ctx,
                                                        RFLLVM_OPTION_IDENTIFIER_VALUE);
     enum elementary_type_category elementary_type;
     LLVMIntPredicate llvm_int_compare_type;
@@ -196,8 +196,8 @@ LLVMValueRef bllvm_compile_assign(struct ast_node *from,
                                   struct llvm_traversal_ctx *ctx)
 {
     // For left side we want the memory location if it's a simple identifier hence options = 0
-    LLVMValueRef llvm_to = bllvm_expression_compile(to, ctx, 0);
-    LLVMValueRef llvm_from = bllvm_expression_compile(from,
+    LLVMValueRef llvm_to = bllvm_compile_expression(to, ctx, 0);
+    LLVMValueRef llvm_from = bllvm_compile_expression(from,
                                                       ctx,
                                                       RFLLVM_OPTION_IDENTIFIER_VALUE);
     
@@ -213,8 +213,8 @@ LLVMValueRef bllvm_compile_bop(struct ast_node *n,
         return bllvm_compile_member_access(n, ctx);
     }
 
-    LLVMValueRef left = bllvm_expression_compile(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
-    LLVMValueRef right = bllvm_expression_compile(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef left = bllvm_compile_expression(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    LLVMValueRef right = bllvm_compile_expression(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     switch(ast_binaryop_op(n)) {
         // arithmetic
         // TODO: This will not be okay for all situations. There are different
@@ -252,7 +252,7 @@ LLVMValueRef bllvm_compile_uop(struct ast_node *n,
 {
     AST_NODE_ASSERT_TYPE(n, AST_UNARY_OPERATOR);
 
-    LLVMValueRef operand = bllvm_expression_compile(
+    LLVMValueRef operand = bllvm_compile_expression(
         ast_unaryop_operand(n),
         ctx,
         RFLLVM_OPTION_IDENTIFIER_VALUE);
