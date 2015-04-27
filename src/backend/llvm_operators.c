@@ -213,6 +213,12 @@ LLVMValueRef bllvm_compile_bop(struct ast_node *n,
         return bllvm_compile_member_access(n, ctx);
     }
 
+    if (ast_binaryop_op(n) == BINARYOP_ASSIGN) {
+        return bllvm_compile_assign(ast_binaryop_right(n),
+                                    ast_binaryop_left(n),
+                                    n->expression_type,
+                                    ctx);
+    }
     LLVMValueRef left = bllvm_compile_expression(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     LLVMValueRef right = bllvm_compile_expression(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     switch(ast_binaryop_op(n)) {
@@ -228,11 +234,6 @@ LLVMValueRef bllvm_compile_bop(struct ast_node *n,
         return LLVMBuildMul(ctx->builder, left, right, "left * right");
     case BINARYOP_DIV:
         return LLVMBuildUDiv(ctx->builder, left, right, "left / right");
-    case BINARYOP_ASSIGN:
-        return bllvm_compile_assign(ast_binaryop_right(n),
-                                    ast_binaryop_left(n),
-                                    n->expression_type,
-                                    ctx);
     case BINARYOP_CMP_EQ:
     case BINARYOP_CMP_NEQ:
     case BINARYOP_CMP_GT:

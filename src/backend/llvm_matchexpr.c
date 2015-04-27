@@ -4,6 +4,7 @@
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
+#include "llvm_operators.h"
 
 #include <ast/matchexpr.h>
 #include <types/type.h>
@@ -12,6 +13,8 @@
 
 static void bllvm_add_matchcase(struct ast_node *matchcase,
                                 struct rir_type *matching_type,
+                                LLVMValueRef llvm_ret_alloca,
+                                const struct type *ret_type,
                                 LLVMValueRef llvm_typedecl_val,
                                 LLVMValueRef llvm_switch,
                                 LLVMBasicBlockRef match_end,
@@ -33,12 +36,13 @@ static void bllvm_add_matchcase(struct ast_node *matchcase,
     // compile match case's expression and assign to type
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, llvm_typedecl_val, indices, 2, "");
-    LLVMValueRef llvm_match_case = bllvm_compile_expression(
-        ast_matchcase_expression(matchcase),
-        ctx,
-        0
-    );
-    bllvm_assign_defined_types(llvm_match_case, gep_to_main_contents, ctx);
+    /* LLVMValueRef llvm_match_case = bllvm_compile_expression( */
+    /*     ast_matchcase_expression(matchcase), */
+    /*     ctx, */
+    /*     0 */
+    /* ); */
+    /* bllvm_assign_defined_types(llvm_match_case, gep_to_main_contents, ctx); */
+    bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, ctx);
     LLVMBuildBr(ctx->builder, match_end);
     LLVMAddCase(llvm_switch, LLVMConstInt(LLVMInt32Type(), 0, num), case_branch);
 }
@@ -78,17 +82,21 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
         ast_matchexpr_cases_num(n)
     );
 
+    // allocate a return value
+    LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
+    LLVMValueRef ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
+
     struct symbol_table *encasing_block_st = ctx->current_st;
     ast_matchexpr_foreach(n, &it, mcase) {
         // switch to the match case symbol table
         ctx->current_st = ast_matchcase_symbol_table_get(mcase);
         // create backend handles (BuildAlloca) for the symbols of the symbol table
         symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
-        bllvm_add_matchcase(mcase, darray_item(rec->rir_data->subtypes, 0), rec->backend_handle, llvm_switch, match_end, i, ctx);
+        bllvm_add_matchcase(mcase, darray_item(rec->rir_data->subtypes, 0), ret_alloc, n->expression_type, rec->backend_handle, llvm_switch, match_end, i, ctx);
         ++i;
     }
 
     ctx->current_st = encasing_block_st;
     bllvm_enter_block(ctx, match_end);
-    return rec->backend_handle;
+    return ret_alloc;
 }

@@ -126,7 +126,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, allocation, indices, 2, "");
     bllvm_assign_defined_types(populated_sum_type, gep_to_main_contents, ctx);
-    // TODO: here also set the second value of the struct (the alloca) which should be the selector
+    // here also set the second value of the struct (the alloca) which should be the selector
     LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
     LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, allocation, indices2, 2, "");
     bllvm_store(LLVMConstInt(LLVMInt32Type(), 1, 0), gep_to_selector, ctx);    
@@ -208,7 +208,7 @@ LLVMValueRef bllvm_compile_function(struct rir_function *fn,
     LLVMTypeRef * types = bllvm_fn_arg_types(fn->arg_type, ctx);
     ctx->current_function = LLVMAddFunction(
         ctx->mod, fn_name,
-        LLVMFunctionType(bllvm_type(fn->ret_type, ctx),
+        LLVMFunctionType(bllvm_type_from_rir(fn->ret_type, ctx),
                          types,
                          llvm_traversal_ctx_get_param_count(ctx),
                          false)); // never variadic for now
@@ -233,7 +233,7 @@ LLVMValueRef bllvm_compile_function(struct rir_function *fn,
             param_name = rf_string_cstr_from_buff_or_die(param_name_str);
             allocation = LLVMBuildAlloca(
                 ctx->builder,
-                bllvm_type(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
+                bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
                 param_name);
             RFS_POP();
             // and assign to it the argument value
@@ -253,7 +253,7 @@ LLVMValueRef bllvm_compile_function(struct rir_function *fn,
     if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
         ctx->current_function_return = LLVMBuildAlloca(
             ctx->builder,
-            bllvm_type(fn->ret_type, ctx),
+            bllvm_type_from_rir(fn->ret_type, ctx),
             "function_return_value");
     }
 

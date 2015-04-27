@@ -129,8 +129,8 @@ LLVMTypeRef bllvm_rir_elementary_to_type(enum rir_type_category type,
     return NULL;
 }
 
-LLVMTypeRef bllvm_type(const struct rir_type *type,
-                       struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_type_from_rir(const struct rir_type *type,
+                                struct llvm_traversal_ctx *ctx)
 {
     char *name;
     LLVMTypeRef ret = NULL;
@@ -147,6 +147,17 @@ LLVMTypeRef bllvm_type(const struct rir_type *type,
 
     RF_ASSERT(ret, "The above functions should never fail");
     return ret;
+}
+
+LLVMTypeRef bllvm_type_from_normal(const struct type *type,
+                                   struct llvm_traversal_ctx *ctx)
+{
+    struct rir_type *rir_t = rir_types_list_get_type(
+        &ctx->rir->rir_types_list,
+        type,
+        NULL
+    );
+    return bllvm_type_from_rir(rir_t, ctx);
 }
 
 i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
@@ -423,7 +434,7 @@ void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(symbol_table_record_id(rec));
     // note: this simply creates the stack space but does not allocate it
-    LLVMTypeRef llvm_type = bllvm_type(type, ctx);
+    LLVMTypeRef llvm_type = bllvm_type_from_rir(type, ctx);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, name);
     symbol_table_record_set_backend_handle(rec, allocation);
     RFS_POP();

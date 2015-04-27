@@ -57,8 +57,10 @@ struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueType *bllvm_rir_elementary_to_type(enum rir_type_category type,
                                                            struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *bllvm_type(const struct rir_type *type,
-                                  struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *bllvm_type_from_rir(const struct rir_type *type,
+                                           struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *bllvm_type_from_normal(const struct type *type,
+                                              struct llvm_traversal_ctx *ctx);
 /**
  * Gets the parameters array from the llvm traversal ctx or NULL if
  * there are none

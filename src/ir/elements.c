@@ -164,27 +164,10 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
         RF_ASSERT(rec->rir_data, "During RIR creation rir type corresponding to a normal type was not found");
 
         break;
-    case AST_BINARY_OPERATOR:
-        if (!rir_handle_block_expression(ast_binaryop_left(n), b, rir)) {
-            return false;
-        }
-        if (!rir_handle_block_expression(ast_binaryop_right(n), b, rir)) {
-            return false;
-        }
-        if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
-            return false;
-        }
-        break;
     case AST_IF_EXPRESSION:
-        if (!rir_expression_create(b, n, RIR_IF_EXPRESSION, rir)) {
-            return false;
-        }
-        break;
+        return rir_expression_create(b, n, RIR_IF_EXPRESSION, rir);
     default:
-        if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
-            return false;
-        }
-        break;
+        return rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir);
     }
 
     return true;

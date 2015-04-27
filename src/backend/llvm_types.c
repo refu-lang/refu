@@ -126,7 +126,7 @@ LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
 }
 
 struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
-                                                           struct llvm_traversal_ctx *ctx)
+                                                    struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
               type->category != COMPOSITE_SUM_RIR_TYPE ||
@@ -136,13 +136,13 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
     struct rir_type **subtype;
     llvm_traversal_ctx_reset_params(ctx);
     if (darray_size(type->subtypes) == 0) {
-        llvm_type = bllvm_type(type, ctx);
+        llvm_type = bllvm_type_from_rir(type, ctx);
         if (llvm_type != LLVMVoidType()) {
             llvm_traversal_ctx_add_param(ctx, llvm_type);
         }
     } else {
         darray_foreach(subtype, type->subtypes) {
-            llvm_type = bllvm_type(*subtype, ctx);
+            llvm_type = bllvm_type_from_rir(*subtype, ctx);
             if (llvm_type != LLVMVoidType()) {
                 llvm_traversal_ctx_add_param(ctx, llvm_type);
             }
