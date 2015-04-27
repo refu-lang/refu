@@ -31,12 +31,20 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
     if (!ret) {
         return NULL;
     }
+    ret->matchexpr.match_cases_num = 0;
     ast_node_register_child(ret, id, matchexpr.identifier);
     return ret;
 }
 
+i_INLINE_INS size_t ast_matchexpr_cases_num(const struct ast_node *n);
 i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchexpr_identifier(const struct ast_node *n);
+
+void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)
+{
+    ast_node_add_child(n, mcase);
+    ++n->matchexpr.match_cases_num;
+}
 
 struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
                                           struct ast_matchexpr_it *it)

@@ -97,14 +97,12 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     bool child_found = false;
     struct rir_type **subtype;
     darray_foreach(subtype, darray_item(defined_type->subtypes, 0)->subtypes) {
-        // TODO: pointer comparison fails here. Investigate why. Thought only had unique rir types
-        if (rir_type_equals(*subtype, params_type)) {
+        if (rir_type_equals(*subtype, params_type, RIR_TYPECMP_SIMPLE)) {
             child_found = true;
             break;
         }
         ++child_index;
     }
-    RF_ASSERT(child_found, "LALALA");
     RF_ASSERT_OR_CRITICAL(child_found,
                           return NULL,
                           "Type should have been found as child of defined type");

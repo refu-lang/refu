@@ -100,7 +100,7 @@ struct ast_node *parser_acc_matchexpr(struct parser *p, bool expect_it)
     }
 
     while ((match_case = parser_accept_matchcase(p))) {
-        ast_node_add_child(match_expr, match_case);
+        ast_matchexpr_add_case(match_expr, match_case);
     }
     if (parser_has_syntax_error(p)) { // last match_case parsing failed
         goto fail_free_matchexpr;

@@ -13,6 +13,7 @@ struct RFstring;
 struct symbol_table;
 struct type;
 struct rir_type;
+struct rir_types_list;
 
 /* -- symbol table record functionality -- */
 
@@ -74,12 +75,16 @@ symbol_table_record_type(struct symbol_table_record *rec)
     return rec->data;
 }
 
-i_INLINE_DECL struct rir_type *
-symbol_table_record_rir_type(struct symbol_table_record *rec)
-{
-    RF_ASSERT(rec->rir_data, "Empty IR type description detected");
-    return rec->rir_data;
-}
+/**
+ * Gets the corresponding rir type for a symbol table record
+ *
+ * @param rec        The record whose rir type to get
+ * @param list       A rir types list in which to find the equivalent rir type
+ *                   if the record does not already contain a rir type
+ * @return           The corresponding rir_type or NULL if no rir type could be found
+ */
+struct rir_type *symbol_table_record_rir_type(struct symbol_table_record *rec,
+                                              struct rir_types_list *list);
 
 i_INLINE_DECL void *
 symbol_table_record_get_backend_handle(struct symbol_table_record *rec)

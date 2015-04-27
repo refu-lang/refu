@@ -66,10 +66,17 @@ enum rir_type_category rir_type_op_from_type(const struct type *t);
  */
 bool rir_type_is_sumtype(const struct rir_type *a);
 
+enum rir_typecmp_options {
+    RIR_TYPECMP_SIMPLE = 0x0,
+    RIR_TYPECMP_NAMES = 0x1,
+    RIR_TYPECMP_CONVERTABLE = 0x2,
+};
 /**
  * Equality comparison for two rir types
  */
-bool rir_type_equals(struct rir_type *a, struct rir_type *b);
+bool rir_type_equals(const struct rir_type *a,
+                     const struct rir_type *b,
+                     enum rir_typecmp_options options);
 
 /**
  * Equality comparison for a rir and a normal type and name combination
@@ -84,7 +91,19 @@ bool rir_type_equals_type(const struct rir_type *a,
                           const struct RFstring *name);
 
 /**
+ * Checks if @a t is a direct child of another type or can be converted to a child
+ * and return its index
+ *
+ * @param t                 The type to check if it's a child.
+ * @param maybe_parent      The type to check if it's a parent
+ * @return                  The index of @a t as child of @a maybe_parent or 
+ *                          -1 for failure
+ */
+int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe_parent);
+
+/**
  * Checks if @c t is a subtype of @c other. Only checks for pointer equality
+ * TODO: Maybe this function can be removed?
  */
 bool rir_type_is_subtype_of_other(struct rir_type *t,
                                   struct rir_type *other);

@@ -583,6 +583,12 @@ const struct type *type_get_wildcard()
 {
     return &g_wildcard_type;
 }
+
+const struct RFstring *type_defined_get_name(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
+    return t->defined.name;
+}
 /* -- type traversal functions -- */
 
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)

@@ -39,14 +39,18 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
                                       struct ast_node *id);
 
 
+i_INLINE_DECL size_t ast_matchexpr_cases_num(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    return n->matchexpr.match_cases_num;
+}
 
 /**
  * Check if a match expression has no cases, and should only appear inside another one
  */
 i_INLINE_DECL bool ast_matchexpr_is_bodyless(const struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
-    return ast_node_get_children_number(n) == 1;
+    return ast_matchexpr_cases_num(n) == 0;
 }
 
 i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n)
@@ -54,6 +58,9 @@ i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
     return n->matchexpr.identifier;
 }
+
+void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
+
 
 struct ast_matchexpr_it {
     const struct RFilist_head *lh;

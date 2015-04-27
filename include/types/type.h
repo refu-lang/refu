@@ -150,6 +150,11 @@ size_t type_get_uid(const struct type *t);
  */
 const struct type *type_get_wildcard();
 
+/**
+ * Gets the name of a defined type
+ */
+const struct RFstring *type_defined_get_name(const struct type *t);
+
 /* -- type traversal functions -- */
 
 typedef bool (*type_iterate_cb) (struct type *t, void *user_arg);

@@ -516,17 +516,18 @@ START_TEST (test_unaryop_post_dec) {
 } END_TEST
 
 START_TEST (test_matchexpr_1) {
-#if 0    // TODO
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i32 | b:f32 }\n"
+        "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
-        "t1:foo = foo(0.222)\n"
-        "t2:foo = foo(123)\n"
-        "return 13\n"
+        "t1:foo = foo(29)\n"
+        "r:i32 = match t1 {\n"
+        " a:i32 => a\n"
+        " _ => 0\n"
+        "}"
+        "return r\n"
         "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 13);
-#endif
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 29, NULL, "test_input_file.rf --backend-debug");
 } END_TEST
 
 Suite *end_to_end_basic_suite_create(void)

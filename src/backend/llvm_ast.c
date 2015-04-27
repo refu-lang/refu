@@ -41,6 +41,7 @@
 #include "llvm_operators.h"
 #include "llvm_functions.h"
 #include "llvm_types.h"
+#include "llvm_matchexpr.h"
 
 LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
                                      struct llvm_traversal_ctx *ctx)
@@ -387,6 +388,8 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
         RF_ASSERT(bllvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx),
                   "typedecl compile should never fail");
         break;
+    case AST_MATCH_EXPRESSION:
+        return bllvm_compile_matchexpr(n, ctx);
     default:
         RF_ASSERT(false, "Illegal node type at LLVM code generation");
         break;
@@ -411,12 +414,12 @@ static void bllvm_expression(struct rir_expression *expr,
     ctx->current_value = NULL;
 }
 
-static void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
-                                    struct llvm_traversal_ctx *ctx)
+void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
+                             struct llvm_traversal_ctx *ctx)
 {
     char *name;
     // for each symbol, allocate an LLVM variable in the stack with alloca
-    struct rir_type *type = symbol_table_record_rir_type(rec);
+    struct rir_type *type = symbol_table_record_rir_type(rec, &ctx->rir->rir_types_list);
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(symbol_table_record_id(rec));
     // note: this simply creates the stack space but does not allocate it

@@ -1,6 +1,7 @@
 #include <ir/rir_type.h>
 
 #include <String/rf_str_core.h>
+#include <Utils/bits.h>
 
 #include <ast/type.h>
 
@@ -212,28 +213,47 @@ bool rir_type_is_sumtype(const struct rir_type *t)
 }
 
 
-bool rir_type_equals(struct rir_type *a, struct rir_type *b)
+bool rir_type_equals(const struct rir_type *a,
+                     const struct rir_type *b,
+                     enum rir_typecmp_options options)
 {
     struct rir_type **subtype_a = NULL;
     unsigned int i = 0;
+
+    if (RF_BITFLAG_ON(options, RIR_TYPECMP_NAMES)) {
+        if ((a->name == NULL &&  b->name != NULL) ||
+            (a->name != NULL && b->name == NULL)) {
+            return false;
+        } else if (a->name != NULL && b->name != NULL &&
+                   !rf_string_equal(a->name, b->name)) {
+            return false;
+        }
+    }
+
     if (a->category != b->category) {
+        if (RF_BITFLAG_ON(options, RIR_TYPECMP_CONVERTABLE)) {
+            // TODO: this has to be more sophisticated just like in typecmp
+            // but perhaps better approach is to avoid this totally here and
+            // not having to rely on any type comparisons at this stage.
+            // Since actual type checking occurred at the previous stage this will
+            // work most of the times but it feels hacky as hell ...
+            if ((a->category <= ELEMENTARY_RIR_TYPE_UINT && b->category <= ELEMENTARY_RIR_TYPE_UINT) ||
+                (a->category >= ELEMENTARY_RIR_TYPE_FLOAT_32 && a->category <= ELEMENTARY_RIR_TYPE_FLOAT_64 &&
+                 b->category >= ELEMENTARY_RIR_TYPE_FLOAT_32 && b->category <= ELEMENTARY_RIR_TYPE_FLOAT_64)) {
+                // no need to check for children, elementary types have no children
+                return true;
+            }
+        }
         return false;
     }
 
-    if ((a->name == NULL &&  b->name != NULL) ||
-        (a->name != NULL && b->name == NULL)) {
-        return false;
-    } else if (a->name != NULL && b->name != NULL &&
-               !rf_string_equal(a->name, b->name)) {
-        return false;
-    }
 
     if (darray_size(a->subtypes) != darray_size(b->subtypes)) {
         return false;
     }
 
     darray_foreach(subtype_a, a->subtypes) {
-        if (!rir_type_equals(*subtype_a, darray_item(b->subtypes, i))) {
+        if (!rir_type_equals(*subtype_a, darray_item(b->subtypes, i), options)) {
             return false;
         }
         ++i;
@@ -242,6 +262,18 @@ bool rir_type_equals(struct rir_type *a, struct rir_type *b)
     return true;
 }
 
+int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe_parent)
+{
+    struct rir_type **subtype;
+    int i = 0;
+    darray_foreach(subtype, maybe_parent->subtypes) {
+        if (rir_type_equals(t, *subtype, RIR_TYPECMP_CONVERTABLE)) {
+            return i;
+        }
+        ++i;
+    }
+    return -1;
+}
 
 bool rir_type_is_subtype_of_other(struct rir_type *t,
                                   struct rir_type *other)

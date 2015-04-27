@@ -14,6 +14,7 @@ struct RFstring;
 struct ast_node;
 struct analyzer;
 struct symbol_table;
+struct symbol_table_record;
 struct compiler_args;
 struct rir;
 struct rir_module;
@@ -132,7 +133,8 @@ struct LLVMOpaqueValue *bllvm_compile_expression(struct ast_node *n,
 
 
 
-
+void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
+                             struct llvm_traversal_ctx *ctx);
 void bllvm_compile_basic_block(struct rir_basic_block *block,
                                       struct llvm_traversal_ctx *ctx);
 

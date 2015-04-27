@@ -73,8 +73,8 @@ static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
 }
 
 LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
-                                          struct rir_type *type,
-                                          struct llvm_traversal_ctx *ctx)
+                                   struct rir_type *type,
+                                   struct llvm_traversal_ctx *ctx)
 {
     if (!type) {
         type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);

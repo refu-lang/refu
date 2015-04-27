@@ -154,7 +154,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {
-            if (rir_type_equals(t, expected_types[i])) {
+            if (rir_type_equals(t, expected_types[i], RIR_TYPECMP_NAMES)) {
                 found = true;
                 break;
             }
