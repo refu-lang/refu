@@ -1,6 +1,8 @@
 #ifndef LFR_BACKEND_LLVM_UTILS_H
 #define LFR_BACKEND_LLVM_UTILS_H
 
+#include <stdint.h>
+
 struct LLVMOpaqueModule;
 struct LLVMOpaqueBasicBlock;
 struct LLVMOpaqueValue;
@@ -70,12 +72,16 @@ struct LLVMOpaqueValue *bllvm_add_br(struct LLVMOpaqueBasicBlock *target,
                                      struct llvm_traversal_ctx *ctx);
 
 /**
- * Shallow copy/assignment of designed types
+ * Shallow copy/assignment of from to to. Uses memcpy.
  * @param from      The source llvm value to assign to
  * @param to        The destination llvm value
  * @param ctx             The llvm traversal context
  */
-void bllvm_assign_defined_types(struct LLVMOpaqueValue *from,
-                                struct LLVMOpaqueValue *to,
-                                struct llvm_traversal_ctx *ctx);
+void bllvm_memcpy(struct LLVMOpaqueValue *from,
+                  struct LLVMOpaqueValue *to,
+                  struct llvm_traversal_ctx *ctx);
+void bllvm_memcpyn(struct LLVMOpaqueValue *from,
+                   struct LLVMOpaqueValue *to,
+                   uint32_t bytes,
+                   struct llvm_traversal_ctx *ctx);
 #endif

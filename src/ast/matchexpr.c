@@ -13,11 +13,13 @@ struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
    
     ast_node_register_child(ret, pattern, matchcase.pattern);
     ast_node_register_child(ret, expression, matchcase.expression);
+    ret->matchcase.matched_type = NULL;
 
     return ret;
 }
 
 i_INLINE_INS struct ast_node *ast_matchcase_pattern(const struct ast_node *n);
+i_INLINE_INS const struct type *ast_matchcase_matched_type(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchcase_expression(const struct ast_node *n);
 i_INLINE_INS struct symbol_table *ast_matchcase_symbol_table_get(const struct ast_node *n);
 i_INLINE_INS void *ast_matchcase_symbol_table_set(struct ast_node *n, struct symbol_table *st);

@@ -83,8 +83,6 @@ LLVMValueRef bllvm_cast_value_to_type_maybe(LLVMValueRef val,
                                             struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef val_type = LLVMTypeOf(val);
-    /* unsigned long long val_size = LLVMStoreSizeOfType(ctx->target_data, val_type); */
-    /* unsigned long long type_size = LLVMStoreSizeOfType(ctx->target_data, type); */
     if (val_type != type) {
         // we have to do typecasts
         if (val_type == LLVMDoubleType() || val_type == LLVMFloatType()) {
@@ -98,16 +96,15 @@ LLVMValueRef bllvm_cast_value_to_type_maybe(LLVMValueRef val,
             } else { // greater or equal size
                 val = LLVMBuildTruncOrBitCast(ctx->builder, val, type, "");
             }
-        /* } else if (type_size >= val_size) { */
+        } else if (LLVMPointerType(type, 0) == val_type &&
+                   (type == LLVMInt8Type() || type == LLVMInt16Type() ||
+                    type == LLVMInt32Type() || type == LLVMInt64Type())) {
+            // if we are trying to assign a pointer to a value, just load it
+            val = LLVMBuildLoad(ctx->builder, val, "");
         } else {
             // in this case if we got here it's probably an assignment to a sum type
             val = LLVMBuildBitCast(ctx->builder, val, type, "");
         }
-        /* } else { */
-        /*     bllvm_type_debug(val_type, "val_type", ctx); */
-        /*     bllvm_type_debug(type, "to_cast_type", ctx); */
-        /*     RF_ASSERT(false, "Unimplemented casts?"); */
-        /* } */
     }
     return val;
 }
@@ -121,6 +118,7 @@ void bllvm_store(LLVMValueRef val,
         bllvm_copy_string(ptr, val, ctx);
         return;
     }
+    
     val = bllvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
     LLVMBuildStore(ctx->builder, val, ptr);
 }
@@ -144,10 +142,20 @@ LLVMValueRef bllvm_add_br(struct LLVMOpaqueBasicBlock *target,
     return (!last_instruction || !LLVMIsATerminatorInst(last_instruction))
         ? LLVMBuildBr(ctx->builder, target) : NULL;
 }
-
-void bllvm_assign_defined_types(LLVMValueRef from,
-                                LLVMValueRef to,
-                                struct llvm_traversal_ctx *ctx)
+ 
+void bllvm_memcpy(struct LLVMOpaqueValue *from,
+                  struct LLVMOpaqueValue *to,
+                  struct llvm_traversal_ctx *ctx)
+{
+    uint32_t from_size = LLVMStoreSizeOfType(ctx->target_data, LLVMTypeOf(from));
+    uint32_t to_size =  LLVMStoreSizeOfType(ctx->target_data, LLVMTypeOf(to));
+    RF_ASSERT(from_size == to_size, "Type sizes not equal. Should have used bllvm_memcpyn()");
+    bllvm_memcpyn(from, to, from_size, ctx);
+}
+void bllvm_memcpyn(LLVMValueRef from,
+                   LLVMValueRef to,
+                   uint32_t bytes,
+                   struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef dst_cast = LLVMBuildBitCast(ctx->builder, to,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
@@ -156,7 +164,7 @@ void bllvm_assign_defined_types(LLVMValueRef from,
     LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
 
     LLVMValueRef call_args[] = { dst_cast, src_cast,
-                                 LLVMConstInt(LLVMInt64Type(), 8, 0),
+                                 LLVMConstInt(LLVMInt64Type(), bytes, 0),
                                  LLVMConstInt(LLVMInt32Type(), 0, 0),
                                  LLVMConstInt(LLVMInt1Type(), 0, 0) };
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");

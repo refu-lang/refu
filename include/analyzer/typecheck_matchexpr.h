@@ -17,6 +17,8 @@ struct pattern_matching_ctx {
     struct rf_objset_type parts;
     //! A set of type parts that have been matched
     struct rf_objset_type matched;
+    //! A pointer to the last type that a case's pattern matched to
+    const struct type *last_matched_case;
 };
 void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx);
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx);

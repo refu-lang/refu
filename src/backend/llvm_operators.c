@@ -1,6 +1,9 @@
 #include "llvm_operators.h"
 
 #include <llvm-c/Core.h>
+#include <llvm-c/Target.h>
+
+#include <Utils/bits.h>
 
 #include <ast/ast.h>
 #include <ast/operators.h>
@@ -174,13 +177,22 @@ static LLVMValueRef bllvm_compile_member_access(struct ast_node *n,
 LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
                                        LLVMValueRef to,
                                        const struct type *type,
+                                       enum llvm_assign_options options,
                                        struct llvm_traversal_ctx *ctx)
 {
     if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
         bllvm_copy_string(from, to, ctx);
     } else if (type_category_equals(type, TYPE_CATEGORY_DEFINED)) {
-        bllvm_assign_defined_types(from, to, ctx);
+        bllvm_memcpy(from, to, ctx);
     } else if (type->category == TYPE_CATEGORY_ELEMENTARY) {
+        if (RF_BITFLAG_ON(options, BLLVM_ASSIGN_MATCH_CASE)) {
+            // get pointer to the elementary type
+            LLVMValueRef from_ptr = LLVMBuildPointerCast(ctx->builder, from, LLVMPointerType(LLVMTypeOf(from), 0), "");
+            // memcpy the elementary type to the sum type contents
+            bllvm_memcpyn(from_ptr, to, LLVMStoreSizeOfType(ctx->target_data, LLVMTypeOf(from)), ctx);
+            return NULL;
+        }
+        
         bllvm_store(from, to, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
@@ -201,7 +213,7 @@ LLVMValueRef bllvm_compile_assign(struct ast_node *from,
                                                       ctx,
                                                       RFLLVM_OPTION_IDENTIFIER_VALUE);
     
-    return bllvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, ctx);
+    return bllvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, BLLVM_ASSIGN_SIMPLE, ctx);
 }
 
 LLVMValueRef bllvm_compile_bop(struct ast_node *n,

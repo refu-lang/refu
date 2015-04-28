@@ -18,33 +18,26 @@ static void bllvm_add_matchcase(struct ast_node *matchcase,
                                 LLVMValueRef llvm_typedecl_val,
                                 LLVMValueRef llvm_switch,
                                 LLVMBasicBlockRef match_end,
-                                unsigned int num,
                                 struct llvm_traversal_ctx *ctx)
 {
-    const struct type *case_type = ast_matchcase_expression(matchcase)->expression_type;
-    const struct rir_type *rcase_type = rir_types_list_get_type(
+    const struct type *case_matched_type = ast_matchcase_matched_type(matchcase);
+    const struct rir_type *rcase_matched_type = rir_types_list_get_type(
         &ctx->rir->rir_types_list,
-        case_type,
+        case_matched_type,
         NULL
     );
-    int index = rir_type_childof_type(rcase_type, matching_type);
+    int index = rir_type_childof_type(rcase_matched_type, matching_type);
     RF_ASSERT(index != -1, "Case type not found in matching type");
-    // if selector_val == num DO
-    // else go to next branch
-    LLVMBasicBlockRef case_branch = bllvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef case_branch = LLVMInsertBasicBlock(match_end, "");
     bllvm_enter_block(ctx, case_branch);
+    // create backend handles (BuildAlloca) for the symbols of the symbol table
+    symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     // compile match case's expression and assign to type
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, llvm_typedecl_val, indices, 2, "");
-    /* LLVMValueRef llvm_match_case = bllvm_compile_expression( */
-    /*     ast_matchcase_expression(matchcase), */
-    /*     ctx, */
-    /*     0 */
-    /* ); */
-    /* bllvm_assign_defined_types(llvm_match_case, gep_to_main_contents, ctx); */
-    bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, ctx);
+    bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, BLLVM_ASSIGN_MATCH_CASE, ctx);
     LLVMBuildBr(ctx->builder, match_end);
-    LLVMAddCase(llvm_switch, LLVMConstInt(LLVMInt32Type(), 0, num), case_branch);
+    LLVMAddCase(llvm_switch, LLVMConstInt(LLVMInt32Type(), index, 0), case_branch);
 }
 
 struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
@@ -52,7 +45,6 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
 {
     struct ast_matchexpr_it it;
     struct ast_node *mcase;
-    unsigned int i = 0;
     // find the type of the matched identifier
     struct symbol_table_record *rec;
     struct ast_node *id = ast_matchexpr_identifier(n);
@@ -70,6 +62,10 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
     RFS_POP();
     RF_ASSERT(llvm_type, "Could not get llvm type for matching type");
     RF_ASSERT(rec->backend_handle, "Could not get llvm Value ref for the object");
+    
+    // allocate a return value
+    LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
+    LLVMValueRef ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
 
     LLVMBasicBlockRef match_end = bllvm_add_block_before_funcend(ctx);
     LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
@@ -82,18 +78,11 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
         ast_matchexpr_cases_num(n)
     );
 
-    // allocate a return value
-    LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
-    LLVMValueRef ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
-
     struct symbol_table *encasing_block_st = ctx->current_st;
     ast_matchexpr_foreach(n, &it, mcase) {
         // switch to the match case symbol table
         ctx->current_st = ast_matchcase_symbol_table_get(mcase);
-        // create backend handles (BuildAlloca) for the symbols of the symbol table
-        symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
-        bllvm_add_matchcase(mcase, darray_item(rec->rir_data->subtypes, 0), ret_alloc, n->expression_type, rec->backend_handle, llvm_switch, match_end, i, ctx);
-        ++i;
+        bllvm_add_matchcase(mcase, darray_item(rec->rir_data->subtypes, 0), ret_alloc, n->expression_type, rec->backend_handle, llvm_switch, match_end, ctx);
     }
 
     ctx->current_st = encasing_block_st;

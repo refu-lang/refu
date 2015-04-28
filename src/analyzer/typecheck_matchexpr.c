@@ -11,6 +11,7 @@
 void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx) {
     rf_objset_init(&ctx->parts, type);
     rf_objset_init(&ctx->matched, type);
+    ctx->last_matched_case = NULL;
 }
 
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx) {
@@ -67,6 +68,7 @@ static inline bool pattern_matching_ctx_add_part(struct pattern_matching_ctx *ct
 static inline bool pattern_matching_ctx_set_matched(struct pattern_matching_ctx *ctx,
                                                     const struct type *match_type)
 {
+    ctx->last_matched_case = match_type;
     return rf_objset_add(&ctx->matched, type, match_type);
 }
 
@@ -199,6 +201,8 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         RFS_POP();
         return TRAVERSAL_CB_ERROR;
     }
+    // keep the type that this match case matched to
+    n->matchcase.matched_type = ctx->matching_ctx.last_matched_case;
     RF_ASSERT(res_type, "Type of a match case's expression was not determined.");
     traversal_node_set_type(n, res_type, ctx);
     return TRAVERSAL_CB_OK;

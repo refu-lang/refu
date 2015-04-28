@@ -360,6 +360,7 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
         bllvm_compile_assign_llvm(llvm_val,
                                   ctx->current_function_return,
                                   n->expression_type,
+                                  BLLVM_ASSIGN_SIMPLE,
                                   ctx);
         LLVMBuildBr(ctx->builder, LLVMGetLastBasicBlock(ctx->current_function));
         break;

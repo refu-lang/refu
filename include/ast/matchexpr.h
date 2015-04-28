@@ -16,6 +16,12 @@ i_INLINE_DECL struct ast_node *ast_matchcase_pattern(const struct ast_node *n)
     return n->matchcase.pattern;
 }
 
+i_INLINE_DECL const struct type *ast_matchcase_matched_type(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
+    return n->matchcase.matched_type;
+}
+
 i_INLINE_DECL struct ast_node *ast_matchcase_expression(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
