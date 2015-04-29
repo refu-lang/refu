@@ -33,8 +33,7 @@ static void bllvm_add_matchcase(struct ast_node *matchcase,
     // create backend handles (BuildAlloca) for the symbols of the symbol table
     symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     // compile match case's expression and assign to type
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, llvm_typedecl_val, indices, 2, "");
+    LLVMValueRef gep_to_main_contents = bllvm_gep_to_struct(llvm_typedecl_val, 0, ctx);
     bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, BLLVM_ASSIGN_MATCH_CASE, ctx);
     LLVMBuildBr(ctx->builder, match_end);
     LLVMAddCase(llvm_switch, LLVMConstInt(LLVMInt32Type(), index, 0), case_branch);
@@ -69,9 +68,8 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
 
     LLVMBasicBlockRef match_end = bllvm_add_block_before_funcend(ctx);
     LLVMBasicBlockRef fatal_err_block = bllvm_add_fatal_block_before(match_end, 1, ctx);
-    
-    LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
-    LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, rec->backend_handle, indices2, 2, "");
+
+    LLVMValueRef gep_to_selector = bllvm_gep_to_struct(rec->backend_handle, 1, ctx);
     LLVMValueRef selector_val = LLVMBuildLoad(ctx->builder, gep_to_selector, "");
     LLVMValueRef llvm_switch = LLVMBuildSwitch(
         ctx->builder,

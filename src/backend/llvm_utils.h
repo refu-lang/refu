@@ -105,4 +105,16 @@ void bllvm_memcpyn(struct LLVMOpaqueValue *from,
                    struct LLVMOpaqueValue *to,
                    uint32_t bytes,
                    struct llvm_traversal_ctx *ctx);
+
+/**
+ * Convenience function to perform a GEP to an element of a struct
+ *
+ * @param ptr            An LLVMValueRef of the struct pointer
+ * @param member_num     The index to the struct member to perform the GEP for
+ * @param ctx            The llvm context
+ * @return               GetElementPointer for the given parameters
+ */
+struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
+                                            unsigned int member_num,
+                                            struct llvm_traversal_ctx *ctx);
 #endif

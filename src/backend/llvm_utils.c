@@ -41,15 +41,11 @@ void bllvm_assign_to_string(LLVMValueRef string_alloca,
                             LLVMValueRef string_data,
                             struct llvm_traversal_ctx *ctx)
 {
-
-
     // store string length
-    LLVMValueRef indices_0[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef gep_to_strlen = LLVMBuildGEP(ctx->builder, string_alloca, indices_0, 2, "gep_to_str");
+    LLVMValueRef gep_to_strlen = bllvm_gep_to_struct(string_alloca, 0, ctx);
     LLVMBuildStore(ctx->builder, length, gep_to_strlen);
     // store string data
-    LLVMValueRef indices_1[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
-    LLVMValueRef gep_to_strdata = LLVMBuildGEP(ctx->builder, string_alloca, indices_1, 2, "gep_to_strdata");
+    LLVMValueRef gep_to_strdata = bllvm_gep_to_struct(string_alloca, 1, ctx);
     LLVMBuildStore(ctx->builder, string_data, gep_to_strdata);
 }
 
@@ -59,12 +55,10 @@ void bllvm_load_from_string(LLVMValueRef string_alloca,
                             struct llvm_traversal_ctx *ctx)
 {
     // load strlen
-    LLVMValueRef indices_0[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef gep_to_strlen = LLVMBuildGEP(ctx->builder, string_alloca, indices_0, 2, "gep_to_strlen");
+    LLVMValueRef gep_to_strlen = bllvm_gep_to_struct(string_alloca, 0, ctx);
     *length = LLVMBuildLoad(ctx->builder, gep_to_strlen, "loaded_str_len");
     // load strdata pointer TODO:load string again?
-    LLVMValueRef indices_1[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
-    LLVMValueRef gep_to_strdata = LLVMBuildGEP(ctx->builder, string_alloca, indices_1, 2, "gep_to_strdata");
+    LLVMValueRef gep_to_strdata = bllvm_gep_to_struct(string_alloca, 1, ctx);
     *string_data = LLVMBuildLoad(ctx->builder, gep_to_strdata, "loaded_str_data");
 }
 
@@ -186,4 +180,12 @@ void bllvm_memcpyn(LLVMValueRef from,
                                  LLVMConstInt(LLVMInt32Type(), 0, 0),
                                  LLVMConstInt(LLVMInt1Type(), 0, 0) };
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
+}
+
+struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
+                                            unsigned int member_num,
+                                            struct llvm_traversal_ctx *ctx)
+{
+    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), member_num, 0) };
+    return LLVMBuildGEP(ctx->builder, ptr, indices, 2, "");    
 }

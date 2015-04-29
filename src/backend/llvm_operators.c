@@ -162,9 +162,8 @@ static LLVMValueRef bllvm_compile_member_access(struct ast_node *n,
     struct rir_type **subtype;
     darray_foreach(subtype, defined_type->subtypes.item[0]->subtypes) {
         if (rf_string_equal(member_s, (*subtype)->name)) {
-            LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), offset, 0) };
-            LLVMValueRef gep_to_type = LLVMBuildGEP(ctx->builder, rec->backend_handle, indices, 2, "");
-            return LLVMBuildLoad(ctx->builder, gep_to_type, "");
+            LLVMValueRef gep_to_member = bllvm_gep_to_struct(rec->backend_handle, offset, ctx);
+            return LLVMBuildLoad(ctx->builder, gep_to_member, "");
         }
         //else
         offset += 1;

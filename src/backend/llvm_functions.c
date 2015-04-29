@@ -41,9 +41,7 @@ static void ctor_args_to_value_cb_ctx_init(struct ctor_args_to_value_cb_ctx *ctx
 static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_cb_ctx *ctx)
 {
     LLVMValueRef arg_value = bllvm_compile_expression(n, ctx->llvm_ctx, 0);
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), ctx->offset, 0) };
-    LLVMValueRef gep = LLVMBuildGEP(ctx->llvm_ctx->builder, ctx->alloca, indices, 2, "");
-
+    LLVMValueRef gep = bllvm_gep_to_struct(ctx->alloca, ctx->offset, ctx->llvm_ctx);
     bllvm_store(arg_value, gep, ctx->llvm_ctx);
     ctx->offset += 1;
     ctx->index++;
@@ -123,12 +121,10 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
                                               rf_string_cstr_from_buff_or_die(type_name));
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_POP();
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
-    LLVMValueRef gep_to_main_contents = LLVMBuildGEP(ctx->builder, allocation, indices, 2, "");
+    LLVMValueRef gep_to_main_contents = bllvm_gep_to_struct(allocation, 0, ctx);
     bllvm_memcpy(populated_sum_type, gep_to_main_contents, ctx);
     // here also set the second value of the struct (the alloca) which should be the selector
-    LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
-    LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, allocation, indices2, 2, "");
+    LLVMValueRef gep_to_selector = bllvm_gep_to_struct(allocation, 1, ctx);
     bllvm_store(LLVMConstInt(LLVMInt32Type(), child_index, 0), gep_to_selector, ctx);    
     return allocation;
 }

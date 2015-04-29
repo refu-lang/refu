@@ -144,9 +144,8 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
     bllvm_load_from_string(loaded_str, &length, &string_data, ctx);
 
     // add the "%.*s" global string used by printf to print RFstring
-    LLVMValueRef indices_0[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
     LLVMValueRef printf_str_lit = bllvm_add_global_strbuff("%.*s\0", 5, "printf_str_literal", ctx);
-    LLVMValueRef gep_to_strlit = LLVMBuildGEP(ctx->builder, printf_str_lit, indices_0, 2, "gep_to_strlit");
+    LLVMValueRef gep_to_strlit = bllvm_gep_to_struct(printf_str_lit, 0, ctx);
     LLVMValueRef printf_call_args[] = { gep_to_strlit, length, string_data };
     LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "printf"),
                   printf_call_args,

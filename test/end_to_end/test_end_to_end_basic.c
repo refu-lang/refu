@@ -527,7 +527,7 @@ START_TEST (test_matchexpr_1) {
         "}"
         "return r\n"
         "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 29, NULL, "test_input_file.rf --backend-debug");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 29);
 } END_TEST
 
 Suite *end_to_end_basic_suite_create(void)
