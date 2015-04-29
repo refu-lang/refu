@@ -50,8 +50,8 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
  * @return            The LLVM type for the compiled struct or NULL in error
  */
 struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
-                                                     struct rir_type *type,
-                                                     struct llvm_traversal_ctx *ctx);
+                                              struct rir_type *type,
+                                              struct llvm_traversal_ctx *ctx);
 
 /**
  * Given a rir type return all its subtypes in an LLVMType Array.
@@ -63,7 +63,7 @@ struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
  * @return             An point to an array of LLVM Types held by the context
  */
 struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
-                                                           struct llvm_traversal_ctx *ctx);
+                                                    struct llvm_traversal_ctx *ctx);
 
 /**
  * Given a simple rir type get its defined member types as an array of LLVMTypeRefs
@@ -72,6 +72,19 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
  * @param ctx         The llvm traversal context
  */
 struct LLVMOpaqueType **bllvm_simple_member_types(struct rir_type *type,
-                                                         struct llvm_traversal_ctx *ctx);
+                                                  struct llvm_traversal_ctx *ctx);
 
+
+/**
+ * Given an LLVMType check if it's any int type
+ */
+bool bllvm_type_is_int(const struct LLVMOpaqueType *type);
+/**
+ * Given an LLVMType check if it's a float/double type
+ */
+bool bllvm_type_is_floating(const struct LLVMOpaqueType *type);
+/**
+ * Given an LLVMType check if it's elementary plain old data type
+ */
+bool bllvm_type_is_elementary(const struct LLVMOpaqueType *type);
 #endif

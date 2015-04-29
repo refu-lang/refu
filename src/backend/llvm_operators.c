@@ -186,14 +186,17 @@ LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
         bllvm_memcpy(from, to, ctx);
     } else if (type->category == TYPE_CATEGORY_ELEMENTARY) {
         if (RF_BITFLAG_ON(options, BLLVM_ASSIGN_MATCH_CASE)) {
-            // get pointer to the elementary type
-            LLVMValueRef from_ptr = LLVMBuildPointerCast(ctx->builder, from, LLVMPointerType(LLVMTypeOf(from), 0), "");
+            LLVMTypeRef from_type = LLVMTypeOf(from);
+            LLVMValueRef from_ptr = from;
+            if (bllvm_type_is_elementary(from_type)) {
+                // get pointer to the elementary type
+                from_ptr = LLVMBuildPointerCast(ctx->builder, from, LLVMPointerType(from_type, 0), "POINTERTOELEMENTARYCAST");
+            }
             // memcpy the elementary type to the sum type contents
             bllvm_memcpyn(from_ptr, to, LLVMStoreSizeOfType(ctx->target_data, LLVMTypeOf(from)), ctx);
-            return NULL;
+        } else {
+            bllvm_store(from, to, ctx);
         }
-        
-        bllvm_store(from, to, ctx);
     } else {
         RF_ASSERT(false, "Not yet implemented");
     }

@@ -68,13 +68,15 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
     LLVMValueRef ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
 
     LLVMBasicBlockRef match_end = bllvm_add_block_before_funcend(ctx);
+    LLVMBasicBlockRef fatal_err_block = bllvm_add_fatal_block_before(match_end, 1, ctx);
+    
     LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
     LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, rec->backend_handle, indices2, 2, "");
     LLVMValueRef selector_val = LLVMBuildLoad(ctx->builder, gep_to_selector, "");
     LLVMValueRef llvm_switch = LLVMBuildSwitch(
         ctx->builder,
         selector_val,
-        match_end, // TODO: should this be an error, and not just a jump to the end?
+        fatal_err_block,
         ast_matchexpr_cases_num(n)
     );
 

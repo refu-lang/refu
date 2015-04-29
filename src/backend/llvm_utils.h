@@ -63,6 +63,17 @@ void bllvm_enter_block(struct llvm_traversal_ctx *ctx,
                        struct LLVMOpaqueBasicBlock *block);
 
 /**
+ * Create a new fatal failure block another block
+ *
+ * @param target        The block before which to add the fail block
+ * @param exit_code     The code to pass to the exit() function
+ * @param ctx           The llvm traversal context
+ */
+struct LLVMOpaqueBasicBlock *bllvm_add_fatal_block_before(struct LLVMOpaqueBasicBlock *target,
+                                                          int exit_code,
+                                                          struct llvm_traversal_ctx *ctx);
+
+/**
  * Add branch to label unless last instruction was already a branch command
  *
  * @param    The target block to jump to 
@@ -72,14 +83,24 @@ struct LLVMOpaqueValue *bllvm_add_br(struct LLVMOpaqueBasicBlock *target,
                                      struct llvm_traversal_ctx *ctx);
 
 /**
- * Shallow copy/assignment of from to to. Uses memcpy.
+ * Memcpy a pointer value.
+ *
+ * Size is determined by the function as the size of the pointed to element of
+ * the @a from value.
+ * If size of @a to is less than size of @a from then this function will fail.
+ * 
  * @param from      The source llvm value to assign to
  * @param to        The destination llvm value
- * @param ctx             The llvm traversal context
+ * @param ctx       The llvm traversal context
  */
 void bllvm_memcpy(struct LLVMOpaqueValue *from,
                   struct LLVMOpaqueValue *to,
                   struct llvm_traversal_ctx *ctx);
+/**
+ * Memcpy a pointer value for specific number of bytes
+ *
+ * Just like @ref bllvm_memcpy() but specify the number of bytes to copy
+ */
 void bllvm_memcpyn(struct LLVMOpaqueValue *from,
                    struct LLVMOpaqueValue *to,
                    uint32_t bytes,

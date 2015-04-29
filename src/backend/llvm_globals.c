@@ -164,6 +164,13 @@ static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                                      printf_args,
                                      1,
                                      true));
+    /* -- add exit() -- */
+    LLVMTypeRef exit_args[] = { LLVMInt32Type() };
+    LLVMAddFunction(ctx->mod, "exit",
+                    LLVMFunctionType(LLVMVoidType(),
+                                     exit_args,
+                                     1,
+                                     false));
     /* -- add print() -- */
     bllvm_create_global_print_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */

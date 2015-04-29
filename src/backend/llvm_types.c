@@ -153,7 +153,7 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
 
 
 LLVMTypeRef *bllvm_simple_member_types(struct rir_type *type,
-                                              struct llvm_traversal_ctx *ctx)
+                                       struct llvm_traversal_ctx *ctx)
 {
     struct rir_type *actual_type = type;
     if (type->category == COMPOSITE_RIR_DEFINED) {
@@ -163,4 +163,20 @@ LLVMTypeRef *bllvm_simple_member_types(struct rir_type *type,
     }
     RF_ASSERT(!rir_type_is_sumtype(actual_type), "Called with sum type contents");
     return bllvm_type_to_subtype_array(actual_type, ctx);
+}
+
+bool bllvm_type_is_int(const struct LLVMOpaqueType *type)
+{
+    return type == LLVMInt8Type() || type == LLVMInt16Type() ||
+        type == LLVMInt32Type() || type == LLVMInt64Type();
+}
+
+bool bllvm_type_is_floating(const struct LLVMOpaqueType *type)
+{
+    return type == LLVMDoubleType() || type == LLVMFloatType();
+}
+
+bool bllvm_type_is_elementary(const struct LLVMOpaqueType *type)
+{
+    return bllvm_type_is_int(type) || bllvm_type_is_floating(type);
 }

@@ -129,7 +129,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     // here also set the second value of the struct (the alloca) which should be the selector
     LLVMValueRef indices2[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
     LLVMValueRef gep_to_selector = LLVMBuildGEP(ctx->builder, allocation, indices2, 2, "");
-    bllvm_store(LLVMConstInt(LLVMInt32Type(), 1, 0), gep_to_selector, ctx);    
+    bllvm_store(LLVMConstInt(LLVMInt32Type(), child_index, 0), gep_to_selector, ctx);    
     return allocation;
 }
 
