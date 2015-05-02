@@ -6,6 +6,7 @@
 
 struct ast_node;
 struct analyzer_traversal_ctx;
+struct symbol_table;
 
 enum traversal_cb_res typecheck_matchcase(struct ast_node *n,
                                           struct analyzer_traversal_ctx* ctx);
@@ -19,8 +20,11 @@ struct pattern_matching_ctx {
     struct rf_objset_type matched;
     //! A pointer to the last type that a case's pattern matched to
     const struct type *last_matched_case;
+    bool match_is_over;
 };
-void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx);
+bool pattern_matching_ctx_init(struct pattern_matching_ctx *ctx,
+                               const struct symbol_table *st,
+                               const struct ast_node *matchexpr);
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx);
 
 #endif

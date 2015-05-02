@@ -8,13 +8,79 @@
 #include <types/type_comparisons.h>
 #include <types/type.h>
 
-void pattern_matching_ctx_init(struct pattern_matching_ctx *ctx) {
+static inline bool pattern_matching_ctx_add_part(struct pattern_matching_ctx *ctx,
+                                                 const struct type *t)
+{
+    return rf_objset_add(&ctx->parts, type, t);
+}
+
+static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx,
+                                                const struct type *t)
+{
+    switch (t->category) {
+    case TYPE_CATEGORY_DEFINED:
+        return pattern_matching_ctx_populate_parts(ctx, t->defined.type);
+    case TYPE_CATEGORY_OPERATOR:
+    {
+        if (t->operator.type == TYPEOP_SUM) {
+            const struct type *target_l = t->operator.left;
+            const struct type *target_r = t->operator.right;
+            if (target_l->category == TYPE_CATEGORY_LEAF) {
+                target_l = target_l->leaf.type;
+            }
+            if (target_r->category == TYPE_CATEGORY_LEAF) {
+                target_r = target_r->leaf.type;
+            }
+            // add the sum operands as different parts of the type in the set
+            if (!pattern_matching_ctx_add_part(ctx, target_l)) {
+                RF_ERROR("Internal error, could not add type to parts set.");
+                return false;
+            }
+            if (!pattern_matching_ctx_add_part(ctx, target_r)) {
+                RF_ERROR("Internal error, could not add type to parts set.");
+                return false;
+            }
+            return true;
+        } else {
+            return pattern_matching_ctx_populate_parts(ctx, t->operator.left) &&
+                pattern_matching_ctx_populate_parts(ctx, t->operator.right);
+        }
+    }
+    case TYPE_CATEGORY_LEAF:
+        return pattern_matching_ctx_populate_parts(ctx, t->leaf.type);
+    case TYPE_CATEGORY_ELEMENTARY:
+            return true;
+    default:
+        RF_ASSERT_OR_EXIT(false, "should never happen");
+        break;
+    }
+
+    return false;    
+}
+
+bool pattern_matching_ctx_init(struct pattern_matching_ctx *ctx,
+                               const struct symbol_table *table,
+                               const struct ast_node *matchexpr)
+{
     rf_objset_init(&ctx->parts, type);
     rf_objset_init(&ctx->matched, type);
     ctx->last_matched_case = NULL;
+    ctx->match_is_over = false;
+
+    // now populate the parts set
+    const struct type *match_type = type_lookup_identifier_string(
+        ast_identifier_str(ast_matchexpr_identifier(matchexpr)),
+        table
+    );
+    RF_ASSERT(match_type, "a type for the matching identifier should have been determined");
+    if (!pattern_matching_ctx_populate_parts(ctx, match_type)) {
+        return false;
+    }
+    return true;
 }
 
-void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx) {
+void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx)
+{
     rf_objset_clear(&ctx->parts);
     rf_objset_clear(&ctx->matched);
 }
@@ -59,15 +125,12 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
     return ret;
 }
 
-static inline bool pattern_matching_ctx_add_part(struct pattern_matching_ctx *ctx,
-                                                 const struct type *t)
-{
-    return rf_objset_add(&ctx->parts, type, t);
-}
-
 static inline bool pattern_matching_ctx_set_matched(struct pattern_matching_ctx *ctx,
                                                     const struct type *match_type)
 {
+    if (rf_objset_get(&ctx->matched, type, match_type)) {
+        return true;
+    }
     ctx->last_matched_case = match_type;
     return rf_objset_add(&ctx->matched, type, match_type);
 }
@@ -123,15 +186,6 @@ static bool pattern_match_type_sumop(const struct type *pattern,
     if (target_r->category == TYPE_CATEGORY_LEAF) {
         target_r = target_r->leaf.type;
     }
-    // add the sum operands as different parts of the type in the set
-    if (!pattern_matching_ctx_add_part(ctx, target_l)) {
-        RF_ERROR("Internal error, could not add type to parts set.");
-        return false;
-    }
-    if (!pattern_matching_ctx_add_part(ctx, target_r)) {
-        RF_ERROR("Internal error, could not add type to parts set.");
-        return false;
-    }
 
     if (pattern->category == TYPE_CATEGORY_OPERATOR &&
         pattern->operator.type == target->operator.type) {
@@ -140,20 +194,19 @@ static bool pattern_match_type_sumop(const struct type *pattern,
     }
 
     left = pattern_match_types(pattern_l, target_l, ctx);
+    right = pattern_match_types(pattern_r, target_r, ctx);
     if (left) {
         if (!pattern_matching_ctx_set_matched(ctx, target_l)) {
             RF_ERROR("Internal error, could not add type to matched set.");
             return false;
         }
     }
-    right = pattern_match_types(pattern_r, target_r, ctx);
     if (right) {
         if (!pattern_matching_ctx_set_matched(ctx, target_r)) {
             RF_ERROR("Internal error, could not add type to matched set.");
             return false;
         }
     }
-
     return left || right;
 }
 
@@ -182,6 +235,18 @@ static bool pattern_match_type_operators(const struct type *pattern,
 
 enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_traversal_ctx* ctx)
 {
+    if (ctx->matching_ctx.match_is_over) {
+        // don't even bother doing any checks. Error was already
+        // given for a previous case
+        return TRAVERSAL_CB_ERROR;
+    }
+    bool useless_case = false;
+    // before anything check if all parts have already been matched
+    if (rf_objset_equal(&ctx->matching_ctx.matched, &ctx->matching_ctx.parts, type)) {
+        // case is useless. Already an error but let's check if it would even match.
+        // If it does not match it's a more important error and will be shown instead.
+        useless_case = true;        
+    }
     struct ast_node *parent_matchexpr_id = ast_matchexpr_identifier(
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
@@ -199,7 +264,20 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
                      RF_STR_PF_ARG(ast_identifier_str(parent_matchexpr_id)),
                      RF_STR_PF_ARG(type_str_or_die(match_type, TSTR_DEFINED_CONTENTS)));
         RFS_POP();
+        ctx->matching_ctx.match_is_over = true;
         return TRAVERSAL_CB_ERROR;
+    }
+
+    if (useless_case) {
+        RFS_PUSH();
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Match case \""RF_STR_PF_FMT"\" is useless since all parts of "
+                     "\""RF_STR_PF_FMT"\" have already been matched.",
+                     RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
+                     RF_STR_PF_ARG(ast_identifier_str(parent_matchexpr_id)));
+        RFS_POP();
+        ctx->matching_ctx.match_is_over = true;
+        return TRAVERSAL_CB_ERROR;        
     }
     // keep the type that this match case matched to
     n->matchcase.matched_type = ctx->matching_ctx.last_matched_case;

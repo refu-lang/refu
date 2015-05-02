@@ -275,6 +275,31 @@ START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
+START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | b:string }\n"
+        "{\n"
+        "    t2:foo = foo(\"hello\")\n"
+        "    s:string = match t2 {\n"
+        "        _ => \"\"\n"
+        "        b:string => b\n"
+        "    }\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            d->front.file,
+            MESSAGE_SEMANTIC_ERROR,
+            "Match case \"string\" is useless since all parts of \"t2\" have "
+            "already been matched.",
+            5, 8, 5, 20)
+    };
+
+    ck_assert_typecheck_with_messages(d, false, messages, true);
+} END_TEST
+
 Suite *analyzer_typecheck_matchexpr_suite_create(void)
 {
     Suite *s = suite_create("typecheck_match_expressions");
@@ -306,6 +331,7 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_nonexisting_case_product_of_2);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_too_many_wildcards);
     tcase_add_test(t_inv, test_typecheck_matchexpr_inv_not_all_cases_covered);
+    tcase_add_test(t_inv, test_typecheck_matchexpr_inv_catchall_before_other_cases);
 
     suite_add_tcase(s, t_simple);
     suite_add_tcase(s, t_advanced);

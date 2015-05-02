@@ -50,12 +50,12 @@ static bool ctor_args_to_value_cb(struct ast_node *n, struct ctor_args_to_value_
 
 
 static LLVMValueRef bllvm_assign_params_to_defined_type(struct ast_node *fn_call,
-                                                        LLVMTypeRef type,
+                                                        LLVMTypeRef internal_subtype,
                                                         LLVMTypeRef *params,
                                                         struct llvm_traversal_ctx *ctx)
 {
     struct ctor_args_to_value_cb_ctx cb_ctx;
-    LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, type, "");
+    LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, internal_subtype, "");
     ctor_args_to_value_cb_ctx_init(&cb_ctx, ctx, allocation, params);
     ast_fncall_for_each_arg(fn_call, (fncall_args_cb)ctor_args_to_value_cb, &cb_ctx);
     return allocation;

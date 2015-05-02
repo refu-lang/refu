@@ -151,7 +151,7 @@ struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
  *                                 in @c t itself (true) or in any of its parents (false)
  * @return                         The symbol table record or NULL for failure.
  */
-struct symbol_table_record *symbol_table_lookup_record(struct symbol_table *t,
+struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table *t,
                                                        const struct RFstring *id,
                                                        bool *at_first_symbol_table);
 

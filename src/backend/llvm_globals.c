@@ -154,6 +154,15 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
     LLVMBuildRetVoid(ctx->builder);
 }
 
+static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
+{
+    // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
+    LLVMValueRef fn =  LLVMAddFunction(ctx->mod, "llvm.donothing",
+                                       LLVMFunctionType(LLVMVoidType(), NULL, 0, false));
+    LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
+    LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
+}
+
 static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 {
     /* -- add printf() declaration -- */
@@ -170,6 +179,8 @@ static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                                      exit_args,
                                      1,
                                      false));
+    /* -- add donothing() -- */
+    bllcm_create_global_donothing_decl(ctx);
     /* -- add print() -- */
     bllvm_create_global_print_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */

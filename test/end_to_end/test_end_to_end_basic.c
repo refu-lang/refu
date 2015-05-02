@@ -51,6 +51,7 @@ START_TEST (test_print_string) {
         "return 13\n"
         "}");
     static const struct RFstring output = RF_STRING_STATIC_INIT("Celina");
+    /* ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output, "test_input_file.rf --backend-debug"); */
     ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
 } END_TEST
 
@@ -530,6 +531,28 @@ START_TEST (test_matchexpr_1) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 29);
 } END_TEST
 
+START_TEST (test_matchexpr_2) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i32 | b:string }\n"
+        "fn main()->u32{\n"
+        "t1:foo = foo(29)\n"
+        "t2:foo = foo(\"hello\")\n"
+        "r:i32 = match t1 {\n"
+        " a:i32 => a\n"
+        " _ => 0\n"
+        "}"
+        "s:string = match t2 {\n"
+        " b:string => b\n"
+        " _ => \"\"\n"
+        "}\n"
+        "print(s)\n"
+        "return r\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("hello");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 29, &output);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -607,6 +630,7 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_match_expr, test_matchexpr_1);
+    tcase_add_test(st_match_expr, test_matchexpr_2);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);

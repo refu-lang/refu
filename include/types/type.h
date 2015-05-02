@@ -100,7 +100,7 @@ struct type *type_create_from_operation(enum typeop_type type,
                                         struct analyzer *a);
 
 struct type *type_lookup_identifier_string(const struct RFstring *str,
-                                           struct symbol_table *st);
+                                           const struct symbol_table *st);
 struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st,

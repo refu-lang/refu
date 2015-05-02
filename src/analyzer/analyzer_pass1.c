@@ -329,8 +329,7 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
         ctx->current_st = ast_typedesc_symbol_table_get(n);
         break;
     case AST_MATCH_EXPRESSION:
-        pattern_matching_ctx_init(&ctx->matching_ctx);
-        break;
+        return pattern_matching_ctx_init(&ctx->matching_ctx, ctx->current_st, n);
     default:
         break;
     }

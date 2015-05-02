@@ -107,6 +107,11 @@ void bllvm_memcpyn(struct LLVMOpaqueValue *from,
                    struct llvm_traversal_ctx *ctx);
 
 /**
+ * A no-op. Calls intrinsic llvm.donothing()
+ */
+void bllvm_nop(struct llvm_traversal_ctx *ctx);
+
+/**
  * Convenience function to perform a GEP to an element of a struct
  *
  * @param ptr            An LLVMValueRef of the struct pointer

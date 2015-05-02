@@ -284,12 +284,12 @@ bool symbol_table_add_type(struct symbol_table *st,
 }
 
 
-struct symbol_table_record *symbol_table_lookup_record(struct symbol_table *t,
+struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table *t,
                                                        const struct RFstring *id,
                                                        bool *at_first_symbol_table)
 {
     struct symbol_table_record *rec;
-    struct symbol_table *lp_table = t;
+    const struct symbol_table *lp_table = t;
 
     if (at_first_symbol_table) {
         *at_first_symbol_table = false;

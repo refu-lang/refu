@@ -107,7 +107,7 @@ void bllvm_store(LLVMValueRef val,
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
     if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
-        bllvm_copy_string(ptr, val, ctx);
+        bllvm_copy_string(val, ptr, ctx);
         return;
     }
     
@@ -180,6 +180,16 @@ void bllvm_memcpyn(LLVMValueRef from,
                                  LLVMConstInt(LLVMInt32Type(), 0, 0),
                                  LLVMConstInt(LLVMInt1Type(), 0, 0) };
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
+}
+
+void bllvm_nop(struct llvm_traversal_ctx *ctx)
+{
+    LLVMBuildCall(ctx->builder,
+                  LLVMGetNamedFunction(ctx->mod, "llvm.donothing"),
+                  NULL,
+                  0,
+                  ""
+    );
 }
 
 struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,

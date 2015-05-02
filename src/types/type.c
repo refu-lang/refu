@@ -478,7 +478,7 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
 
 }
 struct type *type_lookup_identifier_string(const struct RFstring *str,
-                                           struct symbol_table *st)
+                                           const struct symbol_table *st)
 {
     struct symbol_table_record *rec;
     int elementary_type;

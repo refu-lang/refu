@@ -180,6 +180,14 @@ LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
                                        struct llvm_traversal_ctx *ctx)
 {
     if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
+        if (RF_BITFLAG_ON(options, BLLVM_ASSIGN_MATCH_CASE)) {
+            from = LLVMBuildBitCast(
+                ctx->builder,
+                from,
+                LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0),
+                ""
+            );
+        }
         bllvm_copy_string(from, to, ctx);
     } else if (type_category_equals(type, TYPE_CATEGORY_DEFINED)) {
         bllvm_memcpy(from, to, ctx);
