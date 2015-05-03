@@ -330,7 +330,7 @@ struct ast_node *do_front_testdriver_generate_node(
         n1 = front_testdriver_generate_identifier(d, sl, sc, el, ec,
                                                  va_arg(args, const char *));
         if (args_num > 1) {
-            is_constant = va_arg(args, bool);
+            is_constant = va_arg(args, int);
         }
 
         if (args_num > 2) {

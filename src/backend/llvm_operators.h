@@ -21,11 +21,11 @@ struct LLVMOpaqueValue *bllvm_compile_assign_llvm(
     enum llvm_assign_options options,
     struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_compile_assign(struct ast_node *from,
-                                                    struct ast_node *to,
-                                                    const struct type *common_type,
-                                                    struct llvm_traversal_ctx *ctx);
+                                             struct ast_node *to,
+                                             const struct type *common_type,
+                                             struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_compile_bop(struct ast_node *n,
-                                                 struct llvm_traversal_ctx *ctx);
+                                          struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_compile_uop(struct ast_node *n,
-                                                 struct llvm_traversal_ctx *ctx);
+                                          struct llvm_traversal_ctx *ctx);
 #endif

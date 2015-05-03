@@ -15,10 +15,6 @@
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
 
-static inline const void *rir_types_map_key_(const void *elem)
-{
-	return elem;
-}
 static inline size_t rir_types_map_hash_(const void *elem, void *priv)
 {
 	return hash_pointer(elem, 0);

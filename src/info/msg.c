@@ -15,10 +15,6 @@
 #define LOCMARK2_ARG(colpos1_, colpos2_) colpos1_ + 1, '^', \
         colpos2_ - colpos1_, '^'
 
-inline static void print_location_marker(FILE *f, int col_pos)
-{
-    printf(LOCMARK_FMT, LOCMARK_ARG(col_pos));
-}
 
 i_INLINE_INS bool info_msg_has_end_mark(struct info_msg *msg);
 
