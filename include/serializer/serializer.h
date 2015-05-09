@@ -8,8 +8,15 @@
 struct ast_node;
 struct analyzer;
 
+/**
+ * The serializer deals with data exporting and serialization (if needed)
+ *after the end of a succesful analysis.
+ */
 struct serializer {
+    //! A non-owned pointer to the AST
     struct ast_node *root;
+    //! A non-owned pointer to object holding the compiler arguments
+    struct compiler_args *args;
 };
 
 
@@ -19,6 +26,5 @@ bool serializer_init(struct serializer *sr);
 
 void serializer_destroy(struct serializer *sr);
 
-bool serializer_serialize_file(struct serializer *sr, struct analyzer *a);
 
 #endif

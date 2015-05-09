@@ -483,7 +483,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir_module *mod,
         bllvm_compile_function(fn, ctx);
     }
 
-    if (ctx->args->print_backend_debug) {
+    if (compiler_args_print_backend_debug(ctx->args)) {
         // would be much better if we could call llvm::Module::getModuleIdentifier()
         // but that seems to not be exposed in the C-Api
         mod_name = rf_string_cstr_from_buff(&mod->name);

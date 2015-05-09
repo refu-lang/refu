@@ -59,12 +59,11 @@ void compiler_deinit(struct compiler *c)
 bool compiler_pass_args(struct compiler *c, int argc, char **argv)
 {
     if (!compiler_args_parse(c->args, argc, argv)) {
-        RF_ERROR("Failed to parse command line arguments");
         return false;
     }
 
     // do not proceed any further if we got request for help
-    if (c->args->help_requested != HELP_NONE) {
+    if (compiler_args_help_is_requested(c->args)) {
         return true;
     }
 
@@ -131,14 +130,5 @@ bool compiler_process(struct compiler *c)
 
 bool compiler_help_requested(struct compiler *c)
 {
-    switch(c->args->help_requested) {
-    case HELP_ARGS:
-        compiler_args_print_help();
-        return true;
-    case HELP_VERSION:
-        compiler_args_print_version();
-        return true;
-    default:
-        return false;
-    }
+    return compiler_args_check_and_display_help(c->args);
 }

@@ -63,7 +63,7 @@ refu_src = [
     'ir/rir_type.c',
     'ir/rir_types_list.c',
 
-    'serializer/serializer.c'
+    'serializer/serializer.c',
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
@@ -100,6 +100,7 @@ local_env.Append(CPPDEFINES={
     'INPUT_STRING_STARTING_LINES': local_env['INPUT_STRING_STARTING_LINES']
 })
 local_env.Append(CPPPATH=[os.path.abspath('include')])
+local_env.Append(CPPPATH=[os.path.abspath('lib')])
 local_env.Append(LIBS=[clib_static, 'pthread'])
 local_env.Append(LIBPATH=local_env['CLIB_DIR'])
 
@@ -121,9 +122,17 @@ if local_env['LANG_BACKEND'] == 'LLVM':
                           ' executionengine interpreter native')
     linker_exec = 'g++'
 
-# add path before the sources
+# add src prefix before the sources that reside at src/
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]
-refu_src_final = refu_src + ['src/main.c']
+# external library sources
+refu_external_src = [
+    'lib/argtable/argtable3.c'
+    # argtable can go here when they fix the problem with Non Ansi-C
+    # compilation. Until then it needs to be compiled into separate object file
+]
+
+# add up all the sources
+refu_src_final = refu_src + refu_external_src + ['src/main.c']
 gperf_src = [os.path.join(os.getcwd(), "src", x) for x in gperf_src]
 gperf_result = local_env.Gperf(gperf_src)
 
@@ -175,6 +184,7 @@ unit_tests_files = [
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)
+unit_tests_files.extend(refu_external_src)
 test_env = local_env.Clone()
 
 test_env['linker_exec'] = linker_exec

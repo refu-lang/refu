@@ -12,6 +12,8 @@ int main(int argc, char **argv)
     }
 
     if (compiler_help_requested(&compiler)) {
+        // DO not continue any further and do not deinit the compiler since
+        // initialization did not fully conclude
         return 0;
     }
 

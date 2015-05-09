@@ -7,6 +7,7 @@
 bool serializer_init(struct serializer *sr)
 {
     // TODO: can delete if nothing needs initializing
+    (void) sr;
     return true;
 }
 
@@ -26,10 +27,4 @@ struct serializer *serializer_create()
 void serializer_destroy(struct serializer *sr)
 {
     free(sr);
-}
-
-bool serializer_serialize_file(struct serializer *sr, struct analyzer *a)
-{
-    //TODO
-    return true;
 }

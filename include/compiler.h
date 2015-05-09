@@ -18,8 +18,8 @@ struct compiler {
     //! The intermediate representation of the code, created after the analysis
     //! of the code.
     struct rir *ir;
-    //! The serializer that can serialize the Intermediate Representation to a file
-    //! TODO: Maybe just lose this in favour of a to_file() in the IR itself?
+    //! The serializer deals with data exporting and serialization (if needed)
+    //! after the end of a succesfull analysis.
     struct serializer *serializer;
 };
 
