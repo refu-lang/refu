@@ -6,6 +6,7 @@
 #include <info/info.h>
 #include <types/type_comparisons.h>
 #include <compiler_args.h>
+#include <ast/ast.h>
 #include <front_ctx.h>
 #include <ir/rir.h>
 #include <backend/llvm.h>
@@ -97,6 +98,12 @@ bool compiler_process(struct compiler *c)
             return false;
         }
         printf(RF_STR_PF_FMT, RF_STR_PF_ARG(&c->err_buff));
+        return false;
+    }
+
+    // for now at least, if an empty file is given quit here with a message
+    if (ast_node_get_children_number(analyzer->root) == 0) {
+        ERROR("Provided an empty file for compilation");
         return false;
     }
 

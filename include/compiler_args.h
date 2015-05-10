@@ -18,7 +18,6 @@ struct arg_rex;
 struct arg_end;
 
 struct compiler_args {
-    bool repl;
     struct RFstring input;
     struct RFstring *output;
     struct RFstringx buff;
@@ -30,6 +29,7 @@ struct compiler_args {
     // does not really do anything but keep it as example of regex argtable arg
     struct arg_rex *backend;
     struct arg_lit *backend_debug;
+    struct arg_str *output_name;
     struct arg_file *positional_file;
     struct arg_end *end;
 };
@@ -40,7 +40,7 @@ struct compiler_args *compiler_args_create();
 void compiler_args_deinit(struct compiler_args *args);
 void compiler_args_destroy(struct compiler_args *args);
 
-bool compiler_args_parse(struct compiler_args *args, int argc, char** argv);
+bool compiler_args_parse(struct compiler_args *args, int argc, char **argv);
 
 /**
  * Check if any sort of help argument was given and display it if it was.
@@ -50,26 +50,21 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv);
  * @return          True if a help argument was given and we need to exit after
  *                  displaying it. False otherwise
  */
-bool compiler_args_check_and_display_help(struct compiler_args *args);
+bool compiler_args_check_and_display_help(const struct compiler_args *args);
 
 /**
  * Returns true if any help argument was requested. Does not display anything
  */
-bool compiler_args_help_is_requested(struct compiler_args *args);
+bool compiler_args_help_is_requested(const struct compiler_args *args);
 
 /**
  * Should we print backend llvm debug information?
  */
-bool compiler_args_print_backend_debug(struct compiler_args *args);
+bool compiler_args_print_backend_debug(const struct compiler_args *args);
 
-/* -- Getters -- */
-i_INLINE_DECL struct RFstring *compiler_args_get_output(struct compiler_args *args)
-{
-    if (args->output) {
-        return args->output;
-    }
-
-    return &args->input;
-}
+/**
+ * Get the name of the output file that should be generated
+ */
+struct RFstring *compiler_args_get_output(const struct compiler_args *args);
 
 #endif//include guards end
