@@ -1,22 +1,21 @@
 #include <serializer/serializer.h>
 
 #include <Utils/memory.h>
-
 #include <analyzer/analyzer.h>
+#include "astprinter.h"
 
-bool serializer_init(struct serializer *sr)
+bool serializer_init(struct serializer *sr, struct compiler_args *args)
 {
-    // TODO: can delete if nothing needs initializing
-    (void) sr;
+    sr->args = args;
     return true;
 }
 
-struct serializer *serializer_create()
+struct serializer *serializer_create(struct compiler_args *args)
 {
     struct serializer *sr;
     RF_MALLOC(sr, sizeof(*sr), return NULL);
 
-    if (!serializer_init(sr)) {
+    if (!serializer_init(sr, args)) {
         free(sr);
         return NULL;
     }
@@ -27,4 +26,13 @@ struct serializer *serializer_create()
 void serializer_destroy(struct serializer *sr)
 {
     free(sr);
+}
+
+bool serializer_process(struct serializer *sr, const struct ast_node *root)
+{
+    // for now just put it stdout, we will configure via compiler-args
+    if (!ast_output_to_file(root, stdout)) {
+        return SERC_FAILURE;
+    }
+    return SERC_SUCCESS_EXIT;
 }

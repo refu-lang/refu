@@ -64,6 +64,7 @@ refu_src = [
     'ir/rir_types_list.c',
 
     'serializer/serializer.c',
+    'serializer/astprinter.c',
 ]
 
 if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':

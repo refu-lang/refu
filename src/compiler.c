@@ -9,6 +9,7 @@
 #include <ast/ast.h>
 #include <front_ctx.h>
 #include <ir/rir.h>
+#include <serializer/serializer.h>
 #include <backend/llvm.h>
 
 struct rir_module;
@@ -38,6 +39,10 @@ bool compiler_init(struct compiler *c)
         return false;
     }
 
+    if (!(c->serializer = serializer_create(c->args))) {
+        return false;
+    }
+
     return true;
 }
 
@@ -51,6 +56,7 @@ void compiler_deinit(struct compiler *c)
         rir_destroy(c->ir);
     }
 
+    serializer_destroy(c->serializer);
     compiler_args_destroy(c->args);
     typecmp_ctx_deinit();
     rf_stringx_deinit(&c->err_buff);
@@ -120,12 +126,10 @@ bool compiler_process(struct compiler *c)
         return false;
     }
 
-    // TODO -- also think when should the AST be serialized to a file (?)
-    // some argument maybe which would signify we need to transfer the processed
-    // program to another computer
-    /* if (!serializer_serialize_file(c->serializer, c->ir)) { */
-    /*     return NULL; */
-    /* } */
+    enum serializer_rc rc = serializer_process(c->serializer, c->ir->root);
+    if (rc == SERC_SUCCESS_EXIT || rc == SERC_SUCCESS_EXIT) {
+        return rc;
+    }
 
     if (!bllvm_generate(rir_mod, c->ir, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");

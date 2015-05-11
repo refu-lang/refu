@@ -4,6 +4,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+enum serializer_rc {
+    SERC_SUCCESS_CONTINUE = 0,
+    SERC_SUCCESS_EXIT,
+    SERC_FAILURE,
+    
+};
 
 struct ast_node;
 struct analyzer;
@@ -20,11 +26,13 @@ struct serializer {
 };
 
 
-struct serializer *serializer_create();
+struct serializer *serializer_create(struct compiler_args *args);
 
-bool serializer_init(struct serializer *sr);
+bool serializer_init(struct serializer *sr, struct compiler_args *args);
 
 void serializer_destroy(struct serializer *sr);
+
+bool serializer_process(struct serializer *sr, const struct ast_node *root);
 
 
 #endif
