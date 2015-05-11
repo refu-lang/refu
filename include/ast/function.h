@@ -65,8 +65,8 @@ struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
 
 /* -- function implementation functions -- */
 
-struct ast_node *ast_fnimpl_create(struct inplocation_mark *start,
-                                   struct inplocation_mark *end,
+struct ast_node *ast_fnimpl_create(const struct inplocation_mark *start,
+                                   const struct inplocation_mark *end,
                                    struct ast_node *decl,
                                    struct ast_node *body);
 

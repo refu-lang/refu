@@ -62,8 +62,7 @@ bool inpstr_ptr_to_linecol(struct inpstr *s,
     return true;
 }
 
-
 i_INLINE_INS struct RFstringx *inpstr_str(struct inpstr *s);
 i_INLINE_INS char *inpstr_data(struct inpstr *s);
-i_INLINE_INS char *inpstr_beg(struct inpstr *s);
+i_INLINE_INS char *inpstr_beg(const struct inpstr *s);
 i_INLINE_INS uint32_t inpstr_len_from_beg(struct inpstr *s);

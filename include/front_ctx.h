@@ -30,7 +30,6 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args);
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
 
-
 struct analyzer *front_ctx_process(struct front_ctx *ctx);
 
 /* -- some convenience setters/getters --*/

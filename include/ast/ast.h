@@ -184,32 +184,32 @@ i_INLINE_DECL unsigned int ast_node_get_children_number(const struct ast_node *n
     return num;
 }
 
-i_INLINE_DECL char *ast_node_startsp(struct ast_node *n)
+i_INLINE_DECL const char *ast_node_startsp(const struct ast_node *n)
 {
     return n->location.start.p;
 }
 
-i_INLINE_DECL char *ast_node_endsp(struct ast_node *n)
+i_INLINE_DECL const char *ast_node_endsp(const struct ast_node *n)
 {
     return n->location.end.p;
 }
 
-i_INLINE_DECL struct inplocation *ast_node_location(struct ast_node *n)
+i_INLINE_DECL const struct inplocation *ast_node_location(const struct ast_node *n)
 {
     return &n->location;
 }
 
-i_INLINE_DECL struct inplocation_mark *ast_node_startmark(struct ast_node *n)
+i_INLINE_DECL const struct inplocation_mark *ast_node_startmark(const struct ast_node *n)
 {
     return &n->location.start;
 }
 
-i_INLINE_DECL struct inplocation_mark *ast_node_endmark(struct ast_node *n)
+i_INLINE_DECL const struct inplocation_mark *ast_node_endmark(const struct ast_node *n)
 {
     return &n->location.end;
 }
 
-i_INLINE_DECL enum ast_type ast_node_type(struct ast_node *n)
+i_INLINE_DECL enum ast_type ast_node_type(const struct ast_node *n)
 {
     return n->type;
 }
@@ -228,7 +228,7 @@ i_INLINE_DECL bool ast_node_has_value(const struct ast_node *n)
         (n->type == AST_CONSTANT && n->constant.type != CONSTANT_BOOLEAN);
 }
 
-i_INLINE_DECL const struct type *ast_expression_get_type(struct ast_node *expr)
+i_INLINE_DECL const struct type *ast_expression_get_type(const struct ast_node *expr)
 {
     return expr->expression_type;
 }

@@ -30,6 +30,7 @@ static const char* version_message = ""
         (_ca)->verbosity,                       \
         (_ca)->backend,                         \
         (_ca)->backend_debug,                   \
+        (_ca)->output_ast,                      \
         (_ca)->output_name,                     \
         (_ca)->positional_file,                 \
         (_ca)->end                              \
@@ -42,6 +43,7 @@ bool compiler_args_init(struct compiler_args *a)
     a->version = arg_litn(NULL, "version", 0, 1, "display version info and exit");
     a->verbosity = arg_int0("v", "verbose-level", "1-4", "Set compiler verbosity level");
     a->backend = arg_rex0(NULL, "backend", "GCC|LLVM", NULL, 0, "The backend connection the refu compiler will user");
+    a->output_ast = arg_lit0(NULL, "output-ast", "If given then after analysis state the AST will be output in JSON format");
     a->backend_debug = arg_litn(NULL, "backend-debug", 0, 1, "If given then some debug information about the backend code will be printed");
     a->output_name = arg_str0("o", "output", "name", "output file name. Defaults to input.exe if not given");
     a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 1, "input files");
@@ -163,6 +165,11 @@ bool compiler_args_help_is_requested(const struct compiler_args *args)
 bool compiler_args_print_backend_debug(const struct compiler_args *args)
 {
     return args->backend_debug->count > 0;
+}
+
+bool compiler_args_output_ast(const struct compiler_args *args)
+{
+    return args->output_ast->count > 0;
 }
 
 struct RFstring *compiler_args_get_output(const struct compiler_args *args)

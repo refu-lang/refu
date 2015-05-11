@@ -4,8 +4,8 @@
 struct ast_node;
 struct inplocation_mark;
 
-struct ast_node *ast_vardecl_create(struct inplocation_mark *start,
-                                    struct inplocation_mark *end,
+struct ast_node *ast_vardecl_create(const struct inplocation_mark *start,
+                                    const struct inplocation_mark *end,
                                     struct ast_node *leaf);
 
 #include <ast/ast.h>

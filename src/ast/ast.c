@@ -178,14 +178,14 @@ const struct RFstring * ast_node_get_name_str(const struct ast_node *n)
 i_INLINE_INS struct ast_node *ast_node_get_child(struct ast_node *n,
                                                   unsigned int num);
 i_INLINE_INS unsigned int ast_node_get_children_number(const struct ast_node *n);
-i_INLINE_INS char *ast_node_startsp(struct ast_node *n);
-i_INLINE_INS char *ast_node_endsp(struct ast_node *n);
-i_INLINE_INS struct inplocation *ast_node_location(struct ast_node *n);
-i_INLINE_INS struct inplocation_mark *ast_node_startmark(struct ast_node *n);
-i_INLINE_INS struct inplocation_mark *ast_node_endmark(struct ast_node *n);
-i_INLINE_INS enum ast_type ast_node_type(struct ast_node *n);
+i_INLINE_INS const char *ast_node_startsp(const struct ast_node *n);
+i_INLINE_INS const char *ast_node_endsp(const struct ast_node *n);
+i_INLINE_INS const struct inplocation *ast_node_location(const struct ast_node *n);
+i_INLINE_INS const struct inplocation_mark *ast_node_startmark(const struct ast_node *n);
+i_INLINE_INS const struct inplocation_mark *ast_node_endmark(const struct ast_node *n);
+i_INLINE_INS enum ast_type ast_node_type(const struct ast_node *n);
 i_INLINE_INS bool ast_node_has_value(const struct ast_node *n);
-i_INLINE_INS const struct type *ast_expression_get_type(struct ast_node *expr);
+i_INLINE_INS const struct type *ast_expression_get_type(const struct ast_node *expr);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {

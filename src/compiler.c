@@ -126,7 +126,7 @@ bool compiler_process(struct compiler *c)
         return false;
     }
 
-    enum serializer_rc rc = serializer_process(c->serializer, c->ir->root);
+    enum serializer_rc rc = serializer_process(c->serializer, c->ir->root, c->front->file);
     if (rc == SERC_SUCCESS_EXIT || rc == SERC_SUCCESS_EXIT) {
         return rc;
     }

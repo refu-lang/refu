@@ -44,7 +44,7 @@ void inpstr_deinit(struct inpstr *s);
  * @param p             The byte pointer inside the string whose line and
  *                      column to retrieve
  * @param line[out]     Returns the line pointed to by the byte pointer
- * @param column[out    Returns the column pointed to by the byte pointer
+ * @param column[out]   Returns the column pointed to by the byte pointer
  *
  * @return              True if the byte pointer represents a valid position
  *                      and false if not
@@ -52,7 +52,6 @@ void inpstr_deinit(struct inpstr *s);
 bool inpstr_ptr_to_linecol(struct inpstr *s,
                            char *p, unsigned int *line,
                            unsigned int *col);
-
 
 i_INLINE_DECL struct RFstringx *inpstr_str(struct inpstr *s)
 {
@@ -64,7 +63,7 @@ i_INLINE_DECL char *inpstr_data(struct inpstr *s)
     return rf_string_data(&s->str);
 }
 
-i_INLINE_DECL char *inpstr_beg(struct inpstr *s)
+i_INLINE_DECL char *inpstr_beg(const struct inpstr *s)
 {
     return rf_string_data(&s->str) - s->str.bIndex;
 }

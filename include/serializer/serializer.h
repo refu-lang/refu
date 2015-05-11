@@ -13,6 +13,7 @@ enum serializer_rc {
 
 struct ast_node;
 struct analyzer;
+struct inpfile;
 
 /**
  * The serializer deals with data exporting and serialization (if needed)
@@ -32,7 +33,9 @@ bool serializer_init(struct serializer *sr, struct compiler_args *args);
 
 void serializer_destroy(struct serializer *sr);
 
-bool serializer_process(struct serializer *sr, const struct ast_node *root);
+bool serializer_process(struct serializer *sr,
+                        const struct ast_node *root,
+                        const struct inpfile *f);
 
 
 #endif

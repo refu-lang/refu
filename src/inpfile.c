@@ -142,7 +142,8 @@ char *inpfile_line_p(struct inpfile *f, unsigned int line)
 
 
 i_INLINE_INS char *inpfile_p(struct inpfile *f);
-i_INLINE_INS char *inpfile_sp(struct inpfile *f);
+i_INLINE_INS char *inpfile_sp(const struct inpfile *f);
+i_INLINE_INS uint64_t inpfile_ptr_to_offset(const struct inpfile *f, const char *p);
 i_INLINE_INS struct RFstringx *inpfile_str(struct inpfile *f);
 i_INLINE_INS struct RFstring *inpfile_name(struct inpfile *f);
 i_INLINE_INS struct inpoffset *inpfile_offset(struct inpfile *f);

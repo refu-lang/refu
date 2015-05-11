@@ -76,6 +76,7 @@ i_INLINE_DECL char *inpfile_p(struct inpfile *f)
 {
     return inpstr_data(&f->str);
 }
+
 /**
  * Gets the a string pointer to the beginning of the file
  *
@@ -83,9 +84,21 @@ i_INLINE_DECL char *inpfile_p(struct inpfile *f)
  *
  * @return          A char* pointing to the start position of the file's str
  */
-i_INLINE_DECL char *inpfile_sp(struct inpfile *f)
+i_INLINE_DECL char *inpfile_sp(const struct inpfile *f)
 {
     return inpstr_beg(&f->str);
+}
+
+/**
+ * Obtain a byte offset into the file given a byte pointer
+ *
+ * @param f             The input file for which to get the offset
+ * @param p             The pointer whose offset into the string to get.
+ *                      If this is invalid then behaviour is undefined.
+ */
+i_INLINE_DECL uint64_t inpfile_ptr_to_offset(const struct inpfile *f, const char *p)
+{
+    return p - inpfile_sp(f);
 }
 
 /**

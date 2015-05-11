@@ -29,6 +29,7 @@ struct compiler_args {
     // does not really do anything but keep it as example of regex argtable arg
     struct arg_rex *backend;
     struct arg_lit *backend_debug;
+    struct arg_lit *output_ast;
     struct arg_str *output_name;
     struct arg_file *positional_file;
     struct arg_end *end;
@@ -61,6 +62,11 @@ bool compiler_args_help_is_requested(const struct compiler_args *args);
  * Should we print backend llvm debug information?
  */
 bool compiler_args_print_backend_debug(const struct compiler_args *args);
+
+/**
+ * Should we output the ast?
+ */
+bool compiler_args_output_ast(const struct compiler_args *args);
 
 /**
  * Get the name of the output file that should be generated
