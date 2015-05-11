@@ -69,7 +69,7 @@ static bool bllvm_ir_generate(struct rir_module *module, struct rir *rir,
     
     struct RFstring *temp_s = RFS_NT_OR_DIE(
         RF_STR_PF_FMT".ll",
-        RF_STR_PF_ARG(compiler_args_get_output(args)));
+        RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
     if (0 != LLVMPrintModuleToFile(ctx.mod, rf_string_data(temp_s), &error)) {
         ERROR("LLVM-error: %s", error);
         LLVMDisposeMessage(error);
@@ -93,7 +93,7 @@ static bool transformation_step_do(struct compiler_args *args,
     FILE *proc;
     struct RFstring *inname;
     struct RFstring *cmd;
-    const struct RFstring* output = compiler_args_get_output(args);
+    const struct RFstring* output = compiler_args_get_executable_name(args);
     bool ret = true;
     RFS_PUSH();
 

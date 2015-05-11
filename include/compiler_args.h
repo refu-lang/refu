@@ -65,12 +65,19 @@ bool compiler_args_print_backend_debug(const struct compiler_args *args);
 
 /**
  * Should we output the ast?
+ *
+ * @param args          The compiler args object
+ * @param name          A string pointer to point to the name of the output
+ *                      file if we actually need to output the AST.
+ * @return              true/false depending on whether we need to output the
+ *                      AST or not.
  */
-bool compiler_args_output_ast(const struct compiler_args *args);
+bool compiler_args_output_ast(struct compiler_args *args,
+                              struct RFstring **name);
 
 /**
- * Get the name of the output file that should be generated
+ * Get the name of the executable output file to be generated
  */
-struct RFstring *compiler_args_get_output(const struct compiler_args *args);
+struct RFstring *compiler_args_get_executable_name(struct compiler_args *args);
 
 #endif//include guards end

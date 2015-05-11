@@ -129,7 +129,7 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
 {
     char stdout_buff[1024];
     FILE *proc;
-    const struct RFstring* output = compiler_args_get_output(d->compiler.args);
+    const struct RFstring* output = compiler_args_get_executable_name(d->compiler.args);
 
     RFS_PUSH();
     proc = rf_popen(RFS_OR_DIE("./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output)), "r");

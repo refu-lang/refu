@@ -167,12 +167,37 @@ bool compiler_args_print_backend_debug(const struct compiler_args *args)
     return args->backend_debug->count > 0;
 }
 
-bool compiler_args_output_ast(const struct compiler_args *args)
+bool compiler_args_output_ast(struct compiler_args *args,
+                              struct RFstring **name)
 {
-    return args->output_ast->count > 0;
+    if (args->output_ast->count == 0) {
+        return false;
+    }
+
+    if (args->output_name->count == 0) {
+        args->output = rf_string_create("stdout");
+    } else {
+        args->output = rf_string_create(args->output_name->sval[0]);
+    }
+    *name = args->output;
+    return true;
 }
 
-struct RFstring *compiler_args_get_output(const struct compiler_args *args)
+struct RFstring *compiler_args_get_executable_name(struct compiler_args *args)
 {
+    if (!args->output) {
+        // handle output file name
+        if (args->output_name->count == 0) {
+            if (args->positional_file->count == 0) {
+                // if no filename is given and we read from stdin
+                args->output = rf_string_create("refu_out");
+            } else {
+                // assume same name as input file
+                args->output = &args->input;
+            }
+        } else {
+            args->output = rf_string_create(args->output_name->sval[0]);
+        }
+    }
     return args->output;
 }

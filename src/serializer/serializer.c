@@ -1,6 +1,7 @@
 #include <serializer/serializer.h>
 
 #include <Utils/memory.h>
+#include <System/rf_system.h>
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
 #include "astprinter.h"
@@ -31,12 +32,26 @@ void serializer_destroy(struct serializer *sr)
 
 bool serializer_process(struct serializer *sr,
                         const struct ast_node *root,
-                        const struct inpfile *f)
+                        const struct inpfile *infile)
 {
-    if (compiler_args_output_ast(sr->args)) {
+    struct RFstring *out_name;
+    static const struct RFstring s_stdout = RF_STRING_STATIC_INIT("stdout");
+    if (compiler_args_output_ast(sr->args, &out_name)) {
+        FILE *f;
+        if (rf_string_equal(&s_stdout, out_name)) {
+            f = stdout;
+        } else {
+            f = rf_fopen(out_name, "wb");
+            if (!f) {
+                return false;
+            }
+        }
         // for now just put it stdout, we will configure via compiler-args
-        if (!ast_output_to_file(root, stdout, f)) {
+        if (!ast_output_to_file(root, f, infile)) {
             return SERC_FAILURE;
+        }
+        if (f != stdout) {
+            fclose(f);
         }
         return SERC_SUCCESS_EXIT;
     }
