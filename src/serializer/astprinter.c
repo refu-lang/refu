@@ -10,6 +10,9 @@ struct astprinter {
     const struct inpfile *infile;
 };
 
+static bool astprinter_handle_node(struct astprinter *p,
+                                   const struct ast_node *n);
+
 static bool astprinter_init(struct astprinter *p, const struct inpfile *infile)
 {
     p->root = json_object_new_object();
@@ -31,32 +34,73 @@ static json_object *astprinter_json_new(const struct astprinter *p,
     json_object *typejstr = json_object_new_string(type);
     json_object_object_add(ret, "type", typejstr);
     json_object *locstart = json_object_new_int64(inpfile_ptr_to_offset(p->infile, start_mark->p));
-    json_object_object_add(ret, "location_start", locstart);
+    json_object_object_add(ret, "start", locstart);
     json_object *locend = json_object_new_int64(inpfile_ptr_to_offset(p->infile, end_mark->p));
-    json_object_object_add(ret, "location_end", locend);
+    json_object_object_add(ret, "end", locend);
     
     return ret;
 }
+
+#if 0
+static json_object *astprinter_typedesc_new(const struct astprinter *p,
+                                            const struct ast_node *n)
+{
+    json_object *ret;
+    ret = astprinter_json_new(p, n, "typedesc");
+    json_object_object_add(ret, "left", astprinter_json_new(p, n->typeleaf.left, "identifier"));
+    if (n->typeleaf.right->type != AST_IDENTIFIER || n->typeleaf.right->type != AST_XIDENTIFIER) {
+        json_object_object_add(ret, "right", astprinter_json_new(p, n->typeleaf.right, "identifier"));
+    } else {
+        json_object_object_add(ret, "right", astprinter_json_new(p, n->typeleaf.right, "identifier"));
+    }
+    return ret;
+}
+
+static json_object *astprinter_typeleaf_new(const struct astprinter *p,
+                                            const struct ast_node *n)
+{
+    json_object *ret;
+    ret = astprinter_json_new(p, n, "typeleaf");
+    json_object_object_add(ret, "left", astprinter_json_new(p, n->typeleaf.left, "identifier"));
+    if (n->typeleaf.right->type != AST_IDENTIFIER || n->typeleaf.right->type != AST_XIDENTIFIER) {
+        json_object_object_add(ret, "right", astprinter_json_new(p, n->typeleaf.right, "identifier"));
+    } else {
+        json_object_object_add(ret, "right", astprinter_json_new(p, n->typeleaf.right, "identifier"));
+    }
+    return ret;
+}
+#endif
 
 static bool astprinter_handle_node(struct astprinter *p,
                                    const struct ast_node *n)
 {
     json_object *new_json = NULL;
     json_object *old_current = p->current;
-    switch(n->type) {
+    json_object *json_children;
+    bool visit_children = true;
+    switch (n->type) {
     case AST_FUNCTION_IMPLEMENTATION:
         new_json = astprinter_json_new(p, n, "functionimpl");
         break;
     case AST_IDENTIFIER:
         new_json = astprinter_json_new(p, n, "identifier");
         break;
+    case AST_TYPE_LEAF:
+        /* new_json = astprinter_typeleaf_new(p, n); */
+        /* visit_children = false; */
+        new_json = astprinter_json_new(p, n, "typeleaf");
+        break;
+    case AST_TYPE_DESCRIPTION:
+        new_json = astprinter_json_new(p, n, "typedesc");
+        break;
+    case AST_TYPE_OPERATOR:
+        new_json = astprinter_json_new(p, n, "typeop");
+        break;
     default:
-        
         break;
     }
 
-    if (ast_node_get_children_number(n) != 0) {
-        json_object *json_children;
+    if (visit_children && ast_node_get_children_number(n) != 0) {
         if (new_json) {
             json_children = json_object_new_array();
         }
