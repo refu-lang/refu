@@ -1,6 +1,7 @@
 #include "function.h"
 
 #include <ast/function.h>
+#include <ast/matchexpr.h>
 
 #include <parser/parser.h>
 #include "common.h"
@@ -175,6 +176,8 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
                           "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
             goto fail_free_decl;
         }
+        // now set the matchexpr's fn_args since this is a headless matchexpr
+        ast_matchexpr_set_fnargs(body, ast_fndecl_args_get(decl));
     }
         
     n = ast_fnimpl_create(ast_node_startmark(decl),

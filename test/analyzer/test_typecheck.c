@@ -303,7 +303,7 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
     ck_assert_typecheck_with_messages(d, false, messages, true);
 } END_TEST
 
-START_TEST(test_typecheck_valid_function_impl) {
+START_TEST (test_typecheck_valid_function_impl) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
         "{\n"
@@ -313,6 +313,48 @@ START_TEST(test_typecheck_valid_function_impl) {
         "        return weight * age - height\n"
         "    }\n"
         "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string)\n"
+        "a:i32    => print(\"int\")\n"
+        "b:string => print(b)\n"
+        "\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_return) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string) -> i32\n"
+        "a:i32    => a\n"
+        "b:string => 0\n"
+        "\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
+
+START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_return) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string) -> i32 | string\n"
+        "a:i32    => a\n"
+        "b:string => b\n"
+        "\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front_testdriver_assign(d, &s);
@@ -561,6 +603,9 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_func_val, test_typecheck_valid_function_call_print_int);
     tcase_add_test(t_func_val, test_typecheck_valid_function_call_with_sum_args);
     tcase_add_test(t_func_val, test_typecheck_valid_function_impl);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_impl_matchexp_body_void_return);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_impl_matchexp_body_with_return);
+    tcase_add_test(t_func_val, test_typecheck_valid_function_impl_matchexp_body_with_complicated_return);
 
 
     TCase *t_func_inv = tcase_create("typecheck_invalid_functions");

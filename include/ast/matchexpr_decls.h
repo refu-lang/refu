@@ -14,7 +14,10 @@ struct ast_matchcase {
 };
 
 struct ast_matchexpr {
-    struct ast_node *identifier;
+    //! A pointer to either the identifier of the match node
+    //! or to the arguments of the parent function if this is
+    //! a headless match expression
+    struct ast_node *identifier_or_fnargtype;
     size_t match_cases_num;
 };
 

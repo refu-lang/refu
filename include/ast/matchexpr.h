@@ -59,14 +59,48 @@ i_INLINE_DECL bool ast_matchexpr_is_bodyless(const struct ast_node *n)
     return ast_matchexpr_cases_num(n) == 0;
 }
 
+/**
+ * Check if a match expression has a match() header
+ * @return true if yes and false if it's a function's body
+ */
+i_INLINE_DECL bool ast_matchexpr_has_header(const struct ast_node *n)
+{
+    return n->matchexpr.identifier_or_fnargtype->type == AST_IDENTIFIER;
+}
+
+/**
+ * Will return the identifier that is inside match() if
+ * this is not a headless match expression
+ */
 i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
-    return n->matchexpr.identifier;
+    return ast_matchexpr_has_header(n) ? n->matchexpr.identifier_or_fnargtype : NULL;
 }
 
-void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
+i_INLINE_DECL void ast_matchexpr_set_fnargs(struct ast_node *n,
+                                            struct ast_node *fn_args)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    n->matchexpr.identifier_or_fnargtype = fn_args;
+}
 
+/**
+ * Get the type that is being matched for @a n
+ *
+ * If this is a headless match expression then this is the type of the function
+ * arguments, else it's the type of the identifier
+ */
+const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
+                                              const struct symbol_table *st);
+/**
+ * Get the string representation of the type that is being matched for @a n
+ *
+ * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
+ */
+const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n);
+
+void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
 
 struct ast_matchexpr_it {
     const struct RFilist_head *lh;

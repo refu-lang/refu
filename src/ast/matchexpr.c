@@ -1,4 +1,5 @@
 #include <ast/matchexpr.h>
+#include <types/type.h>
 
 struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,
@@ -35,16 +36,41 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
     }
     ret->matchexpr.match_cases_num = 0;
     if (id) {
-        ast_node_register_child(ret, id, matchexpr.identifier);
+        ast_node_register_child(ret, id, matchexpr.identifier_or_fnargtype);
     } else {
-        ret->matchexpr.identifier = NULL;
+        ret->matchexpr.identifier_or_fnargtype = NULL;
     }
     return ret;
 }
 
 i_INLINE_INS size_t ast_matchexpr_cases_num(const struct ast_node *n);
 i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
+i_INLINE_INS bool ast_matchexpr_has_header(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchexpr_identifier(const struct ast_node *n);
+i_INLINE_INS void ast_matchexpr_set_fnargs(struct ast_node *n,
+                                           struct ast_node *fn_args);
+
+const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
+                                              const struct symbol_table *st)
+{
+    if (ast_matchexpr_has_header(n)) {
+        return type_lookup_identifier_string(
+            ast_identifier_str(n->matchexpr.identifier_or_fnargtype),
+            st
+        );
+    }
+    // else it's the type of the function arguments themselves
+    return n->matchexpr.identifier_or_fnargtype->expression_type;
+}
+
+const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
+{
+    if (ast_matchexpr_has_header(n)) {
+        return ast_identifier_str(ast_matchexpr_identifier(n));
+    }
+    // else it's the type of the function arguments themselves
+    return type_str_or_die(n->matchexpr.identifier_or_fnargtype->expression_type, TSTR_DEFAULT);
+}
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)
 {
