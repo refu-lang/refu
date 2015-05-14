@@ -22,7 +22,7 @@ i_INLINE_DECL struct ast_node *ast_constant_create_boolean_from_tok(struct token
 }
 
 //! Depending on the size of the constant literal, get the smallest type that would fit it
-const struct type * ast_constant_get_storagetype(struct ast_node *n);
+const struct type *ast_constant_get_storagetype(struct ast_node *n);
 
 #include <ast/ast.h>
 

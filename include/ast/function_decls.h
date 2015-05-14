@@ -37,7 +37,7 @@ struct ast_fndecl {
 struct ast_fnimpl {
     //! The function's declaration (signature)
     struct ast_node *decl;
-    //! The function's body
+    //! The function's body, either a block or a match expression
     struct ast_node *body;
     //! Symbol table of the function's arguments.
     //! Points to the symbol table of the declaration

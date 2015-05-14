@@ -48,7 +48,7 @@ struct ast_node *ast_fnimpl_create(const struct inplocation_mark *start,
 {
     struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(decl, AST_FUNCTION_DECLARATION);
-    AST_NODE_ASSERT_TYPE(body, AST_BLOCK);
+    AST_NODE_ASSERT_TYPE(body, AST_BLOCK || AST_MATCH_EXPRESSION);
 
     ret = ast_node_create_marks(AST_FUNCTION_IMPLEMENTATION, start, end);
     if (!ret) {

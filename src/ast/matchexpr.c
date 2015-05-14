@@ -34,7 +34,11 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
         return NULL;
     }
     ret->matchexpr.match_cases_num = 0;
-    ast_node_register_child(ret, id, matchexpr.identifier);
+    if (id) {
+        ast_node_register_child(ret, id, matchexpr.identifier);
+    } else {
+        ret->matchexpr.identifier = NULL;
+    }
     return ret;
 }
 

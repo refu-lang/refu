@@ -36,7 +36,7 @@ START_TEST(test_acc_matchexpr_1case) {
                                    id_wildcard, sliteral1);
     ast_node_add_child(mexpr, mcase);
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -75,7 +75,7 @@ START_TEST(test_acc_matchexpr_2cases) {
     ast_node_add_child(mexpr, mcase2);
     
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -123,7 +123,7 @@ START_TEST(test_acc_matchexpr_3cases) {
     ast_node_add_child(mexpr, mcase3);
     
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -164,7 +164,7 @@ START_TEST(test_acc_matchexpr_product_op) {
     ast_node_add_child(mexpr, mcase2);
     
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -205,7 +205,7 @@ START_TEST(test_acc_matchexpr_sum_op) {
     ast_node_add_child(mexpr, mcase2);
     
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -247,7 +247,7 @@ START_TEST(test_acc_matchexpr_bind_to_typedesc) {
                                    id_wildcard, sliteral2);
     ast_node_add_child(mexpr, mcase2);
     
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);
@@ -291,7 +291,7 @@ START_TEST(test_acc_matchexpr_recursive) {
                                    prodop, addexpr);
     ast_node_add_child(mexpr, mcase2);
 
-    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true);
+    ck_test_parse_as(n, matchexpr, d, "match expression", mexpr, true, true);
 
     ast_node_destroy(n);
     ast_node_destroy(mexpr);

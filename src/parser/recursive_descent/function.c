@@ -9,6 +9,7 @@
 #include "type.h"
 #include "expression.h"
 #include "block.h"
+#include "matchexpr.h"
 
 struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
 {
@@ -145,23 +146,41 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
     struct ast_node *n;
     struct ast_node *decl;
     struct ast_node *body;
+    struct token *tok;
 
     decl = parser_acc_fndecl(p, FNDECL_PARTOF_IMPL);
     if (!decl) {
         return NULL;
+    }    
+    tok = lexer_lookahead(p->lexer, 1);
+    if (!tok) {
+        goto fail_free_decl;
     }
 
-    body = parser_acc_block(p, true);
-    if (!body) {
-        parser_synerr(p, ast_node_endmark(decl), NULL,
-                      "Expected a body for \""RF_STR_PF_FMT"\" function "
-                      "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
-        ast_node_destroy(decl);
-        return NULL;
+    if (tok->type == TOKEN_SM_OCBRACE) {
+        // normal function body
+        body = parser_acc_block(p, true);
+        if (!body) {
+            parser_synerr(p, ast_node_endmark(decl), NULL,
+                          "Expected a body for \""RF_STR_PF_FMT"\" function "
+                          "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
+            goto fail_free_decl;
+        }
+    } else {
+        // attempt to find a headless match expression as the function body
+        body = parser_acc_matchexpr(p, false, true);
+        if (!body) {
+            parser_synerr(p, ast_node_endmark(decl), NULL,
+                          "Expected a body for \""RF_STR_PF_FMT"\" function "
+                          "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
+            goto fail_free_decl;
+        }
     }
-
-    n = ast_fnimpl_create(ast_node_startmark(decl), ast_node_endmark(body),
-                          decl, body);
+        
+    n = ast_fnimpl_create(ast_node_startmark(decl),
+                          ast_node_endmark(body),
+                          decl,
+                          body);
     if (!n) {
         RF_ERRNOMEM();
         ast_node_destroy(body);
@@ -169,6 +188,10 @@ struct ast_node *parser_acc_fnimpl(struct parser *p)
         return NULL;
     }
     return n;
+
+fail_free_decl:
+    ast_node_destroy(decl);
+    return NULL;
 }
 
 enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,

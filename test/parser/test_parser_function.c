@@ -12,6 +12,7 @@
 #include <ast/constants.h>
 #include <ast/generics.h>
 #include <ast/block.h>
+#include <ast/matchexpr.h>
 #include <ast/operators.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
@@ -678,7 +679,80 @@ START_TEST(test_acc_fnimpl_2) {
 
     ast_node_destroy(n);
     ast_node_destroy(fim);
-}END_TEST
+} END_TEST
+
+START_TEST (test_acc_fnimpl_no_braces) {
+    struct ast_node *n;
+    struct inpfile *file;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string)\n"
+        "a:i32    => print(a)\n"
+        "b:string => print(b)\n"
+        "\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    file = d->front.file;
+
+    struct ast_node *name = testsupport_parser_identifier_create(file,
+                                                                 0, 3, 0, 8);
+    struct ast_node *id_a = testsupport_parser_identifier_create(file,
+                                                                 0, 10, 0, 10);
+    testsupport_parser_xidentifier_create_simple(id_i32, file, 0, 12, 0, 14);
+    testsupport_parser_node_create(t1, typeleaf, file, 0, 10, 0, 14, id_a, id_i32);
+
+    struct ast_node *id_b = testsupport_parser_identifier_create(file,
+                                                                 0, 18, 0, 18);
+    testsupport_parser_xidentifier_create_simple(id_string, file, 0, 20, 0, 25);
+    testsupport_parser_node_create(t2, typeleaf, file, 0, 18, 0, 25, id_b, id_string);
+    testsupport_parser_node_create(fn_arg_type, typeop, file, 0, 10, 0, 25,
+                                   TYPEOP_SUM, t1, t2);
+    testsupport_parser_node_create(decl, fndecl, file, 0, 0, 0, 26,
+                                   FNDECL_PARTOF_IMPL, name, NULL, fn_arg_type, NULL);
+    
+
+    // match expression
+    // case 1
+    struct ast_node *id_ma = testsupport_parser_identifier_create(file, 1, 0, 1, 0);
+    testsupport_parser_xidentifier_create_simple(id_mi32, file, 1, 2, 1, 4);
+    testsupport_parser_typedesc_create(t_mai32, file, 1, 0, 1, 4, typeleaf, id_ma, id_mi32);
+    struct ast_node *id_print1 = testsupport_parser_identifier_create(file,
+                                                                  1, 12, 1, 16);
+    struct ast_node *id_pa = testsupport_parser_identifier_create(file,
+                                                                  1, 18, 1, 18);
+    testsupport_parser_node_create(fc1, fncall, file, 1, 12, 1, 19,
+                                   id_print1,
+                                   id_pa,
+                                   NULL);
+    testsupport_parser_node_create(mcase1, matchcase, file, 1, 0, 1, 19,
+                                   t_mai32, fc1);
+    // case 2
+    struct ast_node *id_mb = testsupport_parser_identifier_create(file, 2, 0, 2, 0);
+    testsupport_parser_xidentifier_create_simple(id_mstring, file, 2, 2, 2, 7);
+    testsupport_parser_typedesc_create(t_mstring, file, 2, 0, 2, 7, typeleaf, id_mb, id_mstring);
+    struct ast_node *id_print2 = testsupport_parser_identifier_create(file,
+                                                                  2, 12, 2, 16);
+    struct ast_node *id_pb = testsupport_parser_identifier_create(file,
+                                                                  2, 18, 2, 18);
+    testsupport_parser_node_create(fc2, fncall, file, 2, 12, 2, 19,
+                                   id_print2,
+                                   id_pb,
+                                   NULL);
+    testsupport_parser_node_create(mcase2, matchcase, file, 2, 0, 2, 19,
+                                   t_mstring, fc2);
+    // add the cases
+    testsupport_parser_node_create(mexpr, matchexpr, file, 1, 0, 2, 19, NULL);
+    ast_node_add_child(mexpr, mcase1);
+    ast_node_add_child(mexpr, mcase2);
+    // finally form the function impl
+    testsupport_parser_node_create(fim, fnimpl, file,
+                                   0, 0, 2, 19, decl, mexpr);
+
+    ck_test_parse_as(n, fnimpl, d, "function_implementation", fim);
+
+    ast_node_destroy(n);
+    ast_node_destroy(fim);
+} END_TEST
 
 Suite *parser_function_suite_create(void)
 {
@@ -715,6 +789,7 @@ Suite *parser_function_suite_create(void)
     tcase_add_checked_fixture(fimpl, setup_front_tests, teardown_front_tests);
     tcase_add_test(fimpl, test_acc_fnimpl_1);
     tcase_add_test(fimpl, test_acc_fnimpl_2);
+    tcase_add_test(fimpl, test_acc_fnimpl_no_braces);
 
 
 

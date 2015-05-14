@@ -49,8 +49,9 @@ enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
                                                    int fndecl_position);
 
 
-/*
+/**
  * function_implementation = function_declaration block
+ *                         / function_declaration match_expression
  */
 struct ast_node *parser_acc_fnimpl(struct parser *p);
 

@@ -18,7 +18,15 @@ struct parser;
  *            / NIL
  * match_cases = match_case match_cases
  * match_expression = TOKEN_KW_MATCH identifier TOKEN_SM_OCBRACE match_cases TOKEN_SM_CCBRACE
+ *
+ * @param p               The parser instance 
+ * @param have_header     True if it's an expression with a match(..) { } header
+ *                        and false if it's a body of a function
+ * @param expect_it       If true, failure to parse is an error.
+ * @return                The parsed match expression node.
  */
-struct ast_node *parser_acc_matchexpr(struct parser *p, bool expect_it);
+struct ast_node *parser_acc_matchexpr(struct parser *p,
+                                      bool have_header,
+                                      bool expect_it);
 
 #endif

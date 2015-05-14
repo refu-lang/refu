@@ -85,7 +85,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKEN_IS_POSSIBLE_MATCH_EXPRESSION(tok)) {
-        n = parser_acc_matchexpr(p, true);
+        n = parser_acc_matchexpr(p, true, true);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected a match expression");

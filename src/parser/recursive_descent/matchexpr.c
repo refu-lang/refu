@@ -35,7 +35,7 @@ static struct ast_node *parser_accept_matchcase(struct parser *p)
                       "Expected an expression after '=>'");
         goto fail_free_pattern;
     }
-    
+
     n = ast_matchcase_create(ast_node_startmark(pattern),
                          ast_node_endmark(expr),
                          pattern,
@@ -52,7 +52,9 @@ fail_free_pattern:
     return NULL;
 }
 
-struct ast_node *parser_acc_matchexpr(struct parser *p, bool expect_it)
+struct ast_node *parser_acc_matchexpr(struct parser *p,
+                                      bool have_header,
+                                      bool expect_it)
 {
     struct token *tok;
     struct ast_node *id;
@@ -60,63 +62,92 @@ struct ast_node *parser_acc_matchexpr(struct parser *p, bool expect_it)
     struct ast_node *match_expr;
     const struct inplocation_mark *start;
     bool got_paren = false;
-    tok = lexer_expect_token(p->lexer, TOKEN_KW_MATCH);
-    if (!tok) {
-        if (expect_it) {
-            parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
-                          "Expected 'match' keyword");
+    lexer_push(p->lexer);
+
+    if (have_header) {
+        tok = lexer_expect_token(p->lexer, TOKEN_KW_MATCH);
+        if (!tok) {
+            if (expect_it) {
+                parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+                              "Expected 'match' keyword");
+            }
+            goto fail;
         }
-        return NULL;
-    }
-    start = token_get_start(tok);
+        start = token_get_start(tok);
 
-    tok = lexer_lookahead(p->lexer, 1);
-    if (tok && tok->type == TOKEN_SM_OPAREN) {
-        lexer_next_token(p->lexer);
-        got_paren = true;
-    }
-    id = parser_acc_identifier(p);
-    if (!id) {
-        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                      "Expected an identifier after 'match' keyword");
-        return NULL;
-    }
-    if (got_paren && !(tok = lexer_expect_token(p->lexer, TOKEN_SM_CPAREN))) {
-        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                      "Expected a closing ')' after identifier");
-        return NULL;
+        tok = lexer_lookahead(p->lexer, 1);
+        if (tok && tok->type == TOKEN_SM_OPAREN) {
+            lexer_next_token(p->lexer);
+            got_paren = true;
+        }
+        id = parser_acc_identifier(p);
+        if (!id) {
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                          "Expected an identifier after 'match' keyword");
+            goto fail;
+        }
+        if (got_paren && !(tok = lexer_expect_token(p->lexer, TOKEN_SM_CPAREN))) {
+            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+                          "Expected a closing ')' after identifier");
+            goto fail;
+        }
+        match_expr = ast_matchexpr_create(start, token_get_end(tok), id);
+        if (!match_expr) {
+            RF_ERROR("Failed to allocate a match expression node");
+            goto fail;
+        }
+        
+        tok = lexer_expect_token(p->lexer, TOKEN_SM_OCBRACE);
+        if (!tok) { // a body-less match expression. Can only appear inside another match expression
+            return match_expr;
+        }
+    } else {
+        // match expression as body of a function
+        if (!(match_case = parser_accept_matchcase(p))) {
+            if (expect_it) {
+                parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+                              "Expected headless match expression");
+            }
+            goto fail;
+        }
+        match_expr = ast_matchexpr_create(ast_node_startmark(match_case),
+                                          ast_node_endmark(match_case),
+                                          NULL);
+        if (!match_expr) {
+            ast_node_destroy(match_case);
+            RF_ERROR("Failed to allocate a match expression node");
+            goto fail;
+        }
+        ast_matchexpr_add_case(match_expr, match_case);
     }
 
-    /* match_expr = ast_matchexpr_create(start, lexer_last_token_end(p->lexer), id); */
-    match_expr = ast_matchexpr_create(start, token_get_end(tok), id);
-    if (!match_expr) {
-        RF_ERROR("Failed to allocate a match expression node");
-        return NULL;
-    }
-
-    tok = lexer_expect_token(p->lexer, TOKEN_SM_OCBRACE);
-    if (!tok) { // a body-less match expression. Can only appear inside another match expression
-        return match_expr;
-    }
-
+    const struct inplocation_mark *end;
     while ((match_case = parser_accept_matchcase(p))) {
         ast_matchexpr_add_case(match_expr, match_case);
+        end = ast_node_endmark(match_case);
     }
     if (parser_has_syntax_error(p)) { // last match_case parsing failed
         goto fail_free_matchexpr;
     }
 
-    tok = lexer_expect_token(p->lexer, TOKEN_SM_CCBRACE);
-    if (!tok) {
-        parser_synerr(p, ast_node_endmark(id), NULL,
-                      "Expected a '}' after match case");
-        goto fail_free_matchexpr;
+    if (have_header) {
+        // if the match expression has a header we expect a curly brace at the end
+        tok = lexer_expect_token(p->lexer, TOKEN_SM_CCBRACE);
+        if (!tok) {
+            parser_synerr(p, ast_node_endmark(id), NULL,
+                          "Expected a '}' after match case");
+            goto fail_free_matchexpr;
+        }
+        end = token_get_end(tok);
     }
-    ast_node_set_end(match_expr, token_get_end(tok));
+    ast_node_set_end(match_expr, end);
+    lexer_pop(p->lexer);
     return match_expr;
 
 fail_free_matchexpr:
     ast_node_destroy(match_expr);
+fail:
+    lexer_rollback(p->lexer);
     return NULL;
 }
 
