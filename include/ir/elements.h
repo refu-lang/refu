@@ -34,8 +34,13 @@ struct rir_cond_branch {
     struct ast_node *cond;
 };
 
-bool rir_cond_branch_init(struct rir_cond_branch *rir_cond, struct ast_node *n, struct rir *rir);
-struct rir_cond_branch *rir_cond_branch_create(struct ast_node *n, struct rir *rir);
+bool rir_cond_branch_init(struct rir_cond_branch *rir_cond,
+                          struct ast_node *n,
+                          struct symbol_table *st,
+                          struct rir *rir);
+struct rir_cond_branch *rir_cond_branch_create(struct ast_node *n,
+                                               struct symbol_table *st,
+                                               struct rir *rir);
 
 void rir_cond_branch_deinit(struct rir_cond_branch *rir_cond);
 
@@ -53,7 +58,9 @@ struct rir_branch {
     };
 };
 
-struct rir_branch *rir_branch_create(struct ast_node *node, struct rir *rir);
+struct rir_branch *rir_branch_create(struct ast_node *node,
+                                     struct symbol_table *st,
+                                     struct rir *rir);
 void rir_branch_destroy(struct rir_branch *branch);
 
 /**
@@ -69,12 +76,17 @@ struct rir_basic_block {
     struct RFilist_head expressions;
     //! exit branch
     struct rir_branch exit;
+    //! Is a normal block or not
+    bool normal_block;
     //! [optional] condition branch. If this is not NULL then this is
     //! an else if block and this will be its rir condition
     struct rir_branch *condition;
 };
 RF_STRUCT_COMMON_SIGS_NO_ALLOC(rir_basic_block);
-struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir);
+struct rir_basic_block *rir_basic_blocks_create_from_ast_block(
+    struct ast_node *n,
+    struct symbol_table *st,
+    struct rir *rir);
 
 bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, struct rir *rir);
 

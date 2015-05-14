@@ -54,6 +54,15 @@ struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
                                               struct llvm_traversal_ctx *ctx);
 
 /**
+ * Compile a rir type as internal type declaration
+ * @param type        The rir type to compile
+ * @param ctx         The llvm traversal context
+ * @return            The LLVM type for the compiled struct or NULL in error
+ */
+struct LLVMOpaqueType *bllvm_compile_internal_typedecl(struct rir_type *type,
+                                                       struct llvm_traversal_ctx *ctx);
+
+/**
  * Given a rir type return all its subtypes in an LLVMType Array.
  *
  * This is supposed to work only on non-sum type types

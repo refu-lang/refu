@@ -3,6 +3,7 @@
 #include <ast/block.h>
 #include <ast/function.h>
 #include <ast/type.h>
+#include <ast/matchexpr.h>
 
 #include <Utils/sanity.h>
 #include <Utils/build_assert.h>
@@ -238,6 +239,8 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_fnimpl_symbol_table_get(n);
     case AST_TYPE_DESCRIPTION:
         return ast_typedesc_symbol_table_get(n);
+    case AST_MATCH_CASE:
+        return ast_matchcase_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"

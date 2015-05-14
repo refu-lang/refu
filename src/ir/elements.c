@@ -43,7 +43,10 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl, struct rir *rir)
         return false;
     }
 
-    this->entry = rir_basic_blocks_create_from_ast_block(ast_fnimpl_body_get(fn_impl), rir);
+    this->entry = rir_basic_blocks_create_from_ast_block(
+        ast_fnimpl_body_get(fn_impl),
+        ast_fnimpl_symbol_table_get(fn_impl),
+        rir);
     if (!this->entry) {
         RF_ERROR("Failed to create rir_basic_block for a function");
         return false;
@@ -61,20 +64,23 @@ RF_STRUCT_DEINIT_SIG(rir_function)
 }
 
 /* -- rir_branch -- */
-bool rir_cond_branch_init(struct rir_cond_branch *rir_branch, struct ast_node *n, struct rir *rir)
+bool rir_cond_branch_init(struct rir_cond_branch *rir_branch,
+                          struct ast_node *n,
+                          struct symbol_table *st,
+                          struct rir *rir)
 {
     struct ast_node *fallthrough;
 
     rir_branch->cond = ast_ifexpr_condition_get(n);
     rir_branch->true_br = rir_basic_blocks_create_from_ast_block(
-        ast_ifexpr_taken_block_get(n), rir
+        ast_ifexpr_taken_block_get(n), st, rir
     );
 
     rir_branch->false_br = NULL;
     fallthrough = ast_ifexpr_fallthrough_branch_get(n);
     if (fallthrough) {
         AST_NODE_ASSERT_TYPE(fallthrough, AST_CONDITIONAL_BRANCH || AST_BLOCK);
-        rir_branch->false_br = rir_branch_create(fallthrough, rir);
+        rir_branch->false_br = rir_branch_create(fallthrough, st, rir);
         if (!rir_branch->false_br) {
             RF_ERROR("Failed to create a RIR fallthrough branch");
             return false;
@@ -84,11 +90,13 @@ bool rir_cond_branch_init(struct rir_cond_branch *rir_branch, struct ast_node *n
     return true;
 }
 
-struct rir_cond_branch *rir_cond_branch_create(struct ast_node *n, struct rir *r)
+struct rir_cond_branch *rir_cond_branch_create(struct ast_node *n,
+                                               struct symbol_table *st,
+                                               struct rir *r)
 {
     struct rir_cond_branch *ret;
     RF_MALLOC(ret, sizeof(*ret), NULL);
-    if (!rir_cond_branch_init(ret, n, r)) {
+    if (!rir_cond_branch_init(ret, n, st, r)) {
         return NULL;
     }
     return ret;
@@ -103,6 +111,7 @@ void rir_cond_branch_deinit(struct rir_cond_branch *rir_cond)
 }
 
 struct rir_branch *rir_branch_create(struct ast_node *node,
+                                     struct symbol_table *st,
                                      struct rir *rir)
 {
     struct rir_branch *ret;
@@ -112,9 +121,9 @@ struct rir_branch *rir_branch_create(struct ast_node *node,
     AST_NODE_ASSERT_TYPE(node, AST_IF_EXPRESSION || AST_BLOCK);
     if (node->type == AST_IF_EXPRESSION) {
         ret->is_conditional = true;
-        rir_cond_branch_init(&ret->cond_branch, node, rir);
+        rir_cond_branch_init(&ret->cond_branch, node, st, rir);
     } else {
-        ret->simple_branch = rir_basic_blocks_create_from_ast_block(node, rir);
+        ret->simple_branch = rir_basic_blocks_create_from_ast_block(node, st, rir);
     }
 
     return ret;
@@ -173,21 +182,30 @@ bool rir_handle_block_expression(struct ast_node *n, struct rir_basic_block *b, 
     return true;
 }
 
-struct rir_basic_block *rir_basic_blocks_create_from_ast_block(struct ast_node *n, struct rir *rir)
+struct rir_basic_block *rir_basic_blocks_create_from_ast_block(
+    struct ast_node *n,
+    struct symbol_table *st,
+    struct rir *rir)
 {
     struct ast_node *c;
     struct rir_basic_block *b;
 
-    AST_NODE_ASSERT_TYPE(n, AST_BLOCK);
     b = rir_basic_block_create();
-    b->symbols = ast_block_symbol_table_get(n);
-    rf_ilist_for_each(&n->children, c, lh) {
-        // TODO depending on the children create other blocks and connect them to
-        // this one but for now just simply ignore branching
-        if (!rir_handle_block_expression(c, b, rir)) {
-            return NULL;
+    if (n->type == AST_BLOCK) { // ugly as hell. Go away with RIR refactor.
+        b->symbols = ast_block_symbol_table_get(n);
+        b->normal_block = true;
+        rf_ilist_for_each(&n->children, c, lh) {
+            // TODO depending on the children create other blocks and connect them to
+            // this one but for now just simply ignore branching
+            if (!rir_handle_block_expression(c, b, rir)) {
+                return NULL;
+            }
         }
+    } else {
+        b->symbols = st;
+        b->normal_block = false;
     }
+
 
     return b;
 }
@@ -206,7 +224,7 @@ bool rir_expression_init(struct rir_expression *expr,
         expr->expr = node;
         break;
     case RIR_IF_EXPRESSION:
-        expr->branch = rir_branch_create(node, rir);
+        expr->branch = rir_branch_create(node, parent->symbols, rir);
         if (!expr->branch) {
             return false;
         }

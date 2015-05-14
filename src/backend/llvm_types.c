@@ -68,6 +68,20 @@ static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
     return llvm_type;
 }
 
+LLVMTypeRef bllvm_compile_internal_typedecl(struct rir_type *type,
+                                            struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef ret;
+    RFS_PUSH();
+    ret = bllvm_compile_typedecl(
+        RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type)),
+        type,
+        ctx
+    );
+    RFS_POP();
+    return ret;
+}
+
 LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
                                    struct rir_type *type,
                                    struct llvm_traversal_ctx *ctx)
@@ -88,11 +102,7 @@ LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
 
         LLVMTypeRef subtype_llvm_type = rir_types_map_get(&ctx->types_map, *subtype);
         if (!subtype_llvm_type) {
-            subtype_llvm_type = bllvm_compile_typedecl(
-                RFS_OR_DIE("internal_struct%u", rir_type_get_uid(*subtype)),
-                *subtype,
-                ctx
-            );
+            subtype_llvm_type = bllvm_compile_internal_typedecl(*subtype, ctx);
             if (!subtype_llvm_type) {
                 return NULL;
             }

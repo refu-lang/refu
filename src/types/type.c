@@ -45,6 +45,10 @@ static bool type_function_add_args_to_st(struct type *args_t,
     struct function_args_ctx ctx;
     ctx.st = st;
     ctx.analyzer = a;
+    // TODO: If this argument is a sumtype also add the sumtype itself in the
+    // symbol table with some special name value. e.g:
+    // RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type))
+    
     return type_for_each_leaf(args_t, do_type_function_add_args_to_st, &ctx);
 }
 

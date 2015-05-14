@@ -448,7 +448,9 @@ void bllvm_compile_basic_block(struct rir_basic_block *block,
     struct symbol_table *prev = ctx->current_st;
     ctx->current_st = block->symbols;
 
-    symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
+    if (block->normal_block) { // ugly as hell. Go away with RIR refactor.
+        symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
+    }
     rf_ilist_for_each(&block->expressions, rir_expr, ln) {
         bllvm_expression(rir_expr, ctx, 0);
     }

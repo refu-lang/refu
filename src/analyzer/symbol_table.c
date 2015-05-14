@@ -93,7 +93,6 @@ struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
 
 struct symbol_table_record *symbol_table_record_create_from_type(
     struct symbol_table *st,
-    struct analyzer *analyzer,
     const struct RFstring *id,
     struct type *t)
 {
@@ -255,7 +254,6 @@ bool symbol_table_add_type(struct symbol_table *st,
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
 
-
     rec = symbol_table_lookup_record(st, id, &symbol_found_at_first_st);
 
     if (rec && symbol_found_at_first_st) {
@@ -270,7 +268,7 @@ bool symbol_table_add_type(struct symbol_table *st,
     }
 
     //we can create the type now
-    rec = symbol_table_record_create_from_type(st, analyzer, id, t);
+    rec = symbol_table_record_create_from_type(st, id, t);
     if (!rec) {
         return false;
     }

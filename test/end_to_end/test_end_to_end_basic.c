@@ -553,6 +553,23 @@ START_TEST (test_matchexpr_2) {
     ck_end_to_end_run(d, "test_input_file.rf", &s, 29, &output);
 } END_TEST
 
+START_TEST (test_matchexpr_in_functions) {
+    struct end_to_end_driver *d = get_end_to_end_driver();
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string)\n"
+        // TODO: Change the below to print(string(a)) when conversion of non const ints can happen
+        "a:i32    => print(\"change\")\n"
+        "b:string => print(b)\n"
+        "\n"
+        "fn main()->u32{\n"
+        "action(3)\n"
+        "action(\" friends\")\n"
+        "return 0\n"
+        "}");
+    static const struct RFstring output = RF_STRING_STATIC_INIT("change friends");
+    ck_end_to_end_run(d, "test_input_file.rf", &s, 0, &output);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -631,6 +648,7 @@ Suite *end_to_end_basic_suite_create(void)
                               teardown_end_to_end_tests);
     tcase_add_test(st_match_expr, test_matchexpr_1);
     tcase_add_test(st_match_expr, test_matchexpr_2);
+    tcase_add_test(st_match_expr, test_matchexpr_in_functions);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
