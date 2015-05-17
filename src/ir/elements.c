@@ -204,6 +204,9 @@ struct rir_basic_block *rir_basic_blocks_create_from_ast_block(
     } else {
         b->symbols = st;
         b->normal_block = false;
+        if (!rir_expression_create(b, n, RIR_SIMPLE_EXPRESSION, rir)) {
+            return NULL;
+        }
     }
 
 

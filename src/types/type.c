@@ -32,10 +32,22 @@ struct function_args_ctx {
     struct analyzer *analyzer;
 };
 
-static bool do_type_function_add_args_to_st(struct type_leaf *lt, void *user)
+// Add all arguments to the symbol table. Leafs are added with key as their
+// ID and anonumous types are added with a unique value as their key
+static bool do_type_function_add_args_to_st(struct type *t, void *user)
 {
     struct function_args_ctx *ctx = user;
-    return symbol_table_add_type(ctx->st, ctx->analyzer, lt->id, lt->type);
+    if (t->category == TYPE_CATEGORY_LEAF) {
+        return symbol_table_add_type(ctx->st, ctx->analyzer, t->leaf.id, t->leaf.type);
+    } else if (type_is_sumop(t)) {
+        return symbol_table_add_type(
+            ctx->st,
+            ctx->analyzer,
+            type_get_unique_value_str(t),
+            t
+        );
+    }
+    return true;
 }
 
 static bool type_function_add_args_to_st(struct type *args_t,
@@ -45,11 +57,8 @@ static bool type_function_add_args_to_st(struct type *args_t,
     struct function_args_ctx ctx;
     ctx.st = st;
     ctx.analyzer = a;
-    // TODO: If this argument is a sumtype also add the sumtype itself in the
-    // symbol table with some special name value. e.g:
-    // RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type))
-    
-    return type_for_each_leaf(args_t, do_type_function_add_args_to_st, &ctx);
+
+    return type_traverse_postorder(args_t, do_type_function_add_args_to_st, &ctx);
 }
 
 
@@ -582,6 +591,16 @@ size_t type_get_uid(const struct type *t)
     return ret;
 }
 
+const struct RFstring *type_get_unique_value_str(const struct type *t)
+{
+    return RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t));
+}
+
+const struct RFstring *type_get_unique_type_str(const struct type *t)
+{
+    return RFS_OR_DIE("internal_struct_%u", type_get_uid(t));
+}
+
 static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDCARD};
 const struct type *type_get_wildcard()
 {
@@ -593,6 +612,10 @@ const struct RFstring *type_defined_get_name(const struct type *t)
     RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
     return t->defined.name;
 }
+
+i_INLINE_INS bool type_is_sumop(const struct type *t);
+i_INLINE_INS bool type_is_sumtype(const struct type *t);
+
 /* -- type traversal functions -- */
 
 bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)

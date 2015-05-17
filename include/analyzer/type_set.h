@@ -5,6 +5,7 @@
 #include <Definitions/inline.h>
 
 struct type;
+struct rir_type;
 
 i_INLINE_DECL const void *type_objset_key(const struct type *t)
 {
@@ -32,5 +33,14 @@ OBJSET_DEFINE_TYPE(type,
  */
 bool type_objset_has_convertable(const struct rf_objset_type *set,
                                  const struct type *type);
+
+/**
+ * Find equivalent of a rir type in the set and return it
+ *
+ * TODO: This function is temporary and should probably go away after RIR
+ * refactoring
+ */
+struct type *type_objset_get_rir_type(const struct rf_objset_type *set,
+                                      const struct rir_type *type);
 
 #endif

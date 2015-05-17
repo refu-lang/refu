@@ -4,7 +4,9 @@
 #include <stdlib.h>
 
 struct ast_matchcase {
+    //! A type description of the match pattern
     struct ast_node *pattern;
+    //! An expression to follow when pattern matches
     struct ast_node *expression;
     //! A pointer to the type that the pattern of this case matched
     const struct type *matched_type;

@@ -4,6 +4,7 @@
 #include <Utils/bits.h>
 
 #include <ast/type.h>
+#include <analyzer/type_set.h>
 
 #include <types/type.h>
 #include <types/type_elementary.h>
@@ -459,6 +460,11 @@ bool rir_type_equals_type(const struct rir_type *r_type,
     return ret;
 }
 
+const struct rir_type *rir_type_contents(const struct rir_type *t)
+{
+    return t->category == COMPOSITE_RIR_DEFINED ? darray_item(t->subtypes, 0) : t;
+}
+
 const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
 {
     // if it's only 1 simple type and we want the first subtype's name it's this one
@@ -581,6 +587,18 @@ size_t rir_type_get_uid(const struct rir_type *t)
     ret = rf_hash_str_stable(s, 0);
     RFS_POP();
     return ret;
+}
+
+const struct RFstring *rir_type_get_unique_value_str(const struct rir_type *t,
+                                                     const struct rf_objset_type *set)
+{
+    return type_get_unique_value_str(type_objset_get_rir_type(set, t));
+}
+
+const struct RFstring *rir_type_get_unique_type_str(const struct rir_type *t,
+                                                    const struct rf_objset_type *set)
+{
+    return type_get_unique_type_str(type_objset_get_rir_type(set, t));
 }
 
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);

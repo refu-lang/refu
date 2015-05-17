@@ -106,11 +106,16 @@ void bllvm_store(LLVMValueRef val,
                  struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
-    if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
-        bllvm_copy_string(val, ptr, ctx);
+    if (LLVMTypeOf(val) == LLVMTypeOf(ptr)) {
+        // if we are storing a pointer to another
+        if (ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
+            bllvm_copy_string(val, ptr, ctx);
+        } else {
+            // just memcpy
+            bllvm_memcpy(ptr, val, ctx);
+        }
         return;
     }
-    
     val = bllvm_cast_value_to_type_maybe(val, ptr_element_type, ctx);
     LLVMBuildStore(ctx->builder, val, ptr);
 }

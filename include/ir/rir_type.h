@@ -11,6 +11,7 @@ struct type;
 struct RFstring;
 struct ast_node;
 struct symbol_table;
+struct rf_objset_type;
 
 /**
  * Allocates a new rir_type equivalent of @c input.
@@ -114,6 +115,12 @@ bool rir_type_is_subtype_of_other(struct rir_type *t,
 bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type);
 
 /**
+ * Gets the contents of the rir type. For a defined type it's the first and only
+ * child. For any other type it's the type itself
+ */
+const struct rir_type *rir_type_contents(const struct rir_type *t);
+
+/**
  * Returns the name of the nth parameter of a type
  * @param t        The type to query
  * @param n        The index (starting from 0) of the parameter's whose name to get
@@ -170,6 +177,24 @@ i_INLINE_DECL struct RFstring *rir_type_str_or_die(const struct rir_type *t)
  * @param t        The rir type whose unique id to get
  */
 size_t rir_type_get_uid(const struct rir_type *t);
+
+// TODO: These duplicated functions are an ugly hack for now. Will be
+// refactored when rir_type is a part of type
+/**
+ * Query a unique value name for an anomymous (operator) rir type
+ *
+ * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
+ */
+const struct RFstring *rir_type_get_unique_value_str(const struct rir_type *t,
+                                                     const struct rf_objset_type *set);
+
+/**
+ * Query a unique type name for an anomymous (operator) rir type
+ *
+ * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
+ */
+const struct RFstring *rir_type_get_unique_type_str(const struct rir_type *t,
+                                                    const struct rf_objset_type *set);
 
 i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
 {

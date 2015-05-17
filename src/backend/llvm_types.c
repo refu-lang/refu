@@ -65,6 +65,7 @@ static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
     RFS_POP();
     LLVMTypeRef *members = bllvm_simple_member_types(type, ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
+    llvm_traversal_ctx_reset_params(ctx);
     return llvm_type;
 }
 
@@ -72,9 +73,11 @@ LLVMTypeRef bllvm_compile_internal_typedecl(struct rir_type *type,
                                             struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ret;
+    // TODO: This is an ugly hack for now. Will be refactored when rir_type
+    //       is a part of type
     RFS_PUSH();
     ret = bllvm_compile_typedecl(
-        RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type)),
+        rir_type_get_unique_type_str(type, ctx->rir->types_set),
         type,
         ctx
     );
@@ -89,14 +92,17 @@ LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
     if (!type) {
         type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
     }
+
     if (!rir_type_is_sumtype(type)) {
         return bllvm_compile_simple_typedecl(name, type, ctx);
     }
-    // TODO: if it's a sum type we have to add the selector variable to the
+    // if it's a sum type we have to add the selector variable to the
     // body and also create structures of all the possible subtypes and
     // provide the biggest one as the body (+ the selector)
     struct rir_type **subtype;
-    struct rir_type *contents = darray_item(type->subtypes, 0);
+    struct rir_type *contents = type->category == COMPOSITE_RIR_DEFINED
+        ? darray_item(type->subtypes, 0) // contents of a defined type
+        : type;                          // anonymous type is itself the contents
     unsigned long long max_storage_size = 0;
     darray_foreach(subtype, contents->subtypes) {
 

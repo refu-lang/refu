@@ -78,6 +78,16 @@ i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n
     return ast_matchexpr_has_header(n) ? n->matchexpr.identifier_or_fnargtype : NULL;
 }
 
+/**
+ * If this is a headless match expression Will return the function's arguments
+ * type declaration whose body the match expression consists
+ */
+i_INLINE_DECL struct ast_node *ast_matchexpr_headless_args(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    return ast_matchexpr_has_header(n) ? NULL : n->matchexpr.identifier_or_fnargtype;
+}
+
 i_INLINE_DECL void ast_matchexpr_set_fnargs(struct ast_node *n,
                                             struct ast_node *fn_args)
 {
@@ -99,6 +109,18 @@ const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
  * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
  */
 const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n);
+
+/**
+ * Get the string representation of the value of the type
+ * that is being matched for @a n
+ * 
+ * If the matched type is an identifier then the value is the identifier's string
+ * and if it's an anonymous type then the value is the output of 
+ * type_get_unique_value_str() on the type.
+ *
+ * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
+ */
+const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n);
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
 

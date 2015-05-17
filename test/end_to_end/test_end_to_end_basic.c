@@ -515,7 +515,7 @@ START_TEST (test_unaryop_post_dec) {
     );
     ck_end_to_end_run(d, "test_input_file.rf", &s, 63);
 } END_TEST
-
+#if 0
 START_TEST (test_matchexpr_1) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -552,7 +552,7 @@ START_TEST (test_matchexpr_2) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("hello");
     ck_end_to_end_run(d, "test_input_file.rf", &s, 29, &output);
 } END_TEST
-
+#endif
 START_TEST (test_matchexpr_in_functions) {
     struct end_to_end_driver *d = get_end_to_end_driver();
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -646,8 +646,8 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_checked_fixture(st_match_expr,
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
-    tcase_add_test(st_match_expr, test_matchexpr_1);
-    tcase_add_test(st_match_expr, test_matchexpr_2);
+    /* tcase_add_test(st_match_expr, test_matchexpr_1); */
+    /* tcase_add_test(st_match_expr, test_matchexpr_2); */
     tcase_add_test(st_match_expr, test_matchexpr_in_functions);
 
     suite_add_tcase(s, st_basic);

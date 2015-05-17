@@ -41,7 +41,7 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
                                          struct rir_type *rtype);
 
 /**
- * Compile a type declaration
+ * Compile either a normal type declaration or an anonymous type
  *
  * @param name        Provide the name of the type to create
  * @param type        [optional] Can provide the rir_type to declare here.
@@ -76,6 +76,9 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
 
 /**
  * Given a simple rir type get its defined member types as an array of LLVMTypeRefs
+ *
+ * @warning Uses the context's parameters array.
+ * Call llvm_traversal_ctx_reset_params(ctx) to clear right after using.
  *
  * @param type        The rir type whose members to get. Must not be a sum type
  * @param ctx         The llvm traversal context

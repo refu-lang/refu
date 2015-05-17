@@ -8,11 +8,12 @@
 
 #include <ast/matchexpr.h>
 #include <types/type.h>
+#include <types/type_elementary.h>
 #include <ir/rir.h>
 #include <ir/rir_type.h>
 
 static void bllvm_add_matchcase(struct ast_node *matchcase,
-                                struct rir_type *matching_type,
+                                const struct rir_type *matching_type,
                                 LLVMValueRef llvm_ret_alloca,
                                 const struct type *ret_type,
                                 LLVMValueRef llvm_typedecl_val,
@@ -32,9 +33,31 @@ static void bllvm_add_matchcase(struct ast_node *matchcase,
     bllvm_enter_block(ctx, case_branch);
     // create backend handles (BuildAlloca) for the symbols of the symbol table
     symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
-    // compile match case's expression and assign to type
-    LLVMValueRef gep_to_main_contents = bllvm_gep_to_struct(llvm_typedecl_val, 0, ctx);
-    bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, BLLVM_ASSIGN_MATCH_CASE, ctx);
+    if (llvm_ret_alloca) {
+        // if match does not return void
+        // compile match case's expression and assign to type
+        LLVMValueRef gep_to_main_contents = bllvm_gep_to_struct(llvm_typedecl_val, 0, ctx);
+        bllvm_compile_assign_llvm(gep_to_main_contents, llvm_ret_alloca, ret_type, BLLVM_ASSIGN_MATCH_CASE, ctx);
+    } else {
+        bool first;
+        struct symbol_table_record *rec = symbol_table_lookup_typedesc(
+            ctx->current_st,
+            ast_matchcase_pattern(matchcase),
+            &first
+        );
+        RF_ASSERT(rec && rec->backend_handle && first,
+                  "Symbol must be found in the first symbol table");
+        
+        bllvm_compile_assign_llvm(
+            llvm_typedecl_val,
+            rec->backend_handle,
+            rec->data,
+            BLLVM_ASSIGN_MATCH_CASE,
+            ctx
+        );
+        // simply compile the matchcase expression which should return nothing
+        bllvm_compile_expression(ast_matchcase_expression(matchcase), ctx, 0);
+    }
     LLVMBuildBr(ctx->builder, match_end);
     LLVMAddCase(llvm_switch, LLVMConstInt(LLVMInt32Type(), index, 0), case_branch);
 }
@@ -44,32 +67,48 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
 {
     struct ast_matchexpr_it it;
     struct ast_node *mcase;
-    // find the type of the matched identifier
-    struct symbol_table_record *rec;
-    struct ast_node *id = ast_matchexpr_identifier(n);
-    const struct RFstring *s = ast_identifier_str(id);
-    rec = symbol_table_lookup_record(ctx->current_st, s, NULL);
-    RF_ASSERT(rec && rec->rir_data, "Identifier's type was not determined");
-    RF_ASSERT(rec->rir_data->category == COMPOSITE_RIR_DEFINED &&
-              rir_type_is_sumtype(rec->rir_data),
-              "Identifier's type was not a defined type containing sums");
-    RFS_PUSH();
-    LLVMTypeRef llvm_type = LLVMGetTypeByName(
-        ctx->mod,
-        rf_string_cstr_from_buff_or_die(type_defined_get_name(rec->data))
-    );
-    RFS_POP();
-    RF_ASSERT(llvm_type, "Could not get llvm type for matching type");
-    RF_ASSERT(rec->backend_handle, "Could not get llvm Value ref for the object");
+    // find the type of the matched expression
+    LLVMValueRef llvm_matched_value;
+    const struct rir_type *matched_type_contents;
+    if (ast_matchexpr_has_header(n)) {
+        // if it's a normal match expression
+        struct symbol_table_record *rec;
+        const struct RFstring *matched_value_str = ast_matchexpr_matched_value_str(n);
+        rec = symbol_table_lookup_record(ctx->current_st, matched_value_str, NULL);
+        RF_ASSERT(rec && rec->data && rec->backend_handle,
+                  "at backend: match expression type was not properly found"
+                  "in the symbol table");
+        RF_ASSERT(type_is_sumtype(rec->data),
+                  "at backend: match expression type was not a sumtype");
+        RFS_PUSH();
+        // TODO: this will go away with the RIR refactoring
+        RF_ASSERT(symbol_table_record_rir_type(rec, &ctx->rir->rir_types_list),
+                  "at backend: match expression rir_type could not be determined");
+        RFS_POP();
+        matched_type_contents = rir_type_contents(rec->rir_data);
+        llvm_matched_value = rec->backend_handle;
+    } else {
+        // if it's a match expression acting as function body
+        llvm_matched_value = LLVMGetParam(ctx->current_function, 0);
+        matched_type_contents = rir_types_list_get_type(
+            &ctx->rir->rir_types_list,
+            ast_matchexpr_headless_args(n)->expression_type,
+            NULL
+        );
+    }
+    RF_ASSERT(llvm_matched_value, "Could not get llvm Value ref for the object");
     
-    // allocate a return value
-    LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
-    LLVMValueRef ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
+    // allocate a return value if needed
+    LLVMValueRef ret_alloc = NULL;
+    if (!type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_NIL)) {
+        LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
+        ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
+    }
 
     LLVMBasicBlockRef match_end = bllvm_add_block_before_funcend(ctx);
     LLVMBasicBlockRef fatal_err_block = bllvm_add_fatal_block_before(match_end, 1, ctx);
 
-    LLVMValueRef gep_to_selector = bllvm_gep_to_struct(rec->backend_handle, 1, ctx);
+    LLVMValueRef gep_to_selector = bllvm_gep_to_struct(llvm_matched_value, 1, ctx);
     LLVMValueRef selector_val = LLVMBuildLoad(ctx->builder, gep_to_selector, "");
     LLVMValueRef llvm_switch = LLVMBuildSwitch(
         ctx->builder,
@@ -82,7 +121,16 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
     ast_matchexpr_foreach(n, &it, mcase) {
         // switch to the match case symbol table
         ctx->current_st = ast_matchcase_symbol_table_get(mcase);
-        bllvm_add_matchcase(mcase, darray_item(rec->rir_data->subtypes, 0), ret_alloc, n->expression_type, rec->backend_handle, llvm_switch, match_end, ctx);
+        bllvm_add_matchcase(
+            mcase,
+            matched_type_contents,
+            ret_alloc,
+            n->expression_type,
+            llvm_matched_value,
+            llvm_switch,
+            match_end,
+            ctx
+        );
     }
 
     ctx->current_st = encasing_block_st;

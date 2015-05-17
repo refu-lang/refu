@@ -141,6 +141,13 @@ LLVMTypeRef bllvm_type_from_rir(const struct rir_type *type,
         name = rf_string_cstr_from_buff_or_die(type->name);
         ret = LLVMGetTypeByName(ctx->mod, name);
         RFS_POP();
+    } else if (rir_type_is_sumtype(type)) {
+        RFS_PUSH();
+        name = rf_string_cstr_from_buff_or_die(
+            rir_type_get_unique_type_str(type, ctx->rir->types_set)
+        );
+        ret = LLVMGetTypeByName(ctx->mod, name);
+        RFS_POP();
     } else {
         RF_ASSERT(false, "Not yet implemented type");
     }
@@ -448,7 +455,7 @@ void bllvm_compile_basic_block(struct rir_basic_block *block,
     struct symbol_table *prev = ctx->current_st;
     ctx->current_st = block->symbols;
 
-    if (block->normal_block) { // ugly as hell. Go away with RIR refactor.
+    if (block->normal_block) { // ugly as hell. Goes away with RIR refactor.
         symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
     }
     rf_ilist_for_each(&block->expressions, rir_expr, ln) {

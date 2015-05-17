@@ -79,12 +79,11 @@ static LLVMValueRef bllvm_simple_ctor_args_to_type(struct ast_node *fn_call,
     return bllvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
 }
 
-static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
-                                                const struct RFstring *type_name,
-                                                struct llvm_traversal_ctx *ctx)
+static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
+                                                  struct rir_type *sum_type,
+                                                  const struct RFstring *type_name,
+                                                  struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
-    RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
     struct rir_type *params_type = rir_types_list_get_type(
         &ctx->rir->rir_types_list,
         ast_fncall_params_type(fn_call),
@@ -94,7 +93,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     size_t child_index = 0;
     bool child_found = false;
     struct rir_type **subtype;
-    darray_foreach(subtype, darray_item(defined_type->subtypes, 0)->subtypes) {
+    darray_foreach(subtype, sum_type->subtypes) {
         if (rir_type_equals(*subtype, params_type, RIR_TYPECMP_SIMPLE)) {
             child_found = true;
             break;
@@ -108,7 +107,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     RFS_PUSH();
     LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
         ctx->mod,
-        rf_string_cstr_from_buff_or_die(RFS_OR_DIE("internal_struct%u", rir_type_get_uid(params_type)))
+        rf_string_cstr_from_buff_or_die(rir_type_get_unique_type_str(params_type, ctx->rir->types_set))
     );
     RFS_POP();
     RF_ASSERT(llvm_sum_type, "Internal struct was not created for sum operand");
@@ -127,6 +126,21 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
     LLVMValueRef gep_to_selector = bllvm_gep_to_struct(allocation, 1, ctx);
     bllvm_store(LLVMConstInt(LLVMInt32Type(), child_index, 0), gep_to_selector, ctx);    
     return allocation;
+}
+
+static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
+                                                const struct RFstring *type_name,
+                                                struct llvm_traversal_ctx *ctx)
+{
+    struct rir_type *defined_type = rir_types_list_get_defined(&ctx->rir->rir_types_list, type_name);
+    RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
+    return bllvm_sum_fncall_args_to_type(
+        fn_call,
+        darray_item(defined_type->subtypes, 0), // contents of a defined type is first child
+        type_name, // name of the type is the constructor name
+        ctx
+    );
+    
 }
 
 static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
@@ -150,24 +164,40 @@ static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ct
 LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                                         struct llvm_traversal_ctx *ctx)
 {
-    // for now just deal with the built-in print() function
     const struct RFstring *fn_name = ast_fncall_name(n);
     const struct type *fn_type;
     struct ast_node *args = ast_fncall_args(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
     if (type_is_function(fn_type)) {
-        llvm_traversal_ctx_reset_values(ctx);
-        ast_fncall_for_each_arg(n, (fncall_args_cb)fncall_args_to_value_cb, ctx);
         RFS_PUSH();
         char *fn_name_cstr = rf_string_cstr_from_buff_or_die(fn_name);
         LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->mod, fn_name_cstr);
         RFS_POP();
         LLVMTypeRef llvm_fn_type = bllvm_function_type(llvm_fn);
-        RF_ASSERT(LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
-                  "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
-                  "arguments in backend code generation", RF_STR_PF_ARG(fn_name));
+
+        const struct type *fn_args_type = type_function_get_argtype(fn_type);
+        llvm_traversal_ctx_reset_values(ctx);
+        if (type_is_sumop(fn_args_type)) {
+            // if the function takes an anonymous sum type argument calculate
+            // we need special handling
+            llvm_traversal_ctx_add_value(
+                ctx,
+                bllvm_sum_fncall_args_to_type(
+                    n,
+                    rir_types_list_get_type(&ctx->rir->rir_types_list, fn_args_type, NULL),
+                    type_get_unique_type_str(fn_args_type),
+                    ctx)
+            );
+        } else {
+            ast_fncall_for_each_arg(n, (fncall_args_cb)fncall_args_to_value_cb, ctx);
+            RF_ASSERT(
+                LLVMCountParamTypes(llvm_fn_type) == llvm_traversal_ctx_get_values_count(ctx),
+                "Function \""RF_STR_PF_FMT"()\" receiving unexpected number of "
+                "arguments in backend code generation", RF_STR_PF_ARG(fn_name));
+        }
+
         return LLVMBuildCall(ctx->builder,
-                             LLVMGetNamedFunction(ctx->mod, fn_name_cstr),
+                             llvm_fn,
                              llvm_traversal_ctx_get_values(ctx),
                              llvm_traversal_ctx_get_values_count(ctx),
                              "");
@@ -192,9 +222,10 @@ static LLVMTypeRef *bllvm_compile_fn_arg_types(struct rir_type *type,
     } else {
         // sum type argument function, compile an internal typedecl and add as single parameter
         llvm_traversal_ctx_reset_params(ctx);
+        LLVMTypeRef internal_struct_type = bllvm_compile_internal_typedecl(type, ctx);        
         llvm_traversal_ctx_add_param(
             ctx,
-            bllvm_compile_internal_typedecl(type, ctx)
+            LLVMPointerType(internal_struct_type, 0) // At least for now all structs passed by reference
         );
     }
     return darray_size(ctx->params) == 0 ? NULL : llvm_traversal_ctx_get_params(ctx);
@@ -207,17 +238,13 @@ static LLVMTypeRef *bllvm_compile_fn_arg_types(struct rir_type *type,
  * If the type is a sumtype then just create a dummy name same as the type name
  */
 static inline const struct RFstring *bllvm_param_name_str(struct rir_type *type,
+                                                          struct llvm_traversal_ctx *ctx,
                                                           unsigned int i)
 {
     const struct RFstring *param_name_str;
     return rir_type_is_sumtype(type)
-        ? RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type))
+        ? rir_type_get_unique_value_str(type, ctx->rir->types_set)
         : rir_type_get_nth_name_or_die(type, i);
-    if (!rir_type_is_sumtype(type)) {
-        param_name_str = rir_type_get_nth_name_or_die(type, i);
-    } else {
-        param_name_str = RFS_OR_DIE("internal_struct%u", rir_type_get_uid(type));
-    }
     return param_name_str;
 }
 
@@ -255,42 +282,48 @@ LLVMValueRef bllvm_compile_function(struct rir_function *fn,
 
     if (fn->arg_type->category != ELEMENTARY_RIR_TYPE_NIL) {
         for (i = 0; i < LLVMCountParams(ctx->current_function); ++i) {
+            LLVMTypeRef alloca_type;
 
             // for each argument of the function allocate an LLVM variable
             // in the stack with alloca
             RFS_PUSH();
-            param_name_str = bllvm_param_name_str(fn->arg_type, i);
+            param_name_str = bllvm_param_name_str(fn->arg_type, ctx, i);
             param_name = rf_string_cstr_from_buff_or_die(param_name_str);
-            allocation = LLVMBuildAlloca(
-                ctx->builder,
-                bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx),
-                param_name);
-            // and assign to it the argument value
-            LLVMBuildStore(ctx->builder, LLVMGetParam(ctx->current_function, i), allocation);
-            // also note the alloca in the symbol table
-            rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
-            RFS_POP();
+            
 
-            if (!rec) {
-                if (!rir_type_is_sumtype(fn->arg_type)) {
-                    RF_ASSERT_OR_CRITICAL(rec,
-                                          return NULL,
-                                          "Symbol table of rir_function did "
-                                          "not contain expected parameter");
-                }
-                // In anonymous sum types as function arguments we have
-                // to somehow populate the symbol table with the value of the
-                // allocated type
-                // TODO
-                // Option 1 -- Hack it somehow here
-                // Option 2 -- In such cases also during typechecking
-                //             create a symbol table entry for the anonymous type
-                //             Look at: type_function_add_args_to_st() in
-                //             types/type.c:41
-                //             This way this if can just be an assertion
-                
+            // if it's not a function call on an anonymous sum type
+            if (!rir_type_is_sumtype(fn->arg_type)) {
+                alloca_type = bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx);
+                allocation = LLVMBuildAlloca(
+                ctx->builder,
+                alloca_type,
+                param_name);
+                // and assign to it the argument value
+                bllvm_store(LLVMGetParam(ctx->current_function, i), allocation, ctx);
+                // also note the alloca in the symbol table
+                rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
+                RFS_POP();
+                RF_ASSERT(rec,
+                          "Symbol table of rir_function did "
+                          "not contain expected parameter");
+                symbol_table_record_set_backend_handle(rec, allocation);
             }
-            symbol_table_record_set_backend_handle(rec, allocation);
+            /* alloca_type = rir_type_is_sumtype(fn->arg_type) */
+            /*     ? bllvm_type_from_rir(fn->arg_type, ctx) */
+            /*     : bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx); */
+            /* allocation = LLVMBuildAlloca( */
+            /*     ctx->builder, */
+            /*     alloca_type, */
+            /*     param_name); */
+            /* // and assign to it the argument value */
+            /* bllvm_store(LLVMGetParam(ctx->current_function, i), allocation, ctx); */
+            /* // also note the alloca in the symbol table */
+            /* rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL); */
+            /* RFS_POP(); */
+            /* RF_ASSERT(rec, */
+            /*           "Symbol table of rir_function did " */
+            /*           "not contain expected parameter"); */
+            /* symbol_table_record_set_backend_handle(rec, allocation); */
         }
     }
 

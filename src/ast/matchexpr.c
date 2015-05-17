@@ -47,6 +47,7 @@ i_INLINE_INS size_t ast_matchexpr_cases_num(const struct ast_node *n);
 i_INLINE_INS bool ast_matchexpr_is_bodyless(const struct ast_node *n);
 i_INLINE_INS bool ast_matchexpr_has_header(const struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_matchexpr_identifier(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_matchexpr_headless_args(const struct ast_node *n);
 i_INLINE_INS void ast_matchexpr_set_fnargs(struct ast_node *n,
                                            struct ast_node *fn_args);
 
@@ -72,6 +73,17 @@ const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
     return type_str_or_die(n->matchexpr.identifier_or_fnargtype->expression_type, TSTR_DEFAULT);
 }
 
+const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
+{
+    if (ast_matchexpr_has_header(n)) {
+        return ast_identifier_str(ast_matchexpr_identifier(n));
+    }
+    // else it's an anonymous type matching
+    RF_ASSERT(n->matchexpr.identifier_or_fnargtype->expression_type,
+              "Type of matched expression must have been determined at this point");
+    return type_get_unique_value_str(n->matchexpr.identifier_or_fnargtype->expression_type);
+}
+
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)
 {
     ast_node_add_child(n, mcase);
@@ -84,8 +96,11 @@ struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
     unsigned int i = 0;
     struct ast_node *child;
+    // ugly way to get second child if we have a matched identifier so that we
+    // start from the first matchase
+    unsigned int start = ast_matchexpr_has_header(n) ? 1 : 0;
     rf_ilist_for_each(&n->children, child, lh) {
-        if (i >= 1) {
+        if (i >= start) {
             it->lh = &n->children;
             it->ln = &child->lh;
             return child;

@@ -45,16 +45,21 @@ struct ast_node *ast_typeleaf_create(const struct inplocation_mark *start,
                                      struct ast_node *left,
                                      struct ast_node *right);
 
-i_INLINE_DECL struct ast_node *ast_typeleaf_left(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_typeleaf_left(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_LEAF);
     return n->typeleaf.left;
 }
 
-i_INLINE_DECL struct ast_node *ast_typeleaf_right(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_typeleaf_right(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_LEAF);
     return n->typeleaf.right;
+}
+
+i_INLINE_DECL const struct RFstring *ast_typeleaf_str(const struct ast_node *n)
+{
+    return ast_identifier_str(ast_typeleaf_left(n));
 }
 
 /* -- type operator functions -- */

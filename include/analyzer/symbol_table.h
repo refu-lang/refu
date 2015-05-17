@@ -155,6 +155,23 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
                                                        const struct RFstring *id,
                                                        bool *at_first_symbol_table);
 
+/**
+ * Lookup a typedesc node in a symbol table. This function is to be used only
+ * in special cases like in a match case where you have a symbol table
+ * and a case expression and you need to get the symbol table record for that
+ * expression. It only searches the 
+ *
+ * @param t                        The symbol table in which to lookup the record
+ * @param typedesc                 The type description node to search for
+ * @param at_first_symbol_table    If not NULL then this is passing a boolean which
+ *                                 which return whether or not the record was foun
+ *                                 in @c t itself (true) or in any of its parents (false)
+ * @return                         The symbol table record or NULL for failure.
+ */
+struct symbol_table_record *symbol_table_lookup_typedesc(const struct symbol_table *t,
+                                                         const struct ast_node *typedesc,
+                                                         bool *at_first_symbol_table);
+
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user);
 
 i_INLINE_DECL void symbol_table_set_parent(struct symbol_table *t,

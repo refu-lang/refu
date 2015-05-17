@@ -61,6 +61,7 @@ struct type *type_leaf_create(struct analyzer *a,
                               const struct RFstring *id,
                               struct type *leaf_type);
 
+/* -- type getters -- */
 
 /**
  * Attempts to retrieve the type for ast node @c n and if it does not exist
@@ -146,6 +147,20 @@ i_INLINE_DECL struct RFstring *type_str_or_die(const struct type *t, int options
 size_t type_get_uid(const struct type *t);
 
 /**
+ * Query a unique value name for an anomymous (operator) type
+ *
+ * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
+ */
+const struct RFstring *type_get_unique_value_str(const struct type *t);
+
+/**
+ * Query a unique type name for an anomymous (operator) type
+ *
+ * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
+ */
+const struct RFstring *type_get_unique_type_str(const struct type *t);
+
+/**
  * @returns the wildcard type '_'
  */
 const struct type *type_get_wildcard();
@@ -154,6 +169,24 @@ const struct type *type_get_wildcard();
  * Gets the name of a defined type
  */
 const struct RFstring *type_defined_get_name(const struct type *t);
+
+/**
+ * Query if a type is a sum operator type
+ */
+i_INLINE_DECL bool type_is_sumop(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_SUM;
+}
+
+/**
+ * Query if a type is either a sum operator type or a defined type which contains
+ * a sum of other types
+ */
+i_INLINE_DECL bool type_is_sumtype(const struct type *t)
+{
+    return type_is_sumop(t) ||
+        (t->category == TYPE_CATEGORY_DEFINED && type_is_sumop(t->defined.type));
+}
 
 /* -- type traversal functions -- */
 

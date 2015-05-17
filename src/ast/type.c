@@ -33,9 +33,9 @@ struct ast_node *ast_typeleaf_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS struct ast_node *ast_typeleaf_left(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_typeleaf_right(struct ast_node *n);
-
+i_INLINE_INS struct ast_node *ast_typeleaf_left(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeleaf_right(const struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_typeleaf_str(const struct ast_node *n);
 /* -- type operator functions -- */
 
 struct ast_node *ast_typeop_create(const struct inplocation_mark *start,

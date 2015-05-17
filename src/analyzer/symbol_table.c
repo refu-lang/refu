@@ -32,10 +32,9 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
                               struct ast_node *node,
                               const struct RFstring *id)
 {
+    RF_STRUCT_ZERO(rec);
     rec->node = node;
     rec->id = id;
-    rec->rir_data = NULL;
-    rec->backend_handle = NULL;
     switch (node->type) {
     case AST_FUNCTION_DECLARATION:
         rec->data = type_create_from_fndecl(node, analyzer, st);
@@ -65,7 +64,7 @@ bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
                                         const struct RFstring *id,
                                         struct type *t)
 {
-    rec->node = NULL;
+    RF_STRUCT_ZERO(rec);
     rec->id = id;
     rec->data = t;
     return true;
@@ -305,6 +304,52 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
         lp_table = lp_table->parent;
         rec = htable_get(&lp_table->table, rf_hash_str_stable(id, 0), cmp_fn, id);
     }
+    return rec;
+}
+
+// This function should be enclosed in RFS_PUSH() / RFS_POP()
+static const struct RFstring *symbol_table_extract_string_from_typedesc(const struct ast_node *typedesc)
+{
+    if (typedesc->type == AST_TYPE_DESCRIPTION) {
+        return symbol_table_extract_string_from_typedesc(typedesc->typedesc.desc);
+    } else if (typedesc->type == AST_TYPE_LEAF) {
+        return ast_typeleaf_str(typedesc);
+    } else if (typedesc->type == AST_TYPE_OPERATOR) {
+        return type_get_unique_value_str(typedesc->expression_type);
+    }
+    return NULL;
+}
+
+struct symbol_table_record *symbol_table_lookup_typedesc(const struct symbol_table *t,
+                                                         const struct ast_node *typedesc,
+                                                         bool *at_first_symbol_table)
+{
+    struct symbol_table_record *rec;
+    const struct symbol_table *lp_table = t;
+    const struct RFstring *id;
+
+    if (at_first_symbol_table) {
+        *at_first_symbol_table = false;
+    }
+
+    RFS_PUSH();
+    id = symbol_table_extract_string_from_typedesc(typedesc);
+    RF_ASSERT(id, "This lookup function should never fail");
+    rec = htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    if (rec) {
+        if (at_first_symbol_table) {
+            *at_first_symbol_table = true;
+        }
+        goto end;
+    }
+
+    while (!rec && lp_table->parent) {
+        lp_table = lp_table->parent;
+        rec = htable_get(&lp_table->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    }
+
+end:
+    RFS_POP();
     return rec;
 }
 
