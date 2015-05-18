@@ -6,6 +6,7 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
+#include <Data_Structures/intrusive_list.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_conversion.h>
 #include <Utils/sanity.h>
@@ -465,14 +466,14 @@ void bllvm_compile_basic_block(struct rir_basic_block *block,
     ctx->current_st = prev;
 }
 
-struct LLVMOpaqueModule *blvm_create_module(struct rir_module *mod,
+struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
                                             struct llvm_traversal_ctx *ctx)
 {
-    struct rir_function *fn;
-    const char *mod_name;
+    struct astn_node *child;
+    //TODO: this should be the name of each module when we actually get modules.
+    const char *mod_name = "A MODULE";
     ctx->mod = NULL;
     RFS_PUSH();
-    mod_name = rf_string_cstr_from_buff(&mod->name);
     if (!mod_name) {
         RF_ERROR("Failure to create null terminated cstring from RFstring");
         goto end;
@@ -487,9 +488,11 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir_module *mod,
         goto end;
     }
 
-    // for each function of the module create code
-    rf_ilist_for_each(&mod->functions, fn, ln_for_module) {
-        bllvm_compile_function(fn, ctx);
+    // for each function of the module (for now simply the AST root) create code
+    rf_ilist_for_each(&ast->children, , child, lh) {
+        if (child->type == AST_FUNCTION_IMPLEMENTATION) {
+            bllvm_compile_function(child, ctx);
+        }
     }
 
     if (compiler_args_print_backend_debug(ctx->args)) {

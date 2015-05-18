@@ -10,7 +10,7 @@ struct ast_node;
 struct rir_function;
 struct llvm_traversal_ctx;
 
-struct LLVMOpaqueValue *bllvm_compile_function(struct rir_function *fn,
+struct LLVMOpaqueValue *bllvm_compile_function(struct ast_node *fn,
                                                struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueValue *bllvm_compile_functioncall(struct ast_node *n,

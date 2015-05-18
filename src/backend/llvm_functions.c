@@ -248,13 +248,15 @@ static inline const struct RFstring *bllvm_param_name_str(struct rir_type *type,
     return param_name_str;
 }
 
-LLVMValueRef bllvm_compile_function(struct rir_function *fn,
+LLVMValueRef bllvm_compile_function(struct ast_node *fn,
                                     struct llvm_traversal_ctx *ctx)
 {
+    AST_NODE_ASSERT_TYPE(fn, AST_FUNCTION_IMPLEMENTATION);
+    struct ast_node *fn_decl = ast_fnimpl_fndecl_get(fn);
     char *fn_name;
     char *param_name;
     RFS_PUSH();
-    fn_name = rf_string_cstr_from_buff_or_die(&fn->name);
+    fn_name = rf_string_cstr_from_buff_or_die(ast_fndecl_name_str(fn_decl));
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
     // llvm_traversal_ctx_get_param_count()
