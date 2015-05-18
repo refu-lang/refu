@@ -10,24 +10,24 @@
 #include <types/type_elementary.h>
 #include <types/type_function.h>
 
-static bool rir_type_init_iteration(struct rir_type *type, const struct type *input,
+static bool rir_type_init_iteration(struct rir_type *type,
+                                    struct type *input,
                                     const struct RFstring *name,
-                                    enum rir_type_category *previous_type_op,
-                                    struct rir_type **newly_created_type)
+                                    enum rir_type_category *previous_type_op)
 {
     enum rir_type_category op_category;
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
-            new_type = rir_type_create(input, name, NULL);
+            new_type = rir_type_create(input, name);
             darray_append(type->subtypes, new_type);
         }
         break;
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
         type->name = input->defined.name;
-        new_type = rir_type_create(input->defined.type, NULL, NULL);
+        new_type = rir_type_create(input->defined.type, NULL);
         if (!new_type) {
             return false;
         }
@@ -41,7 +41,7 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
             new_type = type;
             new_type->category = op_category;
         } else if (*previous_type_op != op_category) {
-            new_type = rir_type_create(input, NULL, NULL);
+            new_type = rir_type_create(input, NULL);
             new_type->category = op_category;
             *previous_type_op = op_category;
             darray_append(type->subtypes, new_type);
@@ -51,24 +51,24 @@ static bool rir_type_init_iteration(struct rir_type *type, const struct type *in
             new_type->category = op_category;
         }
 
-        if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op, newly_created_type)) {
+        if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op)) {
             return false;
         }
 
         if (*previous_type_op != op_category) {
-            new_type = rir_type_create(input->operator.right, NULL, NULL);
+            new_type = rir_type_create(input->operator.right, NULL);
             *previous_type_op = op_category;
             darray_append(type->subtypes, new_type);
             return true;
         }
 
-        if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op, newly_created_type)) {
+        if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op)) {
             return false;
         }
         break;
 
     case TYPE_CATEGORY_LEAF:
-        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id, previous_type_op, newly_created_type)) {
+        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id, previous_type_op)) {
             return false;
         }
         break;
@@ -104,9 +104,9 @@ bool rir_type_init_before_iteration(struct rir_type *type,
     return true;
 }
 
-bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name,
-                   struct rir_type **newly_created_type)
+bool rir_type_init(struct rir_type *type,
+                   struct type *input,
+                   const struct RFstring *name)
 {
 
     if (!rir_type_init_before_iteration(type, input, name)) {
@@ -114,7 +114,7 @@ bool rir_type_init(struct rir_type *type, const struct type *input,
     }
     // iterate the subtypes
     enum rir_type_category previous_type_op = RIR_TYPE_CATEGORY_COUNT;
-    if (!rir_type_init_iteration(type, input, name, &previous_type_op, newly_created_type)) {
+    if (!rir_type_init_iteration(type, input, name, &previous_type_op)) {
         return false;
     }
 
@@ -128,9 +128,8 @@ struct rir_type *rir_type_alloc()
     return ret;
 }
 
-struct rir_type *rir_type_create(const struct type *input,
-                                 const struct RFstring *name,
-                                 struct rir_type **newly_created_type)
+struct rir_type *rir_type_create(struct type *input,
+                                 const struct RFstring *name)
 {
     struct rir_type *ret = rir_type_alloc();
     if (!ret) {
@@ -141,7 +140,8 @@ struct rir_type *rir_type_create(const struct type *input,
         RF_ERROR("Failed at rir_type initialization");
         rir_type_dealloc(ret);
     }
-
+    // keep the rir type version of the type
+    input->rir_type = ret;
     return ret;
 }
 

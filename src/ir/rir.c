@@ -35,6 +35,7 @@ bool rir_init(struct rir *r, struct analyzer *a)
     //       of the list for the moment, but change it later
     r->types_set = a->types_set;
     a->types_set = NULL;
+    rir_types_list_populate(&r->rir_types_list, r->types_set);
 
     return true;
 }
@@ -68,13 +69,4 @@ void rir_destroy(struct rir *r)
 {
     rir_deinit(r);
     free(r);
-}
-
-struct rir_module *rir_process(struct rir *r)
-{
-    rir_types_list_populate(&r->rir_types_list, r->types_set);
-    // TODO: When modules are actually introduced change temporary module name
-    //       to the name of the actual module being processed
-    const struct RFstring mod_name = RF_STRING_STATIC_INIT("i_am_a_module");
-    return rir_module_create(r->root, &mod_name, r);
 }

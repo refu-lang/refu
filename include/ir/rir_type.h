@@ -22,17 +22,20 @@ struct rf_objset_type;
 struct rir_type *rir_type_alloc();
 
 /**
- * Create a new allocated rir_type
+ * Create a new allocated rir_type and save it as part of @a input
+ *
+ * @param input                The type from from which to create the rir type
+ * @param name                 The name for the type or NULL if it's nameless
+ * @return                     The newly allocated rir type or NULL in failure.
  */
-struct rir_type *rir_type_create(const struct type *input,
-                                 const struct RFstring *name,
-                                 struct rir_type **newly_created_type);
+struct rir_type *rir_type_create(struct type *input,
+                                 const struct RFstring *name);
 /**
  * Initialize a rir_type
  */
-bool rir_type_init(struct rir_type *type, const struct type *input,
-                   const struct RFstring *name,
-                   struct rir_type **newly_created_type);
+bool rir_type_init(struct rir_type *type,
+                   struct type *input,
+                   const struct RFstring *name);
 /**
  * Initialize a rir_type without proceeding to initialize its children
  *

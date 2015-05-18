@@ -31,13 +31,13 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl, struct rir *rir)
         return false;
     }
 
-    this->arg_type = rir_type_create(type_function_get_argtype(fn_type), NULL, NULL);
+    this->arg_type = rir_type_create(type_function_get_argtype(fn_type), NULL);
     if (!this->arg_type) {
         RF_ERROR("Failed to create rir_function argument type");
         return false;
     }
 
-    this->ret_type = rir_type_create(type_function_get_rettype(fn_type), NULL, NULL);
+    this->ret_type = rir_type_create(type_function_get_rettype(fn_type), NULL);
     if (!this->ret_type) {
         RF_ERROR("Failed to create rir_function return type");
         return false;

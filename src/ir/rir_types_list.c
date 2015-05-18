@@ -103,7 +103,7 @@ bool rir_types_list_populate(struct rir_types_list *rir_types,
             continue;
         }
 
-        created_rir_type = rir_type_create(t, NULL, NULL);
+        created_rir_type = rir_type_create(t, NULL);
 #if TEMP_RIR_DEBUG
         printf("created rir type: "RF_STR_PF_FMT"\n",
                RF_STR_PF_ARG(rir_type_str_or_die(created_rir_type)));

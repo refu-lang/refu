@@ -43,8 +43,7 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     LLVMDisposeTargetData(ctx->target_data);
 }
 
-static bool bllvm_ir_generate(struct rir_module *module, struct rir *rir,
-                              struct compiler_args *args)
+static bool bllvm_ir_generate(struct rir *rir, struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
@@ -136,16 +135,12 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool bllvm_generate(struct rir_module *module, struct rir *r,
-                           struct compiler_args *args)
+bool bllvm_generate(struct rir *r, struct compiler_args *args)
 {
 
-    if (!bllvm_ir_generate(module, r, args)) {
+    if (!bllvm_ir_generate(r, args)) {
         return false;
     }
-
-    // now it should be okay to free the module
-    rir_module_destroy(module);
 
     if (!bllvm_ir_to_asm(args)) {
         ERROR("Failed to generate assembly from LLVM IR code");

@@ -116,13 +116,7 @@ bool compiler_process(struct compiler *c)
     // create the intermediate representation from the analyzer and free analyzer
     c->ir = rir_create(analyzer);
     if (!c->ir) {
-        RF_ERROR("Could not initialize the intermediate representation");
-        return false;
-    }
-
-    struct rir_module *rir_mod = rir_process(c->ir);
-    if (!rir_mod) {
-        RF_ERROR("Failed to create the Refu IR");
+        RF_ERROR("Could not create the intermediate representation");
         return false;
     }
 
@@ -131,7 +125,7 @@ bool compiler_process(struct compiler *c)
         return rc;
     }
 
-    if (!bllvm_generate(rir_mod, c->ir, c->args)) {
+    if (!bllvm_generate(c->ir, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");
         return false;
     }

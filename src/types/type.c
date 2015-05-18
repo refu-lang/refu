@@ -66,7 +66,9 @@ static bool type_function_add_args_to_st(struct type *args_t,
 
 struct type *type_alloc(struct analyzer *a)
 {
-    return rf_fixed_memorypool_alloc_element(a->types_pool);
+    struct type *ret = rf_fixed_memorypool_alloc_element(a->types_pool);
+    RF_STRUCT_ZERO(ret);
+    return ret;
 }
 
 void type_free(struct type *t, struct analyzer *a)
