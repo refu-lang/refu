@@ -13,6 +13,7 @@
 #include <info/info.h>
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
+#include <ir/rir.h>
 #include <ir/elements.h>
 
 #include "llvm_ast.h"
@@ -54,7 +55,7 @@ static bool bllvm_ir_generate(struct rir *rir, struct compiler_args *args)
     LLVMInitializeNativeTarget();
 
     llvm_traversal_ctx_init(&ctx, rir, args);
-    llvm_module = blvm_create_module(module, &ctx);
+    llvm_module = blvm_create_module(rir->root, &ctx);
     if (!llvm_module) {
         ERROR("Failed to form the LLVM IR ast");
         goto end;

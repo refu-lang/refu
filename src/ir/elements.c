@@ -21,7 +21,7 @@ RF_STRUCT_INIT_SIG(rir_function, struct ast_node *fn_impl, struct rir *rir)
 {
     AST_NODE_ASSERT_TYPE(fn_impl, AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *fn_decl = ast_fnimpl_fndecl_get(fn_impl);
-    const struct type *fn_type = ast_expression_get_type(fn_decl);
+    const struct type *fn_type = ast_node_get_type(fn_decl);
 
     // TODO: Somehow here create the parameters, so that names are also included.
     // We need them in the backend

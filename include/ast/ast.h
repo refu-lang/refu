@@ -228,9 +228,19 @@ i_INLINE_DECL bool ast_node_has_value(const struct ast_node *n)
         (n->type == AST_CONSTANT && n->constant.type != CONSTANT_BOOLEAN);
 }
 
-i_INLINE_DECL const struct type *ast_expression_get_type(const struct ast_node *expr)
+i_INLINE_DECL const struct type *ast_node_get_type(const struct ast_node *n)
 {
-    return expr->expression_type;
+    return n->expression_type;
+}
+
+i_INLINE_DECL const struct type *ast_node_get_type_or_die(const struct ast_node *n)
+{
+    const struct type *ret = ast_node_get_type(n);
+    if (!ret) {
+        RF_CRITICAL("rir_type_str() failure");
+        exit(1);
+    }
+    return ret;
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);

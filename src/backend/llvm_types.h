@@ -44,22 +44,22 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
  * Compile either a normal type declaration or an anonymous type
  *
  * @param name        Provide the name of the type to create
- * @param type        [optional] Can provide the rir_type to declare here.
- *                    IF it's NULL then the type is searched for in the rir types list
+ * @param type        [optional] Can provide the type to declare here.
+ *                    IF it's NULL then the type is searched for in the types list
  * @param ctx         The llvm traversal context
  * @return            The LLVM type for the compiled struct or NULL in error
  */
 struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
-                                              struct rir_type *type,
+                                              const struct type *type,
                                               struct llvm_traversal_ctx *ctx);
 
 /**
- * Compile a rir type as internal type declaration
- * @param type        The rir type to compile
+ * Compile a type as internal type declaration
+ * @param type        The type to compile
  * @param ctx         The llvm traversal context
  * @return            The LLVM type for the compiled struct or NULL in error
  */
-struct LLVMOpaqueType *bllvm_compile_internal_typedecl(struct rir_type *type,
+struct LLVMOpaqueType *bllvm_compile_internal_typedecl(const struct type *type,
                                                        struct llvm_traversal_ctx *ctx);
 
 /**

@@ -214,11 +214,11 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
 }
 
 // compile function args and return an array of LLVMTypeRef
-static LLVMTypeRef *bllvm_compile_fn_arg_types(struct rir_type *type,
+static LLVMTypeRef *bllvm_compile_fn_arg_types(const struct type *type,
                                                struct llvm_traversal_ctx *ctx)
 {
-    if (!rir_type_is_sumtype(type)) {
-        bllvm_type_to_subtype_array(type, ctx);
+    if (!type_is_sumtype(type)) {
+        bllvm_type_to_subtype_array(type->rir_type, ctx);
     } else {
         // sum type argument function, compile an internal typedecl and add as single parameter
         llvm_traversal_ctx_reset_params(ctx);
@@ -253,6 +253,7 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
 {
     AST_NODE_ASSERT_TYPE(fn, AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *fn_decl = ast_fnimpl_fndecl_get(fn);
+    const struct type *fn_args = ast_node_get_type(ast_fndecl_args_get(fn_decl));
     char *fn_name;
     char *param_name;
     RFS_PUSH();
@@ -260,7 +261,7 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
     // llvm_traversal_ctx_get_param_count()
-    LLVMTypeRef *types = bllvm_compile_fn_arg_types(fn->arg_type, ctx);
+    LLVMTypeRef *types = bllvm_compile_fn_arg_types(fn_args, ctx);
     ctx->current_function = LLVMAddFunction(
         ctx->mod,
         fn_name,

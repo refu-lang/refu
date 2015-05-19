@@ -353,6 +353,34 @@ end:
     return rec;
 }
 
+struct type *symbol_table_lookup_defined_type(const struct symbol_table *t,
+                                              const struct RFstring *id,
+                                              bool *at_first_symbol_table)
+{
+    struct symbol_table_record *rec;
+    const struct symbol_table *lp_table = t;
+    if (at_first_symbol_table) {
+        *at_first_symbol_table = false;
+    }
+
+    rec = htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    if (rec) {
+        if (at_first_symbol_table) {
+            *at_first_symbol_table = true;
+        }
+        goto end;
+    }
+
+    while (!rec && lp_table->parent) {
+        lp_table = lp_table->parent;
+        rec = htable_get(&lp_table->table, rf_hash_str_stable(id, 0), cmp_fn, id);
+    }
+
+end:
+    return (rec && rec->data && rec->data->category == TYPE_CATEGORY_DEFINED)
+        ? rec->data : NULL;
+}
+
 struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
                                           const struct RFstring *id,
                                           bool *at_first_symbol_table)

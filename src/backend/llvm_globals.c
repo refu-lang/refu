@@ -11,7 +11,9 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <analyzer/string_table.h>
+#include <analyzer/type_set.h>
 #include <lexer/tokens.h>
+#include <types/type.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
 #include <ir/rir.h>
@@ -23,10 +25,11 @@
 
 static bool bllvm_create_global_types(struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *t;
-    rir_types_list_for_each(&ctx->rir->rir_types_list, t) {
-        if (t->category == COMPOSITE_RIR_DEFINED) {
-            if (!bllvm_compile_typedecl(t->name, t, ctx)) {
+    struct type *t;
+    struct rf_objset_iter it;
+    rf_objset_foreach(ctx->rir->types_set, &it, t) {
+        if (t->category == TYPE_CATEGORY_DEFINED) {
+            if (!bllvm_compile_typedecl(type_defined_get_name(t), t, ctx)) {
                 return false;
             }
         }
@@ -198,8 +201,10 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
     llvm_traversal_ctx_add_param(ctx, LLVMInt32Type());
     llvm_traversal_ctx_add_param(ctx, LLVMPointerType(LLVMInt8Type(), DEFAULT_PTR_ADDRESS_SPACE));
     LLVMTypeRef string_type = LLVMStructCreateNamed(LLVMGetGlobalContext(), "string");
-    LLVMStructSetBody(string_type, llvm_traversal_ctx_get_params(ctx),
-                      llvm_traversal_ctx_get_param_count(ctx), true);
+    LLVMStructSetBody(string_type,
+                      llvm_traversal_ctx_get_params(ctx),
+                      llvm_traversal_ctx_get_param_count(ctx),
+                      true);
 
     llvm_traversal_ctx_reset_params(ctx);
     string_table_iterate(ctx->rir->string_literals_table,

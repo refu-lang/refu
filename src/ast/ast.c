@@ -43,9 +43,9 @@ static const struct RFstring ast_type_strings[] = {
 
 void ast_node_init(struct ast_node * n, enum ast_type type)
 {
+    RF_STRUCT_ZERO(n);
     n->state = AST_NODE_STATE_CREATED;
     n->type = type;
-    n->expression_type = NULL;
     rf_ilist_head_init(&n->children);
 }
 
@@ -186,7 +186,8 @@ i_INLINE_INS const struct inplocation_mark *ast_node_startmark(const struct ast_
 i_INLINE_INS const struct inplocation_mark *ast_node_endmark(const struct ast_node *n);
 i_INLINE_INS enum ast_type ast_node_type(const struct ast_node *n);
 i_INLINE_INS bool ast_node_has_value(const struct ast_node *n);
-i_INLINE_INS const struct type *ast_expression_get_type(const struct ast_node *expr);
+i_INLINE_INS const struct type *ast_node_get_type(const struct ast_node *n);
+i_INLINE_INS const struct type *ast_node_get_type_or_die(const struct ast_node *n);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {

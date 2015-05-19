@@ -469,7 +469,7 @@ void bllvm_compile_basic_block(struct rir_basic_block *block,
 struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
                                             struct llvm_traversal_ctx *ctx)
 {
-    struct astn_node *child;
+    struct ast_node *child;
     //TODO: this should be the name of each module when we actually get modules.
     const char *mod_name = "A MODULE";
     ctx->mod = NULL;
@@ -489,16 +489,13 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
     }
 
     // for each function of the module (for now simply the AST root) create code
-    rf_ilist_for_each(&ast->children, , child, lh) {
+    rf_ilist_for_each(&ast->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
             bllvm_compile_function(child, ctx);
         }
     }
 
     if (compiler_args_print_backend_debug(ctx->args)) {
-        // would be much better if we could call llvm::Module::getModuleIdentifier()
-        // but that seems to not be exposed in the C-Api
-        mod_name = rf_string_cstr_from_buff(&mod->name);
         bllvm_mod_debug(ctx->mod, mod_name);
     }
 

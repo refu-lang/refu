@@ -38,14 +38,14 @@ static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node 
                                             struct ast_node *right, const struct type **tright,
                                             struct analyzer_traversal_ctx *ctx)
 {
-    *tleft = ast_expression_get_type(left);
+    *tleft = ast_node_get_type(left);
     if (!*tleft) {
         analyzer_err(ctx->a, ast_node_startmark(left), ast_node_endmark(left),
                      "Type of left side of \""RF_STR_PF_FMT"\" can not be determined",
                      RF_STR_PF_ARG(ast_binaryop_opstr(n)));
         return false;
     }
-    *tright = ast_expression_get_type(right);
+    *tright = ast_node_get_type(right);
     if (!*tright) {
         analyzer_err(ctx->a, ast_node_startmark(right), ast_node_endmark(right),
                      "Type of right side of \""RF_STR_PF_FMT"\" can not be determined",
@@ -246,7 +246,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     struct typecheck_member_access_iter_ctx member_access_iter_ctx;
     enum traversal_cb_res rc;
 
-    tleft = ast_expression_get_type(left);
+    tleft = ast_node_get_type(left);
 
     if (!tleft) {
         analyzer_err(ctx->a, ast_node_startmark(left),
@@ -515,7 +515,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         goto fail;
     }
 
-    fn_found_args_type = (fn_call_args) ? ast_expression_get_type(fn_call_args)
+    fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args)
         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
 
     if (!fn_found_args_type) { // argument typechecking failed
@@ -594,9 +594,9 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
-    fn_type = ast_expression_get_type(fn_decl);
+    fn_type = ast_node_get_type(fn_decl);
     const struct type *fn_ret_type = type_function_get_rettype(fn_type);
-    const struct type *found_ret_type = ast_expression_get_type(ast_returnstmt_expr_get(n));
+    const struct type *found_ret_type = ast_node_get_type(ast_returnstmt_expr_get(n));
 
     if (!found_ret_type) {
         return TRAVERSAL_CB_ERROR;
@@ -723,7 +723,7 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
     enum unaryop_type uop_type = ast_unaryop_op(n);
     const struct type *operand_type;
 
-    operand_type = ast_expression_get_type(ast_unaryop_operand(n));
+    operand_type = ast_node_get_type(ast_unaryop_operand(n));
     if (!operand_type) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Type for operand of \""RF_STR_PF_FMT"\" can not be determined",
@@ -817,7 +817,7 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_FUNCTION_IMPLEMENTATION:
         traversal_node_set_type(n,
-                                ast_expression_get_type(ast_fnimpl_fndecl_get(n)),
+                                ast_node_get_type(ast_fnimpl_fndecl_get(n)),
                                 ctx);
         break;
     case AST_RETURN_STATEMENT:

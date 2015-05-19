@@ -136,7 +136,7 @@ struct rir_type *rir_type_create(struct type *input,
         RF_ERROR("Failed at rir_type allocation");
         return NULL;
     }
-    if (!rir_type_init(ret, input, name, newly_created_type)) {
+    if (!rir_type_init(ret, input, name)) {
         RF_ERROR("Failed at rir_type initialization");
         rir_type_dealloc(ret);
     }

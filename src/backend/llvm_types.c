@@ -69,15 +69,13 @@ static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
     return llvm_type;
 }
 
-LLVMTypeRef bllvm_compile_internal_typedecl(struct rir_type *type,
+LLVMTypeRef bllvm_compile_internal_typedecl(const struct type *type,
                                             struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ret;
-    // TODO: This is an ugly hack for now. Will be refactored when rir_type
-    //       is a part of type
     RFS_PUSH();
     ret = bllvm_compile_typedecl(
-        rir_type_get_unique_type_str(type, ctx->rir->types_set),
+        type_get_unique_type_str(type),
         type,
         ctx
     );
@@ -86,11 +84,11 @@ LLVMTypeRef bllvm_compile_internal_typedecl(struct rir_type *type,
 }
 
 LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
-                                   struct rir_type *type,
+                                   const struct type *type,
                                    struct llvm_traversal_ctx *ctx)
 {
     if (!type) {
-        type = rir_types_list_get_defined(&ctx->rir->rir_types_list, name);
+        type = symbol_table_lookup_defined_type(&ctx->current_st, name);
     }
 
     if (!rir_type_is_sumtype(type)) {
