@@ -23,6 +23,7 @@
 #include <ast/operators.h>
 #include <ast/vardecl.h>
 #include <ast/string_literal.h>
+#include <ast/ifexpr.h>
 
 #include <types/type_function.h>
 #include <types/type_elementary.h>
@@ -32,7 +33,6 @@
 
 #include <analyzer/string_table.h>
 
-#include <ir/elements.h>
 #include <ir/rir_type.h>
 #include <ir/rir.h>
 
@@ -87,66 +87,28 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
     return NULL;
 }
 
-LLVMTypeRef bllvm_rir_elementary_to_type(enum rir_type_category type,
-                                         struct llvm_traversal_ctx *ctx)
-{
-    switch(type) {
-        // LLVM does not differentiate between signed and unsigned
-    case ELEMENTARY_RIR_TYPE_INT_8:
-    case ELEMENTARY_RIR_TYPE_UINT_8:
-        return LLVMInt8Type();
-    case ELEMENTARY_RIR_TYPE_INT_16:
-    case ELEMENTARY_RIR_TYPE_UINT_16:
-        return LLVMInt16Type();
-    case ELEMENTARY_RIR_TYPE_INT_32:
-    case ELEMENTARY_RIR_TYPE_UINT_32:
-        return LLVMInt32Type();
-    case ELEMENTARY_RIR_TYPE_INT_64:
-    case ELEMENTARY_RIR_TYPE_UINT_64:
-    case ELEMENTARY_RIR_TYPE_INT:
-    case ELEMENTARY_RIR_TYPE_UINT:
-        return LLVMInt64Type();
-
-    case ELEMENTARY_RIR_TYPE_FLOAT_32:
-        return LLVMFloatType();
-    case ELEMENTARY_RIR_TYPE_FLOAT_64:
-        return LLVMDoubleType();
-
-    case ELEMENTARY_RIR_TYPE_STRING:
-        return LLVMGetTypeByName(ctx->mod, "string");
-
-    case ELEMENTARY_RIR_TYPE_BOOL:
-        return LLVMInt1Type();
-    case ELEMENTARY_RIR_TYPE_NIL:
-        return LLVMVoidType();
-
-    default:
-        RF_ASSERT(false,
-                  "Unsupported elementary type \""RF_STR_PF_FMT"\" "
-                  "during LLVM conversion",
-                  RF_STR_PF_ARG(type_elementary_get_str((enum elementary_type)type)));
-        break;
-    }
-    return NULL;
-}
-
-LLVMTypeRef bllvm_type_from_rir(const struct rir_type *type,
-                                struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_type_from_type(const struct type *type,
+                                 struct llvm_traversal_ctx *ctx)
 {
     char *name;
     LLVMTypeRef ret = NULL;
-    if (rir_type_is_elementary(type)) {
-        ret = bllvm_rir_elementary_to_type(type->category, ctx);
-    } else if (type->category == COMPOSITE_RIR_DEFINED) {
+    if (type->category == TYPE_CATEGORY_ELEMENTARY) {
+        ret = bllvm_elementary_to_type(type_elementary(type), ctx);
+    } else if (type->category == TYPE_CATEGORY_LEAF) {
+        ret = bllvm_type_from_type(type->leaf.type, ctx);
+    } else if (type->category == TYPE_CATEGORY_DEFINED) {
         RFS_PUSH();
-        name = rf_string_cstr_from_buff_or_die(type->name);
+        name = rf_string_cstr_from_buff_or_die(type_defined_get_name(type));
         ret = LLVMGetTypeByName(ctx->mod, name);
         RFS_POP();
-    } else if (rir_type_is_sumtype(type)) {
+    } else if (type_is_sumtype(type)) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(
-            rir_type_get_unique_type_str(type, ctx->rir->types_set)
+            type_get_unique_type_str(type, false)
         );
+        printf("at bllvm_type_from_type: "RF_STR_PF_FMT"\n%s\n\n",
+               RF_STR_PF_ARG(type_str_or_die(type, TSTR_DEFAULT)), name);
+        fflush(stdout);
         ret = LLVMGetTypeByName(ctx->mod, name);
         RFS_POP();
     } else {
@@ -155,17 +117,6 @@ LLVMTypeRef bllvm_type_from_rir(const struct rir_type *type,
 
     RF_ASSERT(ret, "The above functions should never fail");
     return ret;
-}
-
-LLVMTypeRef bllvm_type_from_normal(const struct type *type,
-                                   struct llvm_traversal_ctx *ctx)
-{
-    struct rir_type *rir_t = rir_types_list_get_type(
-        &ctx->rir->rir_types_list,
-        type,
-        NULL
-    );
-    return bllvm_type_from_rir(rir_t, ctx);
 }
 
 i_INLINE_INS struct LLVMOpaqueType **llvm_traversal_ctx_get_params(struct llvm_traversal_ctx *ctx);
@@ -227,7 +178,7 @@ LLVMValueRef bllvm_compile_explicit_cast(const struct type *cast_type,
         return ret_str;
     }
 
-    if (type_is_specific_elementary(args->expression_type, ELEMENTARY_TYPE_BOOL)) {
+    if (type_is_specific_elementary(ast_node_get_type(args, AST_TYPERETR_DEFAULT), ELEMENTARY_TYPE_BOOL)) {
         LLVMBasicBlockRef taken_branch = bllvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef fallthrough_branch = bllvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef if_end = bllvm_add_block_before_funcend(ctx);
@@ -303,19 +254,16 @@ LLVMValueRef bllvm_compile_identifier(struct ast_node *n,
     return rec->backend_handle;
 }
 
-void bllvm_compile_ifexpr(struct rir_branch *branch,
+void bllvm_compile_ifexpr(const struct ast_node *ifexpr,
                           struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(branch->is_conditional == true, "Branch should be conditional");
-    struct rir_cond_branch *rir_if = &branch->cond_branch;
-
     LLVMBasicBlockRef taken_branch = bllvm_add_block_before_funcend(ctx);
     LLVMBasicBlockRef fallthrough_branch = bllvm_add_block_before_funcend(ctx);
     LLVMBasicBlockRef if_end = bllvm_add_block_before_funcend(ctx);
 
     // create the condition
     LLVMValueRef condition = bllvm_compile_expression(
-        rir_if->cond,
+        ast_ifexpr_condition_get(ifexpr),
         ctx,
         RFLLVM_OPTION_IDENTIFIER_VALUE);
 
@@ -324,13 +272,14 @@ void bllvm_compile_ifexpr(struct rir_branch *branch,
 
     // create the taken block
     bllvm_enter_block(ctx, taken_branch);
-    bllvm_compile_basic_block(rir_if->true_br, ctx);    
+    bllvm_compile_block(ast_ifexpr_taken_block_get(ifexpr), ctx);    
     bllvm_add_br(if_end, ctx);
 
     // if there is a fall through block deal with it
     bllvm_enter_block(ctx, fallthrough_branch);
-    if (rir_if->false_br) {
-        bllvm_compile_branch(rir_if->false_br, ctx);
+    struct ast_node *fallthrough = ast_ifexpr_fallthrough_branch_get(ifexpr);
+    if (fallthrough) {
+        bllvm_compile_branch(fallthrough, ctx);
     }
     bllvm_add_br(if_end, ctx);
 
@@ -338,13 +287,14 @@ void bllvm_compile_ifexpr(struct rir_branch *branch,
     bllvm_enter_block(ctx, if_end);
 }
 
-void bllvm_compile_branch(struct rir_branch *branch,
+void bllvm_compile_branch(const struct ast_node *branch,
                           struct llvm_traversal_ctx *ctx)
 {
-    if (branch->is_conditional) {
+    AST_NODE_ASSERT_TYPE(branch, AST_IF_EXPRESSION || AST_BLOCK);
+    if (branch->type == AST_IF_EXPRESSION) {
         bllvm_compile_ifexpr(branch, ctx);
-    } else {
-        bllvm_compile_basic_block(branch->simple_branch, ctx);
+    } else { // it's final else block
+        bllvm_compile_block(branch, ctx);
     }
 }
 
@@ -367,7 +317,7 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
                                             RFLLVM_OPTION_IDENTIFIER_VALUE);
         bllvm_compile_assign_llvm(llvm_val,
                                   ctx->current_function_return,
-                                  n->expression_type,
+                                  ast_node_get_type(n, AST_TYPERETR_DEFAULT),
                                   BLLVM_ASSIGN_SIMPLE,
                                   ctx);
         LLVMBuildBr(ctx->builder, LLVMGetLastBasicBlock(ctx->current_function));
@@ -408,6 +358,9 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
         RF_ASSERT(bllvm_compile_typedecl(ast_typedecl_name_str(n), NULL, ctx),
                   "typedecl compile should never fail");
         break;
+    case AST_IF_EXPRESSION:
+        bllvm_compile_ifexpr(n, ctx);
+        break;
     case AST_MATCH_EXPRESSION:
         return bllvm_compile_matchexpr(n, ctx);
     default:
@@ -417,52 +370,32 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
     return NULL;
 }
 
-static void bllvm_expression(struct rir_expression *expr,
-                             struct llvm_traversal_ctx *ctx,
-                             int options)
-{
-    ctx->current_value = NULL;
-    switch(expr->type) {
-    case RIR_SIMPLE_EXPRESSION:
-        bllvm_compile_expression(expr->expr, ctx, options);
-        break;
-    case RIR_IF_EXPRESSION:
-        bllvm_compile_ifexpr(expr->branch, ctx);
-        break;
-    }
-
-    ctx->current_value = NULL;
-}
-
 void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
                              struct llvm_traversal_ctx *ctx)
 {
     char *name;
     // for each symbol, allocate an LLVM variable in the stack with alloca
-    struct rir_type *type = symbol_table_record_rir_type(rec, &ctx->rir->rir_types_list);
+    struct type *type = symbol_table_record_type(rec);
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(symbol_table_record_id(rec));
     // note: this simply creates the stack space but does not allocate it
-    LLVMTypeRef llvm_type = bllvm_type_from_rir(type, ctx);
+    LLVMTypeRef llvm_type = bllvm_type_from_type(type, ctx);
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, name);
     symbol_table_record_set_backend_handle(rec, allocation);
     RFS_POP();
 }
 
-void bllvm_compile_basic_block(struct rir_basic_block *block,
-                               struct llvm_traversal_ctx *ctx)
+void bllvm_compile_block(const struct ast_node *block,
+                         struct llvm_traversal_ctx *ctx)
 {
-    struct rir_expression *rir_expr;
+    struct ast_node *child;
     struct symbol_table *prev = ctx->current_st;
-    ctx->current_st = block->symbols;
-
-    if (block->normal_block) { // ugly as hell. Goes away with RIR refactor.
-        symbol_table_iterate(block->symbols, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
+    ctx->current_st = ast_block_symbol_table_get((struct ast_node*)block);
+    
+    symbol_table_iterate(ctx->current_st, (htable_iter_cb)llvm_symbols_iterate_cb, ctx);
+    rf_ilist_for_each(&block->children, child, lh) {
+        bllvm_compile_expression(child, ctx, 0);
     }
-    rf_ilist_for_each(&block->expressions, rir_expr, ln) {
-        bllvm_expression(rir_expr, ctx, 0);
-    }
-
     ctx->current_st = prev;
 }
 

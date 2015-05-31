@@ -1,4 +1,5 @@
 #include "llvm_functions.h"
+#include "llvm_matchexpr.h"
 #include "llvm_ast.h"
 
 #include <llvm-c/Core.h>
@@ -8,9 +9,9 @@
 
 #include <analyzer/symbol_table.h>
 #include <ast/function.h>
+#include <ast/type.h>
 #include <types/type.h>
 #include <types/type_function.h>
-#include <ir/elements.h>
 #include <ir/rir_type.h>
 #include <ir/rir.h>
 
@@ -84,17 +85,14 @@ static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
                                                   const struct RFstring *type_name,
                                                   struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *params_type = rir_types_list_get_type(
-        &ctx->rir->rir_types_list,
-        ast_fncall_params_type(fn_call),
-        NULL
-    );
+    const struct type *params_type = ast_fncall_params_type(fn_call);
+    const struct rir_type *params_rtype = type_get_rir_or_die(params_type);
     // find out the index of the sum operand type in the defined type
     size_t child_index = 0;
     bool child_found = false;
     struct rir_type **subtype;
     darray_foreach(subtype, sum_type->subtypes) {
-        if (rir_type_equals(*subtype, params_type, RIR_TYPECMP_SIMPLE)) {
+        if (rir_type_equals(*subtype, params_rtype, RIR_TYPECMP_SIMPLE)) {
             child_found = true;
             break;
         }
@@ -107,12 +105,12 @@ static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
     RFS_PUSH();
     LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
         ctx->mod,
-        rf_string_cstr_from_buff_or_die(rir_type_get_unique_type_str(params_type, ctx->rir->types_set))
+        rf_string_cstr_from_buff_or_die(type_get_unique_type_str(params_type, false))
     );
     RFS_POP();
     RF_ASSERT(llvm_sum_type, "Internal struct was not created for sum operand");
     // populate the sum operand's internal struct contents
-    LLVMTypeRef *params = bllvm_type_to_subtype_array(params_type, ctx);
+    LLVMTypeRef *params = bllvm_type_to_subtype_array(params_rtype, ctx);
     LLVMValueRef populated_sum_type = bllvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
     // now create the full struct and assign the contents and the selector
     RFS_PUSH();
@@ -185,7 +183,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                 bllvm_sum_fncall_args_to_type(
                     n,
                     rir_types_list_get_type(&ctx->rir->rir_types_list, fn_args_type, NULL),
-                    type_get_unique_type_str(fn_args_type),
+                    type_get_unique_type_str(fn_args_type, false),
                     ctx)
             );
         } else {
@@ -218,7 +216,7 @@ static LLVMTypeRef *bllvm_compile_fn_arg_types(const struct type *type,
                                                struct llvm_traversal_ctx *ctx)
 {
     if (!type_is_sumtype(type)) {
-        bllvm_type_to_subtype_array(type->rir_type, ctx);
+        bllvm_type_to_subtype_array(type_get_rir_or_die(type), ctx);
     } else {
         // sum type argument function, compile an internal typedecl and add as single parameter
         llvm_traversal_ctx_reset_params(ctx);
@@ -232,20 +230,18 @@ static LLVMTypeRef *bllvm_compile_fn_arg_types(const struct type *type,
 }
 
 /**
- * Get the cstring name of a parameter of a rir type
+ * Get the cstring name of a parameter of a type
  *
  * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
  * If the type is a sumtype then just create a dummy name same as the type name
  */
-static inline const struct RFstring *bllvm_param_name_str(struct rir_type *type,
+static inline const struct RFstring *bllvm_param_name_str(const struct type *type,
                                                           struct llvm_traversal_ctx *ctx,
                                                           unsigned int i)
 {
-    const struct RFstring *param_name_str;
-    return rir_type_is_sumtype(type)
-        ? rir_type_get_unique_value_str(type, ctx->rir->types_set)
-        : rir_type_get_nth_name_or_die(type, i);
-    return param_name_str;
+    return type_is_sumtype(type)
+        ? type_get_unique_value_str(type, false)
+        : type_get_nth_name_or_die(type, i);
 }
 
 LLVMValueRef bllvm_compile_function(struct ast_node *fn,
@@ -253,7 +249,14 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
 {
     AST_NODE_ASSERT_TYPE(fn, AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *fn_decl = ast_fnimpl_fndecl_get(fn);
-    const struct type *fn_args = ast_node_get_type(ast_fndecl_args_get(fn_decl));
+    const struct type *fn_args = ast_node_get_type_or_nil(
+        ast_fndecl_args_get(fn_decl),
+        AST_TYPERETR_AS_LEAF
+    );
+    const struct type *fn_ret = ast_node_get_type_or_nil(
+        ast_fndecl_return_get(fn_decl),
+        AST_TYPERETR_AS_LEAF
+    );
     char *fn_name;
     char *param_name;
     RFS_PUSH();
@@ -266,7 +269,7 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
         ctx->mod,
         fn_name,
         LLVMFunctionType(
-            bllvm_type_from_rir(fn->ret_type, ctx),
+            bllvm_type_from_type(fn_ret, ctx),
             types,
             llvm_traversal_ctx_get_param_count(ctx),
             false // never variadic for now
@@ -283,72 +286,67 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
     struct symbol_table_record *rec;
     const struct RFstring *param_name_str;
 
-    if (fn->arg_type->category != ELEMENTARY_RIR_TYPE_NIL) {
+    if (!type_is_specific_elementary(fn_args, ELEMENTARY_TYPE_NIL)) {
         for (i = 0; i < LLVMCountParams(ctx->current_function); ++i) {
             LLVMTypeRef alloca_type;
 
             // for each argument of the function allocate an LLVM variable
             // in the stack with alloca
             RFS_PUSH();
-            param_name_str = bllvm_param_name_str(fn->arg_type, ctx, i);
-            param_name = rf_string_cstr_from_buff_or_die(param_name_str);
-            
+            param_name_str = bllvm_param_name_str(fn_args, ctx, i);
+            param_name =  rf_string_cstr_from_buff_or_die(param_name_str);
 
             // if it's not a function call on an anonymous sum type
-            if (!rir_type_is_sumtype(fn->arg_type)) {
-                alloca_type = bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx);
+            if (!type_is_sumtype(fn_args)) {
+                alloca_type = bllvm_type_from_type(type_get_nth_type_or_die(fn_args, i), ctx);
                 allocation = LLVMBuildAlloca(
-                ctx->builder,
-                alloca_type,
-                param_name);
+                    ctx->builder,
+                    alloca_type,
+                    param_name
+                );
                 // and assign to it the argument value
                 bllvm_store(LLVMGetParam(ctx->current_function, i), allocation, ctx);
                 // also note the alloca in the symbol table
-                rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL);
+                rec = symbol_table_lookup_record(
+                    ast_fnimpl_symbol_table_get(fn),
+                    param_name_str,
+                    NULL
+                );
                 RFS_POP();
                 RF_ASSERT(rec,
                           "Symbol table of rir_function did "
                           "not contain expected parameter");
                 symbol_table_record_set_backend_handle(rec, allocation);
             }
-            /* alloca_type = rir_type_is_sumtype(fn->arg_type) */
-            /*     ? bllvm_type_from_rir(fn->arg_type, ctx) */
-            /*     : bllvm_type_from_rir(rir_type_get_nth_type_or_die(fn->arg_type, i), ctx); */
-            /* allocation = LLVMBuildAlloca( */
-            /*     ctx->builder, */
-            /*     alloca_type, */
-            /*     param_name); */
-            /* // and assign to it the argument value */
-            /* bllvm_store(LLVMGetParam(ctx->current_function, i), allocation, ctx); */
-            /* // also note the alloca in the symbol table */
-            /* rec = symbol_table_lookup_record(fn->symbols, param_name_str, NULL); */
-            /* RFS_POP(); */
-            /* RF_ASSERT(rec, */
-            /*           "Symbol table of rir_function did " */
-            /*           "not contain expected parameter"); */
-            /* symbol_table_record_set_backend_handle(rec, allocation); */
         }
     }
 
     // if the function's got a return value alloc it here
     ctx->current_function_return = NULL;
-    if (fn->ret_type->category != ELEMENTARY_RIR_TYPE_NIL) {
+    if (!type_is_specific_elementary(fn_ret, ELEMENTARY_TYPE_NIL)) {
         ctx->current_function_return = LLVMBuildAlloca(
             ctx->builder,
-            bllvm_type_from_rir(fn->ret_type, ctx),
-            "function_return_value");
+            bllvm_type_from_type(fn_ret, ctx),
+            "function_return_value"
+        );
     }
 
     // this block should always stay at the end of the function
     LLVMBasicBlockRef function_end = LLVMAppendBasicBlock(ctx->current_function, "function_end");
     // now compile all parts of the function
-    bllvm_compile_basic_block(fn->entry, ctx);
+    struct ast_node *body = ast_fnimpl_body_get(fn);
+    if (body->type == AST_BLOCK) {
+        bllvm_compile_block(ast_fnimpl_body_get(fn), ctx);
+    } else {
+        // it's a match expression for a body
+        bllvm_compile_matchexpr(body, ctx);
+    }
 
     // finally build the function return. Jump from whichever the second last block
     // was to the return block and return
     bllvm_add_br(function_end, ctx);
     bllvm_enter_block(ctx, function_end);
-    if (fn->ret_type->category == ELEMENTARY_RIR_TYPE_NIL) {
+    if (type_is_specific_elementary(fn_ret, ELEMENTARY_TYPE_NIL)) {
         LLVMBuildRetVoid(ctx->builder);
     } else { // if we got a return value
         // I suppose in some case no load would be needed. Need to abstract these

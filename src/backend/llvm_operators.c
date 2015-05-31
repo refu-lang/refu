@@ -9,6 +9,7 @@
 #include <ast/operators.h>
 #include <types/type_elementary.h>
 #include <types/type_comparisons.h>
+#include <types/type.h>
 #include <ir/rir_type.h>
 
 #include "llvm_ast.h"
@@ -155,12 +156,12 @@ static LLVMValueRef bllvm_compile_member_access(struct ast_node *n,
     const struct RFstring *member_s = ast_identifier_str(ast_binaryop_right(n));
     size_t offset = 0;
     rec = symbol_table_lookup_record(ctx->current_st, owner_type_s, NULL);
-    struct rir_type *defined_type =  rec->rir_data;
-    RF_ASSERT(defined_type->category == COMPOSITE_RIR_DEFINED,
+    RF_ASSERT(rec->data->category == TYPE_CATEGORY_DEFINED,
               "a member access left hand type can only be a defined type");
 
+    const struct rir_type *rtype = type_get_rir_or_die(rec->data);
     struct rir_type **subtype;
-    darray_foreach(subtype, defined_type->subtypes.item[0]->subtypes) {
+    darray_foreach(subtype, rtype->subtypes.item[0]->subtypes) {
         if (rf_string_equal(member_s, (*subtype)->name)) {
             LLVMValueRef gep_to_member = bllvm_gep_to_struct(rec->backend_handle, offset, ctx);
             return LLVMBuildLoad(ctx->builder, gep_to_member, "");
@@ -179,7 +180,9 @@ LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
                                        enum llvm_assign_options options,
                                        struct llvm_traversal_ctx *ctx)
 {
-    if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
+    if (type->category == TYPE_CATEGORY_LEAF) {
+        bllvm_compile_assign_llvm(from, to, type->leaf.type, options, ctx);
+    } else if (type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)) {
         if (RF_BITFLAG_ON(options, BLLVM_ASSIGN_MATCH_CASE)) {
             from = LLVMBuildBitCast(
                 ctx->builder,
@@ -223,7 +226,13 @@ LLVMValueRef bllvm_compile_assign(struct ast_node *from,
                                                       ctx,
                                                       RFLLVM_OPTION_IDENTIFIER_VALUE);
     
-    return bllvm_compile_assign_llvm(llvm_from, llvm_to, to->expression_type, BLLVM_ASSIGN_SIMPLE, ctx);
+    return bllvm_compile_assign_llvm(
+        llvm_from,
+        llvm_to,
+        ast_node_get_type(to, AST_TYPERETR_DEFAULT),
+        BLLVM_ASSIGN_SIMPLE,
+        ctx
+    );
 }
 
 LLVMValueRef bllvm_compile_bop(struct ast_node *n,
@@ -236,10 +245,12 @@ LLVMValueRef bllvm_compile_bop(struct ast_node *n,
     }
 
     if (ast_binaryop_op(n) == BINARYOP_ASSIGN) {
-        return bllvm_compile_assign(ast_binaryop_right(n),
-                                    ast_binaryop_left(n),
-                                    n->expression_type,
-                                    ctx);
+        return bllvm_compile_assign(
+            ast_binaryop_right(n),
+            ast_binaryop_left(n),
+            ast_node_get_type(n, AST_TYPERETR_DEFAULT),
+            ctx
+        );
     }
     LLVMValueRef left = bllvm_compile_expression(ast_binaryop_left(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
     LLVMValueRef right = bllvm_compile_expression(ast_binaryop_right(n), ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);

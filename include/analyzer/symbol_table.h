@@ -26,10 +26,6 @@ struct symbol_table_record {
     //! Description of the type the identifier refers to
     struct type *data;
 
-    /* -- needed by Refu IR -- */
-    //! Refu Intermediate Format Description of the type the identifier refers to
-    struct rir_type *rir_data;
-
     /* -- needed by the backends -- */
     //! Refu backend handle. Information stored by the backend for specific id
     //! + @c LLVM: It's an LLVMValueRef
@@ -74,17 +70,6 @@ symbol_table_record_type(struct symbol_table_record *rec)
 {
     return rec->data;
 }
-
-/**
- * Gets the corresponding rir type for a symbol table record
- *
- * @param rec        The record whose rir type to get
- * @param list       A rir types list in which to find the equivalent rir type
- *                   if the record does not already contain a rir type
- * @return           The corresponding rir_type or NULL if no rir type could be found
- */
-struct rir_type *symbol_table_record_rir_type(struct symbol_table_record *rec,
-                                              struct rir_types_list *list);
 
 i_INLINE_DECL void *
 symbol_table_record_get_backend_handle(struct symbol_table_record *rec)

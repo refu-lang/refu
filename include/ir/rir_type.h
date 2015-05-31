@@ -6,6 +6,7 @@
 #include <Utils/struct_utils.h>
 #include <Utils/sanity.h>
 #include <types/type_decls.h>
+#include <types/type_elementary.h>
 
 struct type;
 struct RFstring;
@@ -43,7 +44,7 @@ bool rir_type_init(struct rir_type *type,
  *         return true. Else it will return false
  */
 bool rir_type_init_before_iteration(struct rir_type *type,
-                                    const struct type *input,
+                                    struct type *input,
                                     const struct RFstring *name);
 
 void rir_type_dealloc(struct rir_type *t);
@@ -129,8 +130,8 @@ const struct rir_type *rir_type_contents(const struct rir_type *t);
  * @param n        The index (starting from 0) of the parameter's whose name to get
  * @return         The name as a string or NULL if the parameter is out of bounds
  */
-const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n);
-i_INLINE_DECL const struct RFstring *rir_type_get_nth_name_or_die(struct rir_type *t, unsigned n)
+const struct RFstring *rir_type_get_nth_name(const struct rir_type *t, unsigned n);
+i_INLINE_DECL const struct RFstring *rir_type_get_nth_name_or_die(const struct rir_type *t, unsigned n)
 {
     const struct RFstring *ret = rir_type_get_nth_name(t, n);
     RF_ASSERT_OR_EXIT(ret, "rir_type_get_nth_name_or_die() index out of bounds");
@@ -142,8 +143,8 @@ i_INLINE_DECL const struct RFstring *rir_type_get_nth_name_or_die(struct rir_typ
  * @param n        The index (starting from 0) of the parameter's whose type to get
  * @return         The type or NULL if the parameter is out of bounds
  */
-const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n);
-i_INLINE_DECL const struct rir_type *rir_type_get_nth_type_or_die(struct rir_type *t, unsigned n)
+const struct rir_type *rir_type_get_nth_type(const struct rir_type *t, unsigned n);
+i_INLINE_DECL const struct rir_type *rir_type_get_nth_type_or_die(const struct rir_type *t, unsigned n)
 {
     const struct rir_type *ret = rir_type_get_nth_type(t, n);
     RF_ASSERT_OR_EXIT(ret, "rir_type_get_nth_type_or_die() index out of bounds");
@@ -173,34 +174,30 @@ i_INLINE_DECL struct RFstring *rir_type_str_or_die(const struct rir_type *t)
 }
 
 /**
- * Gets a unique id for the rir type.
- *
- * TODO: Make sure this is actually indeed unique
- * 
- * @param t        The rir type whose unique id to get
+ * Gets the equivalent elementary rir type
  */
-size_t rir_type_get_uid(const struct rir_type *t);
-
-// TODO: These duplicated functions are an ugly hack for now. Will be
-// refactored when rir_type is a part of type
-/**
- * Query a unique value name for an anomymous (operator) rir type
- *
- * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
- */
-const struct RFstring *rir_type_get_unique_value_str(const struct rir_type *t,
-                                                     const struct rf_objset_type *set);
-
-/**
- * Query a unique type name for an anomymous (operator) rir type
- *
- * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
- */
-const struct RFstring *rir_type_get_unique_type_str(const struct rir_type *t,
-                                                    const struct rf_objset_type *set);
+const struct rir_type *rir_type_get_elementary(enum elementary_type etype);
 
 i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
 {
     return t->category < COMPOSITE_PRODUCT_RIR_TYPE;
+}
+
+/**
+ * Gets the normal type from a rir type.
+ *
+ * If the normal type is nil but rir_type is elementary we retrieve it from the
+ * elementary type table. If it's not but normal type is stil nil then something
+ * is wrong and we quit with an error.
+ */
+i_INLINE_DECL const struct type *rir_type_get_type_or_die(const struct rir_type *type)
+{
+    if (!type->type) {
+        if (rir_type_is_elementary(type)) {
+            return type_elementary_get_type((enum elementary_type)type->category);
+        }
+        RF_ASSERT_OR_EXIT(false, "rir type contains no normal type.");
+    }
+    return type->type;
 }
 #endif

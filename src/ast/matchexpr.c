@@ -61,7 +61,7 @@ const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
         );
     }
     // else it's the type of the function arguments themselves
-    return n->matchexpr.identifier_or_fnargtype->expression_type;
+    return ast_node_get_type(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF);
 }
 
 const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
@@ -70,7 +70,10 @@ const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
         return ast_identifier_str(ast_matchexpr_identifier(n));
     }
     // else it's the type of the function arguments themselves
-    return type_str_or_die(n->matchexpr.identifier_or_fnargtype->expression_type, TSTR_DEFAULT);
+    return type_str_or_die(
+        ast_node_get_type_or_die(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF),
+        TSTR_DEFAULT
+    );
 }
 
 const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
@@ -79,9 +82,12 @@ const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
         return ast_identifier_str(ast_matchexpr_identifier(n));
     }
     // else it's an anonymous type matching
-    RF_ASSERT(n->matchexpr.identifier_or_fnargtype->expression_type,
-              "Type of matched expression must have been determined at this point");
-    return type_get_unique_value_str(n->matchexpr.identifier_or_fnargtype->expression_type);
+    return type_get_unique_value_str(
+        ast_node_get_type_or_die(
+            n->matchexpr.identifier_or_fnargtype,
+            AST_TYPERETR_AS_LEAF
+        ), true
+    );
 }
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)

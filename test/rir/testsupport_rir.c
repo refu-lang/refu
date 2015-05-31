@@ -1,7 +1,6 @@
 #include "testsupport_rir.h"
 
 #include <ir/rir.h>
-#include <ir/elements.h>
 #include <ir/rir_types_list.h>
 
 static struct rir_testdriver i_rir_test_driver_;
@@ -18,7 +17,6 @@ static bool rir_testdriver_init(struct rir_testdriver *d,
     d->front_driver = front_driver;
     d->analyzer_driver = analyzer_driver;
     d->rir = NULL;
-    d->module = NULL;
     darray_init(d->rir_types);
     return true;
 }
@@ -28,9 +26,6 @@ static void rir_testdriver_deinit(struct rir_testdriver *d)
     struct rir_type **t;
     if (d->rir) {
         rir_destroy(d->rir);
-    }
-    if (d->module) {
-        rir_module_destroy(d->module);
     }
 
     // free the driver's own types
@@ -70,11 +65,6 @@ bool rir_testdriver_process(struct rir_testdriver *d)
     if (!d->rir) {
         return false;
     }
-    d->module = rir_process(d->rir);
-    if (!d->module) {
-        return false;
-    }
-
     return true;
 }
 

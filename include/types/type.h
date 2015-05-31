@@ -7,6 +7,8 @@
 
 #include <utils/traversal.h>
 #include <types/type_decls.h>
+#include <types/type_elementary.h>
+#include <ir/rir_type.h>
 
 struct analyzer;
 struct symbol_table;
@@ -61,6 +63,11 @@ struct type *type_leaf_create(struct analyzer *a,
                               const struct RFstring *id,
                               struct type *leaf_type);
 
+struct type *type_leaf_create_from_node(struct ast_node *typedesc,
+                                        struct analyzer *a,
+                                        struct symbol_table *st,
+                                        struct ast_node *genrdecl);
+
 /* -- type getters -- */
 
 /**
@@ -107,6 +114,24 @@ struct type *type_lookup_xidentifier(struct ast_node *n,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);
 
+/**
+ * Gets the rir vesion of a type.
+ *
+ * If the rir type is nil but type is elementary we retrieve it from the rir
+ * elementary table. If it's not but rir type is stil nil then something is wrong
+ * and we quit with an error.
+ */
+i_INLINE_DECL const struct rir_type *type_get_rir_or_die(const struct type *type)
+{
+    if (!type->rir_type) {
+        if (type->category == TYPE_CATEGORY_ELEMENTARY) {
+            return rir_type_get_elementary(type_elementary(type));
+        }
+        RF_ASSERT_OR_EXIT(false, "Requested rir_type is NULL.");
+    }
+    return type->rir_type;
+}
+
 //! Options for invoking type_str()
 enum type_str_options {
     TSTR_DEFAULT = 0x0,
@@ -142,23 +167,26 @@ i_INLINE_DECL struct RFstring *type_str_or_die(const struct type *t, int options
  *
  * TODO: Needs improvement
  *
- * @param t        The type whose unique key to get.
+ * @param t              The type whose unique key to get.
+ * @param count_leaf_id  If true then type's leaf ids contribute to uid generation
  */
-size_t type_get_uid(const struct type *t);
+size_t type_get_uid(const struct type *t, bool count_leaf_id);
 
 /**
- * Query a unique value name for an anomymous (operator) type
+ * Query a unique value name for a type. If type is defined, its contents are used
+ * in determining the unique string.
  *
  * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
  */
-const struct RFstring *type_get_unique_value_str(const struct type *t);
+const struct RFstring *type_get_unique_value_str(const struct type *t, bool count_leaf_id);
 
 /**
- * Query a unique type name for an anomymous (operator) type
+ * Query a unique type name for a type. If type is defined, its contents are used
+ * in determining the unique string.
  *
  * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
  */
-const struct RFstring *type_get_unique_type_str(const struct type *t);
+const struct RFstring *type_get_unique_type_str(const struct type *t, bool count_leaf_id);
 
 /**
  * @returns the wildcard type '_'
@@ -186,6 +214,33 @@ i_INLINE_DECL bool type_is_sumtype(const struct type *t)
 {
     return type_is_sumop(t) ||
         (t->category == TYPE_CATEGORY_DEFINED && type_is_sumop(t->defined.type));
+}
+
+/**
+ * Get the nth type of a type operation, or kill the program if it doesn't exist
+ *
+ * @warning This function must be called on a type after typechecking. Only then
+ * will the rir_types have been created allowing the function to work. If not 
+ * the program will crush with an error.
+ */
+i_INLINE_DECL const struct type *type_get_nth_type_or_die(const struct type *t, unsigned int index)
+{
+    RF_ASSERT_OR_EXIT(t->rir_type, "Type's rir_type does not exist");
+    const struct rir_type *rtype = rir_type_get_nth_type_or_die(t->rir_type, index);
+    return rtype->type;
+}
+
+/**
+ * Get the nth type of a type operation, or kill the program if it doesn't exist
+ *
+ * @warning This function must be called on a type after typechecking. Only then
+ * will the rir_types have been created allowing the function to work. If not 
+ * the program will crush with an error.
+ */
+i_INLINE_DECL const struct RFstring *type_get_nth_name_or_die(const struct type *t, unsigned int index)
+{
+    RF_ASSERT_OR_EXIT(t->rir_type, "Type's rir_type does not exist");
+    return rir_type_get_nth_name_or_die(t->rir_type, index);
 }
 
 /* -- type traversal functions -- */

@@ -38,14 +38,14 @@ static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node 
                                             struct ast_node *right, const struct type **tright,
                                             struct analyzer_traversal_ctx *ctx)
 {
-    *tleft = ast_node_get_type(left);
+    *tleft = ast_node_get_type(left, AST_TYPERETR_DEFAULT);
     if (!*tleft) {
         analyzer_err(ctx->a, ast_node_startmark(left), ast_node_endmark(left),
                      "Type of left side of \""RF_STR_PF_FMT"\" can not be determined",
                      RF_STR_PF_ARG(ast_binaryop_opstr(n)));
         return false;
     }
-    *tright = ast_node_get_type(right);
+    *tright = ast_node_get_type(right, AST_TYPERETR_DEFAULT);
     if (!*tright) {
         analyzer_err(ctx->a, ast_node_startmark(right), ast_node_endmark(right),
                      "Type of right side of \""RF_STR_PF_FMT"\" can not be determined",
@@ -246,7 +246,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     struct typecheck_member_access_iter_ctx member_access_iter_ctx;
     enum traversal_cb_res rc;
 
-    tleft = ast_node_get_type(left);
+    tleft = ast_node_get_type(left, AST_TYPERETR_DEFAULT);
 
     if (!tleft) {
         analyzer_err(ctx->a, ast_node_startmark(left),
@@ -301,7 +301,7 @@ static enum traversal_cb_res typecheck_constant(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
     traversal_node_set_type(n, ast_constant_get_storagetype(n), ctx);
-    return (n->expression_type) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
+    return ast_node_get_type(n, AST_TYPERETR_DEFAULT) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
 }
 
 // figure out if any of the wildcard's close parents is a matchcase
@@ -336,7 +336,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
     // for some identifiers, like for the right part of a member access it's
     // impossible to determine type at this stage, for the rest it's an error
     struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
-    if (!n->expression_type &&
+    if (!ast_node_get_type(n, AST_TYPERETR_AS_LEAF) &&
         !ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
@@ -351,15 +351,24 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
 static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
                                                    struct analyzer_traversal_ctx *ctx)
 {
-    traversal_node_set_type(n, n->xidentifier.id->expression_type, ctx);
+    traversal_node_set_type(
+        n,
+        ast_node_get_type(n->xidentifier.id, AST_TYPERETR_AS_LEAF),
+        ctx
+    );
     return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
-    // a type leaf's type is the type of the right part of the leaf
-    traversal_node_set_type(n, ast_typeleaf_right(n)->expression_type, ctx);
+    // an ast_type_leaf's type is a type leaf
+    traversal_node_set_type(
+        n,
+        /* type_leaf_create_from_node(n, ctx->a, ctx->current_st, NULL), */
+        analyzer_get_or_create_type(ctx->a, n, ctx->current_st, NULL),
+        ctx
+    );
     return TRAVERSAL_CB_OK;
 }
 
@@ -367,14 +376,22 @@ static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
     // a type descriptions's type is the type of its description
-    traversal_node_set_type(n, ast_typedesc_desc_get(n)->expression_type, ctx);
+    traversal_node_set_type(
+        n,
+        ast_node_get_type(ast_typedesc_desc_get(n), AST_TYPERETR_DEFAULT),
+        ctx
+    );
     return TRAVERSAL_CB_OK;
 }
 
 static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
-    traversal_node_set_type(n, ast_typedecl_typedesc_get(n)->expression_type, ctx);
+    traversal_node_set_type(
+        n,
+        ast_node_get_type(ast_typedecl_typedesc_get(n), AST_TYPERETR_DEFAULT),
+        ctx
+    );
     return TRAVERSAL_CB_OK;
 }
 
@@ -384,7 +401,7 @@ static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
     // during symbol table population, if the typeoperator is a child of some specific
     // nodes there will be calls to analyzer_get_or_create_type() and the type will
     // already exists. If so just return
-    if (n->expression_type) {
+    if (ast_node_get_type(n, AST_TYPERETR_DEFAULT)) {
         return TRAVERSAL_CB_OK;
     }
 
@@ -487,7 +504,7 @@ static enum traversal_cb_res typecheck_comma(struct ast_node *n,
                                                        (struct type*)tright,
                                                        ctx->a),
                             ctx);
-    if (!n->expression_type) {
+    if (!ast_node_get_type(n, AST_TYPERETR_DEFAULT)) {
         RF_ERROR("Could not create a type as a product of 2 other types.");
         return TRAVERSAL_CB_FATAL_ERROR;
     }
@@ -515,7 +532,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         goto fail;
     }
 
-    fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args)
+    fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args, AST_TYPERETR_DEFAULT)
         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
 
     if (!fn_found_args_type) { // argument typechecking failed
@@ -594,9 +611,12 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
-    fn_type = ast_node_get_type(fn_decl);
+    fn_type = ast_node_get_type(fn_decl, AST_TYPERETR_DEFAULT);
     const struct type *fn_ret_type = type_function_get_rettype(fn_type);
-    const struct type *found_ret_type = ast_node_get_type(ast_returnstmt_expr_get(n));
+    const struct type *found_ret_type = ast_node_get_type(
+        ast_returnstmt_expr_get(n),
+        AST_TYPERETR_DEFAULT
+    );
 
     if (!found_ret_type) {
         return TRAVERSAL_CB_ERROR;
@@ -723,7 +743,7 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
     enum unaryop_type uop_type = ast_unaryop_op(n);
     const struct type *operand_type;
 
-    operand_type = ast_node_get_type(ast_unaryop_operand(n));
+    operand_type = ast_node_get_type(ast_unaryop_operand(n), AST_TYPERETR_DEFAULT);
     if (!operand_type) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Type for operand of \""RF_STR_PF_FMT"\" can not be determined",
@@ -805,9 +825,11 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         // for a variable definition, the variable's type description should be
         // the type of the expression
-        traversal_node_set_type(n,
-                                ast_vardecl_desc_get(n)->expression_type,
-                                ctx);
+        traversal_node_set_type(
+            n,
+            ast_node_get_type(ast_vardecl_desc_get(n), AST_TYPERETR_DEFAULT),
+            ctx
+        );
         break;
     case AST_FUNCTION_CALL:
         ret = typecheck_function_call(n, ctx);
@@ -816,9 +838,11 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_fndecl(n, ctx);
         break;
     case AST_FUNCTION_IMPLEMENTATION:
-        traversal_node_set_type(n,
-                                ast_node_get_type(ast_fnimpl_fndecl_get(n)),
-                                ctx);
+        traversal_node_set_type(
+            n,
+            ast_node_get_type(ast_fnimpl_fndecl_get(n), AST_TYPERETR_DEFAULT),
+            ctx
+        );
         break;
     case AST_RETURN_STATEMENT:
         ret = typecheck_return_stmt(n, ctx);

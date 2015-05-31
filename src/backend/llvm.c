@@ -14,7 +14,6 @@
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
 #include <ir/rir.h>
-#include <ir/elements.h>
 
 #include "llvm_ast.h"
 

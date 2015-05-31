@@ -3,6 +3,7 @@
 
 #include <RFintrusive_list.h>
 #include <RFstring.h>
+#include <Utils/bits.h>
 
 #include <inplocation.h>
 #include <ast/type_decls.h>
@@ -18,6 +19,7 @@
 #include <ast/matchexpr_decls.h>
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
+#include <types/type_elementary.h>
 
 #include <analyzer/symbol_table.h>
 
@@ -228,19 +230,45 @@ i_INLINE_DECL bool ast_node_has_value(const struct ast_node *n)
         (n->type == AST_CONSTANT && n->constant.type != CONSTANT_BOOLEAN);
 }
 
-i_INLINE_DECL const struct type *ast_node_get_type(const struct ast_node *n)
+enum type_retrieval_options {
+    //! Default way of type retrieval. Type leafs return the actual type
+    AST_TYPERETR_DEFAULT = 0x0,
+    //! If the type is a type leaf then the whole leaf is returned, not only its type
+    AST_TYPERETR_AS_LEAF = 0x1,
+};
+
+/**
+ * Retrieve the type of an ast node
+ *
+ * @param n         The node whose type to retrieve
+ * @param opts      Options commanding the different ways of type retrieval.
+ *                  For values refer to @ref type_retrieval_options.
+ * @return          The type of the node
+ */
+i_INLINE_DECL const struct type *ast_node_get_type(const struct ast_node *n,
+                                                   enum type_retrieval_options opts)
 {
+    // if leaf type retrieval option is not given, return leaf's actual type
+    if (n->expression_type &&
+        n->expression_type->category == TYPE_CATEGORY_LEAF &&
+        !RF_BITFLAG_ON(opts, AST_TYPERETR_AS_LEAF)) {
+        return n->expression_type->leaf.type;
+    }
     return n->expression_type;
 }
 
-i_INLINE_DECL const struct type *ast_node_get_type_or_die(const struct ast_node *n)
+i_INLINE_DECL const struct type *ast_node_get_type_or_die(const struct ast_node *n,
+                                                          enum type_retrieval_options opts)
 {
-    const struct type *ret = ast_node_get_type(n);
-    if (!ret) {
-        RF_CRITICAL("rir_type_str() failure");
-        exit(1);
-    }
+    const struct type *ret = ast_node_get_type(n, opts);
+    RF_ASSERT_OR_EXIT(ret, "ast_node contained NULL type");
     return ret;
+}
+
+i_INLINE_DECL const struct type *ast_node_get_type_or_nil(const struct ast_node *n,
+                                                          enum type_retrieval_options opts)
+{
+    return n ? ast_node_get_type_or_die(n, opts) : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);

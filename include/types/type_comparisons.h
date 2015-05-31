@@ -67,12 +67,16 @@ bool type_compare(const struct type *from,
  * @param st        The symbol table to use in the comparison
  * @param genrdecl  An optional generic declaration that describes @c n.
  *                  Can be NULL.
+ * @param options   Options to be passed to type_compare
  * @return          true if the type and the node describe the same type.
  *                  false otherwise.
  */
-bool type_equals_ast_node(struct type *t, struct ast_node *n,
-                          struct analyzer *a, struct symbol_table *st,
-                          struct ast_node *genrdecl);
+bool type_equals_ast_node(struct type *t,
+                          struct ast_node *n,
+                          struct analyzer *a,
+                          struct symbol_table *st,
+                          struct ast_node *genrdecl,
+                          enum comparison_reason options);
 
 
 /**

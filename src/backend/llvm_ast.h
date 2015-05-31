@@ -55,12 +55,9 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
 
 struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *bllvm_rir_elementary_to_type(enum rir_type_category type,
-                                                           struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *bllvm_type_from_rir(const struct rir_type *type,
-                                           struct llvm_traversal_ctx *ctx);
-struct LLVMOpaqueType *bllvm_type_from_normal(const struct type *type,
-                                              struct llvm_traversal_ctx *ctx);
+
+struct LLVMOpaqueType *bllvm_type_from_type(const struct type *type,
+                                            struct llvm_traversal_ctx *ctx);
 /**
  * Gets the parameters array from the llvm traversal ctx or NULL if
  * there are none
@@ -137,14 +134,14 @@ struct LLVMOpaqueValue *bllvm_compile_expression(struct ast_node *n,
 
 void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
                              struct llvm_traversal_ctx *ctx);
-void bllvm_compile_basic_block(struct rir_basic_block *block,
-                                      struct llvm_traversal_ctx *ctx);
+void bllvm_compile_block(const struct ast_node *block,
+                         struct llvm_traversal_ctx *ctx);
 
 
-void bllvm_compile_ifexpr(struct rir_branch *branch,
+void bllvm_compile_ifexpr(const struct ast_node *branch,
                           struct llvm_traversal_ctx *ctx);
 
-void bllvm_compile_branch(struct rir_branch *branch,
+void bllvm_compile_branch(const struct ast_node *branch,
                           struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueValue *bllvm_compile_explicit_cast(const struct type *cast_type,

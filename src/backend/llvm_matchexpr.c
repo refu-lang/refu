@@ -22,12 +22,7 @@ static void bllvm_add_matchcase(struct ast_node *matchcase,
                                 struct llvm_traversal_ctx *ctx)
 {
     const struct type *case_matched_type = ast_matchcase_matched_type(matchcase);
-    const struct rir_type *rcase_matched_type = rir_types_list_get_type(
-        &ctx->rir->rir_types_list,
-        case_matched_type,
-        NULL
-    );
-    int index = rir_type_childof_type(rcase_matched_type, matching_type);
+    int index = rir_type_childof_type(type_get_rir_or_die(case_matched_type), matching_type);
     RF_ASSERT(index != -1, "Case type not found in matching type");
     LLVMBasicBlockRef case_branch = LLVMInsertBasicBlock(match_end, "");
     bllvm_enter_block(ctx, case_branch);
@@ -80,28 +75,24 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
                   "in the symbol table");
         RF_ASSERT(type_is_sumtype(rec->data),
                   "at backend: match expression type was not a sumtype");
-        RFS_PUSH();
-        // TODO: this will go away with the RIR refactoring
-        RF_ASSERT(symbol_table_record_rir_type(rec, &ctx->rir->rir_types_list),
-                  "at backend: match expression rir_type could not be determined");
-        RFS_POP();
-        matched_type_contents = rir_type_contents(rec->rir_data);
+        matched_type_contents = rir_type_contents(type_get_rir_or_die(rec->data));
         llvm_matched_value = rec->backend_handle;
     } else {
         // if it's a match expression acting as function body
         llvm_matched_value = LLVMGetParam(ctx->current_function, 0);
-        matched_type_contents = rir_types_list_get_type(
-            &ctx->rir->rir_types_list,
-            ast_matchexpr_headless_args(n)->expression_type,
-            NULL
+        matched_type_contents = type_get_rir_or_die(
+            ast_node_get_type_or_nil(ast_matchexpr_headless_args(n), AST_TYPERETR_AS_LEAF)
         );
     }
     RF_ASSERT(llvm_matched_value, "Could not get llvm Value ref for the object");
     
     // allocate a return value if needed
     LLVMValueRef ret_alloc = NULL;
-    if (!type_is_specific_elementary(n->expression_type, ELEMENTARY_TYPE_NIL)) {
-        LLVMTypeRef ret_llvm_type = bllvm_type_from_normal(n->expression_type, ctx);
+    if (!type_is_specific_elementary(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ELEMENTARY_TYPE_NIL)) {
+        LLVMTypeRef ret_llvm_type = bllvm_type_from_type(
+            ast_node_get_type_or_nil(n, AST_TYPERETR_DEFAULT),
+            ctx
+        );
         ret_alloc = LLVMBuildAlloca(ctx->builder, ret_llvm_type, "");
     }
 
@@ -125,7 +116,7 @@ struct LLVMOpaqueValue *bllvm_compile_matchexpr(struct ast_node *n,
             mcase,
             matched_type_contents,
             ret_alloc,
-            n->expression_type,
+            ast_node_get_type(n, AST_TYPERETR_AS_LEAF),
             llvm_matched_value,
             llvm_switch,
             match_end,

@@ -48,6 +48,8 @@ struct rir_type {
     //! Name of the variable the type describes. TODO: Maybe move this somwhere
     //! else. Separate the notion of type from parameter?
     const struct RFstring *name;
+    //! A pointer to the normal type from which this rir type was created.
+    const struct type *type;
     //! Control to input into the rir types list
     struct RFilist_node ln;
     //! Denotes if the type is indexed in the rir types list (or some other list)

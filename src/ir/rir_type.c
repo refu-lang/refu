@@ -27,6 +27,9 @@ static bool rir_type_init_iteration(struct rir_type *type,
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
         type->name = input->defined.name;
+        // here since rir_type_create() gets the type of the defined, we have to
+        // manually set tne rir type of input
+        input->rir_type = type;
         new_type = rir_type_create(input->defined.type, NULL);
         if (!new_type) {
             return false;
@@ -83,13 +86,16 @@ static bool rir_type_init_iteration(struct rir_type *type,
 }
 
 bool rir_type_init_before_iteration(struct rir_type *type,
-                                    const struct type *input,
+                                    struct type *input,
                                     const struct RFstring *name)
 {
+    RF_STRUCT_ZERO(type);
     darray_init(type->subtypes);
     type->name = name;
     type->indexed = false;
-
+    type->type = input;
+    // keep the rir type version of the type
+    input->rir_type = type;
     // for elementary types there is nothing to inialize
     if (input->category == TYPE_CATEGORY_ELEMENTARY) {
         type->category = (enum rir_type_category) type_elementary(input);
@@ -140,8 +146,6 @@ struct rir_type *rir_type_create(struct type *input,
         RF_ERROR("Failed at rir_type initialization");
         rir_type_dealloc(ret);
     }
-    // keep the rir type version of the type
-    input->rir_type = ret;
     return ret;
 }
 
@@ -465,7 +469,7 @@ const struct rir_type *rir_type_contents(const struct rir_type *t)
     return t->category == COMPOSITE_RIR_DEFINED ? darray_item(t->subtypes, 0) : t;
 }
 
-const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
+const struct RFstring *rir_type_get_nth_name(const struct rir_type *t, unsigned n)
 {
     // if it's only 1 simple type and we want the first subtype's name it's this one
     if (n == 0 && darray_size(t->subtypes) == 0) {
@@ -476,9 +480,9 @@ const struct RFstring *rir_type_get_nth_name(struct rir_type *t, unsigned n)
     }
     return ((struct rir_type*)darray_item(t->subtypes, n))->name;
 }
-i_INLINE_INS const struct RFstring *rir_type_get_nth_name_or_die(struct rir_type *t, unsigned n);
+i_INLINE_INS const struct RFstring *rir_type_get_nth_name_or_die(const struct rir_type *t, unsigned n);
 
-const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
+const struct rir_type *rir_type_get_nth_type(const struct rir_type *t, unsigned n)
 {
     // if it's only 1 simple type and we want the first subtype's type it's this one
     if (n == 0 && darray_size(t->subtypes) == 0) {
@@ -490,7 +494,7 @@ const struct rir_type *rir_type_get_nth_type(struct rir_type *t, unsigned n)
     }
     return darray_item(t->subtypes, n);
 }
-i_INLINE_INS const struct rir_type *rir_type_get_nth_type_or_die(struct rir_type *t, unsigned n);
+i_INLINE_INS const struct rir_type *rir_type_get_nth_type_or_die(const struct rir_type *t, unsigned n);
 
 static inline const struct RFstring *rir_type_op_to_str(const struct rir_type *t)
 {
@@ -578,27 +582,34 @@ struct RFstring *rir_type_str(const struct rir_type *t)
 }
 i_INLINE_INS struct RFstring *rir_type_str_or_die(const struct rir_type *t);
 
-size_t rir_type_get_uid(const struct rir_type *t)
-{
-    size_t ret;
-    struct RFstring *s;
-    RFS_PUSH();
-    s = rir_type_str_or_die(t);
-    ret = rf_hash_str_stable(s, 0);
-    RFS_POP();
-    return ret;
-}
+// NOTE: preserve order
+static struct rir_type i_rir_elementary_types[] = {
+#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)    \
+    [i_type] = {                                    \
+        .category = (enum rir_type_category)i_type, \
+        .type = NULL,                               \
+    }
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_8),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_16),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_16),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_32),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_32),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_64),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_64),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_32),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_FLOAT_64),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_STRING),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_BOOL),
+    INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_NIL)
+#undef INIT_ELEMENTARY_TYPE_ARRAY_INDEX
+};
 
-const struct RFstring *rir_type_get_unique_value_str(const struct rir_type *t,
-                                                     const struct rf_objset_type *set)
+const struct rir_type *rir_type_get_elementary(enum elementary_type etype)
 {
-    return type_get_unique_value_str(type_objset_get_rir_type(set, t));
+    return &i_rir_elementary_types[etype];
 }
-
-const struct RFstring *rir_type_get_unique_type_str(const struct rir_type *t,
-                                                    const struct rf_objset_type *set)
-{
-    return type_get_unique_type_str(type_objset_get_rir_type(set, t));
-}
-
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);
+i_INLINE_INS const struct type *rir_type_get_type_or_die(const struct rir_type *type);

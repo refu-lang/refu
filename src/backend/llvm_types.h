@@ -5,6 +5,7 @@
 
 struct RFstring;
 struct rir_type;
+struct type;
 struct llvm_traversal_ctx;
 struct LLVMOpaqueType;
 
@@ -83,7 +84,7 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
  * @param type        The rir type whose members to get. Must not be a sum type
  * @param ctx         The llvm traversal context
  */
-struct LLVMOpaqueType **bllvm_simple_member_types(struct rir_type *type,
+struct LLVMOpaqueType **bllvm_simple_member_types(const struct rir_type *type,
                                                   struct llvm_traversal_ctx *ctx);
 
 

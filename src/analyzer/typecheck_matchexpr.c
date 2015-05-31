@@ -246,7 +246,10 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         useless_case = true;        
     }
     RFS_PUSH();
-    const struct type *case_pattern_type = ast_matchcase_pattern(n)->expression_type;
+    const struct type *case_pattern_type = ast_node_get_type_or_die(
+        ast_matchcase_pattern(n),
+        AST_TYPERETR_DEFAULT
+    );
     const struct type *match_type = ast_matchexpr_matched_type(
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx),
         ctx->current_st->parent
@@ -255,7 +258,10 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
     // res_type can be NULL if the expression has void type. e.g.: print("foo")
-    const struct type *res_type = ast_matchcase_expression(n)->expression_type;
+    const struct type *res_type = ast_node_get_type_or_die(
+        ast_matchcase_expression(n),
+        AST_TYPERETR_DEFAULT
+    );
     RF_ASSERT(case_pattern_type, "a type for the match case pattern should have been determined");
 
     if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
@@ -305,9 +311,10 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
     struct type *matchexpr_type = NULL;
     rf_objset_init(&case_types, type);
     ast_matchexpr_foreach(n, &it, mcase) {
-        RF_ASSERT(ast_matchcase_expression(mcase)->expression_type,
-                  "A match case's expression type is not determined");
-        case_type = (struct type*)ast_matchcase_expression(mcase)->expression_type;
+        case_type = (struct type*)ast_node_get_type_or_die(
+            ast_matchcase_expression(mcase),
+            AST_TYPERETR_DEFAULT
+        );
         // Check if it's in the set. If yes skip this.
         if (rf_objset_get(&case_types, type, case_type)) {
             continue;

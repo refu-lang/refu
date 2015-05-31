@@ -6,7 +6,6 @@
 #include <ast/ast.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/string_table.h>
-#include <ir/elements.h>
 #include <ir/rir_type.h>
 #include <ir/rir_types_list.h>
 

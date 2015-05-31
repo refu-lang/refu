@@ -30,9 +30,15 @@ static const struct RFstring elementary_type_strings[] = {
 
 // NOTE: preserve order
 static struct type i_elementary_types[] = {
-#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)                        \
-    [i_type] = {.category = TYPE_CATEGORY_ELEMENTARY, .elementary = {.etype=i_type, \
-                                                                     .is_constant = false}}
+#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)    \
+    [i_type] = {                                    \
+        .category = TYPE_CATEGORY_ELEMENTARY,       \
+        .rir_type = NULL,                           \
+        .elementary = {                             \
+            .etype=i_type,                          \
+            .is_constant = false                    \
+        }                                           \
+    }
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_16),
@@ -50,10 +56,16 @@ static struct type i_elementary_types[] = {
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_NIL)
 #undef INIT_ELEMENTARY_TYPE_ARRAY_INDEX
 };
-static struct type i_elementary_types_constant[] = {
-#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(i_type)                        \
-    [i_type] = {.category = TYPE_CATEGORY_ELEMENTARY, .elementary = {.etype=i_type, \
-                                                                     .is_constant = true}}
+static struct type i_elementary_types_constant[] = {    
+#define INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(i_type)   \
+    [i_type] = {                                    \
+        .category = TYPE_CATEGORY_ELEMENTARY,       \
+        .rir_type = NULL,                           \
+        .elementary = {                             \
+            .etype=i_type,                          \
+            .is_constant = true                     \
+        }                                           \
+    }
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_UINT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_16),

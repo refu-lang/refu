@@ -493,8 +493,9 @@ START_TEST(test_determine_block_type1) {
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     block = ast_node_get_child(front_testdriver_get_ast_root(d), 0);
     ck_assert_msg(block, "Block should be the first child of the root");
-    ck_assert_msg(block->expression_type, "Block should have a type");
-    ck_assert_msg(type_compare(block->expression_type, t_f64, TYPECMP_IDENTICAL),
+    const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
+    ck_assert_msg(block_type, "Block should have a type");
+    ck_assert_msg(type_compare(block_type, t_f64, TYPECMP_IDENTICAL),
                   "Expected the block's type to be an f64");
 } END_TEST
 
@@ -526,8 +527,9 @@ START_TEST(test_determine_block_type2) {
 
     block = ast_node_get_child(front_testdriver_get_ast_root(d), 1);
     ck_assert_msg(block, "Block should be the second child of the root");
-    ck_assert_msg(block->expression_type, "Block should have a type");
-    ck_assert_msg(type_compare(block->expression_type, t_foo, TYPECMP_IDENTICAL),
+    const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
+    ck_assert_msg(block_type, "Block should have a type");
+    ck_assert_msg(type_compare(block_type, t_foo, TYPECMP_IDENTICAL),
                   "Expected the block's type to be an f64");
 } END_TEST
 

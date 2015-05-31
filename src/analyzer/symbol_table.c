@@ -124,14 +124,6 @@ i_INLINE_INS struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec);
 i_INLINE_INS struct type *
 symbol_table_record_type(struct symbol_table_record *rec);
-struct rir_type *symbol_table_record_rir_type(struct symbol_table_record *rec,
-                                              struct rir_types_list *list)
-{
-    if (!rec->rir_data) {
-        rec->rir_data = rir_types_list_get_type(list, rec->data, NULL);
-    }
-    return rec->rir_data;
-}
 i_INLINE_INS void *
 symbol_table_record_get_backend_handle(struct symbol_table_record *rec);
 i_INLINE_INS void
@@ -315,7 +307,7 @@ static const struct RFstring *symbol_table_extract_string_from_typedesc(const st
     } else if (typedesc->type == AST_TYPE_LEAF) {
         return ast_typeleaf_str(typedesc);
     } else if (typedesc->type == AST_TYPE_OPERATOR) {
-        return type_get_unique_value_str(typedesc->expression_type);
+        return type_get_unique_value_str(ast_node_get_type(typedesc, AST_TYPERETR_AS_LEAF), true);
     }
     return NULL;
 }

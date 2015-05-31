@@ -139,7 +139,7 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     struct rf_objset_iter it;
     AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
     rf_objset_foreach(a->types_set, &it, t) {
-        if (type_equals_ast_node(t, desc, a, st, genrdecl)) {
+        if (type_equals_ast_node(t, desc, a, st, genrdecl, TYPECMP_GENERIC)) {
             return t;
         }
     }

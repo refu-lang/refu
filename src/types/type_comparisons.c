@@ -439,9 +439,12 @@ bool type_compare(const struct type *from,
     return type_same_categories_compare(from, to, reason);
 }
 
-bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
-                          struct analyzer *a, struct symbol_table *st,
-                          struct ast_node *genrdecl)
+bool type_equals_ast_node(struct type *t,
+                          struct ast_node *type_desc,
+                          struct analyzer *a,
+                          struct symbol_table *st,
+                          struct ast_node *genrdecl,
+                          enum comparison_reason options)
 {
     struct type *looked_up_t;
     switch(type_desc->type) {
@@ -456,25 +459,37 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
 
         return type_equals_ast_node(t->operator.left,
                                     ast_typeop_left(type_desc),
-                                    a, st, genrdecl) &&
+                                    a, st, genrdecl, options) &&
             type_equals_ast_node(t->operator.right,
                                  ast_typeop_right(type_desc),
-                                 a, st, genrdecl);
+                                 a, st, genrdecl, options);
     case AST_TYPE_LEAF:
     {
         AST_NODE_ASSERT_TYPE(ast_typeleaf_left(type_desc), AST_IDENTIFIER);
-        bool predicate = true;
-        if (t->category == TYPE_CATEGORY_LEAF) {
-            predicate = rf_string_equal(t->leaf.id, ast_identifier_str(ast_typeleaf_left(type_desc)));
+        if (t->category != TYPE_CATEGORY_LEAF) {
+            return false;
         }
-        return predicate && type_equals_ast_node(t, ast_typeleaf_right(type_desc),
-                                                 a, st, genrdecl);
+        return rf_string_equal(t->leaf.id, ast_identifier_str(ast_typeleaf_left(type_desc))) &&
+            type_equals_ast_node(
+                t,
+                ast_typeleaf_right(type_desc),
+                a,
+                st,
+                genrdecl,
+                TYPECMP_IDENTICAL
+            );
     }
     case AST_TYPE_DESCRIPTION:
-        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), a, st, genrdecl);
+        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), a, st, genrdecl, options);
     case AST_TYPE_DECLARATION:
-        return type_equals_ast_node(t, ast_typedecl_typedesc_get(type_desc),
-                                    a, st, genrdecl);
+        return type_equals_ast_node(
+            t,
+            ast_typedecl_typedesc_get(type_desc),
+            a,
+            st,
+            genrdecl,
+            options
+        );
     case AST_XIDENTIFIER:
         looked_up_t = type_lookup_xidentifier(type_desc, a, st, genrdecl);
         if (!looked_up_t) {
@@ -482,7 +497,13 @@ bool type_equals_ast_node(struct type *t, struct ast_node *type_desc,
             return false;
         }
 
-        return type_compare(t, looked_up_t, TYPECMP_GENERIC);
+        // if we get here due to a comparison with a typeleaf then the left
+        // identifier must have matched. Only type remains to be matched.
+        if (t->category == TYPE_CATEGORY_LEAF) {
+            t = t->leaf.type;
+        }
+
+        return type_compare(t, looked_up_t, options);
     default:
         break;
     }

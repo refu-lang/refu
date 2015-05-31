@@ -18,8 +18,8 @@ struct ast_node *ast_condbranch_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS struct ast_node *ast_condbranch_condition_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_condbranch_body_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_condbranch_condition_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_condbranch_body_get(const struct ast_node *n);
 
 struct ast_node *ast_ifexpr_create(const struct inplocation_mark *start,
                                    const struct inplocation_mark *end,
@@ -39,9 +39,9 @@ struct ast_node *ast_ifexpr_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS void ast_ifexpr_add_fallthrough_branch(struct ast_node *n,
-                                                     struct ast_node *branch);
+                                                    struct ast_node *branch);
 
-i_INLINE_INS struct ast_node *ast_ifexpr_condition_get(struct ast_node *ifexpr);
-i_INLINE_INS struct ast_node *ast_ifexpr_taken_block_get(struct ast_node *ifexpr);
-i_INLINE_INS struct ast_node *ast_ifexpr_taken_branch_get(struct ast_node *ifexpr);
-i_INLINE_INS struct ast_node *ast_ifexpr_fallthrough_branch_get(struct ast_node *ifexpr);
+i_INLINE_INS struct ast_node *ast_ifexpr_condition_get(const struct ast_node *ifexpr);
+i_INLINE_INS struct ast_node *ast_ifexpr_taken_block_get(const struct ast_node *ifexpr);
+i_INLINE_INS struct ast_node *ast_ifexpr_taken_branch_get(const struct ast_node *ifexpr);
+i_INLINE_INS struct ast_node *ast_ifexpr_fallthrough_branch_get(const struct ast_node *ifexpr);

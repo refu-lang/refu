@@ -43,7 +43,7 @@ static bool do_type_function_add_args_to_st(struct type *t, void *user)
         return symbol_table_add_type(
             ctx->st,
             ctx->analyzer,
-            type_get_unique_value_str(t),
+            type_get_unique_value_str(t, true),
             t
         );
     }
@@ -118,10 +118,10 @@ static bool type_leaf_init_from_node(struct type_leaf *leaf,
     return true;
 }
 
-static struct type *type_leaf_create_from_node(struct ast_node *typedesc,
-                                               struct analyzer *a,
-                                               struct symbol_table *st,
-                                               struct ast_node *genrdecl)
+struct type *type_leaf_create_from_node(struct ast_node *typedesc,
+                                        struct analyzer *a,
+                                        struct symbol_table *st,
+                                        struct ast_node *genrdecl)
 {
     struct type *ret;
     ret = type_alloc(a);
@@ -157,9 +157,9 @@ static bool type_init_from_typeelem(struct type *t, struct ast_node *typeelem,
                                             st,
                                             genrdecl);
     case AST_TYPE_DESCRIPTION:
-        RF_ASSERT(false, "Not implemented yet");
-        //TODO: what?
-        break;
+        // case of anonymous type on the right of a typeleaf
+        // e.g.:  foo:(i32 | string)
+        return type_init_from_typeelem(t, ast_typedesc_desc_get(typeelem), a, st, genrdecl);
     default:
         RF_ASSERT_OR_EXIT(false, "Case should never happen");
         break;
@@ -580,27 +580,36 @@ struct RFstring *type_str(const struct type *t, int options)
         return type_str_do(t, options);
     }
 }
+i_INLINE_INS const struct rir_type *type_get_rir_or_die(const struct type *type);
 i_INLINE_INS struct RFstring *type_str_or_die(const struct type *t, int options);
 
-size_t type_get_uid(const struct type *t)
+size_t type_get_uid(const struct type *t, bool count_leaf_id)
 {
     size_t ret;
     struct RFstring *str;
     RFS_PUSH();
-    str = type_str_or_die(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS);
+    str = count_leaf_id ? type_str_or_die(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS)
+        : type_str_or_die(t, TSTR_DEFINED_CONTENTS);
     ret = rf_hash_str_stable(str, 0);
     RFS_POP();
     return ret;
 }
 
-const struct RFstring *type_get_unique_value_str(const struct type *t)
+
+
+const struct RFstring *type_get_unique_value_str(const struct type *t, bool count_leaf_id)
 {
-    return RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t));
+    return t->category == TYPE_CATEGORY_DEFINED
+        ? RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t->defined.type, count_leaf_id))
+        : RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t, count_leaf_id));
 }
 
-const struct RFstring *type_get_unique_type_str(const struct type *t)
+const struct RFstring *type_get_unique_type_str(const struct type *t, bool count_leaf_id)
 {
-    return RFS_OR_DIE("internal_struct_%u", type_get_uid(t));
+    if (t->category == TYPE_CATEGORY_DEFINED) {
+        t = t->defined.type;
+    }
+    return RFS_OR_DIE("internal_struct_%u", type_get_uid(t, count_leaf_id));
 }
 
 static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDCARD};
@@ -617,6 +626,8 @@ const struct RFstring *type_defined_get_name(const struct type *t)
 
 i_INLINE_INS bool type_is_sumop(const struct type *t);
 i_INLINE_INS bool type_is_sumtype(const struct type *t);
+i_INLINE_INS const struct type *type_get_nth_type_or_die(const struct type *t, unsigned int index);
+i_INLINE_INS const struct RFstring *type_get_nth_name_or_die(const struct type *t, unsigned int index);
 
 /* -- type traversal functions -- */
 

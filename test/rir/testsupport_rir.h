@@ -11,7 +11,6 @@ struct rir_testdriver {
     struct analyzer_testdriver *analyzer_driver;
 
     struct rir *rir;
-    struct rir_module *module;
     //! A buffer of rir types for quick type checks
     //! and easy freeing at test teardown
     struct {darray(struct rir_type*);} rir_types;
