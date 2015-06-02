@@ -61,6 +61,13 @@ i_INLINE_DECL enum fndecl_position ast_fndecl_position_get(struct ast_node *n)
     return n->fndecl.position;
 }
 
+i_INLINE_DECL unsigned ast_fndecl_argsnum_get(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    RF_ASSERT(n->state >= AST_NODE_STATE_RIR_END, "Getter() called before analysis ended."); 
+    return n->fndecl.args_num;
+}
+
 struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
 
 /* -- function implementation functions -- */

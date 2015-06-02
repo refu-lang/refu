@@ -12,7 +12,7 @@
 
 
 
-START_TEST(test_types_list_simple1) {
+START_TEST (test_types_list_simple1) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn foo(a:u32) -> u64 {\n"

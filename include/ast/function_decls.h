@@ -26,6 +26,8 @@ struct ast_fndecl {
 
     //! Position of function declaration. Basically where it's found in the code
     enum fndecl_position position;
+    //! Number of function arguments
+    unsigned args_num;
 
     //! Symbol table of the function's arguments and return values.
     //! Only initialized in analyzer phase.

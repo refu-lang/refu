@@ -30,6 +30,8 @@ struct rir {
 bool rir_init(struct rir *r, struct analyzer *a);
 struct rir *rir_create(struct analyzer *a);
 
+bool rir_finalize_ast(struct rir *r);
+
 void rir_deinit(struct rir *r);
 void rir_destroy(struct rir *r);
 #endif

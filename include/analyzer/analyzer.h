@@ -143,8 +143,7 @@ struct inpfile *analyzer_get_file(struct analyzer *a);
  *
  * @return                    @c true for success and @c false for failure
  */
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
-                           bool with_global_context);
+bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, bool with_global_context);
 
 // TODO: Properly use the set itself for comparison of already existing types
 bool analyzer_types_set_add(struct analyzer *a, struct type *new_type);

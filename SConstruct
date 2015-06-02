@@ -178,6 +178,7 @@ unit_tests_files = [
     'types/test_types.c',
 
     'rir/testsupport_rir.c',
+    'rir/test_finalized_ast.c',
     'rir/test_rir_types.c',
 
     'end_to_end/test_end_to_end_basic.c',

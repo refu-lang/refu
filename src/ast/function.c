@@ -35,6 +35,7 @@ i_INLINE_INS struct ast_node *ast_fndecl_genrdecl_get(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_fndecl_args_get(struct ast_node *n);
 i_INLINE_INS struct ast_node *ast_fndecl_return_get(struct ast_node *n);
 i_INLINE_INS enum fndecl_position ast_fndecl_position_get(struct ast_node *n);
+i_INLINE_INS unsigned ast_fndecl_argsnum_get(const struct ast_node *n);
 i_INLINE_INS bool ast_fndecl_symbol_table_init(struct ast_node *n,
                                                struct analyzer *a);
 i_INLINE_INS struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n);
