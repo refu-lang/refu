@@ -259,6 +259,7 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
     );
     char *fn_name;
     char *param_name;
+    unsigned args_num = ast_fndecl_argsnum_get(fn_decl);
     RFS_PUSH();
     fn_name = rf_string_cstr_from_buff_or_die(ast_fndecl_name_str(fn_decl));
     // evaluating types here since you are not guaranteed order of execution of
@@ -286,8 +287,8 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
     struct symbol_table_record *rec;
     const struct RFstring *param_name_str;
 
-    if (!type_is_specific_elementary(fn_args, ELEMENTARY_TYPE_NIL)) {
-        for (i = 0; i < LLVMCountParams(ctx->current_function); ++i) {
+    if (args_num != 0) {
+        for (i = 0; i < args_num; ++i) {
             LLVMTypeRef alloca_type;
 
             // for each argument of the function allocate an LLVM variable

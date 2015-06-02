@@ -37,25 +37,25 @@ i_INLINE_DECL struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *
     return &n->fndecl.st;
 }
 
-i_INLINE_DECL struct ast_node *ast_fndecl_genrdecl_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_fndecl_genrdecl_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     return n->fndecl.genr;
 }
 
-i_INLINE_DECL struct ast_node *ast_fndecl_args_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_fndecl_args_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     return n->fndecl.args;
 }
 
-i_INLINE_DECL struct ast_node *ast_fndecl_return_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_fndecl_return_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     return n->fndecl.ret;
 }
 
-i_INLINE_DECL enum fndecl_position ast_fndecl_position_get(struct ast_node *n)
+i_INLINE_DECL enum fndecl_position ast_fndecl_position_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     return n->fndecl.position;
@@ -77,13 +77,13 @@ struct ast_node *ast_fnimpl_create(const struct inplocation_mark *start,
                                    struct ast_node *decl,
                                    struct ast_node *body);
 
-i_INLINE_DECL struct ast_node *ast_fnimpl_fndecl_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_fnimpl_fndecl_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     return n->fnimpl.decl;
 }
 
-i_INLINE_DECL struct ast_node *ast_fnimpl_body_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_fnimpl_body_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     return n->fnimpl.body;
@@ -96,7 +96,7 @@ i_INLINE_DECL void ast_fnimpl_symbol_table_set(struct ast_node *n,
     n->fnimpl.st = st;
 }
 
-i_INLINE_DECL struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *n)
+i_INLINE_DECL struct symbol_table *ast_fnimpl_symbol_table_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     return n->fnimpl.st;

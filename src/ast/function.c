@@ -31,10 +31,10 @@ struct ast_node *ast_fndecl_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_fndecl_genrdecl_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_fndecl_args_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_fndecl_return_get(struct ast_node *n);
-i_INLINE_INS enum fndecl_position ast_fndecl_position_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_genrdecl_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_args_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fndecl_return_get(const struct ast_node *n);
+i_INLINE_INS enum fndecl_position ast_fndecl_position_get(const struct ast_node *n);
 i_INLINE_INS unsigned ast_fndecl_argsnum_get(const struct ast_node *n);
 i_INLINE_INS bool ast_fndecl_symbol_table_init(struct ast_node *n,
                                                struct analyzer *a);
@@ -64,11 +64,11 @@ struct ast_node *ast_fnimpl_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS struct ast_node *ast_fnimpl_fndecl_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_fnimpl_body_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fnimpl_fndecl_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_fnimpl_body_get(const struct ast_node *n);
 i_INLINE_INS void ast_fnimpl_symbol_table_set(struct ast_node *n,
                                               struct symbol_table *st);
-i_INLINE_INS struct symbol_table *ast_fnimpl_symbol_table_get(struct ast_node *n);
+i_INLINE_INS struct symbol_table *ast_fnimpl_symbol_table_get(const struct ast_node *n);
 
 /* -- function call functions -- */
 

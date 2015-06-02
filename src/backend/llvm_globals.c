@@ -68,7 +68,8 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
         rf_string_cstr_from_buff_or_die(string),
         length,
         rf_string_data(s),
-        ctx);
+        ctx
+    );
 
     LLVMValueRef indices_0 [] = {
         LLVMConstInt(LLVMInt32Type(), 0, 0),
@@ -97,7 +98,8 @@ LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string,
     return bllvm_create_global_const_string_with_hash(
         string,
         rf_hash_str_stable(string, 0),
-        ctx);
+        ctx
+    );
 }
 
 static void bllvm_const_string_creation_cb(const struct string_table_record *rec,
