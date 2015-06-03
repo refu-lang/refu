@@ -10,6 +10,7 @@
 #include <ast/vardecl.h>
 #include <ast/block.h>
 #include <ast/function.h>
+#include <ast/import.h>
 #include <types/type_comparisons.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
@@ -494,6 +495,18 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 RF_STR_PF_ARG(ast_identifier_str(expect))
             );
             return false;
+        }
+        break;
+    case AST_IMPORT:
+        if (ast_import_is_foreign(got) != ast_import_is_foreign(expect)) {
+
+            ck_astcheck_abort(
+                filename, line,
+                "import statement type mismatch: Got %s but expected %s",
+                ast_import_is_foreign(got) ? "foreign" : "normal",
+                ast_import_is_foreign(expect) ? "foreign" : "normal"
+            );
+                
         }
         break;
     case AST_TYPE_OPERATOR:

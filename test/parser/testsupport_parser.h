@@ -173,6 +173,16 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             parser_finalize_parsing(node_);                            \
         } while (0)
 
+#define ck_test_parse_root(node_, driver_, target_)                     \
+    do {                                                                \
+            testsupport_parser_prepare(driver_);                        \
+            parser_process_file((driver_)->front.parser);               \
+            node_ = (driver_)->front.parser->root;                      \
+            ck_assert_parsed_node(node_, driver_, "Could not parse root node"); \
+            check_ast_match(n, target_, (driver_)->front.file);        \
+            parser_finalize_parsing(node_);                            \
+        } while (0)
+
 
 
 #define ck_assert_parsed_node(n_, d_, msg_)                             \

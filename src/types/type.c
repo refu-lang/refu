@@ -413,6 +413,7 @@ struct type *type_leaf_create(struct analyzer *a,
     t->category = TYPE_CATEGORY_LEAF;
     t->leaf.id = id;
     t->leaf.type = leaf_type;
+    analyzer_types_set_add(a, t);
     return t;
 }
 
@@ -431,6 +432,7 @@ struct type *type_operator_create(struct analyzer *a,
     t->operator.type = type;
     t->operator.left = left_type;
     t->operator.right = right_type;
+    analyzer_types_set_add(a, t);
     return t;
 }
 

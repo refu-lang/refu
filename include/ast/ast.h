@@ -19,6 +19,7 @@
 #include <ast/matchexpr_decls.h>
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
+#include <ast/import_decls.h>
 #include <types/type_elementary.h>
 
 #include <analyzer/symbol_table.h>
@@ -60,6 +61,7 @@ enum ast_type {
     AST_IF_EXPRESSION,
     AST_MATCH_EXPRESSION,
     AST_MATCH_CASE,
+    AST_IMPORT,
     AST_XIDENTIFIER,
     AST_BINARY_OPERATOR,
     AST_UNARY_OPERATOR,
@@ -107,6 +109,7 @@ struct ast_node {
         struct ast_ifexpr ifexpr;
         struct ast_matchcase matchcase;
         struct ast_matchexpr matchexpr;
+        struct ast_import import;
         struct ast_binaryop binaryop;
         struct ast_unaryop unaryop;
         struct ast_string_literal string_literal;

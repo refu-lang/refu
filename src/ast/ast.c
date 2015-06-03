@@ -31,6 +31,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("if expression"),
     RF_STRING_STATIC_INIT("match expression"),
     RF_STRING_STATIC_INIT("match case"),
+    RF_STRING_STATIC_INIT("import statement"),
     RF_STRING_STATIC_INIT("annotated identifier"),
     RF_STRING_STATIC_INIT("binary operator"),
     RF_STRING_STATIC_INIT("unary operator"),

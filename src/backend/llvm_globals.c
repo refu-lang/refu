@@ -131,7 +131,7 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
     LLVMValueRef llvm_fn;
     // evaluating types here since you are not guaranteed order of execution of
     // a function's arguments and this does have sideffects we read from
-    LLVMTypeRef  args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0) };
+    LLVMTypeRef args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0) };
     llvm_fn = LLVMAddFunction(ctx->mod, "print",
                               LLVMFunctionType(LLVMVoidType(),
                                                args,
@@ -152,9 +152,13 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
     LLVMValueRef printf_str_lit = bllvm_add_global_strbuff("%.*s\0", 5, "printf_str_literal", ctx);
     LLVMValueRef gep_to_strlit = bllvm_gep_to_struct(printf_str_lit, 0, ctx);
     LLVMValueRef printf_call_args[] = { gep_to_strlit, length, string_data };
-    LLVMBuildCall(ctx->builder, LLVMGetNamedFunction(ctx->mod, "printf"),
-                  printf_call_args,
-                  3, "printf_call");
+    LLVMBuildCall(
+        ctx->builder,
+        LLVMGetNamedFunction(ctx->mod, "printf"),
+        printf_call_args,
+        3,
+        "printf_call"
+    );
 
     LLVMBuildRetVoid(ctx->builder);
 }
@@ -162,8 +166,8 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
 static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
 {
     // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
-    LLVMValueRef fn =  LLVMAddFunction(ctx->mod, "llvm.donothing",
-                                       LLVMFunctionType(LLVMVoidType(), NULL, 0, false));
+    LLVMValueRef fn = LLVMAddFunction(ctx->mod, "llvm.donothing",
+                                      LLVMFunctionType(LLVMVoidType(), NULL, 0, false));
     LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
     LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
 }

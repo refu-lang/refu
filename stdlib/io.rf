@@ -1,0 +1,5 @@
+foreign_import _print_int, _print_string
+
+fn print(a:i32 | s:string)
+    a:i32    => _print_int(a)
+    s:string => _print_string(s)

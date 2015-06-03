@@ -11,6 +11,7 @@
 #include "function.h"
 #include "block.h"
 #include "vardecl.h"
+#include "import.h"
 
 static struct ast_node *parser_acc_stmt(struct parser *p);
 
@@ -48,9 +49,9 @@ bool parser_process_file(struct parser *p)
 
 static struct ast_node *parser_acc_stmt(struct parser *p)
 {
-    struct ast_node *stmt = NULL;
-    struct token *tok;
     struct token *tok2;
+    struct token *tok;
+    struct ast_node *stmt = NULL;
 
     tok = lexer_lookahead(p->lexer, 1);
     tok2 = lexer_lookahead(p->lexer, 2);
@@ -63,6 +64,8 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
         stmt = parser_acc_typedecl(p);
     } else if (TOKENS_ARE_FNDECL_OR_IMPL(tok, tok2)) {
         stmt = parser_acc_fnimpl(p);
+    } else if (TOKEN_IS_IMPORT(tok)) {
+        stmt = parser_acc_import(p);
     }
 
     return stmt;

@@ -20,6 +20,8 @@ returnTOKEN_KW_RETURN
 trueTOKEN_KW_TRUE
 falseTOKEN_KW_FALSE
 matchTOKEN_KW_MATCH
+importTOKEN_KW_IMPORT
+foreign_importTOKEN_KW_FOREIGN_IMPORT
 # special symbols
 :TOKEN_SM_COLON
 {TOKEN_SM_OCBRACE

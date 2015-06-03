@@ -22,6 +22,8 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("true"),
     RF_STRING_STATIC_INIT("false"),
     RF_STRING_STATIC_INIT("match"),
+    RF_STRING_STATIC_INIT("import"),
+    RF_STRING_STATIC_INIT("foreign_import"),
 
     /* symbols */
     RF_STRING_STATIC_INIT(":"),
@@ -70,7 +72,6 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("|"),
     RF_STRING_STATIC_INIT(","),
     RF_STRING_STATIC_INIT("->"),
-
 };
 
 const struct RFstring *tokentype_to_str(enum token_type type)

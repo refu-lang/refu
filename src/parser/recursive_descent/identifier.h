@@ -20,7 +20,7 @@ i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
 {
     struct token *tok;
     tok = lexer_lookahead(p->lexer, 1);
-    if (tok && tok->type != TOKEN_IDENTIFIER) {
+    if (!tok || tok->type != TOKEN_IDENTIFIER) {
         return NULL;
     }
     // consume the identifier token and return it

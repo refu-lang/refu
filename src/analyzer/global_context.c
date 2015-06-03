@@ -9,9 +9,8 @@ bool analyzer_load_globals(struct analyzer *a)
 {
     //add print() to special functions
     static const struct RFstring arg_name1 = RF_STRING_STATIC_INIT("a");
-#if 0 // temporary make print accept only string for debugging purposes. TODO: fix
     static const struct RFstring arg_name2 = RF_STRING_STATIC_INIT("b");
-#endif
+
     static const struct RFstring print_fn_name = RF_STRING_STATIC_INIT("print");
     struct symbol_table *root_st = ast_root_symbol_table_get(a->root);
     struct type *type_string = type_leaf_create(
@@ -21,11 +20,11 @@ bool analyzer_load_globals(struct analyzer *a)
     if (!type_string) {
         goto fail;
     }
-#if 0 // temporary make print accept only string for debugging purposes. TODO: fix
     struct type *type_int = type_leaf_create(
         a,
         &arg_name2,
-        type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_64));
+        type_elementary_get_type_constant(ELEMENTARY_TYPE_INT_64)
+    );
     if (!type_int) {
         goto fail;
     }
@@ -34,9 +33,6 @@ bool analyzer_load_globals(struct analyzer *a)
     if (!arg_type) {
         goto fail;
     }
-#else
-    struct type *arg_type = type_string;
-#endif
 
     struct type *print_fn_type = type_function_create(
         a,

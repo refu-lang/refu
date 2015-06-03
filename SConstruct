@@ -39,6 +39,7 @@ refu_src = [
     'ast/ifexpr.c',
     'ast/matchexpr.c',
     'ast/returnstmt.c',
+    'ast/import.c',
     'ast/ast_utils.c',
 
     'utils/traversal.c',
@@ -79,6 +80,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/vardecl.c',
         'parser/recursive_descent/ifexpr.c',
         'parser/recursive_descent/matchexpr.c',
+        'parser/recursive_descent/import.c',
     ]
 
 # add specific environment variables
@@ -163,7 +165,7 @@ unit_tests_files = [
     'parser/test_parser_operators.c',
     'parser/test_parser_block.c',
     'parser/test_parser_ifexpr.c',
-    'parser/test_parser_expressions.c',
+    'parser/test_parser_misc.c',
     'parser/test_parser_matchexpr.c',
 
     'analyzer/testsupport_analyzer.c',

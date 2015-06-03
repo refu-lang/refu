@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include <Data_Structures/darray.h>
+/* #include <Data_Structures/darray.h> */
 #include <ast/identifier.h>
 
 #include <lexer/tokens.h>

@@ -365,7 +365,6 @@ static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
     // an ast_type_leaf's type is a type leaf
     traversal_node_set_type(
         n,
-        /* type_leaf_create_from_node(n, ctx->a, ctx->current_st, NULL), */
         analyzer_get_or_create_type(ctx->a, n, ctx->current_st, NULL),
         ctx
     );
