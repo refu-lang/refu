@@ -9,6 +9,7 @@
 #include <ast/function.h>
 #include <ast/matchexpr.h>
 #include <ast/string_literal.h>
+#include <ast/import.h>
 #include <ast/ast_utils.h>
 
 #include <types/type_function.h>
@@ -168,6 +169,35 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     return true;
 }
 
+static bool analyzer_populate_symbol_table_import(struct analyzer_traversal_ctx *ctx,
+                                                  struct ast_node *n)
+{
+    struct symbol_table_record *rec;
+    RF_ASSERT(ast_import_is_foreign(n), "Only foreign imports are supported for now");
+
+    // for now, for foreign functions just insert them into the global symbol table
+    struct ast_node *child;
+    rf_ilist_for_each(&n->children, child, lh) {
+        rec = symbol_table_record_create(
+            ctx->current_st,
+            ctx->a,
+            ast_foreign_fncall(),
+            ast_identifier_str(child)
+        );
+        if (!rec) {
+            RF_ERROR("Symbol table record creation failed");
+            return false;
+        }
+        if (!symbol_table_add_record(ctx->current_st, rec)) {
+            RF_ERROR("Symbol table record addition failed");
+            return false;
+        }
+        // also set the type of identifier (which should be a foreign function)
+        child->expression_type = rec->data;
+    }
+    return true;
+}
+
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg)
 {
@@ -245,6 +275,11 @@ static bool analyzer_first_pass_do(struct ast_node *n,
                   "Attempting to create literal hash for node in a wrong state "
                   "of processing");
         if (!ast_string_literal_hash_create(n, ctx->a)) {
+            return false;
+        }
+        break;
+    case AST_IMPORT:
+        if (!analyzer_populate_symbol_table_import(ctx, n)) {
             return false;
         }
         break;

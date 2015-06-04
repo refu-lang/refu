@@ -527,7 +527,11 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     // check for existence of function
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
-    if (!fn_type || !(type_is_foreign_function(fn_type) || type_is_callable(fn_type))) {
+    if (fn_type && type_is_foreign_function(fn_type)) {
+        // if it's a foreign function call we can't do any typechecking at the moment
+        return TRAVERSAL_CB_OK;
+    }
+    if (!fn_type || !type_is_callable(fn_type)) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
@@ -651,34 +655,12 @@ static enum traversal_cb_res typecheck_block(struct ast_node *n,
 static enum traversal_cb_res typecheck_import(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
-    struct symbol_table_record *rec;
     if (!ast_import_is_foreign(n)) {
         analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                      "Only foreign imports are supported for now");
         return TRAVERSAL_CB_ERROR;
     }
 
-    // for now, for foreign functions just insert them into the global symbol table
-    struct ast_node *child;
-    rf_ilist_for_each(&n->children, child, lh) {
-        rec = symbol_table_record_create(
-            ctx->current_st,
-            ctx->a,
-            ast_foreign_fncall(),
-            ast_identifier_str(child)
-        );
-        if (!rec) {
-            RF_ERROR("Symbol table record creation failed");
-            return TRAVERSAL_CB_ERROR;
-        }
-        if (!symbol_table_add_record(ctx->current_st, rec)) {
-            RF_ERROR("Symbol table record addition failed");
-            return TRAVERSAL_CB_ERROR;
-        }
-        // also set the type of identifier (which should be a foreign function)
-        child->expression_type = rec->data;
-    }
-    
     // import does not have a type
     n->expression_type = NULL;
     return TRAVERSAL_CB_OK;

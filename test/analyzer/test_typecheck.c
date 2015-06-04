@@ -11,47 +11,47 @@
 
 #include CLIB_TEST_HELPERS
 
-/* START_TEST(test_typecheck_variable_declarations) { */
+START_TEST(test_typecheck_variable_declarations) {
 
-/*     static const struct RFstring s = RF_STRING_STATIC_INIT( */
-/*         "{\n" */
-/*         "a:u64 = 523432\n" */
-/*         "b:u64 = 123 + b\n" */
-/*         "s:string = \"Foo\" + \"Bar\"\n" */
-/*         "d:f32 = 98 / 3.21\n" */
-/*         "}" */
-/*     ); */
-/*     struct front_testdriver *d = get_front_testdriver(); */
-/*     front_testdriver_assign(d, &s); */
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u64 = 523432\n"
+        "b:u64 = 123 + b\n"
+        "s:string = \"Foo\" + \"Bar\"\n"
+        "d:f32 = 98 / 3.21\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
 
-/*     ck_assert_typecheck_ok(d, true); */
-/* } END_TEST */
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
 
-/* START_TEST(test_typecheck_negative_int_variable_declarations) { */
+START_TEST(test_typecheck_negative_int_variable_declarations) {
 
-/*     static const struct RFstring s = RF_STRING_STATIC_INIT( */
-/*         "{\n" */
-/*         "a:i32 = -23432\n" */
-/*         "}" */
-/*     ); */
-/*     struct front_testdriver *d = get_front_testdriver(); */
-/*     front_testdriver_assign(d, &s); */
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:i32 = -23432\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
 
-/*     ck_assert_typecheck_ok(d, true); */
-/* } END_TEST */
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
 
-/* START_TEST(test_typecheck_complex_type_in_variable_declaration) { */
+START_TEST(test_typecheck_complex_type_in_variable_declaration) {
 
-/*     static const struct RFstring s = RF_STRING_STATIC_INIT( */
-/*         "{\n" */
-/*         "a:(b:int | c:string)\n" */
-/*         "}" */
-/*     ); */
-/*     struct front_testdriver *d = get_front_testdriver(); */
-/*     front_testdriver_assign(d, &s); */
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:(b:int | c:string)\n"
+        "}"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
 
-/*     ck_assert_typecheck_ok(d, true); */
-/* } END_TEST */
+    ck_assert_typecheck_ok(d, true);
+} END_TEST
 
 START_TEST(test_typecheck_foreign_import) {
 
@@ -268,9 +268,9 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_checked_fixture(t_typecheck_misc,
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
-    /* tcase_add_test(t_typecheck_misc, test_typecheck_variable_declarations); */
-    /* tcase_add_test(t_typecheck_misc, test_typecheck_negative_int_variable_declarations); */
-    /* tcase_add_test(t_typecheck_misc, test_typecheck_complex_type_in_variable_declaration); */
+    tcase_add_test(t_typecheck_misc, test_typecheck_variable_declarations);
+    tcase_add_test(t_typecheck_misc, test_typecheck_negative_int_variable_declarations);
+    tcase_add_test(t_typecheck_misc, test_typecheck_complex_type_in_variable_declaration);
     tcase_add_test(t_typecheck_misc, test_typecheck_foreign_import);
     // TODO: Test where there are errors in two different parts of the code
     //       to assert the continuation of the traversal works

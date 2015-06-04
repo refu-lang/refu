@@ -57,6 +57,7 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
             "Only function call allowed in symbol_table_record_init is ast_foreign_fncall()"
         );
         rec->data = (struct type*)type_foreign_function_get();
+        break;
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
