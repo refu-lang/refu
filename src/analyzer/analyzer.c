@@ -131,7 +131,7 @@ bool analyzer_types_set_add(struct analyzer *a, struct type *new_type)
 }
 
 struct type *analyzer_get_or_create_type(struct analyzer *a,
-                                         struct ast_node *desc,
+                                         const struct ast_node *desc,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl)
 {

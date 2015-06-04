@@ -44,6 +44,7 @@ enum type_category {
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
+    TYPE_CATEGORY_FOREIGN_FUNCTION      /* type of a foreign function */
 };
 
 struct type_elementary {
@@ -83,5 +84,4 @@ struct type {
         struct type_elementary elementary;
     };
 };
-
 #endif

@@ -29,7 +29,7 @@
 
 START_TEST(test_symbol_table_add) {
     struct symbol_table st;
-    struct ast_node *n;
+    const struct ast_node *n;
     bool at_first;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i32\n"
@@ -76,7 +76,7 @@ START_TEST(test_symbol_table_add) {
 
 START_TEST(test_symbol_table_add_existing) {
     struct symbol_table st;
-    struct ast_node *n;
+    const struct ast_node *n;
     bool at_first;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i32\n"

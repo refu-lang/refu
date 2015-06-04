@@ -11,7 +11,7 @@ struct ast_node *ast_vardecl_create(const struct inplocation_mark *start,
 #include <ast/ast.h>
 #include <ast/type.h>
 
-i_INLINE_DECL struct ast_node *ast_vardecl_desc_get(struct ast_node *n)
+i_INLINE_DECL struct ast_node *ast_vardecl_desc_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_VARIABLE_DECLARATION);
     return n->vardecl.leaf;

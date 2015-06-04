@@ -75,6 +75,9 @@ static bool rir_type_init_iteration(struct rir_type *type,
             return false;
         }
         break;
+    case TYPE_CATEGORY_FOREIGN_FUNCTION:
+        RF_ASSERT(false, "Foreign function types not supported in the IR yet");
+        break;
     case TYPE_CATEGORY_GENERIC:
         RF_ASSERT(false, "Generic types not supported in the IR yet");
         break;

@@ -19,4 +19,9 @@ i_INLINE_DECL bool ast_import_is_foreign(const struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_IMPORT);
     return n->import.foreign;
 }
+
+/**
+ * Specialized (bit of a hack) function to return special foreign fncall function
+ */
+const struct ast_node *ast_foreign_fncall();
 #endif

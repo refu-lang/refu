@@ -23,4 +23,4 @@ struct ast_node *ast_vardecl_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS struct ast_node *ast_vardecl_desc_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_vardecl_desc_get(const struct ast_node *n);

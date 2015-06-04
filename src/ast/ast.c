@@ -176,7 +176,6 @@ const struct RFstring * ast_node_get_name_str(const struct ast_node *n)
     }
 }
 
-
 i_INLINE_INS struct ast_node *ast_node_get_child(struct ast_node *n,
                                                   unsigned int num);
 i_INLINE_INS unsigned int ast_node_get_children_number(const struct ast_node *n);

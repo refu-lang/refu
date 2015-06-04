@@ -8,6 +8,7 @@
 #include <ast/ast.h>
 #include <ast/identifier.h>
 #include <ast/type.h>
+#include <ast/import.h>
 #include <types/type.h>
 #include <ir/rir_types_list.h>
 #include <analyzer/analyzer.h>
@@ -29,7 +30,7 @@ static void symbol_table_record_free(struct symbol_table_record *rec,
 bool symbol_table_record_init(struct symbol_table_record *rec,
                               struct analyzer *analyzer,
                               struct symbol_table *st,
-                              struct ast_node *node,
+                              const struct ast_node *node,
                               const struct RFstring *id)
 {
     RF_STRUCT_ZERO(rec);
@@ -47,6 +48,15 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     case AST_TYPE_LEAF:
         rec->data = type_lookup_or_create(node, analyzer, st, NULL, false);
         break;
+    case AST_FUNCTION_CALL:
+        // if a function call makes it in here this means that it can only be
+        // the "bit of a hack" ast_foreign_fncall()
+        RF_ASSERT_OR_CRITICAL(
+            node == ast_foreign_fncall(),
+            return false,
+            "Only function call allowed in symbol_table_record_init is ast_foreign_fncall()"
+        );
+        rec->data = (struct type*)type_foreign_function_get();
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
@@ -72,7 +82,7 @@ bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
 
 struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
                                                        struct analyzer *analyzer,
-                                                       struct ast_node *node,
+                                                       const struct ast_node *node,
                                                        const struct RFstring *id)
 {
     struct symbol_table_record *ret;
@@ -120,7 +130,7 @@ i_INLINE_INS const struct RFstring *
 symbol_table_record_id(struct symbol_table_record *rec);
 i_INLINE_INS enum type_category
 symbol_table_record_category(struct symbol_table_record *rec);
-i_INLINE_INS struct ast_node *
+i_INLINE_INS const struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec);
 i_INLINE_INS struct type *
 symbol_table_record_type(struct symbol_table_record *rec);
@@ -206,7 +216,7 @@ bool symbol_table_add_typedecl(struct symbol_table *st,
                                struct analyzer *analyzer,
                                struct ast_node *n)
 {
-    struct ast_node *search_node;
+    const struct ast_node *search_node;
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
     const struct RFstring *type_name;
@@ -373,9 +383,9 @@ end:
         ? rec->data : NULL;
 }
 
-struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
-                                          const struct RFstring *id,
-                                          bool *at_first_symbol_table)
+const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
+                                                const struct RFstring *id,
+                                                bool *at_first_symbol_table)
 {
     struct symbol_table_record *rec;
     rec = symbol_table_lookup_record(t, id, at_first_symbol_table);

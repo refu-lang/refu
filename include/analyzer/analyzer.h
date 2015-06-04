@@ -128,7 +128,7 @@ void analyzer_destroy(struct analyzer *a);
  * @return           The retrieved or created type, or NULL in error.
  */
 struct type *analyzer_get_or_create_type(struct analyzer *a,
-                                         struct ast_node *desc,
+                                         const struct ast_node *desc,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl);
 

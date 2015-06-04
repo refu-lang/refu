@@ -21,7 +21,7 @@ const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
 
 /* -- forward declarations of functions -- */
 static bool type_operator_init_from_node(struct type_operator *t,
-                                         struct ast_node *n,
+                                         const struct ast_node *n,
                                          struct analyzer *a,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl);
@@ -79,7 +79,7 @@ void type_free(struct type *t, struct analyzer *a)
 /* -- type creation and initialization functions used internally -- */
 
 static bool type_leaf_init_from_node(struct type_leaf *leaf,
-                                     struct ast_node *ast_typeleaf,
+                                     const struct ast_node *ast_typeleaf,
                                      struct analyzer *a,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl)
@@ -118,7 +118,7 @@ static bool type_leaf_init_from_node(struct type_leaf *leaf,
     return true;
 }
 
-struct type *type_leaf_create_from_node(struct ast_node *typedesc,
+struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
                                         struct analyzer *a,
                                         struct symbol_table *st,
                                         struct ast_node *genrdecl)
@@ -141,8 +141,10 @@ struct type *type_leaf_create_from_node(struct ast_node *typedesc,
     return ret;
 }
 
-static bool type_init_from_typeelem(struct type *t, struct ast_node *typeelem,
-                                    struct analyzer *a, struct symbol_table *st,
+static bool type_init_from_typeelem(struct type *t,
+                                    const struct ast_node *typeelem,
+                                    struct analyzer *a,
+                                    struct symbol_table *st,
                                     struct ast_node *genrdecl)
 {
     switch(typeelem->type) {
@@ -176,7 +178,7 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
     return type_create_from_typeelem(typedesc->typedesc.desc, a, st, genrdecl);
 }
 
-struct type *type_create_from_typeelem(struct ast_node *typedesc,
+struct type *type_create_from_typeelem(const struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl)
@@ -196,7 +198,7 @@ struct type *type_create_from_typeelem(struct ast_node *typedesc,
 }
 
 static bool type_operator_init_from_node(struct type_operator *t,
-                                         struct ast_node *n,
+                                         const struct ast_node *n,
                                          struct analyzer *a,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl)
@@ -221,7 +223,17 @@ static bool type_operator_init_from_node(struct type_operator *t,
     return true;
 }
 
-struct type *type_lookup_or_create(struct ast_node *n,
+static const struct type i_foreign_function_type = {
+    .category = TYPE_CATEGORY_FOREIGN_FUNCTION,
+    .rir_type = NULL
+};
+const struct type *type_foreign_function_get()
+{
+    return &i_foreign_function_type;
+}
+i_INLINE_INS bool type_is_foreign_function(const struct type *t);
+
+struct type *type_lookup_or_create(const struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl,
@@ -274,7 +286,7 @@ struct type *type_create_from_operation(enum typeop_type type,
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create_from_node(struct ast_node *node,
+struct type *type_create_from_node(const struct ast_node *node,
                                    struct analyzer *a, struct symbol_table *st,
                                    struct ast_node *genrdecl)
 {
@@ -296,7 +308,7 @@ struct type *type_create_from_node(struct ast_node *node,
     return NULL;
 }
 
-struct type *type_create_from_typedecl(struct ast_node *n,
+struct type *type_create_from_typedecl(const struct ast_node *n,
                                        struct analyzer *a,
                                        struct symbol_table *st)
 {
@@ -325,7 +337,7 @@ struct type *type_create_from_typedecl(struct ast_node *n,
 }
 
 static bool type_init_from_fndecl(struct type *t,
-                                  struct ast_node *n,
+                                  const struct ast_node *n,
                                   struct analyzer *a,
                                   struct symbol_table *st)
 {
@@ -344,7 +356,7 @@ static bool type_init_from_fndecl(struct type *t,
             return false;
         }
         // also add the function's arguments to its symbol table
-        type_function_add_args_to_st(arg_type, a, ast_fndecl_symbol_table_get(n));
+        type_function_add_args_to_st(arg_type, a, ast_fndecl_symbol_table_get((struct ast_node*)n));
     } else {
         arg_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     }
@@ -364,7 +376,7 @@ static bool type_init_from_fndecl(struct type *t,
     return true;
 }
 
-struct type *type_create_from_fndecl(struct ast_node *n,
+struct type *type_create_from_fndecl(const struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st)
 {
@@ -459,7 +471,7 @@ struct type *type_operator_create_from_node(struct ast_node *n,
 }
 
 /* -- type getters -- */
-struct type *type_lookup_xidentifier(struct ast_node *n,
+struct type *type_lookup_xidentifier(const struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl)
@@ -639,6 +651,7 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
+    case TYPE_CATEGORY_FOREIGN_FUNCTION:
         // Do nothing
         break;
 
@@ -674,6 +687,7 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
+    case TYPE_CATEGORY_FOREIGN_FUNCTION:
         // Do nothing
         break;
 

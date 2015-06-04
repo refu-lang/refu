@@ -14,6 +14,7 @@
 #include <ast/ast_utils.h>
 #include <ast/returnstmt.h>
 #include <ast/type.h>
+#include <ast/import.h>
 
 #include <types/type.h>
 #include <types/type_comparisons.h>
@@ -333,19 +334,22 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
                                                           ctx->current_st),
                             ctx);
 
+    const struct type *id_type = ast_node_get_type(n, AST_TYPERETR_AS_LEAF);
+    if (id_type) {
+        return TRAVERSAL_CB_OK;
+    }
     // for some identifiers, like for the right part of a member access it's
     // impossible to determine type at this stage, for the rest it's an error
     struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
-    if (!ast_node_get_type(n, AST_TYPERETR_AS_LEAF) &&
-        !ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) {
-        analyzer_err(ctx->a, ast_node_startmark(n),
-                     ast_node_endmark(n),
-                     "Undeclared identifier \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_identifier_str(n)));
-        return TRAVERSAL_CB_ERROR;
+    if (ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS) ||
+        parent->type == AST_IMPORT) {
+        return TRAVERSAL_CB_OK;
     }
-
-    return TRAVERSAL_CB_OK;
+    analyzer_err(ctx->a, ast_node_startmark(n),
+                 ast_node_endmark(n),
+                 "Undeclared identifier \""RF_STR_PF_FMT"\"",
+                 RF_STR_PF_ARG(ast_identifier_str(n)));
+    return TRAVERSAL_CB_ERROR;
 }
 
 static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
@@ -523,7 +527,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     // check for existence of function
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
-    if (!fn_type || !type_is_callable(fn_type)) {
+    if (!fn_type || !(type_is_foreign_function(fn_type) || type_is_callable(fn_type))) {
         analyzer_err(ctx->a, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
@@ -641,6 +645,42 @@ static enum traversal_cb_res typecheck_block(struct ast_node *n,
 {
     // a block's type is the type of it's last expression
     n->expression_type = ctx->last_node_type;
+    return TRAVERSAL_CB_OK;
+}
+
+static enum traversal_cb_res typecheck_import(struct ast_node *n,
+                                              struct analyzer_traversal_ctx *ctx)
+{
+    struct symbol_table_record *rec;
+    if (!ast_import_is_foreign(n)) {
+        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                     "Only foreign imports are supported for now");
+        return TRAVERSAL_CB_ERROR;
+    }
+
+    // for now, for foreign functions just insert them into the global symbol table
+    struct ast_node *child;
+    rf_ilist_for_each(&n->children, child, lh) {
+        rec = symbol_table_record_create(
+            ctx->current_st,
+            ctx->a,
+            ast_foreign_fncall(),
+            ast_identifier_str(child)
+        );
+        if (!rec) {
+            RF_ERROR("Symbol table record creation failed");
+            return TRAVERSAL_CB_ERROR;
+        }
+        if (!symbol_table_add_record(ctx->current_st, rec)) {
+            RF_ERROR("Symbol table record addition failed");
+            return TRAVERSAL_CB_ERROR;
+        }
+        // also set the type of identifier (which should be a foreign function)
+        child->expression_type = rec->data;
+    }
+    
+    // import does not have a type
+    n->expression_type = NULL;
     return TRAVERSAL_CB_OK;
 }
 
@@ -854,6 +894,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_MATCH_CASE:
         ret = typecheck_matchcase(n, ctx);
+        break;
+    case AST_IMPORT:
+        ret = typecheck_import(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

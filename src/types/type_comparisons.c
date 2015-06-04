@@ -440,7 +440,7 @@ bool type_compare(const struct type *from,
 }
 
 bool type_equals_ast_node(struct type *t,
-                          struct ast_node *type_desc,
+                          const struct ast_node *type_desc,
                           struct analyzer *a,
                           struct symbol_table *st,
                           struct ast_node *genrdecl,

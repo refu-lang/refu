@@ -10,8 +10,8 @@ static const struct RFstring op_str_impl_  = RF_STRING_STATIC_INIT("->");
 
 /* -- functions concerning both type description and operators */
 
-i_INLINE_INS struct ast_node *ast_types_left(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_types_right(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_types_left(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_types_right(const struct ast_node *n);
 
 /* -- type leaf functions -- */
 
@@ -73,7 +73,7 @@ void ast_typeop_set_right(struct ast_node *op, struct ast_node *r)
     ast_node_set_end(op, ast_node_endmark(r));
 }
 
-i_INLINE_INS enum typeop_type ast_typeop_op(struct ast_node *n);
+i_INLINE_INS enum typeop_type ast_typeop_op(const struct ast_node *n);
 
 
 const struct RFstring *type_op_str(enum typeop_type op)
@@ -91,13 +91,13 @@ const struct RFstring *type_op_str(enum typeop_type op)
     }
 }
 
-const struct RFstring *ast_typeop_opstr(struct ast_node *n)
+const struct RFstring *ast_typeop_opstr(const struct ast_node *n)
 {
     return type_op_str(n->typeop.type);
 }
 
-i_INLINE_INS struct ast_node *ast_typeop_left(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_typeop_right(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeop_left(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeop_right(const struct ast_node *n);
 
 /* -- type description functions -- */
 
@@ -115,7 +115,7 @@ struct ast_node *ast_typedesc_create(struct ast_node *desc)
     return ret;
 }
 i_INLINE_INS struct symbol_table *ast_typedesc_symbol_table_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_typedesc_desc_get(struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typedesc_desc_get(const struct ast_node *n);
 
 /* -- type declaration functions -- */
 struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
@@ -138,6 +138,6 @@ struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS const struct RFstring *ast_typedecl_name_str(struct ast_node *n);
-i_INLINE_INS struct ast_node* ast_typedecl_typedesc_get(struct ast_node *n);
-i_INLINE_INS struct ast_node *ast_typedecl_genrdecl_get(struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_typedecl_name_str(const struct ast_node *n);
+i_INLINE_INS struct ast_node* ast_typedecl_typedesc_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typedecl_genrdecl_get(const struct ast_node *n);

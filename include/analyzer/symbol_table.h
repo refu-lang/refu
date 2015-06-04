@@ -22,7 +22,7 @@ struct symbol_table_record {
     const struct RFstring *id;
     //! [optional] The ast node the identifier should point to
     //! Can actually be NULL.
-    struct ast_node *node;
+    const struct ast_node *node;
     //! Description of the type the identifier refers to
     struct type *data;
 
@@ -35,13 +35,13 @@ struct symbol_table_record {
 bool symbol_table_record_init(struct symbol_table_record *rec,
                               struct analyzer *analyzer,
                               struct symbol_table *st,
-                              struct ast_node *node,
+                              const struct ast_node *node,
                               const struct RFstring *id);
 
 struct symbol_table_record *symbol_table_record_create(
     struct symbol_table *st,
     struct analyzer *analyzer,
-    struct ast_node *node,
+    const struct ast_node *node,
     const struct RFstring *id);
 
 void symbol_table_record_destroy(struct symbol_table_record *rec,
@@ -59,7 +59,7 @@ symbol_table_record_category(struct symbol_table_record *rec)
     return rec->data->category;
 }
 
-i_INLINE_DECL struct ast_node *
+i_INLINE_DECL const struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec)
 {
     return rec->node;
@@ -85,7 +85,6 @@ symbol_table_record_set_backend_handle(struct symbol_table_record *rec, void *ha
 }
 
 /* -- symbol table functionality -- */
-
 
 struct symbol_table {
     //! Hash table of symbols
@@ -123,9 +122,9 @@ bool symbol_table_add_record(struct symbol_table *t,
  * Arguments are just like @rec symbol_table_lookup_record()
  * @return  The found ast_node or NULL for failure
  */
-struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
-                                          const struct RFstring *id,
-                                          bool *at_first_symbol_table);
+const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
+                                                const struct RFstring *id,
+                                                bool *at_first_symbol_table);
 /**
  * Lookup a record in a symbol table
  *

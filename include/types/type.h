@@ -23,15 +23,16 @@ void type_free(struct type *t, struct analyzer *a);
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create_from_node(struct ast_node *n, struct analyzer *a,
+struct type *type_create_from_node(const struct ast_node *n,
+                                   struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl);
 
-struct type *type_create_from_typedecl(struct ast_node *n,
+struct type *type_create_from_typedecl(const struct ast_node *n,
                                        struct analyzer *a,
                                        struct symbol_table *st);
 
-struct type *type_create_from_fndecl(struct ast_node *n,
+struct type *type_create_from_fndecl(const struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st);
 
@@ -44,7 +45,7 @@ struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
-struct type *type_create_from_typeelem(struct ast_node *typedesc,
+struct type *type_create_from_typeelem(const struct ast_node *typedesc,
                                        struct analyzer *a,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
@@ -63,12 +64,18 @@ struct type *type_leaf_create(struct analyzer *a,
                               const struct RFstring *id,
                               struct type *leaf_type);
 
-struct type *type_leaf_create_from_node(struct ast_node *typedesc,
+struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
                                         struct analyzer *a,
                                         struct symbol_table *st,
                                         struct ast_node *genrdecl);
 
 /* -- type getters -- */
+
+const struct type *type_foreign_function_get();
+i_INLINE_DECL bool type_is_foreign_function(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
+}
 
 /**
  * Attempts to retrieve the type for ast node @c n and if it does not exist
@@ -88,7 +95,7 @@ struct type *type_leaf_create_from_node(struct ast_node *typedesc,
  *                     description
  * @return             Return either the type of @c n or NULL if there was an error
  */
-struct type *type_lookup_or_create(struct ast_node *n,
+struct type *type_lookup_or_create(const struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl,
@@ -109,7 +116,7 @@ struct type *type_create_from_operation(enum typeop_type type,
 
 struct type *type_lookup_identifier_string(const struct RFstring *str,
                                            const struct symbol_table *st);
-struct type *type_lookup_xidentifier(struct ast_node *n,
+struct type *type_lookup_xidentifier(const struct ast_node *n,
                                      struct analyzer *a,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);

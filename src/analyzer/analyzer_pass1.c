@@ -19,7 +19,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
 static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
                                                     struct ast_node *n)
 {
-    struct ast_node *search_node;
+    const struct ast_node *search_node;
     bool symbol_found_at_first_st;
     const struct RFstring *type_name;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
@@ -51,7 +51,7 @@ static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ct
 static bool analyzer_populate_symbol_table_typeleaf(struct analyzer_traversal_ctx *ctx,
                                                     struct ast_node *n)
 {
-    struct ast_node *search_node;
+    const struct ast_node *search_node;
     bool symbol_found_at_first_st;
     const struct RFstring *id_name;
     struct ast_node *left;
