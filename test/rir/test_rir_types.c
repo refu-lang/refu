@@ -179,7 +179,7 @@ START_TEST(test_rir_type_equals_type1) {
     
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(d->rir->types_set, &it, t) {
+    rf_objset_foreach(testsupport_rir_typeset(d), &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             break;
         }
@@ -220,7 +220,7 @@ START_TEST(test_rir_type_equals_type2) {
     // search the normal types for the only defined type that should be there
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(d->rir->types_set, &it, t) {
+    rf_objset_foreach(testsupport_rir_typeset(d), &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             break;
         }
@@ -267,7 +267,7 @@ START_TEST(test_rir_type_equals_type3) {
     // search the normal types for the only defined type that should be there
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(d->rir->types_set, &it, t) {
+    rf_objset_foreach(testsupport_rir_typeset(d), &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             break;
         }
@@ -321,7 +321,7 @@ START_TEST(test_rir_type_equals_type4) {
     // search the normal types for the only defined type that should be there
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(d->rir->types_set, &it, t) {
+    rf_objset_foreach(testsupport_rir_typeset(d), &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             break;
         }

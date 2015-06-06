@@ -14,7 +14,6 @@
 #include <analyzer/symbol_table.h>
 #include <types/type.h>
 
-#include <ir/rir.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
 

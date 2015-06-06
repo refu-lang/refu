@@ -8,10 +8,11 @@
 #include <serializer/serializer.h>
 
 bool front_ctx_init(struct front_ctx *ctx,
-                    const struct compiler_args *args)
+                    const struct compiler_args *args,
+                    const struct RFstring *input_file)
 {
     RF_STRUCT_ZERO(ctx);
-    ctx->file = inpfile_create(&args->input);
+    ctx->file = inpfile_create(input_file);
     if (!ctx->file) {
         goto err;
     }
@@ -36,7 +37,6 @@ bool front_ctx_init(struct front_ctx *ctx,
         goto free_parser;
     }
 
-
     return true;
 
 free_parser:
@@ -51,11 +51,12 @@ err:
     return false;
 }
 
-struct front_ctx *front_ctx_create(const struct compiler_args *args)
+struct front_ctx *front_ctx_create(const struct compiler_args *args,
+                                   const struct RFstring *input_file)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args)) {
+    if (!front_ctx_init(ret, args, input_file)) {
         free(ret);
         return NULL;
     }

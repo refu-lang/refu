@@ -8,6 +8,8 @@
 
 #include <ast/ast.h>
 #include <ast/type.h>
+#include <ast/function.h>
+#include <ast/ast_utils.h>
 #include <parser/parser.h>
 #include <types/type.h>
 #include <types/type_comparisons.h>
@@ -176,6 +178,7 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
     if (with_global_context) {
         if (!analyzer_load_globals(a)) {
             RF_ERROR("Failure at loading the global context for the analyzer");
+            return false;
         }
     }
     // create symbol tables and change ast nodes ownership
@@ -190,6 +193,51 @@ bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
     }
 
     return true;
+}
+
+static void analyzer_finalize_fndecl(struct ast_node *n)
+{
+    // figure out the number of arguments
+    struct ast_node *fn_args = ast_fndecl_args_get(n);
+    if (fn_args) {
+        const struct rir_type *rtype = type_get_rir_or_die(ast_node_get_type(ast_fndecl_args_get(n), AST_TYPERETR_AS_LEAF));
+        n->fndecl.args_num = (darray_size(rtype->subtypes) == 0) ? 1 : darray_size(rtype->subtypes);
+    } else {
+        n->fndecl.args_num = 0;
+    }
+}
+
+static enum traversal_cb_res analyzer_finalize_do(struct ast_node *n, void *user_arg)
+{
+    struct analyzer *a = user_arg;
+    (void)a;
+    switch (n->type) {
+    case AST_FUNCTION_DECLARATION:
+        analyzer_finalize_fndecl(n);
+        break;
+    default:
+        break;
+    }
+    // finally set the state
+    n->state = AST_NODE_STATE_RIR_END;
+    return TRAVERSAL_CB_OK;
+}
+
+static bool do_nothing(struct ast_node *n, void *user_arg) { return true; }
+
+bool analyzer_finalize(struct analyzer *a)
+{
+    rir_types_list_init(&a->rir_types_list);
+    // TODO: if we don't have any actual pre_ callback then use ast_post_traverse_tree()
+    bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
+                    a->root,
+                    do_nothing,
+                    NULL,
+                    analyzer_finalize_do,
+                    a
+                )
+    );
+    return ret;    
 }
 
 

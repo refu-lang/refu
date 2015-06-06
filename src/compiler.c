@@ -8,7 +8,6 @@
 #include <compiler_args.h>
 #include <ast/ast.h>
 #include <front_ctx.h>
-#include <ir/rir.h>
 #include <serializer/serializer.h>
 #include <backend/llvm.h>
 
@@ -42,18 +41,17 @@ bool compiler_init(struct compiler *c)
     if (!(c->serializer = serializer_create(c->args))) {
         return false;
     }
+    rf_ilist_head_init(&c->front_ctxs);
 
     return true;
 }
 
 void compiler_deinit(struct compiler *c)
 {
-    if (c->front) {
-        front_ctx_destroy(c->front);
-    }
-
-    if (c->ir) {
-        rir_destroy(c->ir);
+    struct front_ctx *front;
+    struct front_ctx *tmp;
+    rf_ilist_for_each_safe(&c->front_ctxs, front, tmp, ln) {
+        front_ctx_destroy(front);
     }
 
     serializer_destroy(c->serializer);
@@ -61,6 +59,17 @@ void compiler_deinit(struct compiler *c)
     typecmp_ctx_deinit();
     rf_stringx_deinit(&c->err_buff);
     rf_deinit();
+}
+
+static bool compiler_new_front(struct compiler *c, const struct RFstring *input_name)
+{
+    struct front_ctx *front;
+    if (!(front = front_ctx_create(c->args, &c->args->input))) {
+        RF_ERROR("Failure at frontend context initialization");
+        return false;
+    }
+    rf_ilist_add_tail(&c->front_ctxs, &front->ln);
+    return true;
 }
 
 bool compiler_pass_args(struct compiler *c, int argc, char **argv)
@@ -74,12 +83,7 @@ bool compiler_pass_args(struct compiler *c, int argc, char **argv)
         return true;
     }
 
-    if (!(c->front = front_ctx_create(c->args))) {
-        RF_ERROR("Failure at frontend context initialization");
-        return false;
-    }
-
-    return true;
+    return compiler_new_front(c, &c->args->input);
 }
 
 bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
@@ -91,15 +95,15 @@ bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
     return compiler_pass_args(c, argc, argv);
 }
 
-bool compiler_process(struct compiler *c)
+static bool compiler_process_front(struct compiler *c, struct front_ctx *front)
 {
-    struct analyzer *analyzer = front_ctx_process(c->front);
+    struct analyzer *analyzer = front_ctx_process(front);
     if (!analyzer) {
         RF_ERROR("Failure to parse and analyze the input");
 
         // for now temporarily just dump all messages in the info context
         // TODO: fix
-        if (!info_ctx_get_messages_fmt(c->front->info, MESSAGE_ANY, &c->err_buff)) {
+        if (!info_ctx_get_messages_fmt(front->info, MESSAGE_ANY, &c->err_buff)) {
             RF_ERROR("Could not retrieve messages from the info context");
             return false;
         }
@@ -113,19 +117,36 @@ bool compiler_process(struct compiler *c)
         return false;
     }
 
-    // create the intermediate representation from the analyzer and free analyzer
-    c->ir = rir_create(analyzer);
-    if (!c->ir) {
-        RF_ERROR("Could not create the intermediate representation");
+    if (!analyzer_finalize(analyzer)) {
+        RF_ERROR("Could not finalize AST after typechecking");
         return false;
     }
+    return true;
+}
 
-    enum serializer_rc rc = serializer_process(c->serializer, c->ir->root, c->front->file);
+bool compiler_process(struct compiler *c)
+{
+    // add the standard library to the front contexts
+    const struct RFstring stdlib = RF_STRING_STATIC_INIT("core/stdlib/io.rf");
+    if (!compiler_new_front(c, &stdlib)) {
+        RF_ERROR("Failed to add standard library to the front_ctxs");
+        return false;
+    }
+    struct front_ctx *front;
+    rf_ilist_for_each(&c->front_ctxs, front, ln) {
+        if (!compiler_process_front(c, front)) {
+            return false;
+        }
+    }
+
+#if 0 // don't call serializer at all for now
+    enum serializer_rc rc = serializer_process(c->serializer, front);
     if (rc == SERC_SUCCESS_EXIT || rc == SERC_SUCCESS_EXIT) {
         return rc;
     }
+#endif
 
-    if (!bllvm_generate(c->ir, c->args)) {
+    if (!bllvm_generate(&c->front_ctxs, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");
         return false;
     }

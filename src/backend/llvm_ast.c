@@ -15,6 +15,7 @@
 #include <compiler_args.h>
 
 #include <lexer/tokens.h>
+#include <analyzer/analyzer.h>
 #include <ast/ast_utils.h>
 #include <ast/type.h>
 #include <ast/block.h>
@@ -34,7 +35,6 @@
 #include <analyzer/string_table.h>
 
 #include <ir/rir_type.h>
-#include <ir/rir.h>
 
 #include <backend/llvm.h>
 #include "llvm_utils.h"
@@ -106,9 +106,6 @@ LLVMTypeRef bllvm_type_from_type(const struct type *type,
         name = rf_string_cstr_from_buff_or_die(
             type_get_unique_type_str(type, false)
         );
-        printf("at bllvm_type_from_type: "RF_STR_PF_FMT"\n%s\n\n",
-               RF_STR_PF_ARG(type_str_or_die(type, TSTR_DEFAULT)), name);
-        fflush(stdout);
         ret = LLVMGetTypeByName(ctx->mod, name);
         RFS_POP();
     } else {
@@ -226,7 +223,7 @@ LLVMValueRef bllvm_compile_string_literal(struct ast_node *n,
     // all unique string literals should have been declared as global strings
     uint32_t hash;
     const struct RFstring *s = ast_string_literal_get_str(n);
-    if (!string_table_add_or_get_str(ctx->rir->string_literals_table, s, &hash)) {
+    if (!string_table_add_or_get_str(ctx->a->string_literals_table, s, &hash)) {
         RF_ERROR("Unable to retrieve string literal from table during LLVM compile");
         return NULL;
     }

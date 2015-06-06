@@ -26,6 +26,12 @@ void bllvm_load_from_string(struct LLVMOpaqueValue *string_alloca,
                             struct LLVMOpaqueValue **length,
                             struct LLVMOpaqueValue **string_data,
                             struct llvm_traversal_ctx *ctx);
+
+/**
+ * Prints the LLVM error string and disposes of it
+ */
+void bllvm_error(char *errstr);
+
 /**
  * A combination of a @ref bllvm_load_from_string() and a
  * @ref bllvm_assign_to_string() to achieve a shallow copy

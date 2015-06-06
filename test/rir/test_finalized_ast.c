@@ -28,11 +28,11 @@ START_TEST (test_finalized_function_arguments) {
     rir_testdriver_assign(d, &s);
     testsupport_rir_process(d);
 
-    struct ast_node *fn1 = ast_node_get_child(d->rir->root, 0);
+    struct ast_node *fn1 = ast_node_get_child(d->front_driver->front.analyzer->root, 0);
     ck_assert_uint_eq(ast_fndecl_argsnum_get(ast_fnimpl_fndecl_get(fn1)), 1);
-    struct ast_node *fn2 = ast_node_get_child(d->rir->root, 1);
+    struct ast_node *fn2 = ast_node_get_child(d->front_driver->front.analyzer->root, 1);
     ck_assert_uint_eq(ast_fndecl_argsnum_get(ast_fnimpl_fndecl_get(fn2)), 3);
-    struct ast_node *fn3 = ast_node_get_child(d->rir->root, 2);
+    struct ast_node *fn3 = ast_node_get_child(d->front_driver->front.analyzer->root, 2);
     ck_assert_uint_eq(ast_fndecl_argsnum_get(ast_fnimpl_fndecl_get(fn3)), 0);
 
 } END_TEST

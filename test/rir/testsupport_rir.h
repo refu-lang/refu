@@ -1,16 +1,17 @@
 #ifndef LFR_TESTSUPPORT_RIR_H
 #define LFR_TESTSUPPORT_RIR_H
 
+// NOTE: This test support file can slowly go away
+//       RIR is now just a final state of the analyzer's AST
+
 #include "../testsupport_front.h"
 #include "../analyzer/testsupport_analyzer.h"
-#include <ir/rir.h>
 #include <ir/rir_type.h>
+#include <Definitions/inline.h>
 
 struct rir_testdriver {
     struct front_testdriver *front_driver;
     struct analyzer_testdriver *analyzer_driver;
-
-    struct rir *rir;
     //! A buffer of rir types for quick type checks
     //! and easy freeing at test teardown
     struct {darray(struct rir_type*);} rir_types;
@@ -34,7 +35,6 @@ bool rir_testdriver_process(struct rir_testdriver *d);
         }                                                               \
         ck_assert_msg(rir_testdriver_process((driver_)), "Failed to create the refu intermediate format"); \
     } while (0)
-
 
 struct rir_type *i_testsupport_rir_type_create(struct rir_testdriver *d,
                                                enum rir_type_category category,
@@ -64,4 +64,9 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
                                     unsigned int expected_num,
                                     const char* filename,
                                     unsigned int line);
+
+i_INLINE_DECL struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d)
+{
+    return d->front_driver->front.analyzer->types_set;
+}
 #endif

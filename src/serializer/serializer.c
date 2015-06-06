@@ -3,6 +3,7 @@
 #include <Utils/memory.h>
 #include <System/rf_system.h>
 #include <analyzer/analyzer.h>
+#include <front_ctx.h>
 #include <compiler_args.h>
 #include "astprinter.h"
 
@@ -31,8 +32,7 @@ void serializer_destroy(struct serializer *sr)
 }
 
 bool serializer_process(struct serializer *sr,
-                        const struct ast_node *root,
-                        const struct inpfile *infile)
+                        const struct front_ctx *front)
 {
     struct RFstring *out_name;
     static const struct RFstring s_stdout = RF_STRING_STATIC_INIT("stdout");
@@ -47,7 +47,7 @@ bool serializer_process(struct serializer *sr,
             }
         }
         // for now just put it stdout, we will configure via compiler-args
-        if (!ast_output_to_file(root, f, infile)) {
+        if (!ast_output_to_file(front->analyzer->root, f, front->file)) {
             return SERC_FAILURE;
         }
         if (f != stdout) {

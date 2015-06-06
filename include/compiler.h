@@ -2,6 +2,7 @@
 #define LFR_REFU_COMPILER_H
 
 #include <stdbool.h>
+#include <RFintrusive_list.h>
 #include <String/rf_str_core.h>
 
 struct compiler_args;
@@ -13,11 +14,8 @@ struct compiler {
     struct RFstringx err_buff;
     //! The object holding the compiler arguments
     struct compiler_args *args;
-    //! The compiler's front end context
-    struct front_ctx *front;
-    //! The intermediate representation of the code, created after the analysis
-    //! of the code.
-    struct rir *ir;
+    //! A list of compiler's front end contexts. One for each file.
+    struct RFilist_head front_ctxs;
     //! The serializer deals with data exporting and serialization (if needed)
     //! after the end of a succesfull analysis.
     struct serializer *serializer;

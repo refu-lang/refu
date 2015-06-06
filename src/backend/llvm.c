@@ -4,6 +4,7 @@
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
+#include <llvm-c/Linker.h>
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <String/rf_str_core.h>
@@ -13,19 +14,20 @@
 #include <info/info.h>
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
-#include <ir/rir.h>
+#include <front_ctx.h>
 
 #include "llvm_ast.h"
+#include "llvm_utils.h"
 
 
 static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
-                                           struct rir *rir,
+                                           struct analyzer *a,
                                            struct compiler_args *args)
 {
     ctx->mod = NULL;
     ctx->current_st = NULL;
     ctx->current_function = NULL;
-    ctx->rir = rir;
+    ctx->a = a;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
@@ -43,42 +45,64 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
     LLVMDisposeTargetData(ctx->target_data);
 }
 
-static bool bllvm_ir_generate(struct rir *rir, struct compiler_args *args)
+static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
+    struct LLVMOpaqueModule *main_module;
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
 
     LLVMInitializeCore(LLVMGetGlobalPassRegistry());
     LLVMInitializeNativeTarget();
 
-    llvm_traversal_ctx_init(&ctx, rir, args);
-    llvm_module = blvm_create_module(rir->root, &ctx);
-    if (!llvm_module) {
-        ERROR("Failed to form the LLVM IR ast");
-        goto end;
+    struct front_ctx *front;
+    bool index = 0;
+    
+    rf_ilist_for_each(fronts, front, ln) {        
+        llvm_traversal_ctx_init(&ctx, front->analyzer, args);
+        llvm_module = blvm_create_module(front->analyzer->root, &ctx);
+        if (!llvm_module) {
+            ERROR("Failed to form the LLVM IR ast");
+            llvm_traversal_ctx_deinit(&ctx);
+            goto end;
+        }
+        llvm_traversal_ctx_deinit(&ctx);
+
+        // verify module and create code
+        if (!LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error)) {
+            bllvm_error(error);
+            goto end;
+        }
+        LLVMDisposeMessage(error);
+
+        // link all other modules to the first one
+        if (index == 0) {
+            main_module = llvm_module;
+        } else {
+            if (!LLVMLinkModules(main_module, llvm_module, LLVMLinkerDestroySource, &error)) {
+                bllvm_error(error);
+                goto end;
+            }
+            LLVMDisposeMessage(error);
+        }
+        
+        ++index;
     }
-
-    // verify module and create code
-    LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error);
-    LLVMDisposeMessage(error); // Handler == LLVMAbortProcessAction -> No need to check errors
-
     RFS_PUSH();
     
     struct RFstring *temp_s = RFS_NT_OR_DIE(
         RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
-    if (0 != LLVMPrintModuleToFile(ctx.mod, rf_string_data(temp_s), &error)) {
-        ERROR("LLVM-error: %s", error);
-        LLVMDisposeMessage(error);
+    if (0 != LLVMPrintModuleToFile(main_module, rf_string_data(temp_s), &error)) {
+        bllvm_error(error);
         goto end;
     }
-
+    LLVMDisposeMessage(error);
     ret = true;
+
 end:
     RFS_POP();
-    llvm_traversal_ctx_deinit(&ctx);
     LLVMShutdown();
     return ret;
 }
@@ -135,10 +159,10 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe");
 }
 
-bool bllvm_generate(struct rir *r, struct compiler_args *args)
+bool bllvm_generate(struct RFilist_head *fronts, struct compiler_args *args)
 {
 
-    if (!bllvm_ir_generate(r, args)) {
+    if (!bllvm_ir_generate(fronts, args)) {
         return false;
     }
 

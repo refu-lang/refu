@@ -9,6 +9,7 @@
 #include <Utils/sanity.h>
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/type_set.h>
+#include <ir/rir_types_list.h>
 
 struct parser;
 struct inpfile;
@@ -94,6 +95,8 @@ struct analyzer {
 
     //! A set of all types encountered
     struct rf_objset_type *types_set;
+    //! A list of all rir types of the file
+    struct rir_types_list rir_types_list;
 
     /* String tables containing identifiers and string literals found during parsing */
     struct string_table *identifiers_table;
@@ -117,6 +120,21 @@ void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
 
 /**
+ * Analyze a file
+ *
+ * @param a                   The analyzer instance
+ * @param parser              The parser instance from which the AST was created.
+ * @param with_global_context If @c true also have global context elements introduced
+ *
+ * @return                    @c true for success and @c false for failure
+ */
+bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, bool with_global_context);
+/**
+ * Finalize the AST of an analyzer after analysis.
+ */
+bool analyzer_finalize(struct analyzer *a);
+
+/**
  * If existing, retrieve the type and if not existing create the type
  * for ast node @c desc
  *
@@ -133,17 +151,6 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
                                          struct ast_node *genrdecl);
 
 struct inpfile *analyzer_get_file(struct analyzer *a);
-
-/**
- * Analyze a file
- *
- * @param a                   The analyzer instance
- * @param parser              The parser instance from which the AST was created.
- * @param with_global_context If @c true also have global context elements introduced
- *
- * @return                    @c true for success and @c false for failure
- */
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, bool with_global_context);
 
 // TODO: Properly use the set itself for comparison of already existing types
 bool analyzer_types_set_add(struct analyzer *a, struct type *new_type);

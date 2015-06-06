@@ -1,6 +1,5 @@
 #include "testsupport_rir.h"
 
-#include <ir/rir.h>
 #include <ir/rir_types_list.h>
 
 static struct rir_testdriver i_rir_test_driver_;
@@ -16,7 +15,6 @@ static bool rir_testdriver_init(struct rir_testdriver *d,
 {
     d->front_driver = front_driver;
     d->analyzer_driver = analyzer_driver;
-    d->rir = NULL;
     darray_init(d->rir_types);
     return true;
 }
@@ -24,9 +22,6 @@ static bool rir_testdriver_init(struct rir_testdriver *d,
 static void rir_testdriver_deinit(struct rir_testdriver *d)
 {
     struct rir_type **t;
-    if (d->rir) {
-        rir_destroy(d->rir);
-    }
 
     // free the driver's own types
     darray_foreach(t, d->rir_types) {
@@ -61,11 +56,7 @@ void rir_testdriver_assign(struct rir_testdriver *d,
 
 bool rir_testdriver_process(struct rir_testdriver *d)
 {
-    d->rir = rir_create(d->front_driver->front.analyzer);
-    if (!d->rir) {
-        return false;
-    }
-    return true;
+    return analyzer_finalize(d->front_driver->front.analyzer);
 }
 
 static void rir_testdriver_add_type(struct rir_testdriver *d,
@@ -140,7 +131,7 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
-    rir_types_list_for_each(&d->rir->rir_types_list, t) {
+    rir_types_list_for_each(&d->front_driver->front.analyzer->rir_types_list, t) {
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {
@@ -166,3 +157,6 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
         line);
     return true;
 }
+
+
+i_INLINE_INS struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d);

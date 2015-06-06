@@ -16,11 +16,7 @@ struct analyzer;
 struct symbol_table;
 struct symbol_table_record;
 struct compiler_args;
-struct rir;
-struct rir_module;
-struct rir_type;
-struct rir_basic_block;
-struct rir_branch;
+struct analyzer;
 struct type;
 
 struct LLVMOpaqueModule;
@@ -44,7 +40,7 @@ struct llvm_traversal_ctx {
     struct rir_types_map types_map;
 
     struct compiler_args *args;
-    struct rir *rir;
+    struct analyzer *a;
     struct symbol_table *current_st;
 };
 

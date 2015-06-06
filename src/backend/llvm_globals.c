@@ -12,11 +12,11 @@
 
 #include <analyzer/string_table.h>
 #include <analyzer/type_set.h>
+#include <analyzer/analyzer.h>
 #include <lexer/tokens.h>
 #include <types/type.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
-#include <ir/rir.h>
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
@@ -27,7 +27,7 @@ static bool bllvm_create_global_types(struct llvm_traversal_ctx *ctx)
 {
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(ctx->rir->types_set, &it, t) {
+    rf_objset_foreach(ctx->a->types_set, &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             if (!bllvm_compile_typedecl(type_defined_get_name(t), t, ctx)) {
                 return false;
@@ -213,7 +213,7 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
                       true);
 
     llvm_traversal_ctx_reset_params(ctx);
-    string_table_iterate(ctx->rir->string_literals_table,
+    string_table_iterate(ctx->a->string_literals_table,
                          (string_table_cb)bllvm_const_string_creation_cb, ctx);
     // also add "true" and "false" as global constant string literals
     bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);

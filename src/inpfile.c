@@ -15,9 +15,7 @@ bool inpfile_init(struct inpfile* f,
     int lines;
     static const struct RFstring s_stdin = RF_STRING_STATIC_INIT("stdin");
     RF_STRUCT_ZERO(f);
-
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
-
 
     if (!rf_stringx_init_buff(&file_str, INPUT_FILE_BUFF_INITIAL_SIZE, "")) {
         RF_ERRNOMEM();

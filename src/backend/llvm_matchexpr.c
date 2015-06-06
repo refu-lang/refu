@@ -9,7 +9,6 @@
 #include <ast/matchexpr.h>
 #include <types/type.h>
 #include <types/type_elementary.h>
-#include <ir/rir.h>
 #include <ir/rir_type.h>
 
 static void bllvm_add_matchcase(struct ast_node *matchcase,

@@ -59,7 +59,6 @@ refu_src = [
     'types/type_elementary.c',
     'types/type_utils.c',
 
-    'ir/rir.c',
     'ir/rir_type.c',
     'ir/rir_types_list.c',
 
@@ -121,7 +120,7 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     ]
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
-                          ' executionengine interpreter native')
+                          ' executionengine interpreter native linker')
     linker_exec = 'g++'
 
 # add src prefix before the sources that reside at src/

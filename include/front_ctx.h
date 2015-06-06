@@ -3,6 +3,7 @@
 
 #include <inpfile.h>
 #include <analyzer/analyzer.h>
+#include <RFintrusive_list.h>
 
 struct info_ctx;
 struct lexer;
@@ -21,11 +22,15 @@ struct front_ctx {
     struct parser *parser;
     struct analyzer *analyzer;
     struct info_ctx *info;
+    /* Control for adding to compiler object's linked list */
+    struct RFilist_node ln;
 };
 
 bool front_ctx_init(struct front_ctx *ctx,
-                    const struct compiler_args *args);
-struct front_ctx *front_ctx_create(const struct compiler_args *args);
+                    const struct compiler_args *args,
+                    const struct RFstring *input_file);
+struct front_ctx *front_ctx_create(const struct compiler_args *args,
+                                   const struct RFstring *input_file);
 
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);

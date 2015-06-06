@@ -3,20 +3,18 @@
 
 #include <stdbool.h>
 
-struct analyzer;
+struct RFilist_head;
 struct compiler_args;
-struct rir;
-struct rir_module;
 
 
 /**
- * Processes the Refu IR and creates the backend code
+ * Generate the backend code with llvm
  *
- * @param rir           The ir handler. Need from some data, lke the string tables
+ * @param fronts_list   A list of front_ctxs to try and compile
  * @param args          The arguments given to the compiler
  *
  * @return              true in succes and false for failure
  */
-bool bllvm_generate(struct rir *rir, struct compiler_args *args);
+bool bllvm_generate(struct RFilist_head *fronts, struct compiler_args *args);
 
 #endif
