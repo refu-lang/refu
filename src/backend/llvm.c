@@ -21,13 +21,11 @@
 
 
 static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
-                                           struct analyzer *a,
                                            struct compiler_args *args)
 {
     ctx->mod = NULL;
     ctx->current_st = NULL;
     ctx->current_function = NULL;
-    ctx->a = a;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
     darray_init(ctx->params);
@@ -37,12 +35,29 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
 
 static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
-    rir_types_map_deinit(&ctx->types_map);
-    darray_free(ctx->params);
-    darray_free(ctx->values);
     LLVMDisposeBuilder(ctx->builder);
     LLVMDisposeModule(ctx->mod);
     LLVMDisposeTargetData(ctx->target_data);
+}
+
+static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *ctx,
+                                                     struct analyzer *a)
+{
+    ctx->a = a;
+    ctx->mod = NULL;
+    ctx->current_st = NULL;
+    ctx->current_function = NULL;;
+    darray_init(ctx->params);
+    darray_init(ctx->values);
+    rir_types_map_init(&ctx->types_map);
+}
+
+static inline void llvm_traversal_ctx_reset_singlepass(struct llvm_traversal_ctx *ctx)
+{
+    ctx->a = NULL;
+    rir_types_map_deinit(&ctx->types_map);
+    darray_free(ctx->params);
+    darray_free(ctx->values);
 }
 
 static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args *args)
@@ -58,20 +73,21 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
 
     struct front_ctx *front;
     bool index = 0;
-    
-    rf_ilist_for_each(fronts, front, ln) {        
-        llvm_traversal_ctx_init(&ctx, front->analyzer, args);
+
+    llvm_traversal_ctx_init(&ctx, args);
+    rf_ilist_for_each(fronts, front, ln) {
+        llvm_traversal_ctx_set_singlepass(&ctx, front->analyzer);
         llvm_module = blvm_create_module(front->analyzer->root, &ctx);
         if (!llvm_module) {
             ERROR("Failed to form the LLVM IR ast");
-            llvm_traversal_ctx_deinit(&ctx);
+            llvm_traversal_ctx_reset_singlepass(&ctx);
             goto end;
         }
-        llvm_traversal_ctx_deinit(&ctx);
+        llvm_traversal_ctx_reset_singlepass(&ctx);
 
         // verify module and create code
         if (!LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error)) {
-            bllvm_error(error);
+            bllvm_error("Could not verify LLVM module", error);
             goto end;
         }
         LLVMDisposeMessage(error);
@@ -81,28 +97,31 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
             main_module = llvm_module;
         } else {
             if (!LLVMLinkModules(main_module, llvm_module, LLVMLinkerDestroySource, &error)) {
-                bllvm_error(error);
+                bllvm_error("Could not link LLVM modules", error);
                 goto end;
             }
             LLVMDisposeMessage(error);
         }
-        
+
         ++index;
     }
+
+
     RFS_PUSH();
-    
     struct RFstring *temp_s = RFS_NT_OR_DIE(
         RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
     if (0 != LLVMPrintModuleToFile(main_module, rf_string_data(temp_s), &error)) {
-        bllvm_error(error);
-        goto end;
+        bllvm_error("Could not output LLVM module to file", error);
+        goto end_pop_rfs;
     }
     LLVMDisposeMessage(error);
+    llvm_traversal_ctx_deinit(&ctx);
     ret = true;
 
-end:
+end_pop_rfs:
     RFS_POP();
+end:
     LLVMShutdown();
     return ret;
 }

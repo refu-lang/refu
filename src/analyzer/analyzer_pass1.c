@@ -2,6 +2,7 @@
 
 #include <analyzer/analyzer.h>
 
+#include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/block.h>
 #include <ast/type.h>
@@ -172,28 +173,17 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
 static bool analyzer_populate_symbol_table_import(struct analyzer_traversal_ctx *ctx,
                                                   struct ast_node *n)
 {
-    struct symbol_table_record *rec;
     RF_ASSERT(ast_import_is_foreign(n), "Only foreign imports are supported for now");
 
-    // for now, for foreign functions just insert them into the global symbol table
+    // insert foreign functions to the global symbol table
     struct ast_node *child;
     rf_ilist_for_each(&n->children, child, lh) {
-        rec = symbol_table_record_create(
+        if (!symbol_table_add_foreignfn(
             ctx->current_st,
-            ctx->a,
-            ast_foreign_fncall(),
-            ast_identifier_str(child)
-        );
-        if (!rec) {
-            RF_ERROR("Symbol table record creation failed");
+            child,
+            ctx->a)) {
             return false;
         }
-        if (!symbol_table_add_record(ctx->current_st, rec)) {
-            RF_ERROR("Symbol table record addition failed");
-            return false;
-        }
-        // also set the type of identifier (which should be a foreign function)
-        child->expression_type = rec->data;
     }
     return true;
 }
@@ -371,10 +361,15 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
     return true;
 }
 
-bool analyzer_first_pass(struct analyzer *a)
+bool analyzer_first_pass(struct analyzer *a, struct front_ctx *stdlib)
 {
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, a);
+
+    if (stdlib) {
+        // if we got stdlib add its symbols to the root symbol table
+        ast_root_symbol_table_get(a->root)->parent = ast_root_symbol_table_get(stdlib->analyzer->root);
+    }
 
     bool ret = ast_traverse_tree(
         a->root,

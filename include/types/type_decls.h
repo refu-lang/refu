@@ -70,6 +70,10 @@ struct type_defined {
     struct type *type;
 };
 
+struct type_foreignfn {
+    const struct RFstring *name;
+};
+
 struct type {
     enum type_category category;
     //! The RIR version of the type
@@ -82,6 +86,7 @@ struct type {
         struct type_operator operator;
         struct type_leaf leaf;
         struct type_elementary elementary;
+        struct type_foreignfn foreignfn;
     };
 };
 #endif

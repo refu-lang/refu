@@ -163,26 +163,22 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     return t;
 }
 
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser,
-                           bool with_global_context)
+bool analyzer_analyze_file(struct analyzer *a,
+                           struct parser *parser,
+                           struct front_ctx *stdlib)
 {
     // acquire the root of the AST from the parser
     a->root = parser_yield_ast_root(parser);
 
-    // initialize root symbol table here instead od analyzer_first_pass
-    // since we need it at least for now if we want to introduce a global context
+    // initialize root symbol table here instead of analyzer_first_pass
+    // since we need it beforehand to get symbols from import
     if (!ast_root_symbol_table_init(a->root, a)) {
         RF_ERROR("Could not initialize symbol table for root node");
         return false;
     }
-    if (with_global_context) {
-        if (!analyzer_load_globals(a)) {
-            RF_ERROR("Failure at loading the global context for the analyzer");
-            return false;
-        }
-    }
+
     // create symbol tables and change ast nodes ownership
-    if (!analyzer_first_pass(a)) {
+    if (!analyzer_first_pass(a, stdlib)) {
         RF_ERROR("Failure at analyzer's first pass");
         return false;
     }
@@ -227,8 +223,10 @@ static bool do_nothing(struct ast_node *n, void *user_arg) { return true; }
 
 bool analyzer_finalize(struct analyzer *a)
 {
-    rir_types_list_init(&a->rir_types_list);
-    // TODO: if we don't have any actual pre_ callback then use ast_post_traverse_tree()
+    if (!rir_types_list_init(&a->rir_types_list, a->types_set)) {
+        return false;
+    }
+    // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
                     a->root,
                     do_nothing,

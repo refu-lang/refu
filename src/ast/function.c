@@ -95,7 +95,7 @@ struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
     return ret;
 }
 
-i_INLINE_INS const struct RFstring* ast_fncall_name(struct ast_node *n);
+i_INLINE_INS const struct RFstring* ast_fncall_name(const struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_args(struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_genr(struct ast_node *n);
 i_INLINE_INS const struct type *ast_fncall_params_type(struct ast_node *n);

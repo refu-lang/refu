@@ -29,11 +29,6 @@ struct rir_type elementary_rir_types_[] = {
 };
 #undef ELEMENTARY_RIR_TYPE_INIT
 
-void rir_types_list_init(struct rir_types_list *l)
-{
-    rf_ilist_head_init(&l->lh);
-}
-
 void rir_types_list_deinit(struct rir_types_list *l)
 {
     struct rir_type *t;
@@ -75,14 +70,15 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
 
 // very very temporary macro to allow visualization of rir type creation. Will go away
  /* #define TEMP_RIR_DEBUG 1 */
-bool rir_types_list_populate(struct rir_types_list *rir_types,
-                             struct rf_objset_type *types_set)
+bool rir_types_list_init(struct rir_types_list *rir_types,
+                         struct rf_objset_type *types_set)
 {
     struct type *t;
     struct rf_objset_iter it1;
     struct rir_type *iter_rir_type;
     struct rir_type *created_rir_type;
     bool found;
+    rf_ilist_head_init(&rir_types->lh);
     rf_objset_foreach(types_set, &it1, t) {
 #if TEMP_RIR_DEBUG
         RFS_PUSH();

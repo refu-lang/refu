@@ -9,7 +9,9 @@
 #include <ast/identifier.h>
 #include <ast/type.h>
 #include <ast/import.h>
+#include <ast/function.h>
 #include <types/type.h>
+#include <types/type_function.h>
 #include <ir/rir_types_list.h>
 #include <analyzer/analyzer.h>
 
@@ -48,16 +50,6 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     case AST_TYPE_LEAF:
         rec->data = type_lookup_or_create(node, analyzer, st, NULL, false);
         break;
-    case AST_FUNCTION_CALL:
-        // if a function call makes it in here this means that it can only be
-        // the "bit of a hack" ast_foreign_fncall()
-        RF_ASSERT_OR_CRITICAL(
-            node == ast_foreign_fncall(),
-            return false,
-            "Only function call allowed in symbol_table_record_init is ast_foreign_fncall()"
-        );
-        rec->data = (struct type*)type_foreign_function_get();
-        break;
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
                               "for illegal ast node type \""RF_STR_PF_FMT"\"",
@@ -71,9 +63,9 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     return true;
 }
 
-bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
-                                        const struct RFstring *id,
-                                        struct type *t)
+static bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
+                                               const struct RFstring *id,
+                                               struct type *t)
 {
     RF_STRUCT_ZERO(rec);
     rec->id = id;
@@ -101,7 +93,7 @@ struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
     return ret;
 }
 
-struct symbol_table_record *symbol_table_record_create_from_type(
+static struct symbol_table_record *symbol_table_record_create_from_type(
     struct symbol_table *st,
     const struct RFstring *id,
     struct type *t)
@@ -211,6 +203,27 @@ bool symbol_table_add_record(struct symbol_table *t,
     }
 
     return true;
+}
+
+bool symbol_table_add_foreignfn(struct symbol_table *st,
+                                struct ast_node *node,
+                                struct analyzer *a)
+{
+        struct symbol_table_record *rec;
+        const struct RFstring *id = ast_identifier_str(node);
+        struct type *t = type_foreign_function_create(a, id);
+        rec = symbol_table_record_create_from_type(st, id, t);
+        if (!rec) {
+            RF_ERROR("Symbol table record creation failed");
+            return false;
+        }
+        if (!symbol_table_add_record(st, rec)) {
+            RF_ERROR("Symbol table record addition failed");
+            return false;
+        }
+        // also set the type of identifier (which should be a foreign function)
+        node->expression_type = t;
+        return true;
 }
 
 bool symbol_table_add_typedecl(struct symbol_table *st,

@@ -78,7 +78,7 @@ void front_ctx_destroy(struct front_ctx *ctx)
     free(ctx);
 }
 
-struct analyzer *front_ctx_process(struct front_ctx *ctx)
+struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdlib)
 {
     if (!lexer_scan(ctx->lexer)) {
         return NULL;
@@ -88,8 +88,11 @@ struct analyzer *front_ctx_process(struct front_ctx *ctx)
         return NULL;
     }
 
-    // for now always create global context for analyzer
-    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, true)) {
+    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, stdlib)) {
+        return NULL;
+    }
+
+    if (!analyzer_finalize(ctx->analyzer)) {
         return NULL;
     }
 

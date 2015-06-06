@@ -61,15 +61,21 @@ void compiler_deinit(struct compiler *c)
     rf_deinit();
 }
 
-static bool compiler_new_front(struct compiler *c, const struct RFstring *input_name)
+static struct front_ctx *compiler_new_front(struct compiler *c,
+                                            const struct RFstring *input_name,
+                                            bool add_at_start)
 {
     struct front_ctx *front;
-    if (!(front = front_ctx_create(c->args, &c->args->input))) {
+    if (!(front = front_ctx_create(c->args, input_name))) {
         RF_ERROR("Failure at frontend context initialization");
-        return false;
+        return NULL;
     }
-    rf_ilist_add_tail(&c->front_ctxs, &front->ln);
-    return true;
+    if (add_at_start) {
+        rf_ilist_add(&c->front_ctxs, &front->ln);
+    } else {
+        rf_ilist_add_tail(&c->front_ctxs, &front->ln);
+    }
+    return front;
 }
 
 bool compiler_pass_args(struct compiler *c, int argc, char **argv)
@@ -83,7 +89,7 @@ bool compiler_pass_args(struct compiler *c, int argc, char **argv)
         return true;
     }
 
-    return compiler_new_front(c, &c->args->input);
+    return compiler_new_front(c, &c->args->input, true);
 }
 
 bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
@@ -95,9 +101,11 @@ bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
     return compiler_pass_args(c, argc, argv);
 }
 
-static bool compiler_process_front(struct compiler *c, struct front_ctx *front)
+static bool compiler_process_front(struct compiler *c,
+                                   struct front_ctx *front,
+                                   struct front_ctx *stdlib)
 {
-    struct analyzer *analyzer = front_ctx_process(front);
+    struct analyzer *analyzer = front_ctx_process(front, stdlib);
     if (!analyzer) {
         RF_ERROR("Failure to parse and analyze the input");
 
@@ -117,24 +125,32 @@ static bool compiler_process_front(struct compiler *c, struct front_ctx *front)
         return false;
     }
 
-    if (!analyzer_finalize(analyzer)) {
-        RF_ERROR("Could not finalize AST after typechecking");
-        return false;
-    }
     return true;
 }
 
 bool compiler_process(struct compiler *c)
 {
     // add the standard library to the front contexts
+    struct front_ctx *stdlib_front;
     const struct RFstring stdlib = RF_STRING_STATIC_INIT("core/stdlib/io.rf");
-    if (!compiler_new_front(c, &stdlib)) {
+    if (!(stdlib_front = compiler_new_front(c, &stdlib, true))) {
         RF_ERROR("Failed to add standard library to the front_ctxs");
         return false;
     }
+
+    // first and foremost process the standard library front context
+    if (!compiler_process_front(c, stdlib_front, NULL)) {
+        RF_ERROR("Failed to analyze stdlib module");
+        return false;
+    }
+
     struct front_ctx *front;
     rf_ilist_for_each(&c->front_ctxs, front, ln) {
-        if (!compiler_process_front(c, front)) {
+        if (front == stdlib_front) {
+            continue;
+        }
+        if (!compiler_process_front(c, front, stdlib_front)) {
+            RF_ERROR("Failed to analyze a module");
             return false;
         }
     }

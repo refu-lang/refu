@@ -30,7 +30,7 @@ void bllvm_load_from_string(struct LLVMOpaqueValue *string_alloca,
 /**
  * Prints the LLVM error string and disposes of it
  */
-void bllvm_error(char *errstr);
+void bllvm_error(const char *errpre, char *errstr);
 
 /**
  * A combination of a @ref bllvm_load_from_string() and a

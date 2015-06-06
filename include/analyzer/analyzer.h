@@ -16,6 +16,7 @@ struct inpfile;
 struct type;
 struct symbol_table;
 struct analyzer;
+struct front_ctx;
 
 struct  analyzer_traversal_ctx {
     struct analyzer *a;
@@ -124,11 +125,12 @@ void analyzer_destroy(struct analyzer *a);
  *
  * @param a                   The analyzer instance
  * @param parser              The parser instance from which the AST was created.
- * @param with_global_context If @c true also have global context elements introduced
+ * @param stdlib              If we compile with stdlib this is not NULL and should
+ *                            contains the struct front_ctx of the stdlib
  *
  * @return                    @c true for success and @c false for failure
  */
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, bool with_global_context);
+bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, struct front_ctx *stdlib);
 /**
  * Finalize the AST of an analyzer after analysis.
  */

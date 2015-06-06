@@ -117,6 +117,10 @@ bool symbol_table_add_type(struct symbol_table *st,
 bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec);
 
+bool symbol_table_add_foreignfn(struct symbol_table *st,
+                                struct ast_node *node,
+                                struct analyzer *a);
+
 /**
  * Lookup an ast_node in a symbol table
  * Arguments are just like @rec symbol_table_lookup_record()

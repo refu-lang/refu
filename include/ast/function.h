@@ -110,7 +110,7 @@ struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
                                    struct ast_node *args,
                                    struct ast_node *genr);
 
-i_INLINE_DECL const struct RFstring* ast_fncall_name(struct ast_node *n)
+i_INLINE_DECL const struct RFstring* ast_fncall_name(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     return ast_identifier_str(n->fncall.name);

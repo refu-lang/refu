@@ -1,10 +1,10 @@
 #include <types/type_function.h>
 
+#include <types/type.h>
 #include <String/rf_str_core.h>
 
 i_INLINE_INS bool type_is_function(const struct type *t);
 i_INLINE_INS bool type_is_callable(const struct type *t);
-i_INLINE_INS struct type *type_function_get_argtype(const struct type *t);
 i_INLINE_INS struct type *type_callable_get_argtype(const struct type *t);
 i_INLINE_INS void type_function_set_argtype(struct type *t, struct type *other);
 i_INLINE_INS struct type *type_function_get_rettype(const struct type *t);
@@ -13,6 +13,25 @@ i_INLINE_INS void type_function_set_rettype(struct type *t, struct type *other);
 
 static const struct RFstring s_function_ = RF_STRING_STATIC_INIT("function");
 static const struct RFstring s_ctor_ = RF_STRING_STATIC_INIT("constructor");
+static const struct RFstring sforeign_pint = RF_STRING_STATIC_INIT("rf_stdlib_print_int");
+static const struct RFstring sforeign_pstr = RF_STRING_STATIC_INIT("rf_stdlib_print_string");
+
+struct type *type_function_get_argtype(const struct type *t)
+{
+    RF_ASSERT(type_is_function(t), "Non function type detected");
+    if (t->category == TYPE_CATEGORY_FOREIGN_FUNCTION) {
+        // should allow only same foreign functions as in type_foreign_function_allowed()
+        if (rf_string_equal(t->foreignfn.name, &sforeign_pint)) {
+            return type_elementary_get_type(ELEMENTARY_TYPE_INT_64);
+        } else if (rf_string_equal(t->foreignfn.name, &sforeign_pstr)) {
+            return type_elementary_get_type(ELEMENTARY_TYPE_STRING);
+        } else {
+            RF_ASSERT_OR_EXIT(false, "Attempted to request args of illegal foreign function");
+            return NULL;
+        }
+    }
+    return t->operator.left;
+}
 
 const struct RFstring *type_callable_category_str(const struct type *t)
 {
@@ -76,3 +95,27 @@ const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int 
 
     return do_type_fnargs_get_argtype_n(&t->operator, n);
 }
+
+
+struct type *type_foreign_function_create(struct analyzer *a, const struct RFstring *name)
+{
+    struct type *ret;
+    ret = type_alloc(a);
+    if (!ret) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+
+    ret->category = TYPE_CATEGORY_FOREIGN_FUNCTION;
+    ret->foreignfn.name = name;
+    // do not add foreign function type to the types list at the moment
+    /* analyzer_types_set_add(a, ret); */
+    return ret;
+}
+
+bool type_foreign_function_allowed(const struct type *t)
+{    
+    return rf_string_equal(t->foreignfn.name, &sforeign_pint) || rf_string_equal(t->foreignfn.name, &sforeign_pstr);
+}
+
+i_INLINE_INS bool type_is_foreign_function(const struct type *t);

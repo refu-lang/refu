@@ -70,13 +70,6 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
                                         struct ast_node *genrdecl);
 
 /* -- type getters -- */
-
-const struct type *type_foreign_function_get();
-i_INLINE_DECL bool type_is_foreign_function(const struct type *t)
-{
-    return t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
-}
-
 /**
  * Attempts to retrieve the type for ast node @c n and if it does not exist
  * it creates it and adds it to the types set (if it's not already there)

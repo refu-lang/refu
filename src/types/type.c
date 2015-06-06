@@ -223,16 +223,6 @@ static bool type_operator_init_from_node(struct type_operator *t,
     return true;
 }
 
-static const struct type i_foreign_function_type = {
-    .category = TYPE_CATEGORY_FOREIGN_FUNCTION,
-    .rir_type = NULL
-};
-const struct type *type_foreign_function_get()
-{
-    return &i_foreign_function_type;
-}
-i_INLINE_INS bool type_is_foreign_function(const struct type *t);
-
 struct type *type_lookup_or_create(const struct ast_node *n,
                                    struct analyzer *a,
                                    struct symbol_table *st,

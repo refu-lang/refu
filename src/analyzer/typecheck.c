@@ -528,7 +528,17 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
     if (fn_type && type_is_foreign_function(fn_type)) {
+        // only allow a few specific foreign functions for the moment
+        if (!type_foreign_function_allowed(fn_type)) {
+            analyzer_err(ctx->a, ast_node_startmark(n),
+                         ast_node_endmark(n),
+                         "Illegal foreign function call \""RF_STR_PF_FMT"\" detected",
+                         RF_STR_PF_ARG(fn_name));
+            goto fail;
+        }
         // if it's a foreign function call we can't do any typechecking at the moment
+        // and set its type as nil, since for now foreign functions can return nothing
+        traversal_node_set_type(n, type_elementary_get_type(ELEMENTARY_TYPE_NIL), ctx);
         return TRAVERSAL_CB_OK;
     }
     if (!fn_type || !type_is_callable(fn_type)) {

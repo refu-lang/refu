@@ -17,11 +17,8 @@ struct rir_types_list {
     struct RFilist_head lh;
 };
 
-void rir_types_list_init(struct rir_types_list *t);
-void rir_types_list_deinit(struct rir_types_list *t);
-
 /**
- * Will populate the rir types list from the composite types
+ * Will initialize and populate the rir types list from the composite types
  *
  * RIR types are simply a non-tree form of types where each sum type is separated
  * into different types since in the backends we need to be able to easily distinguish
@@ -32,8 +29,9 @@ void rir_types_list_deinit(struct rir_types_list *t);
  *
  * @return                   true in success and false in failure
  */
-bool rir_types_list_populate(struct rir_types_list *rir_types,
-                             struct rf_objset_type *types_set);
+bool rir_types_list_init(struct rir_types_list *t,
+                         struct rf_objset_type *types_set);
+void rir_types_list_deinit(struct rir_types_list *t);
 
 /**
  * Searches the rir types list for a defined type called @c name

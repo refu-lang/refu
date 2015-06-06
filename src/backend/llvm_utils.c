@@ -35,9 +35,9 @@ void bllvm_mod_debug(LLVMModuleRef m, const char *mod_name)
     LLVMDisposeMessage(str);
 }
 
-void bllvm_error(char *errstr)
+void bllvm_error(const char *errpre, char *errstr)
 {
-    printf("[LLVM-error]: %s\n", errstr);
+    printf("[LLVM-error]:%s. %s\n", errpre, errstr);
     fflush(stdout);
     LLVMDisposeMessage(errstr);
 }

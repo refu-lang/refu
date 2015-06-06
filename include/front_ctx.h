@@ -35,7 +35,7 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args,
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
 
-struct analyzer *front_ctx_process(struct front_ctx *ctx);
+struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdlib);
 
 /* -- some convenience setters/getters --*/
 i_INLINE_DECL void front_ctx_set_warn_on_implicit_conversions(struct front_ctx *ctx,

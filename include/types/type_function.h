@@ -7,10 +7,13 @@
 #include <types/type_decls.h>
 #include <types/type_elementary.h>
 
+struct analyzer;
+
 i_INLINE_DECL bool type_is_function(const struct type *t)
 {
-    return t->category == TYPE_CATEGORY_OPERATOR &&
-           t->operator.type == TYPEOP_IMPLICATION;
+    return (t->category == TYPE_CATEGORY_OPERATOR &&
+            t->operator.type == TYPEOP_IMPLICATION) ||
+        t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
 }
 
 /**
@@ -28,11 +31,7 @@ i_INLINE_DECL bool type_is_callable(const struct type *t)
 }
 
 //! Gets the type descriptions of the arguments of the function
-i_INLINE_DECL struct type *type_function_get_argtype(const struct type *t)
-{
-    RF_ASSERT(type_is_function(t), "Non function type detected");
-    return t->operator.left;
-}
+struct type *type_function_get_argtype(const struct type *t);
 
 //! Gets the type description of the arguments of a callable type
 i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
@@ -94,5 +93,14 @@ void type_function_init(struct type *t, struct type *arg_type, struct type *ret_
  *                 malformed expression type or @n is out of bounds
  */
 const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int n);
+
+
+struct type *type_foreign_function_create(struct analyzer *a, const struct RFstring *name);
+bool type_foreign_function_allowed(const struct type *t);
+i_INLINE_DECL bool type_is_foreign_function(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
+}
+
 
 #endif
