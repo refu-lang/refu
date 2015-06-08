@@ -1,5 +1,5 @@
 foreign_import rf_stdlib_print_int, rf_stdlib_print_string
 
-fn print(a:i32 | s:string)
-    a:i32    => rf_stdlib_print_int(a)
+fn print(a:i64 | s:string)
+    a:i64    => rf_stdlib_print_int(a)
     s:string => rf_stdlib_print_string(s)

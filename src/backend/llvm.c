@@ -64,7 +64,7 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
-    struct LLVMOpaqueModule *main_module;
+    struct LLVMOpaqueModule *stdlib_module;
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
 
@@ -85,18 +85,19 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
         }
         llvm_traversal_ctx_reset_singlepass(&ctx);
 
-        // verify module and create code
-        if (!LLVMVerifyModule(llvm_module, LLVMAbortProcessAction, &error)) {
+        // verify each module
+        if (LLVMVerifyModule(llvm_module, LLVMPrintMessageAction, &error) == 1) {
             bllvm_error("Could not verify LLVM module", error);
             goto end;
         }
         LLVMDisposeMessage(error);
 
-        // link all other modules to the first one
+        // first module should be stdlib module
         if (index == 0) {
-            main_module = llvm_module;
+            stdlib_module = llvm_module;
         } else {
-            if (!LLVMLinkModules(main_module, llvm_module, LLVMLinkerDestroySource, &error)) {
+            // if an error occurs LLVMLinkModules() returns true ...
+            if (true == LLVMLinkModules(llvm_module, stdlib_module, LLVMLinkerDestroySource, &error)) {
                 bllvm_error("Could not link LLVM modules", error);
                 goto end;
             }
@@ -106,12 +107,11 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
         ++index;
     }
 
-
     RFS_PUSH();
     struct RFstring *temp_s = RFS_NT_OR_DIE(
         RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
-    if (0 != LLVMPrintModuleToFile(main_module, rf_string_data(temp_s), &error)) {
+    if (0 != LLVMPrintModuleToFile(llvm_module, rf_string_data(temp_s), &error)) {
         bllvm_error("Could not output LLVM module to file", error);
         goto end_pop_rfs;
     }

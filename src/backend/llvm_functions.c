@@ -153,7 +153,8 @@ static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
 
 static bool fncall_args_to_value_cb(struct ast_node *n, struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef arg_value = bllvm_compile_expression(n, ctx, 0);
+    LLVMValueRef arg_value = bllvm_compile_expression(n, ctx, RFLLVM_OPTION_IDENTIFIER_VALUE);
+    /* LLVMValueRef arg_value = bllvm_compile_expression(n, ctx, 0); */
     llvm_traversal_ctx_add_value(ctx, arg_value);
     return true;
 }
