@@ -37,7 +37,6 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
     LLVMDisposeBuilder(ctx->builder);
     LLVMDisposeModule(ctx->mod);
-    LLVMDisposeTargetData(ctx->target_data);
 }
 
 static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *ctx,
@@ -55,6 +54,7 @@ static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *
 static inline void llvm_traversal_ctx_reset_singlepass(struct llvm_traversal_ctx *ctx)
 {
     ctx->a = NULL;
+    LLVMDisposeTargetData(ctx->target_data);
     rir_types_map_deinit(&ctx->types_map);
     darray_free(ctx->params);
     darray_free(ctx->values);
@@ -65,6 +65,8 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
     struct LLVMOpaqueModule *stdlib_module;
+    const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
+    const struct RFstring s_main = RF_STRING_STATIC_INIT("mainmodule");
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
 
@@ -73,24 +75,23 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
 
     struct front_ctx *front;
     bool index = 0;
-
     llvm_traversal_ctx_init(&ctx, args);
     rf_ilist_for_each(fronts, front, ln) {
         llvm_traversal_ctx_set_singlepass(&ctx, front->analyzer);
-        llvm_module = blvm_create_module(front->analyzer->root, &ctx);
+        llvm_module = blvm_create_module(front->analyzer->root, &ctx,
+                                         index == 0 ? &s_stdlib : &s_main );
         if (!llvm_module) {
             ERROR("Failed to form the LLVM IR ast");
             llvm_traversal_ctx_reset_singlepass(&ctx);
             goto end;
         }
-        llvm_traversal_ctx_reset_singlepass(&ctx);
 
         // verify each module
         if (LLVMVerifyModule(llvm_module, LLVMPrintMessageAction, &error) == 1) {
             bllvm_error("Could not verify LLVM module", error);
+            llvm_traversal_ctx_reset_singlepass(&ctx);
             goto end;
         }
-        LLVMDisposeMessage(error);
 
         // first module should be stdlib module
         if (index == 0) {
@@ -99,10 +100,11 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
             // if an error occurs LLVMLinkModules() returns true ...
             if (true == LLVMLinkModules(llvm_module, stdlib_module, LLVMLinkerDestroySource, &error)) {
                 bllvm_error("Could not link LLVM modules", error);
+                llvm_traversal_ctx_reset_singlepass(&ctx);
                 goto end;
             }
-            LLVMDisposeMessage(error);
         }
+        llvm_traversal_ctx_reset_singlepass(&ctx);
 
         ++index;
     }
@@ -115,7 +117,6 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
         bllvm_error("Could not output LLVM module to file", error);
         goto end_pop_rfs;
     }
-    LLVMDisposeMessage(error);
     llvm_traversal_ctx_deinit(&ctx);
     ret = true;
 

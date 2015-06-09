@@ -28,6 +28,7 @@ struct LLVMOpaqueBasicBlock;
 
 struct llvm_traversal_ctx {
     struct LLVMOpaqueModule *mod;
+    const struct RFstring *mod_name;
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;
     struct LLVMOpaqueValue *current_function;
@@ -47,7 +48,8 @@ struct llvm_traversal_ctx {
 bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
 struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
-                                            struct llvm_traversal_ctx *ctx);
+                                            struct llvm_traversal_ctx *ctx,
+                                            const struct RFstring *name);
 
 struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);

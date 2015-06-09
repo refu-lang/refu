@@ -397,13 +397,16 @@ void bllvm_compile_block(const struct ast_node *block,
 }
 
 struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
-                                            struct llvm_traversal_ctx *ctx)
+                                            struct llvm_traversal_ctx *ctx,
+                                            const struct RFstring *name)
 {
     struct ast_node *child;
-    //TODO: this should be the name of each module when we actually get modules.
-    const char *mod_name = "A MODULE";
+    // temporary. Name checking should be abstracted elsewhere
+    const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
     ctx->mod = NULL;
     RFS_PUSH();
+    ctx->mod_name = name;
+    const char *mod_name = rf_string_cstr_from_buff_or_die(name);
     if (!mod_name) {
         RF_ERROR("Failure to create null terminated cstring from RFstring");
         goto end;
@@ -411,11 +414,14 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
     ctx->mod = LLVMModuleCreateWithName(mod_name);
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->mod));
 
-    if (!bllvm_create_globals(ctx)) {
-        RF_ERROR("Failed to create global context for LLVM");
-        LLVMDisposeModule(ctx->mod);
-        ctx->mod = NULL;
-        goto end;
+    if (rf_string_equal(name, &s_stdlib)) {
+        // create some global definitions and variable
+        if (!bllvm_create_globals(ctx)) {
+            RF_ERROR("Failed to create global context for LLVM");
+            LLVMDisposeModule(ctx->mod);
+            ctx->mod = NULL;
+            goto end;
+        }
     }
 
     // for each function of the module (for now simply the AST root) create code
