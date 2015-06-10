@@ -5,6 +5,7 @@
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/Linker.h>
 
 #include <Data_Structures/intrusive_list.h>
 #include <String/rf_str_common.h>
@@ -398,7 +399,8 @@ void bllvm_compile_block(const struct ast_node *block,
 
 struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
                                             struct llvm_traversal_ctx *ctx,
-                                            const struct RFstring *name)
+                                            const struct RFstring *name,
+                                            struct LLVMOpaqueModule *link_source)
 {
     struct ast_node *child;
     // temporary. Name checking should be abstracted elsewhere
@@ -417,11 +419,26 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
     if (rf_string_equal(name, &s_stdlib)) {
         // create some global definitions and variable
         if (!bllvm_create_globals(ctx)) {
-            RF_ERROR("Failed to create global context for LLVM");
+            RF_ERROR("Failed to create general globals for LLVM");
             LLVMDisposeModule(ctx->mod);
             ctx->mod = NULL;
             goto end;
         }
+    } else {
+        char *error = NULL;
+        RF_ASSERT(link_source, "If module is not stdlib, linking with something is mandatory at least for now");
+        // if an error occurs LLVMLinkModules() returns true ...
+        if (true == LLVMLinkModules(ctx->mod, link_source, LLVMLinkerDestroySource, &error)) {
+            bllvm_error("Could not link LLVM modules", &error);
+            goto end;
+        }
+        bllvm_error_dispose(&error);
+    }
+    if (!bllvm_create_module_globals(ctx)) {
+        RF_ERROR("Failed to create module globals for LLVM");
+            LLVMDisposeModule(ctx->mod);
+            ctx->mod = NULL;
+            goto end;
     }
 
     // for each function of the module (for now simply the AST root) create code

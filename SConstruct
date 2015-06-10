@@ -98,7 +98,9 @@ local_env.Append(CPPDEFINES={
     'VERBOSE_LEVEL_DEFAULT': local_env['VERBOSE_LEVEL_DEFAULT'],
     'INFO_CTX_BUFF_INITIAL_SIZE': local_env['INFO_CTX_BUFF_INITIAL_SIZE'],
     'INPUT_FILE_BUFF_INITIAL_SIZE': local_env['INPUT_FILE_BUFF_INITIAL_SIZE'],
-    'INPUT_STRING_STARTING_LINES': local_env['INPUT_STRING_STARTING_LINES']
+    'INPUT_STRING_STARTING_LINES': local_env['INPUT_STRING_STARTING_LINES'],
+    'RF_CLIB_ROOT': "\\\"" + local_env['CLIB_DIR'] + "\\\"",
+    'RF_LANG_CORE_ROOT': "\\\"" + local_env['LANG_DIR'] + "\\\"",
 })
 local_env.Append(CPPPATH=[os.path.abspath('include')])
 local_env.Append(CPPPATH=[os.path.abspath('lib')])

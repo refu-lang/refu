@@ -317,7 +317,7 @@ START_TEST(test_block_symbol_table) {
     front_testdriver_assign(d, &s);
 
     testsupport_analyzer_prepare(d);
-    ck_assert(analyzer_first_pass(d->front.analyzer));
+    ck_assert(analyzer_first_pass(d->front.analyzer, NULL));
 
     struct type *ti64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
@@ -357,7 +357,7 @@ START_TEST(test_fndecl_symbol_table) {
 
 
     testsupport_analyzer_prepare(d);
-    ck_assert(analyzer_first_pass(d->front.analyzer));
+    ck_assert(analyzer_first_pass(d->front.analyzer, NULL));
 
     struct ast_node *fnimpl = ast_node_get_child(d->front.analyzer->root, 0);
     ck_assert_msg(fnimpl, "fnimpl node was not found");
@@ -396,7 +396,7 @@ START_TEST(test_typedecl_symbol_table) {
         TYPEOP_PRODUCT, l1, l2);
 
     testsupport_analyzer_prepare(d);
-    ck_assert(analyzer_first_pass(d->front.analyzer));
+    ck_assert(analyzer_first_pass(d->front.analyzer, NULL));
 
     struct ast_node *td = ast_node_get_child(d->front.analyzer->root, 0);
     ck_assert_msg(td, "typedecl node was not found");
@@ -439,7 +439,7 @@ START_TEST(test_multiple_level_symbol_tables) {
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
 
     testsupport_analyzer_prepare(d);
-    ck_assert(analyzer_first_pass(d->front.analyzer));
+    ck_assert(analyzer_first_pass(d->front.analyzer, NULL));
 
     struct ast_node *root = d->front.analyzer->root;
     struct ast_node *block_1 = ast_node_get_child(root, 1);

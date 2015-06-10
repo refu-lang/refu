@@ -9,6 +9,8 @@ struct RFstring;
 struct LLVMOpaqueValue;
 
 bool bllvm_create_globals(struct llvm_traversal_ctx *ctx);
+bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx);
+
 struct LLVMOpaqueValue *bllvm_create_global_const_string(const struct RFstring *string,
                                                          struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_create_global_const_string_with_hash(

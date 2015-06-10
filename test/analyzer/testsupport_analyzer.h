@@ -30,6 +30,12 @@ void setup_analyzer_tests();
 void setup_analyzer_tests_with_filelog();
 void teardown_analyzer_tests();
 
+#define testsupport_have_stdlib(frontdriver_, with_stdlib_)   do {  \
+        if (with_stdlib_ && ! (frontdriver_)->stdlib) {             \
+            front_testdriver_create_analyze_stdlib(frontdriver_);   \
+        }                                                           \
+    } while(0)
+
 #define testsupport_show_front_errors(driver_, msg_)                    \
     do {                                                                \
         struct RFstringx *tmp_ = front_testdriver_geterrors(driver_);   \
@@ -123,19 +129,22 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 /* -- typecheck related support -- */
 
 //! Assert all of the front context processing including typechecking is done
-#define ck_assert_typecheck_ok(d_, with_global_context_)                                     \
+#define ck_assert_typecheck_ok(d_, with_stdlib_)                        \
     do {                                                                \
+        testsupport_have_stdlib(d_, with_stdlib_);                      \
         testsupport_scan_and_parse(d_);                                 \
-        if (!analyzer_analyze_file((d_)->front.analyzer, (d_)->front.parser, with_global_context_)) { \
+        if (!analyzer_analyze_file((d_)->front.analyzer, (d_)->front.parser, (d_)->stdlib)) { \
             testsupport_show_front_errors(d_, "Typechecking failed");   \
         }                                                               \
     } while(0)
 
-#define ck_assert_typecheck_with_messages(d_, success_, expected_msgs_, with_global_context_) \
+#define ck_assert_typecheck_with_messages(d_, success_, expected_msgs_, with_stdlib_) \
     do {                                                                \
+        testsupport_have_stdlib(d_, with_stdlib_);                      \
         testsupport_scan_and_parse(d_);                                 \
         ck_assert_msg(success_ == analyzer_analyze_file((d_)->front.analyzer, \
-                                                        (d_)->front.parser, with_global_context_), \
+                                                        (d_)->front.parser, \
+                                                        (d_)->stdlib),  \
                       "Unexpected typecheck result");                   \
         ck_assert_analyzer_errors((d_)->front.info, expected_msgs_);    \
     } while(0)

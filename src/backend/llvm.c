@@ -4,7 +4,6 @@
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
-#include <llvm-c/Linker.h>
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <String/rf_str_core.h>
@@ -79,7 +78,8 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
     rf_ilist_for_each(fronts, front, ln) {
         llvm_traversal_ctx_set_singlepass(&ctx, front->analyzer);
         llvm_module = blvm_create_module(front->analyzer->root, &ctx,
-                                         index == 0 ? &s_stdlib : &s_main );
+                                         index == 0 ? &s_stdlib : &s_main,
+                                         index == 0 ? NULL : stdlib_module);
         if (!llvm_module) {
             ERROR("Failed to form the LLVM IR ast");
             llvm_traversal_ctx_reset_singlepass(&ctx);
@@ -88,21 +88,15 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
 
         // verify each module
         if (LLVMVerifyModule(llvm_module, LLVMPrintMessageAction, &error) == 1) {
-            bllvm_error("Could not verify LLVM module", error);
+            bllvm_error("Could not verify LLVM module", &error);
             llvm_traversal_ctx_reset_singlepass(&ctx);
             goto end;
         }
+        bllvm_error_dispose(&error);
 
         // first module should be stdlib module
         if (index == 0) {
             stdlib_module = llvm_module;
-        } else {
-            // if an error occurs LLVMLinkModules() returns true ...
-            if (true == LLVMLinkModules(llvm_module, stdlib_module, LLVMLinkerDestroySource, &error)) {
-                bllvm_error("Could not link LLVM modules", error);
-                llvm_traversal_ctx_reset_singlepass(&ctx);
-                goto end;
-            }
         }
         llvm_traversal_ctx_reset_singlepass(&ctx);
 
@@ -114,9 +108,10 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
         RF_STR_PF_FMT".ll",
         RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
     if (0 != LLVMPrintModuleToFile(llvm_module, rf_string_data(temp_s), &error)) {
-        bllvm_error("Could not output LLVM module to file", error);
+        bllvm_error("Could not output LLVM module to file", &error);
         goto end_pop_rfs;
     }
+    bllvm_error_dispose(&error);
     llvm_traversal_ctx_deinit(&ctx);
     ret = true;
 
@@ -130,7 +125,8 @@ end:
 static bool transformation_step_do(struct compiler_args *args,
                                    const char *executable,
                                    const char *insuff,
-                                   const char *outsuff)
+                                   const char *outsuff,
+                                   const char *extra)
 {
     int rc;
     FILE *proc;
@@ -142,9 +138,10 @@ static bool transformation_step_do(struct compiler_args *args,
 
     inname = RFS(RF_STR_PF_FMT".%s", RF_STR_PF_ARG(output), insuff);
     cmd = RFS(
-        "%s "RF_STR_PF_FMT" -o "RF_STR_PF_FMT".%s",
+        "%s "RF_STR_PF_FMT" %s -o "RF_STR_PF_FMT".%s",
         executable,
         RF_STR_PF_ARG(inname),
+        extra ? extra : "",
         RF_STR_PF_ARG(output),
         outsuff);
     proc = rf_popen(cmd, "r");
@@ -171,12 +168,12 @@ end:
 
 static bool bllvm_ir_to_asm(struct compiler_args *args)
 {
-    return transformation_step_do(args, "llc", "ll", "s");
+    return transformation_step_do(args, "llc", "ll", "s", NULL);
 }
 
 static bool backend_asm_to_exec(struct compiler_args *args)
 {
-    return transformation_step_do(args, "gcc", "s", "exe");
+    return transformation_step_do(args, "gcc", "s", "exe", "-L"RF_CLIB_ROOT" -lrefu");
 }
 
 bool bllvm_generate(struct RFilist_head *fronts, struct compiler_args *args)

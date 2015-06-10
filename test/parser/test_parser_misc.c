@@ -131,7 +131,6 @@ START_TEST (test_acc_import_statements) {
 
     ck_test_parse_root(n, d, expected_root);
 
-    ast_node_destroy(n);
     ast_node_destroy(expected_root);
 } END_TEST
 

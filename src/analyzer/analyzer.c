@@ -6,12 +6,14 @@
 #include <Utils/memory.h>
 #include <Utils/fixed_memory_pool.h>
 
+#include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/type.h>
 #include <ast/function.h>
 #include <ast/ast_utils.h>
 #include <parser/parser.h>
 #include <types/type.h>
+#include <analyzer/type_set.h>
 #include <types/type_comparisons.h>
 #include <analyzer/typecheck.h>
 #include <analyzer/string_table.h>
@@ -45,8 +47,8 @@ bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
 
 bool analyzer_init(struct analyzer *a, struct info_ctx *info)
 {
+    RF_STRUCT_ZERO(a);
     a->info = info;
-    a->root = NULL;
     a->have_semantic_err = false;
 
     a->symbol_table_records_pool = rf_fixed_memorypool_create(sizeof(struct symbol_table_record),
@@ -112,6 +114,10 @@ void analyzer_deinit(struct analyzer *a)
     if (a->types_set) {
         rf_objset_clear(a->types_set);
         free(a->types_set);
+    }
+
+    if (a->rir_types_list) {
+        rir_types_list_destroy(a->rir_types_list);
     }
 }
 
@@ -221,9 +227,21 @@ static enum traversal_cb_res analyzer_finalize_do(struct ast_node *n, void *user
 
 static bool do_nothing(struct ast_node *n, void *user_arg) { return true; }
 
-bool analyzer_finalize(struct analyzer *a)
+bool analyzer_finalize(struct analyzer *a, struct front_ctx *stdlib)
 {
-    if (!rir_types_list_init(&a->rir_types_list, a->types_set)) {
+    // if stdlib is passed copy its types to the module
+    if (stdlib) {
+        struct rf_objset_iter it;
+        struct type *t;
+        rf_objset_foreach(stdlib->analyzer->types_set, &it, t) {
+            if (!rf_objset_add(a->types_set, type, t)) {
+                RF_ERROR("rf_objset_add() failure");
+                return false;
+            }
+        }
+    }
+    // create the rir types list from the types set for this module
+    if (!(a->rir_types_list = rir_types_list_create(a->types_set))) {
         return false;
     }
     // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()

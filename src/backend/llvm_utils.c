@@ -35,11 +35,19 @@ void bllvm_mod_debug(LLVMModuleRef m, const char *mod_name)
     LLVMDisposeMessage(str);
 }
 
-void bllvm_error(const char *errpre, char *errstr)
+void bllvm_error_dispose(char **llvmerr)
 {
-    printf("[LLVM-error]:%s. %s\n", errpre, errstr);
+    if (*llvmerr) {
+        LLVMDisposeMessage(*llvmerr);
+    }
+    *llvmerr = NULL;
+}
+
+void bllvm_error(const char *errpre, char **llvmerr)
+{
+    printf("[LLVM-error]:%s. %s\n", errpre, *llvmerr);
     fflush(stdout);
-    LLVMDisposeMessage(errstr);
+    bllvm_error_dispose(llvmerr);
 }
 
 void bllvm_assign_to_string(LLVMValueRef string_alloca,
@@ -112,8 +120,8 @@ void bllvm_store(LLVMValueRef val,
                  struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
-    if (LLVMTypeOf(val) == LLVMTypeOf(ptr)) {
-        // if we are storing a pointer to another
+    if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && !bllvm_type_is_elementary(ptr_element_type)) {
+        // string is a special case
         if (ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
             bllvm_copy_string(val, ptr, ctx);
         } else {

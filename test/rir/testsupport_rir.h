@@ -27,10 +27,13 @@ void rir_testdriver_assign(struct rir_testdriver *d,
 
 bool rir_testdriver_process(struct rir_testdriver *d);
 
-#define testsupport_rir_process(driver_)                                \
+#define testsupport_rir_process(driver_, with_stdlib_)                  \
     do {                                                                \
+        testsupport_have_stdlib((driver_)->front_driver, with_stdlib_); \
         testsupport_scan_and_parse((driver_)->front_driver);            \
-        if (!analyzer_analyze_file(((driver_)->front_driver)->front.analyzer, ((driver_)->front_driver)->front.parser, true)) { \
+        if (!analyzer_analyze_file(((driver_)->front_driver)->front.analyzer, \
+                                   ((driver_)->front_driver)->front.parser, \
+                                   ((driver_)->front_driver)->stdlib)) {  \
             testsupport_show_front_errors((driver_)->front_driver, "Typechecking failed"); \
         }                                                               \
         ck_assert_msg(rir_testdriver_process((driver_)), "Failed to create the refu intermediate format"); \

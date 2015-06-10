@@ -32,6 +32,8 @@ struct rir_types_list {
 bool rir_types_list_init(struct rir_types_list *t,
                          struct rf_objset_type *types_set);
 void rir_types_list_deinit(struct rir_types_list *t);
+struct rir_types_list *rir_types_list_create(struct rf_objset_type *types_set);
+void rir_types_list_destroy(struct rir_types_list *t);
 
 /**
  * Searches the rir types list for a defined type called @c name
@@ -59,4 +61,5 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
  */
 #define rir_types_list_for_each(list_, type_) \
     rf_ilist_for_each(&(list_)->lh, type_, ln)
+
 #endif

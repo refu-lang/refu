@@ -49,7 +49,8 @@ bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
 struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
                                             struct llvm_traversal_ctx *ctx,
-                                            const struct RFstring *name);
+                                            const struct RFstring *name,
+                                            struct LLVMOpaqueModule *link_source);
 
 struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);

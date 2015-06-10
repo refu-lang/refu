@@ -122,3 +122,20 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
         return false;
 #endif
 }
+
+struct rir_types_list *rir_types_list_create(struct rf_objset_type *types_set)
+{
+    struct rir_types_list *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    if (!rir_types_list_init(ret, types_set)) {
+        free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+void rir_types_list_destroy(struct rir_types_list *t)
+{
+    rir_types_list_deinit(t);
+    free(t);
+}

@@ -56,10 +56,10 @@ START_TEST(test_typecheck_complex_type_in_variable_declaration) {
 START_TEST(test_typecheck_foreign_import) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "foreign_import func1, func2\n"
+        "foreign_import rf_stdlib_print_int, rf_stdlib_print_string\n"
         "{\n"
-        "func1(1, 2)\n"
-        "func2(1, 2)\n"
+        "rf_stdlib_print_int(3)\n"
+        "rf_stdlib_print_string(\"hello\")\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();

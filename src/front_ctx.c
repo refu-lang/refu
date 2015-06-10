@@ -92,7 +92,7 @@ struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdl
         return NULL;
     }
 
-    if (!analyzer_finalize(ctx->analyzer)) {
+    if (!analyzer_finalize(ctx->analyzer, stdlib)) {
         return NULL;
     }
 

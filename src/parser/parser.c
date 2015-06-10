@@ -10,7 +10,7 @@ bool parser_init(struct parser *p,
                  struct lexer *lex,
                  struct info_ctx *info)
 {
-
+    p->root = NULL;
     p->file = file;
     p->lexer = lex;
     p->info = info;
@@ -44,6 +44,7 @@ void parser_deinit(struct parser *p)
 
 void parser_destroy(struct parser *p)
 {
+    parser_deinit(p);
     free(p);
 }
 

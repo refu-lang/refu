@@ -23,7 +23,7 @@
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
-static bool bllvm_create_global_types(struct llvm_traversal_ctx *ctx)
+static bool bllvm_create_module_types(struct llvm_traversal_ctx *ctx)
 {
     struct type *t;
     struct rf_objset_iter it;
@@ -190,22 +190,25 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
                       llvm_traversal_ctx_get_params(ctx),
                       llvm_traversal_ctx_get_param_count(ctx),
                       true);
-
-    llvm_traversal_ctx_reset_params(ctx);
-    string_table_iterate(ctx->a->string_literals_table,
-                         (string_table_cb)bllvm_const_string_creation_cb, ctx);
     // also add "true" and "false" as global constant string literals
     bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);
     bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
-
-
-    if (!bllvm_create_global_types(ctx)) {
-        RF_ERROR("Could not create global types");
-        return false;
-    }
-
+    // create some global functions
     if (!bllvm_create_global_functions(ctx)) {
         RF_ERROR("Could not create global functions");
+        return false;
+    }
+    return true;
+}
+
+bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx)
+{
+    // create all constant strings
+    llvm_traversal_ctx_reset_params(ctx);
+    string_table_iterate(ctx->a->string_literals_table,
+                         (string_table_cb)bllvm_const_string_creation_cb, ctx);
+    if (!bllvm_create_module_types(ctx)) {
+        RF_ERROR("Could not create global types");
         return false;
     }
     return true;

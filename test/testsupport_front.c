@@ -112,14 +112,23 @@ struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
     return &d->buffstr;
 }
 
-bool front_testdriver_init(struct front_testdriver *d)
+void front_testdriver_create_analyze_stdlib(struct front_testdriver *d)
+{
+    const struct RFstring stdlib_s = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
+    ck_assert_msg(!d->stdlib, "Stdlib appears to already be initialized");
+    d->stdlib = front_ctx_create(NULL, &stdlib_s);
+    ck_assert_msg(d->stdlib, "Failed to initialize stdlib front ctx");
+    ck_assert_msg(NULL != front_ctx_process(d->stdlib, NULL));
+}
+
+bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib)
 {
     RF_STRUCT_ZERO(d);
     darray_init(d->nodes);
 
-    // Note: Here are providing NULL pointer for front context input file
-    // The input file is created and injected at lexer and parser during
-    // front_testdriver_assign()
+    if (with_stdlib) {
+        front_testdriver_create_analyze_stdlib(d);
+    }
 
     if (!rf_stringx_init_buff(&d->buffstr, 1024, "")) {
         goto free_nodes;
@@ -169,6 +178,10 @@ free_nodes:
 }
 void front_testdriver_deinit(struct front_testdriver *d)
 {
+    if (d->stdlib) {
+        front_ctx_destroy(d->stdlib);
+        d->stdlib = NULL;
+    }
     struct ast_node **n;
     rf_stringx_deinit(&d->buffstr);
     typecmp_ctx_deinit();
@@ -377,7 +390,7 @@ void setup_front_tests()
                           RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
                           RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
                   "Failed to initialize refu library");
-    ck_assert_msg(front_testdriver_init(&__front_testdriver),
+    ck_assert_msg(front_testdriver_init(&__front_testdriver, false),
                   "Failed to initialize front end test driver");
 }
 
@@ -389,7 +402,7 @@ void setup_front_tests_with_file_log()
                           RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
                           RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
                   "Failed to initialize refu library");
-    ck_assert_msg(front_testdriver_init(&__front_testdriver),
+    ck_assert_msg(front_testdriver_init(&__front_testdriver, false),
                   "Failed to initialize front end test driver");
 }
 
