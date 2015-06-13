@@ -296,7 +296,7 @@ static bool lexer_get_constant_int(
     struct lexer *l, char *p,
     char *lim, char **ret_p,
     bool negative,
-    bool (*conv_fun)(const void*, uint64_t*, size_t *))
+    bool (*conv_fun)(const struct RFstring*, uint64_t*, size_t *))
 {
     struct RFstring tmps;
     uint64_t int_val;

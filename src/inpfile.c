@@ -102,7 +102,7 @@ void inpfile_move(struct inpfile *f,
 
     off->bytes_moved += bytes;
     off->chars_moved += chars;
-    off->lines_moved += rf_string_count(inpfile_str(f), &nl, bytes, 0, 0);
+    off->lines_moved += rf_string_count(RF_STRX2STR(inpfile_str(f)), &nl, bytes, 0, 0);
 
     rf_stringx_move_bytes(inpfile_str(f), bytes);
 }

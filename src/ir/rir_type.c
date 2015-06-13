@@ -300,6 +300,14 @@ bool rir_type_is_subtype_of_other(struct rir_type *t,
     return false;
 }
 
+// very temporary macro to allow visualization of rir type comparison. Will go away
+/* #define TEMP_RIR_DEBUG 1 */
+#ifdef TEMP_RIR_DEBUG
+#define DD(...) do { RFS_PUSH(); RF_CDEBUG(__VA_ARGS__); RFS_POP();}while(0)
+#else
+#define DD(...) 
+#endif
+
 struct rir_type_cmp_ctx {
     //! Current type operation while iterating the rir type to type comparison
     enum rir_type_category current_rir_op;
@@ -321,8 +329,6 @@ static inline const struct rir_type *rir_type_cmp_ctx_current_type(struct rir_ty
     if (darray_top(ctx->indices) == -1) {
         return darray_top(ctx->rir_types);
     }
-    /* RF_ASSERT(darray_top(ctx->indices) < (int)darray_size(darray_top(ctx->rir_types)->subtypes), */
-    /*           "Attempt to access subtype out of bounds. Should not happen at this point."); */
     if (darray_top(ctx->indices) >= (int)darray_size(darray_top(ctx->rir_types)->subtypes)) {
         return NULL;
     }
@@ -365,20 +371,25 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
     const struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
     if (!current_rir) {
+        DD("!current_rir -> return false\n");
         return false;
     }
     if (t->category == TYPE_CATEGORY_OPERATOR) {
         enum rir_type_category n_type_op = rir_type_op_from_type(t);
         if (ctx->current_rir_op == RIR_TYPE_CATEGORY_COUNT) {
+            DD("ctx->current_rir_op == RIR_TYPE_CATEGORY_COUNT "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
             ctx->current_rir_op = n_type_op;
             if (rir_type_op_from_rir_type(current_rir) == RIR_TYPE_CATEGORY_COUNT) {
+                DD("rir_type_op_from_rir_type(current_rir) == RIR_TYPE_CATEGORY_COUNT -> return false "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
                 return false;
             }
             // also go to the first index of the type
             rir_type_cmp_ctx_idx_plus1(ctx);
         } else {
+            DD("ctx->current_rir_op != RIR_TYPE_CATEGORY_COUNT "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
             // check if we need to go deeper into the rir type
             if (n_type_op != ctx->current_rir_op) {
+                DD("going deepper into the rir type\n");
                 rir_type_cmp_ctx_push_type(ctx, current_rir);
 
                 // also go to the first index of the new type
@@ -388,6 +399,7 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         }
 
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
+        DD("t->category == TYPE_CATEGORY_DEFINED\n");
         if (current_rir->category != COMPOSITE_RIR_DEFINED) {
             return false;
         }
@@ -408,11 +420,14 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
+        DD("post_cb[elementary] "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
         if (!curr_rir) {
+            DD("post_cb[elementary] !curr_rir -> return false\n");
             return false;
         }
         if (!rir_type_is_elementary(curr_rir)) {
+            DD("post_cb[elementary] !rir_type_is_elementary(curr_rir) -> return false\n");
             return false;
         }
         return (enum elementary_type)curr_rir->category == type_elementary(t);
@@ -421,18 +436,23 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         break;
 
     case TYPE_CATEGORY_OPERATOR:
+        DD("post_cb[operator] going up\n");
         rir_type_cmp_ctx_go_up(ctx, t);
         break;
 
     case TYPE_CATEGORY_LEAF:
+        DD("post_cb[leaf] going up "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
         curr_rir = rir_type_cmp_ctx_current_type(ctx);
         if (!curr_rir) {
+            DD("post_cb[leaf] !curr_rir -> return false\n");
             return false;
         }
         if (!curr_rir->name || !rf_string_equal(curr_rir->name, t->leaf.id)) {
+            DD("post_cb[leaf] !curr_rir->name || !rf_string_equal(curr_rir->name, t->leaf.id)r -> return false\n");
             return false;
         }
         if (!rir_type_equals_type(curr_rir, t->leaf.type, NULL)) {
+            DD("post_cb[leaf] !rir_type_equals_type(curr_rir, t->leaf.type, NULL) -> return false\n");
             return false;
         }
         // also index + 1
@@ -463,6 +483,12 @@ bool rir_type_equals_type(const struct rir_type *r_type,
         (type_iterate_cb)(rir_type_cmp_post_cb),
         &ctx
     );
+    // if we are at the end of a rir_type operator comparison that has subtypes
+    // then check if all of has been covered. If not then it's not a match
+    if (ret && darray_top(ctx.indices) != -1 && darray_top(ctx.indices)  != darray_size(rir_type_contents(r_type)->subtypes)) {
+        DD("at end of comparison %d != %lu -> return false;\n", darray_top(ctx.indices), darray_size(rir_type_contents(r_type)->subtypes));
+        ret = false;
+    }
     rir_type_cmp_ctx_deinit(&ctx);
     return ret;
 }

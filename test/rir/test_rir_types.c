@@ -5,6 +5,7 @@
 
 #include <String/rf_str_core.h>
 #include <ast/ast.h>
+#include <ast/function.h>
 
 #include "testsupport_rir.h"
 
@@ -370,6 +371,45 @@ START_TEST(test_rir_type_equals_type4) {
     ck_assert(rir_type_equals_type(t_foobar, t, NULL));
 } END_TEST
 
+START_TEST(test_rir_type_doesnotequal_subsum_type) {
+
+    struct rir_testdriver *d = get_rir_testdriver();
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+
+    // create normal type for (a:i64 | b:u64 | c:f64)
+    struct type *n_a_i64 = testsupport_analyzer_type_create_leaf(
+        &id_a,
+        type_elementary_get_type(ELEMENTARY_TYPE_INT_64));
+    struct type *n_b_u64 = testsupport_analyzer_type_create_leaf(
+        &id_b,
+        type_elementary_get_type(ELEMENTARY_TYPE_UINT_64));
+    struct type *n_c_f64 = testsupport_analyzer_type_create_leaf(
+        &id_c,
+        type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64));
+    struct type *n_sum1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                   n_a_i64,
+                                                                   n_b_u64);
+    struct type *n_sum= testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                  n_sum1,
+                                                                  n_c_f64);
+    
+    // create rir type for (a:i64 | b:u64 | c:f64 | d:string)
+    struct rir_type *t_a_i64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_64, &id_a, true);
+    struct rir_type *t_b_u64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_64, &id_b, true);
+    struct rir_type *t_c_f64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_64, &id_c, true);
+    struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
+    struct rir_type *t_sum = testsupport_rir_type_create(d, COMPOSITE_SUM_RIR_TYPE, NULL, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_a_i64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_b_u64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_c_f64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_d_string, true);
+
+    // the comparison should fail
+    ck_assert(!rir_type_equals_type(t_sum, n_sum, NULL));
+} END_TEST
 
 Suite *rir_types_suite_create(void)
 {
@@ -393,6 +433,7 @@ Suite *rir_types_suite_create(void)
     tcase_add_test(type_comparison, test_rir_type_equals_type2);
     tcase_add_test(type_comparison, test_rir_type_equals_type3);
     tcase_add_test(type_comparison, test_rir_type_equals_type4);
+    tcase_add_test(type_comparison, test_rir_type_doesnotequal_subsum_type);
 
     suite_add_tcase(s, type_lists);
     suite_add_tcase(s, type_comparison);

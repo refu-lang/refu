@@ -80,7 +80,7 @@ static bool inpfile_dummy_assign(struct inpfile *f,
     if (!rf_stringx_assign(&f->str.str, s)) {
         goto end;
     }
-    lines = rf_string_count(&f->str.str, &nl, 0, &arr, 0);
+    lines = rf_string_count(RF_STRX2STR(&f->str.str), &nl, 0, &arr, 0);
     if (lines == -1) {
         goto end;
     }

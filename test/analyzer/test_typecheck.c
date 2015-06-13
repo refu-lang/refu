@@ -56,9 +56,9 @@ START_TEST(test_typecheck_complex_type_in_variable_declaration) {
 START_TEST(test_typecheck_foreign_import) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "foreign_import rf_stdlib_print_int, rf_stdlib_print_string\n"
+        "foreign_import rf_stdlib_print_int64, rf_stdlib_print_string\n"
         "{\n"
-        "rf_stdlib_print_int(3)\n"
+        "rf_stdlib_print_int64(3)\n"
         "rf_stdlib_print_string(\"hello\")\n"
         "}"
     );

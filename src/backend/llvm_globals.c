@@ -128,10 +128,22 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
 
 static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
 {
-    LLVMTypeRef pint_args[] = { LLVMInt64Type()};
-    LLVMAddFunction(ctx->mod, "rf_stdlib_print_int",
+    LLVMTypeRef pint64_args[] = { LLVMInt64Type()};
+    LLVMAddFunction(ctx->mod, "rf_stdlib_print_int64",
                     LLVMFunctionType(LLVMVoidType(),
-                                     pint_args,
+                                     pint64_args,
+                                     1,
+                                     false));
+    LLVMTypeRef puint64_args[] = { LLVMInt64Type()};
+    LLVMAddFunction(ctx->mod, "rf_stdlib_print_uint64",
+                    LLVMFunctionType(LLVMVoidType(),
+                                     puint64_args,
+                                     1,
+                                     false));
+    LLVMTypeRef pdouble_args[] = { LLVMDoubleType()};
+    LLVMAddFunction(ctx->mod, "rf_stdlib_print_double",
+                    LLVMFunctionType(LLVMVoidType(),
+                                     pdouble_args,
                                      1,
                                      false));
     LLVMTypeRef pstring_args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0) };

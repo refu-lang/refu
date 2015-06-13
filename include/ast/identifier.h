@@ -45,7 +45,6 @@ bool ast_identifier_is_wildcard(const struct ast_node *n);
 bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a);
 uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a);
 
-
 /* -- xidentifier -- */
 
 /**

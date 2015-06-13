@@ -68,8 +68,13 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
     return NULL;
 }
 
-// very very temporary macro to allow visualization of rir type creation. Will go away
+// very temporary macro to allow visualization of rir type creation. Will go away
  /* #define TEMP_RIR_DEBUG 1 */
+#ifdef TEMP_RIR_DEBUG
+#define DD(...) do { RFS_PUSH(); RF_CDEBUG(__VA_ARGS__); RFS_POP();}while(0)
+#else
+#define DD(...) 
+#endif
 bool rir_types_list_init(struct rir_types_list *rir_types,
                          struct rf_objset_type *types_set)
 {
@@ -80,32 +85,26 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
     bool found;
     rf_ilist_head_init(&rir_types->lh);
     rf_objset_foreach(types_set, &it1, t) {
-#if TEMP_RIR_DEBUG
-        RFS_PUSH();
-        struct RFstring *types;
-        RF_TYPESTR_CHECK(types, t, TSTR_LEAF_ID, goto fail);
-        printf("iterating type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(types));
-        fflush(stdout);
-#endif
+        DD("iterating type: "RF_STR_PF_FMT"\n",
+           RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
         // first of all see if this type already has an equivalent rir type
         found = false;
         rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
             if (rir_type_equals_type(iter_rir_type, t, NULL)) {
                 found = true;
+                break;
             }
         }
         // if it does don't bother with it anymore
         if (found) {
+            DD("Equal rir type already found: "RF_STR_PF_FMT"\n",
+                      RF_STR_PF_ARG(rir_type_str_or_die(iter_rir_type)));
             continue;
         }
 
         created_rir_type = rir_type_create(t, NULL);
-#if TEMP_RIR_DEBUG
-        printf("created rir type: "RF_STR_PF_FMT"\n",
+        DD("created rir type: "RF_STR_PF_FMT"\n",
                RF_STR_PF_ARG(rir_type_str_or_die(created_rir_type)));
-        fflush(stdout);
-        RFS_pop();
-#endif
         if (!created_rir_type) {
             RF_ERROR("Failed to create a rir type during transition Refu IR.");
             return false;
@@ -115,12 +114,6 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
     }
 
     return true;
-
-#if TEMP_RIR_DEBUG
-    fail:
-        RFS_pop();
-        return false;
-#endif
 }
 
 struct rir_types_list *rir_types_list_create(struct rf_objset_type *types_set)
