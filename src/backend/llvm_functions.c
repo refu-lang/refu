@@ -87,19 +87,8 @@ static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
     const struct type *params_type = ast_fncall_params_type(fn_call);
     const struct rir_type *params_rtype = type_get_rir_or_die(params_type);
     // find out the index of the sum operand type in the defined type
-    size_t child_index = 0;
-    bool child_found = false;
-    struct rir_type **subtype;
-    darray_foreach(subtype, sum_type->subtypes) {
-        if (rir_type_equals(*subtype, params_rtype, RIR_TYPECMP_SIMPLE)) {
-            child_found = true;
-            break;
-        }
-        ++child_index;
-    }
-    RF_ASSERT_OR_CRITICAL(child_found,
-                          return NULL,
-                          "Type should have been found as child of defined type");
+    int child_index = rir_type_childof_type(params_rtype, sum_type);
+    RF_ASSERT(child_index != -1, "fncall arg should be a child of original functions sum type");
     // get the LLVM struct type of the sum operand
     RFS_PUSH();
     LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
@@ -176,8 +165,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
         const struct type *fn_args_type = type_function_get_argtype(fn_type);
         llvm_traversal_ctx_reset_values(ctx);
         if (type_is_sumop(fn_args_type)) {
-            // if the function takes an anonymous sum type argument calculate
-            // we need special handling
+            // if the function takes an anonymous sum type argument we need special handling
             llvm_traversal_ctx_add_value(
                 ctx,
                 bllvm_sum_fncall_args_to_type(

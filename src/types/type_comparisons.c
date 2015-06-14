@@ -18,7 +18,8 @@
 struct typecmp_ctx {
     bool needs_reset;
     int flags;
-    struct type *matched_type;
+    bool conversion_at_final_match;
+    const struct type *matched_type;
     struct RFstringx err_buff;
     struct RFstringx warn_buff;
     struct {darray(struct RFstring);} warning_indices;
@@ -30,11 +31,25 @@ i_THREAD__ struct typecmp_ctx g_typecmp_ctx;
     g_typecmp_ctx.needs_reset = true;                 \
     return i_retvalue_
 
+// just like TYPECMP_RETURN(true) but also set the matched type properly
+#define TYPECMP_RETSET_SUCCESS(i_matched_)            \
+    g_typecmp_ctx.matched_type = i_matched_;          \
+    g_typecmp_ctx.needs_reset = true;                 \
+    g_typecmp_ctx.conversion_at_final_match = false;  \
+    return true
+
+// just like TYPECMP_RETSET_SUCCESS() but also specify that success occured due to conversion
+#define TYPECMP_RETSET_SUCCESS_CONVERSION(i_matched_)            \
+    g_typecmp_ctx.matched_type = i_matched_;                     \
+    g_typecmp_ctx.needs_reset = true;                            \
+    g_typecmp_ctx.conversion_at_final_match = false;             \
+    return true
 
 bool typecmp_ctx_init()
 {
     darray_init(g_typecmp_ctx.warning_indices);
     g_typecmp_ctx.needs_reset = false;
+    g_typecmp_ctx.conversion_at_final_match = false;
     g_typecmp_ctx.flags = 0;
     g_typecmp_ctx.matched_type = NULL;
     return rf_stringx_init_buff(&g_typecmp_ctx.err_buff, 1024, "") &&
@@ -46,6 +61,7 @@ static inline void typecmp_ctx_reset()
     if (g_typecmp_ctx.needs_reset) {
         g_typecmp_ctx.needs_reset = false;
         g_typecmp_ctx.matched_type = NULL;
+        g_typecmp_ctx.conversion_at_final_match = false;
         g_typecmp_ctx.flags = 0;
         rf_stringx_assignv(&g_typecmp_ctx.err_buff, "");
         rf_stringx_assignv(&g_typecmp_ctx.warn_buff, "");
@@ -103,7 +119,7 @@ void typecmp_ctx_set_flags(int flags)
     g_typecmp_ctx.flags = flags;
 }
 
-struct type *typemp_ctx_get_matched_type()
+const struct type *typemp_ctx_get_matched_type()
 {
     return g_typecmp_ctx.matched_type;
 }
@@ -123,26 +139,26 @@ static inline bool type_leaf_compare(const struct type_leaf *from,
     return predicate && type_compare(from->type, to->type, reason);
 }
 
-static bool type_operator_compare(const struct type_operator *from,
-                                  const struct type_operator *to,
+static bool type_operator_compare(const struct type *from,
+                                  const struct type *to,
                                   enum comparison_reason reason)
 {
     if (from == to) {
-        TYPECMP_RETURN(true);
+        TYPECMP_RETSET_SUCCESS(from);
     }
 
-    if (from->type != to->type) {
+    if (from->operator.type != to->operator.type) {
         TYPECMP_RETURN(false);
     }
 
-    return type_compare(from->left, to->left, reason) &&
-           type_compare(from->right, to->right, reason);
+    return type_compare(from->operator.left, to->operator.left, reason) &&
+        type_compare(from->operator.right, to->operator.right, reason);
 }
 
 
 
-static bool type_elementary_compare(const struct type_elementary *from,
-                                    const struct type_elementary *to,
+static bool type_elementary_compare(const struct type *fromtype,
+                                    const struct type *totype,
                                     enum comparison_reason reason)
 {
     // keep the enum and the array synced
@@ -158,11 +174,14 @@ static bool type_elementary_compare(const struct type_elementary *from,
         ". Attempting to assign larger constant to smaller variable",
         ". Attempting to assign signed constant to unsigned variable",
     };
+    const struct type_elementary *from = &fromtype->elementary;
+    const struct type_elementary *to = &totype->elementary;
     if (from->etype == to->etype) {
-        TYPECMP_RETURN(true);
+        TYPECMP_RETSET_SUCCESS(fromtype);
     }
 
-    if (reason == TYPECMP_IDENTICAL) {
+    // for pattern matching and for identical comparison no conversions happen here
+    if (reason == TYPECMP_IDENTICAL || reason == TYPECMP_PATTERN_MATCHING) {
         goto end;
     }
 
@@ -223,15 +242,15 @@ static bool type_elementary_compare(const struct type_elementary *from,
                     RFS_POP();
                 }
             }
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         if (type_elementary_is_float(to)) {// an int is convertible to a float
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         if (to->etype == ELEMENTARY_TYPE_BOOL) { // we can convert from int to bool
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         // explicit conversion from int constant numeric literal to string is ok
@@ -239,19 +258,19 @@ static bool type_elementary_compare(const struct type_elementary *from,
             from->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
             
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
         break;
     case ELEMENTARY_TYPE_FLOAT_32:
     case ELEMENTARY_TYPE_FLOAT_64:
         // float to float is okay
         if (type_elementary_is_float(to)) {
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         // only explicit float to int
         if (type_elementary_is_int(to) && reason == TYPECMP_EXPLICIT_CONVERSION) {
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         // explicit conversion from float constant numeric literal to string is ok
@@ -259,7 +278,7 @@ static bool type_elementary_compare(const struct type_elementary *from,
             from->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
             
-            TYPECMP_RETURN(true);
+            TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
         break;
     case ELEMENTARY_TYPE_BOOL:
@@ -269,11 +288,11 @@ static bool type_elementary_compare(const struct type_elementary *from,
             break;
         }
             if (type_elementary_is_int(to)) { // we can convert from bool to int
-                TYPECMP_RETURN(true);
+                TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
             }
             // we can explicitly convert from bool to string
             if (to->etype == ELEMENTARY_TYPE_STRING && reason == TYPECMP_EXPLICIT_CONVERSION) {
-                TYPECMP_RETURN(true);
+                TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
             }
         break;
     case ELEMENTARY_TYPE_STRING:
@@ -303,9 +322,9 @@ static bool type_same_categories_compare(const struct type *from,
               "with types of different categories");
     switch (from->category) {
     case TYPE_CATEGORY_OPERATOR:
-        return type_operator_compare(&from->operator, &to->operator, reason);
+        return type_operator_compare(from, to, reason);
     case TYPE_CATEGORY_ELEMENTARY:
-        return type_elementary_compare(&from->elementary, &to->elementary, reason);
+        return type_elementary_compare(from, to, reason);
     case TYPE_CATEGORY_LEAF:
         return type_leaf_compare(&from->leaf, &to->leaf, reason);
     case TYPE_CATEGORY_DEFINED:
@@ -334,14 +353,18 @@ static bool type_compare_to_operator(const struct type *from,
         enum comparison_reason new_reason = reason == TYPECMP_PATTERN_MATCHING
             ? TYPECMP_PATTERN_MATCHING : TYPECMP_AFTER_IMPLICIT_CONVERSION;
 
-        if (type_compare(from, to->left, new_reason)) {
-            g_typecmp_ctx.matched_type = to->left;
+        bool left_result = type_compare(from, to->left, new_reason);
+        if (left_result && !g_typecmp_ctx.conversion_at_final_match) {
+            // had an exact match
             return true;
         }
-        if (type_compare(from, to->right, new_reason)) {
-            g_typecmp_ctx.matched_type = to->right;
+        bool right_result = type_compare(from, to->right, new_reason);
+        if (right_result && !g_typecmp_ctx.conversion_at_final_match) {
+            // had an exact match
             return true;
         }
+        // no exact match, but still check if there was a conversion match
+        return left_result || right_result;
     }
     return false;
 }
@@ -423,7 +446,7 @@ bool type_compare(const struct type *from,
     typecmp_ctx_reset();
     // first check if we refer to the same type (elementary or composite)
     if (from == to) {
-        TYPECMP_RETURN(true);
+        TYPECMP_RETSET_SUCCESS(to);
     }
 
     switch (type_category_check(from, to, reason)) {

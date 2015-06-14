@@ -125,6 +125,6 @@ void typecmp_ctx_set_flags(int flags);
  * This only makes sense if the "to" part of the comparison is a sum type
  * In all other cases the return will be NULL
  */
-struct type *typemp_ctx_get_matched_type();
+const struct type *typemp_ctx_get_matched_type();
 
 #endif

@@ -151,6 +151,59 @@ START_TEST (test_type_comparison_identical) {
 
 } END_TEST
 
+START_TEST (test_type_comparison_for_sum_fncall) {
+    // test for a bug concerning subtypes of sum types
+    // make type a:i64 | b:u64 | c:f64 | d:string
+    // just like the typechecking for function calls
+    // check that comparing a subtype gives the correct matched type
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_leaf_ai64 = testsupport_analyzer_type_create_leaf(&id_a, t_i64);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_leaf_bu64 = testsupport_analyzer_type_create_leaf(&id_b, t_u64);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_leaf_cf64 = testsupport_analyzer_type_create_leaf(&id_c, t_f64);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_leaf_dstring = testsupport_analyzer_type_create_leaf(&id_d, t_string);
+
+    struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                     t_leaf_ai64,
+                                                                     t_leaf_bu64);
+    struct type *t_sum_2 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                     t_sum_1,
+                                                                     t_leaf_cf64);
+    struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                   t_sum_2,
+                                                                   t_leaf_dstring);
+    
+    RFS_PUSH();
+    typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
+    ck_assert(type_compare(t_leaf_bu64, t_sum, TYPECMP_PATTERN_MATCHING));
+    const struct type *matched_type = typemp_ctx_get_matched_type();
+    ck_assert_msg(matched_type == t_leaf_bu64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+
+    typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
+    ck_assert(type_compare(t_leaf_ai64, t_sum, TYPECMP_PATTERN_MATCHING));
+    matched_type = typemp_ctx_get_matched_type();
+    ck_assert_msg(matched_type == t_leaf_ai64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+
+    typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
+    ck_assert(type_compare(t_leaf_cf64, t_sum, TYPECMP_PATTERN_MATCHING));
+    matched_type = typemp_ctx_get_matched_type();
+    ck_assert_msg(matched_type == t_leaf_cf64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+
+    typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
+    ck_assert(type_compare(t_leaf_dstring, t_sum, TYPECMP_PATTERN_MATCHING));
+    matched_type = typemp_ctx_get_matched_type();
+    ck_assert_msg(matched_type == t_leaf_dstring, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    RFS_POP();
+    
+} END_TEST
+
 START_TEST (test_elementary_get_category) {
 
     struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT, false);
@@ -541,6 +594,7 @@ Suite *types_suite_create(void)
     tcase_add_checked_fixture(st1, setup_analyzer_tests, teardown_analyzer_tests);
     tcase_add_test(st1, test_type_to_str);
     tcase_add_test(st1, test_type_comparison_identical);
+    tcase_add_test(st1, test_type_comparison_for_sum_fncall);
 
     TCase *st2 = tcase_create("types_getter_tests");
     tcase_add_checked_fixture(st2, setup_analyzer_tests, teardown_analyzer_tests);
