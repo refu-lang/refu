@@ -32,20 +32,20 @@ static void rir_testdriver_deinit(struct rir_testdriver *d)
 
 void setup_rir_tests()
 {
-    setup_front_tests();
+    setup_analyzer_tests();
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
 }
 void setup_rir_tests_with_filelog()
 {
-    setup_front_tests_with_file_log();
+    setup_analyzer_tests_with_filelog();
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
 }
 void teardown_rir_tests()
 {
     rir_testdriver_deinit(&i_rir_test_driver_);
-    teardown_front_tests();
+    teardown_analyzer_tests();
 }
 
 void rir_testdriver_assign(struct rir_testdriver *d,

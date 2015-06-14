@@ -123,12 +123,17 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
 }
 
 static inline bool pattern_matching_ctx_set_matched(struct pattern_matching_ctx *ctx,
-                                                    const struct type *match_type)
+                                                    const struct type *match_type,
+                                                    const struct type *pattern_type)
 {
     if (rf_objset_get(&ctx->matched, type, match_type)) {
         return true;
     }
-    ctx->last_matched_case = match_type;
+    if (pattern_type->category == TYPE_CATEGORY_WILDCARD || pattern_type->category == TYPE_CATEGORY_OPERATOR) {
+        ctx->last_matched_case = match_type;
+    } else {
+        ctx->last_matched_case = pattern_type;
+    }
     return rf_objset_add(&ctx->matched, type, match_type);
 }
 
@@ -193,13 +198,13 @@ static bool pattern_match_type_sumop(const struct type *pattern,
     left = pattern_match_types(pattern_l, target_l, ctx);
     right = pattern_match_types(pattern_r, target_r, ctx);
     if (left) {
-        if (!pattern_matching_ctx_set_matched(ctx, target_l)) {
+        if (!pattern_matching_ctx_set_matched(ctx, target_l, pattern)) {
             RF_ERROR("Internal error, could not add type to matched set.");
             return false;
         }
     }
     if (right) {
-        if (!pattern_matching_ctx_set_matched(ctx, target_r)) {
+        if (!pattern_matching_ctx_set_matched(ctx, target_r, pattern)) {
             RF_ERROR("Internal error, could not add type to matched set.");
             return false;
         }

@@ -411,6 +411,32 @@ START_TEST(test_rir_type_doesnotequal_subsum_type) {
     ck_assert(!rir_type_equals_type(t_sum, n_sum, NULL));
 } END_TEST
 
+START_TEST(test_rir_type_childof_type) {
+    struct rir_testdriver *d = get_rir_testdriver();
+    // create rir type for (a:i64 | b:u64 | c:f64 | d:string)
+    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_c = RF_STRING_STATIC_INIT("c");
+    static const struct RFstring id_d = RF_STRING_STATIC_INIT("d");
+    struct rir_type *t_a_i64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_INT_64, &id_a, true);
+    struct rir_type *t_b_u64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_UINT_64, &id_b, true);
+    struct rir_type *t_c_f64 = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_FLOAT_64, &id_c, true);
+    struct rir_type *t_d_string = testsupport_rir_type_create(d, ELEMENTARY_RIR_TYPE_STRING, &id_d, true);
+    struct rir_type *t_sum = testsupport_rir_type_create(d, COMPOSITE_SUM_RIR_TYPE, NULL, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_a_i64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_b_u64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_c_f64, false);
+    testsupport_rir_type_add_subtype(d, t_sum, t_d_string, true);
+
+    // test that each subtype has the correct index with rir_type_childof_type
+    ck_assert_int_eq(0, rir_type_childof_type(t_a_i64, t_sum));
+    ck_assert_int_eq(1, rir_type_childof_type(t_b_u64, t_sum));
+    ck_assert_int_eq(2, rir_type_childof_type(t_c_f64, t_sum));
+    ck_assert_int_eq(3, rir_type_childof_type(t_d_string, t_sum));
+
+} END_TEST
+
+
 Suite *rir_types_suite_create(void)
 {
     Suite *s = suite_create("rir_types");
@@ -435,8 +461,15 @@ Suite *rir_types_suite_create(void)
     tcase_add_test(type_comparison, test_rir_type_equals_type4);
     tcase_add_test(type_comparison, test_rir_type_doesnotequal_subsum_type);
 
+    TCase *type_misc = tcase_create("rir_types_misc");
+    tcase_add_checked_fixture(type_misc,
+                              setup_rir_tests,
+                              teardown_rir_tests);
+    tcase_add_test(type_misc, test_rir_type_childof_type);
+
     suite_add_tcase(s, type_lists);
     suite_add_tcase(s, type_comparison);
+    suite_add_tcase(s, type_misc);
 
     return s;
 }

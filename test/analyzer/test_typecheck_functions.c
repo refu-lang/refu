@@ -5,6 +5,8 @@
 
 #include <info/msg.h>
 
+#include <ast/function.h>
+#include <ast/matchexpr.h>
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
 #include "testsupport_analyzer.h"
@@ -280,6 +282,37 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
     ck_assert_typecheck_ok(d, true);
 } END_TEST
 
+START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
+    // this is a test for the matched type of a case in a 3 sum type
+    // to reproduce an issue where it was incorrectly matching to a part of the sum
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn action(a:i32 | b:string | c:f64)\n"
+        "a:i32    => print(\"int\")\n"
+        "b:string => print(b)\n"
+        "c:f64    => print(\"f64\")\n"
+        "\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    ck_assert_typecheck_ok(d, true);
+
+    struct ast_node *fn_impl = ast_node_get_child(d->front.analyzer->root, 0);
+    ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
+    struct ast_node *match = ast_fnimpl_body_get(fn_impl);
+    struct ast_matchexpr_it it;
+    struct ast_node *mcase;
+    ast_matchexpr_foreach(match, &it, mcase) {
+        // make sure that pattern type and matched type are equal for all cases
+        const struct type *pattern_type = ast_node_get_type_or_die(
+            ast_matchcase_pattern(mcase),
+            AST_TYPERETR_DEFAULT
+        );
+        const struct type *matched_type = ast_matchcase_matched_type(mcase);
+        ck_assert(type_compare(pattern_type, matched_type, TYPECMP_IDENTICAL));
+    }
+} END_TEST
+
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_return) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn action(a:i32 | b:string) -> i32\n"
@@ -364,9 +397,15 @@ Suite *analyzer_typecheck_functions_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_impl_val, test_typecheck_valid_function_impl);
-    tcase_add_test(t_impl_val, test_typecheck_valid_function_impl_matchexp_body_void_return);
-    tcase_add_test(t_impl_val, test_typecheck_valid_function_impl_matchexp_body_with_return);
-    tcase_add_test(t_impl_val, test_typecheck_valid_function_impl_matchexp_body_with_complicated_return);
+
+    TCase *t_impl_matchbody_val = tcase_create("typecheck_valid_function_implementation_no_block");
+    tcase_add_checked_fixture(t_impl_matchbody_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_impl_matchbody_val, test_typecheck_valid_function_impl_matchexp_body_void_return);
+    tcase_add_test(t_impl_matchbody_val, test_typecheck_valid_function_impl_matchexp_body_3sum);
+    tcase_add_test(t_impl_matchbody_val, test_typecheck_valid_function_impl_matchexp_body_with_return);
+    tcase_add_test(t_impl_matchbody_val, test_typecheck_valid_function_impl_matchexp_body_with_complicated_return);
 
     TCase *t_impl_inv = tcase_create("typecheck_invalid_function_implementations");
     tcase_add_checked_fixture(t_impl_inv,
@@ -378,6 +417,7 @@ Suite *analyzer_typecheck_functions_suite_create(void)
     suite_add_tcase(s, t_call_val);
     suite_add_tcase(s, t_call_inv);
     suite_add_tcase(s, t_impl_val);
+    suite_add_tcase(s, t_impl_matchbody_val);
     suite_add_tcase(s, t_impl_inv);
 
     return s;
