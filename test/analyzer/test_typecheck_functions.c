@@ -244,7 +244,7 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
             MESSAGE_SEMANTIC_ERROR,
             "function foo() is called with argument type of \"bool\" which does "
             "not match the expected type of \"u64|string\". Unable to convert from "
-            "\"bool\" to \"string\". An implicit conversion already happened.",
+            "\"bool\" to \"string\".",
             3, 0, 3, 8),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);

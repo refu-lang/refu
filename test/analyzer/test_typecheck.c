@@ -240,7 +240,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
             d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"foo\" to \"string\".",
+            "\"foo\" to \"string\". Unable to convert from \"string\" to \"u32\".",
             2, 4, 6, 4),
     };
     ck_assert_typecheck_with_messages(d, false, messages, true);

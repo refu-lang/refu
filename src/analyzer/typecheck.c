@@ -579,7 +579,9 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         //check that the types of its arguments do indeed match
         fn_declared_args_type = type_callable_get_argtype(fn_type);
         typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
-        if (!type_compare(fn_found_args_type, fn_declared_args_type, TYPECMP_IMPLICIT_CONVERSION)) {
+        if (!type_compare(fn_found_args_type,
+                          fn_declared_args_type,
+                          type_is_sumop(fn_declared_args_type) ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
             analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
                          RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
