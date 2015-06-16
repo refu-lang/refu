@@ -191,6 +191,18 @@ static bool lexer_add_token_string_literal(struct lexer *l,
     return true;
 }
 
+static void lexer_get_dblslash_comment(struct lexer *l, char *p, char *lim, char **ret_p)
+{
+    // skip the first 2 '//'
+    p += 2;
+    // TODO: this assumes newline is always LF which depends on where we get our data from
+    // If we use RFTextFile that is always gonna be true. If other ways we have to add
+    // logic for different types of new line characters
+    while (p < lim && *(p++) != '\n') {
+    }
+    *ret_p = p;
+}
+
 #define COND_IDENTIFIER_BEGIN(p_)               \
     (((p_) >= 'A' && (p_) <= 'Z') ||            \
      ((p_) >= 'a' && (p_) <= 'z') ||            \
@@ -436,6 +448,9 @@ bool lexer_scan(struct lexer *l)
                     "Failed to scan numeric literal");
                 return false;
             }
+         // if it's the start of a comment
+        } else if (p + 1 <= lim && *p == '/' && *(p + 1) == '/') {
+            lexer_get_dblslash_comment(l, p, lim, &p);                        
         } else { // see if it's a token
             unsigned int len = 1;
             const struct internal_token *itoken;
@@ -445,9 +460,9 @@ bool lexer_scan(struct lexer *l)
 
             while (len <= MAX_WORD_LENGTH) {
                 itoken = lexer_lexeme_is_token(p, len);
-                if (itoken) {
-                    // if it's the start of a string literal
+                if (itoken) {                    
                     if (itoken->type == TOKEN_SM_DBLQUOTE) {
+                        // if it's the start of a string literal
                         if (!lexer_get_string_literal(l, p, lim, &p)) {
                             lexer_synerr(
                                 l, lexer_get_last_token_loc_start(l),
@@ -457,11 +472,10 @@ bool lexer_scan(struct lexer *l)
                         }
                         got_token = true;
                         break;
-                    }
-                    // if it's a negative numeric literal
-                    if (itoken->type == TOKEN_OP_MINUS &&
-                        p + 1 <= lim &&
-                        COND_NUMERIC(*(p + 1))) {
+                    } else if (itoken->type == TOKEN_OP_MINUS &&
+                               p + 1 <= lim &&
+                               COND_NUMERIC(*(p + 1))) {
+                        // if it's a negative numeric literal
                         if (!lexer_get_numeric(l, p + 1, lim, true, &p)) {
                             lexer_synerr(
                                 l, lexer_get_last_token_loc_start(l),
@@ -471,9 +485,8 @@ bool lexer_scan(struct lexer *l)
                         }
                         got_token = true;
                         break;
-                    }
-                    // if more than 1 tokens may start with that character
-                    if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
+                    } else if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
+                        // if more than 1 tokens may start with that character
                         len = 2;
                         itoken2 = lexer_lexeme_is_token(p, len);
                         if (itoken2) {
@@ -495,7 +508,7 @@ bool lexer_scan(struct lexer *l)
             if (!got_token) {
                 // error unknown token
                 lexer_synerr(l, lexer_get_last_token_loc_start(l), NULL,
-                               "Unknown token encountered");
+                             "Unknown token encountered");
                 return false;
             }
         }

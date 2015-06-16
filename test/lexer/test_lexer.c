@@ -312,6 +312,25 @@ START_TEST(test_lexer_scan_string_literals) {
 
 } END_TEST
 
+START_TEST (test_lexer_scan_with_comments) {
+    struct front_ctx *front;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "234 // a comment\n"
+        "// another comment\n"
+        "\"string_literal\"\n"
+        "//"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front = front_testdriver_assign(d, &s);
+    ck_assert_msg(front, "Failed to assign string to file");
+    struct token expected[] = {
+        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 2, 234),
+        TESTLEX_LITERAL_INIT(d, 2, 0, 2, 15, 0, 15, "string_literal")
+    };
+    ck_assert_lexer_scan(d, "Scanning failed");
+    check_lexer_tokens(d->front.lexer, expected);
+} END_TEST
+
 /* -- lexer scan edge cases tests -- */
 
 START_TEST(test_lexer_scan_identifier_at_end) {
@@ -697,6 +716,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan, test_lexer_scan_tokens_crammed);
     tcase_add_test(scan, test_lexer_scan_constant_numbers);
     tcase_add_test(scan, test_lexer_scan_string_literals);
+    tcase_add_test(scan, test_lexer_scan_with_comments);
 
     TCase *scan_edge = tcase_create("lexer_scan_edge_cases");
     tcase_add_checked_fixture(scan_edge,
