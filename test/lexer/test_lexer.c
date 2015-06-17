@@ -62,6 +62,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         ".\n"
         "match\n"
         "=>\n"
+        "module\n"
     );
     struct front_testdriver *d = get_front_testdriver();
     front = front_testdriver_assign(d, &s);
@@ -217,6 +218,11 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_SM_THICKARROW,
             .location=LOC_INIT(f, 18, 0, 18, 1)
+        },
+        /* 19th line */
+        {
+            .type=TOKEN_KW_MODULE,
+            .location=LOC_INIT(f, 19, 0, 19, 5)
         },
     };
     ck_assert(lexer_scan(lex));

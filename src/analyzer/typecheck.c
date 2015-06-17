@@ -14,7 +14,7 @@
 #include <ast/ast_utils.h>
 #include <ast/returnstmt.h>
 #include <ast/type.h>
-#include <ast/import.h>
+#include <ast/module.h>
 
 #include <types/type.h>
 #include <types/type_comparisons.h>

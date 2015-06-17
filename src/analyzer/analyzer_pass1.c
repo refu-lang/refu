@@ -10,7 +10,7 @@
 #include <ast/function.h>
 #include <ast/matchexpr.h>
 #include <ast/string_literal.h>
-#include <ast/import.h>
+#include <ast/module.h>
 #include <ast/ast_utils.h>
 
 #include <types/type_function.h>
@@ -133,6 +133,14 @@ static inline bool analyzer_populate_symbol_table_typedesc(struct analyzer_trave
     return analyzer_populate_symbol_table_typeelement(ctx, ast_typedesc_desc_get(n));
 }
 
+static bool analyzer_create_symbol_table_module(struct analyzer_traversal_ctx *ctx,
+                                                struct ast_node *n)
+{
+    // TODO
+    return true;
+}
+                                                
+
 static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
                                                 struct ast_node *n)
 {
@@ -207,6 +215,12 @@ static bool analyzer_first_pass_do(struct ast_node *n,
             return false;
         }
         symbol_table_swap_current(&ctx->current_st, ast_block_symbol_table_get(n));
+        break;
+    case AST_MODULE:
+        if (!analyzer_create_symbol_table_module(ctx, n)) {
+            return false;
+        }
+        symbol_table_swap_current(&ctx->current_st, ast_module_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
         if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
@@ -306,6 +320,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
             ctx->current_st = ast_fndecl_symbol_table_get(n)->parent;
         }
         break;
+    case AST_MODULE:
+            ctx->current_st = ast_module_symbol_table_get(n)->parent;
+        break;
     case AST_TYPE_DESCRIPTION:
     {
         struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
@@ -349,6 +366,9 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
         break;
     case AST_FUNCTION_DECLARATION:
         ctx->current_st = ast_fndecl_symbol_table_get(n);
+        break;
+    case AST_MODULE:
+        ctx->current_st = ast_module_symbol_table_get(n);
         break;
     case AST_TYPE_DESCRIPTION:
         ctx->current_st = ast_typedesc_symbol_table_get(n);

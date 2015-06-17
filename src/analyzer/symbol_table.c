@@ -8,7 +8,7 @@
 #include <ast/ast.h>
 #include <ast/identifier.h>
 #include <ast/type.h>
-#include <ast/import.h>
+#include <ast/module.h>
 #include <ast/function.h>
 #include <types/type.h>
 #include <types/type_function.h>

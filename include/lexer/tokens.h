@@ -41,6 +41,7 @@ enum token_type {
     TOKEN_KW_TRUE,
     TOKEN_KW_FALSE,
     TOKEN_KW_MATCH,
+    TOKEN_KW_MODULE,
     TOKEN_KW_IMPORT,
     TOKEN_KW_FOREIGN_IMPORT,
 

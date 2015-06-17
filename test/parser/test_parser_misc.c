@@ -17,7 +17,7 @@
 #include <ast/block.h>
 #include <ast/operators.h>
 #include <ast/constants.h>
-#include <ast/import.h>
+#include <ast/module.h>
 #include <ast/string_literal.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>

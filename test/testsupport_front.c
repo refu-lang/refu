@@ -10,7 +10,7 @@
 #include <ast/vardecl.h>
 #include <ast/block.h>
 #include <ast/function.h>
-#include <ast/import.h>
+#include <ast/module.h>
 #include <types/type_comparisons.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>

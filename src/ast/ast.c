@@ -4,6 +4,7 @@
 #include <ast/function.h>
 #include <ast/type.h>
 #include <ast/matchexpr.h>
+#include <ast/module.h>
 
 #include <Utils/sanity.h>
 #include <Utils/build_assert.h>
@@ -31,6 +32,7 @@ static const struct RFstring ast_type_strings[] = {
     RF_STRING_STATIC_INIT("if expression"),
     RF_STRING_STATIC_INIT("match expression"),
     RF_STRING_STATIC_INIT("match case"),
+    RF_STRING_STATIC_INIT("module"),
     RF_STRING_STATIC_INIT("import statement"),
     RF_STRING_STATIC_INIT("annotated identifier"),
     RF_STRING_STATIC_INIT("binary operator"),
@@ -119,6 +121,9 @@ void ast_node_destroy(struct ast_node *n)
             break;
         case AST_TYPE_DESCRIPTION:
             symbol_table_deinit(ast_typedesc_symbol_table_get(n));
+            break;
+        case AST_MODULE:
+            symbol_table_deinit(ast_module_symbol_table_get(n));
             break;
         default:
             // no type specific destruction for the rest
@@ -246,6 +251,8 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_typedesc_symbol_table_get(n);
     case AST_MATCH_CASE:
         return ast_matchcase_symbol_table_get(n);
+    case AST_MODULE:
+        return ast_module_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"

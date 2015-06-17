@@ -11,7 +11,7 @@
 #include "function.h"
 #include "block.h"
 #include "vardecl.h"
-#include "import.h"
+#include "module.h"
 
 static struct ast_node *parser_acc_stmt(struct parser *p);
 
@@ -56,7 +56,10 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
     tok = lexer_lookahead(p->lexer, 1);
     tok2 = lexer_lookahead(p->lexer, 2);
 
-    if (TOKEN_IS_BLOCK_START(tok)) {
+    // TODO: Maybe change these, since each one of these macros actually checks for token existence too
+    if (TOKEN_IS_MODULE_START(tok)) {
+        stmt = parser_acc_module(p);
+    } else if (TOKEN_IS_BLOCK_START(tok)) {
         stmt = parser_acc_block(p, true);
     } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {
         stmt = parser_acc_vardecl(p);
