@@ -115,6 +115,180 @@ START_TEST (test_acc_module_with_args) {
     ast_node_destroy(mod);
 } END_TEST
 
+START_TEST (test_acc_module_fail1) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("module () {}");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an identifier for the module name after 'module'",
+            0, 7)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail2) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a '(' or a '{' at module declaration",
+            0, 14)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail3) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "module graphics {\n"
+        "a:i32 = 5\n"
+        "}\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a module statement or '}'",
+            1, 0)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail4) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "module graphics {\n"
+        "fn foo() -> i32{ return 42 }\n"
+        "\n"
+    );
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a module statement or '}'",
+            1, 27)
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail5) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics (a:) {}");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "expected 'const' or identifier or '(' after ':'",
+            0, 19),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected either a type description for the module's arguments or ')' after '('",
+            0, 16),
+        
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail6) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics (a:i32 {}");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected ')' at module declaration after type description",
+            0, 23),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
+
+START_TEST (test_acc_module_fail7) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics ( {}");
+    struct front_testdriver *d = get_front_testdriver();
+    front_testdriver_assign(d, &s);
+
+    ck_assert(lexer_scan(d->front.lexer));
+    n = parser_acc_module(d->front.parser);
+    ck_assert_msg(n == NULL, "parsing a module should fail");
+    ck_assert_msg(
+        parser_has_syntax_error(d->front.parser),
+        "a syntax error should have been reported");
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            d->front.file,
+            MESSAGE_SYNTAX_ERROR,
+            "Expected ')' at module declaration after '('",
+            0, 18),
+    };
+    ck_assert_parser_errors(d->front.info, errors);
+} END_TEST
 
 Suite *parser_modules_suite_create(void)
 {
@@ -125,6 +299,17 @@ Suite *parser_modules_suite_create(void)
     tcase_add_test(tc1, test_acc_module_simple);
     tcase_add_test(tc1, test_acc_module_with_args);
 
+    TCase *tc2 = tcase_create("parser_module_decls_failures");
+    tcase_add_checked_fixture(tc2, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc2, test_acc_module_fail1);
+    tcase_add_test(tc2, test_acc_module_fail2);
+    tcase_add_test(tc2, test_acc_module_fail3);
+    tcase_add_test(tc2, test_acc_module_fail4);
+    tcase_add_test(tc2, test_acc_module_fail5);
+    tcase_add_test(tc2, test_acc_module_fail6);
+    tcase_add_test(tc2, test_acc_module_fail7);
+
     suite_add_tcase(s, tc1);
+    suite_add_tcase(s, tc2);
     return s;
 }

@@ -90,13 +90,13 @@ struct ast_node *parser_acc_module(struct parser *p)
     name = parser_acc_identifier(p);
     if (!name) {
         parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
-                      "Expected an identifier for the module name after 'mdoule'");
+                      "Expected an identifier for the module name after 'module'");
         goto err;
     }
 
     tok = lexer_lookahead(p->lexer, 1);
     if (!tok || (tok->type != TOKEN_SM_OPAREN && tok->type != TOKEN_SM_OCBRACE)) {
-        parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected a '(' or a '{' at module declaration");
         goto err;
     }
@@ -149,7 +149,7 @@ struct ast_node *parser_acc_module(struct parser *p)
 
     if (!(tok = lexer_expect_token(p->lexer, TOKEN_SM_CCBRACE))) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
-                      "Expected '}' at the end of module");
+                      "Expected a module statement or '}'");
         goto err_free_module;
     }
     ast_node_set_end(n, token_get_end(tok));
