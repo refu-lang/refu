@@ -377,8 +377,8 @@ START_TEST(test_composite_types_list_population) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, false);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
@@ -403,7 +403,7 @@ START_TEST(test_composite_types_list_population) {
 
     const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64,
                                              t_func_1, t_foo };
-    ck_assert_type_set_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, front_testdriver_analyzer());
 } END_TEST
 
 START_TEST(test_composite_types_list_population2) {
@@ -416,8 +416,8 @@ START_TEST(test_composite_types_list_population2) {
         "type boo {a:i64, b:f64}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, false);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
@@ -444,7 +444,7 @@ START_TEST(test_composite_types_list_population2) {
 
     const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64,
                                              t_func_1, t_foo, t_boo};
-    ck_assert_type_set_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, front_testdriver_analyzer());
 } END_TEST
 
 START_TEST(test_composite_types_list_population3) {
@@ -452,8 +452,8 @@ START_TEST(test_composite_types_list_population3) {
         "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, false);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -495,7 +495,7 @@ START_TEST(test_composite_types_list_population3) {
                                              t_leaf_f32, t_leaf_string, t_prod_1,
                                              t_prod_2, t_prod_3, t_prod_4,
                                              t_foo};
-    ck_assert_type_set_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, front_testdriver_analyzer());
 } END_TEST
 
 START_TEST(test_composite_types_list_population4) {
@@ -505,8 +505,8 @@ START_TEST(test_composite_types_list_population4) {
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, false);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_bar = RF_STRING_STATIC_INIT("bar");
@@ -553,7 +553,7 @@ START_TEST(test_composite_types_list_population4) {
                                              t_prod_1, t_prod_2, t_sum_1,
                                              t_foo, t_bar, t_foobar, t_prod_3
     };
-    ck_assert_type_set_equal(expected_types, d->front.analyzer);
+    ck_assert_type_set_equal(expected_types, front_testdriver_analyzer());
 } END_TEST
 
 START_TEST(test_determine_block_type1) {
@@ -564,11 +564,11 @@ START_TEST(test_determine_block_type1) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    struct front_ctx *front = front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    block = ast_node_get_child(front_testdriver_get_ast_root(d), 0);
+    block = ast_node_get_child(front->analyzer->root, 0);
     ck_assert_msg(block, "Block should be the first child of the root");
     const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
     ck_assert_msg(block_type, "Block should have a type");
@@ -585,8 +585,8 @@ START_TEST(test_determine_block_type2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    struct front_ctx *front = front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -602,7 +602,7 @@ START_TEST(test_determine_block_type2) {
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
 
-    block = ast_node_get_child(front_testdriver_get_ast_root(d), 1);
+    block = ast_node_get_child(front->analyzer->root, 1);
     ck_assert_msg(block, "Block should be the second child of the root");
     const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
     ck_assert_msg(block_type, "Block should have a type");
@@ -615,28 +615,28 @@ Suite *types_suite_create(void)
     Suite *s = suite_create("types");
 
     TCase *st1 = tcase_create("types_general_tests");
-    tcase_add_checked_fixture(st1, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st1, setup_analyzer_tests_no_source, teardown_analyzer_tests);
     tcase_add_test(st1, test_type_to_str);
     tcase_add_test(st1, test_type_comparison_identical);
     tcase_add_test(st1, test_type_comparison_for_sum_fncall);
     tcase_add_test(st1, test_type_comparison_for_sum_fncall_with_conversion);
 
     TCase *st2 = tcase_create("types_getter_tests");
-    tcase_add_checked_fixture(st2, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st2, setup_analyzer_tests_no_source, teardown_analyzer_tests);
     tcase_add_test(st2, test_elementary_get_category);
     tcase_add_test(st2, test_is_signed_elementary);
     tcase_add_test(st2, test_is_unsigned_elementary);
     tcase_add_test(st2, test_is_floating_elementary);
 
     TCase *st3 = tcase_create("types_management_tests");
-    tcase_add_checked_fixture(st3, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st3, setup_analyzer_tests_no_source, teardown_analyzer_tests);
     tcase_add_test(st3, test_composite_types_list_population);
     tcase_add_test(st3, test_composite_types_list_population2);
     tcase_add_test(st3, test_composite_types_list_population3);
     tcase_add_test(st3, test_composite_types_list_population4);
 
     TCase *st4 = tcase_create("type_determination");
-    tcase_add_checked_fixture(st4, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st4, setup_analyzer_tests_no_source, teardown_analyzer_tests);
     tcase_add_test(st4, test_determine_block_type1);
     tcase_add_test(st4, test_determine_block_type2);
 

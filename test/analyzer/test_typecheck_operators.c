@@ -39,9 +39,9 @@ START_TEST(test_typecheck_assignment_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_string_to_int) {
@@ -54,17 +54,16 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"string\" to \"u64\". Unable to convert from \"string\" to \"u64\".",
             4, 0, 4, 7)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_addition_simple) {
@@ -78,8 +77,8 @@ START_TEST(test_typecheck_valid_addition_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_subtraction_simple) {
@@ -94,8 +93,8 @@ START_TEST(test_typecheck_valid_subtraction_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_multiplication_simple) {
@@ -110,9 +109,9 @@ START_TEST(test_typecheck_valid_multiplication_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_division_simple) {
@@ -127,9 +126,9 @@ START_TEST(test_typecheck_valid_division_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_minus) {
@@ -139,8 +138,8 @@ START_TEST (test_typecheck_valid_uop_minus) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_plus) {
@@ -150,8 +149,8 @@ START_TEST (test_typecheck_valid_uop_plus) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_inc_pre) {
@@ -161,8 +160,8 @@ START_TEST (test_typecheck_valid_uop_inc_pre) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_inc_post) {
@@ -172,8 +171,8 @@ START_TEST (test_typecheck_valid_uop_inc_post) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_dec_pre) {
@@ -183,8 +182,8 @@ START_TEST (test_typecheck_valid_uop_dec_pre) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_dec_post) {
@@ -194,8 +193,8 @@ START_TEST (test_typecheck_valid_uop_dec_post) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_minus) {
@@ -205,20 +204,18 @@ START_TEST (test_typecheck_invalid_uop_minus) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Can't apply \"-\" to \"string\"",
             1, 11, 1, 16),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             1, 11, 1, 16),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_plus) {
@@ -228,20 +225,18 @@ START_TEST (test_typecheck_invalid_uop_plus) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Can't apply \"+\" to \"bool\"",
             1, 8, 1, 9),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 9),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_inc_pre) {
@@ -251,20 +246,18 @@ START_TEST (test_typecheck_invalid_uop_inc_pre) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Can't apply \"++\" to \"string\"",
             1, 8, 1, 14),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 14),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_dec_post) {
@@ -274,20 +267,18 @@ START_TEST (test_typecheck_invalid_uop_dec_post) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Can't apply \"--\" to \"string\"",
             1, 8, 1, 14),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 14),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
   
 START_TEST(test_typecheck_valid_member_access) {
@@ -301,9 +292,9 @@ START_TEST(test_typecheck_valid_member_access) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_member_access) {
@@ -317,27 +308,24 @@ START_TEST(test_typecheck_invalid_member_access) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Could not find member \"craze\" in type \"person\"",
             4, 12, 4, 18),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"+\" can not be determined",
             4, 12, 4, 18),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             4, 8, 4, 18),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_member_access2) {
@@ -351,27 +339,24 @@ START_TEST(test_typecheck_invalid_member_access2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Undeclared identifier \"s\" as left part of member access operator",
             4, 12, 4, 12),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"+\" can not be determined",
             4, 12, 4, 17),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             4, 8, 4, 17),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 Suite *analyzer_typecheck_operators_suite_create(void)

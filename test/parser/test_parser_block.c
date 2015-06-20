@@ -24,17 +24,15 @@
 
 START_TEST(test_acc_block_empty) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 1, 0);
-    ck_test_parse_as(n, block, d, "block", bnode, true);
+    testsupport_parser_block_create(bnode, 0, 0, 1, 0);
+    ck_test_parse_as(n, block, "block", bnode, true);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -42,41 +40,37 @@ START_TEST(test_acc_block_empty) {
 
 START_TEST(test_acc_block_no_braces_1) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "\n"
         "a:i32\n"
         "a = 5 + 0.234"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 1, 0, 2, 12);
+    testsupport_parser_block_create(bnode, 1, 0, 2, 12);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                1, 0, 1, 0);
-    testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typeleaf, file,
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 0, 1, 0);
+    testsupport_parser_xidentifier_create_simple(id2, 1, 2, 1, 4);
+    testsupport_parser_node_create(type1, typeleaf,
                                    1, 0, 1, 4, id1, id2);
-    testsupport_parser_node_create(vardecl, vardecl, file,
+    testsupport_parser_node_create(vardecl, vardecl,
                                    1, 0, 1, 4, type1);
     ast_node_add_child(bnode, vardecl);
 
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                2, 0, 2, 0);
-    testsupport_parser_constant_create(cnum1, file,
+    struct ast_node *id3 = testsupport_parser_identifier_create(2, 0, 2, 0);
+    testsupport_parser_constant_create(cnum1,
                                        2, 4, 2, 4, integer, 5);
-    testsupport_parser_constant_create(cnum2, file,
+    testsupport_parser_constant_create(cnum2,
                                        2, 8, 2, 12, float, 0.234);
-    testsupport_parser_node_create(op1, binaryop, file, 2, 4, 2, 12,
+    testsupport_parser_node_create(op1, binaryop, 2, 4, 2, 12,
                                    BINARYOP_ADD, cnum1, cnum2);
 
-    testsupport_parser_node_create(op2, binaryop, file, 2, 0, 2, 12,
+    testsupport_parser_node_create(op2, binaryop, 2, 0, 2, 12,
                                    BINARYOP_ASSIGN, id3, op1);
     ast_node_add_child(bnode, op2);
 
-    ck_test_parse_as(n, block, d, "block", bnode, false);
+    ck_test_parse_as(n, block, "block", bnode, false);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -84,36 +78,28 @@ START_TEST(test_acc_block_no_braces_1) {
 
 START_TEST(test_acc_block_no_braces_2) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "var = buff[index] * 92.324"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 0, 25);
+    testsupport_parser_block_create(bnode, 0, 0, 0, 25);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                0, 0, 0, 2);
-
-    struct ast_node *id2 = testsupport_parser_identifier_create(file,
-                                                                0, 6, 0, 9);
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                0, 11, 0, 15);
-    testsupport_parser_node_create(arr, binaryop, file, 0, 6, 0, 16,
+    struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 2);
+    struct ast_node *id2 = testsupport_parser_identifier_create(0, 6, 0, 9);
+    struct ast_node *id3 = testsupport_parser_identifier_create(0, 11, 0, 15);
+    testsupport_parser_node_create(arr, binaryop, 0, 6, 0, 16,
                                    BINARYOP_ARRAY_REFERENCE, id2, id3);
 
-    testsupport_parser_constant_create(cnum, file,
-                                       0, 20, 0, 25, float, 92.324);
-    testsupport_parser_node_create(op1, binaryop, file, 0, 6, 0, 25,
-                                   BINARYOP_MUL, arr, cnum);
+    testsupport_parser_constant_create(cnum, 0, 20, 0, 25, float, 92.324);
+    testsupport_parser_node_create(op1, binaryop, 0, 6, 0, 25, BINARYOP_MUL, arr, cnum);
 
-    testsupport_parser_node_create(op2, binaryop, file, 0, 0, 0, 25,
+    testsupport_parser_node_create(op2, binaryop, 0, 0, 0, 25,
                                    BINARYOP_ASSIGN, id1, op1);
     ast_node_add_child(bnode, op2);
 
-    ck_test_parse_as(n, block, d, "block", bnode, false);
+    ck_test_parse_as(n, block, "block", bnode, false);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -121,7 +107,6 @@ START_TEST(test_acc_block_no_braces_2) {
 
 START_TEST(test_acc_block_1) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:i32\n"
@@ -129,34 +114,26 @@ START_TEST(test_acc_block_1) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
+    testsupport_parser_block_create(bnode, 0, 0, 3, 0);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                1, 0, 1, 0);
-    testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typeleaf, file,
-                                   1, 0, 1, 4, id1, id2);
-    testsupport_parser_node_create(vardecl, vardecl, file,
-                                   1, 0, 1, 4, type1);
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 0, 1, 0);
+    testsupport_parser_xidentifier_create_simple(id2, 1, 2, 1, 4);
+    testsupport_parser_node_create(type1, typeleaf, 1, 0, 1, 4, id1, id2);
+    testsupport_parser_node_create(vardecl, vardecl, 1, 0, 1, 4, type1);
     ast_node_add_child(bnode, vardecl);
 
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                2, 0, 2, 0);
-    testsupport_parser_constant_create(cnum1, file,
-                                       2, 4, 2, 4, integer, 5);
-    testsupport_parser_constant_create(cnum2, file,
-                                       2, 8, 2, 12, float, 0.234);
-    testsupport_parser_node_create(op1, binaryop, file, 2, 4, 2, 12,
-                                   BINARYOP_ADD, cnum1, cnum2);
+    struct ast_node *id3 = testsupport_parser_identifier_create(2, 0, 2, 0);
+    testsupport_parser_constant_create(cnum1, 2, 4, 2, 4, integer, 5);
+    testsupport_parser_constant_create(cnum2, 2, 8, 2, 12, float, 0.234);
+    testsupport_parser_node_create(op1, binaryop, 2, 4, 2, 12, BINARYOP_ADD, cnum1, cnum2);
 
-    testsupport_parser_node_create(op2, binaryop, file, 2, 0, 2, 12,
+    testsupport_parser_node_create(op2, binaryop, 2, 0, 2, 12,
                                    BINARYOP_ASSIGN, id3, op1);
     ast_node_add_child(bnode, op2);
 
-    ck_test_parse_as(n, block, d, "block", bnode, true);
+    ck_test_parse_as(n, block, "block", bnode, true);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -164,42 +141,36 @@ START_TEST(test_acc_block_1) {
 
 START_TEST(test_acc_block_2) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "do_sth(eleos, \"str\", arr[15])\n"
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 2, 0);
+    testsupport_parser_block_create(bnode, 0, 0, 2, 0);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                1, 0, 1, 5);
-    struct ast_node *id2 = testsupport_parser_identifier_create(file,
-                                                                1, 7, 1, 11);
-    testsupport_parser_string_literal_create(str, file, 1, 14, 1, 18);
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 0, 1, 5);
+    struct ast_node *id2 = testsupport_parser_identifier_create(1, 7, 1, 11);
+    testsupport_parser_string_literal_create(str, 1, 14, 1, 18);
 
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                1, 21, 1, 23);
-    testsupport_parser_constant_create(cnum1, file,
-                                       1, 25, 1, 26, integer, 15);
-    testsupport_parser_node_create(arr, binaryop, file, 1, 21, 1, 27,
+    struct ast_node *id3 = testsupport_parser_identifier_create(1, 21, 1, 23);
+    testsupport_parser_constant_create(cnum1, 1, 25, 1, 26, integer, 15);
+    testsupport_parser_node_create(arr, binaryop, 1, 21, 1, 27,
                                    BINARYOP_ARRAY_REFERENCE, id3, cnum1);
 
-    testsupport_parser_node_create(bop1, binaryop, file, 1, 7, 1, 18,
+    testsupport_parser_node_create(bop1, binaryop, 1, 7, 1, 18,
                                    BINARYOP_COMMA,
                                    id2, str);
-    testsupport_parser_node_create(arg_bop, binaryop, file, 1, 7, 1, 27,
+    testsupport_parser_node_create(arg_bop, binaryop, 1, 7, 1, 27,
                                    BINARYOP_COMMA,
                                    bop1, arr);
-    testsupport_parser_node_create(fn, fncall, file, 1, 0, 1, 28, id1, arg_bop, NULL);
+    testsupport_parser_node_create(fn, fncall, 1, 0, 1, 28, id1, arg_bop, NULL);
 
     ast_node_add_child(bnode, fn);
     
-    ck_test_parse_as(n, block, d, "block", bnode, true);
+    ck_test_parse_as(n, block, "block", bnode, true);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -207,7 +178,6 @@ START_TEST(test_acc_block_2) {
 
 START_TEST(test_acc_block_value_without_return) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:i32\n"
@@ -215,34 +185,27 @@ START_TEST(test_acc_block_value_without_return) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 3, 0);
+    testsupport_parser_block_create(bnode, 0, 0, 3, 0);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                1, 0, 1, 0);
-    testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typeleaf, file,
-                                   1, 0, 1, 4, id1, id2);
-    testsupport_parser_node_create(vardecl, vardecl, file,
-                                   1, 0, 1, 4, type1);
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 0, 1, 0);
+    testsupport_parser_xidentifier_create_simple(id2, 1, 2, 1, 4);
+    testsupport_parser_node_create(type1, typeleaf, 1, 0, 1, 4, id1, id2);
+    testsupport_parser_node_create(vardecl, vardecl, 1, 0, 1, 4, type1);
     ast_node_add_child(bnode, vardecl);
 
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                2, 0, 2, 0);
-    testsupport_parser_constant_create(cnum1, file,
-                                       2, 4, 2, 4, integer, 5);
-    testsupport_parser_constant_create(cnum2, file,
-                                       2, 8, 2, 12, float, 0.234);
-    testsupport_parser_node_create(op1, binaryop, file, 2, 4, 2, 12,
+    struct ast_node *id3 = testsupport_parser_identifier_create(2, 0, 2, 0);
+    testsupport_parser_constant_create(cnum1, 2, 4, 2, 4, integer, 5);
+    testsupport_parser_constant_create(cnum2, 2, 8, 2, 12, float, 0.234);
+    testsupport_parser_node_create(op1, binaryop, 2, 4, 2, 12,
                                    BINARYOP_ADD, cnum1, cnum2);
 
-    testsupport_parser_node_create(op2, binaryop, file, 2, 0, 2, 12,
+    testsupport_parser_node_create(op2, binaryop, 2, 0, 2, 12,
                                    BINARYOP_ASSIGN, id3, op1);
     ast_node_add_child(bnode, op2);
 
-    ck_test_parse_as(n, block, d, "block", bnode, true);
+    ck_test_parse_as(n, block, "block", bnode, true);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);
@@ -250,7 +213,6 @@ START_TEST(test_acc_block_value_without_return) {
 
 START_TEST(test_acc_block_value_with_return) {
     struct ast_node *n;
-    struct inpfile *file;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
         "a:i32\n"
@@ -259,43 +221,33 @@ START_TEST(test_acc_block_value_with_return) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    file = d->front.file;
+    front_testdriver_new_source(d, &s);
 
-    testsupport_parser_block_create(bnode, file, 0, 0, 4, 0);
+    testsupport_parser_block_create(bnode, 0, 0, 4, 0);
 
-    struct ast_node *id1 = testsupport_parser_identifier_create(file,
-                                                                1, 0, 1, 0);
-    testsupport_parser_xidentifier_create_simple(id2, file, 1, 2, 1, 4);
-    testsupport_parser_node_create(type1, typeleaf, file,
-                                   1, 0, 1, 4, id1, id2);
-    testsupport_parser_node_create(vardecl, vardecl, file,
-                                   1, 0, 1, 4, type1);
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 0, 1, 0);
+    testsupport_parser_xidentifier_create_simple(id2, 1, 2, 1, 4);
+    testsupport_parser_node_create(type1, typeleaf, 1, 0, 1, 4, id1, id2);
+    testsupport_parser_node_create(vardecl, vardecl, 1, 0, 1, 4, type1);
     ast_node_add_child(bnode, vardecl);
 
-    struct ast_node *id3 = testsupport_parser_identifier_create(file,
-                                                                2, 0, 2, 0);
-    testsupport_parser_constant_create(cnum1, file,
-                                       2, 4, 2, 4, integer, 5);
-    testsupport_parser_constant_create(cnum2, file,
-                                       2, 8, 2, 12, float, 0.234);
-    testsupport_parser_node_create(op1, binaryop, file, 2, 4, 2, 12,
-                                   BINARYOP_ADD, cnum1, cnum2);
+    struct ast_node *id3 = testsupport_parser_identifier_create(2, 0, 2, 0);
+    testsupport_parser_constant_create(cnum1, 2, 4, 2, 4, integer, 5);
+    testsupport_parser_constant_create(cnum2, 2, 8, 2, 12, float, 0.234);
+    testsupport_parser_node_create(op1, binaryop, 2, 4, 2, 12, BINARYOP_ADD, cnum1, cnum2);
 
-    testsupport_parser_node_create(op2, binaryop, file, 2, 0, 2, 12,
+    testsupport_parser_node_create(op2, binaryop, 2, 0, 2, 12,
                                    BINARYOP_ASSIGN, id3, op1);
     ast_node_add_child(bnode, op2);
 
-    struct ast_node *id4 = testsupport_parser_identifier_create(file,
-                                                                3, 7, 3, 7);
-    testsupport_parser_constant_create(cnum3, file,
-                                       3, 11, 3, 11, integer, 2);
-    testsupport_parser_node_create(op3, binaryop, file, 3, 7, 3, 11,
+    struct ast_node *id4 = testsupport_parser_identifier_create(3, 7, 3, 7);
+    testsupport_parser_constant_create(cnum3, 3, 11, 3, 11, integer, 2);
+    testsupport_parser_node_create(op3, binaryop, 3, 7, 3, 11,
                                    BINARYOP_MUL, id4, cnum3);
-    testsupport_parser_node_create(ret, returnstmt, file, 3, 0, 3, 11, op3);
+    testsupport_parser_node_create(ret, returnstmt, 3, 0, 3, 11, op3);
     ast_node_add_child(bnode, ret);
 
-    ck_test_parse_as(n, block, d, "block", bnode, true);
+    ck_test_parse_as(n, block, "block", bnode, true);
 
     ast_node_destroy(n);
     ast_node_destroy(bnode);

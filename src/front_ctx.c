@@ -7,12 +7,15 @@
 #include <analyzer/analyzer.h>
 #include <serializer/serializer.h>
 
-bool front_ctx_init(struct front_ctx *ctx,
-                    const struct compiler_args *args,
-                    const struct RFstring *input_file)
+static bool front_ctx_init(struct front_ctx *ctx,
+                           const struct compiler_args *args,
+                           const struct RFstring *input_file_name,
+                           const struct RFstring *file_contents)
 {
     RF_STRUCT_ZERO(ctx);
-    ctx->file = inpfile_create(input_file);
+    ctx->file = file_contents
+        ? inpfile_create_from_string(input_file_name, file_contents)
+        : inpfile_create(input_file_name);
     if (!ctx->file) {
         goto err;
     }
@@ -56,7 +59,20 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args,
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, input_file)) {
+    if (!front_ctx_init(ret, args, input_file, NULL)) {
+        free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
+                                               const struct RFstring *file_name,
+                                               const struct RFstring *source)
+{
+    struct front_ctx *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    if (!front_ctx_init(ret, args, file_name, source)) {
         free(ret);
         return NULL;
     }

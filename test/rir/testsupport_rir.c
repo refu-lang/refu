@@ -42,29 +42,37 @@ void setup_rir_tests_with_filelog()
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
 }
+void setup_rir_tests_no_source()
+{
+    const struct RFstring s = RF_STRING_STATIC_INIT("");
+    setup_analyzer_tests();
+    ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
+                  "Failed to initialize the rir test driver");
+    front_testdriver_new_source(get_front_testdriver(), &s);
+}
+
 void teardown_rir_tests()
 {
     rir_testdriver_deinit(&i_rir_test_driver_);
     teardown_analyzer_tests();
 }
 
-void rir_testdriver_assign(struct rir_testdriver *d,
-                           const struct RFstring *s)
+void rir_testdriver_assign(const struct RFstring *s)
 {
-    front_testdriver_assign(d->front_driver, s);
+    front_testdriver_new_source(get_rir_testdriver()->front_driver, s);
 }
 
 bool rir_testdriver_process(struct rir_testdriver *d)
 {
-    return analyzer_finalize(d->front_driver->front.analyzer, d->front_driver->stdlib);
+    return analyzer_finalize(d->front_driver->current_front->analyzer, d->front_driver->stdlib);
 }
 
-static void rir_testdriver_add_type(struct rir_testdriver *d,
-                                    struct rir_type *type,
+static void rir_testdriver_add_type(struct rir_type *type,
                                     const char* filename,
                                     unsigned int line)
 {
     struct rir_type **subtype;
+    struct rir_testdriver *d = get_rir_testdriver();
     // just a check that the type is not already added
     darray_foreach(subtype, d->rir_types) {
     RFS_PUSH();
@@ -89,8 +97,7 @@ static void rir_testdriver_add_type(struct rir_testdriver *d,
     darray_append(d->rir_types, type);
 }
 
-struct rir_type *i_testsupport_rir_type_create(struct rir_testdriver *d,
-                                               enum rir_type_category category,
+struct rir_type *i_testsupport_rir_type_create(enum rir_type_category category,
                                                const struct RFstring *name,
                                                bool add_to_drivers_list,
                                                const char* filename,
@@ -103,13 +110,12 @@ struct rir_type *i_testsupport_rir_type_create(struct rir_testdriver *d,
     ret->name = name;
     ret->indexed = true;
     if (add_to_drivers_list) {
-        rir_testdriver_add_type(d, ret, filename, line);
+        rir_testdriver_add_type(ret, filename, line);
     }
     return ret;
 }
 
-void i_testsupport_rir_type_add_subtype(struct rir_testdriver *d,
-                                        struct rir_type *type,
+void i_testsupport_rir_type_add_subtype(struct rir_type *type,
                                         struct rir_type *subtype,
                                         bool add_to_drivers_list,
                                         const char* filename,
@@ -117,12 +123,11 @@ void i_testsupport_rir_type_add_subtype(struct rir_testdriver *d,
 {
     darray_append(type->subtypes, subtype);
     if (add_to_drivers_list) {
-        rir_testdriver_add_type(d, type, filename, line);
+        rir_testdriver_add_type(type, filename, line);
     }
 }
 
-bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
-                                    struct rir_type **expected_types,
+bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
                                     unsigned int expected_num,
                                     const char* filename,
                                     unsigned int line)
@@ -131,7 +136,8 @@ bool i_rir_testdriver_compare_lists(struct rir_testdriver *d,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
-    rir_types_list_for_each(d->front_driver->front.analyzer->rir_types_list, t) {
+    struct rir_testdriver *d = get_rir_testdriver();
+    rir_types_list_for_each(d->front_driver->current_front->analyzer->rir_types_list, t) {
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {

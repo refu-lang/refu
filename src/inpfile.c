@@ -6,8 +6,9 @@
 #include <inpstr.h>
 #include <unistd.h>
 
-bool inpfile_init(struct inpfile* f,
-                  const struct RFstring *name)
+static bool inpfile_init(struct inpfile* f,
+                         const struct RFstring *name,
+                         const struct RFstring *contents)
 {
     struct RFtextfile file;
     struct RFstringx file_str;
@@ -17,48 +18,74 @@ bool inpfile_init(struct inpfile* f,
     RF_STRUCT_ZERO(f);
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
 
-    if (!rf_stringx_init_buff(&file_str, INPUT_FILE_BUFF_INITIAL_SIZE, "")) {
-        RF_ERRNOMEM();
-        return false;
-    }
     if (!rf_string_copy_in(&f->file_name, name)) {
         RF_ERRNOMEM();
         return false;
     }
 
-    if (!rf_textfile_init(&file,
-                          name,
-                          rf_string_equal(name, &s_stdin) ? RF_FILE_STDIN : RF_FILE_READ,
-                          RF_ENDIANESS_UNKNOWN,
-                          RF_UTF8,
-                          RF_EOL_AUTO)) {
-        return false;
+    if (!contents) { // if we read from a file
+        if (!rf_stringx_init_buff(&file_str, INPUT_FILE_BUFF_INITIAL_SIZE, "")) {
+            RF_ERRNOMEM();
+            goto fail_free_name;
+        }
+
+        if (!rf_textfile_init(&file,
+                              name,
+                              rf_string_equal(name, &s_stdin) ? RF_FILE_STDIN : RF_FILE_READ,
+                              RF_ENDIANESS_UNKNOWN,
+                              RF_UTF8,
+                              RF_EOL_AUTO)) {
+            goto fail_free_filecase_stringbuff;
+        }
+
+        lines = rf_textfile_read_lines(&file, 0, &file_str, &lines_arr);
+        rf_textfile_deinit(&file);
+        if (lines == -1) {
+            goto fail_free_filecase_stringbuff;
+        }
+        if (!inpstr_init(&f->str, &file_str, &lines_arr, lines)) {
+            goto fail_free_filecase_stringbuff;
+        }
+
+    } else { //we read string contents directly
+        if (!inpstr_init_from_source(&f->str, contents)) {
+            goto fail_free_name;
+        }
     }
 
-    lines = rf_textfile_read_lines(&file, 0, &file_str, &lines_arr);
-    if (lines == -1) {
-        return false;
-    }
-    rf_textfile_deinit(&file);
 
-    if (!inpstr_init(&f->str, &file_str, &lines_arr, lines)) {
-        return false;
-    }
     inpoffset_init(&f->offset);
-
     rf_array_deinit(&lines_arr);
     return true;
+
+fail_free_filecase_stringbuff:
+    rf_stringx_deinit(&file_str);
+fail_free_name:
+    rf_string_deinit(&f->file_name);
+    return false;
 }
 
 struct inpfile *inpfile_create(const struct RFstring *name)
 {
     struct inpfile *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!inpfile_init(ret, name)) {
+    if (!inpfile_init(ret, name, NULL)) {
         free(ret);
         ret = NULL;
     }
     return ret;
+}
+
+struct inpfile *inpfile_create_from_string(const struct RFstring *name,
+                                           const struct RFstring *contents)
+{
+    struct inpfile *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    if (!inpfile_init(ret, name, contents)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;    
 }
 
 void inpfile_deinit(struct inpfile *f)

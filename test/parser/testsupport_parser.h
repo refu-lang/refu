@@ -6,30 +6,28 @@
 #include <Preprocessor/rf_xmacro_argcount.h>
 #include <ast/identifier.h>
 
-struct inpfile;
+struct front_testdriver;
 
 /**
  * A utility testing macro to generate an ast_node whose _create() accepts
  * a start and end location mark
  */
 #define testsupport_parser_node_create(...)                             \
-    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_node_create, 7, __VA_ARGS__)
+    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_node_create, 6, __VA_ARGS__)
 
-#define i_testsupport_parser_node_create1(node_, type_,                 \
-                                          file_, sl_, sc_, el_, ec_, ...) \
+#define i_testsupport_parser_node_create1(node_, type_, sl_, sc_, el_, ec_, ...)      \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,\
                                      &temp_location_.end, __VA_ARGS__);  \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while(0)
 
-#define i_testsupport_parser_node_create0(node_, type_,                 \
-                                          file_, sl_, sc_, el_, ec_)    \
+#define i_testsupport_parser_node_create0(node_, type_, sl_, sc_, el_, ec_) \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_##type_##_create(&temp_location_.start,             \
                                      &temp_location_.end);              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
@@ -40,40 +38,40 @@ struct inpfile;
  * direct child description at the same line
  */
 #define testsupport_parser_typedesc_create(...)                         \
-    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_typedesc_create, 7, __VA_ARGS__)
-#define testsupport_parser_typedesc_create_xidentifier(node_, file_,             \
+    RF_SELECT_FUNC_IF_NARGGT(i_testsupport_parser_typedesc_create, 6, __VA_ARGS__)
+#define testsupport_parser_typedesc_create_xidentifier(node_,           \
                                                        sl_, sc_, el_,   \
                                                        ec_)             \
     struct ast_node *node_;                                             \
     do {                                                                \
-    struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
     node_ = ast_typedesc_create(                                        \
         ast_xidentifier_create(                                         \
         &temp_location_.start, &temp_location_.end,                     \
-        testsupport_parser_identifier_create(file, sl_, sc_, el_,ec_),  \
+        testsupport_parser_identifier_create(sl_, sc_, el_,ec_),        \
                                              false, NULL)               \
         );                                                              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
     
-#define i_testsupport_parser_typedesc_create1(node_, file_,             \
+#define i_testsupport_parser_typedesc_create1(node_,                    \
                                               sl_, sc_, el_,            \
                                               ec_, type_, ...)          \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_typedesc_create(                                    \
             ast_##type_##_create(&temp_location_.start, &temp_location_.end, __VA_ARGS__) \
         );                                                              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
 
-#define i_testsupport_parser_typedesc_create0(node_, file_,             \
+#define i_testsupport_parser_typedesc_create0(node_,                    \
                                               sl_, sc_, el_,            \
                                               ec_, type_)               \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_typedesc_create(                                    \
             ast_##type_##_create(&temp_location_.start, &temp_location_.end) \
         );                                                              \
@@ -83,12 +81,12 @@ struct inpfile;
 /**
  * A utility testing macro to generate a constant node at a location
  */
-#define testsupport_parser_constant_create(node_, file_,                \
+#define testsupport_parser_constant_create(node_,                       \
                                            sl_, sc_, el_,               \
                                            ec_, type_, value_)          \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_constant_create_##type_(&temp_location_, value_); \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
@@ -96,12 +94,12 @@ struct inpfile;
 /**
  * A utility testing macro to generate a string literal at a location
  */
-#define testsupport_parser_string_literal_create(node_, file_,          \
+#define testsupport_parser_string_literal_create(node_,          \
                                                  sl_, sc_, el_,         \
                                                  ec_)                   \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
         node_ = ast_string_literal_create(&temp_location_);             \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
@@ -109,12 +107,12 @@ struct inpfile;
 /**
  * A utility testing macro to generate a block at a location
  */
-#define testsupport_parser_block_create(node_, file_,                   \
+#define testsupport_parser_block_create(node_,                          \
                                         sl_, sc_, el_,                  \
                                         ec_)                            \
         struct ast_node *node_;                                         \
         do {                                                            \
-            struct inplocation temp_location_ = LOC_INIT(file_, sl_, sc_, el_, ec_); \
+            struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
             node_ = ast_block_create();                                 \
             ast_node_set_start(node_, &temp_location_.start);           \
             ast_node_set_end(node_, &temp_location_.end);               \
@@ -124,8 +122,7 @@ struct inpfile;
 /**
  * A utility testing function to generate an identifier at a location
  */
-struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
-                                                      unsigned int sline,
+struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
                                                       unsigned int scol,
                                                       unsigned int eline,
                                                       unsigned int ecol);
@@ -134,17 +131,17 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
  * A utility test macro to help create an xidentifier node wrapped over
  * a simple identifier
  */
-#define testsupport_parser_xidentifier_create_simple(node_, file_,             \
-                                              sl_, sc_, el_, ec_)       \
-    testsupport_parser_node_create(node_, xidentifier, file_,           \
+#define testsupport_parser_xidentifier_create_simple(node_,             \
+                                                     sl_, sc_, el_, ec_) \
+    testsupport_parser_node_create(node_, xidentifier,                  \
                                    sl_, sc_, el_, ec_,                  \
                                    testsupport_parser_identifier_create( \
-                                       file_, sl_, sc_, el_, ec_),      \
+                                       sl_, sc_, el_, ec_),             \
                                    false, NULL)
 
-#define testsupport_parser_prepare(driver_)                     \
-    do {                                                        \
-        ck_assert(lexer_scan((driver_)->front.lexer));          \
+#define testsupport_parser_prepare()                                    \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
     } while (0)
 
 
@@ -153,42 +150,74 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
  * accept.
  */
 #define ck_test_parse_as(...) \
-    RF_SELECT_FUNC_IF_NARGGT(i_ck_test_parse_as, 5, __VA_ARGS__)
+    RF_SELECT_FUNC_IF_NARGGT(i_ck_test_parse_as, 4, __VA_ARGS__)
 
-#define i_ck_test_parse_as1(node_, type_, driver_,  node_name, target_, ...) \
+#define i_ck_test_parse_as1(node_, type_, node_name, target_, ...)      \
     do {                                                                \
-            testsupport_parser_prepare(driver_);                        \
-            node_ = parser_acc_##type_((driver_)->front.parser, __VA_ARGS__); \
-            ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
-            check_ast_match(n, target_, (driver_)->front.file);        \
+        testsupport_parser_prepare();                                   \
+        node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__); \
+            ck_assert_parsed_node(node_, "Could not parse "node_name); \
+            check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
             parser_finalize_parsing(node_);                            \
         } while (0)
 
-#define i_ck_test_parse_as0(node_, type_, driver_,  node_name, target_)    \
+#define i_ck_test_parse_as0(node_, type_,  node_name, target_)          \
         do {                                                            \
-            testsupport_parser_prepare(driver_);                        \
-            node_ = parser_acc_##type_((driver_)->front.parser);        \
-            ck_assert_parsed_node(node_, driver_, "Could not parse "node_name); \
-            check_ast_match(n, target_, (driver_)->front.file);        \
+            testsupport_parser_prepare();                        \
+            node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser);        \
+            ck_assert_parsed_node(node_, "Could not parse "node_name); \
+            check_ast_match(n, target_, get_front_testdriver()->current_front->file);        \
             parser_finalize_parsing(node_);                            \
         } while (0)
 
-#define ck_test_parse_root(node_, driver_, target_)                     \
+#define ck_test_parse_root(node_, target_)                              \
     do {                                                                \
-            testsupport_parser_prepare(driver_);                        \
-            parser_process_file((driver_)->front.parser);               \
-            node_ = (driver_)->front.parser->root;                      \
-            ck_assert_parsed_node(node_, driver_, "Could not parse root node"); \
-            check_ast_match(n, target_, (driver_)->front.file);        \
-            parser_finalize_parsing(node_);                            \
-        } while (0)
+        testsupport_parser_prepare();                                   \
+        parser_process_file(get_front_testdriver()->current_front->parser); \
+        node_ = get_front_testdriver()->current_front->parser->root;    \
+        ck_assert_parsed_node(node_, "Could not parse root node");      \
+        check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
+        parser_finalize_parsing(node_);                                 \
+    } while (0)
+
+/**
+ * A utility testing macro used to test if we detect parsing failure properly
+ */
+#define ck_test_fail_parse_as(...)                                      \
+    RF_SELECT_FUNC_IF_NARGGT(i_ck_test_fail_parse_as, 1, __VA_ARGS__)
+
+#define i_ck_test_fail_parse_as1(type_, ...)                            \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
+        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__), \
+                      "parsing "#type_"should have failed");            \
+        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+                      "a syntax error should have been reported");      \
+    } while (0)
+
+#define i_ck_test_fail_parse_as0(type_, ...)                            \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
+        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser), \
+                      "parsing "#type_"should have failed");            \
+        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+                      "a syntax error should have been reported");      \
+    } while (0)
+
+#define ck_test_fail_parse_file()                                       \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
+        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser), \
+                      "parsing should have failed");                    \
+        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+                      "a syntax error should have been reported");      \
+    } while (0)
 
 
-
-#define ck_assert_parsed_node(n_, d_, msg_)                             \
+#define ck_assert_parsed_node(n_,  msg_)                                \
         do {                                                            \
             if (!(n_)) {                                                \
-                struct RFstringx *tmp_ = front_testdriver_geterrors(d_); \
+                struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
                 if (tmp_) {                                             \
                     ck_abort_msg(msg_" -- with parser errors\n"RF_STR_PF_FMT, \
                                  RF_STR_PF_ARG(tmp_));                  \
@@ -198,9 +227,9 @@ struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
             }                                                           \
         } while(0)
 
-#define ck_assert_parser_errors(info_, expected_arr_)                   \
+#define ck_assert_parser_errors(expected_arr_)                          \
         ck_assert_parser_errors_impl(                                   \
-            info_,                                                      \
+            get_front_testdriver()->current_front->info,                \
             expected_arr_,                                              \
             sizeof(expected_arr_)/sizeof(struct info_msg),              \
             __FILE__, __LINE__)

@@ -10,7 +10,8 @@
 
 
 struct front_testdriver {
-    struct front_ctx front;
+    struct {darray(struct front_ctx*);} fronts;
+    struct front_ctx *current_front;
     struct front_ctx *stdlib;
     struct RFstringx buffstr;
     //! A buffer of ast node pointers for easy freeing
@@ -27,16 +28,35 @@ struct front_testdriver *get_front_testdriver();
 bool front_testdriver_init(struct front_testdriver *p, bool with_stdlib);
 void front_testdriver_deinit(struct front_testdriver *p);
 
+/**
+ * Set the currently active front_ctx for testing operations
+ * that are front_ctx specific
+ */
+bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i);
+/**
+ * Get the analyzer of the current front_ctx being tested
+ */
+struct analyzer *front_testdriver_analyzer();
+/**
+ * Get the parser of the current front_ctx being tested
+ */
+struct parser *front_testdriver_parser();
+/**
+ * Get the lexer of the current front_ctx being tested
+ */
+struct lexer *front_testdriver_lexer();
+/**
+ * Get the inpfile of the current front_ctx being tested
+ */
+struct inpfile *front_testdriver_file();
+
 void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
-struct inpfile *front_testdriver_get_file(struct front_testdriver *d);
-struct ast_node *front_testdriver_get_ast_root(const struct front_testdriver *d);
 
 /**
- * Assign a string to the  file of the driver
- * and return the frontend context.
+ * Create a new front_ctx with the given source string
  */
-struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
-                                          const struct RFstring *s);
+struct front_ctx *front_testdriver_new_source(struct front_testdriver *d,
+                                              const struct RFstring *s);
 
 /**
  * Returns a pointer to the buffer string after having populated it with
@@ -50,28 +70,23 @@ struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d);
  * and keep their pointer indexed for freeing at test teardown
  */
 struct ast_node *front_testdriver_generate_identifier(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     const char *s);
 
 struct ast_node *front_testdriver_generate_string_literal(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     unsigned int sl_byte_off, unsigned int el_byte_off,
     const char *s);
 
 struct ast_node *front_testdriver_generate_constant_float(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     double val);
 
 struct ast_node *front_testdriver_generate_constant_integer(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     uint64_t val);
 
 struct ast_node *do_front_testdriver_generate_node(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     enum ast_type type, unsigned int args_num, ...);
 
@@ -121,20 +136,20 @@ bool check_ast_match_impl(struct ast_node *got,
                           const char* filename,
                           unsigned int line);
 
-#define TESTSUPPORT_INFOMSG_INIT_START(file_, type_, msg_, sl_, sc_)    \
+#define TESTSUPPORT_INFOMSG_INIT_START(type_, msg_, sl_, sc_)           \
     {                                                                   \
         .s = RF_STRING_STATIC_INIT(msg_),                               \
             .type = type_,                                              \
-            .start_mark = LOCMARK_INIT(file_, sl_, sc_)                 \
-    }
+            .start_mark = LOCMARK_INIT(get_front_testdriver()->current_front->file, sl_, sc_) \
+            }
 
 
-#define TESTSUPPORT_INFOMSG_INIT_BOTH(file_, type_, msg_, sl_, sc_, el_, ec_) \
+#define TESTSUPPORT_INFOMSG_INIT_BOTH(type_, msg_, sl_, sc_, el_, ec_)  \
     {                                                                   \
         .s = RF_STRING_STATIC_INIT(msg_),                               \
             .type = type_,                                              \
-            .start_mark = LOCMARK_INIT(file_, sl_, sc_),                \
-            .end_mark = LOCMARK_INIT(file_, el_, ec_)                   \
-    }
+            .start_mark = LOCMARK_INIT(get_front_testdriver()->current_front->file, sl_, sc_), \
+            .end_mark = LOCMARK_INIT(get_front_testdriver()->current_front->file, el_, ec_) \
+            }
 
 #endif

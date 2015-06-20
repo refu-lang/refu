@@ -31,9 +31,9 @@ START_TEST(test_typecheck_matchexpr_simple) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
@@ -48,9 +48,9 @@ START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
@@ -65,9 +65,9 @@ START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
@@ -85,9 +85,9 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
@@ -102,9 +102,9 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
@@ -119,9 +119,9 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_access_field) {
@@ -136,8 +136,8 @@ START_TEST (test_typecheck_access_field) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);    
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);    
 } END_TEST
 
 START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
@@ -152,8 +152,8 @@ START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);    
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);    
 } END_TEST
 
 START_TEST (test_typecheck_access_fieldname_in_typeop) {
@@ -168,8 +168,8 @@ START_TEST (test_typecheck_access_fieldname_in_typeop) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);    
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);    
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
@@ -184,17 +184,16 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"i32\" can not be matched to the type of \"a\" which is "
             "of type \"foo {string}\".",
             4, 4, 4, 18)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
@@ -209,17 +208,16 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"_,i32\" can not be matched to the type of \"a\" which "
             "is of type \"foo {i32,string}\".",
             4, 4, 4, 21)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
@@ -235,17 +233,16 @@ START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"_,_,_\" can not be matched to the type of \"a\" which "
             "is of type \"foo {i32,bool|string}\".",
             6, 4, 6, 22)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
@@ -262,17 +259,16 @@ START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match expression does not match all cases for \"a\". Sum type "
             "operand of \"i8,f32,string\" is not covered.",
             5, 4, 8, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
@@ -287,17 +283,16 @@ START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Match case \"string\" is useless since all parts of \"t2\" have "
             "already been matched.",
             5, 8, 5, 20)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 Suite *analyzer_typecheck_matchexpr_suite_create(void)

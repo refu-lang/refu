@@ -14,16 +14,14 @@
 START_TEST(test_lexer_scan_tokens_1) {
     struct front_ctx *front;
     struct inpfile *f;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "asd { }");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
+    front = front_testdriver_new_source(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = front->file;
-    lex = front->lexer;
+    f = front_testdriver_file();
     struct token expected[] = {
-        TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 2, "asd"),
+        TESTLEX_IDENTIFIER_INIT(0, 0, 0, 2, "asd"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 4, 0, 4)
@@ -33,15 +31,13 @@ START_TEST(test_lexer_scan_tokens_1) {
             .location=LOC_INIT(f, 0, 6, 0, 6)
         }
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_scan_tokens_2) {
     struct front_ctx *front;
-    struct inpfile *f;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i32, b:string | c:f32 }\n"
         "fn foo(a:int) -> int\n"
@@ -65,46 +61,45 @@ START_TEST(test_lexer_scan_tokens_2) {
         "module\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
+    front = front_testdriver_new_source(d, &s);
     ck_assert_msg(front, "Failed to assign string to file ");
-    f = front->file;
-    lex = front->lexer;
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_KW_TYPE,
             .location=LOC_INIT(f, 0, 0, 0, 3)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 5, 0, 7, "foo"),
+        TESTLEX_IDENTIFIER_INIT(0, 5, 0, 7, "foo"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 9, 0, 9)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 11, 0, 11, "a"),
+        TESTLEX_IDENTIFIER_INIT(0, 11, 0, 11, "a"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 12, 0, 12)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 13, 0, 15, "i32"),
+        TESTLEX_IDENTIFIER_INIT(0, 13, 0, 15, "i32"),
         {
             .type=TOKEN_OP_COMMA,
             .location=LOC_INIT(f, 0, 16, 0, 16)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 18, 0, 18, "b"),
+        TESTLEX_IDENTIFIER_INIT(0, 18, 0, 18, "b"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 19, 0, 19)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 20, 0, 25,  "string"),
+        TESTLEX_IDENTIFIER_INIT(0, 20, 0, 25,  "string"),
         {
             .type=TOKEN_OP_TYPESUM,
             .location=LOC_INIT(f, 0, 27, 0, 27)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 29, 0, 29, "c"),
+        TESTLEX_IDENTIFIER_INIT(0, 29, 0, 29, "c"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 0, 30, 0, 30)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 31, 0, 33, "f32"),
+        TESTLEX_IDENTIFIER_INIT(0, 31, 0, 33, "f32"),
         {
             .type=TOKEN_SM_CCBRACE,
             .location=LOC_INIT(f, 0, 35, 0, 35)
@@ -114,17 +109,17 @@ START_TEST(test_lexer_scan_tokens_2) {
             .type=TOKEN_KW_FUNCTION,
             .location=LOC_INIT(f, 1, 0, 1, 1)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 1, 3, 1, 5, "foo"),
+        TESTLEX_IDENTIFIER_INIT(1, 3, 1, 5, "foo"),
         {
             .type=TOKEN_SM_OPAREN,
             .location=LOC_INIT(f, 1, 6, 1, 6)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 1, 7, 1, 7, "a"),
+        TESTLEX_IDENTIFIER_INIT(1, 7, 1, 7, "a"),
         {
             .type=TOKEN_SM_COLON,
             .location=LOC_INIT(f, 1, 8, 1, 8)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 1, 9, 1, 11, "int"),
+        TESTLEX_IDENTIFIER_INIT(1, 9, 1, 11, "int"),
         {
             .type=TOKEN_SM_CPAREN,
             .location=LOC_INIT(f, 1, 12, 1, 12)
@@ -133,7 +128,7 @@ START_TEST(test_lexer_scan_tokens_2) {
             .type=TOKEN_OP_IMPL,
             .location=LOC_INIT(f, 1, 14, 1, 15)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 1, 17, 1, 19, "int"),
+        TESTLEX_IDENTIFIER_INIT(1, 17, 1, 19, "int"),
         /* 3rd line */
         {
             .type=TOKEN_OP_PLUS,
@@ -225,24 +220,20 @@ START_TEST(test_lexer_scan_tokens_2) {
             .location=LOC_INIT(f, 19, 0, 19, 5)
         },
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_scan_tokens_crammed) {
-    struct front_ctx *front;
     struct inpfile *f;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "food<>||");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    f = front->file;
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    f = front_testdriver_file();
     struct token expected[] = {
-        TESTLEX_IDENTIFIER_INIT(d, 0, 0, 0, 3, "food"),
+        TESTLEX_IDENTIFIER_INIT(0, 0, 0, 3, "food"),
         {
             .type=TOKEN_OP_LT,
             .location=LOC_INIT(f, 0, 4, 0, 4)
@@ -256,14 +247,12 @@ START_TEST(test_lexer_scan_tokens_crammed) {
             .location=LOC_INIT(f, 0, 6, 0, 7)
         }
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_scan_constant_numbers) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "42\n"
         "3.14\n"
@@ -277,44 +266,41 @@ START_TEST(test_lexer_scan_constant_numbers) {
         "-2.1234\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 42),
-        TESTLEX_FLOAT_INIT(d, 1, 0, 1, 3, 3.14),
-        TESTLEX_INTEGER_INIT(d, 2, 0, 2, 6, 28),
-        TESTLEX_INTEGER_INIT(d, 3, 0, 3, 6, 1044478),
-        TESTLEX_INTEGER_INIT(d, 4, 0, 4, 7, 939411),
-        TESTLEX_FLOAT_INIT(d, 5, 0, 5, 6, 1.0e-10),
-        TESTLEX_FLOAT_INIT(d, 6, 0, 6, 8, 3.9265e+2),
-        TESTLEX_INTEGER_INIT(d, 7, 0, 7, 0, 0),
-        TESTLEX_INTEGER_INIT(d, 8, 0, 8, 2, -13),
-        TESTLEX_FLOAT_INIT(d, 9, 0, 9, 6, -2.1234),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 42),
+        TESTLEX_FLOAT_INIT(1, 0, 1, 3, 3.14),
+        TESTLEX_INTEGER_INIT(2, 0, 2, 6, 28),
+        TESTLEX_INTEGER_INIT(3, 0, 3, 6, 1044478),
+        TESTLEX_INTEGER_INIT(4, 0, 4, 7, 939411),
+        TESTLEX_FLOAT_INIT(5, 0, 5, 6, 1.0e-10),
+        TESTLEX_FLOAT_INIT(6, 0, 6, 8, 3.9265e+2),
+        TESTLEX_INTEGER_INIT(7, 0, 7, 0, 0),
+        TESTLEX_INTEGER_INIT(8, 0, 8, 2, -13),
+        TESTLEX_FLOAT_INIT(9, 0, 9, 6, -2.1234),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_scan_string_literals) {
-    struct front_ctx *front;
+
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "\"Celka\"\n"
         "\"Containing escaped \\\"\\\" quotes\"\n"
         "\"Eleos そう思いながらも\"\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file");
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_LITERAL_INIT(d, 0, 0, 0, 6, 0, 6,  "Celka"),
-        TESTLEX_LITERAL_INIT(d, 1, 0, 1, 31, 0, 31,
+        TESTLEX_LITERAL_INIT(0, 0, 0, 6, 0, 6,  "Celka"),
+        TESTLEX_LITERAL_INIT(1, 0, 1, 31, 0, 31,
                              "Containing escaped \\\"\\\" quotes"),
-        TESTLEX_LITERAL_INIT(d, 2, 0, 2, 15, 0, 31, "Eleos そう思いながらも")
+        TESTLEX_LITERAL_INIT(2, 0, 2, 15, 0, 31, "Eleos そう思いながらも")
     };
-    ck_assert_lexer_scan(d, "Scanning failed");
-    check_lexer_tokens(d->front.lexer, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
@@ -327,61 +313,52 @@ START_TEST (test_lexer_scan_with_comments) {
         "//"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
+    front = front_testdriver_new_source(d, &s);
     ck_assert_msg(front, "Failed to assign string to file");
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 2, 234),
-        TESTLEX_LITERAL_INIT(d, 2, 0, 2, 15, 0, 15, "string_literal")
+        TESTLEX_INTEGER_INIT(0, 0, 0, 2, 234),
+        TESTLEX_LITERAL_INIT(2, 0, 2, 15, 0, 15, "string_literal")
     };
-    ck_assert_lexer_scan(d, "Scanning failed");
-    check_lexer_tokens(d->front.lexer, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 /* -- lexer scan edge cases tests -- */
 
 START_TEST(test_lexer_scan_identifier_at_end) {
-    struct front_ctx *front;
     struct inpfile *f;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a bbb");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    f = front->file;
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_OP_LT,
             .location=LOC_INIT(f, 0, 0, 0, 0),
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 1, 0, 4, "Type"),
-        TESTLEX_IDENTIFIER_INIT(d, 0, 6, 0, 6, "a"),
-        TESTLEX_IDENTIFIER_INIT(d, 0, 8, 0, 10, "bbb"),
+        TESTLEX_IDENTIFIER_INIT(0, 1, 0, 4, "Type"),
+        TESTLEX_IDENTIFIER_INIT(0, 6, 0, 6, "a"),
+        TESTLEX_IDENTIFIER_INIT(0, 8, 0, 10, "bbb"),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
-
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_problematic_typeclass) {
-    struct front_ctx *front;
     struct inpfile *f;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "class pointers {\n"
         "fn dosth(\n"
         "}");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    f = front->file;
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_KW_TYPECLASS,
             .location=LOC_INIT(f, 0, 0, 0, 4),
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 6, 0, 13, "pointers"),
+        TESTLEX_IDENTIFIER_INIT(0, 6, 0, 13, "pointers"),
         {
             .type=TOKEN_SM_OCBRACE,
             .location=LOC_INIT(f, 0, 15, 0, 15),
@@ -390,7 +367,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
             .type=TOKEN_KW_FUNCTION,
             .location=LOC_INIT(f, 1, 0, 1, 1),
         },
-        TESTLEX_IDENTIFIER_INIT(d, 1, 3, 1, 7, "dosth"),
+        TESTLEX_IDENTIFIER_INIT(1, 3, 1, 7, "dosth"),
         {
             .type=TOKEN_SM_OPAREN,
             .location=LOC_INIT(f, 1, 8, 1, 8),
@@ -400,188 +377,161 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
             .location=LOC_INIT(f, 2, 0, 2, 0),
         },
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_scan_constant_int_at_end) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("13 2462");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 13),
-        TESTLEX_INTEGER_INIT(d, 0, 3, 0, 6, 2462),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 13),
+        TESTLEX_INTEGER_INIT(0, 3, 0, 6, 2462),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_constant_float_at_end) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("13 0.142");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 13),
-        TESTLEX_FLOAT_INIT(d, 0, 3, 0, 7, 0.142),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 13),
+        TESTLEX_FLOAT_INIT(0, 3, 0, 7, 0.142),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_string_literal_at_end) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("21 \"Berlin\"");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 21),
-        TESTLEX_LITERAL_INIT(d, 0, 3, 0, 10, 3, 10, "Berlin"),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 21),
+        TESTLEX_LITERAL_INIT(0, 3, 0, 10, 3, 10, "Berlin"),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_integer_with_tokens_in_between) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("10|&{23");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 10),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 10),
         {
             .type=TOKEN_OP_TYPESUM,
-            .location=LOC_INIT(front->file, 0, 2, 0, 2),
+            .location=LOC_INIT(f, 0, 2, 0, 2),
         },
         {
             .type=TOKEN_OP_AMPERSAND,
-            .location=LOC_INIT(front->file, 0, 3, 0, 3),
+            .location=LOC_INIT(f, 0, 3, 0, 3),
         },
         {
             .type=TOKEN_SM_OCBRACE,
-            .location=LOC_INIT(front->file, 0, 4, 0, 4),
+            .location=LOC_INIT(f, 0, 4, 0, 4),
         },
-        TESTLEX_INTEGER_INIT(d, 0, 5, 0, 6, 23),
+        TESTLEX_INTEGER_INIT(0, 5, 0, 6, 23),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_float_with_tokens_in_between) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("5.3134|&{23");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
-        TESTLEX_FLOAT_INIT(d, 0, 0, 0, 5, 5.3134),
+        TESTLEX_FLOAT_INIT(0, 0, 0, 5, 5.3134),
         {
             .type=TOKEN_OP_TYPESUM,
-            .location=LOC_INIT(front->file, 0, 6, 0, 6),
+            .location=LOC_INIT(f, 0, 6, 0, 6),
         },
         {
             .type=TOKEN_OP_AMPERSAND,
-            .location=LOC_INIT(front->file, 0, 7, 0, 7),
+            .location=LOC_INIT(f, 0, 7, 0, 7),
         },
         {
             .type=TOKEN_SM_OCBRACE,
-            .location=LOC_INIT(front->file, 0, 8, 0, 8),
+            .location=LOC_INIT(f, 0, 8, 0, 8),
         },
-        TESTLEX_INTEGER_INIT(d, 0, 9, 0, 10, 23),
+        TESTLEX_INTEGER_INIT(0, 9, 0, 10, 23),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_integer_close_to_member_access) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("10).something_else");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 1, 10),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 1, 10),
         {
             .type=TOKEN_SM_CPAREN,
-            .location=LOC_INIT(front->file, 0, 2, 0, 2),
+            .location=LOC_INIT(f, 0, 2, 0, 2),
         },
         {
             .type=TOKEN_OP_MEMBER_ACCESS,
-            .location=LOC_INIT(front->file, 0, 3, 0, 3),
+            .location=LOC_INIT(f, 0, 3, 0, 3),
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 4, 0, 17, "something_else"),
+        TESTLEX_IDENTIFIER_INIT(0, 4, 0, 17, "something_else"),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 } END_TEST
 
 START_TEST(test_lexer_scan_zero_at_eof) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "0"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
     struct token expected[] = {
-        TESTLEX_INTEGER_INIT(d, 0, 0, 0, 0, 0),
+        TESTLEX_INTEGER_INIT(0, 0, 0, 0, 0),
     };
-    ck_assert(lexer_scan(lex));
-    check_lexer_tokens(lex, expected);
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
 
 } END_TEST
 
 START_TEST(test_lexer_push_pop) {
-    struct front_ctx *front;
-    struct lexer *lex;
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_KW_IF,
-            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+            .location=LOC_INIT(f, 0, 0, 0, 1)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        TESTLEX_IDENTIFIER_INIT(0, 3, 0, 3, "a"),
         {
             .type=TOKEN_OP_LT,
-            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+            .location=LOC_INIT(f, 0, 5, 0, 5),
         },
-        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        TESTLEX_INTEGER_INIT(0, 7, 0, 7, 2),
         {
             .type=TOKEN_SM_OCBRACE,
-            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+            .location=LOC_INIT(f, 0, 9, 0, 9),
         },
         {
             .type=TOKEN_SM_CCBRACE,
-            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+            .location=LOC_INIT(f, 0, 11, 0, 11),
         },
     };
-    ck_assert(lexer_scan(lex));
+    ck_assert_lexer_scan("Scanning failed");
 
     // check that simple push/pop does not affect anything
+    struct lexer *lex = front_testdriver_lexer();
     struct token *tok = lexer_next_token(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);
     lexer_push(lex);
@@ -601,35 +551,34 @@ START_TEST(test_lexer_push_pop) {
 } END_TEST
 
 START_TEST(test_lexer_push_rollback) {
-    struct front_ctx *front;
-    struct lexer *lex;
+
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_KW_IF,
-            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+            .location=LOC_INIT(f, 0, 0, 0, 1)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        TESTLEX_IDENTIFIER_INIT(0, 3, 0, 3, "a"),
         {
             .type=TOKEN_OP_LT,
-            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+            .location=LOC_INIT(f, 0, 5, 0, 5),
         },
-        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        TESTLEX_INTEGER_INIT(0, 7, 0, 7, 2),
         {
             .type=TOKEN_SM_OCBRACE,
-            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+            .location=LOC_INIT(f, 0, 9, 0, 9),
         },
         {
             .type=TOKEN_SM_CCBRACE,
-            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+            .location=LOC_INIT(f, 0, 11, 0, 11),
         },
     };
-    ck_assert(lexer_scan(lex));
+    ck_assert_lexer_scan("Scanning failed");
 
+    struct lexer *lex = front_testdriver_lexer();
     struct token *tok = lexer_next_token(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);
     lexer_push(lex);
@@ -653,35 +602,34 @@ START_TEST(test_lexer_push_rollback) {
 } END_TEST
 
 START_TEST(test_lexer_many_push_rollback) {
-    struct front_ctx *front;
-    struct lexer *lex;
+
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
     struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_assign(d, &s);
-    ck_assert_msg(front, "Failed to assign string to file ");
-    lex = front->lexer;
+    front_testdriver_new_source(d, &s);
+    struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
             .type=TOKEN_KW_IF,
-            .location=LOC_INIT(front->file, 0, 0, 0, 1)
+            .location=LOC_INIT(f, 0, 0, 0, 1)
         },
-        TESTLEX_IDENTIFIER_INIT(d, 0, 3, 0, 3, "a"),
+        TESTLEX_IDENTIFIER_INIT(0, 3, 0, 3, "a"),
         {
             .type=TOKEN_OP_LT,
-            .location=LOC_INIT(front->file, 0, 5, 0, 5),
+            .location=LOC_INIT(f, 0, 5, 0, 5),
         },
-        TESTLEX_INTEGER_INIT(d, 0, 7, 0, 7, 2),
+        TESTLEX_INTEGER_INIT(0, 7, 0, 7, 2),
         {
             .type=TOKEN_SM_OCBRACE,
-            .location=LOC_INIT(front->file, 0, 9, 0, 9),
+            .location=LOC_INIT(f, 0, 9, 0, 9),
         },
         {
             .type=TOKEN_SM_CCBRACE,
-            .location=LOC_INIT(front->file, 0, 11, 0, 11),
+            .location=LOC_INIT(f, 0, 11, 0, 11),
         },
     };
-    ck_assert(lexer_scan(lex));
+    ck_assert_lexer_scan("Scanning failed");
 
+    struct lexer *lex = front_testdriver_lexer();
     struct token *tok = lexer_next_token(lex);
     lexer_push(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);

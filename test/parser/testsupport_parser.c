@@ -1,4 +1,5 @@
 #include "testsupport_parser.h"
+#include "../testsupport_front.h"
 
 #include <info/info.h>
 #include <info/msg.h>
@@ -67,13 +68,13 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
     return true;
 }
 
-struct ast_node *testsupport_parser_identifier_create(struct inpfile *file,
-                                                      unsigned int sline,
+struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
                                                       unsigned int scol,
                                                       unsigned int eline,
                                                       unsigned int ecol)
 {
-    struct inplocation temp_location_ = LOC_INIT(file,
+    struct front_testdriver *d = get_front_testdriver();
+    struct inplocation temp_location_ = LOC_INIT(d->current_front->file,
                                                  sline,
                                                  scol,
                                                  eline,

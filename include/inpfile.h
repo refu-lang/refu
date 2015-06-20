@@ -16,9 +16,10 @@ struct inpfile {
     struct ast_node *root;
 };
 
-bool inpfile_init(struct inpfile* f,
-                  const struct RFstring *name);
+
 struct inpfile *inpfile_create(const struct RFstring *name);
+struct inpfile *inpfile_create_from_string(const struct RFstring *name,
+                                           const struct RFstring *contents);
 
 void inpfile_deinit(struct inpfile* f);
 void inpfile_destroy(struct inpfile *f);

@@ -34,6 +34,13 @@ bool inpstr_init(struct inpstr *s,
                  struct RFarray *arr,
                  unsigned int lines_num);
 
+/**
+ * Initializes an input string from a source string. The source string is copied
+ * inside the inpstr struct.
+ */
+bool inpstr_init_from_source(struct inpstr *s,
+                             const struct RFstring *input_str);
+
 void inpstr_deinit(struct inpstr *s);
 
 /**

@@ -25,90 +25,44 @@ struct front_testdriver *get_front_testdriver()
     return &__front_testdriver;
 }
 
-struct inpfile *front_testdriver_get_file(struct front_testdriver *d)
+bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i)
 {
-    return d->front.file;
-}
-
-struct ast_node *front_testdriver_get_ast_root(const struct front_testdriver *d)
-{
-    return d->front.parser->root ? d->front.parser->root :
-        d->front.analyzer->root;
-}
-
-static struct inpfile *inpfile_dummy_create(struct info_ctx *info)
-{
-    struct inpfile *f;
-    RF_MALLOC(f, sizeof(*f), return NULL);
-    if (!rf_string_init(&f->file_name, "test_file")) {
+    if (i >= darray_size(d->fronts)) {
         return false;
     }
-
-    if (!rf_stringx_init_buff(&f->str.str, 1024, "")) {
-        return false;
-    }
-
-    f->info = info;
-    f->root = NULL;
-    inpoffset_init(&f->offset);
-    return f;
+    d->current_front = darray_item(d->fronts, i);
+    return true;
 }
 
-static void inpfile_dummy_destroy(struct inpfile *f)
+struct analyzer *front_testdriver_analyzer()
 {
-    /*
-     * if in the test the inpfile_dummy_assign() function
-     * was not used then str.lines was never allocated so, to still
-     * use inpfile_deinit() let's quickly allocate it here
-     */
-    if (!f->str.lines) {
-        RF_MALLOC(f->str.lines, 1,;);
-    }
-    /* inpfile_deinit(f); */
-    inpfile_destroy(f);
+    return get_front_testdriver()->current_front->analyzer;
 }
 
-static bool inpfile_dummy_assign(struct inpfile *f,
-                                 const struct RFstring *s)
+struct parser *front_testdriver_parser()
 {
-    bool ret = false;
-    struct RFarray arr;
-    RF_ARRAY_TEMP_INIT(&arr, uint32_t, 128);
-    static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
-    int lines;
+    return get_front_testdriver()->current_front->parser;
+}
 
-    if (!rf_stringx_assign(&f->str.str, s)) {
-        goto end;
-    }
-    lines = rf_string_count(RF_STRX2STR(&f->str.str), &nl, 0, &arr, 0);
-    if (lines == -1) {
-        goto end;
-    }
+struct lexer *front_testdriver_lexer()
+{
+    return get_front_testdriver()->current_front->lexer;
+}
 
-    lines += 1;
-    RF_MALLOC(f->str.lines, sizeof(uint32_t) * lines, goto end);
-    if (lines == 1) { //we got nothing to copy from, so don't
-        f->str.lines[0] = 0;
-    } else {
-        int i;
-        f->str.lines[0] = 0;
-        for (i = 1; i < lines; i ++) {
-            f->str.lines[i] = rf_array_at_unsafe(&arr, i - 1, uint32_t) + 1;
-        }
-    }
-    f->str.lines_num = lines;
-
-    ret = true;
-end:
-    rf_array_deinit(&arr);
-    return ret;
+struct inpfile *front_testdriver_file()
+{
+    return get_front_testdriver()->current_front->file;
 }
 
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 {
-    if (!info_ctx_get_messages_fmt(d->front.info, MESSAGE_ANY, &d->buffstr)) {
+    struct front_ctx **front;
+    darray_foreach(front, d->fronts) {
+        if (!info_ctx_get_messages_fmt((*front)->info, MESSAGE_ANY, &d->buffstr)) {
         return NULL;
+        }
     }
+
     return &d->buffstr;
 }
 
@@ -125,6 +79,7 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib)
 {
     RF_STRUCT_ZERO(d);
     darray_init(d->nodes);
+    darray_init(d->fronts);
 
     if (with_stdlib) {
         front_testdriver_create_analyze_stdlib(d);
@@ -138,38 +93,9 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib)
         goto free_buff;
     }
 
-    d->front.info = info_ctx_create(d->front.file);
-    if (!d->front.info) {
-        goto free_typecmp;
-    }
-
-    d->front.lexer = lexer_create(d->front.file, d->front.info);
-    if (!d->front.lexer) {
-        goto free_info;
-    }
-
-    d->front.parser = parser_create(d->front.file,
-                                    d->front.lexer,
-                                    d->front.info);
-    if (!d->front.parser) {
-        goto free_lexer;
-    }
-
-    d->front.analyzer = analyzer_create(d->front.info);
-    if (!d->front.analyzer) {
-        goto free_parser;
-    }
 
     return true;
 
-free_parser:
-    parser_destroy(d->front.parser);
-free_lexer:
-    lexer_destroy(d->front.lexer);
-free_info:
-    info_ctx_destroy(d->front.info);
-free_typecmp:
-    typecmp_ctx_deinit();
 free_buff:
     rf_stringx_deinit(&d->buffstr);
 free_nodes:
@@ -182,50 +108,35 @@ void front_testdriver_deinit(struct front_testdriver *d)
         front_ctx_destroy(d->stdlib);
         d->stdlib = NULL;
     }
-    struct ast_node **n;
     rf_stringx_deinit(&d->buffstr);
     typecmp_ctx_deinit();
+    struct ast_node **n;
     darray_foreach(n, d->nodes) {
         ast_node_destroy(*n);
     }
     darray_free(d->nodes);
-
-    if (d->front.file) {
-        inpfile_dummy_destroy(d->front.file);
+    struct front_ctx **front;
+    darray_foreach(front, d->fronts) {
+        front_ctx_destroy(*front);
     }
-
-    lexer_destroy(d->front.lexer);
-    parser_destroy(d->front.parser);
-    info_ctx_destroy(d->front.info);
-    analyzer_destroy(d->front.analyzer);
+    darray_free(d->fronts);
 }
 
-struct front_ctx *front_testdriver_assign(struct front_testdriver *d,
-                                          const struct RFstring *s)
+struct front_ctx *front_testdriver_new_source(struct front_testdriver *d,
+                                              const struct RFstring *s)
 {
-    d->front.file = inpfile_dummy_create(d->front.info);
-
-    if (!d->front.file) {
-        ck_abort_msg("Failed to create a dummy input file");
-    }
-
-    if (!inpfile_dummy_assign(d->front.file, s)) {
-        ck_abort_msg("Assigning a string to a test driver failed");
-    }
-
-    lexer_inject_input_file(d->front.lexer, d->front.file);
-    parser_inject_input_file(d->front.parser, d->front.file);
-    info_ctx_inject_input_file(d->front.info, d->front.file);
-
-    return &d->front;
+    const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
+    struct front_ctx *front = front_ctx_create_from_source(NULL, &name, s);
+    darray_append(d->fronts, front);
+    d->current_front = front;
+    return front;
 }
 
 
 static inline struct ast_node *front_testdriver_node_from_loc(
-    struct front_testdriver *d, enum ast_type type,
-    unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
+    enum ast_type type, unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
 {
-    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
+    struct inplocation temp_loc = LOC_INIT(get_front_testdriver()->current_front->file, sl, sc, el, ec);
     struct ast_node *ret = ast_node_create_loc(type, &temp_loc);
     // since this is testing code change owner so that it gets properly freed
     ret->state = AST_NODE_STATE_AFTER_PARSING;
@@ -233,32 +144,31 @@ static inline struct ast_node *front_testdriver_node_from_loc(
 }
 
 struct ast_node *front_testdriver_generate_identifier(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     const char *s)
 {
     struct ast_node *ret;
-    ret = front_testdriver_node_from_loc(d, AST_IDENTIFIER, sl, sc, el, ec);
+    ret = front_testdriver_node_from_loc(AST_IDENTIFIER, sl, sc, el, ec);
     if (!ret) {
         return NULL;
     }
     ret->state = AST_NODE_STATE_AFTER_PARSING;
     RF_STRING_SHALLOW_INIT(&ret->identifier.string, (char*)s, strlen(s));
-    darray_append(d->nodes, ret);
+    darray_append(get_front_testdriver()->nodes, ret);
     return ret;
 }
 
 struct ast_node *front_testdriver_generate_string_literal(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     unsigned int sl_byte_off, unsigned int el_byte_off,
     const char *s)
 {
     struct ast_node *ret;
+    struct front_testdriver *d = get_front_testdriver();
     struct inplocation temp_loc = LOC_INIT_FULL(
         sl, sc, el, ec,
-        inpfile_line_p(d->front.file, sl) + sl_byte_off,
-        inpfile_line_p(d->front.file, el) + el_byte_off);
+        inpfile_line_p(d->current_front->file, sl) + sl_byte_off,
+        inpfile_line_p(d->current_front->file, el) + el_byte_off);
     ret = ast_string_literal_create(&temp_loc);
     if (!ret) {
         return NULL;
@@ -269,12 +179,12 @@ struct ast_node *front_testdriver_generate_string_literal(
 }
 
 struct ast_node *front_testdriver_generate_constant_float(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     double val)
 {
     struct ast_node *ret;
-    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
+    struct front_testdriver *d = get_front_testdriver();
+    struct inplocation temp_loc = LOC_INIT(d->current_front->file, sl, sc, el, ec);
     ret = ast_constant_create_float(&temp_loc, val);
     if (!ret) {
         return NULL;
@@ -285,12 +195,12 @@ struct ast_node *front_testdriver_generate_constant_float(
 }
 
 struct ast_node *front_testdriver_generate_constant_integer(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     uint64_t val)
 {
     struct ast_node *ret;
-    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
+    struct front_testdriver *d = get_front_testdriver();
+    struct inplocation temp_loc = LOC_INIT(d->current_front->file, sl, sc, el, ec);
     ret = ast_constant_create_integer(&temp_loc, val);
     if (!ret) {
         return NULL;
@@ -323,7 +233,6 @@ void front_testdriver_node_remove_children_from_array(struct front_testdriver *d
 }
 
 struct ast_node *do_front_testdriver_generate_node(
-    struct front_testdriver *d,
     unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec,
     enum ast_type type, unsigned int args_num, ...)
 {
@@ -331,7 +240,8 @@ struct ast_node *do_front_testdriver_generate_node(
     struct ast_node *ret;
     struct ast_node *n1 = NULL;
     struct ast_node *n2 = NULL;
-    struct inplocation temp_loc = LOC_INIT(d->front.file, sl, sc, el, ec);
+    struct front_testdriver *d = get_front_testdriver();
+    struct inplocation temp_loc = LOC_INIT(d->current_front->file, sl, sc, el, ec);
     struct inplocation_mark *smark = &temp_loc.start;
     struct inplocation_mark *emark = &temp_loc.end;
     bool is_constant = false;
@@ -341,8 +251,8 @@ struct ast_node *do_front_testdriver_generate_node(
     switch(type) {
     case AST_XIDENTIFIER:
         ck_assert_uint_gt(args_num, 0);
-        n1 = front_testdriver_generate_identifier(d, sl, sc, el, ec,
-                                                 va_arg(args, const char *));
+        n1 = front_testdriver_generate_identifier(sl, sc, el, ec,
+                                                  va_arg(args, const char *));
         if (args_num > 1) {
             is_constant = va_arg(args, int);
         }

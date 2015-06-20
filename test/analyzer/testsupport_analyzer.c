@@ -26,7 +26,7 @@ void analyzer_testdriver_deinit(struct analyzer_testdriver *d)
     struct type **t;
     struct front_testdriver *fdriver = get_front_testdriver();
     darray_foreach(t, d->types) {
-        type_free(*t, fdriver->front.analyzer);
+        type_free(*t, fdriver->current_front->analyzer);
     }
     darray_free(d->types);
 }
@@ -42,6 +42,15 @@ void setup_analyzer_tests()
     setup_front_tests();
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
+}
+
+void setup_analyzer_tests_no_source()
+{
+    const struct RFstring s = RF_STRING_STATIC_INIT("");
+    setup_front_tests();
+    ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
+                  "Failed to initialize the analyzer test driver");
+    front_testdriver_new_source(get_front_testdriver(), &s);
 }
 
 void setup_analyzer_tests_with_filelog()
@@ -64,7 +73,7 @@ struct type *testsupport_analyzer_type_create_elementary(enum elementary_type et
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
+    t = type_alloc(fdriver->current_front->analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
     t->category = TYPE_CATEGORY_ELEMENTARY;
@@ -82,7 +91,7 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
+    t = type_alloc(fdriver->current_front->analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
     t->category = TYPE_CATEGORY_OPERATOR;
@@ -100,7 +109,7 @@ struct type *testsupport_analyzer_type_create_defined(const struct RFstring *nam
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
+    t = type_alloc(fdriver->current_front->analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
     t->category = TYPE_CATEGORY_DEFINED;
@@ -117,7 +126,7 @@ struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
+    t = type_alloc(fdriver->current_front->analyzer);
     ck_assert_msg(t, "Failed to allocate type");
 
     t->category = TYPE_CATEGORY_LEAF;
@@ -134,7 +143,7 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
     struct front_testdriver *fdriver = get_front_testdriver();
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
-    t = type_alloc(fdriver->front.analyzer);
+    t = type_alloc(fdriver->current_front->analyzer);
     ck_assert_msg(t, "Failed to allocate type");
     type_function_init(t, arg, ret);
     darray_append(adriver->types, t);

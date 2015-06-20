@@ -24,9 +24,9 @@ START_TEST(test_typecheck_valid_function_call0) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call1) {
@@ -40,9 +40,9 @@ START_TEST(test_typecheck_valid_function_call1) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call2) {
@@ -57,9 +57,9 @@ START_TEST(test_typecheck_valid_function_call2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_print_string) {
@@ -70,8 +70,8 @@ START_TEST(test_typecheck_valid_function_call_print_string) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_print_int) {
@@ -82,8 +82,8 @@ START_TEST(test_typecheck_valid_function_call_print_int) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_with_sum_args) {
@@ -95,8 +95,8 @@ START_TEST(test_typecheck_valid_function_call_with_sum_args) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_arguments) {
@@ -111,12 +111,11 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"u32,string\" which does not match the expected type of "
@@ -124,7 +123,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
             6, 0, 6, 24),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_return) {
@@ -139,19 +138,18 @@ START_TEST(test_typecheck_invalid_function_call_return) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"f32\" to \"u64\". Unable to convert from \"f32\" to \"u64\".",
             6, 0, 6, 32),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_return2) {
@@ -162,18 +160,17 @@ START_TEST(test_typecheck_invalid_function_call_return2) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Undeclared identifier \"s\"",
             2, 7, 2, 7),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
@@ -188,24 +185,22 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"string,u32\" which does not match the expected type of \"nil\".",
             6, 8, 6, 32),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             6, 8, 6, 32)
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
@@ -217,15 +212,14 @@ START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Undeclared identifier \"b\"",
             2, 10, 2, 10),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
@@ -237,17 +231,16 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "function foo() is called with argument type of \"bool\" which does "
             "not match the expected type of \"u64|string\". Unable to convert from "
             "\"bool\" to \"string\".",
             3, 0, 3, 8),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl) {
@@ -262,10 +255,10 @@ START_TEST (test_typecheck_valid_function_impl) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
@@ -276,10 +269,10 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
         "\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
@@ -293,11 +286,11 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
         "\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    ck_assert_typecheck_ok(true);
 
-    struct ast_node *fn_impl = ast_node_get_child(d->front.analyzer->root, 0);
+    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
     ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *match = ast_fnimpl_body_get(fn_impl);
     struct ast_matchexpr_it it;
@@ -321,10 +314,10 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_return) {
         "\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_return) {
@@ -335,10 +328,10 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_re
         "\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_impl_return) {
@@ -349,19 +342,18 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Return statement type \"u8\" does not match the "
             "expected return type of \"string\"",
             2, 0, 2, 8),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 

@@ -31,8 +31,8 @@ START_TEST (test_typecheck_implicit_conversion_bool_to_int) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
@@ -42,8 +42,8 @@ START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
@@ -54,16 +54,15 @@ START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit conversion from \"u64\" to \"u8\" during assignment.",
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
@@ -74,16 +73,15 @@ START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit conversion from \"u32\" to \"u8\" during assignment.",
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
@@ -94,16 +92,15 @@ START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit conversion from \"u16\" to \"u8\" during assignment.",
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
@@ -114,16 +111,15 @@ START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit signed to unsigned conversion from \"i16\" to \"u16\" during assignment.",
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_inv_implicit_conversion_warning) {
@@ -134,21 +130,19 @@ START_TEST (test_typecheck_inv_implicit_conversion_warning) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit signed to unsigned conversion from \"i64\" to \"u16\" during assignment.",
             2, 0, 2, 4),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_WARNING,
             "Implicit conversion from \"i64\" to \"u16\" during assignment.",
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(d, true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
@@ -158,10 +152,9 @@ START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign \"u32\" to \"u8\". "
             "Unable to convert from \"u32\" to \"u8\". "
@@ -169,7 +162,7 @@ START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
             1, 0, 1, 15),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion1) {
@@ -180,8 +173,8 @@ START_TEST (test_typecheck_valid_explicit_conversion1) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion2) {
@@ -192,8 +185,8 @@ START_TEST (test_typecheck_valid_explicit_conversion2) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion3) {
@@ -204,8 +197,8 @@ START_TEST (test_typecheck_valid_explicit_conversion3) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
@@ -216,8 +209,8 @@ START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
@@ -228,8 +221,8 @@ START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
@@ -240,8 +233,8 @@ START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
@@ -252,20 +245,18 @@ START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Invalid arguments for explicit conversion to \"u64\".",
             2, 4, 2, 8),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             2, 4, 2, 8),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
@@ -277,20 +268,18 @@ START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Invalid explicit conversion. Unable to convert from \"u64\" to \"string\".",
             3, 4, 3, 12),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             3, 4, 3, 12),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 Suite *analyzer_typecheck_conversion_suite_create(void)

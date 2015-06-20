@@ -26,11 +26,11 @@ struct front_ctx {
     struct RFilist_node ln;
 };
 
-bool front_ctx_init(struct front_ctx *ctx,
-                    const struct compiler_args *args,
-                    const struct RFstring *input_file);
 struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *input_file);
+                                   const struct RFstring *file_name);
+struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
+                                               const struct RFstring *file_name,
+                                               const struct RFstring *src);
 
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);

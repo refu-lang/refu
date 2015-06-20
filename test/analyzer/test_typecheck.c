@@ -22,9 +22,9 @@ START_TEST(test_typecheck_variable_declarations) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_negative_int_variable_declarations) {
@@ -35,9 +35,9 @@ START_TEST(test_typecheck_negative_int_variable_declarations) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_complex_type_in_variable_declaration) {
@@ -48,9 +48,9 @@ START_TEST(test_typecheck_complex_type_in_variable_declaration) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_foreign_import) {
@@ -63,9 +63,9 @@ START_TEST(test_typecheck_foreign_import) {
         "}"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
+    front_testdriver_new_source(d, &s);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
@@ -77,10 +77,10 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
@@ -92,10 +92,10 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_constructor) {
@@ -108,10 +108,10 @@ START_TEST(test_typecheck_valid_custom_type_constructor) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
@@ -124,10 +124,10 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_custom_type_constructor) {
@@ -140,24 +140,22 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "constructor person() is called with argument type of "
             "\"string\" which does not match the expected type of \"string,u32\".",
             3, 11, 3, 26),
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Type of right side of \"=\" can not be determined",
             3, 11, 3, 26),
     };
 
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_assignment_from_block1) {
@@ -171,10 +169,10 @@ START_TEST (test_typecheck_valid_assignment_from_block1) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_assignment_from_block2) {
@@ -189,10 +187,10 @@ START_TEST (test_typecheck_valid_assignment_from_block2) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
-    ck_assert_typecheck_ok(d, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_assignment_from_block1) {
@@ -206,18 +204,17 @@ START_TEST (test_typecheck_invalid_assignment_from_block1) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"u32\" to \"string\". Unable to convert from \"u32\" to \"string\".",
             1, 4, 5, 4),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_assignment_from_block2) {
@@ -232,18 +229,17 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
-            d->front.file,
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
             "\"foo\" to \"string\". Unable to convert from \"string\" to \"u32\".",
             2, 4, 6, 4),
     };
-    ck_assert_typecheck_with_messages(d, false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages, true);
 } END_TEST
 
 START_TEST (test_typecheck_valid_if_stmt) {
@@ -255,9 +251,9 @@ START_TEST (test_typecheck_valid_if_stmt) {
         "}\n"
     );
     struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_assign(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(&d->front, true);
-    ck_assert_typecheck_ok(d, true);
+    front_testdriver_new_source(d, &s);
+    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    ck_assert_typecheck_ok(true);
 } END_TEST
 
 Suite *analyzer_typecheck_suite_create(void)
