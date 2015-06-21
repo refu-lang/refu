@@ -30,8 +30,7 @@ START_TEST(test_typecheck_matchexpr_simple) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -47,8 +46,7 @@ START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -64,8 +62,7 @@ START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -84,8 +81,7 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -101,8 +97,7 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -118,8 +113,7 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -135,8 +129,7 @@ START_TEST (test_typecheck_access_field) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);    
 } END_TEST
 
@@ -151,8 +144,7 @@ START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);    
 } END_TEST
 
@@ -167,8 +159,7 @@ START_TEST (test_typecheck_access_fieldname_in_typeop) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);    
 } END_TEST
 
@@ -183,8 +174,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -207,8 +197,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -232,8 +221,7 @@ START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -258,8 +246,7 @@ START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -282,8 +269,7 @@ START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
         "    }\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,

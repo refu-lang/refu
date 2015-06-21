@@ -30,8 +30,7 @@ START_TEST (test_acc_module_simple) {
         "module graphics {\n"
         "fn foo() -> i32 { return -1 }\n"
         "}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_graphics = testsupport_parser_identifier_create(0, 7, 0, 14);
     
@@ -60,8 +59,7 @@ START_TEST (test_acc_module_with_args) {
         "import g\n"
         "fn foo() -> i32 { return -1 }\n"
         "}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_graphics = testsupport_parser_identifier_create(0, 7, 0, 14);
     
@@ -100,8 +98,7 @@ START_TEST (test_acc_module_with_args) {
 
 START_TEST (test_acc_module_fail1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("module () {}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -115,8 +112,7 @@ START_TEST (test_acc_module_fail1) {
 
 START_TEST (test_acc_module_fail2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -134,8 +130,7 @@ START_TEST (test_acc_module_fail3) {
         "a:i32 = 5\n"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -153,8 +148,7 @@ START_TEST (test_acc_module_fail4) {
         "fn foo() -> i32{ return 42 }\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -168,8 +162,7 @@ START_TEST (test_acc_module_fail4) {
 
 START_TEST (test_acc_module_fail5) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics (a:) {}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -188,8 +181,7 @@ START_TEST (test_acc_module_fail5) {
 
 START_TEST (test_acc_module_fail6) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics (a:i32 {}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {
@@ -203,8 +195,7 @@ START_TEST (test_acc_module_fail6) {
 
 START_TEST (test_acc_module_fail7) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("module graphics ( {}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(module);
     struct info_msg errors[] = {

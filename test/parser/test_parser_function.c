@@ -26,8 +26,7 @@ START_TEST(test_acc_fndecl_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:i32) -> i32");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 7);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 9, 0, 9);
@@ -52,8 +51,7 @@ START_TEST(test_acc_fndecl_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:i32, b:string) -> i32|nil");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 7);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 9, 0, 9);
@@ -88,8 +86,7 @@ START_TEST(test_acc_fndecl_void) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth_no_args()");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 15);
 
@@ -111,8 +108,7 @@ START_TEST(test_acc_fndecl_with_generics) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_generic<Type a, Type b>(a:b, x:string) -> (r1:i32,r2:i8)");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 12);
 
@@ -162,8 +158,7 @@ START_TEST(test_acc_fndecl_with_generics) {
 START_TEST(test_acc_fndecl_err1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn ()");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -178,8 +173,7 @@ START_TEST(test_acc_fndecl_err1) {
 START_TEST(test_acc_fndecl_err2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth)");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -194,8 +188,7 @@ START_TEST(test_acc_fndecl_err2) {
 START_TEST(test_acc_fndecl_err3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:int");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -210,8 +203,7 @@ START_TEST(test_acc_fndecl_err3) {
 START_TEST(test_acc_fndecl_err4) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:int, )");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -231,8 +223,7 @@ START_TEST(test_acc_fndecl_err4) {
 START_TEST(test_acc_fndecl_err5) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:int) ->");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -248,8 +239,7 @@ START_TEST(test_acc_fndecl_err5) {
 START_TEST(test_acc_fndecl_err6) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn dosth(a:int) -> (a:int, ");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fndecl, FNDECL_STANDALONE);
     struct info_msg errors[] = {
@@ -274,8 +264,7 @@ START_TEST(test_acc_fncall_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "foo(a, b)");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 0, 0, 2);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 4, 0, 4);
@@ -299,8 +288,7 @@ START_TEST(test_acc_fncall_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "do_something (a, b, 31, \"celka\")");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 0, 0, 11);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 14, 0, 14);
@@ -335,8 +323,7 @@ START_TEST(test_acc_fncall_3) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "do_something <a, b> (a, b, 31, \"celka\")");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 0, 0, 11);
     testsupport_parser_xidentifier_create_simple(id1,
@@ -378,8 +365,7 @@ START_TEST(test_acc_fncall_3) {
 START_TEST(test_acc_fncall_err1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "foo(");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fncall, true);
     struct info_msg errors[] = {
@@ -394,8 +380,7 @@ START_TEST(test_acc_fncall_err1) {
 START_TEST(test_acc_fncall_err2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "foo(a,");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_as(fncall, true);
     struct info_msg errors[] = {
@@ -419,8 +404,7 @@ START_TEST(test_acc_fnimpl_1) {
         "f = 3.214 * a\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 18);
 
@@ -482,8 +466,7 @@ START_TEST(test_acc_fnimpl_2) {
         "s[3] = 33\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 18);
 
@@ -563,8 +546,7 @@ START_TEST (test_acc_fnimpl_no_braces) {
         "b:string => print(b)\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 3, 0, 8);
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 10, 0, 10);

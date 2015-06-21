@@ -28,8 +28,7 @@ START_TEST(test_acc_block_empty) {
         "{\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 1, 0);
     ck_test_parse_as(n, block, "block", bnode, true);
@@ -45,8 +44,7 @@ START_TEST(test_acc_block_no_braces_1) {
         "a:i32\n"
         "a = 5 + 0.234"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 1, 0, 2, 12);
 
@@ -81,8 +79,7 @@ START_TEST(test_acc_block_no_braces_2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "var = buff[index] * 92.324"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 0, 25);
 
@@ -113,8 +110,7 @@ START_TEST(test_acc_block_1) {
         "a = 5 + 0.234\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 3, 0);
 
@@ -146,8 +142,7 @@ START_TEST(test_acc_block_2) {
         "do_sth(eleos, \"str\", arr[15])\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 2, 0);
 
@@ -184,8 +179,7 @@ START_TEST(test_acc_block_value_without_return) {
         "a = 5 + 0.234\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 3, 0);
 
@@ -220,8 +214,7 @@ START_TEST(test_acc_block_value_with_return) {
         "return a * 2\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_parser_block_create(bnode, 0, 0, 4, 0);
 

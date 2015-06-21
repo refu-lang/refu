@@ -37,8 +37,7 @@ START_TEST(test_symbol_table_add) {
     );
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("a");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("var_2");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
 
@@ -84,8 +83,7 @@ START_TEST(test_symbol_table_add_existing) {
     );
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("a");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("var_2");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
 
@@ -128,8 +126,7 @@ START_TEST(test_symbol_table_lookup_non_existing) {
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("I_dont_exist");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("neither_do_I");
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
 
@@ -271,8 +268,7 @@ START_TEST(test_symbol_table_many_symbols) {
     unsigned int i;
     struct symbol_table st;
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
 
     ids_num = sizeof(ids_arr) / sizeof(struct st_test_record);
@@ -312,8 +308,7 @@ START_TEST(test_block_symbol_table) {
         "   c = a + b\n"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     testsupport_analyzer_prepare();
     ck_assert(analyzer_first_pass(front_testdriver_analyzer(), NULL));
@@ -340,8 +335,7 @@ START_TEST(test_fndecl_symbol_table) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_sth(var:u64, s:string) -> u32 { }"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
 
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
@@ -384,8 +378,7 @@ START_TEST(test_typedecl_symbol_table) {
         "name:string, age:u16\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *tu16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
@@ -424,8 +417,7 @@ START_TEST(test_multiple_level_symbol_tables) {
         "}\n"
         "var3:u64"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
 
     struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);

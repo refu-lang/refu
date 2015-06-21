@@ -16,8 +16,7 @@ START_TEST(test_acc_ws_simple) {
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("  asd    ");
-    struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_new_source(d, &s);
+    front = front_testdriver_new_source(&s);
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
@@ -35,8 +34,7 @@ START_TEST(test_acc_ws_simple_nl) {
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         " \n \r \t asd \n   ");
-    struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_new_source(d, &s);
+    front = front_testdriver_new_source(&s);
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
@@ -53,8 +51,7 @@ START_TEST(test_acc_ws_full) {
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(" \n \r \t \n \n  ");
-    struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_new_source(d, &s);
+    front = front_testdriver_new_source(&s);
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
@@ -72,8 +69,7 @@ START_TEST(test_acc_ws_none) {
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "identifier_before_space \n \r \t");
-    struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_new_source(d, &s);
+    front = front_testdriver_new_source(&s);
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 
@@ -90,8 +86,7 @@ START_TEST(test_acc_ws_none_empty) {
     struct inpoffset *off;
     struct RFstringx *str;
     static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    struct front_testdriver *d = get_front_testdriver();
-    front = front_testdriver_new_source(d, &s);
+    front = front_testdriver_new_source(&s);
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 

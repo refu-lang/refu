@@ -376,8 +376,7 @@ START_TEST(test_composite_types_list_population) {
         "return 15"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
@@ -415,8 +414,7 @@ START_TEST(test_composite_types_list_population2) {
         "}\n"
         "type boo {a:i64, b:f64}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
@@ -451,8 +449,7 @@ START_TEST(test_composite_types_list_population3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -504,8 +501,7 @@ START_TEST(test_composite_types_list_population4) {
         "type bar {a:i8, b:string}\n"
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(false);
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -563,8 +559,7 @@ START_TEST(test_determine_block_type1) {
         "d:f64 = 3.14 * 0.14\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    struct front_ctx *front = front_testdriver_new_source(d, &s);
+    struct front_ctx *front = front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);
 
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
@@ -584,8 +579,7 @@ START_TEST(test_determine_block_type2) {
         "a:foo\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    struct front_ctx *front = front_testdriver_new_source(d, &s);
+    struct front_ctx *front = front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);

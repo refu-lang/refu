@@ -34,6 +34,10 @@ bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i)
     return true;
 }
 
+struct front_ctx *front_tesdriver_curr()
+{
+    return get_front_testdriver()->current_front;
+}
 struct analyzer *front_testdriver_analyzer()
 {
     return get_front_testdriver()->current_front->analyzer;
@@ -122,11 +126,11 @@ void front_testdriver_deinit(struct front_testdriver *d)
     darray_free(d->fronts);
 }
 
-struct front_ctx *front_testdriver_new_source(struct front_testdriver *d,
-                                              const struct RFstring *s)
+struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
 {
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
     struct front_ctx *front = front_ctx_create_from_source(NULL, &name, s);
+    struct front_testdriver *d = get_front_testdriver();
     darray_append(d->fronts, front);
     d->current_front = front;
     return front;

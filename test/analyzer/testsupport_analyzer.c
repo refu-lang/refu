@@ -50,7 +50,7 @@ void setup_analyzer_tests_no_source()
     setup_front_tests();
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
-    front_testdriver_new_source(get_front_testdriver(), &s);
+    front_testdriver_new_source(&s);
 }
 
 void setup_analyzer_tests_with_filelog()

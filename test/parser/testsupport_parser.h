@@ -182,6 +182,7 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
 
 /**
  * A utility testing macro used to test if we detect parsing failure properly
+ * with syntax errors
  */
 #define ck_test_fail_parse_as(...)                                      \
     RF_SELECT_FUNC_IF_NARGGT(i_ck_test_fail_parse_as, 1, __VA_ARGS__)
@@ -204,6 +205,34 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
                       "a syntax error should have been reported");      \
     } while (0)
 
+/**
+ * A utility testing macro used to test if we detect parsing failure properly
+ * without any syntax errors
+ */
+#define ck_test_fail_parse_noerr_as(...)                                      \
+    RF_SELECT_FUNC_IF_NARGGT(i_ck_test_fail_parse_noerr_as, 1, __VA_ARGS__)
+
+#define i_ck_test_fail_parse_noerr_as1(type_, ...)                            \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
+        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__), \
+                      "parsing "#type_"should have failed");            \
+        ck_assert_msg(!parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+                      "no syntax error should have been reported");      \
+    } while (0)
+
+#define i_ck_test_fail_parse_noerr_as0(type_, ...)                            \
+    do {                                                                \
+        ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
+        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser), \
+                      "parsing "#type_"should have failed");            \
+        ck_assert_msg(!parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+                      "no syntax error should have been reported");      \
+    } while (0)
+
+/**
+ * Utility testing macro for testing parsing failure of parsing an entire file
+ */
 #define ck_test_fail_parse_file()                                       \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \

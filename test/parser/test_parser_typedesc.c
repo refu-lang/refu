@@ -19,8 +19,7 @@
 START_TEST(test_acc_typedesc_simple1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -35,8 +34,7 @@ START_TEST(test_acc_typedesc_simple1) {
 START_TEST(test_acc_typedesc_simple2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a : \t  i16");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 7, 0, 9);
@@ -51,8 +49,7 @@ START_TEST(test_acc_typedesc_simple2) {
 START_TEST(test_acc_typedesc_no_colon) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16 -> int");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -67,46 +64,24 @@ START_TEST(test_acc_typedesc_no_colon) {
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail1) {
-    struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
-    ck_assert(lexer_scan(d->current_front->lexer));
-    n = parser_acc_typedesc(d->current_front->parser);
-    ck_assert_msg(n == NULL, "parsing type description should fail");
-    ck_assert_msg(
-        !parser_has_syntax_error(d->current_front->parser),
-        "no syntax error should have been reported");
+    ck_test_fail_parse_noerr_as(typedesc);
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail2) {
-    struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(" : ,");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
-    ck_assert(lexer_scan(d->current_front->lexer));
-    n = parser_acc_typedesc(d->current_front->parser);
-    ck_assert_msg(n == NULL, "parsing type description should fail");
-    ck_assert_msg(
-        !parser_has_syntax_error(d->current_front->parser),
-        "no syntax error should have been reported");
+    ck_test_fail_parse_noerr_as(typedesc);
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
-    struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("foo:int ,");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
-    ck_assert(lexer_scan(d->current_front->lexer));
-    n = parser_acc_typedesc(d->current_front->parser);
-    ck_assert_msg(n == NULL, "parsing type description should fail");
-    ck_assert_msg(
-        parser_has_syntax_error(d->current_front->parser),
-        "a syntax error should have been reported");
-
+    ck_test_fail_parse_as(typedesc);
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
@@ -120,8 +95,7 @@ static void test_simple_typeop(enum typeop_type op_type, char *str, int t2_start
 {
     struct ast_node *n;
     const struct RFstring s = RF_STRING_SHALLOW_INIT_CSTR(str);
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -158,8 +132,7 @@ START_TEST(test_acc_typedesc_prod2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i16, b:i32, c:f64");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -191,8 +164,7 @@ START_TEST(test_acc_typedesc_sum_associativity) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16, b:i32 | "
                                                            "c:f64, d:f32");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -235,8 +207,7 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i16, b:i32  -> c:f64 | d:f32");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -279,8 +250,7 @@ START_TEST(test_acc_typedesc_complex_right) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:(i16|f32)");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id_i16, 0, 3, 0, 5);

@@ -34,6 +34,10 @@ void front_testdriver_deinit(struct front_testdriver *p);
  */
 bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i);
 /**
+ * Get the current front_ctx of the testdriver
+ */
+struct front_ctx *front_tesdriver_curr();
+/**
  * Get the analyzer of the current front_ctx being tested
  */
 struct analyzer *front_testdriver_analyzer();
@@ -55,10 +59,9 @@ void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
 /**
  * Create a new front_ctx with the given source string
  */
-struct front_ctx *front_testdriver_new_source(struct front_testdriver *d,
-                                              const struct RFstring *s);
+struct front_ctx *front_testdriver_new_source(const struct RFstring *s);
 
-/**
+/**P
  * Returns a pointer to the buffer string after having populated it with
  * any parsing errors that may have occured. If no errors occured then
  * returns NULL.

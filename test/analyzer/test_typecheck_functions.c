@@ -23,8 +23,7 @@ START_TEST(test_typecheck_valid_function_call0) {
         "a:u64 = do_something()\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -39,8 +38,7 @@ START_TEST(test_typecheck_valid_function_call1) {
         "do_something(13)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -56,8 +54,7 @@ START_TEST(test_typecheck_valid_function_call2) {
         "do_something(name, 45)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -69,8 +66,7 @@ START_TEST(test_typecheck_valid_function_call_print_string) {
         "print(name)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);
 } END_TEST
 
@@ -81,8 +77,7 @@ START_TEST(test_typecheck_valid_function_call_print_int) {
         "print(a)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);
 } END_TEST
 
@@ -94,8 +89,7 @@ START_TEST(test_typecheck_valid_function_call_with_sum_args) {
         "foo(\"s\")\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     ck_assert_typecheck_ok(true);
 } END_TEST
 
@@ -110,9 +104,8 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
         "do_something(a, \"Berlin\")\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -137,9 +130,8 @@ START_TEST(test_typecheck_invalid_function_call_return) {
         "c:u64 = do_something(\"Berlin\", a)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -159,9 +151,8 @@ START_TEST(test_typecheck_invalid_function_call_return2) {
         "return s\n"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -184,9 +175,8 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
         "c:u64 = do_something(\"Berlin\", a)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -211,8 +201,7 @@ START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
         "    return 1\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -230,8 +219,7 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
         "foo(true)\n"
         "}"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -254,9 +242,8 @@ START_TEST (test_typecheck_valid_function_impl) {
         "    }\n"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -268,9 +255,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
         "b:string => print(b)\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -285,9 +271,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
         "c:f64    => print(\"f64\")\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
     ck_assert_typecheck_ok(true);
 
     struct ast_node *fn_impl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
@@ -313,9 +298,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_return) {
         "b:string => 0\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -327,9 +311,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_re
         "b:string => b\n"
         "\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     ck_assert_typecheck_ok(true);
 } END_TEST
@@ -341,9 +324,8 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
         "return 15"
         "}\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
-    front_ctx_set_warn_on_implicit_conversions(d->current_front, true);
+    front_testdriver_new_source(&s);
+    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(

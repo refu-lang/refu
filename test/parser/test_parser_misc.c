@@ -33,8 +33,7 @@ START_TEST (test_acc_string_literals) {
         "{\n"
         "a = \"a_string_literal\"\n"
         "}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(1, 0, 1, 0);
     testsupport_parser_string_literal_create(lit_1, 1, 4, 1, 21);
@@ -67,8 +66,7 @@ START_TEST (test_acc_boolean_constants) {
         "a = true\n"
         "b = false\n"
         "}");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(1, 0, 1, 0);
     struct ast_node *id_b = testsupport_parser_identifier_create(2, 0, 2, 0);
@@ -96,8 +94,7 @@ START_TEST (test_acc_import_statements) {
         "import mod3\n"
         "foreign_import a_function\n"
     );
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     struct ast_node *id_mod1 = testsupport_parser_identifier_create(0, 7, 0, 10);
     struct ast_node *id_mod2 = testsupport_parser_identifier_create(0, 13, 0, 16);
@@ -111,7 +108,7 @@ START_TEST (test_acc_import_statements) {
     testsupport_parser_node_create(imp3, import, 2, 0, 2, 24, true);
     ast_node_add_child(imp3, id_fn);
 
-    struct ast_node *expected_root = ast_root_create(d->current_front->file);
+    struct ast_node *expected_root = ast_root_create(front_testdriver_file());
     ast_node_add_child(expected_root, imp1);
     ast_node_add_child(expected_root, imp2);
     ast_node_add_child(expected_root, imp3);
@@ -123,8 +120,7 @@ START_TEST (test_acc_import_statements) {
 
 START_TEST (test_acc_import_statements_fail1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("import ");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_file();
     struct info_msg errors[] = {
@@ -143,8 +139,7 @@ START_TEST (test_acc_import_statements_fail1) {
 
 START_TEST (test_acc_import_statements_fail2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("foreign_import func1,");
-    struct front_testdriver *d = get_front_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_source(&s);
 
     ck_test_fail_parse_file();
     struct info_msg errors[] = {

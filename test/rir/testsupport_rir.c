@@ -48,7 +48,7 @@ void setup_rir_tests_no_source()
     setup_analyzer_tests();
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
-    front_testdriver_new_source(get_front_testdriver(), &s);
+    front_testdriver_new_source(&s);
 }
 
 void teardown_rir_tests()
@@ -59,7 +59,7 @@ void teardown_rir_tests()
 
 void rir_testdriver_assign(const struct RFstring *s)
 {
-    front_testdriver_new_source(get_rir_testdriver()->front_driver, s);
+    front_testdriver_new_source(s);
 }
 
 bool rir_testdriver_process(struct rir_testdriver *d)
