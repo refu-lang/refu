@@ -13,6 +13,7 @@ static bool front_ctx_init(struct front_ctx *ctx,
                            const struct RFstring *file_contents)
 {
     RF_STRUCT_ZERO(ctx);
+    darray_init(ctx->modules);
     ctx->file = file_contents
         ? inpfile_create_from_string(input_file_name, file_contents)
         : inpfile_create(input_file_name);
@@ -81,6 +82,7 @@ struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {
+    darray_free(ctx->modules);
     inpfile_destroy(ctx->file);
     lexer_destroy(ctx->lexer);
     parser_destroy(ctx->parser);
@@ -100,7 +102,7 @@ struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdl
         return NULL;
     }
 
-    if (!parser_process_file(ctx->parser)) {
+    if (!parser_process_file(ctx->parser, &ctx->modules)) {
         return NULL;
     }
 

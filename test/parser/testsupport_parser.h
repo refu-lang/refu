@@ -173,7 +173,7 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
 #define ck_test_parse_root(node_, target_)                              \
     do {                                                                \
         testsupport_parser_prepare();                                   \
-        parser_process_file(get_front_testdriver()->current_front->parser); \
+        parser_process_file(get_front_testdriver()->current_front->parser, &get_front_testdriver()->current_front->modules); \
         node_ = get_front_testdriver()->current_front->parser->root;    \
         ck_assert_parsed_node(node_, "Could not parse root node");      \
         check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
@@ -236,7 +236,7 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
 #define ck_test_fail_parse_file()                                       \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser, &get_front_testdriver()->current_front->modules), \
                       "parsing should have failed");                    \
         ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
                       "a syntax error should have been reported");      \

@@ -9,6 +9,10 @@ struct info_ctx;
 struct lexer;
 struct parser;
 struct compiler_args;
+struct ast_node;
+//! Just a darray of ast nodes
+struct nodes_arr {darray(struct ast_node*);};
+
 
 /**
  * The front end context
@@ -22,6 +26,8 @@ struct front_ctx {
     struct parser *parser;
     struct analyzer *analyzer;
     struct info_ctx *info;
+    //! Array of pointers to the modules contained in this file
+    struct nodes_arr modules;
     /* Control for adding to compiler object's linked list */
     struct RFilist_node ln;
 };

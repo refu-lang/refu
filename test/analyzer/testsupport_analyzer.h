@@ -50,10 +50,10 @@ void teardown_analyzer_tests();
 
 #define testsupport_scan_and_parse()                                    \
     do {                                                                \
-        if (!(lexer_scan(get_front_testdriver()->current_front->lexer))) { \
+        if (!(lexer_scan(front_testdriver_lexer()))) { \
             testsupport_show_front_errors("Scanning failed"); \
         }                                                               \
-        if (!(parser_process_file(front_testdriver_parser()))) {        \
+        if (!(parser_process_file(front_testdriver_parser(), &get_front_testdriver()->current_front->modules))) { \
             testsupport_show_front_errors("Parsing failed");            \
         }                                                               \
     } while (0)

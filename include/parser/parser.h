@@ -7,12 +7,15 @@
 struct info_ctx;
 struct lexer;
 struct inpfile;
+struct nodes_arr;
 
 struct parser {
     struct info_ctx *info;
     struct lexer *lexer;
     struct inpfile *file;
     struct ast_node *root;
+    //! A pointer to the modules array. Not owned by the parser.
+    struct nodes_arr *modules_array;
     bool have_syntax_err;
 };
 
@@ -27,7 +30,7 @@ struct parser *parser_create(struct inpfile *f,
 void parser_deinit(struct parser *p);
 void parser_destroy(struct parser *p);
 
-bool parser_process_file(struct parser *parser);
+bool parser_process_file(struct parser *p, struct nodes_arr *modules_array);
 void parser_flush_messages(struct parser *parser);
 
 i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)
