@@ -121,16 +121,24 @@ void analyzer_deinit(struct analyzer *a);
 void analyzer_destroy(struct analyzer *a);
 
 /**
- * Analyze a file
+ * Determine the dependencies inside a file by checking the imports needed by
+ * each module
+ */
+bool analyzer_determine_dependencies(struct analyzer *a,
+                                     struct parser *parser);
+
+/**
+ * Analyze a module of a file
  *
  * @param a                   The analyzer instance
- * @param parser              The parser instance from which the AST was created.
- * @param stdlib              If we compile with stdlib this is not NULL and should
- *                            contains the struct front_ctx of the stdlib
+ * @param module              The ast_node of the module
+ * @param imported_symbols    TBD
  *
  * @return                    @c true for success and @c false for failure
  */
-bool analyzer_analyze_file(struct analyzer *a, struct parser *parser, struct front_ctx *stdlib);
+bool analyzer_analyze_module(struct analyzer *a,
+                             struct ast_node *module,
+                             struct symbol_table *imported_symbols);
 /**
  * Finalize the AST of an analyzer after analysis.
  */

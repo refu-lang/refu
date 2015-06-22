@@ -26,7 +26,7 @@ void string_table_destroy(struct string_table *t);
  *
  * @param[in] t                 The string table in question
  * @param[in] input             The string to attempt to input
- * @param[out] out_hash         Returns the hash of the string.
+ * @param[out] out_hash         Optional. Returns the hash of the string. Can be Null.
  * @return                      True if all went okay. Also if the string is
  *                              already in the table. False if there was an error.
  */

@@ -65,7 +65,9 @@ bool string_table_add_or_get_str(struct string_table *t,
     // first see if it's already in the table
     rec = htable_get(&t->table, hash, cmp_fn, &hash);
     if (rec) {
-        *out_hash = rec->hash;
+        if (out_hash) {
+            *out_hash = rec->hash;
+        }
         return true;
     }
 
@@ -89,7 +91,9 @@ bool string_table_add_or_get_str(struct string_table *t,
         return false;
     }
 
-    *out_hash = hash;
+    if (out_hash) {
+        *out_hash = hash;
+    }
     return true;
 }
 

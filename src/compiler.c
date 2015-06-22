@@ -101,10 +101,33 @@ bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
     return compiler_pass_args(c, argc, argv);
 }
 
+static bool compiler_preprocess_fronts(struct compiler *c)
+{
+    struct front_ctx *front;
+    // make sure all files are parsed
+    rf_ilist_for_each(&c->front_ctxs, front, ln) {
+        if (!front_ctx_parse(front)) {
+            return false;
+        }
+    }
+
+    // determine the dependencies of all the modules
+    rf_ilist_for_each(&c->front_ctxs, front, ln) {
+        if (!analyzer_determine_dependencies(front->analyzer, front->parser)) {
+            return false;
+        }
+    }
+
+    //TODO: resolve dependencies and figure out analyze order
+    
+    return true;
+}
+
 static bool compiler_process_front(struct compiler *c,
                                    struct front_ctx *front,
                                    struct front_ctx *stdlib)
 {
+    // TODO: now here you will know the order of analysis so analyze the modules in order
     struct analyzer *analyzer = front_ctx_process(front, stdlib);
     if (!analyzer) {
         RF_ERROR("Failure to parse and analyze the input");

@@ -6,10 +6,12 @@
 #include <Utils/memory.h>
 #include <Utils/fixed_memory_pool.h>
 
+#include <module.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/type.h>
 #include <ast/function.h>
+#include <ast/module.h>
 #include <ast/ast_utils.h>
 #include <parser/parser.h>
 #include <types/type.h>
@@ -169,22 +171,12 @@ struct type *analyzer_get_or_create_type(struct analyzer *a,
     return t;
 }
 
-bool analyzer_analyze_file(struct analyzer *a,
-                           struct parser *parser,
-                           struct front_ctx *stdlib)
+bool analyzer_analyze_module(struct analyzer *a,
+                             struct ast_node *module,
+                             struct symbol_table *imported_symbols)
 {
-    // acquire the root of the AST from the parser
-    a->root = parser_yield_ast_root(parser);
-
-    // initialize root symbol table here instead of analyzer_first_pass
-    // since we need it beforehand to get symbols from import
-    if (!ast_root_symbol_table_init(a->root, a)) {
-        RF_ERROR("Could not initialize symbol table for root node");
-        return false;
-    }
-
     // create symbol tables and change ast nodes ownership
-    if (!analyzer_first_pass(a, stdlib)) {
+    if (!analyzer_first_pass(a, imported_symbols)) {
         RF_ERROR("Failure at analyzer's first pass");
         return false;
     }
@@ -194,8 +186,49 @@ bool analyzer_analyze_file(struct analyzer *a,
         return false;
     }
 
+    if (!analyzer_finalize(a, stdlib)) {
+        RF_ERROR("Failure at analyzer's finalization");
+        return false;
+    }
     return true;
 }
+
+static bool analyzer_determine_dependencies_do(struct ast_node *n, void *user_arg)
+{
+    struct module *mod = user_arg;
+    switch (n->type) {
+    case AST_IMPORT:
+        if (!ast_import_is_foreign(n)) {
+            return module_add_import(mod, n);
+        }
+    default:
+        break;
+    }
+    return true;
+}
+
+bool analyzer_determine_dependencies(struct analyzer *a,
+                                     struct parser *parser)
+{
+    // acquire the root of the AST from the parser
+    a->root = parser_yield_ast_root(parser);
+    // initialize root symbol table here instead of analyzer_first_pass
+    // since we need it beforehand to get symbols from import
+    if (!ast_root_symbol_table_init(a->root, a)) {
+        RF_ERROR("Could not initialize symbol table for root node");
+        return false;
+    }
+
+    // for each module in the modules list read the imports and determine dependencies
+    struct module **mod;
+    darray_foreach(mod, *parser->modules_array) {
+        if (!ast_pre_traverse_tree((*mod)->node, analyzer_determine_dependencies_do, mod)) {
+            return false;
+        }
+    }
+    return true;
+}
+                              
 
 static void analyzer_finalize_fndecl(struct ast_node *n)
 {

@@ -31,4 +31,10 @@ i_INLINE_DECL struct symbol_table *ast_module_symbol_table_get(struct ast_node *
     AST_NODE_ASSERT_TYPE(n, AST_MODULE);
     return &n->module.st;
 }
+
+i_INLINE_DECL const struct RFstring *ast_module_name(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MODULE);
+    return ast_identifier_str(n->module.name);
+}
 #endif

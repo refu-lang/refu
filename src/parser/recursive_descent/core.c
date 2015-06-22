@@ -1,6 +1,7 @@
 #include <parser/parser.h>
 
 #include <inpfile.h>
+#include <module.h>
 #include <inpstr.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
@@ -28,7 +29,7 @@ void parser_finalize_parsing(struct ast_node *n)
     ast_pre_traverse_tree(n, do_finalize_parsing, NULL);
 }
 
-bool parser_process_file(struct parser *p, struct nodes_arr *modules_array)
+bool parser_process_file(struct parser *p, struct modules_arr *modules_array)
 {
     struct ast_node *stmt;
     p->root = ast_root_create(p->file);
@@ -60,7 +61,8 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
     // TODO: Maybe change these, since each one of these macros actually checks for token existence too
     if (TOKEN_IS_MODULE_START(tok)) {
         stmt = parser_acc_module(p);
-        darray_append(*(p->modules_array), stmt);
+        struct module *mod = module_new(stmt);
+        darray_append(*(p->modules_array), mod);
     } else if (TOKEN_IS_BLOCK_START(tok)) {
         stmt = parser_acc_block(p, true);
     } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {

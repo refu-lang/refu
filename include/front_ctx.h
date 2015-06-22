@@ -10,8 +10,9 @@ struct lexer;
 struct parser;
 struct compiler_args;
 struct ast_node;
-//! Just a darray of ast nodes
-struct nodes_arr {darray(struct ast_node*);};
+struct module;
+//! Just a darray of ast modules
+struct modules_arr {darray(struct module*);};
 
 
 /**
@@ -27,7 +28,7 @@ struct front_ctx {
     struct analyzer *analyzer;
     struct info_ctx *info;
     //! Array of pointers to the modules contained in this file
-    struct nodes_arr modules;
+    struct modules_arr modules;
     /* Control for adding to compiler object's linked list */
     struct RFilist_node ln;
 };
@@ -41,6 +42,10 @@ struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
 
+/**
+ * Scan and parse the file of a front_ctx
+ */
+bool front_ctx_parse(struct front_ctx *ctx);
 struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdlib);
 
 /* -- some convenience setters/getters --*/

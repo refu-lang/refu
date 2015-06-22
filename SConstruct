@@ -11,6 +11,7 @@ refu_src = [
     'compiler.c',
     'compiler_args.c',
 
+    'module.c',
     'inpfile.c',
     'inpstr.c',
     'inplocation.c',

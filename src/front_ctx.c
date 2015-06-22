@@ -1,5 +1,6 @@
 #include <front_ctx.h>
 
+#include <module.h>
 #include <compiler_args.h>
 #include <info/info.h>
 #include <lexer/lexer.h>
@@ -82,6 +83,11 @@ struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {
+    struct module **mod;
+
+    darray_foreach(mod, ctx->modules) {
+        module_destroy(*mod);
+    }
     darray_free(ctx->modules);
     inpfile_destroy(ctx->file);
     lexer_destroy(ctx->lexer);
@@ -94,6 +100,28 @@ void front_ctx_destroy(struct front_ctx *ctx)
 {
     front_ctx_deinit(ctx);
     free(ctx);
+}
+
+bool front_ctx_parse(struct front_ctx *ctx)
+{
+    if (!lexer_scan(ctx->lexer)) {
+        return false;
+    }
+
+    return parser_process_file(ctx->parser, &ctx->modules);
+}
+
+bool front_ctx_analyze(struct front_ctx *ctx, struct symbol_table *imported_symbols)
+{
+    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, stdlib)) {
+        return NULL;
+    }
+
+    if (!analyzer_finalize(ctx->analyzer, stdlib)) {
+        return NULL;
+    }
+
+    return ctx->analyzer;
 }
 
 struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdlib)

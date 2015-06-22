@@ -34,3 +34,4 @@ struct ast_node *ast_module_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS struct symbol_table *ast_module_symbol_table_get(struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_module_name(const struct ast_node *n);
