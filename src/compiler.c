@@ -21,7 +21,7 @@ bool compiler_init(struct compiler *c, int rf_logtype)
 
     // initialize Refu library
     rf_init(rf_logtype,
-            NULL,
+            "refu.log",
             LOG_WARNING,
             RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
             RF_DEFAULT_TS_SBUFF_INITIAL_SIZE
@@ -209,7 +209,7 @@ static bool compiler_visit_unmarked_module(struct module *m, unsigned i, bool *m
         }
     }
 
-    // add module 'm to the sorted list
+    // add module m to the sorted list
     rf_ilist_add(&compiler_instance_get()->sorted_modules, &m->ln);
     return true;
 }
@@ -225,11 +225,14 @@ static bool compiler_resolve_dependencies()
     bool *marks;
     RF_CALLOC(marks, darray_size(c->modules), sizeof(bool), return false);
 
-    while (true) {
+    bool unmarked_found = true;
+    while (unmarked_found) {
         i = 0;
+        unmarked_found = false;
         darray_foreach(mod, c->modules) {
             // if module is unmarked
             if (!marks[i]) {
+                unmarked_found = true;
                 if (!compiler_visit_unmarked_module(*mod, i, marks)) {
                     free(marks);
                     return false;
@@ -257,13 +260,43 @@ bool compiler_preprocess_fronts()
     // determine the dependencies of all the modules
     struct module **mod;
     darray_foreach(mod, c->modules) {
-        if (!analyzer_determine_dependencies(*mod, (*mod)->front->parser)) {
+        if (!analyzer_determine_dependencies(*mod)) {
+            i_info_ctx_add_msg((*mod)->front->info,   
+                               MESSAGE_SEMANTIC_ERROR,
+                               ast_node_startmark((*mod)->node),
+                               ast_node_endmark((*mod)->node),
+                               "Could not determine dependencies for module "RF_STR_PF_FMT,
+                               RF_STR_PF_ARG(module_name(*mod)));
             return false;
         }
     }
 
     // resolve dependencies and figure out analysis order
-    return compiler_resolve_dependencies();
+    if (!compiler_resolve_dependencies()) {
+        // can't access any specific module at this point ...
+        // TODO: try to find out how/why the cyclic dependency is caused
+        /* i_info_ctx_add_msg((*mod)->front->info,    */
+        /*                    MESSAGE_SEMANTIC_ERROR, */
+        /*                    ast_node_startmark((*mod)->node), */
+        /*                    ast_node_endmark((*mod)->node), */
+        /*                    "Cyclic module dependency detected"); */
+        ERROR("Cycling module dependency detected");
+        return false;
+    }
+    return true;
+}
+
+bool compiler_analyze()
+{
+    struct compiler *c = g_compiler_instance;
+    // now analyze the modules in the topologically sorted order
+    struct module *mod;
+    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
+        if (!module_analyze(mod)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool compiler_process()
@@ -282,13 +315,8 @@ bool compiler_process()
         return false;
     }
     
-    // now analyze the modules in the topologically sorted order
-    struct module *mod;
-    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
-        if (!module_analyze(mod)) {
-            RF_ERROR("Failed to analyze a module");
-            return false;
-        }
+    if (!compiler_analyze()) {
+        return false;
     }
 
 #if 0 // don't call serializer at all for now

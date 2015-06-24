@@ -60,5 +60,4 @@ i_INLINE_INS void parser_set_syntax_error(struct parser *parser);
 i_INLINE_INS bool parser_has_syntax_error(struct parser *parser);
 i_INLINE_INS bool parser_has_syntax_error_reset(struct parser *parser);
 
-i_INLINE_INS struct ast_node *parser_yield_ast_root(struct parser *parser);
 i_INLINE_INS void parser_inject_input_file(struct parser *p, struct inpfile *f);

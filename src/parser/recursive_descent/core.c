@@ -52,6 +52,7 @@ bool parser_process_file(struct parser *p, bool is_main)
             return false;
         }
     }
+
     return true;
 }
 

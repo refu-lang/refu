@@ -1,11 +1,12 @@
 #include <stdio.h>
 
 #include <compiler.h>
+#include <refu.h>
 
 int main(int argc, char **argv)
 {
     int rc = 0;
-    struct compiler *compiler = compiler_create_with_args(argc, argv);
+    struct compiler *compiler = compiler_create_with_args(LOG_TARGET_STDOUT, argc, argv);
     if (!compiler) {
         return 1;
     }

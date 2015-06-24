@@ -126,8 +126,7 @@ void analyzer_destroy(struct analyzer *a);
  * Determine the dependencies inside a file by checking the imports needed by
  * each module
  */
-bool analyzer_determine_dependencies(struct module *m,
-                                     struct parser *parser);
+bool analyzer_determine_dependencies(struct module *m);
 
 /**
  * Analyze a module of a file

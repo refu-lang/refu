@@ -98,5 +98,8 @@ bool front_ctx_parse(struct front_ctx *ctx)
         return false;
     }
 
-    return parser_process_file(ctx->parser, ctx->is_main);
+    bool ret = parser_process_file(ctx->parser, ctx->is_main);
+    // the root should no longer be owned by the parser at this point
+    ctx->parser->root = 0;
+    return ret;
 }

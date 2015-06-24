@@ -142,7 +142,9 @@ struct type *analyzer_get_or_create_type(struct module *mod,
 {
     struct type *t;
     struct rf_objset_iter it;
-    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION || desc->type == AST_TYPE_OPERATOR,
+    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION ||
+              desc->type == AST_TYPE_OPERATOR ||
+              desc->type == AST_TYPE_LEAF,
               "Unexpected ast node type");
     rf_objset_foreach(mod->analyzer->types_set, &it, t) {
         if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_GENERIC)) {
@@ -201,21 +203,31 @@ static bool analyzer_determine_dependencies_do(struct ast_node *n, void *user_ar
     return true;
 }
 
-bool analyzer_determine_dependencies(struct module *m,
-                                     struct parser *parser)
+bool analyzer_determine_dependencies(struct module *m)
 {
-    // acquire the root of the AST from the parser
-    m->analyzer->root = parser_yield_ast_root(parser);
-    // initialize root symbol table here instead of analyzer_first_pass
+    // for now analyzer->root is basically module root. When analyzer goes away this won't be needed
+    m->analyzer = analyzer_create(m->front->info);
+    if (!m->analyzer) {
+        RF_ERROR("Could not create an analyzer");
+        return false;
+    }
+    m->analyzer->root = m->node;
+
+    // initialize module symbol table here instead of analyzer_first_pass
     // since we need it beforehand to get symbols from import
-    if (!ast_root_symbol_table_init(m->analyzer->root, m)) {
+    if (!module_symbol_table_init(m)) {
         RF_ERROR("Could not initialize symbol table for root node");
         return false;
     }
 
-    // read the imports and determine dependencies
+    // read the imports and add dependencies
     if (!ast_pre_traverse_tree(m->node, analyzer_determine_dependencies_do, m)) {
         return false;
+    }
+
+    // if this is the main module add the stdlib as dependency
+    if (module_is_main(m)) {
+        return module_add_stdlib(m);
     }
     return true;
 }

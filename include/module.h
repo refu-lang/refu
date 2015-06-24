@@ -37,7 +37,13 @@ void module_destroy(struct module* m);
 bool module_add_import(struct module *m, struct ast_node *import);
 const struct RFstring *module_name(const struct module *m);
 struct symbol_table *module_symbol_table(const struct module *m);
+bool module_symbol_table_init(struct module *m);
 struct inpfile *module_get_file(const struct module *m);
+bool module_is_main(const struct module *m);
+/**
+ * Manually add the standard library as a dependency to a module
+ */
+bool module_add_stdlib(struct module *m);
 
 bool module_analyze(struct module *m);
 

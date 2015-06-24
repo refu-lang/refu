@@ -133,14 +133,6 @@ static inline bool analyzer_populate_symbol_table_typedesc(struct analyzer_trave
     return analyzer_populate_symbol_table_typeelement(ctx, ast_typedesc_desc_get(n));
 }
 
-static bool analyzer_create_symbol_table_module(struct analyzer_traversal_ctx *ctx,
-                                                struct ast_node *n)
-{
-    // TODO
-    return true;
-}
-                                                
-
 static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
                                                 struct ast_node *n)
 {
@@ -217,9 +209,6 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         symbol_table_swap_current(&ctx->current_st, ast_block_symbol_table_get(n));
         break;
     case AST_MODULE:
-        if (!analyzer_create_symbol_table_module(ctx, n)) {
-            return false;
-        }
         symbol_table_swap_current(&ctx->current_st, ast_module_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
@@ -387,7 +376,7 @@ bool analyzer_first_pass(struct module *m)
     analyzer_traversal_ctx_init(&ctx, m);
 
     bool ret = ast_traverse_tree(
-        m->analyzer->root,
+        m->node,
         analyzer_first_pass_do,
         &ctx,
         (ast_node_cb)analyzer_handle_symbol_table_ascending,

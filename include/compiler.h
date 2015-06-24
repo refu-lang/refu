@@ -48,6 +48,7 @@ struct front_ctx *compiler_new_front_from_source(struct compiler *c,
 bool compiler_pass_args(int argc, char **argv);
 
 bool compiler_preprocess_fronts();
+bool compiler_analyze();
 bool compiler_process();
 
 //! Query compiler's argument and if help was requested, print help message and

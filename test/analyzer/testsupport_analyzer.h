@@ -52,8 +52,7 @@ void teardown_analyzer_tests();
 #define testsupport_analyzer_prepare()                                  \
     do {                                                                \
         testsupport_scan_and_parse();                                   \
-        ck_assert(ast_root_symbol_table_init(front_testdriver_module()->node, \
-                                             front_testdriver_module())); \
+        ck_assert(module_symbol_table_init(front_testdriver_module())); \
     } while(0)
 
 #define testsupport_symbol_table_add_node(st_, id_, node_)              \
@@ -123,16 +122,17 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 #define ck_assert_typecheck_ok()                                        \
     do {                                                                \
         testsupport_scan_and_parse();                                   \
-        if (!analyzer_analyze_module(front_testdriver_module())) {   \
+        if (!compiler_analyze()) {                                      \
             testsupport_show_front_errors("Typechecking failed");       \
         }                                                               \
     } while(0)
 
-#define ck_assert_typecheck_with_messages(success_, expected_msgs_) \
+#define ck_assert_typecheck_with_messages(success_, expected_msgs_)     \
     do {                                                                \
         testsupport_scan_and_parse();                                   \
-        ck_assert_msg(success_ == analyzer_analyze_module(front_testdriver_module()), \
-                      "Unexpected typecheck result");                   \
+        if (success_ != compiler_analyze()) {                           \
+            testsupport_show_front_errors("Typechecking result was unexpected"); \
+        }                                                               \
         ck_assert_analyzer_errors(expected_msgs_);                      \
     } while(0)
 

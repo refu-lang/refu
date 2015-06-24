@@ -286,13 +286,6 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n);
 /* -- ast_root functions -- */
 struct ast_node *ast_root_create(struct inpfile *file);
 
-i_INLINE_DECL bool ast_root_symbol_table_init(struct ast_node *n,
-                                              struct module *m)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_ROOT);
-    return symbol_table_init(&n->root.st, m);
-}
-
 i_INLINE_DECL struct symbol_table *ast_root_symbol_table_get(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_ROOT);
