@@ -6,7 +6,7 @@
 #include <types/type_decls.h>
 
 struct symbol_table;
-struct analyzer;
+struct module;
 
 //! Flags to generally describe next type comparison
 enum typecmp_flags {
@@ -63,7 +63,7 @@ bool type_compare(const struct type *from,
  * Compare a type and an AST node that describes a type.
  * @param t         The type to compare
  * @param n         The node with which to compare @c t
- * @param a         The analyzer instance
+ * @param a         The module for which the comparison happens
  * @param st        The symbol table to use in the comparison
  * @param genrdecl  An optional generic declaration that describes @c n.
  *                  Can be NULL.
@@ -73,7 +73,7 @@ bool type_compare(const struct type *from,
  */
 bool type_equals_ast_node(struct type *t,
                           const struct ast_node *n,
-                          struct analyzer *a,
+                          struct module *m,
                           struct symbol_table *st,
                           struct ast_node *genrdecl,
                           enum comparison_reason options);

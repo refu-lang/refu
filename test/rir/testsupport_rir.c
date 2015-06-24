@@ -64,7 +64,7 @@ void rir_testdriver_assign(const struct RFstring *s)
 
 bool rir_testdriver_process(struct rir_testdriver *d)
 {
-    return analyzer_finalize(d->front_driver->current_front->analyzer, d->front_driver->stdlib);
+    return analyzer_finalize(front_testdriver_module());
 }
 
 static void rir_testdriver_add_type(struct rir_type *type,
@@ -136,8 +136,7 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
-    struct rir_testdriver *d = get_rir_testdriver();
-    rir_types_list_for_each(d->front_driver->current_front->analyzer->rir_types_list, t) {
+    rir_types_list_for_each(front_testdriver_analyzer()->rir_types_list, t) {
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {

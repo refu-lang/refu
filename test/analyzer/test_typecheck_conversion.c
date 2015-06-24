@@ -31,7 +31,7 @@ START_TEST (test_typecheck_implicit_conversion_bool_to_int) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
@@ -41,7 +41,7 @@ START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
@@ -59,7 +59,7 @@ START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages);
 } END_TEST
 
 START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
@@ -77,7 +77,7 @@ START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages);
 } END_TEST
 
 START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
@@ -95,7 +95,7 @@ START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages);
 } END_TEST
 
 START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
@@ -113,7 +113,7 @@ START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages);
 } END_TEST
 
 START_TEST (test_typecheck_inv_implicit_conversion_warning) {
@@ -135,7 +135,7 @@ START_TEST (test_typecheck_inv_implicit_conversion_warning) {
             2, 0, 2, 4)
     };
 
-    ck_assert_typecheck_with_messages(true, messages, true);
+    ck_assert_typecheck_with_messages(true, messages);
 } END_TEST
 
 START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
@@ -154,7 +154,7 @@ START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
             1, 0, 1, 15),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion1) {
@@ -165,7 +165,7 @@ START_TEST (test_typecheck_valid_explicit_conversion1) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion2) {
@@ -176,7 +176,7 @@ START_TEST (test_typecheck_valid_explicit_conversion2) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion3) {
@@ -187,7 +187,7 @@ START_TEST (test_typecheck_valid_explicit_conversion3) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
@@ -198,7 +198,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
@@ -209,7 +209,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
@@ -220,7 +220,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
@@ -241,7 +241,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
             "Type of right side of \"=\" can not be determined",
             2, 4, 2, 8),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
@@ -263,7 +263,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
             "Type of right side of \"=\" can not be determined",
             3, 4, 3, 12),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 Suite *analyzer_typecheck_conversion_suite_create(void)

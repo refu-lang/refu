@@ -7,6 +7,7 @@
 #include <String/rf_str_common.h>
 #include <String/rf_str_conversion.h>
 
+#include <module.h>
 #include <analyzer/symbol_table.h>
 #include <analyzer/analyzer.h>
 #include <ast/function.h>
@@ -69,11 +70,11 @@ static LLVMValueRef bllvm_simple_ctor_args_to_type(struct ast_node *fn_call,
     // alloca enough space in the stack for the type created by the constructor
     RFS_PUSH();
     name = rf_string_cstr_from_buff_or_die(type_name);
-    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod, name);
+    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->llvm_mod, name);
     RFS_POP();
 
     LLVMTypeRef *params;
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->a->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
     RF_ASSERT(!rir_type_is_sumtype(defined_type), "Called with sum type");
     params = bllvm_simple_member_types(defined_type, ctx);
     return bllvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
@@ -92,7 +93,7 @@ static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
     // get the LLVM struct type of the sum operand
     RFS_PUSH();
     LLVMTypeRef llvm_sum_type = LLVMGetTypeByName(
-        ctx->mod,
+        ctx->llvm_mod,
         rf_string_cstr_from_buff_or_die(type_get_unique_type_str(params_type, false))
     );
     RFS_POP();
@@ -102,7 +103,7 @@ static LLVMValueRef bllvm_sum_fncall_args_to_type(struct ast_node *fn_call,
     LLVMValueRef populated_sum_type = bllvm_assign_params_to_defined_type(fn_call, llvm_sum_type, params, ctx);
     // now create the full struct and assign the contents and the selector
     RFS_PUSH();
-    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->mod,
+    LLVMTypeRef llvm_type = LLVMGetTypeByName(ctx->llvm_mod,
                                               rf_string_cstr_from_buff_or_die(type_name));
     LLVMValueRef allocation = LLVMBuildAlloca(ctx->builder, llvm_type, "");
     RFS_POP();
@@ -118,7 +119,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
                                                 const struct RFstring *type_name,
                                                 struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->a->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
     RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
     return bllvm_sum_fncall_args_to_type(
         fn_call,
@@ -133,7 +134,7 @@ static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
                                             const struct RFstring *type_name,
                                             struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->a->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
     if (rir_type_is_sumtype(defined_type)) {
         return bllvm_sum_ctor_args_to_type(fn_call, type_name, ctx);
     }
@@ -158,7 +159,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
     if (type_is_function(fn_type)) {
         RFS_PUSH();
         char *fn_name_cstr = rf_string_cstr_from_buff_or_die(fn_name);
-        LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->mod, fn_name_cstr);
+        LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->llvm_mod, fn_name_cstr);
         RFS_POP();
         LLVMTypeRef llvm_fn_type = bllvm_function_type(llvm_fn);
 
@@ -170,7 +171,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                 ctx,
                 bllvm_sum_fncall_args_to_type(
                     n,
-                    rir_types_list_get_type(ctx->a->rir_types_list, fn_args_type, NULL),
+                    rir_types_list_get_type(ctx->mod->analyzer->rir_types_list, fn_args_type, NULL),
                     type_get_unique_type_str(fn_args_type, false),
                     ctx)
             );
@@ -255,7 +256,7 @@ LLVMValueRef bllvm_compile_function(struct ast_node *fn,
     // llvm_traversal_ctx_get_param_count()
     LLVMTypeRef *types = bllvm_compile_fn_arg_types(fn_args, ctx);
     ctx->current_function = LLVMAddFunction(
-        ctx->mod,
+        ctx->llvm_mod,
         fn_name,
         LLVMFunctionType(
             bllvm_type_from_type(fn_ret, ctx),

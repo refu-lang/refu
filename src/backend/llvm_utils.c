@@ -122,7 +122,7 @@ void bllvm_store(LLVMValueRef val,
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
     if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && !bllvm_type_is_elementary(ptr_element_type)) {
         // string is a special case
-        if (ptr_element_type == LLVMGetTypeByName(ctx->mod, "string")) {
+        if (ptr_element_type == LLVMGetTypeByName(ctx->llvm_mod, "string")) {
             bllvm_copy_string(val, ptr, ctx);
         } else {
             // just memcpy
@@ -153,7 +153,7 @@ struct LLVMOpaqueBasicBlock *bllvm_add_fatal_block_before(struct LLVMOpaqueBasic
     LLVMBasicBlockRef prev_block = ctx->current_block;
     LLVMBasicBlockRef ret = LLVMInsertBasicBlock(target, "");
     bllvm_enter_block(ctx, ret);
-    LLVMValueRef exit_fn = LLVMGetNamedFunction(ctx->mod, "exit");
+    LLVMValueRef exit_fn = LLVMGetNamedFunction(ctx->llvm_mod, "exit");
     LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt32Type(), exit_code, 0) };
     LLVMBuildCall(ctx->builder, exit_fn, call_args, 1, "");
     LLVMBuildBr(ctx->builder, target);
@@ -192,7 +192,7 @@ void bllvm_memcpyn(LLVMValueRef from,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
     LLVMValueRef src_cast = LLVMBuildBitCast(ctx->builder, from,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
-    LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64");
+    LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->llvm_mod, "llvm.memcpy.p0i8.p0i8.i64");
 
     LLVMValueRef call_args[] = { dst_cast, src_cast,
                                  LLVMConstInt(LLVMInt64Type(), bytes, 0),
@@ -204,7 +204,7 @@ void bllvm_memcpyn(LLVMValueRef from,
 void bllvm_nop(struct llvm_traversal_ctx *ctx)
 {
     LLVMBuildCall(ctx->builder,
-                  LLVMGetNamedFunction(ctx->mod, "llvm.donothing"),
+                  LLVMGetNamedFunction(ctx->llvm_mod, "llvm.donothing"),
                   NULL,
                   0,
                   ""

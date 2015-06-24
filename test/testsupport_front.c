@@ -3,6 +3,7 @@
 #include <refu.h>
 #include <Definitions/threadspecific.h>
 
+#include <compiler.h>
 #include <ast/type.h>
 #include <ast/string_literal.h>
 #include <ast/constants.h>
@@ -25,22 +26,19 @@ struct front_testdriver *get_front_testdriver()
     return &__front_testdriver;
 }
 
-bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i)
-{
-    if (i >= darray_size(d->fronts)) {
-        return false;
-    }
-    d->current_front = darray_item(d->fronts, i);
-    return true;
-}
-
 struct front_ctx *front_tesdriver_curr()
 {
     return get_front_testdriver()->current_front;
 }
+
 struct analyzer *front_testdriver_analyzer()
 {
-    return get_front_testdriver()->current_front->analyzer;
+    return darray_item(get_front_testdriver()->compiler->modules, 0)->analyzer;
+}
+
+struct module *front_testdriver_module()
+{
+    return darray_item(get_front_testdriver()->compiler->modules, 0);
 }
 
 struct parser *front_testdriver_parser()
@@ -60,78 +58,49 @@ struct inpfile *front_testdriver_file()
 
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)
 {
-    struct front_ctx **front;
-    darray_foreach(front, d->fronts) {
-        if (!info_ctx_get_messages_fmt((*front)->info, MESSAGE_ANY, &d->buffstr)) {
-        return NULL;
-        }
-    }
-
-    return &d->buffstr;
+    return compiler_get_errors(d->compiler);
 }
 
-void front_testdriver_create_analyze_stdlib(struct front_testdriver *d)
-{
-    const struct RFstring stdlib_s = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-    ck_assert_msg(!d->stdlib, "Stdlib appears to already be initialized");
-    d->stdlib = front_ctx_create(NULL, &stdlib_s);
-    ck_assert_msg(d->stdlib, "Failed to initialize stdlib front ctx");
-    ck_assert_msg(NULL != front_ctx_process(d->stdlib, NULL));
-}
-
-bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib)
+bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib, int rf_logtype)
 {
     RF_STRUCT_ZERO(d);
     darray_init(d->nodes);
-    darray_init(d->fronts);
+    if (!(d->compiler = compiler_create(rf_logtype))) {
+        return false;
+    }
 
+    struct front_ctx *stdlib_front;
     if (with_stdlib) {
-        front_testdriver_create_analyze_stdlib(d);
+        const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
+        if (!(stdlib_front = compiler_new_front(d->compiler, &stdlib, false))) {
+            RF_ERROR("Failed to add standard library to the front_ctxs");
+            return false;
+        }
     }
-
-    if (!rf_stringx_init_buff(&d->buffstr, 1024, "")) {
-        goto free_nodes;
-    }
-
-    if (!typecmp_ctx_init()) {
-        goto free_buff;
-    }
-
+    // set driver's current front
+    d->current_front = stdlib_front;
 
     return true;
-
-free_buff:
-    rf_stringx_deinit(&d->buffstr);
-free_nodes:
-    darray_free(d->nodes);
-    return false;
 }
 void front_testdriver_deinit(struct front_testdriver *d)
 {
-    if (d->stdlib) {
-        front_ctx_destroy(d->stdlib);
-        d->stdlib = NULL;
+    if (d->compiler) {
+        compiler_destroy(d->compiler);
     }
-    rf_stringx_deinit(&d->buffstr);
-    typecmp_ctx_deinit();
+
     struct ast_node **n;
     darray_foreach(n, d->nodes) {
         ast_node_destroy(*n);
     }
     darray_free(d->nodes);
-    struct front_ctx **front;
-    darray_foreach(front, d->fronts) {
-        front_ctx_destroy(*front);
-    }
-    darray_free(d->fronts);
 }
 
 struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
 {
-    const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
-    struct front_ctx *front = front_ctx_create_from_source(NULL, &name, s);
     struct front_testdriver *d = get_front_testdriver();
-    darray_append(d->fronts, front);
+    const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
+    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s, true);
+    ck_assert_msg(front, "Could not add a new file to the driver");
     d->current_front = front;
     return front;
 }
@@ -298,32 +267,25 @@ struct ast_node *do_front_testdriver_generate_node(
 
 void setup_front_tests()
 {
-    ck_assert_msg(rf_init(LOG_TARGET_STDOUT,
-                          NULL,
-                          LOG_WARNING,
-                          RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
-                          RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
-                  "Failed to initialize refu library");
-    ck_assert_msg(front_testdriver_init(&__front_testdriver, false),
+    ck_assert_msg(front_testdriver_init(&__front_testdriver, true, LOG_TARGET_STDOUT),
+                  "Failed to initialize front end test driver");
+}
+
+void setup_front_tests_no_stdlib()
+{
+    ck_assert_msg(front_testdriver_init(&__front_testdriver, false, LOG_TARGET_STDOUT),
                   "Failed to initialize front end test driver");
 }
 
 void setup_front_tests_with_file_log()
 {
-    ck_assert_msg(rf_init(LOG_TARGET_FILE,
-                          "refu.log",
-                          LOG_WARNING,
-                          RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
-                          RF_DEFAULT_TS_SBUFF_INITIAL_SIZE),
-                  "Failed to initialize refu library");
-    ck_assert_msg(front_testdriver_init(&__front_testdriver, false),
+    ck_assert_msg(front_testdriver_init(&__front_testdriver, true, LOG_TARGET_FILE),
                   "Failed to initialize front end test driver");
 }
 
 void teardown_front_tests()
 {
     front_testdriver_deinit(&__front_testdriver);
-    rf_deinit();
 }
 
 

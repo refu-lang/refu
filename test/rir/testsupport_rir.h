@@ -27,9 +27,9 @@ void rir_testdriver_assign(const struct RFstring *s);
 
 bool rir_testdriver_process(struct rir_testdriver *d);
 
-#define testsupport_rir_process(with_stdlib_)                           \
+#define testsupport_rir_process()                                       \
     do {                                                                \
-        ck_assert_typecheck_ok(with_stdlib_);                           \
+        ck_assert_typecheck_ok();                                       \
         ck_assert_msg(rir_testdriver_process(get_rir_testdriver()), "Failed to create the refu intermediate format"); \
     } while (0)
 
@@ -59,6 +59,6 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
 
 i_INLINE_DECL struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d)
 {
-    return d->front_driver->current_front->analyzer->types_set;
+    return front_testdriver_analyzer()->types_set;
 }
 #endif

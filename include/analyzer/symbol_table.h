@@ -7,13 +7,13 @@
 #include <Definitions/inline.h>
 #include <types/type_decls.h>
 
-struct analyzer;
 struct ast_node;
 struct RFstring;
 struct symbol_table;
 struct type;
 struct rir_type;
 struct rir_types_list;
+struct module;
 
 /* -- symbol table record functionality -- */
 
@@ -33,14 +33,14 @@ struct symbol_table_record {
 };
 
 bool symbol_table_record_init(struct symbol_table_record *rec,
-                              struct analyzer *analyzer,
+                              struct module *mod,
                               struct symbol_table *st,
                               const struct ast_node *node,
                               const struct RFstring *id);
 
 struct symbol_table_record *symbol_table_record_create(
     struct symbol_table *st,
-    struct analyzer *analyzer,
+    struct module *mod,
     const struct ast_node *node,
     const struct RFstring *id);
 
@@ -91,6 +91,9 @@ struct symbol_table {
     struct htable table;
     //! Pointer to the parent symbol table, or NULL if this is the top table
     struct symbol_table *parent;
+    //! Pointer to the module of this symbol table. Used only from the top symbol
+    //! table of a module to check for symbols in dependendencies
+    struct module *mod;
     //! Pointer to the analyzer instance's memory pool
     struct rf_fixed_memorypool *pool;
     //! Pointer to the function declaration that contains this table, or NULL
@@ -98,19 +101,19 @@ struct symbol_table {
     struct ast_node *fndecl;
 };
 
-bool symbol_table_init(struct symbol_table *t, struct analyzer *a);
+bool symbol_table_init(struct symbol_table *t, struct module *m);
 void symbol_table_deinit(struct symbol_table *t);
 
 /**
  * Add a node to the symbol table and also set its type
  */
 bool symbol_table_add_node(struct symbol_table *t,
-                           struct analyzer *analyzer,
+                           struct module *m,
                            const struct RFstring *id,
                            struct ast_node *n);
 
 bool symbol_table_add_type(struct symbol_table *st,
-                           struct analyzer *analyzer,
+                           struct module *mod,
                            const struct RFstring *id,
                            struct type *t);
 
@@ -119,7 +122,7 @@ bool symbol_table_add_record(struct symbol_table *t,
 
 bool symbol_table_add_foreignfn(struct symbol_table *st,
                                 struct ast_node *node,
-                                struct analyzer *a);
+                                struct module *m);
 
 /**
  * Lookup an ast_node in a symbol table

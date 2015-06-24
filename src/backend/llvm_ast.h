@@ -18,6 +18,7 @@ struct symbol_table_record;
 struct compiler_args;
 struct analyzer;
 struct type;
+struct module;
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueTargetData;
@@ -27,8 +28,8 @@ struct LLVMOpaqueType;
 struct LLVMOpaqueBasicBlock;
 
 struct llvm_traversal_ctx {
-    struct LLVMOpaqueModule *mod;
-    const struct RFstring *mod_name;
+    struct module *mod;
+    struct LLVMOpaqueModule *llvm_mod;
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;
     struct LLVMOpaqueValue *current_function;
@@ -41,13 +42,12 @@ struct llvm_traversal_ctx {
     struct rir_types_map types_map;
 
     struct compiler_args *args;
-    struct analyzer *a;
     struct symbol_table *current_st;
 };
 
 bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
-struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
+struct LLVMOpaqueModule *blvm_create_module(struct module *module,
                                             struct llvm_traversal_ctx *ctx,
                                             const struct RFstring *name,
                                             struct LLVMOpaqueModule *link_source);

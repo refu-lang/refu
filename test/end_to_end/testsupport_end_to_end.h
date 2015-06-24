@@ -6,7 +6,7 @@
 struct RFstring;
 
 struct end_to_end_driver {
-    struct compiler compiler;
+    struct compiler *compiler;
     struct RFstring *file_name;
 };
 

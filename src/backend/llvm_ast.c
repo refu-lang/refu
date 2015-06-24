@@ -15,6 +15,7 @@
 
 #include <compiler_args.h>
 
+#include <module.h>
 #include <lexer/tokens.h>
 #include <analyzer/analyzer.h>
 #include <ast/ast_utils.h>
@@ -71,7 +72,7 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
         return LLVMDoubleType();
 
     case ELEMENTARY_TYPE_STRING:
-        return LLVMGetTypeByName(ctx->mod, "string");
+        return LLVMGetTypeByName(ctx->llvm_mod, "string");
 
     case ELEMENTARY_TYPE_BOOL:
         return LLVMInt1Type();
@@ -100,14 +101,14 @@ LLVMTypeRef bllvm_type_from_type(const struct type *type,
     } else if (type->category == TYPE_CATEGORY_DEFINED) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(type_defined_get_name(type));
-        ret = LLVMGetTypeByName(ctx->mod, name);
+        ret = LLVMGetTypeByName(ctx->llvm_mod, name);
         RFS_POP();
     } else if (type_is_sumtype(type)) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(
             type_get_unique_type_str(type, false)
         );
-        ret = LLVMGetTypeByName(ctx->mod, name);
+        ret = LLVMGetTypeByName(ctx->llvm_mod, name);
         RFS_POP();
     } else {
         RF_ASSERT(false, "Not yet implemented type");
@@ -180,7 +181,7 @@ LLVMValueRef bllvm_compile_explicit_cast(const struct type *cast_type,
         LLVMBasicBlockRef taken_branch = bllvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef fallthrough_branch = bllvm_add_block_before_funcend(ctx);
         LLVMBasicBlockRef if_end = bllvm_add_block_before_funcend(ctx);
-        LLVMValueRef string_alloca = LLVMBuildAlloca(ctx->builder, LLVMGetTypeByName(ctx->mod, "string"), "");
+        LLVMValueRef string_alloca = LLVMBuildAlloca(ctx->builder, LLVMGetTypeByName(ctx->llvm_mod, "string"), "");
         LLVMBuildCondBr(ctx->builder, cast_value, taken_branch, fallthrough_branch);
 
         // if true
@@ -224,13 +225,13 @@ LLVMValueRef bllvm_compile_string_literal(struct ast_node *n,
     // all unique string literals should have been declared as global strings
     uint32_t hash;
     const struct RFstring *s = ast_string_literal_get_str(n);
-    if (!string_table_add_or_get_str(ctx->a->string_literals_table, s, &hash)) {
+    if (!string_table_add_or_get_str(ctx->mod->analyzer->string_literals_table, s, &hash)) {
         RF_ERROR("Unable to retrieve string literal from table during LLVM compile");
         return NULL;
     }
     RFS_PUSH();
     struct RFstring *temps = RFS_NT_OR_DIE("gstr_%u", hash);
-    LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->mod, rf_string_data(temps));
+    LLVMValueRef global_str = LLVMGetNamedGlobal(ctx->llvm_mod, rf_string_data(temps));
     RFS_POP();
     return global_str;
 }
@@ -288,7 +289,8 @@ void bllvm_compile_ifexpr(const struct ast_node *ifexpr,
 void bllvm_compile_branch(const struct ast_node *branch,
                           struct llvm_traversal_ctx *ctx)
 {
-    AST_NODE_ASSERT_TYPE(branch, AST_IF_EXPRESSION || AST_BLOCK);
+    RF_ASSERT(branch->type == AST_IF_EXPRESSION || branch->type == AST_BLOCK,
+              "Unexpected ast node type");
     if (branch->type == AST_IF_EXPRESSION) {
         bllvm_compile_ifexpr(branch, ctx);
     } else { // it's final else block
@@ -397,7 +399,7 @@ void bllvm_compile_block(const struct ast_node *block,
     ctx->current_st = prev;
 }
 
-struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
+struct LLVMOpaqueModule *blvm_create_module(struct module *module,
                                             struct llvm_traversal_ctx *ctx,
                                             const struct RFstring *name,
                                             struct LLVMOpaqueModule *link_source)
@@ -407,20 +409,19 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
     const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
     ctx->mod = NULL;
     RFS_PUSH();
-    ctx->mod_name = name;
-    const char *mod_name = rf_string_cstr_from_buff_or_die(name);
+    const char *mod_name = rf_string_cstr_from_buff_or_die(module_name(module));
     if (!mod_name) {
         RF_ERROR("Failure to create null terminated cstring from RFstring");
         goto end;
     }
-    ctx->mod = LLVMModuleCreateWithName(mod_name);
-    ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->mod));
+    ctx->llvm_mod = LLVMModuleCreateWithName(mod_name);
+    ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
     if (rf_string_equal(name, &s_stdlib)) {
         // create some global definitions and variable
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");
-            LLVMDisposeModule(ctx->mod);
+            LLVMDisposeModule(ctx->llvm_mod);
             ctx->mod = NULL;
             goto end;
         }
@@ -428,7 +429,7 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
         char *error = NULL;
         RF_ASSERT(link_source, "If module is not stdlib, linking with something is mandatory at least for now");
         // if an error occurs LLVMLinkModules() returns true ...
-        if (true == LLVMLinkModules(ctx->mod, link_source, LLVMLinkerDestroySource, &error)) {
+        if (true == LLVMLinkModules(ctx->llvm_mod, link_source, LLVMLinkerDestroySource, &error)) {
             bllvm_error("Could not link LLVM modules", &error);
             goto end;
         }
@@ -436,23 +437,23 @@ struct LLVMOpaqueModule *blvm_create_module(const struct ast_node *ast,
     }
     if (!bllvm_create_module_globals(ctx)) {
         RF_ERROR("Failed to create module globals for LLVM");
-            LLVMDisposeModule(ctx->mod);
+            LLVMDisposeModule(ctx->llvm_mod);
             ctx->mod = NULL;
             goto end;
     }
 
     // for each function of the module (for now simply the AST root) create code
-    rf_ilist_for_each(&ast->children, child, lh) {
+    rf_ilist_for_each(&module->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
             bllvm_compile_function(child, ctx);
         }
     }
 
     if (compiler_args_print_backend_debug(ctx->args)) {
-        bllvm_mod_debug(ctx->mod, mod_name);
+        bllvm_mod_debug(ctx->llvm_mod, mod_name);
     }
 
 end:
     RFS_POP();
-    return ctx->mod;
+    return ctx->llvm_mod;
 }

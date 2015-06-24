@@ -25,10 +25,10 @@ i_INLINE_DECL const struct RFstring *ast_fndecl_name_str(const struct ast_node *
 }
 
 i_INLINE_DECL bool ast_fndecl_symbol_table_init(struct ast_node *n,
-                                                struct analyzer *a)
+                                                struct module *m)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
-    return symbol_table_init(&n->fndecl.st, a);
+    return symbol_table_init(&n->fndecl.st, m);
 }
 
 i_INLINE_DECL struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n)

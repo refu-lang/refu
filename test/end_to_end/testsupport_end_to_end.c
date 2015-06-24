@@ -21,7 +21,8 @@ struct end_to_end_driver *get_end_to_end_driver()
 void setup_end_to_end_tests()
 {
     RF_STRUCT_ZERO(&_driver);
-    ck_assert_msg(compiler_init(&_driver.compiler),
+    _driver.compiler = compiler_create(LOG_TARGET_STDOUT);
+    ck_assert_msg(_driver.compiler,
                   "Failed to initialize compiler in end to end tests setup");
 }
 
@@ -31,7 +32,7 @@ void teardown_end_to_end_tests()
         rf_system_delete_file(_driver.file_name);
         rf_string_destroy(_driver.file_name);
     }
-    compiler_deinit(&_driver.compiler);
+    compiler_destroy(_driver.compiler);
 }
 
 bool end_to_end_driver_create_file(struct end_to_end_driver *d,
@@ -96,7 +97,7 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
     }
 
     // + 1 is for the initial argument of the executable name
-    if (!compiler_pass_args(&d->compiler, args_number + 1, args_cstrings)) {
+    if (!compiler_pass_args(args_number + 1, args_cstrings)) {
         goto free_cstrings_arr;
     }
 
@@ -129,7 +130,7 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
 {
     char stdout_buff[1024];
     FILE *proc;
-    const struct RFstring* output = compiler_args_get_executable_name(d->compiler.args);
+    const struct RFstring* output = compiler_args_get_executable_name(d->compiler->args);
 
     RFS_PUSH();
     proc = rf_popen(RFS_OR_DIE("./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output)), "r");

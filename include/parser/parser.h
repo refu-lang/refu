@@ -7,15 +7,16 @@
 struct info_ctx;
 struct lexer;
 struct inpfile;
-struct modules_arr;
+struct front_ctx;
 
 struct parser {
+    //! A pointer to the front_ctx that owns the parser. Needed only by the
+    //! parsing of a module function. Maybe pass only as argument?
+    struct front_ctx *front;
     struct info_ctx *info;
     struct lexer *lexer;
     struct inpfile *file;
     struct ast_node *root;
-    //! A pointer to the modules array. Not owned by the parser.
-    struct modules_arr *modules_array;
     bool have_syntax_err;
 };
 
@@ -23,14 +24,16 @@ struct parser {
 bool parser_init(struct parser *p,
                  struct inpfile *f,
                  struct lexer *lex,
-                 struct info_ctx *info);
+                 struct info_ctx *info,
+                 struct front_ctx *front);
 struct parser *parser_create(struct inpfile *f,
                              struct lexer *lex,
-                             struct info_ctx *info);
+                             struct info_ctx *info,
+                             struct front_ctx *front);
 void parser_deinit(struct parser *p);
 void parser_destroy(struct parser *p);
 
-bool parser_process_file(struct parser *p, struct modules_arr *modules_array);
+bool parser_process_file(struct parser *p, bool is_main);
 void parser_flush_messages(struct parser *parser);
 
 i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)

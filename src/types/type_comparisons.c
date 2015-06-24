@@ -483,7 +483,7 @@ bool type_compare(const struct type *from,
 
 bool type_equals_ast_node(struct type *t,
                           const struct ast_node *type_desc,
-                          struct analyzer *a,
+                          struct module *mod,
                           struct symbol_table *st,
                           struct ast_node *genrdecl,
                           enum comparison_reason options)
@@ -501,10 +501,10 @@ bool type_equals_ast_node(struct type *t,
 
         return type_equals_ast_node(t->operator.left,
                                     ast_typeop_left(type_desc),
-                                    a, st, genrdecl, options) &&
+                                    mod, st, genrdecl, options) &&
             type_equals_ast_node(t->operator.right,
                                  ast_typeop_right(type_desc),
-                                 a, st, genrdecl, options);
+                                 mod, st, genrdecl, options);
     case AST_TYPE_LEAF:
     {
         AST_NODE_ASSERT_TYPE(ast_typeleaf_left(type_desc), AST_IDENTIFIER);
@@ -515,25 +515,25 @@ bool type_equals_ast_node(struct type *t,
             type_equals_ast_node(
                 t,
                 ast_typeleaf_right(type_desc),
-                a,
+                mod,
                 st,
                 genrdecl,
                 TYPECMP_IDENTICAL
             );
     }
     case AST_TYPE_DESCRIPTION:
-        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), a, st, genrdecl, options);
+        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), mod, st, genrdecl, options);
     case AST_TYPE_DECLARATION:
         return type_equals_ast_node(
             t,
             ast_typedecl_typedesc_get(type_desc),
-            a,
+            mod,
             st,
             genrdecl,
             options
         );
     case AST_XIDENTIFIER:
-        looked_up_t = type_lookup_xidentifier(type_desc, a, st, genrdecl);
+        looked_up_t = type_lookup_xidentifier(type_desc, mod, st, genrdecl);
         if (!looked_up_t) {
             RF_ERROR("Failed to lookup an identifier");
             return false;

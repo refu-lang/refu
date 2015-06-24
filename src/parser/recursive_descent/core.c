@@ -29,11 +29,10 @@ void parser_finalize_parsing(struct ast_node *n)
     ast_pre_traverse_tree(n, do_finalize_parsing, NULL);
 }
 
-bool parser_process_file(struct parser *p, struct modules_arr *modules_array)
+bool parser_process_file(struct parser *p, bool is_main)
 {
     struct ast_node *stmt;
     p->root = ast_root_create(p->file);
-    p->modules_array = modules_array;
     while ((stmt = parser_acc_stmt(p))) {
         ast_node_add_child(p->root, stmt);
     }
@@ -46,6 +45,13 @@ bool parser_process_file(struct parser *p, struct modules_arr *modules_array)
 
     // at the end of parsing let's signify that all of the nodes are owned by the parser
     parser_finalize_parsing(p->root);
+
+    // if this is the main module then create it
+    if (is_main) {
+        if (!module_create(p->root, p->front)) {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -61,8 +67,9 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
     // TODO: Maybe change these, since each one of these macros actually checks for token existence too
     if (TOKEN_IS_MODULE_START(tok)) {
         stmt = parser_acc_module(p);
-        struct module *mod = module_new(stmt);
-        darray_append(*(p->modules_array), mod);
+        if (!module_create(stmt, p->front)) {
+            return NULL;
+        }
     } else if (TOKEN_IS_BLOCK_START(tok)) {
         stmt = parser_acc_block(p, true);
     } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {

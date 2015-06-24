@@ -6,12 +6,12 @@
 
 #include <stdbool.h>
 
-struct analyzer;
+struct module;
 struct ast_node;
 struct type;
 struct analyzer_traversal_ctx;
 
-bool analyzer_typecheck(struct analyzer *a, struct ast_node *root);
+bool analyzer_typecheck(struct module *m, struct ast_node *n);
 /**
  * Convenience function to set the type of a node and
  * remember last node type during traversal

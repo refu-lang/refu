@@ -377,7 +377,7 @@ START_TEST(test_composite_types_list_population) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(false);
+    ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_a =  RF_STRING_STATIC_INIT("a");
@@ -415,7 +415,7 @@ START_TEST(test_composite_types_list_population2) {
         "type boo {a:i64, b:f64}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(false);
+    ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
@@ -450,7 +450,7 @@ START_TEST(test_composite_types_list_population3) {
         "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(false);
+    ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -502,7 +502,7 @@ START_TEST(test_composite_types_list_population4) {
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(false);
+    ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     static const struct RFstring id_bar = RF_STRING_STATIC_INIT("bar");
@@ -559,11 +559,11 @@ START_TEST(test_determine_block_type1) {
         "d:f64 = 3.14 * 0.14\n"
         "}"
     );
-    struct front_ctx *front = front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    front_testdriver_new_source(&s);
+    ck_assert_typecheck_ok();
 
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    block = ast_node_get_child(front->analyzer->root, 0);
+    block = ast_node_get_child(front_testdriver_module()->node, 0);
     ck_assert_msg(block, "Block should be the first child of the root");
     const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
     ck_assert_msg(block_type, "Block should have a type");
@@ -579,8 +579,8 @@ START_TEST(test_determine_block_type2) {
         "a:foo\n"
         "}"
     );
-    struct front_ctx *front = front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    front_testdriver_new_source(&s);
+    ck_assert_typecheck_ok();
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -596,7 +596,7 @@ START_TEST(test_determine_block_type2) {
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
     struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
 
-    block = ast_node_get_child(front->analyzer->root, 1);
+    block = ast_node_get_child(front_testdriver_module()->node, 1);
     ck_assert_msg(block, "Block should be the second child of the root");
     const struct type *block_type = ast_node_get_type(block, AST_TYPERETR_DEFAULT);
     ck_assert_msg(block_type, "Block should have a type");

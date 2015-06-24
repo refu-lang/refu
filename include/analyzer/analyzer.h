@@ -17,9 +17,10 @@ struct type;
 struct symbol_table;
 struct analyzer;
 struct front_ctx;
+struct module;
 
 struct  analyzer_traversal_ctx {
-    struct analyzer *a;
+    struct module *m;
     //! Remembers the current symbol table during ast traversal
     struct symbol_table *current_st;
     //! Remembers the type of the previous node during the typechecking
@@ -32,9 +33,9 @@ struct  analyzer_traversal_ctx {
 };
 
 i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
-                                               struct analyzer *a)
+                                               struct module *m)
 {
-    ctx->a = a;
+    ctx->m = m;
     ctx->current_st = NULL;
     ctx->last_node_type = NULL;
     darray_init(ctx->parent_nodes);
@@ -76,6 +77,7 @@ typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *us
  * @param ctx        The analyzer contextx
  * @param cb         The callback function. Should accept a node and an optional
  *                   user argument. If we want to continue searching return false.
+
  *                   If the callback found what it was looking for return true
  * @param user_arg   An arbitrary argument to pass to the callback
  * @return           Returns @c true if any callback returned succesfully and whatever
@@ -124,43 +126,37 @@ void analyzer_destroy(struct analyzer *a);
  * Determine the dependencies inside a file by checking the imports needed by
  * each module
  */
-bool analyzer_determine_dependencies(struct analyzer *a,
+bool analyzer_determine_dependencies(struct module *m,
                                      struct parser *parser);
 
 /**
  * Analyze a module of a file
  *
- * @param a                   The analyzer instance
- * @param module              The ast_node of the module
- * @param imported_symbols    TBD
+ * @param mod                The module to analyze
  *
  * @return                    @c true for success and @c false for failure
  */
-bool analyzer_analyze_module(struct analyzer *a,
-                             struct ast_node *module,
-                             struct symbol_table *imported_symbols);
+bool analyzer_analyze_module(struct module *mod);
 /**
  * Finalize the AST of an analyzer after analysis.
  */
-bool analyzer_finalize(struct analyzer *a, struct front_ctx *stdlib);
+bool analyzer_finalize(struct module *m);
 
 /**
  * If existing, retrieve the type and if not existing create the type
  * for ast node @c desc
  *
- * @param a          The analyzer instance from which to retrieve the type
+ * @param m          The module containing the analyzer
  * @param desc       The node whose type to check
  * @param st         The symbol table to check for type existence
  * @param genrdecl   Optional generic delcation that accompanied @c desc.
  *                   Can be NULL.
  * @return           The retrieved or created type, or NULL in error.
  */
-struct type *analyzer_get_or_create_type(struct analyzer *a,
+struct type *analyzer_get_or_create_type(struct module *m,
                                          const struct ast_node *desc,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl);
-
-struct inpfile *analyzer_get_file(struct analyzer *a);
 
 // TODO: Properly use the set itself for comparison of already existing types
 bool analyzer_types_set_add(struct analyzer *a, struct type *new_type);
@@ -191,19 +187,19 @@ i_INLINE_DECL struct ast_node *analyzer_yield_ast_root(struct analyzer *analyzer
 }
 
 // TODO: Change both this, the lexer and the parser macro to something better
-#define analyzer_err(analyzer_, start_, end_, ...) \
+#define analyzer_err(mod_, start_, end_, ...) \
     do {                                          \
-        i_info_ctx_add_msg((analyzer_)->info,       \
+        i_info_ctx_add_msg((mod_)->analyzer->info,       \
                            MESSAGE_SEMANTIC_ERROR,  \
                            (start_),              \
                            (end_),                \
                            __VA_ARGS__);          \
-        analyzer_set_semantic_error(analyzer_);         \
+        analyzer_set_semantic_error((mod_)->analyzer);   \
     } while(0)
 
-#define analyzer_warn(analyzer_, start_, end_, ...)     \
+#define analyzer_warn(mod_, start_, end_, ...)     \
     do {                                                \
-        i_info_ctx_add_msg((analyzer_)->info,           \
+        i_info_ctx_add_msg((mod_)->analyzer->info,           \
                            MESSAGE_SEMANTIC_WARNING,    \
                            (start_),                    \
                            (end_),                      \

@@ -31,7 +31,8 @@ void ast_identifier_print(struct ast_node *n, int depth)
 
 const struct RFstring *ast_identifier_str(const struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER || AST_XIDENTIFIER);
+    RF_ASSERT(n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
+              "Unexpected ast node type");
     if (n->type == AST_IDENTIFIER) {
         return &n->identifier.string;
     }
@@ -41,7 +42,8 @@ const struct RFstring *ast_identifier_str(const struct ast_node *n)
 const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
                                                    const struct analyzer *a)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER || AST_XIDENTIFIER);
+    RF_ASSERT(n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
+              "Unexpected ast node type");
     RF_ASSERT(n->state >= AST_NODE_STATE_ANALYZER_PASS1,
               "calling function at wrong part of processing pipeline");
 

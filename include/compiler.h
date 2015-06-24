@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <RFintrusive_list.h>
 #include <String/rf_str_core.h>
+#include <module.h>
 
 struct compiler_args;
 struct serializer;
@@ -19,21 +20,40 @@ struct compiler {
     //! The serializer deals with data exporting and serialization (if needed)
     //! after the end of a succesfull analysis.
     struct serializer *serializer;
+    //! Dynamic array to hold the memory of all created modules
+    struct modules_arr modules;
+    //! Sorted list of modules, after dependency resolution
+    struct RFilist_head sorted_modules;
 };
 
-bool compiler_init(struct compiler *c);
+// a compiler will always be a unique singleton so we can get its instance
+struct compiler *compiler_instance_get();
+struct compiler *compiler_alloc();
+bool compiler_init(struct compiler *c, int rf_logtype);
+struct compiler *compiler_create(int rf_logtype);
+struct compiler *compiler_create_with_args(int rf_logtype, int argc, char **argv);
+void compiler_destroy();
 
-void compiler_deinit(struct compiler *c);
+struct module *compiler_module_get(const struct RFstring *name);
 
-bool compiler_init_with_args(struct compiler *c, int argc, char **argv);
+struct front_ctx *compiler_new_front(struct compiler *c,
+                                     const struct RFstring *input_name,
+                                     bool is_main);
+struct front_ctx *compiler_new_front_from_source(struct compiler *c,
+                                                 const struct RFstring *name,
+                                                 const struct RFstring *source,
+                                                 bool is_main);
 
 //! Passes arguments to the compiler and initializes the front end context
-bool compiler_pass_args(struct compiler *c, int argc, char **argv);
+bool compiler_pass_args(int argc, char **argv);
 
-bool compiler_process(struct compiler *c);
+bool compiler_preprocess_fronts();
+bool compiler_process();
 
 //! Query compiler's argument and if help was requested, print help message and
 //! return true. If true, program should exit succesfully
 bool compiler_help_requested(struct compiler *c);
+
+struct RFstringx *compiler_get_errors(struct compiler *c);
 
 #endif

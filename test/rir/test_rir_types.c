@@ -21,7 +21,7 @@ START_TEST (test_types_list_simple1) {
         "}"
     );
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
     struct rir_type *fn = testsupport_rir_type_create(COMPOSITE_IMPLICATION_RIR_TYPE, NULL, false);
@@ -82,7 +82,7 @@ START_TEST(test_types_list_type_reuse) {
         "type boo {a:i64, b:f64}"
     );
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
     static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
@@ -117,7 +117,7 @@ START_TEST(test_types_list_type_reuse_products_and_sums) {
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
     static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
@@ -171,7 +171,7 @@ START_TEST(test_rir_type_equals_type1) {
     );
     struct rir_testdriver *d = get_rir_testdriver();
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     // search the normal types for the only defined type that should be there
     
@@ -213,7 +213,7 @@ START_TEST(test_rir_type_equals_type2) {
     );
     struct rir_testdriver *d = get_rir_testdriver();
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     // search the normal types for the only defined type that should be there
     struct type *t;
@@ -260,7 +260,7 @@ START_TEST(test_rir_type_equals_type3) {
     );
     struct rir_testdriver *d = get_rir_testdriver();
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     // search the normal types for the only defined type that should be there
     struct type *t;
@@ -314,7 +314,7 @@ START_TEST(test_rir_type_equals_type4) {
     );
     struct rir_testdriver *d = get_rir_testdriver();
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     // search the normal types for the only defined type that should be there
     struct type *t;

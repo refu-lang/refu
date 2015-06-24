@@ -25,7 +25,7 @@ START_TEST (test_finalized_function_arguments) {
         "}"
     );
     rir_testdriver_assign(&s);
-    testsupport_rir_process(false);
+    testsupport_rir_process();
 
     struct ast_node *fn1 = ast_node_get_child(front_testdriver_analyzer()->root, 0);
     ck_assert_uint_eq(ast_fndecl_argsnum_get(ast_fnimpl_fndecl_get(fn1)), 1);

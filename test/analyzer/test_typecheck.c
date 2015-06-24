@@ -23,7 +23,7 @@ START_TEST(test_typecheck_variable_declarations) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_negative_int_variable_declarations) {
@@ -35,7 +35,7 @@ START_TEST(test_typecheck_negative_int_variable_declarations) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_complex_type_in_variable_declaration) {
@@ -47,7 +47,7 @@ START_TEST(test_typecheck_complex_type_in_variable_declaration) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_foreign_import) {
@@ -61,7 +61,7 @@ START_TEST(test_typecheck_foreign_import) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
@@ -73,9 +73,8 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
@@ -87,9 +86,8 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_type_constructor) {
@@ -102,9 +100,8 @@ START_TEST(test_typecheck_valid_custom_type_constructor) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
@@ -117,9 +114,8 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_invalid_custom_type_constructor) {
@@ -132,7 +128,6 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -146,7 +141,7 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
             3, 11, 3, 26),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_valid_assignment_from_block1) {
@@ -160,9 +155,8 @@ START_TEST (test_typecheck_valid_assignment_from_block1) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_assignment_from_block2) {
@@ -177,9 +171,8 @@ START_TEST (test_typecheck_valid_assignment_from_block2) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_invalid_assignment_from_block1) {
@@ -193,7 +186,6 @@ START_TEST (test_typecheck_invalid_assignment_from_block1) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -202,7 +194,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block1) {
             "\"u32\" to \"string\". Unable to convert from \"u32\" to \"string\".",
             1, 4, 5, 4),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_assignment_from_block2) {
@@ -217,7 +209,6 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -226,7 +217,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
             "\"foo\" to \"string\". Unable to convert from \"string\" to \"u32\".",
             2, 4, 6, 4),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_valid_if_stmt) {
@@ -238,8 +229,7 @@ START_TEST (test_typecheck_valid_if_stmt) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 Suite *analyzer_typecheck_suite_create(void)

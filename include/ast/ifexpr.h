@@ -35,7 +35,8 @@ struct ast_node *ast_ifexpr_create(const struct inplocation_mark *start,
 i_INLINE_DECL void ast_ifexpr_add_fallthrough_branch(struct ast_node *n,
                                                      struct ast_node *branch)
 {
-    AST_NODE_ASSERT_TYPE(branch, AST_BLOCK || AST_IF_EXPRESSION);
+    RF_ASSERT(n->type == AST_BLOCK || n->type == AST_IF_EXPRESSION,
+              "Unexpected ast node type");
     ast_node_register_child(n, branch, ifexpr.fallthrough_branch);
 }
 

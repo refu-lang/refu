@@ -10,6 +10,7 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
+#include <module.h>
 #include <analyzer/string_table.h>
 #include <analyzer/type_set.h>
 #include <analyzer/analyzer.h>
@@ -27,7 +28,7 @@ static bool bllvm_create_module_types(struct llvm_traversal_ctx *ctx)
 {
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(ctx->a->types_set, &it, t) {
+    rf_objset_foreach(ctx->mod->analyzer->types_set, &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             if (!bllvm_compile_typedecl(type_defined_get_name(t), t, ctx)) {
                 return false;
@@ -45,7 +46,7 @@ static LLVMValueRef bllvm_add_global_strbuff(char *str_data, size_t str_len,
         optional_name = str_data;
     }
     LLVMValueRef stringbuff = LLVMConstString(str_data, str_len, true);
-    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->mod, LLVMTypeOf(stringbuff), optional_name);
+    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->llvm_mod, LLVMTypeOf(stringbuff), optional_name);
     LLVMSetInitializer(global_stringbuff, stringbuff);
     LLVMSetUnnamedAddr(global_stringbuff, true);
     LLVMSetLinkage(global_stringbuff, LLVMPrivateLinkage);
@@ -80,12 +81,12 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
         LLVMConstInt(LLVMInt32Type(), length, 0),
         gep_to_string_buff
     };
-    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->mod, "string"),
+    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->llvm_mod, "string"),
                                                     string_struct_layout, 2);
 
     s = RFS_NT_OR_DIE("gstr_%u", hash);
-    LLVMValueRef global_val = LLVMAddGlobal(ctx->mod,
-                                            LLVMGetTypeByName(ctx->mod, "string"),
+    LLVMValueRef global_val = LLVMAddGlobal(ctx->llvm_mod,
+                                            LLVMGetTypeByName(ctx->llvm_mod, "string"),
                                             rf_string_data(s));
     LLVMSetInitializer(global_val, string_decl);
     RFS_POP();
@@ -115,7 +116,7 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
                            LLVMInt64Type(),
                            LLVMInt32Type(),
                            LLVMInt1Type() };
-    LLVMValueRef fn =  LLVMAddFunction(ctx->mod, "llvm.memcpy.p0i8.p0i8.i64",
+    LLVMValueRef fn =  LLVMAddFunction(ctx->llvm_mod, "llvm.memcpy.p0i8.p0i8.i64",
                                        LLVMFunctionType(LLVMVoidType(), args, 5, false));
 
     // adding attributes to the arguments of memcpy as seen when generating llvm code via clang
@@ -129,25 +130,25 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
 static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef pint64_args[] = { LLVMInt64Type()};
-    LLVMAddFunction(ctx->mod, "rf_stdlib_print_int64",
+    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_int64",
                     LLVMFunctionType(LLVMVoidType(),
                                      pint64_args,
                                      1,
                                      false));
     LLVMTypeRef puint64_args[] = { LLVMInt64Type()};
-    LLVMAddFunction(ctx->mod, "rf_stdlib_print_uint64",
+    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_uint64",
                     LLVMFunctionType(LLVMVoidType(),
                                      puint64_args,
                                      1,
                                      false));
     LLVMTypeRef pdouble_args[] = { LLVMDoubleType()};
-    LLVMAddFunction(ctx->mod, "rf_stdlib_print_double",
+    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_double",
                     LLVMFunctionType(LLVMVoidType(),
                                      pdouble_args,
                                      1,
                                      false));
-    LLVMTypeRef pstring_args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0) };
-    LLVMAddFunction(ctx->mod, "rf_stdlib_print_string",
+    LLVMTypeRef pstring_args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->llvm_mod, "string"), 0) };
+    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_string",
                     LLVMFunctionType(LLVMVoidType(),
                                      pstring_args,
                                      1,
@@ -157,7 +158,7 @@ static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
 static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
 {
     // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
-    LLVMValueRef fn = LLVMAddFunction(ctx->mod, "llvm.donothing",
+    LLVMValueRef fn = LLVMAddFunction(ctx->llvm_mod, "llvm.donothing",
                                       LLVMFunctionType(LLVMVoidType(), NULL, 0, false));
     LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
     LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
@@ -167,14 +168,14 @@ static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 {
     /* -- add printf() declaration -- */
     LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
-    LLVMAddFunction(ctx->mod, "printf",
+    LLVMAddFunction(ctx->llvm_mod, "printf",
                     LLVMFunctionType(LLVMInt32Type(),
                                      printf_args,
                                      1,
                                      true));
     /* -- add exit() -- */
     LLVMTypeRef exit_args[] = { LLVMInt32Type() };
-    LLVMAddFunction(ctx->mod, "exit",
+    LLVMAddFunction(ctx->llvm_mod, "exit",
                     LLVMFunctionType(LLVMVoidType(),
                                      exit_args,
                                      1,
@@ -217,7 +218,7 @@ bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx)
 {
     // create all constant strings
     llvm_traversal_ctx_reset_params(ctx);
-    string_table_iterate(ctx->a->string_literals_table,
+    string_table_iterate(ctx->mod->analyzer->string_literals_table,
                          (string_table_cb)bllvm_const_string_creation_cb, ctx);
     if (!bllvm_create_module_types(ctx)) {
         RF_ERROR("Could not create global types");
@@ -230,6 +231,6 @@ LLVMValueRef bllvm_get_boolean_str(bool boolean, struct llvm_traversal_ctx *ctx)
 {
     // this depends on the string hash being stable and same across all
     // implementations (which it should be)
-    return boolean ? LLVMGetNamedGlobal(ctx->mod, "gstr_706834940")
-        : LLVMGetNamedGlobal(ctx->mod, "gstr_3855993015");
+    return boolean ? LLVMGetNamedGlobal(ctx->llvm_mod, "gstr_706834940")
+        : LLVMGetNamedGlobal(ctx->llvm_mod, "gstr_3855993015");
 }

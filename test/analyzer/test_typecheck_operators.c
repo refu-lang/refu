@@ -40,7 +40,7 @@ START_TEST(test_typecheck_assignment_simple) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_assignment_invalid_string_to_int) {
@@ -61,7 +61,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
             4, 0, 4, 7)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_valid_addition_simple) {
@@ -75,7 +75,7 @@ START_TEST(test_typecheck_valid_addition_simple) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_subtraction_simple) {
@@ -90,7 +90,7 @@ START_TEST(test_typecheck_valid_subtraction_simple) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_multiplication_simple) {
@@ -106,7 +106,7 @@ START_TEST(test_typecheck_valid_multiplication_simple) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_division_simple) {
@@ -122,7 +122,7 @@ START_TEST(test_typecheck_valid_division_simple) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_minus) {
@@ -132,7 +132,7 @@ START_TEST (test_typecheck_valid_uop_minus) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_plus) {
@@ -142,7 +142,7 @@ START_TEST (test_typecheck_valid_uop_plus) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_inc_pre) {
@@ -152,7 +152,7 @@ START_TEST (test_typecheck_valid_uop_inc_pre) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_inc_post) {
@@ -162,7 +162,7 @@ START_TEST (test_typecheck_valid_uop_inc_post) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_dec_pre) {
@@ -172,7 +172,7 @@ START_TEST (test_typecheck_valid_uop_dec_pre) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_uop_dec_post) {
@@ -182,7 +182,7 @@ START_TEST (test_typecheck_valid_uop_dec_post) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_minus) {
@@ -202,7 +202,7 @@ START_TEST (test_typecheck_invalid_uop_minus) {
             "Type of right side of \"=\" can not be determined",
             1, 11, 1, 16),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_plus) {
@@ -222,7 +222,7 @@ START_TEST (test_typecheck_invalid_uop_plus) {
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 9),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_inc_pre) {
@@ -242,7 +242,7 @@ START_TEST (test_typecheck_invalid_uop_inc_pre) {
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 14),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_uop_dec_post) {
@@ -262,7 +262,7 @@ START_TEST (test_typecheck_invalid_uop_dec_post) {
             "Type of right side of \"=\" can not be determined",
             1, 8, 1, 14),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
   
 START_TEST(test_typecheck_valid_member_access) {
@@ -277,7 +277,7 @@ START_TEST(test_typecheck_valid_member_access) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_invalid_member_access) {
@@ -307,7 +307,7 @@ START_TEST(test_typecheck_invalid_member_access) {
             4, 8, 4, 18),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_member_access2) {
@@ -337,7 +337,7 @@ START_TEST(test_typecheck_invalid_member_access2) {
             4, 8, 4, 17),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 Suite *analyzer_typecheck_operators_suite_create(void)

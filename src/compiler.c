@@ -5,6 +5,7 @@
 
 #include <info/info.h>
 #include <types/type_comparisons.h>
+#include <module.h>
 #include <compiler_args.h>
 #include <ast/ast.h>
 #include <front_ctx.h>
@@ -12,18 +13,21 @@
 #include <backend/llvm.h>
 
 struct rir_module;
+static struct compiler *g_compiler_instance = NULL;
 
-bool compiler_init(struct compiler *c)
+bool compiler_init(struct compiler *c, int rf_logtype)
 {
     RF_STRUCT_ZERO(c);
 
     // initialize Refu library
-    rf_init(LOG_TARGET_STDOUT,
+    rf_init(rf_logtype,
             NULL,
             LOG_WARNING,
             RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
             RF_DEFAULT_TS_SBUFF_INITIAL_SIZE
     );
+
+    darray_init(c->modules);
 
     // initialize an error buffer string
     if (!rf_stringx_init_buff(&c->err_buff, 1024, "")) {
@@ -46,10 +50,85 @@ bool compiler_init(struct compiler *c)
     return true;
 }
 
-void compiler_deinit(struct compiler *c)
+struct compiler *compiler_alloc()
+{
+    struct compiler *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    // can't use RF_ASSERT() here, comes before rf_init()
+    assert(!g_compiler_instance);
+    g_compiler_instance = ret;
+    return ret;
+}
+
+struct compiler *compiler_create(int rf_logtype)
+{
+    struct compiler *compiler = compiler_alloc();
+    return compiler_init(compiler, rf_logtype) ? compiler : NULL;
+}
+
+static bool compiler_init_with_args(struct compiler *c, int rf_logtype, int argc, char **argv)
+{
+    if (!compiler_init(c, rf_logtype)) {
+        return false;
+    }
+
+    return compiler_pass_args(argc, argv);
+}
+
+struct compiler *compiler_create_with_args(int rf_logtype, int argc, char **argv)
+{
+    struct compiler *ret = compiler_alloc();
+    if (!compiler_init_with_args(ret, rf_logtype, argc, argv)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct compiler *compiler_instance_get()
+{
+    return g_compiler_instance;
+}
+
+
+struct front_ctx *compiler_new_front(struct compiler *c,
+                                     const struct RFstring *input_name,
+                                     bool is_main)
+{
+    struct front_ctx *front;
+    if (!(front = front_ctx_create(c->args, input_name, is_main))) {
+        RF_ERROR("Failure at frontend context initialization");
+        return NULL;
+    }
+
+    rf_ilist_add(&c->front_ctxs, &front->ln);
+    return front;
+}
+
+struct front_ctx *compiler_new_front_from_source(struct compiler *c,
+                                                 const struct RFstring *name,
+                                                 const struct RFstring *source,
+                                                 bool is_main)
+{
+    struct front_ctx *front;
+    if (!(front = front_ctx_create_from_source(c->args, name, source, is_main))) {
+        RF_ERROR("Failure at frontend context initialization");
+        return NULL;
+    }
+
+    rf_ilist_add(&c->front_ctxs, &front->ln);
+    return front;
+}
+
+static void compiler_deinit(struct compiler *c)
 {
     struct front_ctx *front;
     struct front_ctx *tmp;
+    struct module **mod;
+    darray_foreach(mod, c->modules) {
+        module_destroy(*mod);
+    }
+    darray_free(c->modules);
     rf_ilist_for_each_safe(&c->front_ctxs, front, tmp, ln) {
         front_ctx_destroy(front);
     }
@@ -61,25 +140,16 @@ void compiler_deinit(struct compiler *c)
     rf_deinit();
 }
 
-static struct front_ctx *compiler_new_front(struct compiler *c,
-                                            const struct RFstring *input_name,
-                                            bool add_at_start)
+void compiler_destroy(struct compiler *c)
 {
-    struct front_ctx *front;
-    if (!(front = front_ctx_create(c->args, input_name))) {
-        RF_ERROR("Failure at frontend context initialization");
-        return NULL;
-    }
-    if (add_at_start) {
-        rf_ilist_add(&c->front_ctxs, &front->ln);
-    } else {
-        rf_ilist_add_tail(&c->front_ctxs, &front->ln);
-    }
-    return front;
+    compiler_deinit(c);
+    free(c);
+    g_compiler_instance = NULL;
 }
 
-bool compiler_pass_args(struct compiler *c, int argc, char **argv)
+bool compiler_pass_args(int argc, char **argv)
 {
+    struct compiler *c = g_compiler_instance;
     if (!compiler_args_parse(c->args, argc, argv)) {
         return false;
     }
@@ -92,17 +162,90 @@ bool compiler_pass_args(struct compiler *c, int argc, char **argv)
     return compiler_new_front(c, &c->args->input, true);
 }
 
-bool compiler_init_with_args(struct compiler *c, int argc, char **argv)
+struct module *compiler_module_get(const struct RFstring *name)
 {
-    if (!compiler_init(c)) {
+    struct module **mod;
+    struct compiler *c = g_compiler_instance;
+    darray_foreach(mod, c->modules) {
+        if (rf_string_equal(module_name(*mod), name)) {
+            return *mod;
+        }
+    }
+    return NULL;
+}
+
+static unsigned compiler_get_module_index(struct module *m)
+{
+    struct module **mod;
+    unsigned found_index = 0;
+    bool found = false;
+    darray_foreach(mod, compiler_instance_get()->modules) {
+        if (*mod == m) {
+            found = true;
+            break;
+        }
+        found_index ++;
+    }
+    RF_ASSERT(found, "A module must have been found at this point");
+    return found_index;
+}
+
+static bool compiler_visit_unmarked_module(struct module *m, unsigned i, bool *marks)
+{
+    // not a DAG, cyclic dependency detected
+    if (marks[i]) {
         return false;
     }
 
-    return compiler_pass_args(c, argc, argv);
+    marks[i] = true;
+    struct module **dependency;
+    darray_foreach(dependency, m->dependencies) {
+
+        // find index of dependency in marks
+        unsigned found_index = compiler_get_module_index(*dependency);
+        // visit the module
+        if (!compiler_visit_unmarked_module(*dependency, found_index, marks)) {
+            return false;
+        }
+    }
+
+    // add module 'm to the sorted list
+    rf_ilist_add(&compiler_instance_get()->sorted_modules, &m->ln);
+    return true;
 }
 
-static bool compiler_preprocess_fronts(struct compiler *c)
+static bool compiler_resolve_dependencies()
 {
+    struct compiler *c = g_compiler_instance;
+    struct module **mod;
+    rf_ilist_head_init(&c->sorted_modules);
+
+    // topologically sort the dependency DAG
+    unsigned int i;
+    bool *marks;
+    RF_CALLOC(marks, darray_size(c->modules), sizeof(bool), return false);
+
+    while (true) {
+        i = 0;
+        darray_foreach(mod, c->modules) {
+            // if module is unmarked
+            if (!marks[i]) {
+                if (!compiler_visit_unmarked_module(*mod, i, marks)) {
+                    free(marks);
+                    return false;
+                }
+            }
+            i++;
+        }
+    }
+
+    free(marks);
+    return true;
+}
+
+bool compiler_preprocess_fronts()
+{
+    struct compiler *c = g_compiler_instance;
     struct front_ctx *front;
     // make sure all files are parsed
     rf_ilist_for_each(&c->front_ctxs, front, ln) {
@@ -112,67 +255,37 @@ static bool compiler_preprocess_fronts(struct compiler *c)
     }
 
     // determine the dependencies of all the modules
-    rf_ilist_for_each(&c->front_ctxs, front, ln) {
-        if (!analyzer_determine_dependencies(front->analyzer, front->parser)) {
+    struct module **mod;
+    darray_foreach(mod, c->modules) {
+        if (!analyzer_determine_dependencies(*mod, (*mod)->front->parser)) {
             return false;
         }
     }
 
-    //TODO: resolve dependencies and figure out analyze order
+    // resolve dependencies and figure out analysis order
+    return compiler_resolve_dependencies();
+}
+
+bool compiler_process()
+{
+    struct compiler *c = g_compiler_instance;
     
-    return true;
-}
-
-static bool compiler_process_front(struct compiler *c,
-                                   struct front_ctx *front,
-                                   struct front_ctx *stdlib)
-{
-    // TODO: now here you will know the order of analysis so analyze the modules in order
-    struct analyzer *analyzer = front_ctx_process(front, stdlib);
-    if (!analyzer) {
-        RF_ERROR("Failure to parse and analyze the input");
-
-        // for now temporarily just dump all messages in the info context
-        // TODO: fix
-        if (!info_ctx_get_messages_fmt(front->info, MESSAGE_ANY, &c->err_buff)) {
-            RF_ERROR("Could not retrieve messages from the info context");
-            return false;
-        }
-        printf(RF_STR_PF_FMT, RF_STR_PF_ARG(&c->err_buff));
-        return false;
-    }
-
-    // for now at least, if an empty file is given quit here with a message
-    if (ast_node_get_children_number(analyzer->root) == 0) {
-        ERROR("Provided an empty file for compilation");
-        return false;
-    }
-
-    return true;
-}
-
-bool compiler_process(struct compiler *c)
-{
     // add the standard library to the front contexts
     struct front_ctx *stdlib_front;
     const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-    if (!(stdlib_front = compiler_new_front(c, &stdlib, true))) {
+    if (!(stdlib_front = compiler_new_front(c, &stdlib, false))) {
         RF_ERROR("Failed to add standard library to the front_ctxs");
         return false;
     }
 
-    // first and foremost process the standard library front context
-    if (!compiler_process_front(c, stdlib_front, NULL)) {
-        RF_ERROR("Failed to analyze stdlib module");
+    if (!compiler_preprocess_fronts()) {
         return false;
     }
-
-    struct front_ctx *front;
-    rf_ilist_for_each(&c->front_ctxs, front, ln) {
-        if (front == stdlib_front) {
-            continue;
-        }
-        if (!compiler_process_front(c, front, stdlib_front)) {
+    
+    // now analyze the modules in the topologically sorted order
+    struct module *mod;
+    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
+        if (!module_analyze(mod)) {
             RF_ERROR("Failed to analyze a module");
             return false;
         }
@@ -185,7 +298,7 @@ bool compiler_process(struct compiler *c)
     }
 #endif
 
-    if (!bllvm_generate(&c->front_ctxs, c->args)) {
+    if (!bllvm_generate(&c->modules, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");
         return false;
     }
@@ -196,4 +309,16 @@ bool compiler_process(struct compiler *c)
 bool compiler_help_requested(struct compiler *c)
 {
     return compiler_args_check_and_display_help(c->args);
+}
+
+struct RFstringx *compiler_get_errors(struct compiler *c)
+{
+    struct front_ctx *front;
+    rf_ilist_for_each(&c->front_ctxs, front, ln) {
+        if (!info_ctx_get_messages_fmt(front->info, MESSAGE_ANY, &c->err_buff)) {
+        return NULL;
+        }
+    }
+
+    return &c->err_buff;
 }

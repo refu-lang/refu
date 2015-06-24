@@ -31,12 +31,6 @@ void setup_analyzer_tests_with_filelog();
 void setup_analyzer_tests_no_source();
 void teardown_analyzer_tests();
 
-#define testsupport_have_stdlib(with_stdlib_)   do {                    \
-        if (with_stdlib_ && ! get_front_testdriver()->stdlib) {         \
-            front_testdriver_create_analyze_stdlib(get_front_testdriver()); \
-        }                                                           \
-    } while(0)
-
 #define testsupport_show_front_errors(msg_)                             \
     do {                                                                \
         struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
@@ -50,25 +44,21 @@ void teardown_analyzer_tests();
 
 #define testsupport_scan_and_parse()                                    \
     do {                                                                \
-        if (!(lexer_scan(front_testdriver_lexer()))) { \
-            testsupport_show_front_errors("Scanning failed"); \
+        if (!compiler_preprocess_fronts()) {                            \
+            testsupport_show_front_errors("Scanning/parsing failed");   \
         }                                                               \
-        if (!(parser_process_file(front_testdriver_parser(), &get_front_testdriver()->current_front->modules))) { \
-            testsupport_show_front_errors("Parsing failed");            \
-        }                                                               \
-    } while (0)
+} while (0)
 
 #define testsupport_analyzer_prepare()                                  \
     do {                                                                \
         testsupport_scan_and_parse();                                   \
-        front_testdriver_analyzer()->root = parser_yield_ast_root(front_testdriver_parser()); \
-        ck_assert(ast_root_symbol_table_init(front_testdriver_analyzer()->root, \
-                                             front_testdriver_analyzer())); \
+        ck_assert(ast_root_symbol_table_init(front_testdriver_module()->node, \
+                                             front_testdriver_module())); \
     } while(0)
 
 #define testsupport_symbol_table_add_node(st_, id_, node_)              \
     do {                                                                \
-        ck_assert(symbol_table_add_node(st_, front_testdriver_analyzer(), id_, node_)); \
+        ck_assert(symbol_table_add_node(st_, front_testdriver_module(), id_, node_)); \
     } while(0)
 
 #define testsupport_symbol_table_lookup_node(st_, idstring_, retval_, first_st) \
@@ -130,24 +120,18 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
 /* -- typecheck related support -- */
 
 //! Assert all of the front context processing including typechecking is done
-#define ck_assert_typecheck_ok(with_stdlib_)                            \
+#define ck_assert_typecheck_ok()                                        \
     do {                                                                \
-        testsupport_have_stdlib(with_stdlib_);                          \
         testsupport_scan_and_parse();                                   \
-        if (!analyzer_analyze_file(front_testdriver_analyzer(),         \
-                                   front_testdriver_parser(),           \
-                                   get_front_testdriver()->stdlib)) {   \
+        if (!analyzer_analyze_module(front_testdriver_module())) {   \
             testsupport_show_front_errors("Typechecking failed");       \
         }                                                               \
     } while(0)
 
-#define ck_assert_typecheck_with_messages(success_, expected_msgs_, with_stdlib_) \
+#define ck_assert_typecheck_with_messages(success_, expected_msgs_) \
     do {                                                                \
-        testsupport_have_stdlib(with_stdlib_);                          \
         testsupport_scan_and_parse();                                   \
-        ck_assert_msg(success_ == analyzer_analyze_file(front_testdriver_analyzer(), \
-                                                        front_testdriver_parser(), \
-                                                        get_front_testdriver()->stdlib), \
+        ck_assert_msg(success_ == analyzer_analyze_module(front_testdriver_module()), \
                       "Unexpected typecheck result");                   \
         ck_assert_analyzer_errors(expected_msgs_);                      \
     } while(0)

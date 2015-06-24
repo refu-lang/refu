@@ -32,7 +32,7 @@ START_TEST(test_typecheck_matchexpr_simple) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
@@ -48,7 +48,7 @@ START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
@@ -64,7 +64,7 @@ START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
@@ -83,7 +83,7 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
@@ -99,7 +99,7 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
@@ -115,7 +115,7 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_access_field) {
@@ -130,7 +130,7 @@ START_TEST (test_typecheck_access_field) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);    
+    ck_assert_typecheck_ok();    
 } END_TEST
 
 START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
@@ -145,7 +145,7 @@ START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);    
+    ck_assert_typecheck_ok();    
 } END_TEST
 
 START_TEST (test_typecheck_access_fieldname_in_typeop) {
@@ -160,7 +160,7 @@ START_TEST (test_typecheck_access_fieldname_in_typeop) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);    
+    ck_assert_typecheck_ok();    
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
@@ -183,7 +183,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
             4, 4, 4, 18)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
@@ -206,7 +206,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
             4, 4, 4, 21)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
@@ -230,7 +230,7 @@ START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
             6, 4, 6, 22)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
@@ -255,7 +255,7 @@ START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
             5, 4, 8, 4)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
@@ -278,7 +278,7 @@ START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
             5, 8, 5, 20)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 Suite *analyzer_typecheck_matchexpr_suite_create(void)

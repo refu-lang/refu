@@ -25,7 +25,7 @@ START_TEST(test_typecheck_valid_function_call0) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call1) {
@@ -40,7 +40,7 @@ START_TEST(test_typecheck_valid_function_call1) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call2) {
@@ -56,7 +56,7 @@ START_TEST(test_typecheck_valid_function_call2) {
     );
     front_testdriver_new_source(&s);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_print_string) {
@@ -67,7 +67,7 @@ START_TEST(test_typecheck_valid_function_call_print_string) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_print_int) {
@@ -78,7 +78,7 @@ START_TEST(test_typecheck_valid_function_call_print_int) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_valid_function_call_with_sum_args) {
@@ -90,7 +90,7 @@ START_TEST(test_typecheck_valid_function_call_with_sum_args) {
         "}"
     );
     front_testdriver_new_source(&s);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_arguments) {
@@ -105,7 +105,6 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
         "}"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -116,7 +115,7 @@ START_TEST(test_typecheck_invalid_function_call_arguments) {
             6, 0, 6, 24),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_return) {
@@ -131,7 +130,6 @@ START_TEST(test_typecheck_invalid_function_call_return) {
         "}"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -141,7 +139,7 @@ START_TEST(test_typecheck_invalid_function_call_return) {
             6, 0, 6, 32),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_return2) {
@@ -152,7 +150,6 @@ START_TEST(test_typecheck_invalid_function_call_return2) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -161,7 +158,7 @@ START_TEST(test_typecheck_invalid_function_call_return2) {
             2, 7, 2, 7),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
@@ -176,7 +173,6 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
         "}"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -190,7 +186,7 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
             6, 8, 6, 32)
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
@@ -208,7 +204,7 @@ START_TEST (test_typecheck_invalid_function_call_undeclared_identifier) {
             "Undeclared identifier \"b\"",
             2, 10, 2, 10),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
@@ -228,7 +224,7 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
             "\"bool\" to \"string\".",
             3, 0, 3, 8),
     };
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl) {
@@ -243,9 +239,8 @@ START_TEST (test_typecheck_valid_function_impl) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
@@ -256,9 +251,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_void_return) {
         "\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
@@ -272,8 +266,7 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
         "\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 
     struct ast_node *fn_impl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
     ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
@@ -299,9 +292,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_return) {
         "\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_return) {
@@ -312,9 +304,8 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_with_complicated_re
         "\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
-    ck_assert_typecheck_ok(true);
+    ck_assert_typecheck_ok();
 } END_TEST
 
 START_TEST(test_typecheck_invalid_function_impl_return) {
@@ -325,7 +316,6 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
         "}\n"
     );
     front_testdriver_new_source(&s);
-    front_ctx_set_warn_on_implicit_conversions(front_tesdriver_curr(), true);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -335,7 +325,7 @@ START_TEST(test_typecheck_invalid_function_impl_return) {
             2, 0, 2, 8),
     };
 
-    ck_assert_typecheck_with_messages(false, messages, true);
+    ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
 

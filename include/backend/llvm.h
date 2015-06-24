@@ -5,6 +5,7 @@
 
 struct RFilist_head;
 struct compiler_args;
+struct modules_arr;
 
 
 /**
@@ -15,6 +16,6 @@ struct compiler_args;
  *
  * @return              true in succes and false for failure
  */
-bool bllvm_generate(struct RFilist_head *fronts, struct compiler_args *args);
+bool bllvm_generate(struct modules_arr *modules, struct compiler_args *args);
 
 #endif

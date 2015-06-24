@@ -32,7 +32,7 @@ void serializer_destroy(struct serializer *sr)
 }
 
 bool serializer_process(struct serializer *sr,
-                        const struct front_ctx *front)
+                        const struct module *mod)
 {
     struct RFstring *out_name;
     static const struct RFstring s_stdout = RF_STRING_STATIC_INIT("stdout");
@@ -47,7 +47,7 @@ bool serializer_process(struct serializer *sr,
             }
         }
         // for now just put it stdout, we will configure via compiler-args
-        if (!ast_output_to_file(front->analyzer->root, f, front->file)) {
+        if (!ast_output_to_file(mod->node, f, module_get_file(mod))) {
             return SERC_FAILURE;
         }
         if (f != stdout) {

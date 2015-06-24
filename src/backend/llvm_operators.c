@@ -187,7 +187,7 @@ LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
             from = LLVMBuildBitCast(
                 ctx->builder,
                 from,
-                LLVMPointerType(LLVMGetTypeByName(ctx->mod, "string"), 0),
+                LLVMPointerType(LLVMGetTypeByName(ctx->llvm_mod, "string"), 0),
                 ""
             );
         }

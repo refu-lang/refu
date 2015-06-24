@@ -1,5 +1,6 @@
 #include <types/type_function.h>
 
+#include <module.h>
 #include <types/type.h>
 #include <String/rf_str_core.h>
 
@@ -54,7 +55,7 @@ static inline bool type_is_product_op(const struct type *t)
 }
 
 static const struct type *do_type_fnargs_get_argtype_n(const struct type_operator *op,
-                                                             unsigned int n)
+                                                       unsigned int n)
 {
     const struct type *t;
     if (n == 0) {
@@ -103,10 +104,10 @@ const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int 
 }
 
 
-struct type *type_foreign_function_create(struct analyzer *a, const struct RFstring *name)
+struct type *type_foreign_function_create(struct module *mod, const struct RFstring *name)
 {
     struct type *ret;
-    ret = type_alloc(a);
+    ret = type_alloc(mod->analyzer);
     if (!ret) {
         RF_ERROR("Type allocation failed");
         return NULL;

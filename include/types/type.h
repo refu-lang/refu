@@ -10,6 +10,7 @@
 #include <types/type_elementary.h>
 #include <ir/rir_type.h>
 
+struct module;
 struct analyzer;
 struct symbol_table;
 struct RFbuffer;
@@ -24,48 +25,48 @@ void type_free(struct type *t, struct analyzer *a);
 /* -- various type creation and initialization functions -- */
 
 struct type *type_create_from_node(const struct ast_node *n,
-                                   struct analyzer *a,
+                                   struct module *m,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl);
 
 struct type *type_create_from_typedecl(const struct ast_node *n,
-                                       struct analyzer *a,
+                                       struct module *m,
                                        struct symbol_table *st);
 
 struct type *type_create_from_fndecl(const struct ast_node *n,
-                                     struct analyzer *a,
+                                     struct module *m,
                                      struct symbol_table *st);
 
-struct type *type_function_create(struct analyzer *a,
+struct type *type_function_create(struct module *m,
                                   struct type *arg_type,
                                   struct type *ret_type);
 
 
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
-                                       struct analyzer *a,
+                                       struct module *m,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
 struct type *type_create_from_typeelem(const struct ast_node *typedesc,
-                                       struct analyzer *a,
+                                       struct module *m,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
 
-struct type *type_operator_create(struct analyzer *a,
+struct type *type_operator_create(struct module *m,
                                   struct type *left_type,
                                   struct type *right_type,
                                   enum typeop_type type);
 
 struct type *type_operator_create_from_node(struct ast_node *n,
-                                            struct analyzer *a,
+                                            struct module *m,
                                             struct symbol_table *st,
                                             struct ast_node *genrdecl);
 
-struct type *type_leaf_create(struct analyzer *a,
+struct type *type_leaf_create(struct module *m,
                               const struct RFstring *id,
                               struct type *leaf_type);
 
 struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
-                                        struct analyzer *a,
+                                        struct module *m,
                                         struct symbol_table *st,
                                         struct ast_node *genrdecl);
 
@@ -78,7 +79,7 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
  *        the kind of type this should return
  *
  * @param n            The node whose type to retrieve/create
- * @param a            The analyzer instance for which to do it
+ * @param m            The module for which to do it
  * @param st           The symbol table to check for the type
  * @param genrdecl     An optional generic declaration node that describes @c n.
  *                     Can be NULL.
@@ -89,7 +90,7 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
  * @return             Return either the type of @c n or NULL if there was an error
  */
 struct type *type_lookup_or_create(const struct ast_node *n,
-                                   struct analyzer *a,
+                                   struct module *m,
                                    struct symbol_table *st,
                                    struct ast_node *genrdecl,
                                    bool make_leaf);
@@ -99,18 +100,18 @@ struct type *type_lookup_or_create(const struct ast_node *n,
  * @param type          The type operator to apply to @c left and @c right
  * @param left          The type to become left part of the operand
  * @param right         The type to become right part of the operand
- * @param a             The analyzer instance for which we are typechecking
+ * @param a             The module instance for which we are typechecking
  * @return              The new type or NULL if there was an error
  */
 struct type *type_create_from_operation(enum typeop_type type,
                                         struct type *left,
                                         struct type *right,
-                                        struct analyzer *a);
+                                        struct module *m);
 
 struct type *type_lookup_identifier_string(const struct RFstring *str,
                                            const struct symbol_table *st);
 struct type *type_lookup_xidentifier(const struct ast_node *n,
-                                     struct analyzer *a,
+                                     struct module *mod,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);
 

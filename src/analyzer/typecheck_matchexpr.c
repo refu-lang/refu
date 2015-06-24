@@ -1,5 +1,6 @@
 #include <analyzer/typecheck_matchexpr.h>
 
+#include <module.h>
 #include <ast/ast.h>
 #include <ast/matchexpr.h>
 #include <analyzer/analyzer.h>
@@ -83,7 +84,7 @@ void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx)
 }
 
 static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
-                                         struct analyzer *analyzer,
+                                         struct module *m,
                                          struct ast_node *matchexpr)
 {
     struct rf_objset_iter it1;
@@ -107,7 +108,7 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
             }
             if (!found) {
                 RFS_PUSH();
-                analyzer_err(analyzer, ast_node_startmark(matchexpr),
+                analyzer_err(m, ast_node_startmark(matchexpr),
                              ast_node_endmark(matchexpr),
                              "Match expression does not match all cases for "
                              "\""RF_STR_PF_FMT"\". Sum type operand of "
@@ -270,7 +271,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     RF_ASSERT(case_pattern_type, "a type for the match case pattern should have been determined");
 
     if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Match case \""RF_STR_PF_FMT"\" can not be matched to the "
                      "type of \""RF_STR_PF_FMT"\" which is of type \""RF_STR_PF_FMT"\".",
                      RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
@@ -281,7 +282,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     }
 
     if (useless_case) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Match case \""RF_STR_PF_FMT"\" is useless since all parts of "
                      "\""RF_STR_PF_FMT"\" have already been matched.",
                      RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
@@ -304,7 +305,7 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
 {
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
-    if (!pattern_matching_ctx_compare(&ctx->matching_ctx, ctx->a, n)) {
+    if (!pattern_matching_ctx_compare(&ctx->matching_ctx, ctx->m, n)) {
         ret = TRAVERSAL_CB_ERROR;
     }
 
@@ -336,7 +337,7 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
                 TYPEOP_SUM,
                 matchexpr_type,
                 case_type,
-                ctx->a);
+                ctx->m);
         } else {
             matchexpr_type = case_type;
         }

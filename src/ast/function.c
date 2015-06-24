@@ -37,7 +37,7 @@ i_INLINE_INS struct ast_node *ast_fndecl_return_get(const struct ast_node *n);
 i_INLINE_INS enum fndecl_position ast_fndecl_position_get(const struct ast_node *n);
 i_INLINE_INS unsigned ast_fndecl_argsnum_get(const struct ast_node *n);
 i_INLINE_INS bool ast_fndecl_symbol_table_init(struct ast_node *n,
-                                               struct analyzer *a);
+                                               struct module *m);
 i_INLINE_INS struct symbol_table *ast_fndecl_symbol_table_get(struct ast_node *n);
 
 /* -- function implementation functions -- */
@@ -49,7 +49,8 @@ struct ast_node *ast_fnimpl_create(const struct inplocation_mark *start,
 {
     struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(decl, AST_FUNCTION_DECLARATION);
-    AST_NODE_ASSERT_TYPE(body, AST_BLOCK || AST_MATCH_EXPRESSION);
+    RF_ASSERT(body->type == AST_BLOCK || body->type == AST_MATCH_EXPRESSION,
+              "Unexpected ast node type");
 
     ret = ast_node_create_marks(AST_FUNCTION_IMPLEMENTATION, start, end);
     if (!ret) {

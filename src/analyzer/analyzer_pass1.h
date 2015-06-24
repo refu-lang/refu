@@ -5,7 +5,7 @@
 
 struct analyzer;
 struct ast_node;
-struct front_ctx;
+struct module;
 struct analyzer_traversal_ctx;
 
 /**
@@ -20,11 +20,11 @@ struct analyzer_traversal_ctx;
  * This way they can all be disassociated from the file.
  *
  * @param a           The analyzer handle
- * @param stdlib      If we compile with stdlib this is not NULL and should
- *                    contains the struct front_ctx of the stdlib
+ * @param mod         A pointer to the module object for the first pass.
+ *                    We need it for the dependencies modules list
  * @return            True for success, false otherwise
  */
-bool analyzer_first_pass(struct analyzer *a, struct front_ctx *stdlib);
+bool analyzer_first_pass(struct module *mod);
 
 /**
  * A function to to be called for a node while traversing the AST

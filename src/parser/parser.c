@@ -8,23 +8,26 @@
 bool parser_init(struct parser *p,
                  struct inpfile *file,
                  struct lexer *lex,
-                 struct info_ctx *info)
+                 struct info_ctx *info,
+                 struct front_ctx *front)
 {
     p->root = NULL;
     p->file = file;
     p->lexer = lex;
     p->info = info;
+    p->front = front;
     p->have_syntax_err = false;
     return true;
 }
 
 struct parser *parser_create(struct inpfile *f,
                              struct lexer *lex,
-                             struct info_ctx *info)
+                             struct info_ctx *info,
+                             struct front_ctx *front)
 {
     struct parser *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!parser_init(ret, f, lex, info)) {
+    if (!parser_init(ret, f, lex, info, front)) {
         free(ret);
         return NULL;
     }

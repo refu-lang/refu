@@ -11,10 +11,10 @@
 static bool front_ctx_init(struct front_ctx *ctx,
                            const struct compiler_args *args,
                            const struct RFstring *input_file_name,
-                           const struct RFstring *file_contents)
+                           const struct RFstring *file_contents,
+                           bool is_main)
 {
     RF_STRUCT_ZERO(ctx);
-    darray_init(ctx->modules);
     ctx->file = file_contents
         ? inpfile_create_from_string(input_file_name, file_contents)
         : inpfile_create(input_file_name);
@@ -32,20 +32,15 @@ static bool front_ctx_init(struct front_ctx *ctx,
         goto free_info;
     }
 
-    ctx->parser = parser_create(ctx->file, ctx->lexer, ctx->info);
+    ctx->parser = parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
     if (!ctx->parser) {
         goto free_lexer;
     }
 
-    ctx->analyzer = analyzer_create(ctx->info);
-    if (!ctx->analyzer) {
-        goto free_parser;
-    }
+    ctx->is_main = is_main;
 
     return true;
 
-free_parser:
-    parser_destroy(ctx->parser);
 free_lexer:
     lexer_destroy(ctx->lexer);
 free_info:
@@ -57,11 +52,12 @@ err:
 }
 
 struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *input_file)
+                                   const struct RFstring *input_file,
+                                   bool is_main)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, input_file, NULL)) {
+    if (!front_ctx_init(ret, args, input_file, NULL, is_main)) {
         free(ret);
         return NULL;
     }
@@ -70,11 +66,12 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args,
 
 struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
                                                const struct RFstring *file_name,
-                                               const struct RFstring *source)
+                                               const struct RFstring *source,
+                                               bool is_main)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, file_name, source)) {
+    if (!front_ctx_init(ret, args, file_name, source, is_main)) {
         free(ret);
         return NULL;
     }
@@ -83,17 +80,10 @@ struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {
-    struct module **mod;
-
-    darray_foreach(mod, ctx->modules) {
-        module_destroy(*mod);
-    }
-    darray_free(ctx->modules);
     inpfile_destroy(ctx->file);
     lexer_destroy(ctx->lexer);
     parser_destroy(ctx->parser);
     info_ctx_destroy(ctx->info);
-    analyzer_destroy(ctx->analyzer);
 }
 
 void front_ctx_destroy(struct front_ctx *ctx)
@@ -108,44 +98,5 @@ bool front_ctx_parse(struct front_ctx *ctx)
         return false;
     }
 
-    return parser_process_file(ctx->parser, &ctx->modules);
+    return parser_process_file(ctx->parser, ctx->is_main);
 }
-
-bool front_ctx_analyze(struct front_ctx *ctx, struct symbol_table *imported_symbols)
-{
-    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, stdlib)) {
-        return NULL;
-    }
-
-    if (!analyzer_finalize(ctx->analyzer, stdlib)) {
-        return NULL;
-    }
-
-    return ctx->analyzer;
-}
-
-struct analyzer *front_ctx_process(struct front_ctx *ctx, struct front_ctx *stdlib)
-{
-    if (!lexer_scan(ctx->lexer)) {
-        return NULL;
-    }
-
-    if (!parser_process_file(ctx->parser, &ctx->modules)) {
-        return NULL;
-    }
-
-    if (!analyzer_analyze_file(ctx->analyzer, ctx->parser, stdlib)) {
-        return NULL;
-    }
-
-    if (!analyzer_finalize(ctx->analyzer, stdlib)) {
-        return NULL;
-    }
-
-    return ctx->analyzer;
-}
-
-
-/* -- some convenience setters/getters --*/
-i_INLINE_INS void front_ctx_set_warn_on_implicit_conversions(struct front_ctx *ctx,
-                                                             bool v);

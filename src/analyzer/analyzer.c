@@ -24,7 +24,7 @@
 #define TYPES_POOL_CHUNK_SIZE 2048
 
 i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
-                                              struct analyzer *a);
+                                              struct module *m);
 i_INLINE_INS void analyzer_traversal_ctx_deinit(struct analyzer_traversal_ctx *ctx);
 i_INLINE_INS struct ast_node *analyzer_traversal_ctx_get_nth_parent(
     unsigned int num,
@@ -129,64 +129,58 @@ void analyzer_destroy(struct analyzer *a)
     free(a);
 }
 
-struct inpfile *analyzer_get_file(struct analyzer *a)
-{
-    return a->info->file;
-}
-
 // TODO: Maybe delete this function and simply use rf_objset_add() ?
 bool analyzer_types_set_add(struct analyzer *a, struct type *new_type)
 {
     return rf_objset_add(a->types_set, type, new_type);
 }
 
-struct type *analyzer_get_or_create_type(struct analyzer *a,
+struct type *analyzer_get_or_create_type(struct module *mod,
                                          const struct ast_node *desc,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl)
 {
     struct type *t;
     struct rf_objset_iter it;
-    AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
-    rf_objset_foreach(a->types_set, &it, t) {
-        if (type_equals_ast_node(t, desc, a, st, genrdecl, TYPECMP_GENERIC)) {
+    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION || desc->type == AST_TYPE_OPERATOR,
+              "Unexpected ast node type");
+    rf_objset_foreach(mod->analyzer->types_set, &it, t) {
+        if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_GENERIC)) {
             return t;
         }
     }
 
     // else we have to create a new type
-    t = type_create_from_node(desc, a, st, genrdecl);
+    t = type_create_from_node(desc, mod, st, genrdecl);
     if (!t) {
         RF_ERROR("Failure to create a composite type");
         return NULL;
     }
 
     // add it to the list
-    analyzer_types_set_add(a, t);
+    analyzer_types_set_add(mod->analyzer, t);
     if (desc->type == AST_TYPE_OPERATOR && ast_typeop_op(desc) == TYPEOP_SUM) {
         // if it's a sum type also add the left and the right operand type
-        analyzer_types_set_add(a, t->operator.left);
-        analyzer_types_set_add(a, t->operator.right);
+        analyzer_types_set_add(mod->analyzer, t->operator.left);
+        analyzer_types_set_add(mod->analyzer, t->operator.right);
     }
     return t;
 }
 
-bool analyzer_analyze_module(struct analyzer *a,
-                             struct ast_node *module,
-                             struct symbol_table *imported_symbols)
+bool analyzer_analyze_module(struct module *module)
 {
     // create symbol tables and change ast nodes ownership
-    if (!analyzer_first_pass(a, imported_symbols)) {
+    if (!analyzer_first_pass(module)) {
         RF_ERROR("Failure at analyzer's first pass");
         return false;
     }
 
-    if (!analyzer_typecheck(a, a->root)) {
+    if (!analyzer_typecheck(module, module->node)) {
         RF_ERROR("Failure at analyzer's typechecking");
         return false;
     }
 
-    if (!analyzer_finalize(a, stdlib)) {
+    if (!analyzer_finalize(module)) {
         RF_ERROR("Failure at analyzer's finalization");
         return false;
     }
@@ -207,24 +201,21 @@ static bool analyzer_determine_dependencies_do(struct ast_node *n, void *user_ar
     return true;
 }
 
-bool analyzer_determine_dependencies(struct analyzer *a,
+bool analyzer_determine_dependencies(struct module *m,
                                      struct parser *parser)
 {
     // acquire the root of the AST from the parser
-    a->root = parser_yield_ast_root(parser);
+    m->analyzer->root = parser_yield_ast_root(parser);
     // initialize root symbol table here instead of analyzer_first_pass
     // since we need it beforehand to get symbols from import
-    if (!ast_root_symbol_table_init(a->root, a)) {
+    if (!ast_root_symbol_table_init(m->analyzer->root, m)) {
         RF_ERROR("Could not initialize symbol table for root node");
         return false;
     }
 
-    // for each module in the modules list read the imports and determine dependencies
-    struct module **mod;
-    darray_foreach(mod, *parser->modules_array) {
-        if (!ast_pre_traverse_tree((*mod)->node, analyzer_determine_dependencies_do, mod)) {
-            return false;
-        }
+    // read the imports and determine dependencies
+    if (!ast_pre_traverse_tree(m->node, analyzer_determine_dependencies_do, m)) {
+        return false;
     }
     return true;
 }
@@ -244,8 +235,8 @@ static void analyzer_finalize_fndecl(struct ast_node *n)
 
 static enum traversal_cb_res analyzer_finalize_do(struct ast_node *n, void *user_arg)
 {
-    struct analyzer *a = user_arg;
-    (void)a;
+    struct module *m = user_arg;
+    (void)m;
     switch (n->type) {
     case AST_FUNCTION_DECLARATION:
         analyzer_finalize_fndecl(n);
@@ -260,30 +251,33 @@ static enum traversal_cb_res analyzer_finalize_do(struct ast_node *n, void *user
 
 static bool do_nothing(struct ast_node *n, void *user_arg) { return true; }
 
-bool analyzer_finalize(struct analyzer *a, struct front_ctx *stdlib)
+bool analyzer_finalize(struct module *m)
 {
-    // if stdlib is passed copy its types to the module
-    if (stdlib) {
+    // for now copy types of all dependencies.
+    // TODO: Should be searching the dependencies when needed and not copy here
+    struct module **dependency;
+    darray_foreach(dependency, m->dependencies) {
         struct rf_objset_iter it;
         struct type *t;
-        rf_objset_foreach(stdlib->analyzer->types_set, &it, t) {
-            if (!rf_objset_add(a->types_set, type, t)) {
+        rf_objset_foreach((*dependency)->analyzer->types_set, &it, t) {
+            if (!rf_objset_add(m->analyzer->types_set, type, t)) {
                 RF_ERROR("rf_objset_add() failure");
                 return false;
             }
         }
     }
+    
     // create the rir types list from the types set for this module
-    if (!(a->rir_types_list = rir_types_list_create(a->types_set))) {
+    if (!(m->analyzer->rir_types_list = rir_types_list_create(m->analyzer->types_set))) {
         return false;
     }
     // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
-                    a->root,
+                    m->node,
                     do_nothing,
                     NULL,
                     analyzer_finalize_do,
-                    a
+                    m
                 )
     );
     return ret;    

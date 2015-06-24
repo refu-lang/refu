@@ -5,6 +5,7 @@
 #include <Persistent/buffers.h>
 #include <String/rf_str_core.h>
 
+#include <module.h>
 #include <ast/ast.h>
 #include <ast/operators.h>
 #include <ast/function.h>
@@ -41,14 +42,14 @@ static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node 
 {
     *tleft = ast_node_get_type(left, AST_TYPERETR_DEFAULT);
     if (!*tleft) {
-        analyzer_err(ctx->a, ast_node_startmark(left), ast_node_endmark(left),
+        analyzer_err(ctx->m, ast_node_startmark(left), ast_node_endmark(left),
                      "Type of left side of \""RF_STR_PF_FMT"\" can not be determined",
                      RF_STR_PF_ARG(ast_binaryop_opstr(n)));
         return false;
     }
     *tright = ast_node_get_type(right, AST_TYPERETR_DEFAULT);
     if (!*tright) {
-        analyzer_err(ctx->a, ast_node_startmark(right), ast_node_endmark(right),
+        analyzer_err(ctx->m, ast_node_startmark(right), ast_node_endmark(right),
                      "Type of right side of \""RF_STR_PF_FMT"\" can not be determined",
                      RF_STR_PF_ARG(ast_binaryop_opstr(n)));
         return false;
@@ -117,7 +118,7 @@ static enum traversal_cb_res typecheck_unaryop_generic(struct ast_node *n,
 fail:
     n->expression_type = NULL;
     RFS_PUSH();
-    analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+    analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                  "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
                  error_intro, RF_STR_PF_ARG(ast_unaryop_opstr(n)),
                  error_conj, RF_STR_PF_ARG(type_str_or_die(operand_type, TSTR_DEFAULT)));
@@ -148,7 +149,7 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
     final_type = typecheck_do_type_conversion(tleft, tright, ctx);
     RFS_PUSH();
     if (!final_type && !operator_applicable_cb(left, right, ctx)) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
                      error_intro, RF_STR_PF_ARG(type_str_or_die(tright, TSTR_DEFAULT)),
                      error_conj, RF_STR_PF_ARG(type_str_or_die(tleft, TSTR_DEFAULT)));
@@ -185,7 +186,7 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
     final_type = typecheck_do_type_conversion(tleft, tright, ctx);
     if (!final_type && !operator_applicable_cb(left, right, ctx)) {
         RFS_PUSH();
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
                      error_intro,
                      RF_STR_PF_ARG(type_str_or_die(tright, TSTR_DEFAULT)),
@@ -250,7 +251,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     tleft = ast_node_get_type(left, AST_TYPERETR_DEFAULT);
 
     if (!tleft) {
-        analyzer_err(ctx->a, ast_node_startmark(left),
+        analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
                      "Undeclared identifier \""RF_STR_PF_FMT"\" as left part of "
                      "member access operator",
@@ -260,7 +261,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
 
     // left type of member access should be a custom defined type
     if (!type_category_equals(tleft, TYPE_CATEGORY_DEFINED)) {
-        analyzer_err(ctx->a, ast_node_startmark(left),
+        analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
                      "Left part of member access operator \""RF_STR_PF_FMT"\"is "
                      "not a user defined type",
@@ -270,7 +271,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
 
     // right type of member access should be an identifier (at least for now)
     if (right->type != AST_IDENTIFIER) {
-        analyzer_err(ctx->a, ast_node_startmark(right),
+        analyzer_err(ctx->m, ast_node_startmark(right),
                      ast_node_endmark(right),
                      "Right part of member access operator is not an identifier"
                      " but is \""RF_STR_PF_FMT"\"",
@@ -284,7 +285,7 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
                                    &member_access_iter_ctx);
     if (!traversal_success(rc)) {
         RFS_PUSH();
-        analyzer_err(ctx->a, ast_node_startmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Could not find member \""RF_STR_PF_FMT"\" in type \""
                      RF_STR_PF_FMT"\"",
@@ -319,7 +320,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
         if (!analyzer_traversal_ctx_traverse_parents(ctx,
                                                     wilcard_parent_is_matchcase,
                                                     NULL)) {
-            analyzer_err(ctx->a, ast_node_startmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n),
                          ast_node_endmark(n),
                          "Reserved wildcard identifier '_' used outside of "
                          " a match expression");
@@ -345,7 +346,7 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
         parent->type == AST_IMPORT) {
         return TRAVERSAL_CB_OK;
     }
-    analyzer_err(ctx->a, ast_node_startmark(n),
+    analyzer_err(ctx->m, ast_node_startmark(n),
                  ast_node_endmark(n),
                  "Undeclared identifier \""RF_STR_PF_FMT"\"",
                  RF_STR_PF_ARG(ast_identifier_str(n)));
@@ -369,7 +370,7 @@ static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
     // an ast_type_leaf's type is a type leaf
     traversal_node_set_type(
         n,
-        analyzer_get_or_create_type(ctx->a, n, ctx->current_st, NULL),
+        analyzer_get_or_create_type(ctx->m, n, ctx->current_st, NULL),
         ctx
     );
     return TRAVERSAL_CB_OK;
@@ -409,7 +410,7 @@ static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
     }
 
     // for the rest we need to create it here
-    n->expression_type = type_lookup_or_create(n, ctx->a, ctx->current_st, NULL, true);
+    n->expression_type = type_lookup_or_create(n, ctx->m, ctx->current_st, NULL, true);
     RF_ASSERT_OR_EXIT(n->expression_type, "Could not determine type of matchase type operation");
     return TRAVERSAL_CB_OK;
 }
@@ -437,7 +438,7 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
 
     // left side of an assignment should be an identifier or a variable declaration
     if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
-        analyzer_err(ctx->a, ast_node_startmark(left),
+        analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
                      "Expected an identifier or a variable declaration "
                      "as left part of the assignment "
@@ -457,7 +458,7 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
         if (typecmp_ctx_have_warning()) {
             const struct RFstring *warning;
             while ((warning = typecmp_ctx_get_next_warning())) {
-                analyzer_warn(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+                analyzer_warn(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                               RF_STR_PF_FMT" during assignment.",
                               RF_STR_PF_ARG(warning));
             }
@@ -465,7 +466,7 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
             RFS_PUSH();
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                          "Assignment between incompatible types. Can't assign "
                          "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\""
                          "%s"RF_STR_PF_FMT".",
@@ -505,7 +506,7 @@ static enum traversal_cb_res typecheck_comma(struct ast_node *n,
                             type_create_from_operation(TYPEOP_PRODUCT,
                                                        (struct type*)tleft,
                                                        (struct type*)tright,
-                                                       ctx->a),
+                                                       ctx->m),
                             ctx);
     if (!ast_node_get_type(n, AST_TYPERETR_DEFAULT)) {
         RF_ERROR("Could not create a type as a product of 2 other types.");
@@ -530,7 +531,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     if (fn_type && type_is_foreign_function(fn_type)) {
         // only allow a few specific foreign functions for the moment
         if (!type_foreign_function_allowed(fn_type)) {
-            analyzer_err(ctx->a, ast_node_startmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n),
                          ast_node_endmark(n),
                          "Illegal foreign function call \""RF_STR_PF_FMT"\" detected",
                          RF_STR_PF_ARG(fn_name));
@@ -542,7 +543,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
         return TRAVERSAL_CB_OK;
     }
     if (!fn_type || !type_is_callable(fn_type)) {
-        analyzer_err(ctx->a, ast_node_startmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
                      "Undefined function call \""RF_STR_PF_FMT"\" detected",
                      RF_STR_PF_ARG(fn_name));
@@ -559,7 +560,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     if (type_is_explicitly_convertable_elementary(fn_type)) {
         // silly way to check if it's only 1 argument. Maybe figure out safer way?
         if (!fn_call_args || fn_found_args_type->category == TYPE_CATEGORY_OPERATOR) {
-            analyzer_err(ctx->a, ast_node_startmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n),
                          ast_node_endmark(n),
                          "Invalid arguments for explicit conversion to \""
                          RF_STR_PF_FMT"\".",
@@ -569,7 +570,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
 
         // check if the explicit conversion is valid
         if (!type_compare(fn_found_args_type, fn_type, TYPECMP_EXPLICIT_CONVERSION)) {
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                          "Invalid explicit conversion. "RF_STR_PF_FMT".",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             goto fail;
@@ -583,7 +584,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                           fn_declared_args_type,
                           type_is_sumop(fn_declared_args_type) ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
-            analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                          RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
                          "\""RF_STR_PF_FMT"\" which does not match the expected "
                          "type of \""RF_STR_PF_FMT"\"%s"RF_STR_PF_FMT".",
@@ -617,7 +618,7 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
     const struct type *fn_type;
     if (!fn_decl) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement outside of function body");
         return TRAVERSAL_CB_ERROR;
     }
@@ -626,7 +627,7 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     // Do it now .. which is not optimal since it will happen again when going upwards
     // TODO: perhaps add a check in the typecheck reverse tree traversal to not visit
     // certain subtrees if they are already typechecked.
-    if (!analyzer_typecheck(ctx->a, fn_decl)) {
+    if (!analyzer_typecheck(ctx->m, fn_decl)) {
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -643,7 +644,7 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
 
     if (!type_compare(fn_ret_type, found_ret_type, TYPECMP_IMPLICIT_CONVERSION)) {
         RFS_PUSH();
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Return statement type \""RF_STR_PF_FMT"\" does not match "
                      "the expected return type of \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(type_str_or_die(found_ret_type, TSTR_DEFAULT)),
@@ -668,7 +669,7 @@ static enum traversal_cb_res typecheck_import(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
     if (!ast_import_is_foreign(n)) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Only foreign imports are supported for now");
         return TRAVERSAL_CB_ERROR;
     }
@@ -778,7 +779,7 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
 
     operand_type = ast_node_get_type(ast_unaryop_operand(n), AST_TYPERETR_DEFAULT);
     if (!operand_type) {
-        analyzer_err(ctx->a, ast_node_startmark(n), ast_node_endmark(n),
+        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Type for operand of \""RF_STR_PF_FMT"\" can not be determined",
                      RF_STR_PF_ARG(ast_unaryop_opstr(n)));
         return TRAVERSAL_CB_ERROR;
@@ -901,13 +902,13 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     return ret;
 }
 
-bool analyzer_typecheck(struct analyzer *a, struct ast_node *root)
+bool analyzer_typecheck(struct module *mod, struct ast_node *n)
 {
     struct analyzer_traversal_ctx ctx;
-    analyzer_traversal_ctx_init(&ctx, a);
+    analyzer_traversal_ctx_init(&ctx, mod);
 
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
-                    root,
+                    n,
                     (ast_node_cb)analyzer_handle_traversal_descending,
                     &ctx,
                     typecheck_do,

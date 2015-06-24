@@ -7,13 +7,12 @@
 #include <inpfile.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
+#include <compiler.h>
 
 
 struct front_testdriver {
-    struct {darray(struct front_ctx*);} fronts;
+    struct compiler *compiler;
     struct front_ctx *current_front;
-    struct front_ctx *stdlib;
-    struct RFstringx buffstr;
     //! A buffer of ast node pointers for easy freeing
     //! of some nodes at test teardown
     struct {darray(struct ast_node*);} nodes;
@@ -25,22 +24,21 @@ struct front_testdriver {
  */
 struct front_testdriver *get_front_testdriver();
 
-bool front_testdriver_init(struct front_testdriver *p, bool with_stdlib);
+bool front_testdriver_init(struct front_testdriver *p, bool with_stdlib, int rf_logtype);
 void front_testdriver_deinit(struct front_testdriver *p);
 
-/**
- * Set the currently active front_ctx for testing operations
- * that are front_ctx specific
- */
-bool front_testdriver_set_current_front(struct front_testdriver *d, unsigned i);
 /**
  * Get the current front_ctx of the testdriver
  */
 struct front_ctx *front_tesdriver_curr();
 /**
- * Get the analyzer of the current front_ctx being tested
+ * Get the first analyzer of the current module being tested
  */
 struct analyzer *front_testdriver_analyzer();
+/**
+ * Get the first module being tested
+ */
+struct module *front_testdriver_module();
 /**
  * Get the parser of the current front_ctx being tested
  */
@@ -61,7 +59,7 @@ void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
  */
 struct front_ctx *front_testdriver_new_source(const struct RFstring *s);
 
-/**P
+/**
  * Returns a pointer to the buffer string after having populated it with
  * any parsing errors that may have occured. If no errors occured then
  * returns NULL.
@@ -100,6 +98,7 @@ struct ast_node *do_front_testdriver_generate_node(
     } while(0)
 
 void setup_front_tests();
+void setup_front_tests_no_stdlib();
 void setup_front_tests_with_file_log();
 void teardown_front_tests();
 

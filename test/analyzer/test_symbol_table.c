@@ -38,8 +38,9 @@ START_TEST(test_symbol_table_add) {
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("a");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("var_2");
     front_testdriver_new_source(&s);
+    testsupport_analyzer_prepare();
 
-    ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
+    ck_assert(symbol_table_init(&st, front_testdriver_module()));
 
     struct ast_node *id1 = front_testdriver_generate_identifier(0, 0, 0, 0,
                                                                 "a");
@@ -85,7 +86,7 @@ START_TEST(test_symbol_table_add_existing) {
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("var_2");
     front_testdriver_new_source(&s);
 
-    ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
+    ck_assert(symbol_table_init(&st, front_testdriver_module()));
 
     struct ast_node *id1 = front_testdriver_generate_identifier(0, 0, 0, 0,
                                                                 "a");
@@ -108,7 +109,7 @@ START_TEST(test_symbol_table_add_existing) {
 
     testsupport_symbol_table_add_node(&st, ast_identifier_str(id1), v1);
     testsupport_symbol_table_add_node(&st, ast_identifier_str(id2), v2);
-    ck_assert(!symbol_table_add_node(&st, front_testdriver_analyzer(),
+    ck_assert(!symbol_table_add_node(&st, front_testdriver_module(),
                                      ast_identifier_str(id2), v2));
 
     n = symbol_table_lookup_node(&st, &id1s, &at_first);
@@ -128,7 +129,7 @@ START_TEST(test_symbol_table_lookup_non_existing) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
     front_testdriver_new_source(&s);
 
-    ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
+    ck_assert(symbol_table_init(&st, front_testdriver_module()));
 
     ck_assert(symbol_table_lookup_record(&st, &id1s, NULL) == NULL);
     ck_assert(symbol_table_lookup_record(&st, &id2s, NULL) == NULL);
@@ -269,14 +270,14 @@ START_TEST(test_symbol_table_many_symbols) {
     struct symbol_table st;
     static const struct RFstring s = RF_STRING_STATIC_INIT("program");
     front_testdriver_new_source(&s);
-    ck_assert(symbol_table_init(&st, front_testdriver_analyzer()));
+    ck_assert(symbol_table_init(&st, front_testdriver_module()));
 
     ids_num = sizeof(ids_arr) / sizeof(struct st_test_record);
     for (i = 0; i < ids_num; i ++) {
         n = generate_test_vardecl(i);
         ck_assert_msg(n, "Could not generate a test vardecl");
         ids_arr[i].n = n;
-        ck_assert_msg(symbol_table_add_node(&st, front_testdriver_analyzer(),
+        ck_assert_msg(symbol_table_add_node(&st, front_testdriver_module(),
                                             &ids_arr[i].s, n),
                       "Could not add %u/%zu generated vardecl to the symbol table",
                       i, ids_num);
@@ -311,12 +312,12 @@ START_TEST(test_block_symbol_table) {
     front_testdriver_new_source(&s);
 
     testsupport_analyzer_prepare();
-    ck_assert(analyzer_first_pass(front_testdriver_analyzer(), NULL));
+    ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct type *ti64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
     struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
 
-    struct ast_node *block = ast_node_get_child(front_testdriver_analyzer()->root, 0);
+    struct ast_node *block = ast_node_get_child(front_testdriver_module()->node, 0);
     ck_assert_msg(block, "block node was not found");
     st = ast_block_symbol_table_get(block);
 
@@ -350,7 +351,7 @@ START_TEST(test_fndecl_symbol_table) {
 
 
     testsupport_analyzer_prepare();
-    ck_assert(analyzer_first_pass(front_testdriver_analyzer(), NULL));
+    ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *fnimpl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
     ck_assert_msg(fnimpl, "fnimpl node was not found");
@@ -388,7 +389,7 @@ START_TEST(test_typedecl_symbol_table) {
         TYPEOP_PRODUCT, l1, l2);
 
     testsupport_analyzer_prepare();
-    ck_assert(analyzer_first_pass(front_testdriver_analyzer(), NULL));
+    ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *td = ast_node_get_child(front_testdriver_analyzer()->root, 0);
     ck_assert_msg(td, "typedecl node was not found");
@@ -430,7 +431,7 @@ START_TEST(test_multiple_level_symbol_tables) {
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
 
     testsupport_analyzer_prepare();
-    ck_assert(analyzer_first_pass(front_testdriver_analyzer(), NULL));
+    ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *root = front_testdriver_analyzer()->root;
     struct ast_node *block_1 = ast_node_get_child(root, 1);

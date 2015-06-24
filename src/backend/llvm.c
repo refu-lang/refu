@@ -14,6 +14,7 @@
 #include <analyzer/analyzer.h>
 #include <compiler_args.h>
 #include <front_ctx.h>
+#include <module.h>
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
@@ -35,14 +36,14 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
 static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
     LLVMDisposeBuilder(ctx->builder);
-    LLVMDisposeModule(ctx->mod);
+    LLVMDisposeModule(ctx->llvm_mod);
 }
 
 static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *ctx,
-                                                     struct analyzer *a)
+                                                     struct module *m)
 {
-    ctx->a = a;
-    ctx->mod = NULL;
+    ctx->mod = m;
+    ctx->llvm_mod = NULL;
     ctx->current_st = NULL;
     ctx->current_function = NULL;;
     darray_init(ctx->params);
@@ -52,14 +53,14 @@ static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *
 
 static inline void llvm_traversal_ctx_reset_singlepass(struct llvm_traversal_ctx *ctx)
 {
-    ctx->a = NULL;
+    ctx->mod = NULL;
     LLVMDisposeTargetData(ctx->target_data);
     rir_types_map_deinit(&ctx->types_map);
     darray_free(ctx->params);
     darray_free(ctx->values);
 }
 
-static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args *args)
+static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args *args)
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
@@ -72,12 +73,12 @@ static bool bllvm_ir_generate(struct RFilist_head *fronts, struct compiler_args 
     LLVMInitializeCore(LLVMGetGlobalPassRegistry());
     LLVMInitializeNativeTarget();
 
-    struct front_ctx *front;
+    struct module **mod;
     bool index = 0;
     llvm_traversal_ctx_init(&ctx, args);
-    rf_ilist_for_each(fronts, front, ln) {
-        llvm_traversal_ctx_set_singlepass(&ctx, front->analyzer);
-        llvm_module = blvm_create_module(front->analyzer->root, &ctx,
+    darray_foreach(mod, *modules) {
+        llvm_traversal_ctx_set_singlepass(&ctx, *mod);
+        llvm_module = blvm_create_module(*mod, &ctx,
                                          index == 0 ? &s_stdlib : &s_main,
                                          index == 0 ? NULL : stdlib_module);
         if (!llvm_module) {
@@ -176,10 +177,10 @@ static bool backend_asm_to_exec(struct compiler_args *args)
     return transformation_step_do(args, "gcc", "s", "exe", "-L"RF_CLIB_ROOT" -lrefu");
 }
 
-bool bllvm_generate(struct RFilist_head *fronts, struct compiler_args *args)
+bool bllvm_generate(struct modules_arr *modules, struct compiler_args *args)
 {
 
-    if (!bllvm_ir_generate(fronts, args)) {
+    if (!bllvm_ir_generate(modules, args)) {
         return false;
     }
 

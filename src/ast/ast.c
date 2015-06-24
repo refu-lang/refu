@@ -281,7 +281,7 @@ struct ast_node *ast_root_create(struct inpfile *file)
 }
 
 i_INLINE_INS bool ast_root_symbol_table_init(struct ast_node *n,
-                                             struct analyzer *a);
+                                             struct module *m);
 i_INLINE_INS struct symbol_table *ast_root_symbol_table_get(struct ast_node *n);
 
 void ast_print(struct ast_node *n, struct inpfile *f, int depth)

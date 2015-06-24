@@ -119,7 +119,8 @@ i_INLINE_DECL struct ast_node *ast_typedesc_desc_get(const struct ast_node *n)
  */
 i_INLINE_DECL bool ast_typedesc_type_is_single_identifier(struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    RF_ASSERT(n->type == AST_TYPE_DESCRIPTION || n->type == AST_TYPE_OPERATOR,
+    "Unexpected ast node type");
     struct ast_node *left = ast_types_left(n);
 
     if (n->type == AST_TYPE_DESCRIPTION && left &&
@@ -135,7 +136,8 @@ i_INLINE_DECL bool ast_typedesc_type_is_single_identifier(struct ast_node *n)
  */
 i_INLINE_DECL bool ast_typedesc_type_is_composite(struct ast_node *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    RF_ASSERT(n->type == AST_TYPE_DESCRIPTION || n->type == AST_TYPE_OPERATOR,
+          "Unexpected ast node type");
     struct ast_node *left = ast_types_left(n);
 
     if (n->type == AST_TYPE_DESCRIPTION && left &&

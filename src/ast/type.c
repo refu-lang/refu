@@ -45,7 +45,11 @@ struct ast_node *ast_typeop_create(const struct inplocation_mark *start,
                                    struct ast_node *right)
 {
     struct ast_node *ret;
-    AST_NODE_ASSERT_TYPE(left, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    RF_ASSERT(left->type == AST_TYPE_DESCRIPTION ||
+              left->type == AST_TYPE_OPERATOR ||
+              left->type == AST_TYPE_LEAF ||
+              left->type == AST_XIDENTIFIER,
+              "Unexpected ast node type");
 
     ret = ast_node_create_marks(AST_TYPE_OPERATOR, start, end);
     if (!ret) {
@@ -57,7 +61,11 @@ struct ast_node *ast_typeop_create(const struct inplocation_mark *start,
     ast_node_add_child(ret, left);
     ret->typeop.left = left;
     if (right) {
-        AST_NODE_ASSERT_TYPE(right, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    RF_ASSERT(right->type == AST_TYPE_DESCRIPTION ||
+              right->type == AST_TYPE_OPERATOR ||
+              right->type == AST_TYPE_LEAF ||
+              right->type == AST_XIDENTIFIER,
+              "Unexpected ast node type");
         ast_node_add_child(ret, right);
         ret->typeop.right = right;
     }
@@ -125,7 +133,8 @@ struct ast_node *ast_typedecl_create(const struct inplocation_mark *start,
 {
     struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
-    AST_NODE_ASSERT_TYPE(desc, AST_TYPE_DESCRIPTION || AST_TYPE_OPERATOR);
+    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION || desc->type == AST_TYPE_OPERATOR,
+              "Unexpected ast node type");
 
     ret = ast_node_create_marks(AST_TYPE_DECLARATION, start, end);
     if (!ret) {
