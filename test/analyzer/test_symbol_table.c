@@ -348,13 +348,8 @@ START_TEST(test_fndecl_symbol_table) {
     struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tu64);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tstring);
-    struct type *op1 = testsupport_analyzer_type_create_operator(
-        TYPEOP_PRODUCT, l1, l2);
+    struct type *op1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, l1, l2);
     struct type *tfn = testsupport_analyzer_type_create_function(op1, tu32);
-
-
-
-    testsupport_analyzer_prepare();
     ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *fnimpl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
@@ -385,15 +380,12 @@ START_TEST(test_typedecl_symbol_table) {
     );
     front_testdriver_new_source(&s);
     testsupport_analyzer_prepare();
-
     struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *tu16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tstring);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
     struct type *op1 = testsupport_analyzer_type_create_operator(
         TYPEOP_PRODUCT, l1, l2);
-
-    testsupport_analyzer_prepare();
     ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *td = ast_node_get_child(front_testdriver_analyzer()->root, 0);
@@ -425,18 +417,13 @@ START_TEST(test_multiple_level_symbol_tables) {
     );
     front_testdriver_new_source(&s);
     testsupport_analyzer_prepare();
-
-
     struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *tu16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16, false);
     struct type *l1 = testsupport_analyzer_type_create_leaf(&id1s, tstring);
     struct type *l2 = testsupport_analyzer_type_create_leaf(&id2s, tu16);
-    struct type *op1 = testsupport_analyzer_type_create_operator(
-        TYPEOP_PRODUCT, l1, l2);
+    struct type *op1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, l1, l2);
     struct type *ti8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
-
-    testsupport_analyzer_prepare();
     ck_assert(analyzer_first_pass(front_testdriver_module()));
 
     struct ast_node *root = front_testdriver_analyzer()->root;

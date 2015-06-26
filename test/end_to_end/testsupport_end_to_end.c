@@ -21,9 +21,6 @@ struct end_to_end_driver *get_end_to_end_driver()
 void setup_end_to_end_tests()
 {
     RF_STRUCT_ZERO(&_driver);
-    _driver.compiler = compiler_create(LOG_TARGET_STDOUT);
-    ck_assert_msg(_driver.compiler,
-                  "Failed to initialize compiler in end to end tests setup");
 }
 
 void teardown_end_to_end_tests()
@@ -97,11 +94,11 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
     }
 
     // + 1 is for the initial argument of the executable name
-    if (!compiler_pass_args(args_number + 1, args_cstrings)) {
+    if (!(d->compiler = compiler_create_with_args(LOG_TARGET_STDOUT, args_number + 1, args_cstrings))) {
         goto free_cstrings_arr;
     }
 
-    if (!compiler_process(&d->compiler)) {
+    if (!compiler_process(d->compiler)) {
         goto free_cstrings_arr;
     }
 

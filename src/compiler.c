@@ -190,24 +190,39 @@ static unsigned compiler_get_module_index(struct module *m)
     return found_index;
 }
 
-static bool compiler_visit_unmarked_module(struct module *m, unsigned i, bool *marks)
+enum mark_states {
+    STATE_UNMARKED = 0,
+    STATE_TEMP_MARK,
+    STATE_MARKED
+};
+
+static bool compiler_visit_unmarked_module(struct module *m, unsigned i, enum mark_states *marks)
 {
+    printf("Visit module "RF_STR_PF_FMT" with index %u of marks\n",
+           RF_STR_PF_ARG(module_name(m)), i);
     // not a DAG, cyclic dependency detected
-    if (marks[i]) {
+    if (marks[i] == STATE_TEMP_MARK) {
+        printf("Revisiting mark %u. Cycling dependency detected.\n", i);
         return false;
     }
 
-    marks[i] = true;
+    marks[i] = STATE_TEMP_MARK;
+    printf("Setting mark %u.\n", i);
     struct module **dependency;
     darray_foreach(dependency, m->dependencies) {
 
         // find index of dependency in marks
         unsigned found_index = compiler_get_module_index(*dependency);
+        printf("Module's "RF_STR_PF_FMT" dependency for "RF_STR_PF_FMT" found at: index %u of marks\n",
+               RF_STR_PF_ARG(module_name(m)),
+               RF_STR_PF_ARG(module_name(*dependency)),
+               found_index);
         // visit the module
         if (!compiler_visit_unmarked_module(*dependency, found_index, marks)) {
             return false;
         }
     }
+    marks[i] = STATE_MARKED;
 
     // add module m to the sorted list
     rf_ilist_add(&compiler_instance_get()->sorted_modules, &m->ln);
@@ -218,12 +233,12 @@ static bool compiler_resolve_dependencies()
 {
     struct compiler *c = g_compiler_instance;
     struct module **mod;
+    printf("START\n\n");
     rf_ilist_head_init(&c->sorted_modules);
-
     // topologically sort the dependency DAG
     unsigned int i;
-    bool *marks;
-    RF_CALLOC(marks, darray_size(c->modules), sizeof(bool), return false);
+    enum mark_states *marks;
+    RF_CALLOC(marks, darray_size(c->modules), sizeof(*marks), return false);
 
     bool unmarked_found = true;
     while (unmarked_found) {
@@ -231,10 +246,11 @@ static bool compiler_resolve_dependencies()
         unmarked_found = false;
         darray_foreach(mod, c->modules) {
             // if module is unmarked
-            if (!marks[i]) {
+            if (marks[i] != STATE_MARKED) {
                 unmarked_found = true;
                 if (!compiler_visit_unmarked_module(*mod, i, marks)) {
                     free(marks);
+                    printf("END FAIL\n\n");
                     return false;
                 }
             }
@@ -243,6 +259,7 @@ static bool compiler_resolve_dependencies()
     }
 
     free(marks);
+    printf("END SUCCESS\n\n");
     return true;
 }
 
