@@ -76,6 +76,10 @@ struct module *front_testdriver_module()
     if ((m = get_front_testdriver()->current_module)) {
         return m;
     }
+    if (darray_size(get_front_testdriver()->compiler->modules) == 0) {
+        int a =5;
+        (void)a;
+    }
     ck_assert_msg(darray_size(get_front_testdriver()->compiler->modules) >= 1,
                   "Attempted to request a module from a front wih empty modules array");
     

@@ -407,7 +407,6 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
     struct ast_node *child;
     // temporary. Name checking should be abstracted elsewhere
     const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
-    ctx->mod = NULL;
     RFS_PUSH();
     const char *mod_name = rf_string_cstr_from_buff_or_die(module_name(module));
     if (!mod_name) {
@@ -422,7 +421,6 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");
             LLVMDisposeModule(ctx->llvm_mod);
-            ctx->mod = NULL;
             goto end;
         }
     } else {
@@ -438,7 +436,6 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
     if (!bllvm_create_module_globals(ctx)) {
         RF_ERROR("Failed to create module globals for LLVM");
             LLVMDisposeModule(ctx->llvm_mod);
-            ctx->mod = NULL;
             goto end;
     }
 
