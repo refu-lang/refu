@@ -94,7 +94,7 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d, char *args)
     }
 
     // + 1 is for the initial argument of the executable name
-    if (!(d->compiler = compiler_create_with_args(LOG_TARGET_STDOUT, args_number + 1, args_cstrings))) {
+    if (!(d->compiler = compiler_create_with_args(LOG_TARGET_STDOUT, true, args_number + 1, args_cstrings))) {
         goto free_cstrings_arr;
     }
 

@@ -43,13 +43,23 @@ void setup_analyzer_tests()
                   "Failed to initialize the analyzer test driver");
 }
 
+void setup_analyzer_tests_no_stdlib()
+{
+    setup_front_tests_no_stdlib();
+    ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
+                  "Failed to initialize the analyzer test driver");
+}
+
 void setup_analyzer_tests_no_source()
 {
     const struct RFstring s = RF_STRING_STATIC_INIT("");
     setup_front_tests();
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
+    // empty source file
     front_testdriver_new_source(&s);
+    // and since it's empty get to the analysis stage (some tests need this)
+    testsupport_analyzer_prepare();
 }
 
 void setup_analyzer_tests_with_filelog()

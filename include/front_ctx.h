@@ -26,6 +26,8 @@ struct front_ctx {
     struct info_ctx *info;
     //! Denotes whether this file is the starting point of our project, hence the main module
     bool is_main;
+    //! Pointer to the root AST node for the file, valid only after parsing is finalized
+    struct ast_node *root;
     /* Control for adding to compiler object's linked list */
     struct RFilist_node ln;
 };

@@ -15,7 +15,7 @@
 struct rir_module;
 static struct compiler *g_compiler_instance = NULL;
 
-bool compiler_init(struct compiler *c, int rf_logtype)
+bool compiler_init(struct compiler *c, int rf_logtype, bool with_stdlib)
 {
     RF_STRUCT_ZERO(c);
 
@@ -46,6 +46,7 @@ bool compiler_init(struct compiler *c, int rf_logtype)
         return false;
     }
     rf_ilist_head_init(&c->front_ctxs);
+    c->use_stdlib = with_stdlib;
 
     return true;
 }
@@ -60,25 +61,25 @@ struct compiler *compiler_alloc()
     return ret;
 }
 
-struct compiler *compiler_create(int rf_logtype)
+struct compiler *compiler_create(int rf_logtype, bool with_stdlib)
 {
     struct compiler *compiler = compiler_alloc();
-    return compiler_init(compiler, rf_logtype) ? compiler : NULL;
+    return compiler_init(compiler, rf_logtype, with_stdlib) ? compiler : NULL;
 }
 
-static bool compiler_init_with_args(struct compiler *c, int rf_logtype, int argc, char **argv)
+static bool compiler_init_with_args(struct compiler *c, int rf_logtype, bool with_stdlib, int argc, char **argv)
 {
-    if (!compiler_init(c, rf_logtype)) {
+    if (!compiler_init(c, rf_logtype, with_stdlib)) {
         return false;
     }
 
     return compiler_pass_args(argc, argv);
 }
 
-struct compiler *compiler_create_with_args(int rf_logtype, int argc, char **argv)
+struct compiler *compiler_create_with_args(int rf_logtype, bool with_stdlib, int argc, char **argv)
 {
     struct compiler *ret = compiler_alloc();
-    if (!compiler_init_with_args(ret, rf_logtype, argc, argv)) {
+    if (!compiler_init_with_args(ret, rf_logtype, with_stdlib, argc, argv)) {
         free(ret);
         ret = NULL;
     }
@@ -190,30 +191,42 @@ static unsigned compiler_get_module_index(struct module *m)
     return found_index;
 }
 
+
+// Algorithm for topological sorting as seen here: https://en.wikipedia.org/wiki/Topological_sorting
+// One main difference is the direction of the edges. Each module has edges towards
+// what it depends on and not what module depends on it. This is the reason we add
+// to the tail of the linked list instead of the head as the algorithm states.
+
 enum mark_states {
     STATE_UNMARKED = 0,
     STATE_TEMP_MARK,
     STATE_MARKED
 };
 
+// temp debugging for dependency resolution. TODO: Remove
+#define DD(...)
+/* #define DD(...) do { printf(__VA_ARGS__); fflush(stdout); } while(0) */
+
 static bool compiler_visit_unmarked_module(struct module *m, unsigned i, enum mark_states *marks)
 {
-    printf("Visit module "RF_STR_PF_FMT" with index %u of marks\n",
-           RF_STR_PF_ARG(module_name(m)), i);
+    if (marks[i] == STATE_MARKED) {
+        return true;
+    }
+    DD("Visit module "RF_STR_PF_FMT" with index %u of marks\n", RF_STR_PF_ARG(module_name(m)), i);
     // not a DAG, cyclic dependency detected
     if (marks[i] == STATE_TEMP_MARK) {
-        printf("Revisiting mark %u. Cycling dependency detected.\n", i);
+        DD("Revisiting mark %u. Cycling dependency detected.\n", i);
         return false;
     }
 
     marks[i] = STATE_TEMP_MARK;
-    printf("Setting mark %u.\n", i);
+    DD("Setting temporary mark %u.\n", i);
     struct module **dependency;
     darray_foreach(dependency, m->dependencies) {
 
         // find index of dependency in marks
         unsigned found_index = compiler_get_module_index(*dependency);
-        printf("Module's "RF_STR_PF_FMT" dependency for "RF_STR_PF_FMT" found at: index %u of marks\n",
+        DD("Module's "RF_STR_PF_FMT" dependency for "RF_STR_PF_FMT" found at: index %u of marks\n",
                RF_STR_PF_ARG(module_name(m)),
                RF_STR_PF_ARG(module_name(*dependency)),
                found_index);
@@ -222,10 +235,11 @@ static bool compiler_visit_unmarked_module(struct module *m, unsigned i, enum ma
             return false;
         }
     }
+    DD("Setting permanent mark %u for module "RF_STR_PF_FMT".\n", i, RF_STR_PF_ARG(module_name(m)));
     marks[i] = STATE_MARKED;
 
-    // add module m to the sorted list
-    rf_ilist_add(&compiler_instance_get()->sorted_modules, &m->ln);
+    // add module m to the end of the sorted list.
+    rf_ilist_add_tail(&compiler_instance_get()->sorted_modules, &m->ln);
     return true;
 }
 
@@ -233,7 +247,7 @@ static bool compiler_resolve_dependencies()
 {
     struct compiler *c = g_compiler_instance;
     struct module **mod;
-    printf("START\n\n");
+    DD("START\n\n");
     rf_ilist_head_init(&c->sorted_modules);
     // topologically sort the dependency DAG
     unsigned int i;
@@ -250,7 +264,7 @@ static bool compiler_resolve_dependencies()
                 unmarked_found = true;
                 if (!compiler_visit_unmarked_module(*mod, i, marks)) {
                     free(marks);
-                    printf("END FAIL\n\n");
+                    DD("END FAIL\n\n");
                     return false;
                 }
             }
@@ -259,7 +273,7 @@ static bool compiler_resolve_dependencies()
     }
 
     free(marks);
-    printf("END SUCCESS\n\n");
+    DD("END SUCCESS\n\n");
     return true;
 }
 
@@ -277,7 +291,7 @@ bool compiler_preprocess_fronts()
     // determine the dependencies of all the modules
     struct module **mod;
     darray_foreach(mod, c->modules) {
-        if (!analyzer_determine_dependencies(*mod)) {
+        if (!analyzer_determine_dependencies(*mod, c->use_stdlib)) {
             i_info_ctx_add_msg((*mod)->front->info,   
                                MESSAGE_SEMANTIC_ERROR,
                                ast_node_startmark((*mod)->node),

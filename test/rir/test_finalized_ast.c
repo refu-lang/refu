@@ -42,7 +42,7 @@ Suite *rir_finalized_ast_suite_create(void)
 
     TCase *finalized_ast = tcase_create("finalized_ast_nodes");
     tcase_add_checked_fixture(finalized_ast,
-                              setup_rir_tests,
+                              setup_rir_tests_no_stdlib,
                               teardown_rir_tests);
     tcase_add_test(finalized_ast, test_finalized_function_arguments);
 

@@ -19,10 +19,13 @@ static bool rir_type_init_iteration(struct rir_type *type,
     struct rir_type *new_type;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        if (type_elementary(input) != ELEMENTARY_TYPE_NIL) {
+        if (type_elementary(input) == ELEMENTARY_TYPE_NIL) {
+            break;
+        }
+        // else wildcards and elementary are treated the same
+    case TYPE_CATEGORY_WILDCARD:
             new_type = rir_type_create(input, name);
             darray_append(type->subtypes, new_type);
-        }
         break;
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
@@ -75,15 +78,15 @@ static bool rir_type_init_iteration(struct rir_type *type,
             return false;
         }
         break;
+    case TYPE_CATEGORY_MODULE:
+        RF_ASSERT(false, "Module types not supported in the IR");
+        break;
     case TYPE_CATEGORY_FOREIGN_FUNCTION:
         RF_ASSERT(false, "Foreign function types not supported in the IR yet");
         break;
     case TYPE_CATEGORY_GENERIC:
         RF_ASSERT(false, "Generic types not supported in the IR yet");
         break;
-    case TYPE_CATEGORY_WILDCARD:
-        RF_ASSERT(false, "Wildmard type should not appear in the IR");
-                  break;
     }
     return true;
 }
@@ -103,6 +106,9 @@ bool rir_type_init_before_iteration(struct rir_type *type,
     if (input->category == TYPE_CATEGORY_ELEMENTARY) {
         type->category = (enum rir_type_category) type_elementary(input);
         return false;
+    } else if (input->category == TYPE_CATEGORY_WILDCARD) {
+        type->category = RIR_TYPE_WILDCARD;
+        return false;        
     } else if (input->category == TYPE_CATEGORY_LEAF &&
         input->leaf.type->category == TYPE_CATEGORY_ELEMENTARY) {
         // for leafs, that are elementary types, just create a named elementary rir type
@@ -431,8 +437,17 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
             return false;
         }
         return (enum elementary_type)curr_rir->category == type_elementary(t);
+    case TYPE_CATEGORY_WILDCARD:
+        curr_rir = rir_type_cmp_ctx_current_type(ctx);
+        if (!curr_rir) {
+            DD("post_cb[elementary] !curr_rir -> return false\n");
+            return false;
+        }
+        return curr_rir->category == RIR_TYPE_WILDCARD;
 
     case TYPE_CATEGORY_DEFINED:
+    case TYPE_CATEGORY_MODULE:
+
         break;
 
     case TYPE_CATEGORY_OPERATOR:

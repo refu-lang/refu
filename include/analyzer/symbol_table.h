@@ -94,7 +94,8 @@ struct symbol_table {
     //! Pointer to the module of this symbol table. Used only from the top symbol
     //! table of a module to check for symbols in dependendencies
     struct module *mod;
-    //! Pointer to the analyzer instance's memory pool
+    //! Pointer to the analyzer instance's memory pool or if this is
+    //! the root's symbol table an owned pointer to the symbol table
     struct rf_fixed_memorypool *pool;
     //! Pointer to the function declaration that contains this table, or NULL
     //! if this is the top table
@@ -102,6 +103,7 @@ struct symbol_table {
 };
 
 bool symbol_table_init(struct symbol_table *t, struct module *m);
+bool root_symbol_table_init(struct symbol_table *t);
 void symbol_table_deinit(struct symbol_table *t);
 
 /**
@@ -147,7 +149,7 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
                                                        bool *at_first_symbol_table);
 
 /**
- * Lookup a typedesc node in a symbol table. This function is to be used only
+s * Lookup a typedesc node in a symbol table. This function is to be used only
  * in special cases like in a match case where you have a symbol table
  * and a case expression and you need to get the symbol table record for that
  * expression.
@@ -196,13 +198,20 @@ i_INLINE_DECL struct ast_node *symbol_table_get_fndecl(struct symbol_table *t)
     return t->fndecl;
 }
 
+i_INLINE_DECL bool symbol_table_is_root(const struct symbol_table *t)
+{
+    return t->mod == NULL;
+}
+
 /**
  * Convenience function to help swap a parent symbol table with its child while
- * traversing the AST downwards in symbol table creation.
+ * traversing the AST downwards in symbol table creation. Never try to swap 
+ * a symbol table with itself.
  */
 i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_ptr,
                                              struct symbol_table *new_st)
 {
+    RF_ASSERT(*current_st_ptr != new_st, "Tried to swap a symbol table with itself");
     symbol_table_set_parent(new_st, *current_st_ptr);
     symbol_table_set_fndecl(new_st, (*current_st_ptr)->fndecl);
     *current_st_ptr = new_st;

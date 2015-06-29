@@ -24,14 +24,16 @@ struct compiler {
     struct modules_arr modules;
     //! Sorted list of modules, after dependency resolution
     struct RFilist_head sorted_modules;
+    //! Should stdlib be used or not? By default for now all main modules are using it
+    bool use_stdlib;
 };
 
 // a compiler will always be a unique singleton so we can get its instance
 struct compiler *compiler_instance_get();
 struct compiler *compiler_alloc();
-bool compiler_init(struct compiler *c, int rf_logtype);
-struct compiler *compiler_create(int rf_logtype);
-struct compiler *compiler_create_with_args(int rf_logtype, int argc, char **argv);
+bool compiler_init(struct compiler *c, int rf_logtype, bool with_stdlib);
+struct compiler *compiler_create(int rf_logtype, bool with_stdlib);
+struct compiler *compiler_create_with_args(int rf_logtype, bool with_stdlib, int argc, char **argv);
 void compiler_destroy();
 
 struct module *compiler_module_get(const struct RFstring *name);

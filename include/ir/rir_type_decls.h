@@ -20,6 +20,7 @@ enum rir_type_category {
     ELEMENTARY_RIR_TYPE_FLOAT_64,
     ELEMENTARY_RIR_TYPE_STRING,
     ELEMENTARY_RIR_TYPE_BOOL,
+    RIR_TYPE_WILDCARD,        // treat wildcard as an elementary type
     ELEMENTARY_RIR_TYPE_NIL,
 
     COMPOSITE_PRODUCT_RIR_TYPE,

@@ -44,7 +44,8 @@ enum type_category {
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
-    TYPE_CATEGORY_FOREIGN_FUNCTION      /* type of a foreign function */
+    TYPE_CATEGORY_FOREIGN_FUNCTION,     /* type of a foreign function */
+    TYPE_CATEGORY_MODULE                /* type of a module */
 };
 
 struct type_elementary {
@@ -74,6 +75,10 @@ struct type_foreignfn {
     const struct RFstring *name;
 };
 
+struct type_module {
+    const struct RFstring *name;
+};
+
 struct type {
     enum type_category category;
     //! The RIR version of the type
@@ -87,6 +92,7 @@ struct type {
         struct type_leaf leaf;
         struct type_elementary elementary;
         struct type_foreignfn foreignfn;
+        struct type_module module;
     };
 };
 #endif

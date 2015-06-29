@@ -98,8 +98,12 @@ bool front_ctx_parse(struct front_ctx *ctx)
         return false;
     }
 
-    bool ret = parser_process_file(ctx->parser, ctx->is_main);
+    if (!parser_process_file(ctx->parser, ctx->is_main)) {
+        return false;
+    }
     // the root should no longer be owned by the parser at this point
+    ctx->root = ctx->parser->root;
     ctx->parser->root = 0;
-    return ret;
+    // finally make sure that the root's symbol table is initialized
+    return root_symbol_table_init(&ctx->root->root.st);
 }

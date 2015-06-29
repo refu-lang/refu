@@ -26,19 +26,60 @@ struct front_testdriver *get_front_testdriver()
     return &__front_testdriver;
 }
 
-struct front_ctx *front_tesdriver_curr()
+struct front_ctx *front_testdriver_curr_front()
 {
-    return get_front_testdriver()->current_front;
+    struct front_ctx *front = get_front_testdriver()->current_front;
+    if (front) {
+        return front;
+    }
+
+    ck_assert_msg(!rf_ilist_is_empty(&get_front_testdriver()->compiler->front_ctxs),
+                  "Attempted to request a front_ctx while the compiler has an empty list of fronts");
+    
+    return get_front_testdriver()->current_front = rf_ilist_top(&get_front_testdriver()->compiler->front_ctxs, struct front_ctx, ln);
+}
+
+void front_testdriver_set_curr_front(unsigned i)
+{
+    unsigned count = 0;
+    struct front_ctx *front;
+    rf_ilist_for_each(&get_front_testdriver()->compiler->front_ctxs, front, ln) {
+        if (i == count) {
+            get_front_testdriver()->current_front = front;
+            return;
+        }
+    }
+    ck_abort_msg("Attempted to set non-existant front_ctx with index %u as current.", i);
+}
+
+void front_testdriver_set_curr_module(unsigned i)
+{
+    unsigned count = 0;
+    struct module **mod;
+    darray_foreach(mod, get_front_testdriver()->compiler->modules) {
+        if (i == count) {
+            get_front_testdriver()->current_module = *mod;
+            return;
+        }
+    }
+    ck_abort_msg("Attempted to set non-existant module with index %u as current.", i);
 }
 
 struct analyzer *front_testdriver_analyzer()
 {
-    return darray_item(get_front_testdriver()->compiler->modules, 0)->analyzer;
+    return front_testdriver_module()->analyzer;
 }
 
 struct module *front_testdriver_module()
 {
-    return darray_item(get_front_testdriver()->compiler->modules, 0);
+    struct module *m;
+    if ((m = get_front_testdriver()->current_module)) {
+        return m;
+    }
+    ck_assert_msg(darray_size(get_front_testdriver()->compiler->modules) >= 1,
+                  "Attempted to request a module from a front wih empty modules array");
+    
+    return get_front_testdriver()->current_module = darray_item(get_front_testdriver()->compiler->modules, 0);
 }
 
 struct parser *front_testdriver_parser()
@@ -49,6 +90,11 @@ struct parser *front_testdriver_parser()
 struct lexer *front_testdriver_lexer()
 {
     return get_front_testdriver()->current_front->lexer;
+}
+
+struct ast_node *front_testdriver_root()
+{
+    return get_front_testdriver()->current_front->root;
 }
 
 struct inpfile *front_testdriver_file()
@@ -65,7 +111,7 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib, int rf_
 {
     RF_STRUCT_ZERO(d);
     darray_init(d->nodes);
-    if (!(d->compiler = compiler_create(rf_logtype))) {
+    if (!(d->compiler = compiler_create(rf_logtype, with_stdlib))) {
         return false;
     }
 
@@ -101,6 +147,7 @@ struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
     struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s, true);
     ck_assert_msg(front, "Could not add a new file to the driver");
+    // set new front as current
     d->current_front = front;
     return front;
 }

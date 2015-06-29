@@ -40,6 +40,9 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     rec->node = node;
     rec->id = id;
     switch (node->type) {
+    case AST_MODULE:
+        rec->data = type_module_create(mod, id);
+        break;
     case AST_FUNCTION_DECLARATION:
         rec->data = type_create_from_fndecl(node, mod, st);
         break;
@@ -157,12 +160,25 @@ bool symbol_table_init(struct symbol_table *t, struct module *m)
     return true;
 }
 
+bool root_symbol_table_init(struct symbol_table *t)
+{
+    RF_STRUCT_ZERO(t);
+    htable_init(&t->table, rehash_fn, NULL);
+    t->mod = NULL;
+    t->pool = rf_fixed_memorypool_create(sizeof(struct symbol_table_record),
+                                         RECORDS_TABLE_POOL_CHUNK_SIZE);
+    return true;    
+}
+
 void symbol_table_deinit(struct symbol_table *t)
 {
     // free memory of all symbol table records
     symbol_table_iterate(t, (htable_iter_cb)symbol_table_record_destroy, t);
     // clear the table
     htable_clear(&t->table);
+    if (symbol_table_is_root(t)) {
+        rf_fixed_memorypool_destroy(t->pool);
+    }
 }
 
 bool symbol_table_add_node(struct symbol_table *t,
@@ -353,6 +369,7 @@ i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,
 i_INLINE_INS void symbol_table_set_fndecl(struct symbol_table *t,
                                            struct ast_node *decl);
 i_INLINE_INS struct ast_node *symbol_table_get_fndecl(struct symbol_table *t);
+i_INLINE_INS bool symbol_table_is_root(const struct symbol_table *t);
 i_INLINE_INS void symbol_table_swap_current(struct symbol_table **current_st_ptr,
                                             struct symbol_table *new_st);
 i_INLINE_INS struct type *symbol_table_lookup_type(struct symbol_table *t,

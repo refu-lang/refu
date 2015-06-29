@@ -74,7 +74,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
 
 
 START_TEST (test_type_to_str) {
-
+    
     struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
     struct type *t_leaf_u32 = testsupport_analyzer_type_create_leaf(&id_foo, t_u32);
@@ -402,6 +402,7 @@ START_TEST(test_composite_types_list_population) {
 
     const struct type *expected_types [] = { t_prod_1, t_leaf_i64, t_leaf_f64,
                                              t_func_1, t_foo };
+    
     ck_assert_type_set_equal(expected_types, front_testdriver_analyzer());
 } END_TEST
 
@@ -623,14 +624,14 @@ Suite *types_suite_create(void)
     tcase_add_test(st2, test_is_floating_elementary);
 
     TCase *st3 = tcase_create("types_management_tests");
-    tcase_add_checked_fixture(st3, setup_analyzer_tests_no_source, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st3, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
     tcase_add_test(st3, test_composite_types_list_population);
     tcase_add_test(st3, test_composite_types_list_population2);
     tcase_add_test(st3, test_composite_types_list_population3);
     tcase_add_test(st3, test_composite_types_list_population4);
 
     TCase *st4 = tcase_create("type_determination");
-    tcase_add_checked_fixture(st4, setup_analyzer_tests_no_source, teardown_analyzer_tests);
+    tcase_add_checked_fixture(st4, setup_analyzer_tests, teardown_analyzer_tests);
     tcase_add_test(st4, test_determine_block_type1);
     tcase_add_test(st4, test_determine_block_type2);
 

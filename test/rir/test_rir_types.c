@@ -438,7 +438,7 @@ Suite *rir_types_suite_create(void)
 
     TCase *type_lists = tcase_create("rir_types_list_creation");
     tcase_add_checked_fixture(type_lists,
-                              setup_rir_tests,
+                              setup_rir_tests_no_stdlib,
                               teardown_rir_tests);
     tcase_add_test(type_lists, test_types_list_simple1);
     /* tcase_add_test(type_lists, test_types_list_simple2); */
@@ -448,7 +448,7 @@ Suite *rir_types_suite_create(void)
 
     TCase *type_comparison = tcase_create("rir_types_comparison");
     tcase_add_checked_fixture(type_comparison,
-                              setup_rir_tests,
+                              setup_rir_tests_no_stdlib,
                               teardown_rir_tests);
     tcase_add_test(type_comparison, test_rir_type_equals_type1);
     tcase_add_test(type_comparison, test_rir_type_equals_type2);

@@ -268,7 +268,7 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
     front_testdriver_new_source(&s);
     ck_assert_typecheck_ok();
 
-    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_analyzer()->root, 0);
+    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 0);
     ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
     struct ast_node *match = ast_fnimpl_body_get(fn_impl);
     struct ast_matchexpr_it it;
@@ -334,6 +334,12 @@ Suite *analyzer_typecheck_functions_suite_create(void)
 {
     Suite *s = suite_create("typecheck_functions");
 
+    TCase *temp = tcase_create("temp_typecheck");
+    tcase_add_checked_fixture(temp,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(temp, test_typecheck_valid_function_call_print_string);
+
     TCase *t_call_val = tcase_create("typecheck_valid_function_calls");
     tcase_add_checked_fixture(t_call_val,
                               setup_analyzer_tests,
@@ -341,7 +347,7 @@ Suite *analyzer_typecheck_functions_suite_create(void)
     tcase_add_test(t_call_val, test_typecheck_valid_function_call0);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call1);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call2);
-    tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_string);
+    /* tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_string); */
     tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_int);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call_with_sum_args);
 
@@ -383,6 +389,7 @@ Suite *analyzer_typecheck_functions_suite_create(void)
     suite_add_tcase(s, t_impl_val);
     suite_add_tcase(s, t_impl_matchbody_val);
     suite_add_tcase(s, t_impl_inv);
+    suite_add_tcase(s, temp);
 
     return s;
 }

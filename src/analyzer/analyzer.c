@@ -20,7 +20,6 @@
 #include <analyzer/typecheck.h>
 #include <analyzer/string_table.h>
 
-#define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
 #define TYPES_POOL_CHUNK_SIZE 2048
 
 i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
@@ -203,7 +202,7 @@ static bool analyzer_determine_dependencies_do(struct ast_node *n, void *user_ar
     return true;
 }
 
-bool analyzer_determine_dependencies(struct module *m)
+bool analyzer_determine_dependencies(struct module *m, bool use_stdlib)
 {
     // for now analyzer->root is basically module root. When analyzer goes away this won't be needed
     m->analyzer = analyzer_create(m->front->info);
@@ -225,8 +224,10 @@ bool analyzer_determine_dependencies(struct module *m)
         return false;
     }
 
-    // if this is the main module add the stdlib as dependency
-    if (module_is_main(m)) {
+    // TODO: This can't be the best way to achieve this. Rethink when possible
+    // if this is the main module add the stdlib as dependency,
+    // unless a program without the stdlib was requested
+    if (use_stdlib && module_is_main(m)) {
         return module_add_stdlib(m);
     }
     return true;

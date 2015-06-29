@@ -19,6 +19,8 @@ struct analyzer;
 struct front_ctx;
 struct module;
 
+#define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
+
 struct  analyzer_traversal_ctx {
     struct module *m;
     //! Remembers the current symbol table during ast traversal
@@ -126,7 +128,7 @@ void analyzer_destroy(struct analyzer *a);
  * Determine the dependencies inside a file by checking the imports needed by
  * each module
  */
-bool analyzer_determine_dependencies(struct module *m);
+bool analyzer_determine_dependencies(struct module *m, bool use_stdlib);
 
 /**
  * Analyze a module of a file

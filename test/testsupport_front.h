@@ -13,6 +13,7 @@
 struct front_testdriver {
     struct compiler *compiler;
     struct front_ctx *current_front;
+    struct module *current_module;
     //! A buffer of ast node pointers for easy freeing
     //! of some nodes at test teardown
     struct {darray(struct ast_node*);} nodes;
@@ -30,7 +31,18 @@ void front_testdriver_deinit(struct front_testdriver *p);
 /**
  * Get the current front_ctx of the testdriver
  */
-struct front_ctx *front_tesdriver_curr();
+struct front_ctx *front_testdriver_curr_front();
+
+/**
+ * Set the index of the current front_ctx of the testdriveer
+ */
+void front_testdriver_set_curr_front(unsigned i);
+
+/**
+ * Set the index of the current module being tested
+ */
+void front_testdriver_set_curr_module(unsigned i);
+
 /**
  * Get the first analyzer of the current module being tested
  */
@@ -47,6 +59,10 @@ struct parser *front_testdriver_parser();
  * Get the lexer of the current front_ctx being tested
  */
 struct lexer *front_testdriver_lexer();
+/**
+ * Get the ast root of the current front_ctx
+ */
+struct ast_node *front_testdriver_root();
 /**
  * Get the inpfile of the current front_ctx being tested
  */

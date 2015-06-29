@@ -41,6 +41,7 @@ struct type *type_function_create(struct module *m,
                                   struct type *arg_type,
                                   struct type *ret_type);
 
+struct type *type_module_create(struct module *m, const struct RFstring *name);
 
 struct type *type_create_from_typedesc(struct ast_node *typedesc,
                                        struct module *m,

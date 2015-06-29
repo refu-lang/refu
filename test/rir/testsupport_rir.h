@@ -18,7 +18,7 @@ struct rir_testdriver {
 };
 struct rir_testdriver *get_rir_testdriver();
 
-void setup_rir_tests();
+void setup_rir_tests_no_stdlib();
 void setup_rir_tests_no_source();
 void setup_rir_tests_with_filelog();
 void teardown_rir_tests();

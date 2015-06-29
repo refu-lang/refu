@@ -404,6 +404,18 @@ struct type *type_function_create(struct module *mod,
     return t;
 }
 
+struct type *type_module_create(struct module *mod, const struct RFstring *name)
+{
+    struct type *t;
+    t = type_alloc(mod->analyzer);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    t->module.name = name;
+    return t;
+}
+
 struct type *type_leaf_create(struct module *m,
                               const struct RFstring *id,
                               struct type *leaf_type)
@@ -644,6 +656,7 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
     case TYPE_CATEGORY_FOREIGN_FUNCTION:
+    case TYPE_CATEGORY_MODULE:
         // Do nothing
         break;
 
@@ -680,6 +693,7 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
     case TYPE_CATEGORY_FOREIGN_FUNCTION:
+    case TYPE_CATEGORY_MODULE:
         // Do nothing
         break;
 
@@ -744,6 +758,9 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_LEAF:
+    case TYPE_CATEGORY_MODULE:
+    case TYPE_CATEGORY_FOREIGN_FUNCTION:
+    case TYPE_CATEGORY_WILDCARD:
         break;
     case TYPE_CATEGORY_DEFINED:
         if (!type_traverse(t->defined.type, pre_cb, post_cb, user_arg)) {

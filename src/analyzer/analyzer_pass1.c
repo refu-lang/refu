@@ -50,6 +50,37 @@ static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ct
     return true;
 }
 
+
+static bool analyzer_populate_symbol_module(struct analyzer_traversal_ctx *ctx,
+                                            struct ast_node *n)
+{
+    const struct ast_node *search_node;
+    bool symbol_found_at_first_st;
+    const struct RFstring *name = ast_module_name(n);
+
+    search_node = symbol_table_lookup_node(ctx->current_st,
+                                           name,
+                                           &symbol_found_at_first_st);
+
+    if (search_node && symbol_found_at_first_st) {
+        analyzer_err(ctx->m, ast_node_startmark(n),
+                     ast_node_endmark(n),
+                     "Identifier \""RF_STR_PF_FMT"\" was already used in scope "
+                     "at "INPLOCATION_FMT,
+                     RF_STR_PF_ARG(name),
+                     INPLOCATION_ARG(module_get_file(ctx->m),
+                                     ast_node_location(search_node)));
+        return false;
+    }
+
+    if (!symbol_table_add_node(ctx->current_st, ctx->m, name, n)) {
+        RF_ERROR("Could not add a module to a symbol table");
+        return false;
+    }
+
+    return true;
+}
+
 static bool analyzer_populate_symbol_table_typeleaf(struct analyzer_traversal_ctx *ctx,
                                                     struct ast_node *n)
 {
@@ -196,11 +227,6 @@ static bool analyzer_first_pass_do(struct ast_node *n,
     // act depending on the node type
     switch(n->type) {
         // nodes that change the current symbol table
-    case AST_ROOT:
-        RF_ASSERT(ctx->current_st == NULL, "Visiting root node more than once");
-        // symbol table already initialized in analyzer_analyze_module
-        ctx->current_st = ast_root_symbol_table_get(n);
-        break;
     case AST_BLOCK:
         if (!ast_block_symbol_table_init(n, ctx->m)) {
             RF_ERROR("Could not initialize symbol table for block node");
@@ -209,6 +235,10 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         symbol_table_swap_current(&ctx->current_st, ast_block_symbol_table_get(n));
         break;
     case AST_MODULE:
+        // input the module's name to the symbol table
+        if (!analyzer_populate_symbol_module(ctx, n)) {
+            return false;
+        }
         symbol_table_swap_current(&ctx->current_st, ast_module_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
@@ -331,8 +361,6 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
 
     // go back to previous parent
     (void)darray_pop(ctx->parent_nodes);
-    RF_ASSERT(ctx->current_st, "Symbol table movement to parent lead to "
-              "a NULL table!");
     return true;
 }
 
@@ -374,6 +402,9 @@ bool analyzer_first_pass(struct module *m)
 {
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, m);
+    // set the starting symbol_table
+    /* ctx.current_st = module_symbol_table(m); */
+    ctx.current_st = &m->front->root->root.st;
 
     bool ret = ast_traverse_tree(
         m->node,
