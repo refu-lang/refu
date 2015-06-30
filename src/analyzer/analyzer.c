@@ -275,7 +275,8 @@ bool analyzer_finalize(struct module *m)
             }
         }
     }
-    
+
+    RF_ASSERT(!m->analyzer->rir_types_list, "An analyzer's rir type list should not have been created before this point");
     // create the rir types list from the types set for this module
     if (!(m->analyzer->rir_types_list = rir_types_list_create(m->analyzer->types_set))) {
         return false;

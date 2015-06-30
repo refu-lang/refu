@@ -23,16 +23,6 @@ void setup_rir_tests_no_source();
 void setup_rir_tests_with_filelog();
 void teardown_rir_tests();
 
-void rir_testdriver_assign(const struct RFstring *s);
-
-bool rir_testdriver_process(struct rir_testdriver *d);
-
-#define testsupport_rir_process()                                       \
-    do {                                                                \
-        ck_assert_typecheck_ok();                                       \
-        ck_assert_msg(rir_testdriver_process(get_rir_testdriver()), "Failed to create the refu intermediate format"); \
-    } while (0)
-
 struct rir_type *i_testsupport_rir_type_create(enum rir_type_category category,
                                                const struct RFstring *name,
                                                bool add_to_drivers_list,

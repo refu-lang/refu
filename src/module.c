@@ -64,9 +64,9 @@ bool module_symbol_table_init(struct module *m)
 {
     RF_ASSERT(m->node->type == AST_ROOT || m->node->type == AST_MODULE,
               "Illegal ast node detected");
-    return m->node->type == AST_ROOT
-        ? symbol_table_init(&m->node->root.st, m)
-        : symbol_table_init(&m->node->module.st, m);
+        return m->node->type == AST_ROOT
+            ? true  // the root symbol table should have already been initialized
+            : symbol_table_init(&m->node->module.st, m);
 }
 
 struct inpfile *module_get_file(const struct module *m)
@@ -93,9 +93,5 @@ bool module_add_stdlib(struct module *m)
 
 bool module_analyze(struct module *m)
 {
-    m->analyzer = analyzer_create(m->front->info);
-    if (!m->analyzer) {
-        return false;
-    }
     return analyzer_analyze_module(m);
 }

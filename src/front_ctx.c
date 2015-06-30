@@ -107,6 +107,8 @@ bool front_ctx_parse(struct front_ctx *ctx)
     // the root should no longer be owned by the parser at this point
     ctx->root = ctx->parser->root;
     ctx->parser->root = 0;
+    // root will never go into analyzer pass1 so set the state properly here
+    ctx->root->state = AST_NODE_STATE_ANALYZER_PASS1;
     // finally make sure that the root's symbol table is initialized
     return root_symbol_table_init(&ctx->root->root.st);
 }

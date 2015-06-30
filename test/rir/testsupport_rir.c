@@ -58,16 +58,6 @@ void teardown_rir_tests()
     teardown_analyzer_tests();
 }
 
-void rir_testdriver_assign(const struct RFstring *s)
-{
-    front_testdriver_new_source(s);
-}
-
-bool rir_testdriver_process(struct rir_testdriver *d)
-{
-    return analyzer_finalize(front_testdriver_module());
-}
-
 static void rir_testdriver_add_type(struct rir_type *type,
                                     const char* filename,
                                     unsigned int line)
