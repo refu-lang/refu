@@ -86,6 +86,11 @@ struct module *front_testdriver_module()
     return get_front_testdriver()->current_module = darray_item(get_front_testdriver()->compiler->modules, 0);
 }
 
+struct ast_node *front_testdriver_module_root()
+{
+    return front_testdriver_module()->node;
+}
+
 struct parser *front_testdriver_parser()
 {
     return get_front_testdriver()->current_front->parser;

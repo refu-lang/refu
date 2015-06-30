@@ -126,13 +126,15 @@ static void compiler_deinit(struct compiler *c)
     struct front_ctx *front;
     struct front_ctx *tmp;
     struct module **mod;
+    rf_ilist_for_each_safe(&c->front_ctxs, front, tmp, ln) {
+        front_ctx_destroy(front);
+    }
+    
     darray_foreach(mod, c->modules) {
         module_destroy(*mod);
     }
     darray_free(c->modules);
-    rf_ilist_for_each_safe(&c->front_ctxs, front, tmp, ln) {
-        front_ctx_destroy(front);
-    }
+
 
     serializer_destroy(c->serializer);
     compiler_args_destroy(c->args);

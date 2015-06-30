@@ -80,6 +80,9 @@ struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {
+    if (ctx->root) {
+        ast_node_destroy(ctx->root);
+    }
     inpfile_destroy(ctx->file);
     lexer_destroy(ctx->lexer);
     parser_destroy(ctx->parser);

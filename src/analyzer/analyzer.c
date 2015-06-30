@@ -96,9 +96,6 @@ struct analyzer *analyzer_create(struct info_ctx *info)
 
 void analyzer_deinit(struct analyzer *a)
 {
-    if (a->root) {
-        ast_node_destroy(a->root);
-    }
     if (a->symbol_table_records_pool) {
         rf_fixed_memorypool_destroy(a->symbol_table_records_pool);
     }
@@ -210,7 +207,6 @@ bool analyzer_determine_dependencies(struct module *m, bool use_stdlib)
         RF_ERROR("Could not create an analyzer");
         return false;
     }
-    m->analyzer->root = m->node;
 
     // initialize module symbol table here instead of analyzer_first_pass
     // since we need it beforehand to get symbols from import
@@ -300,4 +296,3 @@ bool analyzer_finalize(struct module *m)
 i_INLINE_INS void analyzer_set_semantic_error(struct analyzer *a);
 i_INLINE_INS bool analyzer_has_semantic_error(struct analyzer *a);
 i_INLINE_INS bool analyzer_has_semantic_error_reset(struct analyzer *a);
-i_INLINE_INS struct ast_node *analyzer_yield_ast_root(struct analyzer *analyzer);

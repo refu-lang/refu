@@ -92,7 +92,6 @@ bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
 
 struct analyzer {
     struct info_ctx *info;
-    struct ast_node *root;
 
     /* Memory pools */
     struct rf_fixed_memorypool *symbol_table_records_pool;
@@ -177,14 +176,6 @@ i_INLINE_DECL bool analyzer_has_semantic_error_reset(struct analyzer *a)
     bool ret = a->have_semantic_err;
     a->have_semantic_err = false;
     return ret;
-}
-
-i_INLINE_DECL struct ast_node *analyzer_yield_ast_root(struct analyzer *analyzer)
-{
-    struct ast_node *root;
-    root = analyzer->root;
-    analyzer->root = NULL;
-    return root;
 }
 
 // TODO: Change both this, the lexer and the parser macro to something better

@@ -51,6 +51,7 @@ struct analyzer *front_testdriver_analyzer();
  * Get the first module being tested
  */
 struct module *front_testdriver_module();
+struct ast_node *front_testdriver_module_root();
 /**
  * Get the parser of the current front_ctx being tested
  */
