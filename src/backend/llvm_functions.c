@@ -74,7 +74,7 @@ static LLVMValueRef bllvm_simple_ctor_args_to_type(struct ast_node *fn_call,
     RFS_POP();
 
     LLVMTypeRef *params;
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->rir_types_list, type_name);
     RF_ASSERT(!rir_type_is_sumtype(defined_type), "Called with sum type");
     params = bllvm_simple_member_types(defined_type, ctx);
     return bllvm_assign_params_to_defined_type(fn_call, llvm_type, params, ctx);
@@ -119,7 +119,7 @@ static LLVMValueRef bllvm_sum_ctor_args_to_type(struct ast_node *fn_call,
                                                 const struct RFstring *type_name,
                                                 struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->rir_types_list, type_name);
     RF_ASSERT(rir_type_is_sumtype(defined_type), "Called with non sum type");
     return bllvm_sum_fncall_args_to_type(
         fn_call,
@@ -134,7 +134,7 @@ static LLVMValueRef bllvm_ctor_args_to_type(struct ast_node *fn_call,
                                             const struct RFstring *type_name,
                                             struct llvm_traversal_ctx *ctx)
 {
-    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->analyzer->rir_types_list, type_name);
+    struct rir_type *defined_type = rir_types_list_get_defined(ctx->mod->rir_types_list, type_name);
     if (rir_type_is_sumtype(defined_type)) {
         return bllvm_sum_ctor_args_to_type(fn_call, type_name, ctx);
     }
@@ -171,7 +171,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                 ctx,
                 bllvm_sum_fncall_args_to_type(
                     n,
-                    rir_types_list_get_type(ctx->mod->analyzer->rir_types_list, fn_args_type, NULL),
+                    rir_types_list_get_type(ctx->mod->rir_types_list, fn_args_type, NULL),
                     type_get_unique_type_str(fn_args_type, false),
                     ctx)
             );

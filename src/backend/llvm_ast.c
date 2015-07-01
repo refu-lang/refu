@@ -225,7 +225,7 @@ LLVMValueRef bllvm_compile_string_literal(struct ast_node *n,
     // all unique string literals should have been declared as global strings
     uint32_t hash;
     const struct RFstring *s = ast_string_literal_get_str(n);
-    if (!string_table_add_or_get_str(ctx->mod->analyzer->string_literals_table, s, &hash)) {
+    if (!string_table_add_or_get_str(ctx->mod->string_literals_table, s, &hash)) {
         RF_ERROR("Unable to retrieve string literal from table during LLVM compile");
         return NULL;
     }

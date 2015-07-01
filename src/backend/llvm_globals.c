@@ -28,7 +28,7 @@ static bool bllvm_create_module_types(struct llvm_traversal_ctx *ctx)
 {
     struct type *t;
     struct rf_objset_iter it;
-    rf_objset_foreach(ctx->mod->analyzer->types_set, &it, t) {
+    rf_objset_foreach(ctx->mod->types_set, &it, t) {
         if (t->category == TYPE_CATEGORY_DEFINED) {
             if (!bllvm_compile_typedecl(type_defined_get_name(t), t, ctx)) {
                 return false;
@@ -218,7 +218,7 @@ bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx)
 {
     // create all constant strings
     llvm_traversal_ctx_reset_params(ctx);
-    string_table_iterate(ctx->mod->analyzer->string_literals_table,
+    string_table_iterate(ctx->mod->string_literals_table,
                          (string_table_cb)bllvm_const_string_creation_cb, ctx);
     if (!bllvm_create_module_types(ctx)) {
         RF_ERROR("Could not create global types");

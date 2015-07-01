@@ -127,7 +127,7 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
-    rir_types_list_for_each(front_testdriver_analyzer()->rir_types_list, t) {
+    rir_types_list_for_each(front_testdriver_module()->rir_types_list, t) {
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {

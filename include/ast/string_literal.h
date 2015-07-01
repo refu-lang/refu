@@ -8,13 +8,13 @@
 
 struct ast_node;
 struct inplocation;
-struct analyzer;
+struct module;
 
 struct ast_node *ast_string_literal_create(struct inplocation *loc);
-bool ast_string_literal_hash_create(struct ast_node *lit, struct analyzer *a);
+bool ast_string_literal_hash_create(struct ast_node *lit, struct module *m);
 
 const struct RFstring *ast_string_literal_analyzed_str(const struct ast_node *n,
-                                                       const struct analyzer *a);
+                                                       const struct module *m);
 
 #include <ast/ast.h>
 i_INLINE_DECL const struct RFstring *

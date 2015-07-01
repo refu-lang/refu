@@ -65,11 +65,6 @@ void front_testdriver_set_curr_module(unsigned i)
     ck_abort_msg("Attempted to set non-existant module with index %u as current.", i);
 }
 
-struct analyzer *front_testdriver_analyzer()
-{
-    return front_testdriver_module()->analyzer;
-}
-
 struct module *front_testdriver_module()
 {
     struct module *m;

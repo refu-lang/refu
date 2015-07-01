@@ -17,7 +17,7 @@
 
 #include <types/type.h>
 
-#include "../../src/analyzer/analyzer_pass1.h"
+#include <analyzer/analyzer_pass1.h>
 
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"

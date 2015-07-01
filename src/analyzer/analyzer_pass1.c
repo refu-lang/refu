@@ -1,4 +1,4 @@
-#include "analyzer_pass1.h"
+#include <analyzer/analyzer_pass1.h>
 
 #include <analyzer/analyzer.h>
 
@@ -288,7 +288,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         RF_ASSERT(n->state == AST_NODE_STATE_AFTER_PARSING,
                   "Attempting to create identifier hash for node in a wrong "
                   "state of processing");
-        if (!ast_identifier_hash_create(n, ctx->m->analyzer)) {
+        if (!ast_identifier_hash_create(n, ctx->m)) {
             return false;
         }
         break;
@@ -297,7 +297,7 @@ static bool analyzer_first_pass_do(struct ast_node *n,
         RF_ASSERT(n->state == AST_NODE_STATE_AFTER_PARSING,
                   "Attempting to create literal hash for node in a wrong state "
                   "of processing");
-        if (!ast_string_literal_hash_create(n, ctx->m->analyzer)) {
+        if (!ast_string_literal_hash_create(n, ctx->m)) {
             return false;
         }
         break;

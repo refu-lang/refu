@@ -107,7 +107,7 @@ const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int 
 struct type *type_foreign_function_create(struct module *mod, const struct RFstring *name)
 {
     struct type *ret;
-    ret = type_alloc(mod->analyzer);
+    ret = type_alloc(mod);
     if (!ret) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -116,7 +116,7 @@ struct type *type_foreign_function_create(struct module *mod, const struct RFstr
     ret->category = TYPE_CATEGORY_FOREIGN_FUNCTION;
     ret->foreignfn.name = name;
     // do not add foreign function type to the types list at the moment
-    /* analyzer_types_set_add(a, ret); */
+    /* analyzer_types_set_add(mod, ret); */
     return ret;
 }
 

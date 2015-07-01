@@ -25,7 +25,7 @@
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include <analyzer/typecheck_matchexpr.h>
-#include "analyzer_pass1.h" // for analyzer symbol table change functions
+#include <analyzer/analyzer_pass1.h> // for analyzer symbol table change functions
 
 void traversal_node_set_type(struct ast_node *n,
                              const struct type *t,
@@ -370,7 +370,7 @@ static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
     // an ast_type_leaf's type is a type leaf
     traversal_node_set_type(
         n,
-        analyzer_get_or_create_type(ctx->m, n, ctx->current_st, NULL),
+        module_get_or_create_type(ctx->m, n, ctx->current_st, NULL),
         ctx
     );
     return TRAVERSAL_CB_OK;

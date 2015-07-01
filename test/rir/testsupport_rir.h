@@ -49,6 +49,6 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
 
 i_INLINE_DECL struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d)
 {
-    return front_testdriver_analyzer()->types_set;
+    return front_testdriver_module()->types_set;
 }
 #endif

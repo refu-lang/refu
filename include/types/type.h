@@ -11,7 +11,6 @@
 #include <ir/rir_type.h>
 
 struct module;
-struct analyzer;
 struct symbol_table;
 struct RFbuffer;
 
@@ -19,8 +18,8 @@ extern const struct RFstring g_wildcard_s;
 
 /* -- type allocation functions -- */
 
-struct type *type_alloc(struct analyzer *a);
-void type_free(struct type *t, struct analyzer *a);
+struct type *type_alloc(struct module *m);
+void type_free(struct type *t, struct module *m);
 
 /* -- various type creation and initialization functions -- */
 

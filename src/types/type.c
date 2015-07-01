@@ -65,16 +65,16 @@ static bool type_function_add_args_to_st(struct type *args_t,
 
 /* -- type allocation functions -- */
 
-struct type *type_alloc(struct analyzer *a)
+struct type *type_alloc(struct module *m)
 {
-    struct type *ret = rf_fixed_memorypool_alloc_element(a->types_pool);
+    struct type *ret = rf_fixed_memorypool_alloc_element(m->types_pool);
     RF_STRUCT_ZERO(ret);
     return ret;
 }
 
-void type_free(struct type *t, struct analyzer *a)
+void type_free(struct type *t, struct module *m)
 {
-    rf_fixed_memorypool_free_element(a->types_pool, t);
+    rf_fixed_memorypool_free_element(m->types_pool, t);
 }
 
 /* -- type creation and initialization functions used internally -- */
@@ -104,7 +104,7 @@ static bool type_leaf_init_from_node(struct type_leaf *leaf,
 
     } else if (right->type == AST_TYPE_DESCRIPTION ||
                right->type == AST_TYPE_OPERATOR) {
-        leaf->type = analyzer_get_or_create_type(m, right, st, genrdecl);
+        leaf->type = module_get_or_create_type(m, right, st, genrdecl);
         if (!leaf->type) {
             return false;
         }
@@ -125,7 +125,7 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
                                         struct ast_node *genrdecl)
 {
     struct type *ret;
-    ret = type_alloc(m->analyzer);
+    ret = type_alloc(m);
     if (!ret) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -133,12 +133,12 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
 
     ret->category = TYPE_CATEGORY_LEAF;
     if (!type_leaf_init_from_node(&ret->leaf, typedesc, m, st, genrdecl)) {
-        type_free(ret, m->analyzer);
+        type_free(ret, m);
         return NULL;
     }
 
     // add it to the types list
-    analyzer_types_set_add(m->analyzer, ret);
+    module_types_set_add(m, ret);
     return ret;
 }
 
@@ -185,13 +185,13 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
                                        struct ast_node *genrdecl)
 {
     struct type *ret;
-    ret = type_alloc(m->analyzer);
+    ret = type_alloc(m);
     if (!ret) {
         RF_ERROR("Type allocation failed");
         return NULL;
     }
     if (!type_init_from_typeelem(ret, typedesc, m, st, genrdecl)) {
-        type_free(ret, m->analyzer);
+        type_free(ret, m);
         return NULL;
     }
 
@@ -241,7 +241,7 @@ struct type *type_lookup_or_create(const struct ast_node *n,
     case AST_TYPE_DESCRIPTION:
         return type_lookup_or_create(ast_typedesc_desc_get(n), m, st, genrdecl, make_leaf);
     case AST_TYPE_OPERATOR:
-        return analyzer_get_or_create_type(m, n, st, genrdecl);
+        return module_get_or_create_type(m, n, st, genrdecl);
     case AST_VARIABLE_DECLARATION:
         return type_lookup_or_create(ast_vardecl_desc_get(n), m, st, genrdecl, false);
     default:
@@ -261,7 +261,7 @@ struct type *type_create_from_operation(enum typeop_type type,
     struct type *t;
     // TODO: Somehow also check if the type is already existing in the analyzer
     //       and if it is return it instead of creating it
-    t = type_alloc(m->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -306,7 +306,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
-    t = type_alloc(m->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -320,11 +320,11 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
                                             true);
     if (!t->defined.type) {
         RF_ERROR("Failed to create type for typedecl's typedescription");
-        type_free(t, m->analyzer);
+        type_free(t, m);
         t = NULL;
     }
 
-    analyzer_types_set_add(m->analyzer, t);
+    module_types_set_add(m, t);
     return t;
 }
 
@@ -369,33 +369,33 @@ static bool type_init_from_fndecl(struct type *t,
 }
 
 struct type *type_create_from_fndecl(const struct ast_node *n,
-                                     struct module *mod,
+                                     struct module *m,
                                      struct symbol_table *st)
 {
     struct type *t;
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
 
-    t = type_alloc(mod->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
     }
 
-    if (!type_init_from_fndecl(t, n, mod, st)) {
-        type_free(t, mod->analyzer);
+    if (!type_init_from_fndecl(t, n, m, st)) {
+        type_free(t, m);
         t = NULL;
     }
 
-    analyzer_types_set_add(mod->analyzer, t);
+    module_types_set_add(m, t);
     return t;
 }
 
-struct type *type_function_create(struct module *mod,
+struct type *type_function_create(struct module *m,
                                   struct type *arg_type,
                                   struct type *ret_type)
 {
     struct type *t;
-    t = type_alloc(mod->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -404,10 +404,10 @@ struct type *type_function_create(struct module *mod,
     return t;
 }
 
-struct type *type_module_create(struct module *mod, const struct RFstring *name)
+struct type *type_module_create(struct module *m, const struct RFstring *name)
 {
     struct type *t;
-    t = type_alloc(mod->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -421,7 +421,7 @@ struct type *type_leaf_create(struct module *m,
                               struct type *leaf_type)
 {
     struct type *t;
-    t = type_alloc(m->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -429,7 +429,7 @@ struct type *type_leaf_create(struct module *m,
     t->category = TYPE_CATEGORY_LEAF;
     t->leaf.id = id;
     t->leaf.type = leaf_type;
-    analyzer_types_set_add(m->analyzer, t);
+    module_types_set_add(m, t);
     return t;
 }
 
@@ -439,7 +439,7 @@ struct type *type_operator_create(struct module *m,
                                   enum typeop_type type)
 {
     struct type *t;
-    t = type_alloc(m->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -448,7 +448,7 @@ struct type *type_operator_create(struct module *m,
     t->operator.type = type;
     t->operator.left = left_type;
     t->operator.right = right_type;
-    analyzer_types_set_add(m->analyzer, t);
+    module_types_set_add(m, t);
     return t;
 }
 
@@ -458,7 +458,7 @@ struct type *type_operator_create_from_node(struct ast_node *n,
                                             struct ast_node *genrdecl)
 {
     struct type *t;
-    t = type_alloc(m->analyzer);
+    t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
@@ -466,11 +466,11 @@ struct type *type_operator_create_from_node(struct ast_node *n,
 
     t->category = TYPE_CATEGORY_OPERATOR;
     if (!type_operator_init_from_node(&t->operator, n, m, st, genrdecl)) {
-        type_free(t, m->analyzer);
+        type_free(t, m);
         t = NULL;
     }
 
-    analyzer_types_set_add(m->analyzer, t);
+    module_types_set_add(m, t);
     return t;
 }
 

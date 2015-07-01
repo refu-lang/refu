@@ -1,7 +1,7 @@
 #include <ast/identifier.h>
 
 #include <ast/ast.h>
-#include <analyzer/analyzer.h>
+#include <module.h>
 #include <analyzer/string_table.h>
 #include <types/type.h>
 
@@ -39,33 +39,37 @@ const struct RFstring *ast_identifier_str(const struct ast_node *n)
     return ast_xidentifier_str(n);
 }
 
-const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
-                                                   const struct analyzer *a)
+const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n)
 {
     RF_ASSERT(n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
               "Unexpected ast node type");
     RF_ASSERT(n->state >= AST_NODE_STATE_ANALYZER_PASS1,
               "calling function at wrong part of processing pipeline");
 
+    RF_ASSERT(false, "function not implemented");
+    return NULL;
+#if 0 // this is not used anywhere atm. If that changes either pass the module
+      // or each node should know which module it belongs to.
     if (n->type == AST_IDENTIFIER) {
         return string_table_get_str(a->identifiers_table, n->identifier.hash);
     }
     return string_table_get_str(a->identifiers_table,
                                 n->xidentifier.id->identifier.hash);
+#endif
 }
 
-bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a)
+bool ast_identifier_hash_create(struct ast_node *n, struct module *m)
 {
-    return string_table_add_or_get_str(a->identifiers_table,
+    return string_table_add_or_get_str(m->identifiers_table,
                                        &n->identifier.string,
                                        &n->identifier.hash);
 }
 
-uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a)
+uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct module *m)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     if (n->state == AST_NODE_STATE_AFTER_PARSING) {
-        ast_identifier_hash_create(n, a);
+        ast_identifier_hash_create(n, m);
     }
     return n->identifier.hash;
 }

@@ -10,7 +10,7 @@
 struct ast_node;
 struct inplocation;
 struct inplocation_mark;
-struct analyzer;
+struct module;
 
 struct ast_identifier {
     struct RFstring string;
@@ -23,16 +23,15 @@ void ast_identifier_print(struct ast_node *n, int depth);
 
 /**
  * String getter for both an identifier and an xidentifier's string when
- * the identifier is still before the first pass of the analyzer
+ * the identifier is still before the first pass of the analysis stage
  */
 const struct RFstring *ast_identifier_str(const struct ast_node *n);
 
 /**
  * String getter for both an identifier and an xidentifier's string when
- * the identifier has been indexed by the analyzer
+ * the identifier has been indexed by the analysis stage
  */
-const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n,
-                                                   const struct analyzer *a);
+const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n);
 /**
  * Returns if the string is '_', which is a wildcard
  */
@@ -42,8 +41,8 @@ bool string_is_wildcard(const struct RFstring *s);
  */
 bool ast_identifier_is_wildcard(const struct ast_node *n);
 
-bool ast_identifier_hash_create(struct ast_node *n, struct analyzer *a);
-uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct analyzer *a);
+bool ast_identifier_hash_create(struct ast_node *n, struct module *m);
+uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct module *m);
 
 /* -- xidentifier -- */
 

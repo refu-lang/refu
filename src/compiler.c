@@ -293,7 +293,7 @@ bool compiler_preprocess_fronts()
     // determine the dependencies of all the modules
     struct module **mod;
     darray_foreach(mod, c->modules) {
-        if (!analyzer_determine_dependencies(*mod, c->use_stdlib)) {
+        if (!module_determine_dependencies(*mod, c->use_stdlib)) {
             i_info_ctx_add_msg((*mod)->front->info,   
                                MESSAGE_SEMANTIC_ERROR,
                                ast_node_startmark((*mod)->node),

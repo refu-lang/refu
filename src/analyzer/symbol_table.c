@@ -155,7 +155,7 @@ bool symbol_table_init(struct symbol_table *t, struct module *m)
 {
     RF_STRUCT_ZERO(t);
     htable_init(&t->table, rehash_fn, NULL);
-    t->pool = m->analyzer->symbol_table_records_pool;
+    t->pool = m->symbol_table_records_pool;
     t->mod = m;
     return true;
 }

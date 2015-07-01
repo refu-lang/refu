@@ -44,10 +44,6 @@ void front_testdriver_set_curr_front(unsigned i);
 void front_testdriver_set_curr_module(unsigned i);
 
 /**
- * Get the first analyzer of the current module being tested
- */
-struct analyzer *front_testdriver_analyzer();
-/**
  * Get the first module being tested
  */
 struct module *front_testdriver_module();
