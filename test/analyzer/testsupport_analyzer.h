@@ -137,4 +137,25 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
         ck_assert_analyzer_errors(expected_msgs_);                      \
     } while(0)
 
+/* -- module dependencies related support -- */
+
+/**
+ * Assert a specific module dependency order
+ * @param expected_modules_   An array of strings with the names of the modules
+ *                            in the expected order
+ */
+#define ck_assert_modules_order(expected_modules_)                      \
+    do {                                                                \
+        ck_assert_typecheck_ok();                                       \
+        i_ck_assert_modules_order(expected_modules_,                    \
+                                  sizeof(expected_modules_) / sizeof(struct RFstring), \
+                                  __FILE__,                             \
+                                  __LINE__);                            \
+    } while(0)
+
+void i_ck_assert_modules_order(const struct RFstring *expected_module_names,
+                               unsigned int expected_num,
+                               const char *filename,
+                               unsigned int line);
+
 #endif

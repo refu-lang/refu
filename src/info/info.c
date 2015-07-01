@@ -138,7 +138,6 @@ bool info_ctx_get_messages_fmt(struct info_ctx *ctx,
             rf_stringx_move_end(str);
         }
     }
-    rf_stringx_reset(str);
     return true;
 }
 

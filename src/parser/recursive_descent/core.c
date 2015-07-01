@@ -68,7 +68,7 @@ static struct ast_node *parser_acc_stmt(struct parser *p)
     // TODO: Maybe change these, since each one of these macros actually checks for token existence too
     if (TOKEN_IS_MODULE_START(tok)) {
         stmt = parser_acc_module(p);
-        if (!module_create(stmt, p->front)) {
+        if (!stmt || !module_create(stmt, p->front)) {
             return NULL;
         }
     } else if (TOKEN_IS_BLOCK_START(tok)) {

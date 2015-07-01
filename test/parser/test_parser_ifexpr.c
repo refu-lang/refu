@@ -29,7 +29,7 @@ START_TEST(test_acc_ifexpr_1) {
         "    do_sth()\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 3, 0, 3);
     testsupport_parser_constant_create(cnum, 0, 8, 0, 9, integer, 42);
@@ -64,7 +64,7 @@ START_TEST(test_acc_ifexpr_2) {
         "    55 + 2.31\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 3, 0, 3);
     testsupport_parser_constant_create(cnum1, 0, 8, 0, 9, integer, 42);
@@ -111,7 +111,7 @@ START_TEST(test_acc_ifexpr_3) {
         "    55 + 2.31\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 3, 0, 3);
     testsupport_parser_constant_create(cnum1, 0, 8, 0, 9, integer, 42);
@@ -180,7 +180,7 @@ START_TEST(test_acc_ifexpr_4) {
         "    55 + 2.31\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 3, 0, 3);
     testsupport_parser_constant_create(cnum1, 0, 8, 0, 9, integer, 42);
@@ -256,7 +256,7 @@ START_TEST(test_acc_ifexpr_ambiguous_less_than_or_generic) {
         "if a < 42 {\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 3, 0, 3);
     testsupport_parser_constant_create(cnum, 0, 7, 0, 8, integer, 42);
@@ -280,7 +280,7 @@ START_TEST(test_acc_ifexpr_errors_1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "if "
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(ifexpr, TOKEN_KW_IF);
     struct info_msg errors[] = {
@@ -298,7 +298,7 @@ START_TEST(test_acc_ifexpr_errors_2) {
         " do_sth()\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(ifexpr, TOKEN_KW_IF);
     struct info_msg errors[] = {
@@ -316,7 +316,7 @@ START_TEST(test_acc_ifexpr_errors_3) {
         " do_sth()\n"
         "} else {"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(ifexpr, TOKEN_KW_IF);
     struct info_msg errors[] = {
@@ -338,7 +338,7 @@ START_TEST(test_acc_ifexpr_errors_4) {
         " do_sth()\n"
         "} elif "
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(ifexpr, TOKEN_KW_IF);
     struct info_msg errors[] = {
@@ -360,7 +360,7 @@ START_TEST(test_acc_ifexpr_errors_5) {
         "  else_action()\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(ifexpr, TOKEN_KW_IF);
     struct info_msg errors[] = {

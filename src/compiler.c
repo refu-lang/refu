@@ -55,14 +55,15 @@ struct compiler *compiler_alloc()
 {
     struct compiler *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    // can't use RF_ASSERT() here, comes before rf_init()
-    assert(!g_compiler_instance);
     g_compiler_instance = ret;
     return ret;
 }
 
 struct compiler *compiler_create(int rf_logtype, bool with_stdlib)
 {
+
+    RF_ASSERT_OR_EXIT(!g_compiler_instance, 
+                      "compiler_create() was called a second time");
     struct compiler *compiler = compiler_alloc();
     return compiler_init(compiler, rf_logtype, with_stdlib) ? compiler : NULL;
 }
@@ -78,6 +79,8 @@ static bool compiler_init_with_args(struct compiler *c, int rf_logtype, bool wit
 
 struct compiler *compiler_create_with_args(int rf_logtype, bool with_stdlib, int argc, char **argv)
 {
+    RF_ASSERT_OR_EXIT(!g_compiler_instance, 
+                      "compiler_create() was called a second time");
     struct compiler *ret = compiler_alloc();
     if (!compiler_init_with_args(ret, rf_logtype, with_stdlib, argc, argv)) {
         free(ret);
@@ -375,11 +378,13 @@ bool compiler_help_requested(struct compiler *c)
 struct RFstringx *compiler_get_errors(struct compiler *c)
 {
     struct front_ctx *front;
+    RF_ASSERT(rf_string_is_empty(&c->err_buff),
+              "compiler error buffer string should be empty before");
     rf_ilist_for_each(&c->front_ctxs, front, ln) {
-        if (!info_ctx_get_messages_fmt(front->info, MESSAGE_ANY, &c->err_buff)) {
-        return NULL;
-        }
+        // append error messages to the error buffer string
+        (info_ctx_get_messages_fmt(front->info, MESSAGE_ANY, &c->err_buff));
     }
-
-    return &c->err_buff;
+    // if anything got added move internal string pointer to beginning
+    rf_stringx_reset(&c->err_buff);
+    return rf_string_is_empty(&c->err_buff) ? NULL : &c->err_buff;
 }

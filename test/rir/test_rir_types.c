@@ -20,7 +20,7 @@ START_TEST (test_types_list_simple1) {
         "return 45 + a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -42,7 +42,7 @@ START_TEST(test_types_list_simple2) {
         "type foo {a:u32, b:u16, c:i8, d:f32, e:string}"
     );
     struct rir_testdriver *d = get_rir_testdriver();
-    front_testdriver_new_source(d, &s);
+    front_testdriver_new_main_source(d, &s);
     ck_assert_typecheck_ok(d, false);
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -81,7 +81,7 @@ START_TEST(test_types_list_type_reuse) {
         "}\n"
         "type boo {a:i64, b:f64}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -116,7 +116,7 @@ START_TEST(test_types_list_type_reuse_products_and_sums) {
         "type bar {a:i8, b:string}\n"
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
@@ -170,7 +170,7 @@ START_TEST(test_rir_type_equals_type1) {
         "type foobar {a:i64, b:f64, c:i8, d:string}\n"
     );
     struct rir_testdriver *d = get_rir_testdriver();
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     // search the normal types for the only defined type that should be there
@@ -212,7 +212,7 @@ START_TEST(test_rir_type_equals_type2) {
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
     struct rir_testdriver *d = get_rir_testdriver();
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     // search the normal types for the only defined type that should be there
@@ -259,7 +259,7 @@ START_TEST(test_rir_type_equals_type3) {
         "type foobar {a:i64, b:f64, foo:i32 | c:i8, d:string | e:i8}\n"
     );
     struct rir_testdriver *d = get_rir_testdriver();
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     // search the normal types for the only defined type that should be there
@@ -313,7 +313,7 @@ START_TEST(test_rir_type_equals_type4) {
         "type foobar {(a:i64, b:f64, foo:i32 | c:i8, d:string | e:i8) -> f:i32}\n"
     );
     struct rir_testdriver *d = get_rir_testdriver();
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     // search the normal types for the only defined type that should be there

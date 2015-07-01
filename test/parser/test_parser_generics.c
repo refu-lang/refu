@@ -20,7 +20,7 @@ START_TEST(test_acc_genrdecl_simple1) {
     struct ast_node *n;
     struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a>");
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 1, 0, 4);
@@ -40,7 +40,7 @@ START_TEST(test_acc_genrdecl_simple2) {
     struct ast_node *n;
     struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("  <  Type a >  ");
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 5, 0, 8);
@@ -60,7 +60,7 @@ START_TEST(test_acc_genrdecl_simple3) {
     struct ast_node *n;
     struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a, Type b>");
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
 
@@ -85,7 +85,7 @@ START_TEST(test_acc_genrdecl_simple3) {
 START_TEST(test_acc_genrdecl_fail1) {
     struct front_ctx *front;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type ");
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
 
     ck_test_fail_parse_as(genrdecl);
@@ -105,7 +105,7 @@ START_TEST(test_acc_genrdecl_fail1) {
 
 START_TEST(test_acc_genrdecl_fail2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a bbb");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(genrdecl);
     struct info_msg errors[] = {

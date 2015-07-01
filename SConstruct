@@ -178,6 +178,7 @@ unit_tests_files = [
     'analyzer/test_typecheck_matchexpr.c',
     'analyzer/test_typecheck_operators.c',
     'analyzer/test_string_table.c',
+    'analyzer/test_modules.c',
 
     'types/test_types.c',
 

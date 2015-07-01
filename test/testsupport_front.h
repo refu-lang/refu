@@ -68,7 +68,12 @@ struct inpfile *front_testdriver_file();
 void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
 
 /**
- * Create a new front_ctx with the given source string
+ * Create a new front_ctx with the given source string containing the main entry to a program
+ */
+struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s);
+
+/**
+ * Create a new front_ctx with the given source
  */
 struct front_ctx *front_testdriver_new_source(const struct RFstring *s);
 

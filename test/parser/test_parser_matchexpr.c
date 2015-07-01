@@ -21,7 +21,7 @@ START_TEST(test_acc_matchexpr_1case) {
         "match a {\n"
         "    _ => \"only_case\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 2, 0, id_a);
@@ -44,7 +44,7 @@ START_TEST(test_acc_matchexpr_2cases) {
         "    a:i32 => a\n"
         "    _     => \"other_cases\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 3, 0, id_a);
@@ -79,7 +79,7 @@ START_TEST(test_acc_matchexpr_3cases) {
         "    f32   => \"float\"\n"
         "    _     => \"others_cases\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 4, 0, id_a);
@@ -118,7 +118,7 @@ START_TEST(test_acc_matchexpr_product_op) {
         "    string, bool => \"string and bool\"\n"
         "    _     => \"other_cases\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 3, 0, id_a);
@@ -153,7 +153,7 @@ START_TEST(test_acc_matchexpr_sum_op) {
         "    string | bool => \"string or bool\"\n"
         "    _     => \"other_cases\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 3, 0, id_a);
@@ -188,7 +188,7 @@ START_TEST(test_acc_matchexpr_bind_to_typedesc) {
         "    r:(string | bool) => r\n"
         "    _     => \"other_cases\"\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 3, 0, id_a);
@@ -223,7 +223,7 @@ START_TEST(test_acc_matchexpr_recursive) {
         "    nil     => 0\n"
         "    _, tail => 1 + match(tail)\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 6, 0, 6);
     testsupport_parser_node_create(mexpr, matchexpr, 0, 0, 3, 0, id_a);

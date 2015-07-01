@@ -204,16 +204,16 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
 static bool analyzer_populate_symbol_table_import(struct analyzer_traversal_ctx *ctx,
                                                   struct ast_node *n)
 {
-    RF_ASSERT(ast_import_is_foreign(n), "Only foreign imports are supported for now");
-
-    // insert foreign functions to the global symbol table
-    struct ast_node *child;
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (!symbol_table_add_foreignfn(
-            ctx->current_st,
-            child,
-            ctx->m)) {
-            return false;
+    if (ast_import_is_foreign(n)) {
+        // insert foreign functions to the global symbol table
+        struct ast_node *child;
+        rf_ilist_for_each(&n->children, child, lh) {
+            if (!symbol_table_add_foreignfn(
+                    ctx->current_st,
+                    child,
+                    ctx->m)) {
+                return false;
+            }
         }
     }
     return true;
@@ -403,7 +403,6 @@ bool analyzer_first_pass(struct module *m)
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, m);
     // set the starting symbol_table
-    /* ctx.current_st = module_symbol_table(m); */
     ctx.current_st = &m->front->root->root.st;
 
     bool ret = ast_traverse_tree(

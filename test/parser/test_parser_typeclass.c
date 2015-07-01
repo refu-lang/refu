@@ -27,7 +27,7 @@ START_TEST(test_acc_typeclass_1) {
         "class op_ampersand {\n"
         "fn dosth(a:i32) -> i32\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 6, 0, 17);
     testsupport_parser_node_create(tclass, typeclass, 0, 0, 2, 0,
@@ -59,7 +59,7 @@ START_TEST(test_acc_typeclass_with_generics) {
         "class op_ampersand <Type foo> {\n"
         "fn dosth(a:foo) -> i32\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 6, 0, 17);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 20, 0, 23);
@@ -100,7 +100,7 @@ START_TEST(test_acc_typeclass_2) {
         "fn dosth_else() -> i32\n"
         "fn act(a:u64) -> foo\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *name = testsupport_parser_identifier_create(0, 6, 0, 17);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 20, 0, 23);
@@ -162,7 +162,7 @@ START_TEST(test_acc_typeclass_err1) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "class {}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -179,7 +179,7 @@ START_TEST(test_acc_typeclass_err2) {
         "class pointers {\n"
         "\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -195,7 +195,7 @@ START_TEST(test_acc_typeclass_err2) {
 START_TEST(test_acc_typeclass_err3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "class adder <Type a {}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -217,7 +217,7 @@ START_TEST(test_acc_typeclass_err4) {
         "class pointers \n"
         "fn do_sth()\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -234,7 +234,7 @@ START_TEST(test_acc_typeclass_err5) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "class pointers {\n"
         "fn do_sth()");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -251,7 +251,7 @@ START_TEST(test_acc_typeclass_err6) {
         "class pointers {\n"
         "fn dosth(\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typeclass);
     struct info_msg errors[] = {
@@ -278,7 +278,7 @@ START_TEST(test_acc_typeinstance_1) {
         "92821 + a\n"
         "}\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *class_name = testsupport_parser_identifier_create(0, 9, 0, 20);
     struct ast_node *type_name = testsupport_parser_identifier_create(0, 22, 0, 27);
@@ -335,7 +335,7 @@ START_TEST(test_acc_typeinstance_2) {
         "important_action(arg)\n"
         "}\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *class_name = testsupport_parser_identifier_create(0, 9, 0, 20);
     struct ast_node *type_name = testsupport_parser_identifier_create(0, 22, 0, 27);

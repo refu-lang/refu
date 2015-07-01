@@ -30,7 +30,7 @@ START_TEST (test_typecheck_implicit_conversion_bool_to_int) {
         "a:int = true\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -40,7 +40,7 @@ START_TEST (test_typecheck_implicit_conversion_int_to_bool) {
         "a:bool = 13\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -51,7 +51,7 @@ START_TEST (test_typecheck_u64_to_u8_implicit_conversion_warning) {
         "b = a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_WARNING,
@@ -69,7 +69,7 @@ START_TEST (test_typecheck_u32_to_u8_implicit_conversion_warning) {
         "b = a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_WARNING,
@@ -87,7 +87,7 @@ START_TEST (test_typecheck_u16_to_u8_implicit_conversion_warning) {
         "b = a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_WARNING,
@@ -105,7 +105,7 @@ START_TEST (test_typecheck_signed_to_unsigned_implicit_conversion_warning) {
         "b = a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_WARNING,
@@ -123,7 +123,7 @@ START_TEST (test_typecheck_inv_implicit_conversion_warning) {
         "b = a\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_WARNING,
@@ -144,7 +144,7 @@ START_TEST (test_typecheck_inv_implicit_conversion_u64_const_to_u8_error) {
         "b:u8 = 999999999\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -164,7 +164,7 @@ START_TEST (test_typecheck_valid_explicit_conversion1) {
         "b = u8(a)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -175,7 +175,7 @@ START_TEST (test_typecheck_valid_explicit_conversion2) {
         "b = u8(a)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -186,7 +186,7 @@ START_TEST (test_typecheck_valid_explicit_conversion3) {
         "b = u8(a)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -197,7 +197,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_int_literal_to_string) {
         "a = string(32)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -208,7 +208,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_float_literal_to_string) {
         "a = string(0.2342)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -219,7 +219,7 @@ START_TEST (test_typecheck_valid_explicit_conversion_bool_to_string) {
         "a = string(true)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -230,7 +230,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
         "a = u64()\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -252,7 +252,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
         "a = string(b)\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,

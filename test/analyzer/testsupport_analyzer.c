@@ -57,7 +57,7 @@ void setup_analyzer_tests_no_source()
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
     // empty source file
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     // and since it's empty get to the analysis stage (some tests need this)
     testsupport_analyzer_prepare();
 }
@@ -229,4 +229,30 @@ bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
     }
 
     return true;
+}
+
+void i_ck_assert_modules_order(const struct RFstring *expected_module_names,
+                               unsigned int expected_num,
+                               const char *filename,
+                               unsigned int line)
+{
+    unsigned int i = 0;
+    struct compiler *c = compiler_instance_get();
+    // check the modules in the topologically sorted order
+    struct module *mod;
+    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
+        ck_assert_msg(rf_string_equal(&expected_module_names[i], module_name(mod)),
+                      "Dependency error. Expected module \""RF_STR_PF_FMT"\" at "
+                      "position %u but found module \""RF_STR_PF_FMT"\". At %s:%uu",
+                      RF_STR_PF_ARG(&expected_module_names[i]),
+                      i,
+                      RF_STR_PF_ARG(module_name(mod)),
+                      filename, line);
+        ++i;
+    }
+
+    ck_assert_msg(i == expected_num,
+                  "Mismatch of expected modules at dependency check. Expected "
+                  "%u modules but found %i modules. At %s:%u",
+                  expected_num, i, filename, line);
 }

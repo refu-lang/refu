@@ -48,7 +48,7 @@ void setup_rir_tests_no_source()
     setup_analyzer_tests_no_stdlib();
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     testsupport_analyzer_prepare();
 }
 

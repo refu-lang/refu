@@ -668,12 +668,6 @@ static enum traversal_cb_res typecheck_block(struct ast_node *n,
 static enum traversal_cb_res typecheck_import(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
-    if (!ast_import_is_foreign(n)) {
-        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "Only foreign imports are supported for now");
-        return TRAVERSAL_CB_ERROR;
-    }
-
     // import does not have a type
     n->expression_type = NULL;
     return TRAVERSAL_CB_OK;

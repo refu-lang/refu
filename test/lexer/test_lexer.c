@@ -16,7 +16,7 @@ START_TEST(test_lexer_scan_tokens_1) {
     struct inpfile *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "asd { }");
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
     f = front_testdriver_file();
     struct token expected[] = {
@@ -59,7 +59,7 @@ START_TEST(test_lexer_scan_tokens_2) {
         "=>\n"
         "module\n"
     );
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
@@ -227,7 +227,7 @@ START_TEST(test_lexer_scan_tokens_crammed) {
     struct inpfile *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "food<>||");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     f = front_testdriver_file();
     struct token expected[] = {
         TESTLEX_IDENTIFIER_INIT(0, 0, 0, 3, "food"),
@@ -262,7 +262,7 @@ START_TEST(test_lexer_scan_constant_numbers) {
         "-13\n"
         "-2.1234\n"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 42),
         TESTLEX_FLOAT_INIT(1, 0, 1, 3, 3.14),
@@ -287,7 +287,7 @@ START_TEST(test_lexer_scan_string_literals) {
         "\"Containing escaped \\\"\\\" quotes\"\n"
         "\"Eleos そう思いながらも\"\n"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_LITERAL_INIT(0, 0, 0, 6, 0, 6,  "Celka"),
         TESTLEX_LITERAL_INIT(1, 0, 1, 31, 0, 31,
@@ -307,7 +307,7 @@ START_TEST (test_lexer_scan_with_comments) {
         "\"string_literal\"\n"
         "//"
     );
-    front = front_testdriver_new_source(&s);
+    front = front_testdriver_new_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file");
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 2, 234),
@@ -322,7 +322,7 @@ START_TEST (test_lexer_scan_with_comments) {
 START_TEST(test_lexer_scan_identifier_at_end) {
     struct inpfile *f;
     static const struct RFstring s = RF_STRING_STATIC_INIT("<Type a bbb");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     f = front_testdriver_file();
     struct token expected[] = {
         {
@@ -343,7 +343,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
         "class pointers {\n"
         "fn dosth(\n"
         "}");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     f = front_testdriver_file();
     struct token expected[] = {
         {
@@ -376,7 +376,7 @@ START_TEST(test_lexer_scan_problematic_typeclass) {
 
 START_TEST(test_lexer_scan_constant_int_at_end) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("13 2462");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 13),
         TESTLEX_INTEGER_INIT(0, 3, 0, 6, 2462),
@@ -387,7 +387,7 @@ START_TEST(test_lexer_scan_constant_int_at_end) {
 
 START_TEST(test_lexer_scan_constant_float_at_end) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("13 0.142");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 13),
         TESTLEX_FLOAT_INIT(0, 3, 0, 7, 0.142),
@@ -398,7 +398,7 @@ START_TEST(test_lexer_scan_constant_float_at_end) {
 
 START_TEST(test_lexer_scan_string_literal_at_end) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("21 \"Berlin\"");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 21),
         TESTLEX_LITERAL_INIT(0, 3, 0, 10, 3, 10, "Berlin"),
@@ -409,7 +409,7 @@ START_TEST(test_lexer_scan_string_literal_at_end) {
 
 START_TEST(test_lexer_scan_integer_with_tokens_in_between) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("10|&{23");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 10),
@@ -433,7 +433,7 @@ START_TEST(test_lexer_scan_integer_with_tokens_in_between) {
 
 START_TEST(test_lexer_scan_float_with_tokens_in_between) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("5.3134|&{23");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         TESTLEX_FLOAT_INIT(0, 0, 0, 5, 5.3134),
@@ -457,7 +457,7 @@ START_TEST(test_lexer_scan_float_with_tokens_in_between) {
 
 START_TEST(test_lexer_scan_integer_close_to_member_access) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("10).something_else");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 1, 10),
@@ -479,7 +479,7 @@ START_TEST(test_lexer_scan_zero_at_eof) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "0"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct token expected[] = {
         TESTLEX_INTEGER_INIT(0, 0, 0, 0, 0),
     };
@@ -490,7 +490,7 @@ START_TEST(test_lexer_scan_zero_at_eof) {
 
 START_TEST(test_lexer_push_pop) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
@@ -537,7 +537,7 @@ START_TEST(test_lexer_push_pop) {
 START_TEST(test_lexer_push_rollback) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {
@@ -587,7 +587,7 @@ START_TEST(test_lexer_push_rollback) {
 START_TEST(test_lexer_many_push_rollback) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     struct inpfile *f = front_testdriver_file();
     struct token expected[] = {
         {

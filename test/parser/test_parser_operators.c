@@ -23,7 +23,7 @@ START_TEST(test_acc_addition) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a + b");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     struct ast_node *id2 = testsupport_parser_identifier_create(0, 4, 0, 4);
@@ -41,7 +41,7 @@ START_TEST(test_acc_multi) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "214 * foo");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     testsupport_parser_constant_create(cnum, 0, 0, 0, 2, integer, 214);
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 6, 0, 8);
@@ -59,7 +59,7 @@ START_TEST(test_acc_sub) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "214 - 5651");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     testsupport_parser_constant_create(cnum1, 0, 0, 0, 2, integer, 214);
     testsupport_parser_constant_create(cnum2, 0, 6, 0, 9, integer, 5651);
@@ -77,7 +77,7 @@ START_TEST(test_acc_div) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "3.142/2.1245");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     testsupport_parser_constant_create(cnum1, 0, 0, 0, 4, float, 3.142);
     testsupport_parser_constant_create(cnum2, 0, 6, 0, 11, float, 2.1245);
@@ -95,7 +95,7 @@ START_TEST(test_acc_assignment) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a = 5 + 2.149");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_constant_create(cnum1, 0, 4, 0, 4, integer, 5);
@@ -117,7 +117,7 @@ START_TEST(test_acc_assignment) {
 START_TEST(test_acc_minus) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a = -b");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     struct ast_node *id_b = testsupport_parser_identifier_create(0, 5, 0, 5);
@@ -138,7 +138,7 @@ START_TEST(test_acc_minus) {
 START_TEST(test_acc_plus) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a = +b");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     struct ast_node *id_b = testsupport_parser_identifier_create(0, 5, 0, 5);
@@ -160,7 +160,7 @@ START_TEST(test_acc_complex_binary_op_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a + 12.232 * 5 - foo");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_constant_create(cnum1, 0, 4, 0, 9, float, 12.232);
@@ -188,7 +188,7 @@ START_TEST(test_acc_complex_binary_op_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "\"start\" + 1.0e-10 - (a + dosth(42, foo))");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
 
     testsupport_parser_string_literal_create(literal, 0, 0, 0, 6);
@@ -228,7 +228,7 @@ START_TEST(test_acc_complex_binary_op_3) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "(foo<a, b>((25/2) * 323 + 2) + 325) * 3.14");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(0, 1, 0, 3);
 
@@ -277,7 +277,7 @@ START_TEST(test_acc_complex_binary_op_4) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "(table[56] + foo(3, b)) + 4 * 321");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 1, 0, 5);
     testsupport_parser_constant_create(cnum1, 0, 7, 0, 8, integer, 56);
@@ -314,7 +314,7 @@ START_TEST(test_acc_operator_precedence_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "(a * 32) & b + 15 ^ 2 | 3");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     // a * 32
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 1, 0, 1);
@@ -354,7 +354,7 @@ START_TEST(test_acc_operator_precedence_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a.foo[13]");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     // a.foo
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
@@ -376,7 +376,7 @@ START_TEST(test_acc_operator_precedence_3) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "boo(a.foo[13] - 10).member");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     // a.foo
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 4, 0, 4);
@@ -415,7 +415,7 @@ START_TEST(test_acc_subtract_negative_constant_literal) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "214 - -5651");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     testsupport_parser_constant_create(cnum1, 0, 0, 0, 2, integer, 214);
     testsupport_parser_constant_create(cnum2, 0, 6, 0, 10, integer, -5651);
@@ -433,7 +433,7 @@ START_TEST(test_acc_assign_negative_constant_literal) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a = -5651");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_constant_create(cnum2, 0, 4, 0, 8, integer, -5651);

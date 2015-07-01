@@ -376,7 +376,7 @@ START_TEST(test_composite_types_list_population) {
         "return 15"
         "}\n"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
@@ -415,7 +415,7 @@ START_TEST(test_composite_types_list_population2) {
         "}\n"
         "type boo {a:i64, b:f64}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
@@ -450,7 +450,7 @@ START_TEST(test_composite_types_list_population3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -502,7 +502,7 @@ START_TEST(test_composite_types_list_population4) {
         "type bar {a:i8, b:string}\n"
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -560,7 +560,7 @@ START_TEST(test_determine_block_type1) {
         "d:f64 = 3.14 * 0.14\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
@@ -580,7 +580,7 @@ START_TEST(test_determine_block_type2) {
         "a:foo\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);

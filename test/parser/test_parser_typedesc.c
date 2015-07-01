@@ -19,7 +19,7 @@
 START_TEST(test_acc_typedesc_simple1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -34,7 +34,7 @@ START_TEST(test_acc_typedesc_simple1) {
 START_TEST(test_acc_typedesc_simple2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a : \t  i16");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 7, 0, 9);
@@ -49,7 +49,7 @@ START_TEST(test_acc_typedesc_simple2) {
 START_TEST(test_acc_typedesc_no_colon) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16 -> int");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -65,21 +65,21 @@ START_TEST(test_acc_typedesc_no_colon) {
 
 START_TEST(test_acc_typedesc_fail1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_noerr_as(typedesc);
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(" : ,");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_noerr_as(typedesc);
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("foo:int ,");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     ck_test_fail_parse_as(typedesc);
     struct info_msg errors[] = {
@@ -95,7 +95,7 @@ static void test_simple_typeop(enum typeop_type op_type, char *str, int t2_start
 {
     struct ast_node *n;
     const struct RFstring s = RF_STRING_SHALLOW_INIT_CSTR(str);
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -132,7 +132,7 @@ START_TEST(test_acc_typedesc_prod2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i16, b:i32, c:f64");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -164,7 +164,7 @@ START_TEST(test_acc_typedesc_sum_associativity) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16, b:i32 | "
                                                            "c:f64, d:f32");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -207,7 +207,7 @@ START_TEST(test_acc_typedesc_sum_impl_associativity) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:i16, b:i32  -> c:f64 | d:f32");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id2, 0, 2, 0, 4);
@@ -250,7 +250,7 @@ START_TEST(test_acc_typedesc_complex_right) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "a:(i16|f32)");
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create_simple(id_i16, 0, 3, 0, 5);

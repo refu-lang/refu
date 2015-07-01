@@ -24,7 +24,7 @@ START_TEST (test_finalized_function_arguments) {
         "return 45\n"
         "}"
     );
-    front_testdriver_new_source(&s);
+    front_testdriver_new_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct ast_node *fn1 = ast_node_get_child(front_testdriver_module()->node, 0);

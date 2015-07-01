@@ -141,7 +141,7 @@ void front_testdriver_deinit(struct front_testdriver *d)
     darray_free(d->nodes);
 }
 
-struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
+struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s)
 {
     struct front_testdriver *d = get_front_testdriver();
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
@@ -152,6 +152,16 @@ struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
     return front;
 }
 
+struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
+{
+    struct front_testdriver *d = get_front_testdriver();
+    const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
+    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s, false);
+    ck_assert_msg(front, "Could not add a new file to the driver");
+    // set new front as current
+    d->current_front = front;
+    return front;
+}
 
 static inline struct ast_node *front_testdriver_node_from_loc(
     enum ast_type type, unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)
