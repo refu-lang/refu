@@ -7,14 +7,13 @@
 #include <ast/ast.h>
 #include <ast/module.h>
 #include <ast/type.h>
+#include <ast/ast_utils.h>
 #include <types/type.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/string_table.h>
 #include <analyzer/analyzer_pass1.h>
 #include <analyzer/typecheck.h>
 #include <types/type_comparisons.h>
-
-#define TYPES_POOL_CHUNK_SIZE 2048
 
 static const struct RFstring g_main_module_str = RF_STRING_STATIC_INIT("main");
 
@@ -198,6 +197,44 @@ struct type *module_get_or_create_type(struct module *mod,
         module_types_set_add(mod, t->operator.right);
     }
     return t;
+}
+
+
+static bool module_determine_dependencies_do(struct ast_node *n, void *user_arg)
+{
+    struct module *mod = user_arg;
+    switch (n->type) {
+    case AST_IMPORT:
+        if (!ast_import_is_foreign(n)) {
+            return module_add_import(mod, n);
+        }
+    default:
+        break;
+    }
+    return true;
+}
+
+bool module_determine_dependencies(struct module *m, bool use_stdlib)
+{
+    // initialize module symbol table here instead of analyzer_first_pass
+    // since we need it beforehand to get symbols from import
+    if (!module_symbol_table_init(m)) {
+        RF_ERROR("Could not initialize symbol table for root node");
+        return false;
+    }
+
+    // read the imports and add dependencies
+    if (!ast_pre_traverse_tree(m->node, module_determine_dependencies_do, m)) {
+        return false;
+    }
+
+    // TODO: This can't be the best way to achieve this. Rethink when possible
+    // if this is the main module add the stdlib as dependency,
+    // unless a program without the stdlib was requested
+    if (use_stdlib && module_is_main(m)) {
+        return module_add_stdlib(m);
+    }
+    return true;
 }
 
 bool module_analyze(struct module *m)

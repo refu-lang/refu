@@ -52,7 +52,6 @@ refu_src = [
     'analyzer/typecheck.c',
     'analyzer/type_set.c',
     'analyzer/typecheck_matchexpr.c',
-    'analyzer/global_context.c',
 
     'types/type.c',
     'types/type_comparisons.c',

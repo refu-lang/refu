@@ -19,6 +19,9 @@ struct symbol_table;
 struct analyzer;
 struct module;
 
+//! The size in bytes of the types memory pool
+#define TYPES_POOL_CHUNK_SIZE 2048
+//! The size in bytes of the symbol table records memory pool
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
 
 struct  analyzer_traversal_ctx {
@@ -73,6 +76,7 @@ i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_nth_parent_or_die(
 }
 
 typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *user);
+
 /**
  * Traverse parents upwards and run a search callback for each of them.
  * 
@@ -89,15 +93,8 @@ typedef bool (*analyzer_traversal_parents_cb)(const struct ast_node *n, void *us
 bool analyzer_traversal_ctx_traverse_parents(struct analyzer_traversal_ctx *ctx,
                                              analyzer_traversal_parents_cb cb,
                                              void *user_arg);
-
 /**
- * Determine the dependencies of a module by checking the needed imports
- */
-bool module_determine_dependencies(struct module *m, bool use_stdlib);
-
-
-/**
- * Finalize the AST of an analyzer after analysis.
+ * Finalize the AST of a module after analysis.
  */
 bool analyzer_finalize(struct module *m);
 

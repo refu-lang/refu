@@ -68,13 +68,27 @@ struct type *module_get_or_create_type(struct module *m,
                                        const struct ast_node *desc,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
-
+/**
+ * Add a new type to the types set of this module
+ */
 bool module_types_set_add(struct module *m, struct type *new_type);
+
 /**
  * Manually add the standard library as a dependency to a module
  */
 bool module_add_stdlib(struct module *m);
 
+/**
+ * Determine the dependencies of a module by checking the needed imports
+ */
+bool module_determine_dependencies(struct module *m, bool use_stdlib);
+
+/**
+ * Analyze the module
+ *
+ * This performs all of the parts of the analysis stage. Symbol table population,
+ * typecheck, finalization
+ */
 bool module_analyze(struct module *m);
 
 #endif
