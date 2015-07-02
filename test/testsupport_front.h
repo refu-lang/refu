@@ -64,6 +64,10 @@ struct ast_node *front_testdriver_root();
  * Get the inpfile of the current front_ctx being tested
  */
 struct inpfile *front_testdriver_file();
+/**
+ * Get the inpfile of a specific front_ctx being tested
+ */
+struct inpfile *front_testdriver_specific_file(unsigned i);
 
 void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
 
@@ -170,6 +174,14 @@ bool check_ast_match_impl(struct ast_node *got,
             .type = type_,                                              \
             .start_mark = LOCMARK_INIT(get_front_testdriver()->current_front->file, sl_, sc_), \
             .end_mark = LOCMARK_INIT(get_front_testdriver()->current_front->file, el_, ec_) \
+            }
+
+#define TESTSUPPORT_INFOMSG_INIT_BOTH_SPECIFIC_FRONT(findex_, type_, msg_, sl_, sc_, el_, ec_) \
+    {                                                                   \
+        .s = RF_STRING_STATIC_INIT(msg_),                               \
+            .type = type_,                                              \
+            .start_mark = LOCMARK_INIT(front_testdriver_specific_file(findex_), sl_, sc_), \
+            .end_mark = LOCMARK_INIT(front_testdriver_specific_file(findex_), el_, ec_) \
             }
 
 #endif

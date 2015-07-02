@@ -107,15 +107,15 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
 
 #define ck_assert_analyzer_errors(expected_arr_) \
     ck_assert_analyzer_errors_impl(                     \
-        get_front_testdriver()->current_front->info,    \
         expected_arr_,                                  \
         sizeof(expected_arr_)/sizeof(struct info_msg),  \
         __FILE__, __LINE__)
-bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
-                                    struct info_msg *errors,
+bool ck_assert_analyzer_errors_impl(struct info_msg *errors,
                                     unsigned num,
                                     const char *filename,
                                     unsigned int line);
+
+
 
 /* -- typecheck related support -- */
 
@@ -157,5 +157,21 @@ void i_ck_assert_modules_order(const struct RFstring *expected_module_names,
                                unsigned int expected_num,
                                const char *filename,
                                unsigned int line);
+
+/**
+ * Macro to check expected cyclic dependency error after compiler preprocessing
+ */
+#define ck_assert_modules_cyclic_dependency_detected(findex_, expected_msg_, sl_, sc_, el_, ec_) \
+    do {                                                                \
+        struct info_msg expected_msgs_[] = {                            \
+            TESTSUPPORT_INFOMSG_INIT_BOTH_SPECIFIC_FRONT(               \
+                findex_,                                                \
+                MESSAGE_SEMANTIC_ERROR,                                 \
+                expected_msg_, sl_, sc_, el_, ec_)                      \
+        };                                                              \
+        ck_assert_msg(!compiler_preprocess_fronts(),                    \
+                      "Expected a modules cyclic dependency but no error detected at preprocess_fronts()"); \
+        ck_assert_analyzer_errors(expected_msgs_);                      \
+    } while (0)
 
 #endif

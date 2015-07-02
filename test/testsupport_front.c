@@ -61,6 +61,7 @@ void front_testdriver_set_curr_module(unsigned i)
             get_front_testdriver()->current_module = *mod;
             return;
         }
+        ++count;
     }
     ck_abort_msg("Attempted to set non-existant module with index %u as current.", i);
 }
@@ -100,6 +101,19 @@ struct ast_node *front_testdriver_root()
 struct inpfile *front_testdriver_file()
 {
     return get_front_testdriver()->current_front->file;
+}
+
+struct inpfile *front_testdriver_specific_file(unsigned i)
+{
+    unsigned count = 0;
+    struct front_ctx *front;
+    rf_ilist_for_each(&get_front_testdriver()->compiler->front_ctxs, front, ln) {
+        if (i == count) {
+            return front->file;
+        }
+        ++count;
+    }
+    ck_abort_msg("Attempted to ask for inpfile of non-existing front_ctx %u .", i);
 }
 
 struct RFstringx *front_testdriver_geterrors(struct front_testdriver *d)

@@ -154,71 +154,77 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
     return t;
 }
 
-bool ck_assert_analyzer_errors_impl(struct info_ctx *info,
-                                    struct info_msg *exp_errors,
+bool ck_assert_analyzer_errors_impl(struct info_msg *exp_errors,
                                     unsigned num,
                                     const char *filename,
                                     unsigned int line)
 {
     struct info_msg *msg;
     struct info_ctx_msg_iterator iter;
+    struct compiler *c = compiler_instance_get();
     unsigned i = 0;
-    info_ctx_get_iter(info, MESSAGE_ANY, &iter);
 
-    while ((msg = info_ctx_msg_iterator_next(&iter))) {
+    // check against errors from all front_ctxs of the compiler
+    struct front_ctx *front;
+    rf_ilist_for_each(&c->front_ctxs, front, ln) {
 
-        // check for error message string
-        if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
-            ck_analyzer_check_abort(
-                filename, line,
-                "For analyzer error number %u: Got:\n\""RF_STR_PF_FMT"\"\n"
-                "but expected:\n\""RF_STR_PF_FMT"\"", i,
-                RF_STR_PF_ARG(&msg->s), RF_STR_PF_ARG(&exp_errors[i].s));
-            return false;
+        info_ctx_get_iter(front->info, MESSAGE_ANY, &iter);
+
+        while ((msg = info_ctx_msg_iterator_next(&iter))) {
+
+            // check for error message string
+            if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
+                ck_analyzer_check_abort(
+                    filename, line,
+                    "For analyzer error number %u: Got:\n\""RF_STR_PF_FMT"\"\n"
+                    "but expected:\n\""RF_STR_PF_FMT"\"", i,
+                    RF_STR_PF_ARG(&msg->s), RF_STR_PF_ARG(&exp_errors[i].s));
+                return false;
+            }
+
+            // check for error message location
+            if (!inplocation_mark_equal(&msg->start_mark, &exp_errors[i].start_mark)) {
+                ck_analyzer_check_abort(
+                    filename, line,
+                    "For analyzer error number %u got different start location marks. Got:\n"
+                    INPLOCMARKS_FMT " but"
+                    " expected:\n"INPLOCMARKS_FMT,
+                    i,
+                    INPLOCMARKS_ARG(front->info->file, &msg->start_mark, &msg->end_mark),
+                    INPLOCMARKS_ARG(front->info->file, &exp_errors[i].start_mark,
+                                    &exp_errors[i].end_mark));
+                return false;
+            }
+
+            if (info_msg_has_end_mark(msg) &&
+                !inplocation_mark_equal(&msg->end_mark, &exp_errors[i].end_mark)) {
+                ck_analyzer_check_abort(
+                    filename, line,
+                    "For analyzer error number %u got different end location marks. Got:\n"
+                    INPLOCMARKS_FMT " but"
+                    " expected:\n"INPLOCMARKS_FMT,
+                    i,
+                    INPLOCMARKS_ARG(front->info->file, &msg->start_mark, &msg->end_mark),
+                    INPLOCMARKS_ARG(front->info->file, &exp_errors[i].start_mark,
+                                    &exp_errors[i].end_mark));
+                return false;
+            }
+
+            // check for message type
+            if (msg->type != exp_errors[i].type) {
+                ck_analyzer_check_abort(
+                    filename, line,
+                    "For analyzer error number %u got different message types. Got:\n"
+                    "\""RF_STR_PF_FMT"\" but expected: \"" RF_STR_PF_FMT"\"",
+                    i,
+                    RF_STR_PF_ARG(info_msg_type_to_str(msg->type)),
+                    RF_STR_PF_ARG(info_msg_type_to_str(exp_errors[i].type)));
+                return false;
+            }
+
+
+            i ++;
         }
-
-        // check for error message location
-        if (!inplocation_mark_equal(&msg->start_mark, &exp_errors[i].start_mark)) {
-            ck_analyzer_check_abort(
-                filename, line,
-                "For analyzer error number %u got different start location marks. Got:\n"
-                INPLOCMARKS_FMT " but"
-                " expected:\n"INPLOCMARKS_FMT,
-                i,
-                INPLOCMARKS_ARG(info->file, &msg->start_mark, &msg->end_mark),
-                INPLOCMARKS_ARG(info->file, &exp_errors[i].start_mark,
-                                &exp_errors[i].end_mark));
-            return false;
-        }
-
-        if (info_msg_has_end_mark(msg) &&
-            !inplocation_mark_equal(&msg->end_mark, &exp_errors[i].end_mark)) {
-            ck_analyzer_check_abort(
-                filename, line,
-                "For analyzer error number %u got different end location marks. Got:\n"
-                INPLOCMARKS_FMT " but"
-                " expected:\n"INPLOCMARKS_FMT,
-                i,
-                INPLOCMARKS_ARG(info->file, &msg->start_mark, &msg->end_mark),
-                INPLOCMARKS_ARG(info->file, &exp_errors[i].start_mark,
-                                &exp_errors[i].end_mark));
-            return false;
-        }
-
-        // check for message type
-        if (msg->type != exp_errors[i].type) {
-            ck_analyzer_check_abort(
-                filename, line,
-                "For analyzer error number %u got different message types. Got:\n"
-                "\""RF_STR_PF_FMT"\" but expected: \"" RF_STR_PF_FMT"\"",
-                i,
-                RF_STR_PF_ARG(info_msg_type_to_str(msg->type)),
-                RF_STR_PF_ARG(info_msg_type_to_str(exp_errors[i].type)));
-            return false;
-        }
-
-
-        i ++;
     }
 
     if (i != num) {

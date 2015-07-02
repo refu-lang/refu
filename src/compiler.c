@@ -208,39 +208,35 @@ enum mark_states {
     STATE_MARKED
 };
 
-// temp debugging for dependency resolution. TODO: Remove
-#define DD(...)
-/* #define DD(...) do { printf(__VA_ARGS__); fflush(stdout); } while(0) */
-
 static bool compiler_visit_unmarked_module(struct module *m, unsigned i, enum mark_states *marks)
 {
     if (marks[i] == STATE_MARKED) {
         return true;
     }
-    DD("Visit module "RF_STR_PF_FMT" with index %u of marks\n", RF_STR_PF_ARG(module_name(m)), i);
+
     // not a DAG, cyclic dependency detected
     if (marks[i] == STATE_TEMP_MARK) {
-        DD("Revisiting mark %u. Cycling dependency detected.\n", i);
+        // TODO: reporting the offending mdoule can be improved? As it currently
+        // stands this reports any module in the cycle path
+        i_info_ctx_add_msg(m->front->info,
+                           MESSAGE_SEMANTIC_ERROR,
+                           ast_node_startmark(m->node),
+                           ast_node_endmark(m->node),
+                           "Cyclic dependency around module \""RF_STR_PF_FMT"\" "
+                           "detected.", RF_STR_PF_ARG(module_name(m)));
         return false;
     }
 
     marks[i] = STATE_TEMP_MARK;
-    DD("Setting temporary mark %u.\n", i);
     struct module **dependency;
     darray_foreach(dependency, m->dependencies) {
-
         // find index of dependency in marks
         unsigned found_index = compiler_get_module_index(*dependency);
-        DD("Module's "RF_STR_PF_FMT" dependency for "RF_STR_PF_FMT" found at: index %u of marks\n",
-               RF_STR_PF_ARG(module_name(m)),
-               RF_STR_PF_ARG(module_name(*dependency)),
-               found_index);
         // visit the module
         if (!compiler_visit_unmarked_module(*dependency, found_index, marks)) {
             return false;
         }
     }
-    DD("Setting permanent mark %u for module "RF_STR_PF_FMT".\n", i, RF_STR_PF_ARG(module_name(m)));
     marks[i] = STATE_MARKED;
 
     // add module m to the end of the sorted list.
@@ -252,7 +248,6 @@ static bool compiler_resolve_dependencies()
 {
     struct compiler *c = g_compiler_instance;
     struct module **mod;
-    DD("START\n\n");
     rf_ilist_head_init(&c->sorted_modules);
     // topologically sort the dependency DAG
     unsigned int i;
@@ -269,7 +264,6 @@ static bool compiler_resolve_dependencies()
                 unmarked_found = true;
                 if (!compiler_visit_unmarked_module(*mod, i, marks)) {
                     free(marks);
-                    DD("END FAIL\n\n");
                     return false;
                 }
             }
@@ -278,7 +272,6 @@ static bool compiler_resolve_dependencies()
     }
 
     free(marks);
-    DD("END SUCCESS\n\n");
     return true;
 }
 
@@ -309,14 +302,7 @@ bool compiler_preprocess_fronts()
 
     // resolve dependencies and figure out analysis order
     if (!compiler_resolve_dependencies()) {
-        // can't access any specific module at this point ...
-        // TODO: try to find out how/why the cyclic dependency is caused
-        /* i_info_ctx_add_msg((*mod)->front->info,    */
-        /*                    MESSAGE_SEMANTIC_ERROR, */
-        /*                    ast_node_startmark((*mod)->node), */
-        /*                    ast_node_endmark((*mod)->node), */
-        /*                    "Cyclic module dependency detected"); */
-        ERROR("Cycling module dependency detected");
+        // cyclic module dependency (error already reported in the function)
         return false;
     }
     return true;
