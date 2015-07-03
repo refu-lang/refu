@@ -3,6 +3,7 @@
 #include <refu.h>
 #include <Utils/memory.h>
 
+#include <utils/string_set.h>
 #include <info/info.h>
 #include <types/type_comparisons.h>
 #include <module.h>
@@ -279,6 +280,7 @@ bool compiler_preprocess_fronts()
 {
     struct compiler *c = g_compiler_instance;
     struct front_ctx *front;
+    bool ret = false;
     // make sure all files are parsed
     rf_ilist_for_each(&c->front_ctxs, front, ln) {
         if (!front_ctx_parse(front)) {
@@ -287,25 +289,41 @@ bool compiler_preprocess_fronts()
     }
 
     // determine the dependencies of all the modules
+    struct rf_objset_string mod_names_set;
+    rf_objset_init(&mod_names_set, string);
     struct module **mod;
     darray_foreach(mod, c->modules) {
-        if (!module_determine_dependencies(*mod, c->use_stdlib)) {
+        const struct RFstring *mname = module_name(*mod);
+        // First check if a module with same name is in the string set
+        if (rf_objset_get(&mod_names_set, string, mname)) {
             i_info_ctx_add_msg((*mod)->front->info,   
                                MESSAGE_SEMANTIC_ERROR,
                                ast_node_startmark((*mod)->node),
                                ast_node_endmark((*mod)->node),
-                               "Could not determine dependencies for module "RF_STR_PF_FMT,
-                               RF_STR_PF_ARG(module_name(*mod)));
-            return false;
+                               "Module \""RF_STR_PF_FMT"\" already declared",
+                               RF_STR_PF_ARG(mname));
+            goto end_free_names;
+        }
+        // add this module's name to the set
+        rf_objset_add(&mod_names_set, string, mname);
+        
+        if (!module_determine_dependencies(*mod, c->use_stdlib)) {
+            // syntactic errors should have been added inside the above function
+            goto end_free_names;
         }
     }
 
     // resolve dependencies and figure out analysis order
     if (!compiler_resolve_dependencies()) {
         // cyclic module dependency (error already reported in the function)
-        return false;
+        goto end_free_names;
     }
-    return true;
+    // success
+    ret = true;
+
+end_free_names:
+    rf_objset_clear(&mod_names_set);
+    return ret;
 }
 
 bool compiler_analyze()

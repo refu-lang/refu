@@ -44,6 +44,7 @@ refu_src = [
     'ast/ast_utils.c',
 
     'utils/traversal.c',
+    'utils/string_set.c',
 
     'analyzer/analyzer.c',
     'analyzer/symbol_table.c',

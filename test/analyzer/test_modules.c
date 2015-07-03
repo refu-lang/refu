@@ -201,6 +201,47 @@ START_TEST (test_cycle_in_big_graph) {
 
 } END_TEST
 
+START_TEST (test_modules_same_name) {
+    static const struct RFstring foo = RF_STRING_STATIC_INIT(
+        "module foo {\n"
+        "}"
+    );
+    static const struct RFstring foo2 = RF_STRING_STATIC_INIT(
+        "module foo {\n"
+        "}"
+    );
+
+    front_testdriver_new_source(&foo);
+    front_testdriver_new_source(&foo2);
+
+    ck_assert_modules_cyclic_dependency_detected(
+        1, // front_ctx/file index
+        "Module \"foo\" already declared", 0, 0, 1, 0
+    );
+
+} END_TEST
+
+START_TEST (test_modules_nonexistent_import) {
+    static const struct RFstring foo = RF_STRING_STATIC_INIT(
+        "module foo {\n"
+        "}"
+    );
+    static const struct RFstring boo = RF_STRING_STATIC_INIT(
+        "module boo {\n"
+        "    import foo\n"
+        "    import nonexistant\n"
+        "}"
+    );
+
+    front_testdriver_new_source(&foo);
+    front_testdriver_new_source(&boo);
+
+    ck_assert_modules_cyclic_dependency_detected(
+        0, // front_ctx/file index
+        "Requested module \"nonexistant\" not found for importing.", 2, 4, 2, 21
+    );
+
+} END_TEST
 
 Suite *analyzer_modules_suite_create(void)
 {
@@ -221,7 +262,16 @@ Suite *analyzer_modules_suite_create(void)
     tcase_add_test(t_2, test_simple_cycle);
     tcase_add_test(t_2, test_cycle_in_big_graph);
 
+
+    TCase *t_3 = tcase_create("modules_other_errors");
+    tcase_add_checked_fixture(t_3,
+                              setup_analyzer_tests_no_stdlib,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_3, test_modules_same_name);
+    tcase_add_test(t_3, test_modules_nonexistent_import);
+
     suite_add_tcase(s, t_1);
     suite_add_tcase(s, t_2);
+    suite_add_tcase(s, t_3);
     return s;
 }
