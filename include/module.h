@@ -2,6 +2,7 @@
 #define LFR_MODULE_H
 
 #include <Data_Structures/darray.h>
+#include <utils/string_set.h>
 #include <RFintrusive_list.h>
 
 struct module;
@@ -28,9 +29,9 @@ struct module {
     struct rf_objset_type *types_set;
     //! A list of all rir types of the file
     struct rir_types_list *rir_types_list;
-    /* String tables containing identifiers and string literals found during parsing */
-    struct string_table *identifiers_table;
-    struct string_table *string_literals_table;
+    /* String sets containing identifiers and string literals found during parsing */
+    struct rf_objset_string identifiers_set;
+    struct rf_objset_string string_literals_set;
     
     //! Control, to add this module into the final sorted list of modules of the compiler
     struct RFilist_node ln;

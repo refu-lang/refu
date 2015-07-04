@@ -49,7 +49,6 @@ refu_src = [
     'analyzer/analyzer.c',
     'analyzer/symbol_table.c',
     'analyzer/analyzer_pass1.c',
-    'analyzer/string_table.c',
     'analyzer/typecheck.c',
     'analyzer/type_set.c',
     'analyzer/typecheck_matchexpr.c',
@@ -178,7 +177,6 @@ unit_tests_files = [
     'analyzer/test_typecheck_functions.c',
     'analyzer/test_typecheck_matchexpr.c',
     'analyzer/test_typecheck_operators.c',
-    'analyzer/test_string_table.c',
     'analyzer/test_modules.c',
 
     'types/test_types.c',

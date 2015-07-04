@@ -11,7 +11,6 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <module.h>
-#include <analyzer/string_table.h>
 #include <analyzer/type_set.h>
 #include <analyzer/analyzer.h>
 #include <lexer/tokens.h>
@@ -101,12 +100,6 @@ LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string,
         rf_hash_str_stable(string, 0),
         ctx
     );
-}
-
-static void bllvm_const_string_creation_cb(const struct string_table_record *rec,
-                                           struct llvm_traversal_ctx *ctx)
-{
-    bllvm_create_global_const_string_with_hash(&rec->string, rec->hash, ctx);
 }
 
 static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
@@ -218,8 +211,12 @@ bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx)
 {
     // create all constant strings
     llvm_traversal_ctx_reset_params(ctx);
-    string_table_iterate(ctx->mod->string_literals_table,
-                         (string_table_cb)bllvm_const_string_creation_cb, ctx);
+    struct rf_objset_iter it;
+    struct RFstring *s;
+    rf_objset_foreach(&ctx->mod->string_literals_set, &it, s) {
+        bllvm_create_global_const_string(s, ctx);
+    }
+
     if (!bllvm_create_module_types(ctx)) {
         RF_ERROR("Could not create global types");
         return false;

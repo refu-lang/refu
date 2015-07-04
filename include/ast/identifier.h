@@ -42,7 +42,6 @@ bool string_is_wildcard(const struct RFstring *s);
 bool ast_identifier_is_wildcard(const struct ast_node *n);
 
 bool ast_identifier_hash_create(struct ast_node *n, struct module *m);
-uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct module *m);
 
 /* -- xidentifier -- */
 

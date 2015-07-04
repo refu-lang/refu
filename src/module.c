@@ -10,7 +10,6 @@
 #include <ast/ast_utils.h>
 #include <types/type.h>
 #include <analyzer/analyzer.h>
-#include <analyzer/string_table.h>
 #include <analyzer/analyzer_pass1.h>
 #include <analyzer/typecheck.h>
 #include <types/type_comparisons.h>
@@ -44,15 +43,9 @@ static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *
     RF_MALLOC(m->types_set, sizeof(*m->types_set), return false);
     rf_objset_init(m->types_set, type);
 
-    if (!(m->identifiers_table = string_table_create())) {
-        RF_ERROR("Failed to allocate a string table for identifiers");
-        return false;
-    }
-    if (!(m->string_literals_table = string_table_create())) {
-        RF_ERROR("Failed to allocate a string table for string literals");
-        return false;
-    }
-    
+    rf_objset_init(&m->identifiers_set, string);
+    rf_objset_init(&m->string_literals_set, string);
+
     return true;
 }
 
@@ -77,12 +70,8 @@ static void module_deinit(struct module *m)
     if (m->types_pool) {
         rf_fixed_memorypool_destroy(m->types_pool);
     }
-    if (m->identifiers_table) {
-        string_table_destroy(m->identifiers_table);
-    }
-    if (m->string_literals_table) {
-        string_table_destroy(m->string_literals_table);
-    }
+    rf_objset_clear(&m->identifiers_set);
+    rf_objset_clear(&m->string_literals_set);
 
     if (m->types_set) {
         rf_objset_clear(m->types_set);

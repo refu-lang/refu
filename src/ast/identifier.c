@@ -2,7 +2,6 @@
 
 #include <ast/ast.h>
 #include <module.h>
-#include <analyzer/string_table.h>
 #include <types/type.h>
 
 #include <Utils/sanity.h>
@@ -60,18 +59,7 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n)
 
 bool ast_identifier_hash_create(struct ast_node *n, struct module *m)
 {
-    return string_table_add_or_get_str(m->identifiers_table,
-                                       &n->identifier.string,
-                                       &n->identifier.hash);
-}
-
-uint32_t ast_identifier_hash_get_or_create(struct ast_node *n, struct module *m)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
-    if (n->state == AST_NODE_STATE_AFTER_PARSING) {
-        ast_identifier_hash_create(n, m);
-    }
-    return n->identifier.hash;
+    return rf_objset_add(&m->identifiers_set, string, &n->identifier.string);
 }
 
 bool string_is_wildcard(const struct RFstring *s)

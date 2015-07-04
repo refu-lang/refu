@@ -13,14 +13,18 @@ struct module;
 struct ast_node *ast_string_literal_create(struct inplocation *loc);
 bool ast_string_literal_hash_create(struct ast_node *lit, struct module *m);
 
-const struct RFstring *ast_string_literal_analyzed_str(const struct ast_node *n,
-                                                       const struct module *m);
-
 #include <ast/ast.h>
 i_INLINE_DECL const struct RFstring *
 ast_string_literal_get_str(struct ast_node *lit)
 {
+    AST_NODE_ASSERT_TYPE(lit, AST_STRING_LITERAL);
     return &lit->string_literal.string;
+}
+
+i_INLINE_DECL uint32_t ast_string_literal_get_hash(struct ast_node *lit)
+{
+    AST_NODE_ASSERT_TYPE(lit, AST_STRING_LITERAL);
+    return lit->string_literal.hash;
 }
 
 #endif

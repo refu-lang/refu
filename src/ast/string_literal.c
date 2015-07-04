@@ -3,7 +3,6 @@
 #include <ast/ast.h>
 
 #include <module.h>
-#include <analyzer/string_table.h>
 
 struct ast_node *ast_string_literal_create(struct inplocation *loc)
 {
@@ -14,22 +13,15 @@ struct ast_node *ast_string_literal_create(struct inplocation *loc)
     }
     RF_STRING_SHALLOW_INIT(&ret->string_literal.string, loc->start.p + 1,
                            loc->end.p - loc->start.p - 1);
+    ret->string_literal.hash = rf_hash_str_stable(&ret->string_literal.string, 0);
 
     return ret;
 }
 
 bool ast_string_literal_hash_create(struct ast_node *n, struct module *m)
 {
-        return string_table_add_or_get_str(m->string_literals_table,
-                                    &n->string_literal.string,
-                                    &n->string_literal.hash);
-}
-
-const struct RFstring *ast_string_literal_analyzed_str(const struct ast_node *n,
-                                                       const struct module *m)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_STRING_LITERAL);
-    return string_table_get_str(m->string_literals_table, n->string_literal.hash);
+    return rf_objset_add(&m->string_literals_set, string, &n->string_literal.string);
 }
 
 i_INLINE_INS const struct RFstring *ast_string_literal_get_str(struct ast_node *lit);
+i_INLINE_INS uint32_t ast_string_literal_get_hash(struct ast_node *lit);
