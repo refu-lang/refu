@@ -18,7 +18,7 @@ struct arg_rex;
 struct arg_end;
 
 struct compiler_args {
-    struct RFstring input;
+    struct RFstring *input_files;
     struct RFstring *output;
     struct RFstringx buff;
 
@@ -79,5 +79,10 @@ bool compiler_args_output_ast(struct compiler_args *args,
  * Get the name of the executable output file to be generated
  */
 struct RFstring *compiler_args_get_executable_name(struct compiler_args *args);
+
+/**
+ * Get the number of input files
+ */
+unsigned compiler_args_get_input_num(const struct compiler_args *args);
 
 #endif//include guards end

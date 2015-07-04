@@ -57,6 +57,13 @@ bool compiler_process();
 //! return true. If true, program should exit succesfully
 bool compiler_help_requested(struct compiler *c);
 
+/**
+ * Return a string with all the compiler errors/warning from all modules 
+ */
 struct RFstringx *compiler_get_errors(struct compiler *c);
+/**
+ * Prints all the compiler errors/warning from all modules 
+ */
+void compiler_print_errors(struct compiler *c);
 
 #endif

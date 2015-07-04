@@ -166,7 +166,15 @@ bool compiler_pass_args(int argc, char **argv)
         return true;
     }
 
-    return compiler_new_front(c, &c->args->input, true);
+    // add all input files as new fronts
+    unsigned i;
+    for (i = 0; i < compiler_args_get_input_num(c->args); ++i) {
+        // and at least for now consider the first one as the main module
+        if (!compiler_new_front(c, &c->args->input_files[i], i == 0)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 struct module *compiler_module_get(const struct RFstring *name)
@@ -391,4 +399,10 @@ struct RFstringx *compiler_get_errors(struct compiler *c)
     // if anything got added move internal string pointer to beginning
     rf_stringx_reset(&c->err_buff);
     return rf_string_is_empty(&c->err_buff) ? NULL : &c->err_buff;
+}
+
+void compiler_print_errors(struct compiler *c)
+{
+    struct RFstringx *str = compiler_get_errors(c);
+    printf(RF_STR_PF_FMT, RF_STR_PF_ARG(str));
 }
