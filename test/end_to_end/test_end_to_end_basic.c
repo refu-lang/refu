@@ -11,155 +11,199 @@
 #include CLIB_TEST_HELPERS
 
 START_TEST (test_smoke) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 42}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 42);
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+            "fn main()->u32{return 42}")
+    };
+    ck_end_to_end_run(inputs, 42);
 } END_TEST
 
 START_TEST (test_addition) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT("fn main()->u32{return 12 + 22}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 34);
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+            "fn main()->u32{return 12 + 22}")
+    };
+    ck_end_to_end_run(inputs, 34);
 } END_TEST
 
 START_TEST (test_multiple_real_arithmetic) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "return (12 + (22 * 12 - 33) + (121 * 56 - 29)) / 233\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 30);
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "return (12 + (22 * 12 - 33) + (121 * 56 - 29)) / 233\n"
+            "}")
+    };
+    ck_end_to_end_run(inputs, 30);
 } END_TEST
 
 START_TEST (test_negative_integer_constants) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "a:i32 = -34\n"
-        "b:u32 = 44 + a\n"
-        "return b"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 10);
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "a:i32 = -34\n"
+            "b:u32 = 44 + a\n"
+            "return b"
+            "}")
+    };
+    ck_end_to_end_run(inputs, 10);
 } END_TEST
 
 START_TEST (test_print_string) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "s:string = \"Celina\"\n"
-        "print(s)\n"
-        "print(\" is awesome\")\n"
-        "return 13\n"
-        "}");
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "s:string = \"Celina\"\n"
+            "print(s)\n"
+            "print(\" is awesome\")\n"
+            "return 13\n"
+            "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("Celina is awesome");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
+    ck_end_to_end_run(inputs, 13, &output);
 } END_TEST
 
 START_TEST (test_print_string_literal) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "print(\"Hello World\")\n"
-        "return 13\n"
-        "}");
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "print(\"Hello World\")\n"
+            "return 13\n"
+            "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("Hello World");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 13, &output);
+    ck_end_to_end_run(inputs, 13, &output);
 } END_TEST
 
 START_TEST (test_print_integer) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "a:i64 = 3245\n"
-        "print(a)\n"
-        "print(65)\n"
-        "return 1\n"
-        "}");
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "a:i64 = 3245\n"
+            "print(a)\n"
+            "print(65)\n"
+            "return 1\n"
+            "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("324565");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_type_decl) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i32, b:f32 }\n"
-        "fn main()->u32{\n"
-        "t:foo = foo(24, 0.222)\n"
-        "return t.a\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 24);
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "type foo {a:i32, b:f32 }\n"
+            "fn main()->u32{\n"
+            "t:foo = foo(24, 0.222)\n"
+            "return t.a\n"
+            "}")
+    };
+    ck_end_to_end_run(inputs, 24);
 } END_TEST
 
 START_TEST (test_type_member_access) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "type foo {a:u8, b:u16, c:u32, d:u64 }\n"
         "fn main()->u32{\n"
         "t:foo = foo(24, 345, 96, 19234)\n"
         "return t.c\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 96);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 96);
 } END_TEST
 
 START_TEST (test_sum_type_creation) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
         "t1:foo = foo(34)\n"
         "t2:foo = foo(\"hello\")\n"
         "return 13\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 13);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 13);
 } END_TEST
 
 START_TEST (test_function_creation_and_call_noarg) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn foo() { print(\"foo\") }\n"
         "fn main()->u32{\n"
         "foo()\n"
         "return 1\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, NULL);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 1, NULL);
 } END_TEST
 
 START_TEST (test_function_creation_and_call_1arg) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn foo(a:u32) -> u32 { return a + 13 }\n"
         "fn main()->u32{\n"
         "return foo(7)\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 20, NULL);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 20, NULL);
 } END_TEST
 
 START_TEST (test_function_creation_and_call_2arg) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn foo(a:u32, b:u32) -> u32 { return a + b + 10 }\n"
         "fn main()->u32{\n"
         "return foo(3, 7)\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 20, NULL);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 20, NULL);
 } END_TEST
 
 START_TEST (test_simple_if) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "if (2 > 1) {\n"
         "    print(\"yes\")\n"
         "}\n"
         "return 1\n"
-        "}");
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_simple_if_else) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:u32\n"
         "a = 15\n"
@@ -169,14 +213,17 @@ START_TEST (test_simple_if_else) {
         "    print(\"no\")\n"
         "}\n"
         "return 1\n"
-        "}");
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("no");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_simple_if_elif_else) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:u32\n"
         "a = 63\n"
@@ -188,23 +235,29 @@ START_TEST (test_simple_if_elif_else) {
         "    print(\"in else\")\n"
         "}\n"
         "return 1\n"
-        "}");
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("in elif");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_no_outer_return) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main() -> u32 {\n"
         "    if true { return 1 } else { return 0 }\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 1);
 } END_TEST
 
 START_TEST (test_equal) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -225,16 +278,18 @@ START_TEST (test_equal) {
         "    print(\"nope\")\n"
         "}"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     // note: not comparing floats for equality in the test result since it's ambiguous
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_not_equal) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -255,16 +310,18 @@ START_TEST (test_not_equal) {
         "    print(\"nope\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     // note: not comparing floats for uneequality in the test result since it's ambiguous
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_greater_than) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -287,15 +344,17 @@ START_TEST (test_greater_than) {
         "    print(\" here\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_greater_than_or_equal) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -320,15 +379,17 @@ START_TEST (test_greater_than_or_equal) {
         "    print(\"not here either\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_less_than) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -351,15 +412,17 @@ START_TEST (test_less_than) {
         "    print(\" here\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_less_than_or_equal) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:i32 = 1342\n"
         "b:u64 = 938375\n"
@@ -382,15 +445,17 @@ START_TEST (test_less_than_or_equal) {
         "    print(\" here\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("expected output here");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_if_with_boolean) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "a:bool = false\n"
         "b:bool = true\n"
@@ -405,119 +470,135 @@ START_TEST (test_if_with_boolean) {
         "    print(\" yang\")\n"
         "}\n"
         "return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("yang yin");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_explicit_conversion_to_u8) {
     // TODO: refactor this test when print can output ints
     //       and when missing return in outer block works
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "    a:u64 = 4294967294\n"
-        "    b:u8 = u8(a)\n"
-        "    if b == 254 { print(\"yes\") } else { print(\"no\") }\n"
-        "    return 1\n"
-        "}"
-    );
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "    a:u64 = 4294967294\n"
+            "    b:u8 = u8(a)\n"
+            "    if b == 254 { print(\"yes\") } else { print(\"no\") }\n"
+            "    return 1\n"
+            "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_explicit_conversion_to_u16) {
     // TODO: refactor this test when print can output ints
     //       and when missing return in outer block works
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "fn main()->u32{\n"
-        "    a:u64 = 4294967294\n"
-        "    b:u16 = u16(a)\n"
-        "    if b == 65534 { print(\"yes\") } else { print(\"no\") }\n"
-        "    return 1\n"
-        "}"
-    );
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "    a:u64 = 4294967294\n"
+            "    b:u16 = u16(a)\n"
+            "    if b == 65534 { print(\"yes\") } else { print(\"no\") }\n"
+            "    return 1\n"
+            "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("yes");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_explicit_conversion_to_string) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "    a:string = string(42)\n"
-        "    b:string = string(1.61803399)\n"        
-        "    c:string = string(true)\n"        
-        "    d:string = string(false)\n"        
+        "    b:string = string(1.61803399)\n"
+        "    c:string = string(true)\n"
+        "    d:string = string(false)\n"
         "    print(a) print(\" \") print(b)\n"
         "    print(\" \") print(c)\n"
         "    print(\" \") print(d)\n"
         "    return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("42 1.6180 true false");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_explicit_conversion_to_string_from_nonconst_bool) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "    a:string = string(42 == 42)\n"
         "    b:string = string(1 == 3)\n"
         "    print(a) print(\" \") print(b)\n"
         "    return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("true false");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_unaryop_minus) {
     // TODO: refactor this test when print can output ints
     //       and when missing return in outer block works
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "    a:u32 = 64\n"
         "    b:i32 = -a\n"
         "    if b == -64 { print(\"ok\") } else { print(\"no\") }\n"
         "    return 1\n"
-        "}"
-    );
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("ok");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 1, &output);
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_unaryop_post_inc) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "    a:u32 = 64\n"
         "    b:u32 = ++a\n"
         "    return b\n"
-        "}"
-    );
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 65);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 65);
 } END_TEST
 
 START_TEST (test_unaryop_post_dec) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn main()->u32{\n"
         "    a:u32 = 64\n"
         "    b:u32 = --a\n"
         "    return b\n"
-        "}"
-    );
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 63);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 63);
 } END_TEST
 
 START_TEST (test_matchexpr_1) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
         "t1:foo = foo(29)\n"
@@ -526,13 +607,16 @@ START_TEST (test_matchexpr_1) {
         " _ => 0\n"
         "}"
         "return r\n"
-        "}");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 29);
+        "}")
+    };
+    ck_end_to_end_run(inputs, 29);
 } END_TEST
 
 START_TEST (test_matchexpr_2) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "type foo {a:i32 | b:string }\n"
         "fn main()->u32{\n"
         "t1:foo = foo(29)\n"
@@ -547,14 +631,17 @@ START_TEST (test_matchexpr_2) {
         "}\n"
         "print(s)\n"
         "return r\n"
-        "}");
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("hello");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 29, &output);
+    ck_end_to_end_run(inputs, 29, &output);
 } END_TEST
 
 START_TEST (test_matchexpr_in_functions) {
-    struct end_to_end_driver *d = get_end_to_end_driver();
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
         "fn action(a:i32 | b:string)\n"
         // TODO: Change the below to print(string(a)) when conversion of non const ints can happen
         "a:i32    => print(\"change\")\n"
@@ -564,9 +651,10 @@ START_TEST (test_matchexpr_in_functions) {
         "action(3)\n"
         "action(\" friends\")\n"
         "return 0\n"
-        "}");
+        "}")
+    };
     static const struct RFstring output = RF_STRING_STATIC_INIT("change friends");
-    ck_end_to_end_run(d, "test_input_file.rf", &s, 0, &output);
+    ck_end_to_end_run(inputs, 0, &output);
 } END_TEST
 
 Suite *end_to_end_basic_suite_create(void)
