@@ -136,6 +136,8 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d,
     }
 
     if (!compiler_process(d->compiler)) {
+        // if compile failed show errors to explain why
+        compiler_print_errors(d->compiler);
         goto free_cstrings_arr;
     }
 

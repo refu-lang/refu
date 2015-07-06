@@ -59,7 +59,7 @@ i_INLINE_DECL bool end_to_end_run(int *ret_value,
         ck_assert_msg(end_to_end_create_files(PASS_SRC_ARR(i_inputs_)), \
                       "Could not create input file/s");                 \
         ck_assert_msg(end_to_end_compile(PASS_SRC_ARR(i_inputs_), i_arguments_), \
-                      "Could not compile the input file");              \
+                      "Could not compile the input file/s");              \
         ck_assert_msg(end_to_end_run(&actual_ret, i_stdout_),   \
                       "Failed to execute driver's compiled result");    \
         ck_assert_msg(i_expected_ret_ == actual_ret, "Program return values do not match." \

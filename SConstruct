@@ -185,8 +185,9 @@ unit_tests_files = [
     'rir/test_finalized_ast.c',
     'rir/test_rir_types.c',
 
+    'end_to_end/testsupport_end_to_end.c',
     'end_to_end/test_end_to_end_basic.c',
-    'end_to_end/testsupport_end_to_end.c'
+    'end_to_end/test_end_to_end_modules.c',
 ]
 unit_tests_files = ['test/' + s for s in unit_tests_files]
 unit_tests_files.extend(refu_src)

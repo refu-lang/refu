@@ -305,12 +305,17 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
     }
 
     // if we reach the root and we got nothing then check modules we depend on
+    // TODO: this is not very well written. Don't like how I have an exception for
+    //       module names here. Also need to think how to handle specific inclusions
+    //       from modules.
     if (!rec && t->mod) {
         struct module **mod;
         darray_foreach(mod, t->mod->dependencies) {
-            if ((rec = symbol_table_lookup_record(module_symbol_table(*mod), id, NULL))) {
+            if ((rec = symbol_table_lookup_record(module_symbol_table(*mod), id, NULL)) &&
+                !rf_string_equal(id, module_name(*mod))) {
                 return rec;
             }
+            rec = NULL;
         }
     }
     

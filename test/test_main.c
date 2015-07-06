@@ -30,6 +30,7 @@ Suite *rir_types_suite_create(void);
 Suite *rir_finalized_ast_suite_create(void);
 
 Suite *end_to_end_basic_suite_create(void);
+Suite *end_to_end_module_suite_create(void);
 
 static const char *SILENT = "CK_SILENT";
 static const char *MINIMAL = "CK_MINIMAL";
@@ -105,6 +106,7 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, rir_finalized_ast_suite_create());
 
     srunner_add_suite(sr, end_to_end_basic_suite_create());
+    srunner_add_suite(sr, end_to_end_module_suite_create());
 
     srunner_set_fork_status (sr, fork_type);
     srunner_run_all(sr, print_type);
