@@ -156,11 +156,15 @@ bool compiler_set_main(struct front_ctx *front)
 {
     struct compiler *c = g_compiler_instance;
     if (c->main_front) {
+        // TODO: maybe change this? Not very elegant. Could somehow try to provide main's location
+        // set the error location as the beginning of the file
+        struct inplocation_mark start = LOCMARK_INIT(front->file, 0, 0);
+        struct inplocation_mark end = LOCMARK_INIT(front->file, 0, 0);
         i_info_ctx_add_msg(front->info,
                            MESSAGE_SEMANTIC_ERROR,
-                           NULL,
-                           NULL,
-                           "Multiple definition of main() detected in: \""RF_STR_PF_FMT"\". "
+                           &start,
+                           &end,
+                           "Multiple definition of main() detected in \""RF_STR_PF_FMT"\". "
                            "Previous definition was in \""RF_STR_PF_FMT"\".",
                            RF_STR_PF_ARG(front_ctx_filename(front)),
                            RF_STR_PF_ARG(front_ctx_filename(c->main_front)));

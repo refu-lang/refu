@@ -8,6 +8,7 @@
 #include <ast/function.h>
 
 #include "../testsupport_front.h"
+#include "../parser/testsupport_parser.h"
 #include "testsupport_analyzer.h"
 
 #include CLIB_TEST_HELPERS
@@ -243,6 +244,49 @@ START_TEST (test_modules_nonexistent_import) {
 
 } END_TEST
 
+START_TEST (test_modules_main_detection) {
+    static const struct RFstring mainm = RF_STRING_STATIC_INIT(
+        "fn main() -> u32 { }\n"
+        "fn other() -> string {}"
+    );
+    static const struct RFstring boo = RF_STRING_STATIC_INIT(
+        "module boo {\n"
+        "}"
+    );
+
+    struct front_ctx *mfront = front_testdriver_new_source(&mainm);
+    front_testdriver_new_source(&boo);
+    ck_assert_typecheck_ok();
+
+    ck_assert_msg(mfront->is_main, "Main module not detected succesfully");
+
+} END_TEST
+
+START_TEST (test_modules_multiple_main_error) {
+    static const struct RFstring mainm = RF_STRING_STATIC_INIT(
+        "fn main() -> u32 { }\n"
+        "fn other() -> string {}"
+    );
+    static const struct RFstring boo = RF_STRING_STATIC_INIT(
+        "module boo {\n"
+        "fn main() -> i32 { }\n"
+        "}"
+    );
+
+    front_testdriver_new_source(&mainm);
+    front_testdriver_new_source(&boo);
+
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH_SPECIFIC_FRONT(
+            1,
+            MESSAGE_SEMANTIC_ERROR,
+            "Multiple definition of main() detected in \"test_filename\". Previous "
+            "definition was in \"test_filename\".",
+            0, 0, 0, 0)
+    };
+    ck_test_parse_fronts(false, errors);
+} END_TEST
+
 Suite *analyzer_modules_suite_create(void)
 {
     Suite *s = suite_create("analyzer_modules");
@@ -270,8 +314,16 @@ Suite *analyzer_modules_suite_create(void)
     tcase_add_test(t_3, test_modules_same_name);
     tcase_add_test(t_3, test_modules_nonexistent_import);
 
+    TCase *t_4 = tcase_create("modules_analysis_misc");
+    tcase_add_checked_fixture(t_4,
+                              setup_analyzer_tests_no_stdlib,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_4, test_modules_main_detection);
+    tcase_add_test(t_4, test_modules_multiple_main_error);
+
     suite_add_tcase(s, t_1);
     suite_add_tcase(s, t_2);
     suite_add_tcase(s, t_3);
+    suite_add_tcase(s, t_4);
     return s;
 }

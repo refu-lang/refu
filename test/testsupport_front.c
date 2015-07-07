@@ -48,6 +48,7 @@ void front_testdriver_set_curr_front(unsigned i)
             get_front_testdriver()->current_front = front;
             return;
         }
+        ++count;
     }
     ck_abort_msg("Attempted to set non-existant front_ctx with index %u as current.", i);
 }

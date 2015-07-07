@@ -117,6 +117,14 @@ bool ck_assert_analyzer_errors_impl(struct info_msg *errors,
 
 
 
+//! Perform up to the parsing/finalizing stage and check for messages
+#define ck_test_parse_fronts(expected_result_, expected_msgs_)          \
+    do {                                                                \
+        ck_assert_msg(expected_result_ == compiler_preprocess_fronts(), \
+                      "unexpected front parsing result");               \
+        ck_assert_analyzer_errors(expected_msgs_);                      \
+    } while (0)
+
 /* -- typecheck related support -- */
 
 //! Assert all of the front context processing including typechecking is done
