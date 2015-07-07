@@ -31,13 +31,23 @@ static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
     return true;
 }
 
-void parser_finalize_parsing(struct ast_node *n, bool *main_found)
+bool parser_finalize_parsing(struct parser *p)
 {
-    *main_found = false;
-    ast_pre_traverse_tree(n, do_finalize_parsing, main_found);
+    bool main_found = false;
+    ast_pre_traverse_tree(p->root, do_finalize_parsing, &main_found);
+    // if this is the main module or something else set the front's main flag
+    if (main_found || p->front->is_main) {
+        if (!compiler_set_main(p->front)) {
+            return false;
+        }
+        if (!module_create(p->root, p->front)) {
+            return false;
+        }
+    }
+    return true;
 }
 
-bool parser_process_file(struct parser *p)
+bool parser_parse_file(struct parser *p)
 {
     struct ast_node *stmt;
     p->root = ast_root_create(p->file);
@@ -50,21 +60,17 @@ bool parser_process_file(struct parser *p)
                       "Expected an outermost statement");
         return false;
     }
+    return true;
+}
 
-    // at the end of parsing let's signify that all of the nodes are owned by the parser
-    bool main_found;
-    parser_finalize_parsing(p->root, &main_found);
-
-    // if this is the main module then create it
-    if (main_found) {
-        if (!compiler_set_main(p->front)) {
-            return false;
-        }
-        if (!module_create(p->root, p->front)) {
-            return false;
-        }
+bool parser_process_file(struct parser *p)
+{
+    if (!parser_parse_file(p)) {
+        return false;
     }
-
+    if (!parser_finalize_parsing(p)) {
+        return false;
+    }
     return true;
 }
 

@@ -162,7 +162,7 @@ struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s)
     struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s);
 
     ck_assert_msg(front, "Could not add a new file to the driver");
-    ck_assert_msg(compiler_set_main(front), "Could not set a front as main");
+    front->is_main = true; // this will trigger special behaviour in front parser finalization
     // set new front as current
     d->current_front = front;
     return front;

@@ -145,12 +145,9 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
     } while (0)
 
 
-#define i_test_finalize_parsing(node_)                  \
-    do {                                                \
-        bool main_found;                                \
-        parser_finalize_parsing(node_, &main_found);    \
-        (void) main_found;                              \
-    }while(0)
+// convenience function, basically a copy of parser's finalize parsing, without
+// the module related logic
+void i_test_finalize_parsing(struct ast_node *n);
 
 /**
  * A utility testing macro used to test if the parser succesfully does an

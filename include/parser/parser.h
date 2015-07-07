@@ -33,7 +33,22 @@ struct parser *parser_create(struct inpfile *f,
 void parser_deinit(struct parser *p);
 void parser_destroy(struct parser *p);
 
+
+/**
+ * Performs the scanning and parsing stage on a file
+ */
+bool parser_parse_file(struct parser *p);
+/**
+ * Mark all children of node @a n as finalized after parsing and 
+ * checks for a main function to see if this should be the main module
+ */
+bool parser_finalize_parsing(struct parser *p);
+/**
+ * Pre-analysis stage for a file. Scanning, parsing and finalization
+ * This is the main function for parsing.
+ */
 bool parser_process_file(struct parser *p);
+
 void parser_flush_messages(struct parser *parser);
 
 i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)
@@ -57,10 +72,5 @@ i_INLINE_DECL void parser_inject_input_file(struct parser *p, struct inpfile *f)
 {
     p->file = f;
 }
-
-/**
- * Mark all children of node @a n as finalized after parsing
- */
-void parser_finalize_parsing(struct ast_node *n, bool *main_found);
 
 #endif

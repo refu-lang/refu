@@ -6,10 +6,23 @@
 
 #include <ast/identifier.h>
 #include <ast/ast.h>
+#include <ast/ast_utils.h>
 
 #define ck_parser_check_abort(file_, line_, msg_, ...)                 \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
+
+
+static bool do_finalize_parsing(struct ast_node *n, void* arg)
+{
+    (void)arg;
+    n->state = AST_NODE_STATE_AFTER_PARSING;
+    return true;
+}
+void i_test_finalize_parsing(struct ast_node *n)
+{
+    ast_pre_traverse_tree(n, do_finalize_parsing, NULL);
+}
 
 bool ck_assert_parser_errors_impl(struct info_ctx *info,
                                   struct info_msg *exp_errors,
