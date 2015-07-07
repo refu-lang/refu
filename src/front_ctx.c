@@ -11,8 +11,7 @@
 static bool front_ctx_init(struct front_ctx *ctx,
                            const struct compiler_args *args,
                            const struct RFstring *input_file_name,
-                           const struct RFstring *file_contents,
-                           bool is_main)
+                           const struct RFstring *file_contents)
 {
     RF_STRUCT_ZERO(ctx);
     ctx->file = file_contents
@@ -37,7 +36,7 @@ static bool front_ctx_init(struct front_ctx *ctx,
         goto free_lexer;
     }
 
-    ctx->is_main = is_main;
+    ctx->is_main = false;
 
     return true;
 
@@ -52,12 +51,11 @@ err:
 }
 
 struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *input_file,
-                                   bool is_main)
+                                   const struct RFstring *input_file)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, input_file, NULL, is_main)) {
+    if (!front_ctx_init(ret, args, input_file, NULL)) {
         free(ret);
         return NULL;
     }
@@ -66,12 +64,11 @@ struct front_ctx *front_ctx_create(const struct compiler_args *args,
 
 struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
                                                const struct RFstring *file_name,
-                                               const struct RFstring *source,
-                                               bool is_main)
+                                               const struct RFstring *source)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, file_name, source, is_main)) {
+    if (!front_ctx_init(ret, args, file_name, source)) {
         free(ret);
         return NULL;
     }
@@ -95,13 +92,18 @@ void front_ctx_destroy(struct front_ctx *ctx)
     free(ctx);
 }
 
+struct RFstring *front_ctx_filename(const struct front_ctx *f)
+{
+    return inpfile_name(f->file);
+}
+
 bool front_ctx_parse(struct front_ctx *ctx)
 {
     if (!lexer_scan(ctx->lexer)) {
         return false;
     }
 
-    if (!parser_process_file(ctx->parser, ctx->is_main)) {
+    if (!parser_process_file(ctx->parser)) {
         return false;
     }
     // the root should no longer be owned by the parser at this point

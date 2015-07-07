@@ -33,15 +33,15 @@ struct front_ctx {
 };
 
 struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *file_name,
-                                   bool is_main);
+                                   const struct RFstring *file_name);
 struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
                                                const struct RFstring *file_name,
-                                               const struct RFstring *src,
-                                               bool is_main);
+                                               const struct RFstring *src);
 
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
+
+struct RFstring *front_ctx_filename(const struct front_ctx *f);
 
 /**
  * Scan and parse the file of a front_ctx

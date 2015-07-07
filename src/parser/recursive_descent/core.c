@@ -3,10 +3,12 @@
 #include <inpfile.h>
 #include <module.h>
 #include <inpstr.h>
+#include <ast/function.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
 #include <lexer/lexer.h>
 #include <front_ctx.h>
+#include <compiler.h>
 
 #include "common.h"
 #include "type.h"
@@ -19,17 +21,23 @@ static struct ast_node *parser_acc_stmt(struct parser *p);
 
 static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
 {
-    (void) user_arg;
+    bool *main_found = user_arg;
     n->state = AST_NODE_STATE_AFTER_PARSING;
+    if (n->type == AST_FUNCTION_DECLARATION) {
+        if (rf_string_equal(ast_fndecl_name_str(n), main_get_str())) {
+            *main_found = true;
+        }
+    }
     return true;
 }
 
-void parser_finalize_parsing(struct ast_node *n)
+void parser_finalize_parsing(struct ast_node *n, bool *main_found)
 {
-    ast_pre_traverse_tree(n, do_finalize_parsing, NULL);
+    *main_found = false;
+    ast_pre_traverse_tree(n, do_finalize_parsing, main_found);
 }
 
-bool parser_process_file(struct parser *p, bool is_main)
+bool parser_process_file(struct parser *p)
 {
     struct ast_node *stmt;
     p->root = ast_root_create(p->file);
@@ -44,10 +52,14 @@ bool parser_process_file(struct parser *p, bool is_main)
     }
 
     // at the end of parsing let's signify that all of the nodes are owned by the parser
-    parser_finalize_parsing(p->root);
+    bool main_found;
+    parser_finalize_parsing(p->root, &main_found);
 
     // if this is the main module then create it
-    if (is_main) {
+    if (main_found) {
+        if (!compiler_set_main(p->front)) {
+            return false;
+        }
         if (!module_create(p->root, p->front)) {
             return false;
         }

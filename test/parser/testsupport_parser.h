@@ -145,6 +145,13 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
     } while (0)
 
 
+#define i_test_finalize_parsing(node_)                  \
+    do {                                                \
+        bool main_found;                                \
+        parser_finalize_parsing(node_, &main_found);    \
+        (void) main_found;                              \
+    }while(0)
+
 /**
  * A utility testing macro used to test if the parser succesfully does an
  * accept.
@@ -156,28 +163,28 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
     do {                                                                \
         testsupport_parser_prepare();                                   \
         node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__); \
-            ck_assert_parsed_node(node_, "Could not parse "node_name); \
-            check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
-            parser_finalize_parsing(node_);                            \
-        } while (0)
+        ck_assert_parsed_node(node_, "Could not parse "node_name);      \
+        check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
+        i_test_finalize_parsing(node_);                                 \
+    } while (0)
 
 #define i_ck_test_parse_as0(node_, type_,  node_name, target_)          \
-        do {                                                            \
-            testsupport_parser_prepare();                        \
-            node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser);        \
-            ck_assert_parsed_node(node_, "Could not parse "node_name); \
-            check_ast_match(n, target_, get_front_testdriver()->current_front->file);        \
-            parser_finalize_parsing(node_);                            \
-        } while (0)
+    do {                                                                \
+        testsupport_parser_prepare();                                   \
+        node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser); \
+        ck_assert_parsed_node(node_, "Could not parse "node_name);      \
+        check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
+        i_test_finalize_parsing(node_);                                 \
+    } while (0)
 
 #define ck_test_parse_root(node_, target_)                              \
     do {                                                                \
         testsupport_parser_prepare();                                   \
-        parser_process_file(get_front_testdriver()->current_front->parser, true); \
+        parser_process_file(get_front_testdriver()->current_front->parser); \
         node_ = get_front_testdriver()->current_front->parser->root;    \
         ck_assert_parsed_node(node_, "Could not parse root node");      \
         check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
-        parser_finalize_parsing(node_);                                 \
+        i_test_finalize_parsing(node_);                                 \
     } while (0)
 
 /**
@@ -236,7 +243,7 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
 #define ck_test_fail_parse_file()                                       \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser, true), \
+        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser), \
                       "parsing should have failed");                    \
         ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
                       "a syntax error should have been reported");      \

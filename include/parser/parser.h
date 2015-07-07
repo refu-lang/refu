@@ -33,7 +33,7 @@ struct parser *parser_create(struct inpfile *f,
 void parser_deinit(struct parser *p);
 void parser_destroy(struct parser *p);
 
-bool parser_process_file(struct parser *p, bool is_main);
+bool parser_process_file(struct parser *p);
 void parser_flush_messages(struct parser *parser);
 
 i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)
@@ -61,6 +61,6 @@ i_INLINE_DECL void parser_inject_input_file(struct parser *p, struct inpfile *f)
 /**
  * Mark all children of node @a n as finalized after parsing
  */
-void parser_finalize_parsing(struct ast_node *n);
+void parser_finalize_parsing(struct ast_node *n, bool *main_found);
 
 #endif

@@ -15,6 +15,10 @@
 #include <types/type_comparisons.h>
 
 static const struct RFstring g_main_module_str = RF_STRING_STATIC_INIT("main");
+const struct RFstring *main_get_str()
+{
+    return &g_main_module_str;
+}
 
 static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *front)
 {

@@ -53,6 +53,8 @@ struct symbol_table *module_symbol_table(const struct module *m);
 bool module_symbol_table_init(struct module *m);
 struct inpfile *module_get_file(const struct module *m);
 bool module_is_main(const struct module *m);
+// TODO: not the best way to get "main" string, move elsewhere?
+const struct RFstring *main_get_str();
 
 /**
  * If existing, retrieve the type and if not existing create the type

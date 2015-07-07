@@ -97,11 +97,10 @@ struct compiler *compiler_instance_get()
 
 
 struct front_ctx *compiler_new_front(struct compiler *c,
-                                     const struct RFstring *input_name,
-                                     bool is_main)
+                                     const struct RFstring *input_name)
 {
     struct front_ctx *front;
-    if (!(front = front_ctx_create(c->args, input_name, is_main))) {
+    if (!(front = front_ctx_create(c->args, input_name))) {
         RF_ERROR("Failure at frontend context initialization");
         return NULL;
     }
@@ -112,11 +111,10 @@ struct front_ctx *compiler_new_front(struct compiler *c,
 
 struct front_ctx *compiler_new_front_from_source(struct compiler *c,
                                                  const struct RFstring *name,
-                                                 const struct RFstring *source,
-                                                 bool is_main)
+                                                 const struct RFstring *source)
 {
     struct front_ctx *front;
-    if (!(front = front_ctx_create_from_source(c->args, name, source, is_main))) {
+    if (!(front = front_ctx_create_from_source(c->args, name, source))) {
         RF_ERROR("Failure at frontend context initialization");
         return NULL;
     }
@@ -154,6 +152,25 @@ void compiler_destroy(struct compiler *c)
     g_compiler_instance = NULL;
 }
 
+bool compiler_set_main(struct front_ctx *front)
+{
+    struct compiler *c = g_compiler_instance;
+    if (c->main_front) {
+        i_info_ctx_add_msg(front->info,
+                           MESSAGE_SEMANTIC_ERROR,
+                           NULL,
+                           NULL,
+                           "Multiple definition of main() detected in: \""RF_STR_PF_FMT"\". "
+                           "Previous definition was in \""RF_STR_PF_FMT"\".",
+                           RF_STR_PF_ARG(front_ctx_filename(front)),
+                           RF_STR_PF_ARG(front_ctx_filename(c->main_front)));
+        return false;
+    }
+    front->is_main = true;
+    c->main_front = front;
+    return true;
+}
+
 bool compiler_pass_args(int argc, char **argv)
 {
     struct compiler *c = g_compiler_instance;
@@ -169,8 +186,7 @@ bool compiler_pass_args(int argc, char **argv)
     // add all input files as new fronts
     unsigned i;
     for (i = 0; i < compiler_args_get_input_num(c->args); ++i) {
-        // and at least for now consider the first one as the main module
-        if (!compiler_new_front(c, &c->args->input_files[i], i == 0)) {
+        if (!compiler_new_front(c, &c->args->input_files[i])) {
             return false;
         }
     }
@@ -354,7 +370,7 @@ bool compiler_process()
     // add the standard library to the front contexts
     struct front_ctx *stdlib_front;
     const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-    if (!(stdlib_front = compiler_new_front(c, &stdlib, false))) {
+    if (!(stdlib_front = compiler_new_front(c, &stdlib))) {
         RF_ERROR("Failed to add standard library to the front_ctxs");
         return false;
     }

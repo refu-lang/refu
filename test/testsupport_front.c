@@ -132,7 +132,7 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib, int rf_
     struct front_ctx *stdlib_front;
     if (with_stdlib) {
         const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-        if (!(stdlib_front = compiler_new_front(d->compiler, &stdlib, false))) {
+        if (!(stdlib_front = compiler_new_front(d->compiler, &stdlib))) {
             RF_ERROR("Failed to add standard library to the front_ctxs");
             return false;
         }
@@ -159,8 +159,10 @@ struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s)
 {
     struct front_testdriver *d = get_front_testdriver();
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
-    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s, true);
+    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s);
+
     ck_assert_msg(front, "Could not add a new file to the driver");
+    ck_assert_msg(compiler_set_main(front), "Could not set a front as main");
     // set new front as current
     d->current_front = front;
     return front;
@@ -170,7 +172,7 @@ struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
 {
     struct front_testdriver *d = get_front_testdriver();
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
-    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s, false);
+    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s);
     ck_assert_msg(front, "Could not add a new file to the driver");
     // set new front as current
     d->current_front = front;

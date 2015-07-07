@@ -26,6 +26,8 @@ struct compiler {
     struct RFilist_head sorted_modules;
     //! Should stdlib be used or not? By default for now all main modules are using it
     bool use_stdlib;
+    //! Pointer to the main front_ctxs
+    struct front_ctx *main_front;
 };
 
 // a compiler will always be a unique singleton so we can get its instance
@@ -39,12 +41,15 @@ void compiler_destroy();
 struct module *compiler_module_get(const struct RFstring *name);
 
 struct front_ctx *compiler_new_front(struct compiler *c,
-                                     const struct RFstring *input_name,
-                                     bool is_main);
+                                     const struct RFstring *input_name);
 struct front_ctx *compiler_new_front_from_source(struct compiler *c,
                                                  const struct RFstring *name,
-                                                 const struct RFstring *source,
-                                                 bool is_main);
+                                                 const struct RFstring *source);
+
+/**
+ * Set a compiler's front as the main front_ctx
+ */
+bool compiler_set_main(struct front_ctx *c);
 
 //! Passes arguments to the compiler and initializes the front end context
 bool compiler_pass_args(int argc, char **argv);
