@@ -50,6 +50,17 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
     return htable_get(&m->table, hash_pointer(rtype, 0), rir_types_map_eq_, rtype);
 }
 
+static LLVMTypeRef bllvm_create_struct(const struct RFstring *name)
+{
+    char *name_cstr;
+    RFS_PUSH();
+    name_cstr = rf_string_cstr_from_buff_or_die(name);
+    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
+                                                  name_cstr);
+    RFS_POP();
+    return llvm_type;
+}
+
 static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
                                                  const struct type *type,
                                                  struct llvm_traversal_ctx *ctx)
@@ -58,13 +69,7 @@ static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
         type = symbol_table_lookup_defined_type(ctx->current_st, name, NULL);
     }
     RF_ASSERT(!type_is_sumtype(type), "Should not be called with sumtype");
-
-    char *name_cstr;
-    RFS_PUSH();
-    name_cstr = rf_string_cstr_from_buff_or_die(name);
-    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
-                                                  name_cstr);
-    RFS_POP();
+    LLVMTypeRef llvm_type = bllvm_create_struct(name);
     LLVMTypeRef *members = bllvm_simple_member_types(type_get_rir_or_die(type), ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
     llvm_traversal_ctx_reset_params(ctx);
@@ -126,14 +131,7 @@ LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
     RF_ASSERT(max_storage_size != 0, "Loop did not run?");
     // make an array to fit the biggest sum
     LLVMTypeRef body = LLVMArrayType(LLVMInt8Type(), max_storage_size);
-    // TODO: This is identical to start of bllvm_compile_simple_typedecl()
-    //       abstract properly
-    char *name_cstr;
-    RFS_PUSH();
-    name_cstr = rf_string_cstr_from_buff_or_die(name);
-    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
-                                                  name_cstr);
-    RFS_POP();
+    LLVMTypeRef llvm_type = bllvm_create_struct(name);
     // the struct needs enough space to fit the biggest sum operand + int32 for selector
     LLVMTypeRef llvm_struct_contents[] = { body, LLVMInt32Type() };
     LLVMStructSetBody(llvm_type, llvm_struct_contents, 2, true);

@@ -7,13 +7,6 @@
 #include <Utils/memory.h>
 #include <argtable/argtable3.h>
 
-//temporary to compile, TODO: Remove if not used anymore
-#define BACKEND_DEFAULT 1
-#define BACKEND_INTERPRETER 2
-#define BACKEND_GCC 3
-#define BACKEND_LLVM 4
-
-
 #define i_eval(_def) #_def
 #define i_str(_def) i_eval(_def)
 static const char* version_message = ""

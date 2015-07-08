@@ -47,11 +47,7 @@ START_TEST (test_acc_string_literals) {
     ck_test_parse_as(n, block, "block with literals", bnode, true);
 
     // check that the string literal gets parsed without the \"\"
-    struct ast_node *c;
-    // get first child TODO: (kinda stupid way maybe give accessors?)
-    rf_ilist_for_each(&n->children, c, lh) {
-        break;
-    }
+    struct ast_node *c = ast_node_get_child(n, 0);
     ck_assert_rf_str_eq_cstr(ast_string_literal_get_str(ast_binaryop_right(c)),
                              "a_string_literal");
 

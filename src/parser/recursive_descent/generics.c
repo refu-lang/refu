@@ -244,12 +244,6 @@ struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it)
         if (expect_it) {
             parser_synerr(p, token_get_end(tok), NULL,
                           "Expected generic attribute after '<'");
-        } else {
-            // clear all errors from parsing.
-            // TODO: This could be handled by lexer_push()/lexer_pop() and deal only with errors between
-            //       a push and a pop
-            /* info_ctx_rem_messages(p->info, p->info->msg_num); */
-            /* p->have_syntax_err = false; */
         }
         ast_node_destroy(n);
         goto bailout;
@@ -260,12 +254,6 @@ struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it)
         if (expect_it) {
             parser_synerr(p, token_get_end(tok), NULL,
                           "Expected '>' after generic attribute");
-        } else {
-            // clear all errors from parsing.
-            // TODO: This could be handled by lexer_push()/lexer_pop() and deal only with errors between
-            //       a push and a pop
-            /* info_ctx_rem_messages(p->info, p->info->msg_num); */
-            /* p->have_syntax_err = false; */
         }
         ast_node_destroy(n);
         goto bailout;
