@@ -58,6 +58,27 @@ void teardown_rir_tests()
     teardown_analyzer_tests();
 }
 
+// this is a function only used in testing for convenience, in order to add a
+// rir type always before all of its dependencies in the testing rir types list
+// so that no problem happens during destruction.
+// (This should not be a problem in production code)
+static bool rir_type_is_subtype_of_other(struct rir_type *t, struct rir_type *other);
+bool rir_type_is_subtype_of_other(struct rir_type *t, struct rir_type *other)
+{
+    struct rir_type **subtype;
+    darray_foreach(subtype, other->subtypes) {
+        if (*subtype == t) {
+            return true;
+        }
+        if (darray_size((*subtype)->subtypes) != 0) {
+            if (rir_type_is_subtype_of_other(t, *subtype)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 static void rir_testdriver_add_type(struct rir_type *type,
                                     const char* filename,
                                     unsigned int line)
@@ -76,7 +97,16 @@ static void rir_testdriver_add_type(struct rir_type *type,
     RFS_POP();
     }
 
-    // append at the end of the rir driver's types
+    // if adding type depends on any other type on the list add it before all
+    // @look rir_type_is_subtype_of_other()
+    darray_foreach(subtype, d->rir_types) {
+        if (rir_type_is_subtype_of_other(*subtype, type)) {
+            darray_prepend(d->rir_types, type);
+            return;
+        }
+    }
+
+    // else just append at the end
     darray_append(d->rir_types, type);
 }
 
