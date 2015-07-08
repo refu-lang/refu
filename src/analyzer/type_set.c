@@ -29,18 +29,3 @@ bool type_objset_has_convertable(const struct rf_objset_type *set, const struct 
     }
     return false;
 }
-
-
-struct type *type_objset_get_rir_type(const struct rf_objset_type *set,
-                                      const struct rir_type *type)
-{
-    struct rf_objset_iter it1;
-    struct type *t1;
-    
-    rf_objset_foreach(set, &it1, t1) {
-        if (rir_type_equals_type(type, t1, NULL)) {
-            return t1;
-        }
-    }
-    return NULL;
-}

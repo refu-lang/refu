@@ -76,15 +76,7 @@ static void rir_testdriver_add_type(struct rir_type *type,
     RFS_POP();
     }
 
-    // if adding type depends on any other type on the list add it before all
-    darray_foreach(subtype, d->rir_types) {
-        if (rir_type_is_subtype_of_other(*subtype, type)) {
-            darray_prepend(d->rir_types, type);
-            return;
-        }
-    }
-
-    // else just append at the end
+    // append at the end of the rir driver's types
     darray_append(d->rir_types, type);
 }
 

@@ -107,13 +107,6 @@ bool rir_type_equals_type(const struct rir_type *a,
 int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe_parent);
 
 /**
- * Checks if @c t is a subtype of @c other. Only checks for pointer equality
- * TODO: Maybe this function can be removed?
- */
-bool rir_type_is_subtype_of_other(struct rir_type *t,
-                                  struct rir_type *other);
-
-/**
  * A form of @ref rir_type_equals_type for a specific index
  */
 bool rir_type_with_index_equals_type(struct rir_type *r_type, unsigned int *index, struct type *n_type);

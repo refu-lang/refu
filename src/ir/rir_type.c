@@ -289,23 +289,6 @@ int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe
     return -1;
 }
 
-bool rir_type_is_subtype_of_other(struct rir_type *t,
-                                  struct rir_type *other)
-{
-    struct rir_type **subtype;
-    darray_foreach(subtype, other->subtypes) {
-        if (*subtype == t) {
-            return true;
-        }
-        if (darray_size((*subtype)->subtypes) != 0) {
-            if (rir_type_is_subtype_of_other(t, *subtype)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 // very temporary macro to allow visualization of rir type comparison. Will go away
 /* #define TEMP_RIR_DEBUG 1 */
 #ifdef TEMP_RIR_DEBUG

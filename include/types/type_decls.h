@@ -83,9 +83,6 @@ struct type {
     enum type_category category;
     //! The RIR version of the type
     const struct rir_type *rir_type;
-    // TODO: deprecated member. Remove. No longer used.
-    // list handler, to be added to either the types or the composite types list
-    struct RFilist_node lh;
     union {
         struct type_defined defined;
         struct type_operator operator;
