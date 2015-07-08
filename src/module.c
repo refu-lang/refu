@@ -3,6 +3,7 @@
 #include <Utils/fixed_memory_pool.h>
 
 #include <compiler.h>
+#include <compiler_globals.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/module.h>
@@ -14,11 +15,6 @@
 #include <analyzer/typecheck.h>
 #include <types/type_comparisons.h>
 
-static const struct RFstring g_main_module_str = RF_STRING_STATIC_INIT("main");
-const struct RFstring *main_get_str()
-{
-    return &g_main_module_str;
-}
 
 static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *front)
 {
@@ -119,7 +115,7 @@ bool module_add_import(struct module *m, struct ast_node *import)
 
 const struct RFstring *module_name(const struct module *m)
 {
-    return m->node->type == AST_ROOT ? &g_main_module_str : ast_module_name(m->node);
+    return m->node->type == AST_ROOT ? compiler_main_str() : ast_module_name(m->node);
 }
 
 struct symbol_table *module_symbol_table(const struct module *m)
@@ -143,7 +139,7 @@ struct inpfile *module_get_file(const struct module *m)
 
 bool module_is_main(const struct module *m)
 {
-    return rf_string_equal(module_name(m), &g_main_module_str);
+    return rf_string_equal(module_name(m), compiler_main_str());
 }
 
 bool module_add_stdlib(struct module *m)
