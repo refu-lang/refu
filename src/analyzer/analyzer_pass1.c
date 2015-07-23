@@ -219,8 +219,7 @@ static bool analyzer_populate_symbol_table_import(struct analyzer_traversal_ctx 
     return true;
 }
 
-static bool analyzer_first_pass_do(struct ast_node *n,
-                                   void *user_arg)
+static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = user_arg;
 

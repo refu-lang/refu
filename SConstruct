@@ -60,8 +60,10 @@ refu_src = [
     'types/type_elementary.c',
     'types/type_utils.c',
 
+    'ir/rir.c',
     'ir/rir_type.c',
     'ir/rir_types_list.c',
+    'ir/rir_function.c',
 
     'serializer/serializer.c',
     'serializer/astprinter.c',

@@ -26,7 +26,7 @@ struct ast_fndecl {
 
     //! Position of function declaration. Basically where it's found in the code
     enum fndecl_position position;
-    //! Number of function arguments
+    //! Number of function arguments TODO : remove when rir_function is used instead
     unsigned args_num;
 
     //! Symbol table of the function's arguments and return values.

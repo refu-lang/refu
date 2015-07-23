@@ -7,6 +7,7 @@
 
 struct module;
 struct ast_node;
+struct rir;
 struct symbol_table;
 struct analyzer;
 struct type;
