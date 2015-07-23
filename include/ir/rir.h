@@ -4,8 +4,11 @@
 #include <RFintrusive_list.h>
 
 struct module;
+struct rir_types_list;
 
 struct rir {
+    //! A list of all rir types of the file
+    struct rir_types_list *rir_types_list;
     //! List of functions
     struct RFilist_head functions;
 };

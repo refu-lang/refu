@@ -10,10 +10,11 @@
 #include <ast/type.h>
 #include <ast/ast_utils.h>
 #include <types/type.h>
+#include <types/type_comparisons.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/analyzer_pass1.h>
 #include <analyzer/typecheck.h>
-#include <types/type_comparisons.h>
+#include <ir/rir.h>
 
 
 static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *front)
@@ -78,9 +79,10 @@ static void module_deinit(struct module *m)
         free(m->types_set);
     }
 
-    if (m->rir_types_list) {
-        rir_types_list_destroy(m->rir_types_list);
+    if (m->rir) {
+        rir_destroy(m->rir);
     }
+
     darray_free(m->dependencies);
 }
 

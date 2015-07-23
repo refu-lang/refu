@@ -1,5 +1,6 @@
 #include <ir/rir.h>
 #include <ir/rir_function.h>
+#include <ir/rir_types_list.h>
 #include <Utils/memory.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
@@ -9,6 +10,10 @@ static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
     rf_ilist_head_init(&r->functions);
+    // create the rir types list from the types set for this module
+    if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
+        return false;
+    }
     return true;
 }
 
@@ -22,7 +27,19 @@ struct rir *rir_create(struct module *m)
     }
     return ret;
 }
-void rir_destroy();
+
+static void rir_deinit(struct rir *r)
+{
+    if (r->rir_types_list) {
+        rir_types_list_destroy(r->rir_types_list);
+    }
+}
+
+void rir_destroy(struct rir *r)
+{
+    rir_deinit(r);
+    free(r);
+}
 
 /* -- functions for finalizing the ast and creating the RIR -- */
 

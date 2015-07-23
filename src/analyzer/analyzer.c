@@ -6,6 +6,7 @@
 #include <ast/function.h>
 #include <ast/ast_utils.h>
 #include <types/type.h>
+#include <ir/rir.h>
 
 
 i_INLINE_INS void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
@@ -78,11 +79,7 @@ bool analyzer_finalize(struct module *m)
         }
     }
 
-    RF_ASSERT(!m->rir_types_list, "An analyzer's rir type list should not have been created before this point");
-    // create the rir types list from the types set for this module
-    if (!(m->rir_types_list = rir_types_list_create(m->types_set))) {
-        return false;
-    }
+    m->rir = rir_create(m);
     // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
                     m->node,

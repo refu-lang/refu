@@ -10,7 +10,6 @@
 #include <Utils/sanity.h>
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/type_set.h>
-#include <ir/rir_types_list.h>
 
 struct parser;
 struct inpfile;

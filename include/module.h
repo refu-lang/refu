@@ -17,8 +17,10 @@ struct modules_arr {darray(struct module*);};
 struct module {
     //! Pointer to the front_ctx that contains this module
     struct front_ctx *front;
-    //! Pointer to the ast_node of the module
+    //! The root ast_node of the module
     struct ast_node *node;
+    //! The Refu IR format of the module
+    struct rir *rir;
     //! A dynamic array of all the modules this module depends on
     struct modules_arr dependencies;
 
@@ -28,8 +30,6 @@ struct module {
     struct rf_fixed_memorypool *types_pool;
     //! A set of all types encountered
     struct rf_objset_type *types_set;
-    //! A list of all rir types of the file
-    struct rir_types_list *rir_types_list;
     /* String sets containing identifiers and string literals found during parsing */
     struct rf_objset_string identifiers_set;
     struct rf_objset_string string_literals_set;
