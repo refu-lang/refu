@@ -5,12 +5,14 @@
 #include <Data_Structures/darray.h>
 
 struct ast_node *n;
+struct rir_block;
 
 struct rir_fndecl {
     const struct RFstring *name;
     struct {darray(struct rir_type*);} arguments;
     struct {darray(struct rir_type*);} returns;
     unsigned int args_num;
+    struct rir_block *body;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };

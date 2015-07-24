@@ -64,6 +64,7 @@ refu_src = [
     'ir/rir_type.c',
     'ir/rir_types_list.c',
     'ir/rir_function.c',
+    'ir/rir_block.c',
 
     'serializer/serializer.c',
     'serializer/astprinter.c',
