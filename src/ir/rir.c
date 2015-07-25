@@ -30,8 +30,13 @@ struct rir *rir_create(struct module *m)
 
 static void rir_deinit(struct rir *r)
 {
+    struct rir_fndecl *fn;
+    struct rir_fndecl *tmp;
     if (r->rir_types_list) {
         rir_types_list_destroy(r->rir_types_list);
+    }
+    rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
+        rir_fndecl_destroy(fn);
     }
 }
 
@@ -43,48 +48,19 @@ void rir_destroy(struct rir *r)
 
 /* -- functions for finalizing the ast and creating the RIR -- */
 
-struct rir_traversal_ctx {
-    struct module *mod;
-    struct rir *rir;
-};
-
-static inline void rir_traversal_ctx_init(struct rir_traversal_ctx *ctx,
-                                          struct rir *r,
-                                          struct module *m)
-{
-    ctx->mod = m;
-    ctx->rir = r;
-}
-
-
-bool rir_fndecl_add(struct ast_node *n, struct rir_traversal_ctx *ctx)
-{
-    struct rir_fndecl *fndecl = rir_fndecl_create(n);
-    if (!fndecl) {
-        return false;
-    }
-    rf_ilist_add(&ctx->rir->functions, &fndecl->ln);
-    return true;
-}
-
-static bool rir_ast_finalize_do(struct ast_node *n, void *user_arg)
-{
-    struct rir_traversal_ctx *ctx = user_arg;
-    switch(n->type) {
-    case AST_FUNCTION_IMPLEMENTATION:
-        if (!rir_fndecl_add(n, ctx)) {
-            return false;
-        }
-        break;
-    default: // ignore all others
-        break;
-    }
-    return true;
-}
-
 bool rir_ast_finalize(struct rir *r, struct module *m)
 {
-    struct rir_traversal_ctx ctx;
-    rir_traversal_ctx_init(&ctx, r, m);
-    return ast_pre_traverse_tree(m->node, rir_ast_finalize_do, &ctx);
+    struct ast_node *child;
+    struct rir_fndecl *fndecl;
+    // for each function of the module, create a rir equivalent
+    rf_ilist_for_each(&m->node->children, child, lh) {
+        if (child->type == AST_FUNCTION_IMPLEMENTATION) {
+            fndecl = rir_fndecl_create(child, r);
+            if (!fndecl) {
+                return false;
+            }
+            rf_ilist_add(&r->functions, &fndecl->ln);
+        }
+    }
+    return true;
 }

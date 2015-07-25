@@ -6,6 +6,7 @@
 
 struct ast_node *n;
 struct rir_block;
+struct rir;
 
 struct rir_fndecl {
     const struct RFstring *name;
@@ -17,7 +18,7 @@ struct rir_fndecl {
     struct RFilist_node ln;
 };
 
-struct rir_fndecl *rir_fndecl_create(const struct ast_node *n);
+struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir *r);
 void rir_fndecl_destroy(struct rir_fndecl *f);
 
 #endif

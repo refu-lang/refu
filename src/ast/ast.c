@@ -164,7 +164,7 @@ void ast_node_add_child(struct ast_node *parent,
     rf_ilist_add_tail(&parent->children, &child->lh);
 }
 
-const struct RFstring * ast_node_get_name_str(const struct ast_node *n)
+const struct RFstring *ast_node_get_name_str(const struct ast_node *n)
 {
     switch(n->type) {
     case AST_IDENTIFIER:
