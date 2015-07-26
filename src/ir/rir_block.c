@@ -46,7 +46,7 @@ static bool rir_process_ifexpr(struct rir_block *b,
                                unsigned int index,
                                struct rir *r)
 {
-    struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n));
+    struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n), r);
     if (!cond) {
         return false;
     }

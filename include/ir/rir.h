@@ -13,6 +13,11 @@ struct rir {
     struct RFilist_head functions;
 };
 
+struct rir_ctx {
+    struct rir *rir;
+    struct rir_fndecl *current_fn;
+};
+
 struct rir *rir_create(struct module *m);
 void rir_destroy(struct rir* r);
 #endif

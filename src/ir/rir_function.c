@@ -12,6 +12,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
     ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, r);
+    strmap_init(&ret->map);
     darray_init(ret->arguments);
     darray_init(ret->returns);
     return true;
