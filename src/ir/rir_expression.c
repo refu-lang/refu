@@ -3,7 +3,7 @@
 #include <ast/ast.h>
 
 
-static bool rir_expression_init(struct rir_expression *expr, struct ast_node *n, struct rir *r)
+static bool rir_expression_init(struct rir_expression *expr, struct ast_node *n, struct rir_ctx *ctx)
 {
     switch (n->type) {
     case AST_BINARY_OPERATOR:
@@ -18,11 +18,11 @@ static bool rir_expression_init(struct rir_expression *expr, struct ast_node *n,
     return true;
 }
 
-struct rir_expression *rir_expression_create(struct ast_node *n, struct rir *r)
+struct rir_expression *rir_expression_create(struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_expression_init(ret, n, r)) {
+    if (!rir_expression_init(ret, n, ctx)) {
         free(ret);
         ret = NULL;
     }
@@ -31,7 +31,7 @@ struct rir_expression *rir_expression_create(struct ast_node *n, struct rir *r)
 
 static void rir_expression_deinit(struct rir_expression *expr)
 {
-
+    // TODO
 }
 
 void rir_expression_destroy(struct rir_expression *expr)

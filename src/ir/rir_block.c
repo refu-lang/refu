@@ -44,13 +44,13 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
 static bool rir_process_ifexpr(struct rir_block *b,
                                const struct ast_node *n,
                                unsigned int index,
-                               struct rir *r)
+                               struct rir_ctx *ctx)
 {
-    struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n), r);
+    struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n), ctx);
     if (!cond) {
         return false;
     }
-    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, r);
+    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, ctx);
     if (!taken) {
         return false;
     }
@@ -58,7 +58,7 @@ static bool rir_process_ifexpr(struct rir_block *b,
     struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
 #endif
     // at this point the basic block splits. We neeed a new basic block for the rest
-    struct rir_block *new_block = rir_block_create(n, index, r);
+    struct rir_block *new_block = rir_block_create(n, index, ctx);
     if (!new_block) {
         return false;
     }
@@ -68,7 +68,7 @@ static bool rir_process_ifexpr(struct rir_block *b,
 static bool rir_block_init(struct rir_block *b,
                            const struct ast_node *n,
                            unsigned int index,
-                           struct rir *r)
+                           struct rir_ctx *ctx)
 {
     RF_STRUCT_ZERO(b);
     struct ast_node *child;
@@ -81,9 +81,9 @@ static bool rir_block_init(struct rir_block *b,
         if (i >= index) {
             switch (child->type) {
             case AST_IF_EXPRESSION:
-                return rir_process_ifexpr(b, n, i, r);
+                return rir_process_ifexpr(b, n, i, ctx);
             default:
-                expr = rir_expression_create(child, r);
+                expr = rir_expression_create(child, ctx);
                 if (!expr) {
                     return false;
                 }
@@ -97,11 +97,11 @@ static bool rir_block_init(struct rir_block *b,
 
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    unsigned int index,
-                                   struct rir *r)
+                                   struct rir_ctx *ctx)
 {
     struct rir_block *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_block_init(ret, n, index, r)) {
+    if (!rir_block_init(ret, n, index, ctx)) {
         free(ret);
         ret = NULL;
     }

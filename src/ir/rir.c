@@ -6,6 +6,12 @@
 #include <ast/ast_utils.h>
 #include <module.h>
 
+static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r)
+{
+    ctx->rir = r;
+    ctx->current_fn = 0;
+}
+
 static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
@@ -52,10 +58,12 @@ bool rir_ast_finalize(struct rir *r, struct module *m)
 {
     struct ast_node *child;
     struct rir_fndecl *fndecl;
+    struct rir_ctx ctx;
+    rir_ctx_init(&ctx, r);
     // for each function of the module, create a rir equivalent
     rf_ilist_for_each(&m->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
-            fndecl = rir_fndecl_create(child, r);
+            fndecl = rir_fndecl_create(child, &ctx);
             if (!fndecl) {
                 return false;
             }

@@ -4,7 +4,7 @@
 #include <RFintrusive_list.h>
 
 struct ast_node;
-struct rir;
+struct rir_ctx;
 
 
 struct rir_fncall {
@@ -31,7 +31,7 @@ struct rir_expression {
     struct RFilist_node ln;
 };
 
-struct rir_expression *rir_expression_create(struct ast_node *n, struct rir *r);
+struct rir_expression *rir_expression_create(struct ast_node *n, struct rir_ctx *ctx);
 void rir_expression_destroy(struct rir_expression *expr);
 
 #endif

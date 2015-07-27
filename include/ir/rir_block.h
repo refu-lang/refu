@@ -5,7 +5,7 @@
 #include <ir/rir_branch.h>
 
 struct ast_node;
-struct rir;
+struct rir_ctx;
 
 enum rir_block_exit_type {
     RIR_BLOCK_EXIT_BRANCH,
@@ -29,7 +29,7 @@ struct rir_block {
 
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    unsigned int index,
-                                   struct rir *r);
+                                   struct rir_ctx *ctx);
 
 /**
  * Destroy this block and all blocks this connects to
