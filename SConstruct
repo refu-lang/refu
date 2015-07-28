@@ -66,6 +66,7 @@ refu_src = [
     'ir/rir_function.c',
     'ir/rir_block.c',
     'ir/rir_branch.c',
+    'ir/rir_strmap.c',
     'ir/rir_expression.c',
 
     'serializer/serializer.c',

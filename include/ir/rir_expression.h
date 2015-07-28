@@ -2,15 +2,11 @@
 #define LFR_IR_RIR_EXPRESSION_H
 
 #include <RFintrusive_list.h>
+#include <stdint.h>
 
 struct ast_node;
 struct rir_ctx;
-
-
-struct rir_fncall {
-    const struct RFstring *name;
-    // TODO: define the fncall members
-};
+struct rir_type;
 
 enum rir_expression_type {
     RIR_EXPRESSION_FNCALL,
@@ -22,10 +18,25 @@ enum rir_expression_type {
     RIR_EXPRESSION_DIV,
 };
 
+
+struct rir_fncall {
+    const struct RFstring *name;
+    // TODO: define the fncall members
+};
+
+struct rir_alloca {
+    const struct rir_type *type;
+    uint64_t num;
+};
+
+struct rir_expression *rir_alloca_create(const struct rir_type *type, uint64_t num);
+
+
 struct rir_expression {
     enum rir_expression_type type;
     union {
         struct rir_fncall fncall;
+        struct rir_alloca alloca;
     };
     // Control to be added to expression list of a rir block
     struct RFilist_node ln;

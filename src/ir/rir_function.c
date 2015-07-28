@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <ast/function.h>
 #include <ir/rir_block.h>
+#include <ir/rir_expression.h>
 
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
@@ -29,10 +30,22 @@ struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *c
     return ret;
 }
 
+static bool free_map_member(struct RFstring *id,
+                            struct rir_expression *e,
+                            void *user_arg)
+{
+    (void) user_arg;
+    rf_string_destroy(id);
+    rir_expression_destroy(e);
+    return true;
+}
+
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
     darray_free(f->arguments);
     darray_free(f->returns);
+    strmap_iterate(&f->map, free_map_member, NULL);
+    strmap_clear(&f->map);
 }
 
 void rir_fndecl_destroy(struct rir_fndecl *f)

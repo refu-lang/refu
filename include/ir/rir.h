@@ -16,6 +16,7 @@ struct rir {
 struct rir_ctx {
     struct rir *rir;
     struct rir_fndecl *current_fn;
+    struct rir_block *current_block;
 };
 
 struct rir *rir_create(struct module *m);

@@ -14,8 +14,11 @@ struct rir_fndecl {
     struct {darray(struct rir_type*);} arguments;
     struct {darray(struct rir_type*);} returns;
     unsigned int args_num;
+    unsigned int symbols_num;
     struct rir_block *body;
-    //! Stringmap for the function's rir object
+    //! Stringmap from rir identifiers to rir objects
+    //! Owns the rir objects and the rir identifier.
+    //! They will be destroyed at function destruction
     struct rirexpr_strmap map;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
