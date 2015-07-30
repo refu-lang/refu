@@ -6,6 +6,7 @@
 #include <ast/ifexpr.h>
 #include <ast/type.h>
 #include <ast/vardecl.h>
+#include <ast/operators.h>
 #include <types/type.h>
 
 /* -- functions for rir_block_exit -- */
@@ -44,11 +45,12 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
 
 /* -- functions for rir_block -- */
 
-static bool rir_process_ifexpr(struct rir_block *b,
-                               const struct ast_node *n,
-                               unsigned int index,
-                               struct rir_ctx *ctx)
+static struct rir_expression *rir_process_ifexpr(struct rir_block *b,
+                                                 const struct ast_node *n,
+                                                 unsigned int index,
+                                                 struct rir_ctx *ctx)
 {
+#if 0 // TODO, needs thinking. Don't like the index variable.
     struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n), ctx);
     if (!cond) {
         return false;
@@ -57,20 +59,21 @@ static bool rir_process_ifexpr(struct rir_block *b,
     if (!taken) {
         return false;
     }
-#if 0 // TODO: implement fallthrough branch
     struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
-#endif
     // at this point the basic block splits. We neeed a new basic block for the rest
     struct rir_block *new_block = rir_block_create(n, index, ctx);
     if (!new_block) {
         return false;
     }
     return rir_block_exit_init_condbranch(&b->exit, cond, taken, new_block);
+#else
+    return NULL;
+#endif
 }
 
-static bool rir_process_vardecl(struct rir_block *b,
-                                const struct ast_node *n,
-                                struct rir_ctx *ctx)
+static struct rir_expression *rir_process_vardecl(struct rir_block *b,
+                                                  const struct ast_node *n,
+                                                  struct rir_ctx *ctx)
 {
     struct ast_node *left = ast_types_left(ast_vardecl_desc_get(n));
     const struct RFstring *s = ast_identifier_str(left);
@@ -79,15 +82,53 @@ static bool rir_process_vardecl(struct rir_block *b,
         1
     );
     if (!alloca) {
-        return false;
+        return NULL;
     }
 
     if (!rir_strmaps_add_from_id(ctx, s, alloca)) {
-        return false;
+        return NULL;
     }
     // add it to the block
     rf_ilist_add(&b->expressions, &alloca->ln);
-    return true;
+    return alloca;
+}
+
+static struct rir_expression *rir_process_binaryop(struct rir_block *b,
+                                                   const struct ast_node *n,
+                                                   struct rir_ctx *ctx)
+{
+    struct rir_expression *e;
+    struct rir_expression *lrexpr = rir_process_ast_node(b, ast_binaryop_left(n), ctx);
+    struct rir_expression *rrexpr = rir_process_ast_node(b, ast_binaryop_right(n), ctx);
+
+    switch(ast_binaryop_op(n)) {
+    case BINARYOP_ADD:
+        e = rir_binaryop_create(RIR_EXPRESSION_ADD, lrexpr, rrexpr);
+        break;
+    default:
+        RF_ASSERT(false, "Illegal binary op type detected at rir processing");
+        break;
+    }
+    return e;
+}
+
+
+struct rir_expression *rir_process_ast_node(struct rir_block *b,
+                                            const struct ast_node *n,
+                                            struct rir_ctx *ctx)
+{
+    switch (n->type) {
+    case AST_IF_EXPRESSION:
+        return rir_process_ifexpr(b, n, /* TODO */0, ctx);
+    case AST_VARIABLE_DECLARATION:
+        return rir_process_vardecl(b, n, ctx);
+    case AST_BINARY_OPERATOR:
+        return rir_process_binaryop(b, n, ctx);
+        break;
+    default:
+        // TODO
+        return NULL;
+    }
 }
 
 static bool rir_block_init(struct rir_block *b,
@@ -98,25 +139,14 @@ static bool rir_block_init(struct rir_block *b,
     RF_STRUCT_ZERO(b);
     strmap_init(&b->map);
     struct ast_node *child;
-    struct rir_expression *expr;
     unsigned int i = 0;
     // for each expression of the block create a rir expression and add it to the block
     rf_ilist_for_each(&n->children, child, lh) {
         // TODO: pretty stupid way to resume search from a specific index.
         // Rethink this. Maybe linked list is not a good idea here?
         if (i >= index) {
-            switch (child->type) {
-            case AST_IF_EXPRESSION:
-                return rir_process_ifexpr(b, n, i, ctx);
-            case AST_VARIABLE_DECLARATION:
-                return rir_process_vardecl(b, n, ctx);
-            default:
-                expr = rir_expression_create(child, ctx);
-                if (!expr) {
-                    return false;
-                }
-                rf_ilist_add(&b->expressions, &expr->ln);
-                break;
+            if (!rir_process_ast_node(b, child, ctx)) {
+                return false;
             }
         }
     }

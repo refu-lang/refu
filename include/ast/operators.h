@@ -19,13 +19,13 @@ i_INLINE_DECL void ast_binaryop_set_right(struct ast_node *op, struct ast_node *
     ast_node_set_end(op, ast_node_endmark(r));
 }
 
-i_INLINE_DECL enum binaryop_type ast_binaryop_op(struct ast_node *op)
+i_INLINE_DECL enum binaryop_type ast_binaryop_op(const struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return op->binaryop.type;
 }
 
-i_INLINE_DECL bool ast_node_is_specific_binaryop(struct ast_node *n,
+i_INLINE_DECL bool ast_node_is_specific_binaryop(const struct ast_node *n,
                                                  enum binaryop_type optype)
 {
     return n->type == AST_BINARY_OPERATOR && n->binaryop.type == optype;
@@ -38,17 +38,17 @@ const struct RFstring *ast_binaryop_operation_name_str(enum binaryop_type op);
 /**
  * Given a binary operation node return a string representation of the operation
  */
-const struct RFstring *ast_binaryop_opstr(struct ast_node *op);
+const struct RFstring *ast_binaryop_opstr(const struct ast_node *op);
 
 enum binaryop_type binaryop_type_from_token(struct token *tok);
 
-i_INLINE_DECL struct ast_node *ast_binaryop_left(struct ast_node *op)
+i_INLINE_DECL struct ast_node *ast_binaryop_left(const struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return op->binaryop.left;
 }
 
-i_INLINE_DECL struct ast_node *ast_binaryop_right(struct ast_node *op)
+i_INLINE_DECL struct ast_node *ast_binaryop_right(const struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return op->binaryop.right;

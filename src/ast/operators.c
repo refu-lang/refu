@@ -24,9 +24,9 @@ struct ast_node *ast_binaryop_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r);
-i_INLINE_INS enum binaryop_type ast_binaryop_op(struct ast_node *op);
-i_INLINE_INS bool ast_node_is_specific_binaryop(struct ast_node *n,
-                                                 enum binaryop_type optype);
+i_INLINE_INS enum binaryop_type ast_binaryop_op(const struct ast_node *op);
+i_INLINE_INS bool ast_node_is_specific_binaryop(const struct ast_node *n,
+                                                enum binaryop_type optype);
 
 static const struct RFstring binaryop_operation_names[] = {
     [BINARYOP_ADD]               =   RF_STRING_STATIC_INIT("addition"),
@@ -123,14 +123,14 @@ static const enum token_type  token_type_from_bop_lookup[] = {
     [BINARYOP_COMMA]              =   TOKEN_OP_COMMA
 };
 
-const struct RFstring *ast_binaryop_opstr(struct ast_node *op)
+const struct RFstring *ast_binaryop_opstr(const struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
     return tokentype_to_str(token_type_from_bop_lookup[op->binaryop.type]);
 }
 
-i_INLINE_INS struct ast_node *ast_binaryop_left(struct ast_node *op);
-i_INLINE_INS struct ast_node *ast_binaryop_right(struct ast_node *op);
+i_INLINE_INS struct ast_node *ast_binaryop_left(const struct ast_node *op);
+i_INLINE_INS struct ast_node *ast_binaryop_right(const struct ast_node *op);
 i_INLINE_INS const struct type *ast_binaryop_common_type(struct ast_node *op);
 
 /* -- unary operator related functions -- */

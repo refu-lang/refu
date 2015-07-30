@@ -3,31 +3,11 @@
 #include <ast/ast.h>
 
 
-static bool rir_expression_init(struct rir_expression *expr, struct ast_node *n, struct rir_ctx *ctx)
+static inline void rir_expression_init(struct rir_expression *expr, enum rir_expression_type type)
 {
-    switch (n->type) {
-    case AST_BINARY_OPERATOR:
-        // TODO
-        break;
-    default:
-        RF_ASSERT(false,
-                  "Asked to create rir expression from a "RF_STR_PF_FMT" node",
-                  RF_STR_PF_ARG(ast_node_str(n)));
-        return false;
-    }
-    return true;
+    expr->type = type;
 }
 
-struct rir_expression *rir_expression_create(struct ast_node *n, struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_expression_init(ret, n, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
-}
 
 static void rir_expression_deinit(struct rir_expression *expr)
 {
@@ -41,6 +21,24 @@ void rir_expression_destroy(struct rir_expression *expr)
 }
 
 
+static inline void rir_binaryop_init(struct rir_binaryop *op,
+                                     const struct rir_expression *a,
+                                     const struct rir_expression *b)
+{
+    op->a = a;
+    op->b = b;
+}
+
+struct rir_expression *rir_binaryop_create(enum rir_expression_type type,
+                                           const struct rir_expression *a,
+                                           const struct rir_expression *b)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_expression_init(ret, type);
+    rir_binaryop_init(&ret->binaryop, a, b);
+    return ret;
+}
 
 static inline bool rir_alloca_init(struct rir_alloca *obj,
                                   const struct rir_type *type,
@@ -55,6 +53,7 @@ struct rir_expression *rir_alloca_create(const struct rir_type *type, uint64_t n
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_expression_init(ret, RIR_EXPRESSION_ALLOCA);
     if (!rir_alloca_init(&ret->alloca, type, num)) {
         free(ret);
         ret = NULL;

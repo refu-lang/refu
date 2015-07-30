@@ -38,4 +38,8 @@ struct rir_block *rir_block_create(const struct ast_node *n,
  * Destroy this block and all blocks this connects to
  */
 void rir_block_destroy(struct rir_block* b);
+
+struct rir_expression *rir_process_ast_node(struct rir_block *b,
+                                            const struct ast_node *n,
+                                            struct rir_ctx *ctx);
 #endif
