@@ -5,12 +5,15 @@
 
 struct module;
 struct rir_types_list;
+struct RFstringx;
 
 struct rir {
     //! A list of all rir types of the file
     struct rir_types_list *rir_types_list;
     //! List of functions
     struct RFilist_head functions;
+    //! Buffer string to hold the string representation when asked. Can be NULL.
+    struct RFstringx *buff;
 };
 
 struct rir_ctx {
@@ -18,6 +21,8 @@ struct rir_ctx {
     struct rir_fndecl *current_fn;
     struct rir_block *current_block;
 };
+
+struct RFstring *rir_tostring(struct rir *r);
 
 struct rir *rir_create(struct module *m);
 void rir_destroy(struct rir* r);

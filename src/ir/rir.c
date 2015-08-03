@@ -2,6 +2,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_types_list.h>
 #include <Utils/memory.h>
+#include <String/rf_str_corex.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
 #include <module.h>
@@ -71,4 +72,21 @@ bool rir_ast_finalize(struct rir *r, struct module *m)
         }
     }
     return true;
+}
+
+
+struct RFstring *rir_tostring(struct rir *r)
+{
+    if (r->buff) {
+        rf_stringx_destroy(r->buff);
+        r->buff = NULL;
+    }
+
+    r->buff = rf_stringx_create_buff(1024, "");
+    if (!r->buff) {
+        RF_ERROR("Failed to create the string buffer for rir outputting");
+        return NULL;
+    }
+
+    return RF_STRX2STR(r->buff);
 }
