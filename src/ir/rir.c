@@ -6,6 +6,7 @@
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
 #include <module.h>
+#include <compiler.h>
 
 static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r)
 {
@@ -55,12 +56,14 @@ void rir_destroy(struct rir *r)
 
 /* -- functions for finalizing the ast and creating the RIR -- */
 
-bool rir_ast_finalize(struct rir *r, struct module *m)
+static bool rir_process_do(struct rir *r, struct module *m)
 {
     struct ast_node *child;
     struct rir_fndecl *fndecl;
     struct rir_ctx ctx;
+
     rir_ctx_init(&ctx, r);
+
     // for each function of the module, create a rir equivalent
     rf_ilist_for_each(&m->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
@@ -69,6 +72,18 @@ bool rir_ast_finalize(struct rir *r, struct module *m)
                 return false;
             }
             rf_ilist_add(&r->functions, &fndecl->ln);
+        }
+    }
+    return true;
+}
+
+bool rir_process(struct compiler *c)
+{
+    // for each module of the compiler do rir to string
+    struct module *mod;
+    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
+        if (!rir_process_do(mod->rir, mod)) {
+            return false;
         }
     }
     return true;
@@ -89,4 +104,16 @@ struct RFstring *rir_tostring(struct rir *r)
     }
 
     return RF_STRX2STR(r->buff);
+}
+
+bool rir_print(struct compiler *c)
+{
+    // for each module of the compiler do rir to string
+    struct module *mod;
+    rf_ilist_for_each(&c->sorted_modules, mod, ln) {
+        if (!rir_tostring(mod->rir)) {
+            return false;
+        }
+    }
+    return true;
 }

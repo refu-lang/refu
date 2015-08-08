@@ -4,6 +4,7 @@
 #include <RFintrusive_list.h>
 
 struct module;
+struct compiler;
 struct rir_types_list;
 struct RFstringx;
 
@@ -26,4 +27,7 @@ struct RFstring *rir_tostring(struct rir *r);
 
 struct rir *rir_create(struct module *m);
 void rir_destroy(struct rir* r);
+
+bool rir_process(struct compiler *c);
+bool rir_print(struct compiler *c);
 #endif

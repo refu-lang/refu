@@ -12,6 +12,7 @@
 #include <front_ctx.h>
 #include <serializer/serializer.h>
 #include <backend/llvm.h>
+#include <ir/rir.h>
 
 struct rir_module;
 static struct compiler *g_compiler_instance = NULL;
@@ -393,6 +394,19 @@ bool compiler_process()
         return rc;
     }
 #endif
+
+    if (compiler_args_print_rir(c->args)) {
+        // for now process the rir only when we want to print it.
+        // when we properly connect it with the llvm it should always happen
+        if (!rir_process(c)) {
+            RF_ERROR("Failed to process the Refu IR");
+            return false;
+        }
+        if (!rir_print(c)) {
+            RF_ERROR("Failed to print the Refu IR");
+            return false;
+        }
+    }
 
     if (!bllvm_generate(&c->modules, c->args)) {
         RF_ERROR("Failed to create the LLVM IR from the Refu IR");
