@@ -4,6 +4,7 @@
 #include <ast/function.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
+#include <ir/rir.h>
 
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
@@ -52,4 +53,18 @@ void rir_fndecl_destroy(struct rir_fndecl *f)
 {
     rir_fndecl_deinit(f);
     free(f);
+}
+
+bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
+{
+    bool ret = true;
+    RFS_PUSH();
+    if (!rf_stringx_append(
+            r->buff,
+            RFS("fndef("RF_STR_PF_FMT")",
+                RF_STR_PF_ARG(f->name)))) {
+        ret = false;
+    }
+    RFS_POP();
+    return ret;
 }

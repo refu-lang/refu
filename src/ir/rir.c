@@ -2,6 +2,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_types_list.h>
 #include <Utils/memory.h>
+#include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
@@ -93,14 +94,22 @@ bool rir_process(struct compiler *c)
 struct RFstring *rir_tostring(struct rir *r)
 {
     if (r->buff) {
-        rf_stringx_destroy(r->buff);
-        r->buff = NULL;
+        return RF_STRX2STR(r->buff);
     }
 
     r->buff = rf_stringx_create_buff(1024, "");
     if (!r->buff) {
         RF_ERROR("Failed to create the string buffer for rir outputting");
         return NULL;
+    }
+
+    struct rir_fndecl *fn;
+    rf_ilist_for_each(&r->functions, fn, ln) {
+        if (!rir_fndecl_tostring(r, fn)) {
+            RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
+                     RF_STR_PF_ARG(fn->name));
+            return NULL;
+        }
     }
 
     return RF_STRX2STR(r->buff);
@@ -110,10 +119,12 @@ bool rir_print(struct compiler *c)
 {
     // for each module of the compiler do rir to string
     struct module *mod;
+    struct RFstring *s;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
-        if (!rir_tostring(mod->rir)) {
+        if (!(s = rir_tostring(mod->rir))) {
             return false;
         }
+        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(s));
     }
     return true;
 }

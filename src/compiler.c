@@ -406,6 +406,8 @@ bool compiler_process()
             RF_ERROR("Failed to print the Refu IR");
             return false;
         }
+        // if we printed succesfully quit
+        return true;
     }
 
     if (!bllvm_generate(&c->modules, c->args)) {

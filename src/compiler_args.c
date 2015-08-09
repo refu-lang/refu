@@ -40,7 +40,7 @@ bool compiler_args_init(struct compiler_args *a)
     a->output_ast = arg_lit0(NULL, "output-ast", "If given then after analysis state the AST will be output in JSON format");
     a->backend_debug = arg_litn(NULL, "backend-debug", 0, 1, "If given then some debug information about the backend code will be printed");
     a->output_name = arg_str0("o", "output", "name", "output file name. Defaults to input.exe if not given");
-    a->rir_print = arg_lit0("r", "rir", "If given will output the intermediate representation in a file");
+    a->rir_print = arg_lit0("r", "print-rir", "If given will output the intermediate representation in a file");
     a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 100, "input files");
     a->end = arg_end(20);
 
