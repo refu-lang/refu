@@ -12,10 +12,8 @@ struct rir;
 
 struct rir_fndecl {
     const struct RFstring *name;
-    struct {darray(struct rir_type*);} arguments;
-    struct {darray(struct rir_type*);} returns;
-    unsigned int args_num;
-    unsigned int symbols_num;
+    const struct rir_type* arguments;
+    const struct rir_type* returns;
     struct rir_block *body;
     //! Stringmap from rir identifiers to rir objects
     //! Owns the rir objects and the rir identifier.

@@ -5,6 +5,7 @@
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
+#include <types/type.h>
 
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
@@ -15,8 +16,15 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
     ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
     strmap_init(&ret->map);
-    darray_init(ret->arguments);
-    darray_init(ret->returns);
+    struct ast_node *decl = ast_fnimpl_fndecl_get(n);
+    struct ast_node *args = ast_fndecl_args_get(decl);
+    struct ast_node *returns = ast_fndecl_return_get(decl);
+    ret->arguments = args
+        ? type_get_rir_or_die(ast_node_get_type(args, AST_TYPERETR_DEFAULT))
+        : NULL;
+    ret->returns = returns
+        ? type_get_rir_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT))
+        : NULL;
     return true;
 }
 
@@ -43,8 +51,6 @@ static bool free_map_member(struct RFstring *id,
 
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
-    darray_free(f->arguments);
-    darray_free(f->returns);
     strmap_iterate(&f->map, free_map_member, NULL);
     strmap_clear(&f->map);
 }
@@ -57,14 +63,50 @@ void rir_fndecl_destroy(struct rir_fndecl *f)
 
 bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
 {
-    bool ret = true;
+    bool ret = false;
+    static const struct RFstring close_paren = RF_STRING_STATIC_INIT(")");
+    static const struct RFstring sep = RF_STRING_STATIC_INIT("; ");
+
     RFS_PUSH();
     if (!rf_stringx_append(
             r->buff,
-            RFS("fndef("RF_STR_PF_FMT")",
-                RF_STR_PF_ARG(f->name)))) {
-        ret = false;
+            RFS("fndef("RF_STR_PF_FMT RF_STR_PF_FMT,
+                RF_STR_PF_ARG(f->name), RF_STR_PF_ARG(&sep)))) {
+        goto end;
     }
+
+    if (f->arguments) {
+        if (!rf_stringx_append(
+            r->buff,
+            rir_type_str_or_die(f->arguments)
+            )) {
+            goto end;
+        }
+    }
+
+    if (!rf_stringx_append(r->buff, &sep)) {
+        goto end;
+    }
+
+    if (f->returns) {
+        if (!rf_stringx_append(
+            r->buff,
+            rir_type_str_or_die(f->returns)
+            )){
+            goto end;
+        }
+    }
+
+    if (!rf_stringx_append(r->buff, &close_paren)) {
+        goto end;
+    }
+
+    if (!rir_block_tostring(r, f->body)) {
+        goto end;
+    }
+    // success
+    ret = true;
+end:
     RFS_POP();
     return ret;
 }

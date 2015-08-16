@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 struct ast_node;
+struct rir;
 struct rir_ctx;
 struct rir_type;
 
@@ -16,6 +17,8 @@ enum rir_expression_type {
     RIR_EXPRESSION_SUB,
     RIR_EXPRESSION_MUL,
     RIR_EXPRESSION_DIV,
+    // PLACEHOLDER, should not make it into actual production
+    RIR_EXPRESSION_PLACEHOLDER
 };
 
 
@@ -51,5 +54,5 @@ struct rir_expression {
 };
 
 void rir_expression_destroy(struct rir_expression *expr);
-
+bool rir_expression_tostring(struct rir *r, const struct rir_expression *e);
 #endif

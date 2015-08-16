@@ -7,6 +7,7 @@
 
 struct ast_node;
 struct rir_ctx;
+struct rir;
 
 enum rir_block_exit_type {
     RIR_BLOCK_EXIT_BRANCH,
@@ -42,4 +43,6 @@ void rir_block_destroy(struct rir_block* b);
 struct rir_expression *rir_process_ast_node(struct rir_block *b,
                                             const struct ast_node *n,
                                             struct rir_ctx *ctx);
+
+bool rir_block_tostring(struct rir *r, const struct rir_block *b);
 #endif

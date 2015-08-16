@@ -1,6 +1,7 @@
 #include <ir/rir_block.h>
 #include <Utils/memory.h>
 #include <Utils/sanity.h>
+#include <ir/rir.h>
 #include <ir/rir_expression.h>
 #include <ast/ast.h>
 #include <ast/ifexpr.h>
@@ -88,8 +89,6 @@ static struct rir_expression *rir_process_vardecl(struct rir_block *b,
     if (!rir_strmaps_add_from_id(ctx, s, alloca)) {
         return NULL;
     }
-    // add it to the block
-    rf_ilist_add(&b->expressions, &alloca->ln);
     return alloca;
 }
 
@@ -112,6 +111,14 @@ static struct rir_expression *rir_process_binaryop(struct rir_block *b,
     return e;
 }
 
+// TODO: Delete me. Just a placeholder
+struct rir_expression *rir_placeholder_expression()
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->type = RIR_EXPRESSION_PLACEHOLDER;
+    return ret;
+}
 
 struct rir_expression *rir_process_ast_node(struct rir_block *b,
                                             const struct ast_node *n,
@@ -124,11 +131,15 @@ struct rir_expression *rir_process_ast_node(struct rir_block *b,
         return rir_process_vardecl(b, n, ctx);
     case AST_BINARY_OPERATOR:
         return rir_process_binaryop(b, n, ctx);
-        break;
+    case AST_MATCH_EXPRESSION:
+    case AST_MATCH_CASE:
+    case AST_RETURN_STATEMENT:
+        //TODO: Implement properly, no placeholder
+        return rir_placeholder_expression();
     default:
-        // TODO
-        return NULL;
+        RF_ASSERT(false, "Not yet implemented expression for RIR");
     }
+    return NULL;
 }
 
 static bool rir_block_init(struct rir_block *b,
@@ -138,16 +149,20 @@ static bool rir_block_init(struct rir_block *b,
 {
     RF_STRUCT_ZERO(b);
     strmap_init(&b->map);
+    rf_ilist_head_init(&b->expressions);
     struct ast_node *child;
+    struct rir_expression *expr;
     unsigned int i = 0;
     // for each expression of the block create a rir expression and add it to the block
     rf_ilist_for_each(&n->children, child, lh) {
         // TODO: pretty stupid way to resume search from a specific index.
         // Rethink this. Maybe linked list is not a good idea here?
         if (i >= index) {
-            if (!rir_process_ast_node(b, child, ctx)) {
+            if (!(expr = rir_process_ast_node(b, child, ctx))) {
                 return false;
             }
+            // add it to the block
+            rf_ilist_add(&b->expressions, &expr->ln);
         }
     }
     return true;
@@ -181,4 +196,24 @@ void rir_block_destroy(struct rir_block* b)
 {
     rir_block_deinit(b);
     free(b);
+}
+
+bool rir_block_tostring(struct rir *r, const struct rir_block *b)
+{
+    static const struct RFstring open_curly = RF_STRING_STATIC_INIT("\n{\n");
+    static const struct RFstring close_curly = RF_STRING_STATIC_INIT("\n}\n");
+    struct rir_expression *expr;
+    if (!rf_stringx_append(r->buff, &open_curly)) {
+        return false;
+    }
+    rf_ilist_for_each(&b->expressions, expr, ln) {
+        if (!rir_expression_tostring(r, expr)) {
+            return false;
+        }
+    }
+
+    if (!rf_stringx_append(r->buff, &close_curly)) {
+        return false;
+    }
+    return true;
 }

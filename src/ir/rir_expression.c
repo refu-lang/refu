@@ -1,4 +1,5 @@
 #include <ir/rir_expression.h>
+#include <ir/rir.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -66,3 +67,60 @@ static inline void rir_alloca_deinit(struct rir_expression *obj)
     return;// TODO
 }
 
+bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
+{
+    bool ret = false;
+    RFS_PUSH();
+    switch(e->type) {
+    case RIR_EXPRESSION_FNCALL:
+        if (!rf_stringx_append(r->buff, RFS("fncall"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_ALLOCA:
+        if (!rf_stringx_append(r->buff, RFS("alloca"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_CONSTRUCT:
+        if (!rf_stringx_append(r->buff, RFS("construct"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_ADD:
+        if (!rf_stringx_append(r->buff, RFS("add"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_SUB:
+        if (!rf_stringx_append(r->buff, RFS("sub"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_MUL:
+        if (!rf_stringx_append(r->buff, RFS("mul"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_DIV:
+        if (!rf_stringx_append(r->buff, RFS("div"))) {
+            goto end;
+        }
+        break;
+    // PLACEHOLDER, should not make it into actual production
+    case RIR_EXPRESSION_PLACEHOLDER:
+        if (!rf_stringx_append(r->buff, RFS("NOT_IMPLEMENTED"))) {
+            goto end;
+        }
+        break;
+    }
+
+    if (!rf_stringx_append(r->buff, RFS("\n"))) {
+        goto end;
+    }
+    //success
+    ret = true;
+end:
+    RFS_POP();
+    return ret;
+}
