@@ -12,6 +12,7 @@ struct rir_type;
 enum rir_expression_type {
     RIR_EXPRESSION_FNCALL,
     RIR_EXPRESSION_ALLOCA,
+    RIR_EXPRESSION_RETURN,
     RIR_EXPRESSION_CONSTRUCT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
@@ -31,7 +32,13 @@ struct rir_alloca {
     const struct rir_type *type;
     uint64_t num;
 };
+
+struct rir_return {
+    const struct rir_expression *val;
+};
+
 struct rir_expression *rir_alloca_create(const struct rir_type *type, uint64_t num);
+struct rir_expression *rir_return_create(const struct rir_expression *val);
 
 struct rir_binaryop {
     const struct rir_expression *a;
@@ -48,6 +55,7 @@ struct rir_expression {
         struct rir_fncall fncall;
         struct rir_alloca alloca;
         struct rir_binaryop binaryop;
+        struct rir_return ret;
     };
     // Control to be added to expression list of a rir block
     struct RFilist_node ln;

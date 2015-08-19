@@ -8,6 +8,7 @@
 #include <ast/type.h>
 #include <ast/vardecl.h>
 #include <ast/operators.h>
+#include <ast/returnstmt.h>
 #include <types/type.h>
 
 /* -- functions for rir_block_exit -- */
@@ -111,12 +112,25 @@ static struct rir_expression *rir_process_binaryop(struct rir_block *b,
     return e;
 }
 
+static struct rir_expression *rir_process_return(struct rir_block *b,
+                                                 const struct ast_node *n,
+                                                 struct rir_ctx *ctx)
+{
+    struct rir_expression *ret_val = rir_process_ast_node(b, ast_returnstmt_expr_get(n), ctx);
+    struct rir_expression *ret_expr = rir_return_create(ret_val);
+    // add it to the block
+    rf_ilist_add(&b->expressions, &ret_expr->ln);
+    return ret_expr;
+}
+
 // TODO: Delete me. Just a placeholder
-struct rir_expression *rir_placeholder_expression()
+struct rir_expression *rir_placeholder_expression(struct rir_block *b)
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     ret->type = RIR_EXPRESSION_PLACEHOLDER;
+    // add it to the block
+    rf_ilist_add(&b->expressions, &ret->ln);
     return ret;
 }
 
@@ -131,11 +145,14 @@ struct rir_expression *rir_process_ast_node(struct rir_block *b,
         return rir_process_vardecl(b, n, ctx);
     case AST_BINARY_OPERATOR:
         return rir_process_binaryop(b, n, ctx);
+    case AST_RETURN_STATEMENT:
+        return rir_process_return(b, n, ctx);
     case AST_MATCH_EXPRESSION:
     case AST_MATCH_CASE:
-    case AST_RETURN_STATEMENT:
+    case AST_IDENTIFIER:
+    case AST_CONSTANT:
         //TODO: Implement properly, no placeholder
-        return rir_placeholder_expression();
+        return rir_placeholder_expression(b);
     default:
         RF_ASSERT(false, "Not yet implemented expression for RIR");
     }
@@ -161,8 +178,6 @@ static bool rir_block_init(struct rir_block *b,
             if (!(expr = rir_process_ast_node(b, child, ctx))) {
                 return false;
             }
-            // add it to the block
-            rf_ilist_add(&b->expressions, &expr->ln);
         }
     }
     return true;

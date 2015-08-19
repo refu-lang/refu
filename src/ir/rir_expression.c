@@ -67,6 +67,15 @@ static inline void rir_alloca_deinit(struct rir_expression *obj)
     return;// TODO
 }
 
+struct rir_expression *rir_return_create(const struct rir_expression *val)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_expression_init(ret, RIR_EXPRESSION_RETURN);
+    ret->ret.val = val;
+    return ret;
+}
+
 bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
 {
     bool ret = false;
@@ -84,6 +93,11 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         break;
     case RIR_EXPRESSION_CONSTRUCT:
         if (!rf_stringx_append(r->buff, RFS("construct"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_RETURN:
+        if (!rf_stringx_append(r->buff, RFS("return"))) {
             goto end;
         }
         break;
