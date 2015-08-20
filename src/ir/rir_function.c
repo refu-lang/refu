@@ -13,6 +13,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
 {
     RF_STRUCT_ZERO(ret);
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    ctx->current_fn = ret;
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
     ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
     strmap_init(&ret->map);

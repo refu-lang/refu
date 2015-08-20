@@ -1,5 +1,7 @@
 #include <ir/rir.h>
 #include <ir/rir_function.h>
+#include <ir/rir_block.h>
+#include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <Utils/memory.h>
 #include <String/rf_str_common.h>
@@ -11,8 +13,8 @@
 
 static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r)
 {
+    RF_STRUCT_ZERO(ctx);
     ctx->rir = r;
-    ctx->current_fn = 0;
 }
 
 static bool rir_init(struct rir *r, struct module *m)
@@ -127,4 +129,10 @@ bool rir_print(struct compiler *c)
         printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(s));
     }
     return true;
+}
+
+
+void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)
+{
+    rf_ilist_add_tail(&ctx->current_block->expressions, &expr->ln);
 }

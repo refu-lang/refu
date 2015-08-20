@@ -68,6 +68,7 @@ refu_src = [
     'ir/rir_branch.c',
     'ir/rir_strmap.c',
     'ir/rir_expression.c',
+    'ir/rir_value.c',
 
     'serializer/serializer.c',
     'serializer/astprinter.c',

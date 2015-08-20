@@ -19,6 +19,8 @@ struct rir_fndecl {
     //! Owns the rir objects and the rir identifier.
     //! They will be destroyed at function destruction
     struct rirexpr_strmap map;
+    //! Determines the value of $n when generating variables for a function
+    unsigned symbols_num;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };

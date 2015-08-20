@@ -3,6 +3,8 @@
 
 #include <RFintrusive_list.h>
 #include <stdint.h>
+#include <ast/constants_decls.h>
+#include <ir/rir_value.h>
 
 struct ast_node;
 struct rir;
@@ -14,6 +16,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_ALLOCA,
     RIR_EXPRESSION_RETURN,
     RIR_EXPRESSION_CONSTRUCT,
+    RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
     RIR_EXPRESSION_MUL,
@@ -37,17 +40,20 @@ struct rir_return {
     const struct rir_expression *val;
 };
 
-struct rir_expression *rir_alloca_create(const struct rir_type *type, uint64_t num);
-struct rir_expression *rir_return_create(const struct rir_expression *val);
+struct rir_expression *rir_alloca_create(const struct rir_type *type,
+                                         uint64_t num,
+                                         struct rir_ctx *ctx);
+struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
+struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx);
 
 struct rir_binaryop {
-    const struct rir_expression *a;
-    const struct rir_expression *b;
+    const struct rir_value *a;
+    const struct rir_value *b;
 };
 struct rir_expression *rir_binaryop_create(enum rir_expression_type type,
-                                           const struct rir_expression *a,
-                                           const struct rir_expression *b);
-
+                                           const struct rir_value *a,
+                                           const struct rir_value *b,
+                                           struct rir_ctx *ctx);
 
 struct rir_expression {
     enum rir_expression_type type;
@@ -56,7 +62,10 @@ struct rir_expression {
         struct rir_alloca alloca;
         struct rir_binaryop binaryop;
         struct rir_return ret;
+        // kind of ugly but it's exactly what we need
+        struct ast_constant constant;
     };
+    struct rir_value val;
     // Control to be added to expression list of a rir block
     struct RFilist_node ln;
 };

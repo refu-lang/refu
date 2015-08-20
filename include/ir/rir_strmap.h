@@ -16,16 +16,12 @@ struct rirexpr_strmap {
     STRMAP_MEMBERS(struct rir_expression *);
 };
 
-/* bool rirexpr_strmap_add_from_id(struct rirexpr_strmap *m, */
-/*                                 const struct RFstring *id, */
-/*                                 struct rir_expression *e); */
 
 /**
  * This returns false if we run out of memory (errno = ENOMEM), or
  * (more normally) if that string already appears in the map (EEXIST).
  */
-bool rir_strmaps_add_from_id(struct rir_ctx *ctx,
-                             const struct RFstring *id,
-                             struct rir_expression *e);
-
+bool rir_strmap_add_from_id(struct rir_ctx *ctx,
+                            const struct RFstring *id,
+                            struct rir_expression *e);
 #endif
