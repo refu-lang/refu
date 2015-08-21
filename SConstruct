@@ -62,6 +62,7 @@ refu_src = [
 
     'ir/rir.c',
     'ir/rir_type.c',
+    'ir/rir_argument.c',
     'ir/rir_types_list.c',
     'ir/rir_function.c',
     'ir/rir_block.c',

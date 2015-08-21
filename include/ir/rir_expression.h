@@ -9,7 +9,7 @@
 struct ast_node;
 struct rir;
 struct rir_ctx;
-struct rir_type;
+struct rir_ltype;
 
 enum rir_expression_type {
     RIR_EXPRESSION_FNCALL,
@@ -32,7 +32,7 @@ struct rir_fncall {
 };
 
 struct rir_alloca {
-    const struct rir_type *type;
+    const struct rir_ltype *type;
     uint64_t num;
 };
 
@@ -40,7 +40,7 @@ struct rir_return {
     const struct rir_expression *val;
 };
 
-struct rir_expression *rir_alloca_create(const struct rir_type *type,
+struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);

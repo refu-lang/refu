@@ -4,6 +4,7 @@
 #include <ast/function.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
+#include <ir/rir_argument.h>
 #include <ir/rir.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
@@ -16,14 +17,21 @@ bool rir_normal_type_to_subtype_array(const struct rir_type *type,
               type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
               "Called with illegal rir type");
     struct rir_type **subtype;
+    struct rir_argument *arg;
     if (darray_size(type->subtypes) == 0) {
         if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
-            darray_append(ctx->current_fn->arguments_list, type);
+            if (!(arg = rir_argument_create(type))) {
+                return false;
+            }
+            darray_append(ctx->current_fn->arguments_list, arg);
         }
     } else {
         darray_foreach(subtype, type->subtypes) {
             if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
-                darray_append(ctx->current_fn->arguments_list, *subtype);
+                if (!(arg = rir_argument_create(*subtype))) {
+                    return false;
+                }
+                darray_append(ctx->current_fn->arguments_list, arg);
             }
         }
     }
@@ -58,10 +66,11 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         }
     }
 
-    const struct rir_type **arg_type;
-    darray_foreach(arg_type, ret->arguments_list) {
-        struct rir_expression *e = rir_alloca_create(*arg_type, rir_type_bytesize(*arg_type), ctx);
-        strmap_add(&ctx->current_fn->id_map, (*arg_type)->name, e);
+    const struct rir_argument **arg;
+    darray_foreach(arg, ret->arguments_list) {
+        const struct rir_ltype *arg_type = &(*arg)->type;
+        struct rir_expression *e = rir_alloca_create(arg_type, rir_ltype_bytesize(arg_type), ctx);
+        strmap_add(&ctx->current_fn->id_map, (*arg)->name, e);
     }
 
     // finally create the body

@@ -64,7 +64,7 @@ end:
 }
 
 static inline bool rir_alloca_init(struct rir_alloca *obj,
-                                  const struct rir_type *type,
+                                  const struct rir_ltype *type,
                                   uint64_t num)
 {
     obj->type = type;
@@ -72,7 +72,7 @@ static inline bool rir_alloca_init(struct rir_alloca *obj,
     return true;
 }
 
-struct rir_expression *rir_alloca_create(const struct rir_type *type,
+struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
 {

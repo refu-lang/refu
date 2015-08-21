@@ -77,6 +77,7 @@ static struct rir_expression *rir_process_ifexpr(const struct ast_node *n,
 static struct rir_expression *rir_process_vardecl(const struct ast_node *n,
                                                   struct rir_ctx *ctx)
 {
+#if 0
     struct ast_node *left = ast_types_left(ast_vardecl_desc_get(n));
     const struct RFstring *s = ast_identifier_str(left);
     struct rir_expression *alloca = rir_alloca_create(
@@ -92,6 +93,9 @@ static struct rir_expression *rir_process_vardecl(const struct ast_node *n,
         return NULL;
     }
     return alloca;
+#else
+    return NULL;
+#endif
 }
 
 static struct rir_expression *rir_process_binaryop(const struct ast_node *n,
