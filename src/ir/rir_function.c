@@ -5,7 +5,30 @@
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
+#include <ir/rir_strmap.h>
 #include <types/type.h>
+
+bool rir_normal_type_to_subtype_array(const struct rir_type *type,
+                                      struct rir_ctx *ctx)
+{
+    RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
+              type->category != COMPOSITE_SUM_RIR_TYPE ||
+              type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
+              "Called with illegal rir type");
+    struct rir_type **subtype;
+    if (darray_size(type->subtypes) == 0) {
+        if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
+            darray_append(ctx->current_fn->arguments_list, type);
+        }
+    } else {
+        darray_foreach(subtype, type->subtypes) {
+            if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
+                darray_append(ctx->current_fn->arguments_list, *subtype);
+            }
+        }
+    }
+    return true;
+}
 
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
@@ -15,8 +38,8 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     ctx->current_fn = ret;
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
-    ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
     strmap_init(&ret->map);
+    strmap_init(&ret->id_map);
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *args = ast_fndecl_args_get(decl);
     struct ast_node *returns = ast_fndecl_return_get(decl);
@@ -26,6 +49,23 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     ret->returns = returns
         ? type_get_rir_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT))
         : NULL;
+    darray_init(ret->arguments_list);
+    if (rir_type_is_sumtype(ret->arguments)) {
+        // TODO
+    } else {
+        if (!rir_normal_type_to_subtype_array(ret->arguments, ctx)) {
+            return false;
+        }
+    }
+
+    const struct rir_type **arg_type;
+    darray_foreach(arg_type, ret->arguments_list) {
+        struct rir_expression *e = rir_alloca_create(*arg_type, rir_type_bytesize(*arg_type), ctx);
+        strmap_add(&ctx->current_fn->id_map, (*arg_type)->name, e);
+    }
+
+    // finally create the body
+    ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
     return true;
 }
 

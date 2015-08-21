@@ -176,6 +176,12 @@ i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
     return t->category < COMPOSITE_PRODUCT_RIR_TYPE;
 }
 
+i_INLINE_DECL bool rir_type_is_category(const struct rir_type *t,
+                                        enum rir_type_category category)
+{
+    return t->category == category;
+}
+
 /**
  * Gets the normal type from a rir type.
  *
@@ -193,4 +199,9 @@ i_INLINE_DECL const struct type *rir_type_get_type_or_die(const struct rir_type 
     }
     return type->type;
 }
+
+/**
+ * Gets the size in bytes of this type
+ */
+size_t rir_type_bytesize(const struct rir_type *t);
 #endif

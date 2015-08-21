@@ -11,7 +11,7 @@ bool rir_strmap_add_from_id(struct rir_ctx *ctx,
                             struct rir_expression *e)
 {
     // add normal language identifier to current block
-    if (!strmap_add(&ctx->current_block->map, id, e)) {
+    if (!strmap_add(&ctx->current_fn->map, id, e)) {
         return false;
     }
     return true;

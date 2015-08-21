@@ -639,4 +639,12 @@ const struct rir_type *rir_type_get_elementary(enum elementary_type etype)
     return &i_rir_elementary_types[etype];
 }
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);
+i_INLINE_INS bool rir_type_is_category(const struct rir_type *t,
+                                        enum rir_type_category category);
 i_INLINE_INS const struct type *rir_type_get_type_or_die(const struct rir_type *type);
+
+size_t rir_type_bytesize(const struct rir_type *t)
+{
+    // TODO
+    return 4;
+}

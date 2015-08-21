@@ -4,6 +4,8 @@
 #include <ir/rir.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_value.h>
+#include <ir/rir_function.h>
+#include <ir/rir_strmap.h>
 #include <ast/ast.h>
 #include <ast/ifexpr.h>
 #include <ast/type.h>
@@ -128,6 +130,17 @@ static struct rir_expression *rir_process_constant(const struct ast_node *n,
     return ret_expr;
 }
 
+static struct rir_expression *rir_process_identifier(const struct ast_node *n,
+                                                     struct rir_ctx *ctx)
+{
+    struct rir_expression *expr = strmap_get(&ctx->current_fn->id_map, ast_identifier_str(n));
+    if (!expr) {
+        RF_ERROR("An identifier was not found in the strmap during rir creation");
+        return NULL;
+    }
+    return expr;
+}
+
 // TODO: Delete me. Just a placeholder
 struct rir_expression *rir_placeholder_expression(struct rir_ctx *ctx)
 {
@@ -153,9 +166,10 @@ struct rir_expression *rir_process_ast_node(const struct ast_node *n,
         return rir_process_return(n, ctx);
     case AST_CONSTANT:
         return rir_process_constant(n, ctx);
+    case AST_IDENTIFIER:
+        return rir_process_identifier(n, ctx);
     case AST_MATCH_EXPRESSION:
     case AST_MATCH_CASE:
-    case AST_IDENTIFIER:
         //TODO: Implement properly, no placeholder
         return rir_placeholder_expression(ctx);
     default:
@@ -170,7 +184,6 @@ static bool rir_block_init(struct rir_block *b,
                            struct rir_ctx *ctx)
 {
     RF_STRUCT_ZERO(b);
-    strmap_init(&b->map);
     rf_ilist_head_init(&b->expressions);
     struct ast_node *child;
     struct rir_expression *expr;
@@ -210,7 +223,6 @@ static void rir_block_deinit(struct rir_block* b)
         rir_expression_destroy(expr);
     }
     rir_block_exit_deinit(&b->exit);
-    strmap_clear(&b->map);
 }
 
 void rir_block_destroy(struct rir_block* b)

@@ -14,11 +14,13 @@ struct rir_fndecl {
     const struct RFstring *name;
     const struct rir_type* arguments;
     const struct rir_type* returns;
+    struct {darray(const struct rir_type*);} arguments_list;
     struct rir_block *body;
     //! Stringmap from rir identifiers to rir objects
     //! Owns the rir objects and the rir identifier.
     //! They will be destroyed at function destruction
     struct rirexpr_strmap map;
+    struct rirexpr_strmap id_map;
     //! Determines the value of $n when generating variables for a function
     unsigned symbols_num;
     //! Control to be entered into the rir functions list.

@@ -26,8 +26,6 @@ struct rir_block_exit {
 
 struct rir_block {
     struct rir_block_exit exit;
-    //! Stringmap from normal language identifiers to rir objects
-    struct rirexpr_strmap map;
     //! List of rir expressions
     struct RFilist_head expressions;
 };
