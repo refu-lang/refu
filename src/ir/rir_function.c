@@ -9,35 +9,6 @@
 #include <ir/rir_strmap.h>
 #include <types/type.h>
 
-bool rir_normal_type_to_subtype_array(const struct rir_type *type,
-                                      struct rir_ctx *ctx)
-{
-    RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
-              type->category != COMPOSITE_SUM_RIR_TYPE ||
-              type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
-              "Called with illegal rir type");
-    struct rir_type **subtype;
-    struct rir_argument *arg;
-    if (darray_size(type->subtypes) == 0) {
-        if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
-            if (!(arg = rir_argument_create(type))) {
-                return false;
-            }
-            darray_append(ctx->current_fn->arguments_list, arg);
-        }
-    } else {
-        darray_foreach(subtype, type->subtypes) {
-            if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
-                if (!(arg = rir_argument_create(*subtype))) {
-                    return false;
-                }
-                darray_append(ctx->current_fn->arguments_list, arg);
-            }
-        }
-    }
-    return true;
-}
-
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
                             struct rir_ctx *ctx)
@@ -57,20 +28,25 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     ret->returns = returns
         ? type_get_rir_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT))
         : NULL;
-    darray_init(ret->arguments_list);
+
     if (rir_type_is_sumtype(ret->arguments)) {
         // TODO
     } else {
-        if (!rir_normal_type_to_subtype_array(ret->arguments, ctx)) {
+        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list)) {
             return false;
         }
     }
 
+
     const struct rir_argument **arg;
-    darray_foreach(arg, ret->arguments_list) {
-        const struct rir_ltype *arg_type = &(*arg)->type;
-        struct rir_expression *e = rir_alloca_create(arg_type, rir_ltype_bytesize(arg_type), ctx);
-        strmap_add(&ctx->current_fn->id_map, (*arg)->name, e);
+    if (rir_type_is_sumtype(ret->arguments)) {
+        // TODO
+    } else {
+        darray_foreach(arg, ret->arguments_list) {
+            const struct rir_ltype *arg_type = &(*arg)->type;
+            struct rir_expression *e = rir_alloca_create(arg_type, rir_ltype_bytesize(arg_type), ctx);
+            strmap_add(&ctx->current_fn->id_map, (*arg)->name, e);
+        }
     }
 
     // finally create the body
@@ -94,7 +70,6 @@ static bool free_map_member(struct RFstring *id,
                             void *user_arg)
 {
     (void) user_arg;
-    rf_string_destroy(id);
     rir_expression_destroy(e);
     return true;
 }

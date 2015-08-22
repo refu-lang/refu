@@ -1,0 +1,23 @@
+#ifndef LFR_IR_RIR_TYPEDEF_H
+#define LFR_IR_RIR_TYPEDEF_H
+
+#include <stdbool.h>
+#include <ir/rir_argument.h>
+#include <Data_Structures/darray.h>
+
+struct rir;
+struct rir_type;
+
+struct rir_typedef {
+    struct args_arr arguments_list;
+    bool is_union;
+    //! Control to be entered into the rir functions list.
+    struct RFilist_node ln;
+};
+
+struct rir_typedef *rir_typedef_create(struct rir_type *t);
+void rir_typedef_destroy(struct rir_typedef *t);
+
+bool rir_typedef_tostring(struct rir *r, struct rir_typedef *t);
+
+#endif

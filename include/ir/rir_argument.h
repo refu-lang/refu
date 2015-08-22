@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <types/type_decls.h>
+#include <Data_Structures/darray.h>
 
 struct rir_type;
 
@@ -42,4 +43,8 @@ struct rir_argument {
 struct rir_argument *rir_argument_create(const struct rir_type *type);
 void rir_argument_destroy(struct rir_argument *a);
 
+
+struct args_arr {darray(const struct rir_argument*);};
+
+bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr);
 #endif

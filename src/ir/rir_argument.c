@@ -73,3 +73,32 @@ void rir_argument_destroy(struct rir_argument *a)
 {
     free(a);
 }
+
+bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr)
+{
+    RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
+              type->category != COMPOSITE_SUM_RIR_TYPE ||
+              type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
+              "Called with illegal rir type");
+    struct rir_type **subtype;
+    struct rir_argument *arg;
+    darray_init(*arr);
+    if (darray_size(type->subtypes) == 0) {
+        if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
+            if (!(arg = rir_argument_create(type))) {
+                return false;
+            }
+            darray_append(*arr, arg);
+        }
+    } else {
+        darray_foreach(subtype, type->subtypes) {
+            if (!rir_type_is_category(type, ELEMENTARY_RIR_TYPE_NIL)) {
+                if (!(arg = rir_argument_create(*subtype))) {
+                    return false;
+                }
+                darray_append(*arr, arg);
+            }
+        }
+    }
+    return true;
+}

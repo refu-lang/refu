@@ -14,6 +14,8 @@ struct rir {
     struct rir_types_list *rir_types_list;
     //! List of functions
     struct RFilist_head functions;
+    //! List of type definitions
+    struct RFilist_head typedefs;
     //! Buffer string to hold the string representation when asked. Can be NULL.
     struct RFstringx *buff;
 };

@@ -1,8 +1,10 @@
 #include <ir/rir.h>
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
+#include <ir/rir_type.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
+#include <ir/rir_typedef.h>
 #include <Utils/memory.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
@@ -21,6 +23,7 @@ static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
     rf_ilist_head_init(&r->functions);
+    rf_ilist_head_init(&r->typedefs);
     // create the rir types list from the types set for this module
     if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
         return false;
@@ -49,6 +52,11 @@ static void rir_deinit(struct rir *r)
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
         rir_fndecl_destroy(fn);
     }
+    struct rir_typedef *def;
+    struct rir_typedef *deftmp;
+    rf_ilist_for_each_safe(&r->typedefs, def, deftmp, ln) {
+        rir_typedef_destroy(def);
+    }
 }
 
 void rir_destroy(struct rir *r)
@@ -64,8 +72,17 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct ast_node *child;
     struct rir_fndecl *fndecl;
     struct rir_ctx ctx;
+    struct rir_type *t;
 
     rir_ctx_init(&ctx, r);
+
+    // for each rir type create a typedef/uniondef
+    rir_types_list_for_each(r->rir_types_list, t) {
+        if (!rir_type_is_elementary(t)) {
+            struct rir_typedef *def = rir_typedef_create(t);
+            rf_ilist_add_tail(&r->typedefs,  &def->ln);
+        }
+    }
 
     // for each function of the module, create a rir equivalent
     rf_ilist_for_each(&m->node->children, child, lh) {
@@ -77,6 +94,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
             rf_ilist_add(&r->functions, &fndecl->ln);
         }
     }
+
     return true;
 }
 
@@ -103,6 +121,14 @@ struct RFstring *rir_tostring(struct rir *r)
     if (!r->buff) {
         RF_ERROR("Failed to create the string buffer for rir outputting");
         return NULL;
+    }
+
+    struct rir_typedef *def;
+    rf_ilist_for_each(&r->typedefs, def, ln) {
+        if (!rir_typedef_tostring(r, def)) {
+            RF_ERROR("Failed to turn a rir typedef to a string");
+            return NULL;
+        }
     }
 
     struct rir_fndecl *fn;

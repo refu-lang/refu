@@ -99,7 +99,7 @@ static struct rir_expression *rir_process_vardecl(const struct ast_node *n,
 }
 
 static struct rir_expression *rir_process_binaryop(const struct ast_node *n,
-                                               struct rir_ctx *ctx)
+                                                   struct rir_ctx *ctx)
 {
     struct rir_expression *e;
     struct rir_expression *lexpr = rir_process_ast_node(ast_binaryop_left(n), ctx);
