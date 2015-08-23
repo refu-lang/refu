@@ -76,9 +76,9 @@ static bool rir_process_do(struct rir *r, struct module *m)
 
     rir_ctx_init(&ctx, r);
 
-    // for each rir type create a typedef/uniondef
+    // for each non elementary rir type create a typedef/uniondef
     rir_types_list_for_each(r->rir_types_list, t) {
-        if (!rir_type_is_elementary(t)) {
+        if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE ) {
             struct rir_typedef *def = rir_typedef_create(t);
             rf_ilist_add_tail(&r->typedefs,  &def->ln);
 #if 0
@@ -166,8 +166,17 @@ bool rir_print(struct compiler *c)
     return true;
 }
 
+struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name)
+{
+    struct rir_typedef *def;
+    rf_ilist_for_each(&r->typedefs, def, ln) {
+        return def;
+    }
+    return NULL;
+}
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)
 {
     rf_ilist_add_tail(&ctx->current_block->expressions, &expr->ln);
 }
+

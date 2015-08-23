@@ -5,6 +5,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_value.h>
 #include <ir/rir_function.h>
+#include <ir/rir_binaryop.h>
 #include <ir/rir_strmap.h>
 #include <ast/ast.h>
 #include <ast/ifexpr.h>
@@ -98,25 +99,6 @@ static struct rir_expression *rir_process_vardecl(const struct ast_node *n,
 #endif
 }
 
-static struct rir_expression *rir_process_binaryop(const struct ast_node *n,
-                                                   struct rir_ctx *ctx)
-{
-    struct rir_expression *e;
-    struct rir_expression *lexpr = rir_process_ast_node(ast_binaryop_left(n), ctx);
-    struct rir_expression *rexpr = rir_process_ast_node(ast_binaryop_right(n), ctx);
-
-    switch(ast_binaryop_op(n)) {
-    case BINARYOP_ADD:
-        e = rir_binaryop_create(RIR_EXPRESSION_ADD, &lexpr->val, &rexpr->val, ctx);
-        break;
-    default:
-        RF_ASSERT(false, "Illegal binary op type detected at rir processing");
-        break;
-    }
-    rirctx_block_add(ctx, e);
-    return e;
-}
-
 static struct rir_expression *rir_process_return(const struct ast_node *n,
                                                  struct rir_ctx *ctx)
 {
@@ -165,7 +147,7 @@ struct rir_expression *rir_process_ast_node(const struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         return rir_process_vardecl(n, ctx);
     case AST_BINARY_OPERATOR:
-        return rir_process_binaryop(n, ctx);
+        return rir_process_binaryop(&n->binaryop, ctx);
     case AST_RETURN_STATEMENT:
         return rir_process_return(n, ctx);
     case AST_CONSTANT:

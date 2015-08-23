@@ -30,7 +30,12 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         : NULL;
 
     if (rir_type_is_sumtype(ret->arguments)) {
-        // TODO
+        RFS_PUSH();
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(ret->arguments->type, true));
+        RFS_POP();
+        struct rir_argument *arg = rir_argument_create_from_typedef(def);
+        darray_init(ret->arguments_list);
+        darray_append(ret->arguments_list, arg);
     } else {
         if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list)) {
             return false;
@@ -100,13 +105,8 @@ bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (f->arguments) {
-        if (!rf_stringx_append(
-            r->buff,
-            rir_type_str_or_die(f->arguments)
-            )) {
-            goto end;
-        }
+    if (!rir_argsarr_tostring(r, &f->arguments_list)) {
+        return false;
     }
 
     if (!rf_stringx_append(r->buff, &sep)) {

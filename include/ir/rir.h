@@ -28,6 +28,8 @@ void rir_destroy(struct rir* r);
 bool rir_process(struct compiler *c);
 bool rir_print(struct compiler *c);
 
+struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
+
 struct rir_ctx {
     struct rir *rir;
     struct rir_fndecl *current_fn;

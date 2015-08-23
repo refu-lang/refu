@@ -5,9 +5,9 @@
 #include <ast/ast.h>
 
 
-static inline bool rir_expression_init(struct rir_expression *expr,
-                                       enum rir_expression_type type,
-                                       struct rir_ctx *ctx)
+bool rir_expression_init(struct rir_expression *expr,
+                         enum rir_expression_type type,
+                         struct rir_ctx *ctx)
 {
     expr->type = type;
     switch (expr->type) {
@@ -34,33 +34,6 @@ void rir_expression_destroy(struct rir_expression *expr)
 {
     rir_expression_deinit(expr);
     free(expr);
-}
-
-
-
-static inline void rir_binaryop_init(struct rir_binaryop *op,
-                                     const struct rir_value *a,
-                                     const struct rir_value *b)
-{
-    op->a = a;
-    op->b = b;
-}
-
-struct rir_expression *rir_binaryop_create(enum rir_expression_type type,
-                                           const struct rir_value *a,
-                                           const struct rir_value *b,
-                                           struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_expression_init(ret, type, ctx)) {
-        free(ret);
-        ret = NULL;
-        goto end;
-    }
-    rir_binaryop_init(&ret->binaryop, a, b);
-end:
-    return ret;
 }
 
 static inline bool rir_alloca_init(struct rir_alloca *obj,
@@ -184,6 +157,21 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         break;
     case RIR_EXPRESSION_DIV:
         if (!rf_stringx_append(r->buff, RFS("div"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_CMP:
+        if (!rf_stringx_append(r->buff, RFS("cmp"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_LOGIC_AND:
+        if (!rf_stringx_append(r->buff, RFS("logic_and"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_LOGIC_OR:
+        if (!rf_stringx_append(r->buff, RFS("logic_or"))) {
             goto end;
         }
         break;

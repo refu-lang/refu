@@ -21,6 +21,9 @@ enum rir_expression_type {
     RIR_EXPRESSION_SUB,
     RIR_EXPRESSION_MUL,
     RIR_EXPRESSION_DIV,
+    RIR_EXPRESSION_CMP,
+    RIR_EXPRESSION_LOGIC_AND,
+    RIR_EXPRESSION_LOGIC_OR,
     // PLACEHOLDER, should not make it into actual production
     RIR_EXPRESSION_PLACEHOLDER
 };
@@ -40,20 +43,16 @@ struct rir_return {
     const struct rir_expression *val;
 };
 
+struct rir_binaryop {
+    const struct rir_value *a;
+    const struct rir_value *b;
+};
+
 struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
 struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx);
-
-struct rir_binaryop {
-    const struct rir_value *a;
-    const struct rir_value *b;
-};
-struct rir_expression *rir_binaryop_create(enum rir_expression_type type,
-                                           const struct rir_value *a,
-                                           const struct rir_value *b,
-                                           struct rir_ctx *ctx);
 
 struct rir_expression {
     enum rir_expression_type type;
@@ -70,6 +69,9 @@ struct rir_expression {
     struct RFilist_node ln;
 };
 
+bool rir_expression_init(struct rir_expression *expr,
+                         enum rir_expression_type type,
+                         struct rir_ctx *ctx);
 void rir_expression_destroy(struct rir_expression *expr);
 bool rir_expression_tostring(struct rir *r, const struct rir_expression *e);
 #endif

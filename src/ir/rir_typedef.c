@@ -9,6 +9,7 @@
 static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t)
 {
     RF_ASSERT(!rir_type_is_elementary(t), "Typedef can't be created from an elementary type");
+    RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
     RF_STRUCT_ZERO(def);
     RFS_PUSH();
     def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
@@ -48,18 +49,8 @@ bool rir_typedef_tostring(struct rir *r, struct rir_typedef *t)
             RFS("$"RF_STR_PF_FMT" = %s(",  RF_STR_PF_ARG(t->name), t->is_union ? "uniondef" : "typedef"))) {
         return false;
     }
-    const struct rir_argument **arg;
-    unsigned int i = 0;
-    size_t args_num = darray_size(t->arguments_list);
-    darray_foreach(arg, t->arguments_list) {
-        if (!rir_argument_tostring(r, *arg)) {
-            return false;
-        }
-        if (++i != args_num) {
-            if (!rf_stringx_append_cstr(r->buff, ", ")) {
-                return false;
-            }
-        }
+    if (!rir_argsarr_tostring(r, &t->arguments_list)) {
+        return false;
     }
 
     if (!rf_stringx_append_cstr(r->buff, ")\n")) {
