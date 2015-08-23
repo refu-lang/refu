@@ -176,10 +176,24 @@ i_INLINE_DECL bool rir_type_is_elementary(const struct rir_type *t)
     return t->category < COMPOSITE_PRODUCT_RIR_TYPE;
 }
 
+i_INLINE_DECL bool rir_type_is_true_elementary(const struct rir_type *t)
+{
+    return rir_type_is_elementary(t) && !(t->category == RIR_TYPE_WILDCARD);
+}
+
 i_INLINE_DECL bool rir_type_is_category(const struct rir_type *t,
                                         enum rir_type_category category)
 {
     return t->category == category;
+}
+
+/**
+ * Trivial is just an alias for NIL and Wildcard
+ */
+i_INLINE_DECL bool rir_type_is_trivial(const struct rir_type *t)
+{
+    return t->category == ELEMENTARY_RIR_TYPE_NIL ||
+        t->category == RIR_TYPE_WILDCARD;
 }
 
 /**

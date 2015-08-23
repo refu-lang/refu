@@ -440,5 +440,9 @@ struct RFstringx *compiler_get_errors(struct compiler *c)
 void compiler_print_errors(struct compiler *c)
 {
     struct RFstringx *str = compiler_get_errors(c);
-    printf(RF_STR_PF_FMT, RF_STR_PF_ARG(str));
+    if (str) {
+        printf(RF_STR_PF_FMT, RF_STR_PF_ARG(str));
+    } else {
+        printf("Unknown compiler error detected.\n");
+    }
 }

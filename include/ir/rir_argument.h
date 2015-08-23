@@ -5,6 +5,7 @@
 #include <types/type_decls.h>
 #include <Data_Structures/darray.h>
 
+struct rir;
 struct rir_type;
 
 enum rir_ltype_category {
@@ -42,7 +43,7 @@ struct rir_argument {
 
 struct rir_argument *rir_argument_create(const struct rir_type *type);
 void rir_argument_destroy(struct rir_argument *a);
-
+bool rir_argument_tostring(struct rir *r, const struct rir_argument *arg);
 
 struct args_arr {darray(const struct rir_argument*);};
 

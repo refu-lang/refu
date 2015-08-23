@@ -81,6 +81,15 @@ static bool rir_process_do(struct rir *r, struct module *m)
         if (!rir_type_is_elementary(t)) {
             struct rir_typedef *def = rir_typedef_create(t);
             rf_ilist_add_tail(&r->typedefs,  &def->ln);
+#if 0
+            // TEMP TO SEE what types are created
+            printf(RF_STR_PF_FMT"", RF_STR_PF_ARG(rir_type_str_or_die(t)));
+            if (t->name) {
+                printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(t->name));
+            } else {
+                printf("\n");
+            }
+#endif
         }
     }
 

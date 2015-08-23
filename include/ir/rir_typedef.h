@@ -9,8 +9,9 @@ struct rir;
 struct rir_type;
 
 struct rir_typedef {
-    struct args_arr arguments_list;
+    struct RFstring *name;
     bool is_union;
+    struct args_arr arguments_list;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };

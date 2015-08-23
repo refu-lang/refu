@@ -1,13 +1,22 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir.h>
 #include <ir/rir_type.h>
+#include <types/type.h>
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>
+#include <String/rf_str_core.h>
 
 static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t)
 {
     RF_ASSERT(!rir_type_is_elementary(t), "Typedef can't be created from an elementary type");
-    darray_init(def->arguments_list);
+    RF_STRUCT_ZERO(def);
+    RFS_PUSH();
+    def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
+    RFS_POP();
+    if (rir_type_is_sumtype(t)) {
+        def->is_union = true;
+    }
+
     if (!rir_type_to_arg_array(t, &def->arguments_list)) {
         return false;
     }
@@ -28,13 +37,33 @@ struct rir_typedef *rir_typedef_create(struct rir_type *t)
 
 void rir_typedef_destroy(struct rir_typedef *t)
 {
+    rf_string_destroy(t->name);
     free(t);
 }
 
 bool rir_typedef_tostring(struct rir *r, struct rir_typedef *t)
 {
-    if (t->is_union) {
-        return rf_stringx_append(r->buff, RFS("uniondef()\n"));
+    if (!rf_stringx_append(
+            r->buff,
+            RFS("$"RF_STR_PF_FMT" = %s(",  RF_STR_PF_ARG(t->name), t->is_union ? "uniondef" : "typedef"))) {
+        return false;
     }
-    return rf_stringx_append(r->buff, RFS("typedef()\n"));
+    const struct rir_argument **arg;
+    unsigned int i = 0;
+    size_t args_num = darray_size(t->arguments_list);
+    darray_foreach(arg, t->arguments_list) {
+        if (!rir_argument_tostring(r, *arg)) {
+            return false;
+        }
+        if (++i != args_num) {
+            if (!rf_stringx_append_cstr(r->buff, ", ")) {
+                return false;
+            }
+        }
+    }
+
+    if (!rf_stringx_append_cstr(r->buff, ")\n")) {
+        return false;
+    }
+    return true;
 }
