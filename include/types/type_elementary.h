@@ -27,6 +27,12 @@ struct type *type_elementary_get_type_constant(enum elementary_type etype);
 const struct RFstring *type_elementary_get_str(enum elementary_type etype);
 
 /**
+ * Given a string return the elementary type if it represents an elementary type
+ * or ELEMENTARY_TYPE_TYPES_COUNT if it's not
+ */
+enum elementary_type type_elementary_from_str(const struct RFstring *s);
+
+/**
  * Check if @c id is an elementary identifier
  */
 int type_elementary_identifier_p(const struct RFstring *id);

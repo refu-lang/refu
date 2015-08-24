@@ -99,6 +99,18 @@ const struct RFstring *type_elementary_get_str(enum elementary_type etype)
     return &elementary_type_strings[etype];
 }
 
+enum elementary_type type_elementary_from_str(const struct RFstring *s)
+{
+    //TODO: perhaps having a hash table here would be better. Reuse the one from gperf?
+    unsigned int i = 0;
+    for (i = 0; i < sizeof(elementary_type_strings) / sizeof(struct RFstring); ++i) {
+        if (rf_string_equal(s, &elementary_type_strings[i])) {
+            return (enum elementary_type)i;
+        }
+    }
+    return ELEMENTARY_TYPE_TYPES_COUNT;
+}
+
 int type_elementary_identifier_p(const struct RFstring *id)
 {
     const struct gperf_elementary_type *etype;

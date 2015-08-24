@@ -1,6 +1,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
 #include <ir/rir_value.h>
+#include <ir/rir_argument.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -111,7 +112,12 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         }
         break;
     case RIR_EXPRESSION_ALLOCA:
-        if (!rf_stringx_append(r->buff, RFS("alloca"))) {
+        if (!rf_stringx_append(
+                r->buff,
+                RFS(RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_ltype_string(e->alloca.type)))
+            )) {
             goto end;
         }
         break;
@@ -161,7 +167,7 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         }
         break;
     case RIR_EXPRESSION_CMP:
-        if (!rf_stringx_append(r->buff, RFS("cmp"))) {
+        if (!rf_stringx_append(r->buff, RFS("cmp\n"))) {
             goto end;
         }
         break;

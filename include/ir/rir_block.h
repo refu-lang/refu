@@ -39,8 +39,8 @@ struct rir_block *rir_block_create(const struct ast_node *n,
  */
 void rir_block_destroy(struct rir_block* b);
 
-struct rir_expression *rir_process_ast_node(const struct ast_node *n,
-                                            struct rir_ctx *ctx);
+bool rir_process_ast_node(const struct ast_node *n,
+                          struct rir_ctx *ctx);
 
 bool rir_block_tostring(struct rir *r, const struct rir_block *b);
 #endif

@@ -51,12 +51,24 @@ struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
     return ret;
 }
 
-struct rir_expression *rir_process_binaryop(const struct ast_binaryop *op,
-                                            struct rir_ctx *ctx)
+bool rir_process_binaryop(const struct ast_binaryop *op,
+                          struct rir_ctx *ctx)
 {
-    struct rir_expression *lexpr = rir_process_ast_node(op->left, ctx);
-    struct rir_expression *rexpr = rir_process_ast_node(op->right, ctx);
+    if (!rir_process_ast_node(op->left, ctx)) {
+        goto fail;
+    }
+    struct rir_expression *lexpr = ctx->returned_expr;
+    if (!rir_process_ast_node(op->right, ctx)) {
+        goto fail;
+    }
+    struct rir_expression *rexpr = ctx->returned_expr;
     struct rir_expression *e = rir_binaryop_create(op, &lexpr->val, &rexpr->val, ctx);
+    if (!e) {
+        goto fail;
+    }
     rirctx_block_add(ctx, e);
-    return e;
+    RIRCTX_RETURN_EXPR(ctx, true, e);
+
+fail:
+    RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }

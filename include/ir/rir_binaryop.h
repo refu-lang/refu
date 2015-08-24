@@ -11,6 +11,6 @@ struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
                                            const struct rir_value *b,
                                            struct rir_ctx *ctx);
 
-struct rir_expression *rir_process_binaryop(const struct ast_binaryop *n,
-                                            struct rir_ctx *ctx);
+bool rir_process_binaryop(const struct ast_binaryop *n,
+                          struct rir_ctx *ctx);
 #endif

@@ -6,18 +6,42 @@
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>
 
+static struct rir_ltype elementary_types[] = {
+#define RIR_LTYPE_ELEMINIT(i_type_)                                     \
+    [i_type_] = {.category = RIR_LTYPE_ELEMENTARY, .etype = i_type_}
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_INT_8),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_8),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_INT_16),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_16),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_INT_32),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_32),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_INT_64),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_64),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_INT),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_UINT),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_FLOAT_32),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_FLOAT_64),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_STRING),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_BOOL),
+    RIR_LTYPE_ELEMINIT(ELEMENTARY_TYPE_NIL)
+#undef RIR_LTYPE_ELEMINIT
+};
+
 static void rir_ltype_elem_init(struct rir_ltype *t, enum elementary_type etype)
 {
     t->category = RIR_LTYPE_ELEMENTARY;
     t->etype = etype;
 }
 
+struct rir_ltype *rir_ltype_elem_create_from_string(const struct RFstring *name)
+{
+    enum elementary_type etype = type_elementary_from_str(name);
+    return etype == ELEMENTARY_TYPE_TYPES_COUNT ? NULL : &elementary_types[etype];
+}
+
 struct rir_ltype *rir_ltype_elem_create(enum elementary_type etype)
 {
-    struct rir_ltype *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_ltype_elem_init(ret, etype);
-    return ret;
+    return &elementary_types[etype];
 }
 
 static void rir_ltype_comp_init(struct rir_ltype *t, const struct rir_typedef *def)
@@ -36,13 +60,24 @@ struct rir_ltype *rir_ltype_comp_create(struct rir_typedef *def)
 
 void rir_ltype_destroy(struct rir_ltype *t)
 {
-    free(t);
+    if (t->category != RIR_LTYPE_ELEMENTARY) {
+        free(t);
+    }
 }
 
 size_t rir_ltype_bytesize(const struct rir_ltype *a)
 {
     // TOO
     return 4;
+}
+
+const struct RFstring *rir_ltype_string(const struct rir_ltype *t)
+{
+    if (t->category == RIR_LTYPE_ELEMENTARY) {
+        return type_elementary_get_str(t->etype);
+    } else {
+        return t->tdef->name;
+    }
 }
 
 

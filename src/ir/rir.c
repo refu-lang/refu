@@ -170,9 +170,25 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
 {
     struct rir_typedef *def;
     rf_ilist_for_each(&r->typedefs, def, ln) {
-        return def;
+        if (rf_string_equal(name, def->name)) {
+            return def;
+        }
     }
     return NULL;
+}
+
+struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name)
+{
+    struct rir_ltype *type = rir_ltype_elem_create_from_string(name);
+    if (type) {
+        return type;
+    }
+    // not elementary, search for typedef
+    struct rir_typedef *def = rir_typedef_byname(r, name);
+    if (!def) {
+        return NULL;
+    }
+    return rir_ltype_comp_create(def);
 }
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)

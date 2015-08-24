@@ -56,6 +56,10 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
 
     // finally create the body
     ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
+    if (!ret->body) {
+        RF_ERROR("Failed to turn the body of a function into the RIR format");
+        return false;
+    }
     return true;
 }
 

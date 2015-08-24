@@ -25,9 +25,11 @@ struct rir_ltype {
 };
 
 struct rir_ltype *rir_ltype_elem_create(enum elementary_type etype);
+struct rir_ltype *rir_ltype_elem_create_from_string(const struct RFstring *name);
 struct rir_ltype *rir_ltype_comp_create(struct rir_typedef *def);
 
 size_t rir_ltype_bytesize(const struct rir_ltype *a);
+const struct RFstring *rir_ltype_string(const struct rir_ltype *t);
 
 void rir_ltype_destroy(struct rir_ltype *t);
 

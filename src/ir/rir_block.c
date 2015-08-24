@@ -50,96 +50,104 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
 
 
 /* -- functions for rir_block -- */
-static struct rir_expression *rir_process_ifexpr(const struct ast_node *n,
-                                             unsigned int index,
-                                             struct rir_ctx *ctx)
+static bool rir_process_ifexpr(const struct ast_node *n,
+                               unsigned int index,
+                               struct rir_ctx *ctx)
 {
-#if 0 // TODO, needs thinking. Don't like the index variable.
-    struct rir_expression *cond = rir_expression_create(ast_ifexpr_condition_get(n), ctx);
-    if (!cond) {
-        return false;
+    struct rir_block *current_block = ctx->current_block;
+    if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
+        goto fail;
     }
+    struct rir_expression *cond = ctx->returned_expr;
     struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, ctx);
     if (!taken) {
-        return false;
+        goto fail;
     }
-    struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
+    // TODO: fallthrough
+    /* struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n); */
     // at this point the basic block splits. We neeed a new basic block for the rest
     struct rir_block *new_block = rir_block_create(n, index, ctx);
     if (!new_block) {
-        return false;
+        goto fail;
     }
-    return rir_block_exit_init_condbranch(&b->exit, cond, taken, new_block);
-#else
-    return NULL;
-#endif
+    //return to the block we were
+    ctx->current_block = current_block;
+    if (!rir_block_exit_init_condbranch(&ctx->current_block->exit, cond, taken, new_block)) {
+        goto fail;
+    }
+    RIRCTX_RETURN_EXPR(ctx, true, NULL);
+
+fail:
+    RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
 
-static struct rir_expression *rir_process_vardecl(const struct ast_node *n,
-                                                  struct rir_ctx *ctx)
+static bool rir_process_vardecl(const struct ast_node *n,
+                                struct rir_ctx *ctx)
 {
-#if 0
     struct ast_node *left = ast_types_left(ast_vardecl_desc_get(n));
-    const struct RFstring *s = ast_identifier_str(left);
+    const struct RFstring *id_str = ast_identifier_str(left);
+    RFS_PUSH();
+    struct RFstring *type_str = type_str_or_die(ast_node_get_type_or_die(left, AST_TYPERETR_DEFAULT), TSTR_DEFAULT);
+    struct rir_ltype *allocated_type = rir_type_byname(ctx->rir, type_str);
+    RFS_POP();
+    if (!allocated_type) {
+        RF_ERROR("Could not find the type that an alloc() command should allocate in the RIR");
+        return false;
+    }
     struct rir_expression *alloca = rir_alloca_create(
-        type_get_rir_or_die(ast_node_get_type_or_die(left, AST_TYPERETR_DEFAULT)),
+        allocated_type,
         1,
         ctx
     );
     if (!alloca) {
-        return NULL;
+        goto fail;
     }
+    if (!strmap_add(&ctx->current_fn->id_map, id_str, alloca)) {
+        goto fail;
+    }
+    rirctx_block_add(ctx, alloca);
+    RIRCTX_RETURN_EXPR(ctx, true, alloca);
 
-    if (!rir_strmap_add_from_id(ctx, s, alloca)) {
-        return NULL;
-    }
-    return alloca;
-#else
-    return NULL;
-#endif
+fail:
+    RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
 
-static struct rir_expression *rir_process_return(const struct ast_node *n,
-                                                 struct rir_ctx *ctx)
+static bool rir_process_return(const struct ast_node *n,
+                               struct rir_ctx *ctx)
 {
-    struct rir_expression *ret_val = rir_process_ast_node(ast_returnstmt_expr_get(n), ctx);
+    if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
+        return false;
+    }
+    struct rir_expression *ret_val = ctx->returned_expr;
     struct rir_expression *ret_expr = rir_return_create(ret_val, ctx);
+    if (!ret_expr) {
+        return false;
+    }
     // add it to the block
     rirctx_block_add(ctx, ret_expr);
-    return ret_expr;
+    RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
 }
 
-static struct rir_expression *rir_process_constant(const struct ast_node *n,
-                                                   struct rir_ctx *ctx)
+static bool rir_process_constant(const struct ast_node *n,
+                                 struct rir_ctx *ctx)
 {
     struct rir_expression *ret_expr = rir_constant_create(n, ctx);
-    return ret_expr;
+    RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
 }
 
-static struct rir_expression *rir_process_identifier(const struct ast_node *n,
-                                                     struct rir_ctx *ctx)
+static bool rir_process_identifier(const struct ast_node *n,
+                                   struct rir_ctx *ctx)
 {
     struct rir_expression *expr = strmap_get(&ctx->current_fn->id_map, ast_identifier_str(n));
     if (!expr) {
         RF_ERROR("An identifier was not found in the strmap during rir creation");
         return NULL;
     }
-    return expr;
+    RIRCTX_RETURN_EXPR(ctx, true, expr);
 }
 
-// TODO: Delete me. Just a placeholder
-struct rir_expression *rir_placeholder_expression(struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->type = RIR_EXPRESSION_PLACEHOLDER;
-    // add it to the block
-    rirctx_block_add(ctx, ret);
-    return ret;
-}
-
-struct rir_expression *rir_process_ast_node(const struct ast_node *n,
-                                            struct rir_ctx *ctx)
+bool rir_process_ast_node(const struct ast_node *n,
+                          struct rir_ctx *ctx)
 {
     switch (n->type) {
     case AST_IF_EXPRESSION:
@@ -155,13 +163,15 @@ struct rir_expression *rir_process_ast_node(const struct ast_node *n,
     case AST_IDENTIFIER:
         return rir_process_identifier(n, ctx);
     case AST_MATCH_EXPRESSION:
+        // TODO: implement properly
+    case AST_CONDITIONAL_BRANCH:
     case AST_MATCH_CASE:
-        //TODO: Implement properly, no placeholder
-        return rir_placeholder_expression(ctx);
+        // Do nothing in these cases
+        return true;
     default:
         RF_ASSERT(false, "Not yet implemented expression for RIR");
     }
-    return NULL;
+    return false;;
 }
 
 static bool rir_block_init(struct rir_block *b,
@@ -172,7 +182,6 @@ static bool rir_block_init(struct rir_block *b,
     RF_STRUCT_ZERO(b);
     rf_ilist_head_init(&b->expressions);
     struct ast_node *child;
-    struct rir_expression *expr;
     unsigned int i = 0;
     ctx->current_block = b;
     // for each expression of the block create a rir expression and add it to the block
@@ -180,7 +189,7 @@ static bool rir_block_init(struct rir_block *b,
         // TODO: pretty stupid way to resume search from a specific index.
         // Rethink this. Maybe linked list is not a good idea here?
         if (i >= index) {
-            if (!(expr = rir_process_ast_node(child, ctx))) {
+            if (!rir_process_ast_node(child, ctx)) {
                 return false;
             }
         }
