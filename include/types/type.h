@@ -124,10 +124,10 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
  */
 i_INLINE_DECL const struct rir_type *type_get_rir_or_die(const struct type *type)
 {
+    if (type->category == TYPE_CATEGORY_ELEMENTARY) {
+        return rir_type_get_elementary(type_elementary(type));
+    }
     if (!type->rir_type) {
-        if (type->category == TYPE_CATEGORY_ELEMENTARY) {
-            return rir_type_get_elementary(type_elementary(type));
-        }
         RF_ASSERT_OR_EXIT(false, "Requested rir_type is NULL.");
     }
     return type->rir_type;
