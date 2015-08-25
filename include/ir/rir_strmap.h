@@ -16,7 +16,6 @@ struct rirexpr_strmap {
     STRMAP_MEMBERS(struct rir_expression *);
 };
 
-
 /**
  * This returns false if we run out of memory (errno = ENOMEM), or
  * (more normally) if that string already appears in the map (EEXIST).

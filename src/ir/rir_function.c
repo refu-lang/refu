@@ -55,7 +55,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     }
 
     // finally create the body
-    ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, ctx);
+    ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, true, ctx);
     if (!ret->body) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
         return false;
@@ -98,8 +98,9 @@ void rir_fndecl_destroy(struct rir_fndecl *f)
 bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
 {
     bool ret = false;
-    static const struct RFstring close_paren = RF_STRING_STATIC_INIT(")");
+    static const struct RFstring close_paren = RF_STRING_STATIC_INIT(")\n{\n");
     static const struct RFstring sep = RF_STRING_STATIC_INIT("; ");
+    static const struct RFstring close_curly = RF_STRING_STATIC_INIT("}\n");
 
     RFS_PUSH();
     if (!rf_stringx_append(
@@ -130,7 +131,11 @@ bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (!rir_block_tostring(r, f->body)) {
+    if (!rir_block_tostring(r, f->body, 0)) {
+        goto end;
+    }
+
+    if (!rf_stringx_append(r->buff, &close_curly)) {
         goto end;
     }
     // success

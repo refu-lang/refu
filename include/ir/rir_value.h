@@ -11,6 +11,7 @@ struct rir_expression;
 enum rir_valtype {
     RIR_VALUE_CONSTANT,
     RIR_VALUE_VARIABLE,
+    RIR_VALUE_LABEL,
     RIR_VALUE_NIL
 };
 

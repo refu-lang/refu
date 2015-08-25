@@ -11,7 +11,8 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expre
 {
     bool ret = true;
     v->type = type;
-    if (v->type == RIR_VALUE_CONSTANT) {
+    switch (v->type) {
+    case RIR_VALUE_CONSTANT:
         v->constant = e->constant;
         switch (v->constant.type) {
         case CONSTANT_NUMBER_INTEGER:
@@ -24,13 +25,21 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expre
             ret = rf_string_initv(&v->id, "%s", e->constant.value.boolean ? "true" : "false");
             break;
         }
-        return ret;
-    } else if (v->type == RIR_VALUE_VARIABLE) {
+        break;
+    case RIR_VALUE_VARIABLE:
+    case RIR_VALUE_LABEL:
         v->expr = e;
-        if (!rf_string_initv(&v->id, "$%d", ctx->current_fn->symbols_num++)) {
+        if (!rf_string_initv(
+                &v->id,
+                v->type == RIR_VALUE_LABEL ? "%%label_$%d" : "$%d",
+                ctx->current_fn->symbols_num++)) {
             return false;
         }
         ret = rir_strmap_add_from_id(ctx, &v->id, e);
+        break;
+    default:
+        RF_ASSERT(false, "Should not get here");
+        break;
     }
     return ret;
 }
@@ -62,6 +71,7 @@ bool rir_value_tostring(struct rir *r, const struct rir_value *v)
     switch (v->type) {
     case RIR_VALUE_CONSTANT:
     case RIR_VALUE_VARIABLE:
+    case RIR_VALUE_LABEL:
         if (!rf_stringx_append(r->buff, &v->id)) {
             return false;
         }
@@ -77,6 +87,7 @@ const struct RFstring *rir_value_string(const struct rir_value *v)
     switch (v->type) {
     case RIR_VALUE_CONSTANT:
     case RIR_VALUE_VARIABLE:
+    case RIR_VALUE_LABEL:
         return &v->id;
     case RIR_VALUE_NIL:
         break;

@@ -9,7 +9,6 @@
 
 struct ast_node;
 struct rir_ctx;
-struct rir_object;
 struct rir;
 
 enum rir_block_exit_type {
@@ -33,12 +32,15 @@ bool rir_block_exit_return_init(struct rir_block_exit *exit,
 
 struct rir_block {
     struct rir_block_exit exit;
+    //! The block's label. If NULL, then it's first block of a function
+    struct rir_expression *label;
     //! List of rir expressions
     struct RFilist_head expressions;
 };
 
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    unsigned int index,
+                                   bool function_beginning,
                                    struct rir_ctx *ctx);
 
 /**
@@ -49,5 +51,5 @@ void rir_block_destroy(struct rir_block* b);
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
 
-bool rir_block_tostring(struct rir *r, const struct rir_block *b);
+bool rir_block_tostring(struct rir *r, const struct rir_block *b, unsigned index);
 #endif

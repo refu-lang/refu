@@ -18,6 +18,11 @@ bool rir_expression_init(struct rir_expression *expr,
             return false;
         }
         break;
+    case RIR_EXPRESSION_LABEL:
+        if (!rir_value_init(&expr->val, RIR_VALUE_LABEL, expr, ctx)) {
+            return false;
+        }
+        break;
     default:
         if (!rir_value_init(&expr->val, RIR_VALUE_VARIABLE, expr, ctx)) {
             return false;
@@ -80,6 +85,19 @@ bool rir_return_init(struct rir_expression *ret,
     return true;
 }
 
+struct rir_expression *rir_label_create(const struct rir_block *b, unsigned index, struct rir_ctx *ctx)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    if (!rir_expression_init(ret, RIR_EXPRESSION_LABEL, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    ret->label.block = b;
+    ret->label.index = index;
+    return ret;
+}
+
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx)
 {
     struct rir_expression *ret;
@@ -123,6 +141,12 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
     bool ret = false;
     RFS_PUSH();
     switch(e->type) {
+    case RIR_EXPRESSION_LABEL:
+        if (!rf_stringx_append(r->buff, RFS(RF_STR_PF_FMT":\n",
+                                            RF_STR_PF_ARG(rir_value_string(&e->val))))) {
+            goto end;
+        }
+        break;
     case RIR_EXPRESSION_FNCALL:
         if (!rf_stringx_append(r->buff, RFS("fncall"))) {
             goto end;
@@ -162,6 +186,7 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
     case RIR_EXPRESSION_MUL:
     case RIR_EXPRESSION_DIV:
     case RIR_EXPRESSION_CMP:
+    case RIR_EXPRESSION_WRITE:
         if (!rir_binaryop_tostring(r, e)) {
             goto end;
         }
@@ -177,6 +202,7 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         }
         break;
     // PLACEHOLDER, should not make it into actual production
+    case RIR_EXPRESSION_READ:
     case RIR_EXPRESSION_PLACEHOLDER:
         if (!rf_stringx_append(r->buff, RFS("NOT_IMPLEMENTED\n"))) {
             goto end;

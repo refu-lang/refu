@@ -17,7 +17,7 @@
 
 /* -- functions for rir_block_exit -- */
 static inline bool rir_block_exit_init_branch(struct rir_block_exit *exit,
-                                              struct rir_block *branch_dst)
+                                              struct rir_expression *branch_dst)
 {
     exit->type = RIR_BLOCK_EXIT_BRANCH;
     return rir_branch_init(&exit->branch, branch_dst);
@@ -25,8 +25,8 @@ static inline bool rir_block_exit_init_branch(struct rir_block_exit *exit,
 
 static inline bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
                                                   struct rir_expression *cond,
-                                                  struct rir_block *taken,
-                                                  struct rir_block *fallthrough)
+                                                  struct rir_expression *taken,
+                                                  struct rir_expression *fallthrough)
 {
     exit->type = RIR_BLOCK_EXIT_CONDBRANCH;
     return rir_condbranch_init(&exit->condbranch, cond, taken, fallthrough);
@@ -64,7 +64,18 @@ static bool rir_blockexit_tostring(struct rir *r, const struct rir_block_exit *e
     case RIR_BLOCK_EXIT_BRANCH:
         return rir_branch_tostring(r, &exit->branch);
     case RIR_BLOCK_EXIT_CONDBRANCH:
-        return rir_condbranch_tostring(r, &exit->condbranch);
+        if (!rir_condbranch_tostring(r, &exit->condbranch)) {
+            goto end;
+        }
+        if (!rir_block_tostring(r, exit->condbranch.taken->label.block, exit->condbranch.taken->label.index)) {
+            goto end;
+        }
+        if (exit->condbranch.fallthrough) {
+                 if (!rir_block_tostring(r, exit->condbranch.fallthrough->label.block, exit->condbranch.fallthrough->label.index)) {
+                     goto end;
+                 }
+        }
+        break;
     case RIR_BLOCK_EXIT_RETURN:
         if (!rf_stringx_append(
                 r->buff,
@@ -73,7 +84,6 @@ static bool rir_blockexit_tostring(struct rir *r, const struct rir_block_exit *e
             )) {
             goto end;
         }
-        break;
         break;
     }
 
@@ -90,25 +100,24 @@ static bool rir_process_ifexpr(const struct ast_node *n,
                                unsigned int index,
                                struct rir_ctx *ctx)
 {
-    struct rir_block *current_block = ctx->current_block;
+    struct rir_block *old_block = ctx->current_block;
     if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
         goto fail;
     }
     struct rir_expression *cond = ctx->returned_expr;
-    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, ctx);
+    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, false, ctx);
     if (!taken) {
         goto fail;
     }
     // TODO: fallthrough
     /* struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n); */
     // at this point the basic block splits. We neeed a new basic block for the rest
-    struct rir_block *new_block = rir_block_create(n, index, ctx);
+    struct rir_block *new_block = rir_block_create(n, index, false, ctx);
     if (!new_block) {
         goto fail;
     }
-    //return to the block we were
-    ctx->current_block = current_block;
-    if (!rir_block_exit_init_condbranch(&ctx->current_block->exit, cond, taken, new_block)) {
+    //Connect the old block with the new
+    if (!rir_block_exit_init_condbranch(&old_block->exit, cond, taken->label, new_block->label)) {
         goto fail;
     }
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
@@ -212,33 +221,41 @@ bool rir_process_ast_node(const struct ast_node *n,
 static bool rir_block_init(struct rir_block *b,
                            const struct ast_node *n,
                            unsigned int index,
+                           bool function_beginning,
                            struct rir_ctx *ctx)
 {
     RF_STRUCT_ZERO(b);
     rf_ilist_head_init(&b->expressions);
+    ctx->current_block = b;
+    if (!function_beginning) {
+        b->label = rir_label_create(b, 0, ctx);
+        rirctx_block_add(ctx, b->label);
+    }
+
     struct ast_node *child;
     unsigned int i = 0;
-    ctx->current_block = b;
     // for each expression of the block create a rir expression and add it to the block
     rf_ilist_for_each(&n->children, child, lh) {
-        // TODO: pretty stupid way to resume search from a specific index.
+        // TODO: pretty stupid way to search from a specific index.
         // Rethink this. Maybe linked list is not a good idea here?
         if (i >= index) {
             if (!rir_process_ast_node(child, ctx)) {
                 return false;
             }
         }
+        ++i;
     }
     return true;
 }
 
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    unsigned int index,
+                                   bool function_beginning,
                                    struct rir_ctx *ctx)
 {
     struct rir_block *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_block_init(ret, n, index, ctx)) {
+    if (!rir_block_init(ret, n, index, function_beginning, ctx)) {
         free(ret);
         ret = NULL;
     }
@@ -261,26 +278,25 @@ void rir_block_destroy(struct rir_block* b)
     free(b);
 }
 
-bool rir_block_tostring(struct rir *r, const struct rir_block *b)
+bool rir_block_tostring(struct rir *r, const struct rir_block *b, unsigned index)
 {
-    static const struct RFstring open_curly = RF_STRING_STATIC_INIT("\n{\n");
-    static const struct RFstring close_curly = RF_STRING_STATIC_INIT("\n}\n");
     struct rir_expression *expr;
-    if (!rf_stringx_append(r->buff, &open_curly)) {
-        return false;
-    }
+
+    unsigned int i = 0;
     rf_ilist_for_each(&b->expressions, expr, ln) {
-        if (!rir_expression_tostring(r, expr)) {
-            return false;
+        // TODO: pretty stupid way to search from a specific index.
+        // Rethink this. Maybe linked list is not a good idea here?
+        if (i >= index) {
+            if (!rir_expression_tostring(r, expr)) {
+                return false;
+            }
         }
+        ++i;
     }
 
     if (!rir_blockexit_tostring(r, &b->exit)) {
         return false;
     }
 
-    if (!rf_stringx_append(r->buff, &close_curly)) {
-        return false;
-    }
     return true;
 }
