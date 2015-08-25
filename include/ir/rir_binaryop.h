@@ -13,4 +13,6 @@ struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
 
 bool rir_process_binaryop(const struct ast_binaryop *n,
                           struct rir_ctx *ctx);
+
+bool rir_binaryop_tostring(struct rir *r, const struct rir_expression *e);
 #endif

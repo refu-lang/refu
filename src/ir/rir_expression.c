@@ -1,6 +1,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
 #include <ir/rir_value.h>
+#include <ir/rir_binaryop.h>
 #include <ir/rir_argument.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
@@ -34,7 +35,10 @@ static void rir_expression_deinit(struct rir_expression *expr)
 void rir_expression_destroy(struct rir_expression *expr)
 {
     rir_expression_deinit(expr);
-    free(expr);
+    // return expresssions get initialized on the stack so no need to free
+    if (expr->type != RIR_EXPRESSION_RETURN) {
+        free(expr);
+    }
 }
 
 static inline bool rir_alloca_init(struct rir_alloca *obj,
@@ -65,12 +69,25 @@ static inline void rir_alloca_deinit(struct rir_expression *obj)
     return;// TODO
 }
 
+bool rir_return_init(struct rir_expression *ret,
+                     const struct rir_expression *val,
+                     struct rir_ctx *ctx)
+{
+    if (!rir_expression_init(ret, RIR_EXPRESSION_RETURN, ctx)) {
+        return false;
+    }
+    ret->ret.val = val;
+    return true;
+}
+
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx)
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_expression_init(ret, RIR_EXPRESSION_RETURN, ctx);
-    ret->ret.val = val;
+    if (!rir_return_init(ret, val, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
@@ -141,33 +158,11 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         }
         break;
     case RIR_EXPRESSION_ADD:
-        if (!rf_stringx_append(
-                r->buff,
-                RFS(RF_STR_PF_FMT" = add(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
-            )) {
-            goto end;
-        }
-        break;
     case RIR_EXPRESSION_SUB:
-        if (!rf_stringx_append(r->buff, RFS("sub"))) {
-            goto end;
-        }
-        break;
     case RIR_EXPRESSION_MUL:
-        if (!rf_stringx_append(r->buff, RFS("mul"))) {
-            goto end;
-        }
-        break;
     case RIR_EXPRESSION_DIV:
-        if (!rf_stringx_append(r->buff, RFS("div"))) {
-            goto end;
-        }
-        break;
     case RIR_EXPRESSION_CMP:
-        if (!rf_stringx_append(r->buff, RFS("cmp\n"))) {
+        if (!rir_binaryop_tostring(r, e)) {
             goto end;
         }
         break;
@@ -188,11 +183,6 @@ bool rir_expression_tostring(struct rir *r, const struct rir_expression *e)
         }
         break;
     }
-
-    /* if (!rf_stringx_append(r->buff, RFS("\n"))) { */
-    /*     goto end; */
-    /* } */
-    //success
     ret = true;
 end:
     RFS_POP();

@@ -4,6 +4,8 @@
 #include <RFintrusive_list.h>
 #include <ir/rir_branch.h>
 #include <ir/rir_strmap.h>
+#include <ir/rir_expression.h>
+
 
 struct ast_node;
 struct rir_ctx;
@@ -19,10 +21,15 @@ enum rir_block_exit_type {
 struct rir_block_exit {
     enum rir_block_exit_type type;
     union {
+        struct rir_expression retstmt;
         struct rir_branch branch;
         struct rir_condbranch condbranch;
     };
 };
+
+bool rir_block_exit_return_init(struct rir_block_exit *exit,
+                                const struct rir_expression *val,
+                                struct rir_ctx *ctx);
 
 struct rir_block {
     struct rir_block_exit exit;

@@ -1,6 +1,8 @@
 #include <ir/rir_branch.h>
 
 #include <Utils/memory.h>
+#include <String/rf_str_manipulationx.h>
+#include <ir/rir.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 
@@ -30,6 +32,14 @@ void rir_branch_destroy(struct rir_branch *b)
 {
     rir_branch_deinit(b);
     free(b);
+}
+
+bool rir_branch_tostring(struct rir *r, const struct rir_branch *b)
+{
+    RFS_PUSH();
+    bool ret = rf_stringx_append(r->buff, RFS("branch()\n"));
+    RFS_POP();
+    return ret;
 }
 
 bool rir_condbranch_init(struct rir_condbranch *b,
@@ -62,6 +72,7 @@ void rir_condbranch_deinit(struct rir_condbranch *b)
     rir_block_destroy(b->taken);
     rir_block_destroy(b->fallthrough);
 }
+
 void rir_condbranch_destroy(struct rir_condbranch *b)
 {
     rir_condbranch_deinit(b);
@@ -72,4 +83,12 @@ void rir_condbranch_set_fallthrough(struct rir_condbranch *b,
                                     struct rir_block *fallthrough)
 {
     b->fallthrough = fallthrough;
+}
+
+bool rir_condbranch_tostring(struct rir *r, const struct rir_condbranch *b)
+{
+    RFS_PUSH();
+    bool ret = rf_stringx_append(r->buff, RFS("condbranch()\n"));
+    RFS_POP();
+    return ret;
 }

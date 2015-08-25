@@ -72,3 +72,26 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
+
+static const struct RFstring rir_bop_type_strings[] = {
+    [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
+    [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),
+    [RIR_EXPRESSION_MUL] = RF_STRING_STATIC_INIT("mul"),
+    [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
+    [RIR_EXPRESSION_CMP] = RF_STRING_STATIC_INIT("cmp"),
+};
+
+bool rir_binaryop_tostring(struct rir *r, const struct rir_expression *e)
+{
+    if (!rf_stringx_append(
+                r->buff,
+                RFS(RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
+        )) {
+        return false;
+    }
+        return true;
+}

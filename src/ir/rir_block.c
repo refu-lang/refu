@@ -48,6 +48,42 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
     }
 }
 
+bool rir_block_exit_return_init(struct rir_block_exit *exit,
+                                const struct rir_expression *val,
+                                struct rir_ctx *ctx)
+{
+    exit->type = RIR_BLOCK_EXIT_RETURN;
+    return rir_return_init(&exit->retstmt, val, ctx);
+}
+
+static bool rir_blockexit_tostring(struct rir *r, const struct rir_block_exit *exit)
+{
+    bool ret = false;
+    RFS_PUSH();
+    switch (exit->type) {
+    case RIR_BLOCK_EXIT_BRANCH:
+        return rir_branch_tostring(r, &exit->branch);
+    case RIR_BLOCK_EXIT_CONDBRANCH:
+        return rir_condbranch_tostring(r, &exit->condbranch);
+    case RIR_BLOCK_EXIT_RETURN:
+        if (!rf_stringx_append(
+                r->buff,
+                RFS("return("RF_STR_PF_FMT")\n",
+                    RF_STR_PF_ARG(rir_value_string(&exit->retstmt.ret.val->val)))
+            )) {
+            goto end;
+        }
+        break;
+        break;
+    }
+
+    // success
+    ret = true;
+end:
+    RFS_POP();
+    return ret;
+}
+
 
 /* -- functions for rir_block -- */
 static bool rir_process_ifexpr(const struct ast_node *n,
@@ -116,16 +152,15 @@ static bool rir_process_return(const struct ast_node *n,
                                struct rir_ctx *ctx)
 {
     if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
-        return false;
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     struct rir_expression *ret_val = ctx->returned_expr;
-    struct rir_expression *ret_expr = rir_return_create(ret_val, ctx);
-    if (!ret_expr) {
-        return false;
+
+    // current block's exit should be the return
+    if (!rir_block_exit_return_init(&ctx->current_block->exit, ret_val, ctx)) {
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    // add it to the block
-    rirctx_block_add(ctx, ret_expr);
-    RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
+    RIRCTX_RETURN_EXPR(ctx, true, NULL);
 }
 
 static bool rir_process_constant(const struct ast_node *n,
@@ -238,6 +273,10 @@ bool rir_block_tostring(struct rir *r, const struct rir_block *b)
         if (!rir_expression_tostring(r, expr)) {
             return false;
         }
+    }
+
+    if (!rir_blockexit_tostring(r, &b->exit)) {
+        return false;
     }
 
     if (!rf_stringx_append(r->buff, &close_curly)) {
