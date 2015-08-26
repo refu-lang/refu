@@ -16,17 +16,17 @@
 #include <types/type.h>
 
 /* -- functions for rir_block_exit -- */
-static inline bool rir_block_exit_init_branch(struct rir_block_exit *exit,
-                                              struct rir_expression *branch_dst)
+bool rir_block_exit_init_branch(struct rir_block_exit *exit,
+                                struct rir_expression *branch_dst)
 {
     exit->type = RIR_BLOCK_EXIT_BRANCH;
     return rir_branch_init(&exit->branch, branch_dst);
 }
 
-static inline bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
-                                                  struct rir_expression *cond,
-                                                  struct rir_expression *taken,
-                                                  struct rir_expression *fallthrough)
+bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
+                                    struct rir_expression *cond,
+                                    struct rir_expression *taken,
+                                    struct rir_expression *fallthrough)
 {
     exit->type = RIR_BLOCK_EXIT_CONDBRANCH;
     return rir_condbranch_init(&exit->condbranch, cond, taken, fallthrough);
@@ -42,6 +42,7 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
         rir_condbranch_deinit(&exit->condbranch);
         break;
     case RIR_BLOCK_EXIT_RETURN:
+    case RIR_BLOCK_EXIT_INVALID:
         // TODO
         RF_ASSERT(false, "Not yet implemented");
         break;
@@ -56,35 +57,60 @@ bool rir_block_exit_return_init(struct rir_block_exit *exit,
     return rir_return_init(&exit->retstmt, val, ctx);
 }
 
-static bool rir_blockexit_tostring(struct rir *r, const struct rir_block_exit *exit)
+static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_block_exit *exit)
 {
     bool ret = false;
     RFS_PUSH();
     switch (exit->type) {
     case RIR_BLOCK_EXIT_BRANCH:
-        return rir_branch_tostring(r, &exit->branch);
+        if (exit->branch.dst) {
+            if (!rir_branch_tostring(ctx, &exit->branch)) {
+                goto end;
+            }
+            if (!rirtostr_ctx_block_visited(ctx, exit->branch.dst->label.block)) {
+                if (!rir_block_tostring(ctx, exit->branch.dst->label.block, exit->branch.dst->label.index)) {
+                    goto end;
+                }
+            }
+        } else {
+            rf_stringx_append_cstr(ctx->rir->buff, "branch(NODESTINATION-FIXME)\n");
+        }
+        break;
     case RIR_BLOCK_EXIT_CONDBRANCH:
-        if (!rir_condbranch_tostring(r, &exit->condbranch)) {
+        if (!rir_condbranch_tostring(ctx, &exit->condbranch)) {
             goto end;
         }
-        if (!rir_block_tostring(r, exit->condbranch.taken->label.block, exit->condbranch.taken->label.index)) {
-            goto end;
+        if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.taken->label.block)) {
+            if (!rir_block_tostring(ctx, exit->condbranch.taken->label.block, exit->condbranch.taken->label.index)) {
+                goto end;
+            }
         }
         if (exit->condbranch.fallthrough) {
-                 if (!rir_block_tostring(r, exit->condbranch.fallthrough->label.block, exit->condbranch.fallthrough->label.index)) {
-                     goto end;
-                 }
+            if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.fallthrough->label.block)) {
+                if (!rir_block_tostring(ctx, exit->condbranch.fallthrough->label.block, exit->condbranch.fallthrough->label.index)) {
+                    goto end;
+                }
+            }
         }
         break;
     case RIR_BLOCK_EXIT_RETURN:
-        if (!rf_stringx_append(
-                r->buff,
-                RFS("return("RF_STR_PF_FMT")\n",
-                    RF_STR_PF_ARG(rir_value_string(&exit->retstmt.ret.val->val)))
-            )) {
-            goto end;
+        if (exit->retstmt.ret.val) {
+            if (!rf_stringx_append(
+                    ctx->rir->buff,
+                    RFS("return("RF_STR_PF_FMT")\n",
+                        RF_STR_PF_ARG(rir_value_string(&exit->retstmt.ret.val->val)))
+                )) {
+                goto end;
+            }
+        } else {
+            if (!rf_stringx_append_cstr(ctx->rir->buff, "return()\n")) {
+                goto end;
+            }
         }
         break;
+    case RIR_BLOCK_EXIT_INVALID:
+        RF_ASSERT_OR_EXIT(false, "Should never happen");
+        goto end;
     }
 
     // success
@@ -119,6 +145,12 @@ static bool rir_process_ifexpr(const struct ast_node *n,
     //Connect the old block with the new
     if (!rir_block_exit_init_condbranch(&old_block->exit, cond, taken->label, new_block->label)) {
         goto fail;
+    }
+    // if the taken block's exit is not initialized connect it to the new one
+    if (!rir_block_exit_initialized(taken)) {
+        if (!rir_block_exit_init_branch(&taken->exit, new_block->label)) {
+            goto fail;
+        }
     }
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
 
@@ -160,15 +192,23 @@ fail:
 static bool rir_process_return(const struct ast_node *n,
                                struct rir_ctx *ctx)
 {
+    const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
     if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     struct rir_expression *ret_val = ctx->returned_expr;
-
-    // current block's exit should be the return
-    if (!rir_block_exit_return_init(&ctx->current_block->exit, ret_val, ctx)) {
+    // write the return value to the return slot
+    struct rir_expression *ret_slot = strmap_get(&ctx->current_fn->id_map, &returnval_str);
+    if (!ret_slot) {
+        RF_ERROR("Could not find the returnvalue of a function in the string map");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
+    rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, &ret_val->val, ctx);
+    // jump to the return
+    if (!rir_block_exit_init_branch(&ctx->current_block->exit, ctx->current_fn->end_label)) {
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
+    }
+
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
 }
 
@@ -215,7 +255,37 @@ bool rir_process_ast_node(const struct ast_node *n,
     default:
         RF_ASSERT(false, "Not yet implemented expression for RIR");
     }
-    return false;;
+    return false;
+}
+
+struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx)
+{
+    const struct RFstring fend_label = RF_STRING_STATIC_INIT("%function_end");
+    struct rir_block *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    RF_STRUCT_ZERO(ret);
+    ctx->current_block = ret;
+    rf_ilist_head_init(&ret->expressions);
+    if (!(ret->label = rir_label_string_create(ret, &fend_label, 0, ctx))) {
+        free (ret);
+        ret = NULL;
+    }
+    rirctx_block_add(ctx, ret->label);
+
+    // current block's exit should be the return
+    const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
+    struct rir_expression *ret_slot = NULL;
+    if (has_return) {
+        ret_slot = strmap_get(&ctx->current_fn->id_map, &returnval_str);
+        if (!ret_slot) {
+            RF_ERROR("Could not find the returnvalue of a function in the string map");
+            RIRCTX_RETURN_EXPR(ctx, false, NULL);
+        }
+    }
+    if (!rir_block_exit_return_init(&ret->exit, ret_slot, ctx)) {
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
+    }
+    return ret;
 }
 
 static bool rir_block_init(struct rir_block *b,
@@ -245,6 +315,7 @@ static bool rir_block_init(struct rir_block *b,
         }
         ++i;
     }
+
     return true;
 }
 
@@ -278,25 +349,27 @@ void rir_block_destroy(struct rir_block* b)
     free(b);
 }
 
-bool rir_block_tostring(struct rir *r, const struct rir_block *b, unsigned index)
+bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b, unsigned index)
 {
     struct rir_expression *expr;
-
+    rirtostr_ctx_visit_block(ctx, b);
     unsigned int i = 0;
     rf_ilist_for_each(&b->expressions, expr, ln) {
         // TODO: pretty stupid way to search from a specific index.
         // Rethink this. Maybe linked list is not a good idea here?
         if (i >= index) {
-            if (!rir_expression_tostring(r, expr)) {
+            if (!rir_expression_tostring(ctx, expr)) {
                 return false;
             }
         }
         ++i;
     }
 
-    if (!rir_blockexit_tostring(r, &b->exit)) {
+    if (!rir_blockexit_tostring(ctx, &b->exit)) {
         return false;
     }
 
     return true;
 }
+
+i_INLINE_INS bool rir_block_exit_initialized(const struct rir_block *b);

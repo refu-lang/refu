@@ -22,6 +22,8 @@ struct rir_fndecl {
     //! They will be destroyed at function destruction
     struct rirexpr_strmap map;
     struct rirexpr_strmap id_map;
+    //! Label pointing to the function's end
+    struct rir_expression *end_label;
     //! Determines the value of $n when generating variables for a function
     unsigned symbols_num;
     //! Control to be entered into the rir functions list.
@@ -31,6 +33,6 @@ struct rir_fndecl {
 struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *ctx);
 void rir_fndecl_destroy(struct rir_fndecl *f);
 
-bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f);
+bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f);
 
 #endif

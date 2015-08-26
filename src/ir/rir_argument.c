@@ -112,17 +112,17 @@ void rir_argument_destroy(struct rir_argument *a)
     free(a);
 }
 
-bool rir_argument_tostring(struct rir *r, const struct rir_argument *arg)
+bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg)
 {
     bool ret = true;
     if (arg->type.category == RIR_LTYPE_ELEMENTARY) {
         ret = rf_stringx_append(
-            r->buff,
+            ctx->rir->buff,
             RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
                 RF_STR_PF_ARG(arg->name),
                 RF_STR_PF_ARG(type_elementary_get_str(arg->type.etype))));
     } else {
-        rf_stringx_append(r->buff, arg->type.tdef->name);
+        rf_stringx_append(ctx->rir->buff, arg->type.tdef->name);
     }
 
 
@@ -158,17 +158,17 @@ bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr)
     return true;
 }
 
-bool rir_argsarr_tostring(struct rir *r, const struct args_arr *arr)
+bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr)
 {
     size_t i = 0;
     size_t args_num = darray_size(*arr);
     const struct rir_argument **arg;
     darray_foreach(arg, *arr) {
-        if (!rir_argument_tostring(r, *arg)) {
+        if (!rir_argument_tostring(ctx, *arg)) {
             return false;
         }
         if (++i != args_num) {
-            if (!rf_stringx_append_cstr(r->buff, ", ")) {
+            if (!rf_stringx_append_cstr(ctx->rir->buff, ", ")) {
                 return false;
             }
         }

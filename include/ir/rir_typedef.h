@@ -19,6 +19,6 @@ struct rir_typedef {
 struct rir_typedef *rir_typedef_create(struct rir_type *t);
 void rir_typedef_destroy(struct rir_typedef *t);
 
-bool rir_typedef_tostring(struct rir *r, struct rir_typedef *t);
+bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);
 
 #endif

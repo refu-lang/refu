@@ -9,6 +9,7 @@
 struct ast_node;
 struct rir;
 struct rir_ctx;
+struct rirtostr_ctx;
 struct rir_ltype;
 
 enum rir_expression_type {
@@ -67,6 +68,7 @@ bool rir_return_init(struct rir_expression *ret,
                      struct rir_ctx *ctx);
 struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx);
 struct rir_expression *rir_label_create(const struct rir_block *b, unsigned index, struct rir_ctx *ctx);
+struct rir_expression *rir_label_string_create(const struct rir_block *b, const struct RFstring *str, unsigned index, struct rir_ctx *ctx);
 
 struct rir_expression {
     enum rir_expression_type type;
@@ -88,5 +90,5 @@ bool rir_expression_init(struct rir_expression *expr,
                          enum rir_expression_type type,
                          struct rir_ctx *ctx);
 void rir_expression_destroy(struct rir_expression *expr);
-bool rir_expression_tostring(struct rir *r, const struct rir_expression *e);
+bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
 #endif

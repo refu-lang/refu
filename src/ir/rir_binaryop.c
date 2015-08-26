@@ -91,10 +91,10 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
 };
 
-bool rir_binaryop_tostring(struct rir *r, const struct rir_expression *e)
+bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
     if (!rf_stringx_append(
-                r->buff,
+                ctx->rir->buff,
                 RFS(RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),

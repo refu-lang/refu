@@ -35,18 +35,18 @@ void rir_branch_destroy(struct rir_branch *b)
     free(b);
 }
 
-bool rir_branch_tostring(struct rir *r, const struct rir_branch *b)
+bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
 {
     bool ret;
     // TODO: remove me: This is temporary due to unimplemented match case generating empty labels
     if (!b->dst) {
-        rf_stringx_append_cstr(r->buff, "branch(EMPTY_LABEL_FIX_ME)\n");
+        rf_stringx_append_cstr(ctx->rir->buff, "branch(EMPTY_LABEL_FIX_ME)\n");
         return true;
     }
 
     RFS_PUSH();
     ret = rf_stringx_append(
-        r->buff,
+        ctx->rir->buff,
         RFS("branch("RF_STR_PF_FMT")\n",
             RF_STR_PF_ARG(rir_value_string(&b->dst->val))
         ));
@@ -95,11 +95,11 @@ void rir_condbranch_set_fallthrough(struct rir_condbranch *b,
     b->fallthrough = fallthrough;
 }
 
-bool rir_condbranch_tostring(struct rir *r, const struct rir_condbranch *b)
+bool rir_condbranch_tostring(struct rirtostr_ctx *ctx, const struct rir_condbranch *b)
 {
     RFS_PUSH();
     bool ret = rf_stringx_append(
-        r->buff,
+        ctx->rir->buff,
         RFS("condbranch("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
             RF_STR_PF_ARG(rir_value_string(&b->cond->val)),
             RF_STR_PF_ARG(rir_value_string(&b->taken->val)),

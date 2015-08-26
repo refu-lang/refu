@@ -12,6 +12,7 @@ struct rir_ctx;
 struct rir;
 
 enum rir_block_exit_type {
+    RIR_BLOCK_EXIT_INVALID = 0,
     RIR_BLOCK_EXIT_BRANCH,
     RIR_BLOCK_EXIT_CONDBRANCH,
     RIR_BLOCK_EXIT_RETURN,
@@ -26,6 +27,12 @@ struct rir_block_exit {
     };
 };
 
+bool rir_block_exit_init_branch(struct rir_block_exit *exit,
+                                struct rir_expression *branch_dst);
+bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
+                                    struct rir_expression *cond,
+                                    struct rir_expression *taken,
+                                    struct rir_expression *fallthrough);
 bool rir_block_exit_return_init(struct rir_block_exit *exit,
                                 const struct rir_expression *val,
                                 struct rir_ctx *ctx);
@@ -42,6 +49,7 @@ struct rir_block *rir_block_create(const struct ast_node *n,
                                    unsigned int index,
                                    bool function_beginning,
                                    struct rir_ctx *ctx);
+struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);
 
 /**
  * Destroy this block and all blocks this connects to
@@ -51,5 +59,10 @@ void rir_block_destroy(struct rir_block* b);
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
 
-bool rir_block_tostring(struct rir *r, const struct rir_block *b, unsigned index);
+bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b, unsigned index);
+
+i_INLINE_DECL bool rir_block_exit_initialized(const struct rir_block *b)
+{
+    return b->exit.type != RIR_BLOCK_EXIT_INVALID;
+}
 #endif

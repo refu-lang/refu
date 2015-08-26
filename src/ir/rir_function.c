@@ -54,12 +54,43 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         }
     }
 
+    // if we got a return value allocate space for it
+    if (returns) {
+        const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
+        struct rir_expression *alloca = rir_alloca_create(
+            rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT)),
+            1,
+            ctx
+        );
+        if (!alloca) {
+            return false;
+        }
+        if (!strmap_add(&ctx->current_fn->id_map, &returnval_str, alloca)) {
+            return false;
+        }
+    }
+
+    struct rir_block *end_block;
+    if (!(end_block = rir_block_functionend_create(returns ? true : false, ctx))) {
+        RF_ERROR("Failed to create a RIR function's end block");
+        return false;
+    }
+    ret->end_label = end_block->label;
+
     // finally create the body
     ret->body = rir_block_create(ast_fnimpl_body_get(n), 0, true, ctx);
     if (!ret->body) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
         return false;
     }
+
+    // if first block of the function does not have an exit, connect it to the end
+    if (!rir_block_exit_initialized(ret->body)) {
+        if (!rir_block_exit_init_branch(&ret->body->exit, ret->end_label)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -95,47 +126,50 @@ void rir_fndecl_destroy(struct rir_fndecl *f)
     free(f);
 }
 
-bool rir_fndecl_tostring(struct rir *r, const struct rir_fndecl *f)
+bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
 {
     bool ret = false;
     static const struct RFstring close_paren = RF_STRING_STATIC_INIT(")\n{\n");
     static const struct RFstring sep = RF_STRING_STATIC_INIT("; ");
     static const struct RFstring close_curly = RF_STRING_STATIC_INIT("}\n");
 
+    // for every function reset the tostring context
+    rirtostr_ctx_reset(ctx);
+
     RFS_PUSH();
     if (!rf_stringx_append(
-            r->buff,
+            ctx->rir->buff,
             RFS("fndef("RF_STR_PF_FMT RF_STR_PF_FMT,
                 RF_STR_PF_ARG(f->name), RF_STR_PF_ARG(&sep)))) {
         goto end;
     }
 
-    if (!rir_argsarr_tostring(r, &f->arguments_list)) {
+    if (!rir_argsarr_tostring(ctx, &f->arguments_list)) {
         return false;
     }
 
-    if (!rf_stringx_append(r->buff, &sep)) {
+    if (!rf_stringx_append(ctx->rir->buff, &sep)) {
         goto end;
     }
 
     if (f->returns) {
         if (!rf_stringx_append(
-            r->buff,
+            ctx->rir->buff,
             rir_type_str_or_die(f->returns)
             )){
             goto end;
         }
     }
 
-    if (!rf_stringx_append(r->buff, &close_paren)) {
+    if (!rf_stringx_append(ctx->rir->buff, &close_paren)) {
         goto end;
     }
 
-    if (!rir_block_tostring(r, f->body, 0)) {
+    if (!rir_block_tostring(ctx, f->body, 0)) {
         goto end;
     }
 
-    if (!rf_stringx_append(r->buff, &close_curly)) {
+    if (!rf_stringx_append(ctx->rir->buff, &close_curly)) {
         goto end;
     }
     // success

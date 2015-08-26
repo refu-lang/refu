@@ -2,6 +2,7 @@
 #define LFR_IR_RIR
 
 #include <RFintrusive_list.h>
+#include <Data_Structures/darray.h>
 
 struct module;
 struct compiler;
@@ -31,6 +32,7 @@ bool rir_print(struct compiler *c);
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
 struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name);
 
+
 struct rir_ctx {
     struct rir *rir;
     struct rir_fndecl *current_fn;
@@ -46,4 +48,14 @@ struct rir_ctx {
     } while (0)
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr);
+
+
+struct rirtostr_ctx {
+    struct rir *rir;
+    struct {darray(const struct rir_block*);} visited_blocks;
+};
+void rirtostr_ctx_init(struct rirtostr_ctx *ctx, struct rir *r);
+void rirtostr_ctx_reset(struct rirtostr_ctx *ctx);
+void rirtostr_ctx_visit_block(struct rirtostr_ctx *ctx, const struct rir_block *b);
+bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block *b);
 #endif

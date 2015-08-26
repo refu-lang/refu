@@ -119,6 +119,38 @@ bool rir_process(struct compiler *c)
     return true;
 }
 
+void rirtostr_ctx_reset(struct rirtostr_ctx *ctx)
+{
+    darray_clear(ctx->visited_blocks);
+    darray_init(ctx->visited_blocks);
+}
+
+static inline void rirtostr_ctx_deinit(struct rirtostr_ctx *ctx)
+{
+    darray_clear(ctx->visited_blocks);
+}
+
+void rirtostr_ctx_init(struct rirtostr_ctx *ctx, struct rir *r)
+{
+    ctx->rir = r;
+    darray_init(ctx->visited_blocks);
+}
+
+void rirtostr_ctx_visit_block(struct rirtostr_ctx *ctx, const struct rir_block *b)
+{
+    darray_append(ctx->visited_blocks, b);
+}
+
+bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block *b)
+{
+    const struct rir_block **block;
+    darray_foreach(block, ctx->visited_blocks) {
+        if (*block == b) {
+            return true;
+        }
+    }
+    return false;
+}
 
 struct RFstring *rir_tostring(struct rir *r)
 {
@@ -132,24 +164,29 @@ struct RFstring *rir_tostring(struct rir *r)
         return NULL;
     }
 
+    struct rirtostr_ctx ctx;
+    rirtostr_ctx_init(&ctx, r);
     struct rir_typedef *def;
     rf_ilist_for_each(&r->typedefs, def, ln) {
-        if (!rir_typedef_tostring(r, def)) {
+        if (!rir_typedef_tostring(&ctx, def)) {
             RF_ERROR("Failed to turn a rir typedef to a string");
-            return NULL;
+            goto fail_free_ctx;
         }
     }
 
     struct rir_fndecl *fn;
     rf_ilist_for_each(&r->functions, fn, ln) {
-        if (!rir_fndecl_tostring(r, fn)) {
+        if (!rir_fndecl_tostring(&ctx, fn)) {
             RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
                      RF_STR_PF_ARG(fn->name));
-            return NULL;
+            goto fail_free_ctx;
         }
     }
-
     return RF_STRX2STR(r->buff);
+
+fail_free_ctx:
+    rirtostr_ctx_deinit(&ctx);
+    return NULL;
 }
 
 bool rir_print(struct compiler *c)
