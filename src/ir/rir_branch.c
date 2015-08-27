@@ -47,7 +47,7 @@ bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
     RFS_PUSH();
     ret = rf_stringx_append(
         ctx->rir->buff,
-        RFS("branch("RF_STR_PF_FMT")\n",
+        RFS(RITOSTR_INDENT"branch("RF_STR_PF_FMT")\n",
             RF_STR_PF_ARG(rir_value_string(&b->dst->val))
         ));
     RFS_POP();
@@ -100,7 +100,7 @@ bool rir_condbranch_tostring(struct rirtostr_ctx *ctx, const struct rir_condbran
     RFS_PUSH();
     bool ret = rf_stringx_append(
         ctx->rir->buff,
-        RFS("condbranch("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
+        RFS(RITOSTR_INDENT"condbranch("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
             RF_STR_PF_ARG(rir_value_string(&b->cond->val)),
             RF_STR_PF_ARG(rir_value_string(&b->taken->val)),
             RF_STR_PF_ARG(rir_value_string(&b->fallthrough->val))

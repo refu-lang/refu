@@ -37,9 +37,15 @@ struct rir_ctx {
     struct rir *rir;
     struct rir_fndecl *current_fn;
     struct rir_block *current_block;
+    //! Used as the return value, if existing, of all process_XX() functions
     struct rir_expression *returned_expr;
+    //! Used to enumerate numeric value to go to all expressions that need it. Is reset for each function.
     unsigned expression_idx;
+    //! Used to enumerate numeric value for all labels. Is reset for each function.
+    unsigned label_idx;
 };
+
+void rir_ctx_reset(struct rir_ctx *ctx);
 
 #define RIRCTX_RETURN_EXPR(i_ctx_, i_result_, i_expression_)    \
     do {                                                        \
@@ -58,4 +64,7 @@ void rirtostr_ctx_init(struct rirtostr_ctx *ctx, struct rir *r);
 void rirtostr_ctx_reset(struct rirtostr_ctx *ctx);
 void rirtostr_ctx_visit_block(struct rirtostr_ctx *ctx, const struct rir_block *b);
 bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block *b);
+
+//! Represents one indentation level in the resulting string representation
+#define RITOSTR_INDENT "    "
 #endif

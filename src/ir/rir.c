@@ -19,6 +19,12 @@ static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r)
     ctx->rir = r;
 }
 
+void rir_ctx_reset(struct rir_ctx *ctx)
+{
+    ctx->expression_idx = 0;
+    ctx->label_idx = 0;
+}
+
 static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);

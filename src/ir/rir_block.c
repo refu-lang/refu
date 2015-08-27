@@ -97,13 +97,13 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         if (exit->retstmt.ret.val) {
             if (!rf_stringx_append(
                     ctx->rir->buff,
-                    RFS("return("RF_STR_PF_FMT")\n",
+                    RFS(RITOSTR_INDENT"return("RF_STR_PF_FMT")\n",
                         RF_STR_PF_ARG(rir_value_string(&exit->retstmt.ret.val->val)))
                 )) {
                 goto end;
             }
         } else {
-            if (!rf_stringx_append_cstr(ctx->rir->buff, "return()\n")) {
+            if (!rf_stringx_append_cstr(ctx->rir->buff, RITOSTR_INDENT"return()\n")) {
                 goto end;
             }
         }
@@ -203,7 +203,8 @@ static bool rir_process_return(const struct ast_node *n,
         RF_ERROR("Could not find the returnvalue of a function in the string map");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, &ret_val->val, ctx);
+    struct rir_expression *e = rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, &ret_val->val, ctx);
+    rirctx_block_add(ctx, e);
     // jump to the return
     if (!rir_block_exit_init_branch(&ctx->current_block->exit, ctx->current_fn->end_label)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);

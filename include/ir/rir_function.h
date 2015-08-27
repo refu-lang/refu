@@ -24,8 +24,6 @@ struct rir_fndecl {
     struct rirexpr_strmap id_map;
     //! Label pointing to the function's end
     struct rir_expression *end_label;
-    //! Determines the value of $n when generating variables for a function
-    unsigned symbols_num;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };

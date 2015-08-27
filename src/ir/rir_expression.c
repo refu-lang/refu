@@ -24,6 +24,12 @@ bool rir_expression_init(struct rir_expression *expr,
             return false;
         }
         break;
+    case RIR_EXPRESSION_WRITE:
+    case RIR_EXPRESSION_RETURN:
+        if (!rir_value_init(&expr->val, RIR_VALUE_NIL, expr, ctx)) {
+            return false;
+        }
+        break;
     default:
         if (!rir_value_init(&expr->val, RIR_VALUE_VARIABLE, expr, ctx)) {
             return false;
@@ -181,7 +187,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_ALLOCA:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
+                RFS(RITOSTR_INDENT RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(rir_ltype_string(e->alloca.type)))
             )) {
@@ -190,15 +196,6 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
         break;
     case RIR_EXPRESSION_CONSTRUCT:
         if (!rf_stringx_append(ctx->rir->buff, RFS("construct"))) {
-            goto end;
-        }
-        break;
-    case RIR_EXPRESSION_RETURN:
-        if (!rf_stringx_append(
-                ctx->rir->buff,
-                RFS("return("RF_STR_PF_FMT")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->ret.val->val)))
-            )) {
             goto end;
         }
         break;
@@ -217,17 +214,10 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
-    case RIR_EXPRESSION_LOGIC_AND:
-        if (!rf_stringx_append(ctx->rir->buff, RFS("logic_and"))) {
-            goto end;
-        }
-        break;
-    case RIR_EXPRESSION_LOGIC_OR:
-        if (!rf_stringx_append(ctx->rir->buff, RFS("logic_or"))) {
-            goto end;
-        }
-        break;
     // PLACEHOLDER, should not make it into actual production
+    case RIR_EXPRESSION_LOGIC_AND:
+    case RIR_EXPRESSION_LOGIC_OR:
+    case RIR_EXPRESSION_RETURN:
     case RIR_EXPRESSION_READ:
     case RIR_EXPRESSION_PLACEHOLDER:
         if (!rf_stringx_append(ctx->rir->buff, RFS("NOT_IMPLEMENTED\n"))) {

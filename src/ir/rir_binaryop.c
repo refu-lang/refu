@@ -93,15 +93,28 @@ static const struct RFstring rir_bop_type_strings[] = {
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
-    if (!rf_stringx_append(
+    if (e->val.type == RIR_VALUE_NIL) {
+        if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                RFS(RITOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
+            )) {
+            return false;
+        }
+    } else {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RITOSTR_INDENT RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
-        )) {
-        return false;
+            )) {
+            return false;
+        }
     }
-        return true;
+
+    return true;
 }

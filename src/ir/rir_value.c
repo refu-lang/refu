@@ -27,15 +27,21 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expre
         }
         break;
     case RIR_VALUE_VARIABLE:
-    case RIR_VALUE_LABEL:
         v->expr = e;
-        if (!rf_string_initv(
-                &v->id,
-                v->type == RIR_VALUE_LABEL ? "%%label_$%d" : "$%d",
-                ctx->current_fn->symbols_num++)) {
+        if (!rf_string_initv(&v->id, "$%d", ctx->expression_idx++)) {
             return false;
         }
         ret = rir_strmap_add_from_id(ctx, &v->id, e);
+        break;
+    case RIR_VALUE_LABEL:
+        v->expr = e;
+        if (!rf_string_initv(&v->id, "%%label_$%d", ctx->label_idx++)) {
+            return false;
+        }
+        ret = rir_strmap_add_from_id(ctx, &v->id, e);
+        break;
+    case RIR_VALUE_NIL:
+        // nothing to init for nil value
         break;
     default:
         RF_ASSERT(false, "Should not get here");
