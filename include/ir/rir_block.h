@@ -46,7 +46,6 @@ struct rir_block {
 };
 
 struct rir_block *rir_block_create(const struct ast_node *n,
-                                   unsigned int index,
                                    bool function_beginning,
                                    struct rir_ctx *ctx);
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);

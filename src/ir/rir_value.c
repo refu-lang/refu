@@ -35,7 +35,7 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expre
         break;
     case RIR_VALUE_LABEL:
         v->expr = e;
-        if (!rf_string_initv(&v->id, "%%label_$%d", ctx->label_idx++)) {
+        if (!rf_string_initv(&v->id, "%%label_%d", ctx->label_idx++)) {
             return false;
         }
         ret = rir_strmap_add_from_id(ctx, &v->id, e);

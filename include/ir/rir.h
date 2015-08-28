@@ -9,6 +9,7 @@ struct compiler;
 struct rir_types_list;
 struct rir_expression;
 struct RFstringx;
+struct ast_node;
 
 struct rir {
     //! A list of all rir types of the file
@@ -37,6 +38,8 @@ struct rir_ctx {
     struct rir *rir;
     struct rir_fndecl *current_fn;
     struct rir_block *current_block;
+    struct rir_block *next_block;
+    const struct ast_node *current_ast_block;
     //! Used as the return value, if existing, of all process_XX() functions
     struct rir_expression *returned_expr;
     //! Used to enumerate numeric value to go to all expressions that need it. Is reset for each function.

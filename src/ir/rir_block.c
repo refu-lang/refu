@@ -122,37 +122,78 @@ end:
 
 
 /* -- functions for rir_block -- */
-static bool rir_process_ifexpr(const struct ast_node *n,
-                               unsigned int index,
-                               struct rir_ctx *ctx)
+static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct rir_ctx *ctx)
 {
     struct rir_block *old_block = ctx->current_block;
+
+    if (is_elif) {
+        if (!(old_block = rir_block_create(NULL, false, ctx))) {
+            goto fail;
+        }
+    } else {
+        RF_ASSERT(!ctx->next_block, "next block should be empty here");
+        if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
+            goto fail;
+        }
+        ctx->current_block = old_block;
+    }
+
     if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
         goto fail;
     }
     struct rir_expression *cond = ctx->returned_expr;
-    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), 0, false, ctx);
+    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), false, ctx);
     if (!taken) {
         goto fail;
     }
-    // TODO: fallthrough
-    /* struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n); */
-    // at this point the basic block splits. We neeed a new basic block for the rest
-    struct rir_block *new_block = rir_block_create(n, index, false, ctx);
-    if (!new_block) {
-        goto fail;
+
+    struct rir_block *else_block = NULL;
+    struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
+    if (fallthrough_branch) {
+        if (fallthrough_branch->type == AST_IF_EXPRESSION) {
+            if (!rir_process_ifexpr(fallthrough_branch, true, ctx)) {
+                goto fail;
+            }
+        } else {
+            // should be a block
+            else_block = rir_block_create(fallthrough_branch, false, ctx);
+        }
     }
+
+    const struct rir_block *new_block;
+    if (fallthrough_branch) {
+        new_block = fallthrough_branch->type == AST_IF_EXPRESSION
+            ? ctx->returned_expr->label.block
+            : else_block;
+    } else {
+        new_block = ctx->next_block;
+    }
+
     //Connect the old block with the new
     if (!rir_block_exit_init_condbranch(&old_block->exit, cond, taken->label, new_block->label)) {
         goto fail;
     }
-    // if the taken block's exit is not initialized connect it to the new one
+    // if the taken block's exit is not initialized connect it to the after_if block
     if (!rir_block_exit_initialized(taken)) {
-        if (!rir_block_exit_init_branch(&taken->exit, new_block->label)) {
+        if (!rir_block_exit_init_branch(&taken->exit, ctx->next_block->label)) {
             goto fail;
         }
     }
-    RIRCTX_RETURN_EXPR(ctx, true, NULL);
+    // if there was an else block connect it with the after_if block
+    if (else_block) {
+        if (!rir_block_exit_initialized(else_block)) {
+            if (!rir_block_exit_init_branch(&else_block->exit, ctx->next_block->label)) {
+                goto fail;
+            }
+        }
+    }
+    if (!is_elif) {
+        ctx->current_block = ctx->next_block;
+        ctx->next_block = NULL;
+        RIRCTX_RETURN_EXPR(ctx, true, taken->label);
+    } else {
+        RIRCTX_RETURN_EXPR(ctx, true, old_block->label);
+    }
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -236,7 +277,7 @@ bool rir_process_ast_node(const struct ast_node *n,
 {
     switch (n->type) {
     case AST_IF_EXPRESSION:
-        return rir_process_ifexpr(n, /* TODO */0, ctx);
+        return rir_process_ifexpr(n, false, ctx);
     case AST_VARIABLE_DECLARATION:
         return rir_process_vardecl(n, ctx);
     case AST_BINARY_OPERATOR:
@@ -291,7 +332,6 @@ struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *
 
 static bool rir_block_init(struct rir_block *b,
                            const struct ast_node *n,
-                           unsigned int index,
                            bool function_beginning,
                            struct rir_ctx *ctx)
 {
@@ -304,30 +344,30 @@ static bool rir_block_init(struct rir_block *b,
     }
 
     struct ast_node *child;
-    unsigned int i = 0;
-    // for each expression of the block create a rir expression and add it to the block
-    rf_ilist_for_each(&n->children, child, lh) {
-        // TODO: pretty stupid way to search from a specific index.
-        // Rethink this. Maybe linked list is not a good idea here?
-        if (i >= index) {
+    if (n) {
+        // TODO: for now let's accept match expressions here too, but the body should be created
+        // in quite a different way for match expressions so it would probably become its own function
+        RF_ASSERT(n->type == AST_BLOCK || n->type == AST_MATCH_EXPRESSION,
+                  "rir_block_init() called with invalid ast node type");
+        ctx->current_ast_block = n;
+        // for each expression of the block create a rir expression and add it to the block
+        rf_ilist_for_each(&n->children, child, lh) {
             if (!rir_process_ast_node(child, ctx)) {
                 return false;
             }
         }
-        ++i;
     }
 
     return true;
 }
 
 struct rir_block *rir_block_create(const struct ast_node *n,
-                                   unsigned int index,
                                    bool function_beginning,
                                    struct rir_ctx *ctx)
 {
     struct rir_block *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_block_init(ret, n, index, function_beginning, ctx)) {
+    if (!rir_block_init(ret, n, function_beginning, ctx)) {
         free(ret);
         ret = NULL;
     }
