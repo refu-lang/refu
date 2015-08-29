@@ -45,6 +45,18 @@ struct rir_block {
     struct RFilist_head expressions;
 };
 
+/**
+ * Create a new rir basic block
+ *
+ * @param n               If given the basic block will start being populated
+ *                        with expressions taken out of this ast block. If not,
+ *                        a new empty basic block will be created. Additionally
+ *                        if this is given then the basic block will be added
+ *                        to the function's basic blocks. If not it's left up
+ *                        to the caller to add it himself.
+ * @param function_start  If true, then this is the first block of a function
+ * @param ctx             The rir ctx for traversal
+ */
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    bool function_beginning,
                                    struct rir_ctx *ctx);

@@ -18,6 +18,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     rir_ctx_reset(ctx);
     ctx->current_fn = ret;
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
+    darray_init(ret->blocks);
     strmap_init(&ret->map);
     strmap_init(&ret->id_map);
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
@@ -71,6 +72,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         }
     }
 
+    // create the end block
     struct rir_block *end_block;
     if (!(end_block = rir_block_functionend_create(returns ? true : false, ctx))) {
         RF_ERROR("Failed to create a RIR function's end block");
@@ -91,6 +93,9 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
             return false;
         }
     }
+
+    // add the function_end block as last in the block
+    rir_fndecl_add_block(ret, end_block);
 
     return true;
 }
@@ -119,12 +124,18 @@ static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
     strmap_iterate(&f->map, free_map_member, NULL);
     strmap_clear(&f->map);
+    darray_clear(f->blocks);
 }
 
 void rir_fndecl_destroy(struct rir_fndecl *f)
 {
     rir_fndecl_deinit(f);
     free(f);
+}
+
+void rir_fndecl_add_block(struct rir_fndecl *f, struct rir_block *b)
+{
+    darray_append(f->blocks, b);
 }
 
 bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
@@ -166,8 +177,11 @@ bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (!rir_block_tostring(ctx, f->body)) {
-        goto end;
+    struct rir_block **b;
+    darray_foreach(b, f->blocks) {
+        if (!rir_block_tostring(ctx, *b)) {
+            goto end;
+        }
     }
 
     if (!rf_stringx_append(ctx->rir->buff, &close_curly)) {

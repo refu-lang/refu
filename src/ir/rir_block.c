@@ -67,11 +67,6 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
             if (!rir_branch_tostring(ctx, &exit->branch)) {
                 goto end;
             }
-            if (!rirtostr_ctx_block_visited(ctx, exit->branch.dst->label.block)) {
-                if (!rir_block_tostring(ctx, exit->branch.dst->label.block)) {
-                    goto end;
-                }
-            }
         } else {
             rf_stringx_append_cstr(ctx->rir->buff, "branch(NODESTINATION-FIXME)\n");
         }
@@ -79,18 +74,6 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
     case RIR_BLOCK_EXIT_CONDBRANCH:
         if (!rir_condbranch_tostring(ctx, &exit->condbranch)) {
             goto end;
-        }
-        if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.taken->label.block)) {
-            if (!rir_block_tostring(ctx, exit->condbranch.taken->label.block)) {
-                goto end;
-            }
-        }
-        if (exit->condbranch.fallthrough) {
-            if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.fallthrough->label.block)) {
-                if (!rir_block_tostring(ctx, exit->condbranch.fallthrough->label.block)) {
-                    goto end;
-                }
-            }
         }
         break;
     case RIR_BLOCK_EXIT_RETURN:
@@ -130,6 +113,7 @@ static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct ri
         if (!(old_block = rir_block_create(NULL, false, ctx))) {
             goto fail;
         }
+        rir_fndecl_add_block(ctx->current_fn, old_block);
     } else {
         RF_ASSERT(!ctx->next_block, "next block should be empty here");
         if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
@@ -189,6 +173,8 @@ static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct ri
     }
     if (!is_elif) {
         ctx->current_block = ctx->next_block;
+        // since next_block was an empty block let's add it to the function now
+        rir_fndecl_add_block(ctx->current_fn, ctx->next_block);
         ctx->next_block = NULL;
         RIRCTX_RETURN_EXPR(ctx, true, taken->label);
     } else {
@@ -345,6 +331,8 @@ static bool rir_block_init(struct rir_block *b,
 
     struct ast_node *child;
     if (n) {
+        // add basic block to the current function
+        rir_fndecl_add_block(ctx->current_fn, b);
         // TODO: for now let's accept match expressions here too, but the body should be created
         // in quite a different way for match expressions so it would probably become its own function
         RF_ASSERT(n->type == AST_BLOCK || n->type == AST_MATCH_EXPRESSION,
