@@ -6,13 +6,13 @@
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 
-bool rir_branch_init(struct rir_branch *b, struct rir_expression *dst)
+bool rir_branch_init(struct rir_branch *b, struct rir_value *dst)
 {
     b->dst = dst;
     return true;
 }
 
-struct rir_branch *rir_branch_create(struct rir_expression *dst)
+struct rir_branch *rir_branch_create(struct rir_value *dst)
 {
     struct rir_branch *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
@@ -48,7 +48,7 @@ bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
     ret = rf_stringx_append(
         ctx->rir->buff,
         RFS(RITOSTR_INDENT"branch("RF_STR_PF_FMT")\n",
-            RF_STR_PF_ARG(rir_value_string(&b->dst->val))
+            RF_STR_PF_ARG(rir_value_string(b->dst))
         ));
     RFS_POP();
     return ret;
@@ -56,8 +56,8 @@ bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
 
 bool rir_condbranch_init(struct rir_condbranch *b,
                          struct rir_expression *cond,
-                         struct rir_expression *taken,
-                         struct rir_expression *fallthrough)
+                         struct rir_value *taken,
+                         struct rir_value *fallthrough)
 {
     b->cond = cond;
     b->taken = taken;
@@ -66,8 +66,8 @@ bool rir_condbranch_init(struct rir_condbranch *b,
 }
 
 struct rir_condbranch *rir_condbranch_create(struct rir_expression *cond,
-                                             struct rir_expression *taken,
-                                             struct rir_expression *fallthrough)
+                                             struct rir_value *taken,
+                                             struct rir_value *fallthrough)
 {
     struct rir_condbranch *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
@@ -89,12 +89,6 @@ void rir_condbranch_destroy(struct rir_condbranch *b)
     free(b);
 }
 
-void rir_condbranch_set_fallthrough(struct rir_condbranch *b,
-                                    struct rir_expression *fallthrough)
-{
-    b->fallthrough = fallthrough;
-}
-
 bool rir_condbranch_tostring(struct rirtostr_ctx *ctx, const struct rir_condbranch *b)
 {
     RFS_PUSH();
@@ -102,8 +96,8 @@ bool rir_condbranch_tostring(struct rirtostr_ctx *ctx, const struct rir_condbran
         ctx->rir->buff,
         RFS(RITOSTR_INDENT"condbranch("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
             RF_STR_PF_ARG(rir_value_string(&b->cond->val)),
-            RF_STR_PF_ARG(rir_value_string(&b->taken->val)),
-            RF_STR_PF_ARG(rir_value_string(&b->fallthrough->val))
+            RF_STR_PF_ARG(rir_value_string(b->taken)),
+            RF_STR_PF_ARG(rir_value_string(b->fallthrough))
         ));
     RFS_POP();
     return ret;

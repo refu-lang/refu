@@ -16,17 +16,15 @@ struct rir_fndecl {
     const struct rir_type* arguments;
     const struct rir_type* returns;
     struct args_arr arguments_list;
-    //! First basic block of the function
-    struct rir_block *body;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
     //! Stringmap from rir identifiers to rir objects
     //! Owns the rir objects and the rir identifier.
     //! They will be destroyed at function destruction
-    struct rirexpr_strmap map;
-    struct rirexpr_strmap id_map;
+    struct rirobj_strmap map;
+    struct rirobj_strmap id_map;
     //! Label pointing to the function's end
-    struct rir_expression *end_label;
+    struct rir_value *end_label;
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };

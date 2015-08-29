@@ -28,19 +28,19 @@ struct rir_block_exit {
 };
 
 bool rir_block_exit_init_branch(struct rir_block_exit *exit,
-                                struct rir_expression *branch_dst);
+                                struct rir_value *branch_dst);
 bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
                                     struct rir_expression *cond,
-                                    struct rir_expression *taken,
-                                    struct rir_expression *fallthrough);
+                                    struct rir_value *taken,
+                                    struct rir_value *fallthrough);
 bool rir_block_exit_return_init(struct rir_block_exit *exit,
                                 const struct rir_expression *val,
                                 struct rir_ctx *ctx);
 
 struct rir_block {
     struct rir_block_exit exit;
-    //! The block's label. If NULL, then it's first block of a function
-    struct rir_expression *label;
+    //! The block's label. If having a nil value
+    struct rir_value label;
     //! List of rir expressions
     struct RFilist_head expressions;
 };

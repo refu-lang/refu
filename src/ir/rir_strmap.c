@@ -6,13 +6,16 @@
 
 #include <String/rf_str_core.h>
 
-bool rir_strmap_add_from_id(struct rir_ctx *ctx,
+bool rir_strmap_addexpr_from_id(struct rir_ctx *ctx,
                             const struct RFstring *id,
                             struct rir_expression *e)
 {
-    // add normal language identifier to current block
-    if (!strmap_add(&ctx->current_fn->map, id, e)) {
-        return false;
-    }
-    return true;
+    return strmap_add(&ctx->current_fn->map, id, e);
+}
+
+bool rir_strmap_addblock_from_id(struct rir_ctx *ctx,
+                                const struct RFstring *id,
+                                struct rir_block *b)
+{
+    return strmap_add(&ctx->current_fn->map, id, b);
 }

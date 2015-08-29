@@ -17,7 +17,7 @@
 
 /* -- functions for rir_block_exit -- */
 bool rir_block_exit_init_branch(struct rir_block_exit *exit,
-                                struct rir_expression *branch_dst)
+                                struct rir_value *branch_dst)
 {
     exit->type = RIR_BLOCK_EXIT_BRANCH;
     return rir_branch_init(&exit->branch, branch_dst);
@@ -25,8 +25,8 @@ bool rir_block_exit_init_branch(struct rir_block_exit *exit,
 
 bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
                                     struct rir_expression *cond,
-                                    struct rir_expression *taken,
-                                    struct rir_expression *fallthrough)
+                                    struct rir_value *taken,
+                                    struct rir_value *fallthrough)
 {
     exit->type = RIR_BLOCK_EXIT_CONDBRANCH;
     return rir_condbranch_init(&exit->condbranch, cond, taken, fallthrough);
@@ -105,22 +105,14 @@ end:
 
 
 /* -- functions for rir_block -- */
-static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct rir_ctx *ctx)
+static struct rir_block *rir_process_elif(const struct ast_node *n, struct rir_ctx *ctx);
+static struct rir_block *rir_process_elif(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_block *old_block = ctx->current_block;
-
-    if (is_elif) {
-        if (!(old_block = rir_block_create(NULL, false, ctx))) {
-            goto fail;
-        }
-        rir_fndecl_add_block(ctx->current_fn, old_block);
-    } else {
-        RF_ASSERT(!ctx->next_block, "next block should be empty here");
-        if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
-            goto fail;
-        }
-        ctx->current_block = old_block;
+    if (!(old_block = rir_block_create(NULL, false, ctx))) {
+        goto fail;
     }
+    rir_fndecl_add_block(ctx->current_fn, old_block);
 
     if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
         goto fail;
@@ -133,9 +125,10 @@ static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct ri
 
     struct rir_block *else_block = NULL;
     struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
+    struct rir_block *new_if_block;
     if (fallthrough_branch) {
         if (fallthrough_branch->type == AST_IF_EXPRESSION) {
-            if (!rir_process_ifexpr(fallthrough_branch, true, ctx)) {
+            if (!(new_if_block = rir_process_elif(fallthrough_branch, ctx))) {
                 goto fail;
             }
         } else {
@@ -144,42 +137,103 @@ static bool rir_process_ifexpr(const struct ast_node *n, bool is_elif, struct ri
         }
     }
 
-    const struct rir_block *new_block;
+    struct rir_block *new_block;
     if (fallthrough_branch) {
         new_block = fallthrough_branch->type == AST_IF_EXPRESSION
-            ? ctx->returned_expr->label.block
+            ? new_if_block
             : else_block;
     } else {
         new_block = ctx->next_block;
     }
 
     //Connect the old block with the new
-    if (!rir_block_exit_init_condbranch(&old_block->exit, cond, taken->label, new_block->label)) {
+    if (!rir_block_exit_init_condbranch(&old_block->exit, cond, &taken->label, &new_block->label)) {
         goto fail;
     }
     // if the taken block's exit is not initialized connect it to the after_if block
     if (!rir_block_exit_initialized(taken)) {
-        if (!rir_block_exit_init_branch(&taken->exit, ctx->next_block->label)) {
+        if (!rir_block_exit_init_branch(&taken->exit, &ctx->next_block->label)) {
             goto fail;
         }
     }
     // if there was an else block connect it with the after_if block
     if (else_block) {
         if (!rir_block_exit_initialized(else_block)) {
-            if (!rir_block_exit_init_branch(&else_block->exit, ctx->next_block->label)) {
+            if (!rir_block_exit_init_branch(&else_block->exit, &ctx->next_block->label)) {
                 goto fail;
             }
         }
     }
-    if (!is_elif) {
-        ctx->current_block = ctx->next_block;
-        // since next_block was an empty block let's add it to the function now
-        rir_fndecl_add_block(ctx->current_fn, ctx->next_block);
-        ctx->next_block = NULL;
-        RIRCTX_RETURN_EXPR(ctx, true, taken->label);
-    } else {
-        RIRCTX_RETURN_EXPR(ctx, true, old_block->label);
+    return old_block;
+
+fail:
+    return NULL;
+}
+static bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
+{
+    struct rir_block *old_block = ctx->current_block;
+    RF_ASSERT(!ctx->next_block, "next block should be empty here");
+    if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
+        goto fail;
     }
+    ctx->current_block = old_block;
+
+    if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
+        goto fail;
+    }
+    struct rir_expression *cond = ctx->returned_expr;
+    struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), false, ctx);
+    if (!taken) {
+        goto fail;
+    }
+
+    struct rir_block *else_block = NULL;
+    struct ast_node *fallthrough_branch = ast_ifexpr_fallthrough_branch_get(n);
+    struct rir_block *new_if_block;
+    if (fallthrough_branch) {
+        if (fallthrough_branch->type == AST_IF_EXPRESSION) {
+            if (!(new_if_block = rir_process_elif(fallthrough_branch, ctx))) {
+                goto fail;
+            }
+        } else {
+            // should be a block
+            else_block = rir_block_create(fallthrough_branch, false, ctx);
+        }
+    }
+
+    struct rir_block *new_block = NULL;
+    if (fallthrough_branch) {
+        new_block = fallthrough_branch->type == AST_IF_EXPRESSION
+            ? new_if_block
+            : else_block;
+    } else {
+        new_block = ctx->next_block;
+    }
+
+    //Connect the old block with the new
+    if (!rir_block_exit_init_condbranch(&old_block->exit, cond, &taken->label, &new_block->label)) {
+        goto fail;
+    }
+    // if the taken block's exit is not initialized connect it to the after_if block
+    if (!rir_block_exit_initialized(taken)) {
+        if (!rir_block_exit_init_branch(&taken->exit, &ctx->next_block->label)) {
+            goto fail;
+        }
+    }
+    // if there was an else block connect it with the after_if block
+    if (else_block) {
+        if (!rir_block_exit_initialized(else_block)) {
+            if (!rir_block_exit_init_branch(&else_block->exit, &ctx->next_block->label)) {
+                goto fail;
+            }
+        }
+    }
+
+    ctx->current_block = ctx->next_block;
+    // since next_block was an empty block let's add it to the function now
+    rir_fndecl_add_block(ctx->current_fn, ctx->next_block);
+    ctx->next_block = NULL;
+    RIRCTX_RETURN_EXPR(ctx, true, NULL);
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -263,7 +317,7 @@ bool rir_process_ast_node(const struct ast_node *n,
 {
     switch (n->type) {
     case AST_IF_EXPRESSION:
-        return rir_process_ifexpr(n, false, ctx);
+        return rir_process_ifexpr(n, ctx);
     case AST_VARIABLE_DECLARATION:
         return rir_process_vardecl(n, ctx);
     case AST_BINARY_OPERATOR:
@@ -294,11 +348,10 @@ struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *
     RF_STRUCT_ZERO(ret);
     ctx->current_block = ret;
     rf_ilist_head_init(&ret->expressions);
-    if (!(ret->label = rir_label_string_create(ret, &fend_label, 0, ctx))) {
+    if (!rir_value_label_init_string(&ret->label, ret, &fend_label, ctx)) {
         free (ret);
         ret = NULL;
     }
-    rirctx_block_add(ctx, ret->label);
 
     // current block's exit should be the return
     const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
@@ -325,8 +378,13 @@ static bool rir_block_init(struct rir_block *b,
     rf_ilist_head_init(&b->expressions);
     ctx->current_block = b;
     if (!function_beginning) {
-        b->label = rir_label_create(b, 0, ctx);
-        rirctx_block_add(ctx, b->label);
+        if (!rir_value_init(&b->label, RIR_VALUE_LABEL, b, ctx)) {
+            return false;
+        }
+    } else {
+        if (!rir_value_init(&b->label, RIR_VALUE_NIL, NULL, ctx)) {
+            return false;
+        }
     }
 
     struct ast_node *child;
@@ -382,6 +440,14 @@ bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b)
 {
     struct rir_expression *expr;
     rirtostr_ctx_visit_block(ctx, b);
+    if (b->label.type == RIR_VALUE_LABEL) {
+        if (!rir_value_tostring(ctx->rir, &b->label)) {
+            return false;
+        }
+        if (!rf_stringx_append_cstr(ctx->rir->buff, "\n")) {
+            return false;
+        }
+    }
     rf_ilist_for_each(&b->expressions, expr, ln) {
         if (!rir_expression_tostring(ctx, expr)) {
                 return false;

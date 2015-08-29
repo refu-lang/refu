@@ -78,18 +78,18 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         RF_ERROR("Failed to create a RIR function's end block");
         return false;
     }
-    ret->end_label = end_block->label;
+    ret->end_label = &end_block->label;
 
-    // finally create the body
-    ret->body = rir_block_create(ast_fnimpl_body_get(n), true, ctx);
-    if (!ret->body) {
+    // finally create the first block of the body
+    struct rir_block *first_block  = rir_block_create(ast_fnimpl_body_get(n), true, ctx);
+    if (!first_block) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
         return false;
     }
 
     // if first block of the function does not have an exit, connect it to the end
-    if (!rir_block_exit_initialized(ret->body)) {
-        if (!rir_block_exit_init_branch(&ret->body->exit, ret->end_label)) {
+    if (!rir_block_exit_initialized(first_block)) {
+        if (!rir_block_exit_init_branch(&first_block->exit, ret->end_label)) {
             return false;
         }
     }

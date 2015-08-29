@@ -19,11 +19,6 @@ bool rir_expression_init(struct rir_expression *expr,
             return false;
         }
         break;
-    case RIR_EXPRESSION_LABEL:
-        if (!rir_value_init(&expr->val, RIR_VALUE_LABEL, expr, ctx)) {
-            return false;
-        }
-        break;
     case RIR_EXPRESSION_WRITE:
     case RIR_EXPRESSION_RETURN:
         if (!rir_value_init(&expr->val, RIR_VALUE_NIL, expr, ctx)) {
@@ -92,44 +87,6 @@ bool rir_return_init(struct rir_expression *ret,
     return true;
 }
 
-struct rir_expression *rir_label_create(const struct rir_block *b, unsigned index, struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_expression_init(ret, RIR_EXPRESSION_LABEL, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    ret->label.block = b;
-    ret->label.index = index;
-    return ret;
-}
-
-struct rir_expression *rir_label_string_create(const struct rir_block *b, const struct RFstring *str, unsigned index, struct rir_ctx *ctx)
-{
-    // TODO: Maybe abstract it out properly so that it's a special case of rir_expression and rir_value init?
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->type = RIR_EXPRESSION_LABEL;
-    ret->val.type = RIR_VALUE_LABEL;
-    ret->val.expr = ret;
-    if (!rf_string_copy_in(&ret->val.id, str)) {
-        free(ret);
-        ret = NULL;
-        goto end;
-    }
-    if (!rir_strmap_add_from_id(ctx, &ret->val.id, ret)) {
-        free(ret);
-        ret = NULL;
-        goto end;
-    }
-    ret->label.block = b;
-    ret->label.index = index;
-
-end:
-    return ret;
-}
-
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx)
 {
     struct rir_expression *ret;
@@ -173,12 +130,6 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     bool ret = false;
     RFS_PUSH();
     switch(e->type) {
-    case RIR_EXPRESSION_LABEL:
-        if (!rf_stringx_append(ctx->rir->buff, RFS(RF_STR_PF_FMT":\n",
-                                            RF_STR_PF_ARG(rir_value_string(&e->val))))) {
-            goto end;
-        }
-        break;
     case RIR_EXPRESSION_FNCALL:
         if (!rf_stringx_append(ctx->rir->buff, RFS("fncall"))) {
             goto end;

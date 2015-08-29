@@ -6,13 +6,25 @@
 #include <String/rf_str_manipulationx.h>
 #include <Utils/memory.h>
 
-
-bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expression *e, struct rir_ctx *ctx)
+bool rir_value_label_init_string(struct rir_value *v, struct rir_block *b, const struct RFstring *s, struct rir_ctx *ctx)
 {
+    v->type = RIR_VALUE_LABEL;
+    v->label_dst = b;
+    if (!rf_string_copy_in(&v->id, s)) {
+        return false;
+    }
+    return rir_strmap_addblock_from_id(ctx, &v->id, b);
+}
+
+bool rir_value_init(struct rir_value *v, enum rir_valtype type, void *obj, struct rir_ctx *ctx)
+{
+    struct rir_expression *e;
+    struct rir_block *b;
     bool ret = true;
     v->type = type;
     switch (v->type) {
     case RIR_VALUE_CONSTANT:
+        e = obj;
         v->constant = e->constant;
         switch (v->constant.type) {
         case CONSTANT_NUMBER_INTEGER:
@@ -27,18 +39,20 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, struct rir_expre
         }
         break;
     case RIR_VALUE_VARIABLE:
+        e = obj;
         v->expr = e;
         if (!rf_string_initv(&v->id, "$%d", ctx->expression_idx++)) {
             return false;
         }
-        ret = rir_strmap_add_from_id(ctx, &v->id, e);
+        ret = rir_strmap_addexpr_from_id(ctx, &v->id, e);
         break;
     case RIR_VALUE_LABEL:
-        v->expr = e;
+        b = obj;
+        v->label_dst = b;
         if (!rf_string_initv(&v->id, "%%label_%d", ctx->label_idx++)) {
             return false;
         }
-        ret = rir_strmap_add_from_id(ctx, &v->id, e);
+        ret = rir_strmap_addblock_from_id(ctx, &v->id, b);
         break;
     case RIR_VALUE_NIL:
         // nothing to init for nil value
