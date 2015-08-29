@@ -68,7 +68,7 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
                 goto end;
             }
             if (!rirtostr_ctx_block_visited(ctx, exit->branch.dst->label.block)) {
-                if (!rir_block_tostring(ctx, exit->branch.dst->label.block, exit->branch.dst->label.index)) {
+                if (!rir_block_tostring(ctx, exit->branch.dst->label.block)) {
                     goto end;
                 }
             }
@@ -81,13 +81,13 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
             goto end;
         }
         if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.taken->label.block)) {
-            if (!rir_block_tostring(ctx, exit->condbranch.taken->label.block, exit->condbranch.taken->label.index)) {
+            if (!rir_block_tostring(ctx, exit->condbranch.taken->label.block)) {
                 goto end;
             }
         }
         if (exit->condbranch.fallthrough) {
             if (!rirtostr_ctx_block_visited(ctx, exit->condbranch.fallthrough->label.block)) {
-                if (!rir_block_tostring(ctx, exit->condbranch.fallthrough->label.block, exit->condbranch.fallthrough->label.index)) {
+                if (!rir_block_tostring(ctx, exit->condbranch.fallthrough->label.block)) {
                     goto end;
                 }
             }
@@ -390,20 +390,14 @@ void rir_block_destroy(struct rir_block* b)
     free(b);
 }
 
-bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b, unsigned index)
+bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b)
 {
     struct rir_expression *expr;
     rirtostr_ctx_visit_block(ctx, b);
-    unsigned int i = 0;
     rf_ilist_for_each(&b->expressions, expr, ln) {
-        // TODO: pretty stupid way to search from a specific index.
-        // Rethink this. Maybe linked list is not a good idea here?
-        if (i >= index) {
-            if (!rir_expression_tostring(ctx, expr)) {
+        if (!rir_expression_tostring(ctx, expr)) {
                 return false;
-            }
         }
-        ++i;
     }
 
     if (!rir_blockexit_tostring(ctx, &b->exit)) {

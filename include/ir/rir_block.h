@@ -58,7 +58,7 @@ void rir_block_destroy(struct rir_block* b);
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
 
-bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b, unsigned index);
+bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b);
 
 i_INLINE_DECL bool rir_block_exit_initialized(const struct rir_block *b)
 {

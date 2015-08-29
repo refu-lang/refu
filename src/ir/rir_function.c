@@ -166,7 +166,7 @@ bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (!rir_block_tostring(ctx, f->body, 0)) {
+    if (!rir_block_tostring(ctx, f->body)) {
         goto end;
     }
 
