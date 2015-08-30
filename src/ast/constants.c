@@ -13,9 +13,7 @@ struct ast_node *ast_constant_create_integer(struct inplocation *loc,
     if (!ret) {
         return NULL;
     }
-    ret->constant.type = CONSTANT_NUMBER_INTEGER;
-    ret->constant.value.integer = value;
-
+    ast_constant_init_int(&ret->constant, value);
     return ret;
 }
 
@@ -27,9 +25,7 @@ struct ast_node *ast_constant_create_float(struct inplocation *loc,
     if (!ret) {
         return NULL;
     }
-    ret->constant.type = CONSTANT_NUMBER_FLOAT;
-    ret->constant.value.floating = value;
-
+    ast_constant_init_float(&ret->constant, value);
     return ret;
 }
 
@@ -41,12 +37,13 @@ struct ast_node *ast_constant_create_boolean(const struct inplocation *loc,
     if (!ret) {
         return NULL;
     }
-    ret->constant.type = CONSTANT_BOOLEAN;
-    ret->constant.value.boolean = value;
-
+    ast_constant_init_bool(&ret->constant, value);
     return ret;
 }
 i_INLINE_INS struct ast_node *ast_constant_create_boolean_from_tok(struct token *tok);
+i_INLINE_INS void ast_constant_init_int(struct ast_constant *c, int64_t n);
+i_INLINE_INS void ast_constant_init_float(struct ast_constant *c, double n);
+i_INLINE_INS void ast_constant_init_bool(struct ast_constant *c, bool n);
 
 const struct type * ast_constant_get_storagetype(struct ast_node *n)
 {

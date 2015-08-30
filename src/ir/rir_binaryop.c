@@ -67,8 +67,13 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         goto fail;
     }
     struct rir_expression *lexpr = ctx->returned_expr;
+    ctx->last_assign_lhs = lexpr;
     if (!rir_process_ast_node(op->right, ctx)) {
         goto fail;
+    }
+    // for some specific type of rhs all of the writting should have already been done
+    if (op->right->type == AST_FUNCTION_CALL) {
+        RIRCTX_RETURN_EXPR(ctx, true, NULL);
     }
     struct rir_expression *rexpr = ctx->returned_expr;
     struct rir_expression *e = rir_binaryop_create(op, &lexpr->val, &rexpr->val, ctx);
@@ -89,6 +94,7 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
     [RIR_EXPRESSION_CMP] = RF_STRING_STATIC_INIT("cmp"),
     [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
+    [RIR_EXPRESSION_READOBJAT] = RF_STRING_STATIC_INIT("readobjat"),
 };
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

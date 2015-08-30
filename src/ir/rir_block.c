@@ -5,6 +5,8 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_value.h>
 #include <ir/rir_function.h>
+#include <ir/rir_call.h>
+#include <ir/rir_constant.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_strmap.h>
 #include <ast/ast.h>
@@ -328,6 +330,8 @@ bool rir_process_ast_node(const struct ast_node *n,
         return rir_process_constant(n, ctx);
     case AST_IDENTIFIER:
         return rir_process_identifier(n, ctx);
+    case AST_FUNCTION_CALL:
+        return rir_process_fncall(n, ctx);
     case AST_MATCH_EXPRESSION:
         // TODO: implement properly
     case AST_CONDITIONAL_BRANCH:

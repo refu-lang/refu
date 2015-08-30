@@ -13,10 +13,11 @@
 #include <module.h>
 #include <compiler.h>
 
-static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r)
+static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(ctx);
     ctx->rir = r;
+    ctx->current_module_st = &m->node->module.st;
 }
 
 void rir_ctx_reset(struct rir_ctx *ctx)
@@ -80,7 +81,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rir_ctx ctx;
     struct rir_type *t;
 
-    rir_ctx_init(&ctx, r);
+    rir_ctx_init(&ctx, r, m);
 
     // for each non elementary rir type create a typedef/uniondef
     rir_types_list_for_each(r->rir_types_list, t) {

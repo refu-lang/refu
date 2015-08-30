@@ -14,7 +14,7 @@ struct ast_import {
 };
 
 struct ast_module {
-    //! Identifier with the name of the mo
+    //! Identifier with the name of the module
     struct ast_node *name;
     //! If the module has arguments, this contains their type description. If not NULL.
     struct ast_node *args;

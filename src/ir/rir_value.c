@@ -16,6 +16,24 @@ bool rir_value_label_init_string(struct rir_value *v, struct rir_block *b, const
     return rir_strmap_addblock_from_id(ctx, &v->id, b);
 }
 
+bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c)
+{
+    bool ret;
+    v->constant = *c;
+    switch (v->constant.type) {
+    case CONSTANT_NUMBER_INTEGER:
+        ret = rf_string_initv(&v->id, "%"PRId64, v->constant.value.integer);
+        break;
+    case CONSTANT_NUMBER_FLOAT:
+        ret = rf_string_initv(&v->id, "%f", v->constant.value.floating);
+        break;
+    case CONSTANT_BOOLEAN:
+        ret = rf_string_initv(&v->id, "%s", v->constant.value.boolean ? "true" : "false");
+        break;
+    }
+    return ret;
+}
+
 bool rir_value_init(struct rir_value *v, enum rir_valtype type, void *obj, struct rir_ctx *ctx)
 {
     struct rir_expression *e;
@@ -25,18 +43,7 @@ bool rir_value_init(struct rir_value *v, enum rir_valtype type, void *obj, struc
     switch (v->type) {
     case RIR_VALUE_CONSTANT:
         e = obj;
-        v->constant = e->constant;
-        switch (v->constant.type) {
-        case CONSTANT_NUMBER_INTEGER:
-            ret = rf_string_initv(&v->id, "%"PRId64, e->constant.value.integer);
-            break;
-        case CONSTANT_NUMBER_FLOAT:
-            ret = rf_string_initv(&v->id, "%d", e->constant.value.floating);
-            break;
-        case CONSTANT_BOOLEAN:
-            ret = rf_string_initv(&v->id, "%s", e->constant.value.boolean ? "true" : "false");
-            break;
-        }
+        ret = rir_value_constant_init(v, &e->constant);
         break;
     case RIR_VALUE_VARIABLE:
         e = obj;

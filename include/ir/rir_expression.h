@@ -19,6 +19,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_CONSTRUCT,
     RIR_EXPRESSION_WRITE,
     RIR_EXPRESSION_READ,
+    RIR_EXPRESSION_READOBJAT,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
@@ -58,7 +59,6 @@ struct rir_expression *rir_return_create(const struct rir_expression *val, struc
 bool rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val,
                      struct rir_ctx *ctx);
-struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx);
 
 struct rir_expression {
     enum rir_expression_type type;

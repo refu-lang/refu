@@ -4,6 +4,7 @@
 #include <ir/rir_binaryop.h>
 #include <ir/rir_function.h>
 #include <ir/rir_argument.h>
+#include <ir/rir_constant.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -98,33 +99,6 @@ struct rir_expression *rir_return_create(const struct rir_expression *val, struc
     return ret;
 }
 
-struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->constant = c->constant;
-    rir_expression_init(ret, RIR_EXPRESSION_CONSTANT, ctx);
-    return ret;
-}
-
-bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
-{
-    bool ret = false;
-    RF_ASSERT(e->type == RIR_EXPRESSION_CONSTANT, "Expected constant");
-    switch (e->constant.type) {
-    case CONSTANT_NUMBER_INTEGER:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%" PRId64, e->constant.value.integer));
-        break;
-    case CONSTANT_NUMBER_FLOAT:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%d", e->constant.value.floating));
-        break;
-    case CONSTANT_BOOLEAN:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%s", e->constant.value.boolean ? "true" : "false"));
-        break;
-    }
-    return ret;
-}
-
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
     bool ret = false;
@@ -161,6 +135,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_DIV:
     case RIR_EXPRESSION_CMP:
     case RIR_EXPRESSION_WRITE:
+    case RIR_EXPRESSION_READOBJAT:
         if (!rir_binaryop_tostring(ctx, e)) {
             goto end;
         }

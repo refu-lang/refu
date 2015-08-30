@@ -12,12 +12,20 @@ static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t)
     RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
     RF_STRUCT_ZERO(def);
     RFS_PUSH();
-    def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
     RFS_POP();
     if (rir_type_is_sumtype(t)) {
         def->is_union = true;
     }
 
+    if (t->category == COMPOSITE_RIR_DEFINED) {
+        // if it's an actual typedef get the name and proceed to the first and only
+        // subtype which is the actual type declaration
+        def->name = rf_string_copy_out(t->name);
+        RF_ASSERT(darray_size(t->subtypes) == 1, "defined type should have a single subtype");
+        t = darray_item(t->subtypes, 0);
+    } else {
+        def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
+    }
     if (!rir_type_to_arg_array(t, &def->arguments_list)) {
         return false;
     }

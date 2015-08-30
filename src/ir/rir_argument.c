@@ -131,8 +131,7 @@ bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *
 
 bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr)
 {
-    RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
-              type->category != COMPOSITE_SUM_RIR_TYPE ||
+    RF_ASSERT(type->category != COMPOSITE_SUM_RIR_TYPE ||
               type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
               "Called with illegal rir type");
     struct rir_type **subtype;

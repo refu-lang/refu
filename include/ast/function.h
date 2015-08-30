@@ -116,7 +116,7 @@ i_INLINE_DECL const struct RFstring* ast_fncall_name(const struct ast_node *n)
     return ast_identifier_str(n->fncall.name);
 }
 
-i_INLINE_DECL struct ast_node* ast_fncall_args(struct ast_node *n)
+i_INLINE_DECL struct ast_node* ast_fncall_args(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     return n->fncall.args;
@@ -144,6 +144,6 @@ typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);
  * @param cb           The callback to execute for each argument expression
  * @param user_arg     The extra argument to provide to the callback
  */
-bool ast_fncall_for_each_arg(struct ast_node *n, fncall_args_cb cb, void *user_arg);
+bool ast_fncall_for_each_arg(const struct ast_node *n, fncall_args_cb cb, void *user_arg);
 
 #endif

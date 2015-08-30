@@ -26,6 +26,24 @@ const struct type *ast_constant_get_storagetype(struct ast_node *n);
 
 #include <ast/ast.h>
 
+i_INLINE_DECL void ast_constant_init_int(struct ast_constant *c, int64_t n)
+{
+    c->type = CONSTANT_NUMBER_INTEGER;
+    c->value.integer = n;
+}
+
+i_INLINE_DECL void ast_constant_init_float(struct ast_constant *c, double n)
+{
+    c->type = CONSTANT_NUMBER_FLOAT;
+    c->value.floating = n;
+}
+
+i_INLINE_DECL void ast_constant_init_bool(struct ast_constant *c, bool n)
+{
+    c->type = CONSTANT_BOOLEAN;
+    c->value.boolean = n;
+}
+
 i_INLINE_DECL enum constant_type ast_constant_get_type(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
