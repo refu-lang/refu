@@ -3,6 +3,7 @@
 
 #include <RFintrusive_list.h>
 #include <Data_Structures/darray.h>
+#include <ir/rir_strmap.h>
 
 struct module;
 struct compiler;
@@ -18,6 +19,8 @@ struct rir {
     struct RFilist_head functions;
     //! List of type definitions
     struct RFilist_head typedefs;
+    //! Map from strings to rir objects.
+    struct rirobj_strmap map;
     //! Buffer string to hold the string representation when asked. Can be NULL.
     struct RFstringx *buff;
 };

@@ -69,6 +69,8 @@ void rir_block_destroy(struct rir_block* b);
 
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
+bool rir_process_identifier(const struct ast_node *n,
+                            struct rir_ctx *ctx);
 
 bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b);
 

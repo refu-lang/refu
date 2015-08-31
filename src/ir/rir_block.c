@@ -303,8 +303,8 @@ static bool rir_process_constant(const struct ast_node *n,
     RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
 }
 
-static bool rir_process_identifier(const struct ast_node *n,
-                                   struct rir_ctx *ctx)
+bool rir_process_identifier(const struct ast_node *n,
+                            struct rir_ctx *ctx)
 {
     struct rir_expression *expr = strmap_get(&ctx->current_fn->id_map, ast_identifier_str(n));
     if (!expr) {

@@ -6,7 +6,7 @@
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>
 
-static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t)
+static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t, struct rir *r)
 {
     RF_ASSERT(!rir_type_is_elementary(t), "Typedef can't be created from an elementary type");
     RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
@@ -29,15 +29,17 @@ static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t)
     if (!rir_type_to_arg_array(t, &def->arguments_list)) {
         return false;
     }
+    // finally add the typedef to the rir's strmap
+    strmap_add(&r->map, def->name, def);
     
     return true;
 }
 
-struct rir_typedef *rir_typedef_create(struct rir_type *t)
+struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir *r)
 {
     struct rir_typedef *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_typedef_init(ret, t)) {
+    if (!rir_typedef_init(ret, t, r)) {
         free(ret);
         ret = NULL;
     }

@@ -16,7 +16,7 @@ struct rir_typedef {
     struct RFilist_node ln;
 };
 
-struct rir_typedef *rir_typedef_create(struct rir_type *t);
+struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir *r);
 void rir_typedef_destroy(struct rir_typedef *t);
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);

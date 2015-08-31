@@ -29,6 +29,7 @@ void rir_ctx_reset(struct rir_ctx *ctx)
 static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
+    strmap_init(&r->map);
     rf_ilist_head_init(&r->functions);
     rf_ilist_head_init(&r->typedefs);
     // create the rir types list from the types set for this module
@@ -64,6 +65,9 @@ static void rir_deinit(struct rir *r)
     rf_ilist_for_each_safe(&r->typedefs, def, deftmp, ln) {
         rir_typedef_destroy(def);
     }
+    // strmap members are typedefs and functions, all of which are in their own lists
+    // so at the moment there is no need to iterate the map and free them here
+    strmap_clear(&r->map);
 }
 
 void rir_destroy(struct rir *r)
@@ -86,7 +90,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     // for each non elementary rir type create a typedef/uniondef
     rir_types_list_for_each(r->rir_types_list, t) {
         if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE ) {
-            struct rir_typedef *def = rir_typedef_create(t);
+            struct rir_typedef *def = rir_typedef_create(t, r);
             rf_ilist_add_tail(&r->typedefs,  &def->ln);
 #if 0
             // TEMP TO SEE what types are created

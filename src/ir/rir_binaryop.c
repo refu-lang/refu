@@ -2,7 +2,10 @@
 #include <ir/rir.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_block.h>
+#include <ir/rir_typedef.h>
+#include <ir/rir_constant.h>
 #include <ast/operators.h>
+#include <types/type.h>
 
 
 static const enum rir_expression_type binaryop_operation_to_rir[] = {
@@ -60,9 +63,60 @@ struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
     return rir_binaryop_create_nonast(rir_binaryop_type_from_ast(op), a, b, ctx);
 }
 
+static bool rir_process_memberaccess(const struct ast_binaryop *op,
+                                     struct rir_ctx *ctx)
+{
+    if (op->left->type != AST_IDENTIFIER) {
+        RF_ERROR("Left part of a member access was not an identifier");
+        goto fail;
+    }
+    if (!rir_process_identifier(op->left, ctx)) {
+        goto fail;
+    }
+    const struct rir_expression *lhs = ctx->returned_expr;
+    const struct RFstring *rightstr = ast_identifier_str(op->right);
+    const struct type *owner_type = ast_node_get_type_or_die(op->left, AST_TYPERETR_DEFAULT);
+    struct rir_typedef *def = strmap_get(&ctx->rir->map, type_defined_get_name(owner_type));
+
+    // find the index of the right part of member access
+    const struct rir_argument **arg;
+    unsigned int index = 0;
+    darray_foreach(arg, def->arguments_list) {
+        if (rf_string_equal(rightstr, (*arg)->name)) {
+            break;
+        }
+        ++index;
+    }
+    if (index == darray_size(def->arguments_list)) {
+        RF_ERROR("Could not find argument in typedef");
+        goto fail;
+    }
+
+    // create a rir expression to read the object value at the assignee's index position
+    struct rir_value *ririndexval = rir_constantval_fromint(index);
+    struct rir_expression *readobj = rir_binaryop_create_nonast(
+        RIR_EXPRESSION_READOBJAT,
+        &lhs->val,
+        ririndexval,
+        ctx
+    );
+    rirctx_block_add(ctx, readobj);
+
+    // return the readobjat to be used by other rir expressions
+    RIRCTX_RETURN_EXPR(ctx, true, readobj);
+
+fail:
+    RIRCTX_RETURN_EXPR(ctx, false, NULL);
+}
+
 bool rir_process_binaryop(const struct ast_binaryop *op,
                           struct rir_ctx *ctx)
 {
+    // special treatment for member access
+    if (op->type == BINARYOP_MEMBER_ACCESS) {
+        return rir_process_memberaccess(op, ctx);
+    }
+
     if (!rir_process_ast_node(op->left, ctx)) {
         goto fail;
     }
