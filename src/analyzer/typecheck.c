@@ -437,10 +437,12 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     const struct type *final_type = NULL;
 
     // left side of an assignment should be an identifier or a variable declaration
-    if (left->type != AST_IDENTIFIER && left->type != AST_VARIABLE_DECLARATION) {
+    if (left->type != AST_IDENTIFIER &&
+        left->type != AST_VARIABLE_DECLARATION &&
+        !ast_node_is_specific_binaryop(left, BINARYOP_MEMBER_ACCESS)) {
         analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
-                     "Expected an identifier or a variable declaration "
+                     "Expected an identifier a variable declaration, or a member access "
                      "as left part of the assignment "
                      "but found a \""RF_STR_PF_FMT"\"",
                      RF_STR_PF_ARG(ast_node_str(left)));

@@ -280,6 +280,21 @@ START_TEST(test_typecheck_valid_member_access) {
     ck_assert_typecheck_ok();
 } END_TEST
 
+START_TEST(test_typecheck_valid_member_access2) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person {name:string, age:u32}\n"
+        "{\n"
+        "p:person\n"
+        "a:u32 = 42\n"
+        "p.age = a + 1337\n"
+        "}"
+    );
+    front_testdriver_new_main_source(&s);
+
+    ck_assert_typecheck_ok();
+} END_TEST
+
 START_TEST(test_typecheck_invalid_member_access) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -390,6 +405,7 @@ Suite *analyzer_typecheck_operators_suite_create(void)
                               setup_analyzer_tests,
                               teardown_analyzer_tests);
     tcase_add_test(t_access_val, test_typecheck_valid_member_access);
+    tcase_add_test(t_access_val, test_typecheck_valid_member_access2);
 
     TCase *t_access_inv = tcase_create("typecheck_invalid_access_operations");
     tcase_add_checked_fixture(t_access_inv,
