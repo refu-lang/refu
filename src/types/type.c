@@ -321,7 +321,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
     if (!t->defined.type) {
         RF_ERROR("Failed to create type for typedecl's typedescription");
         type_free(t, m);
-        t = NULL;
+        return NULL;
     }
 
     module_types_set_add(m, t);

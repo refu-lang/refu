@@ -144,6 +144,22 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
+START_TEST(test_typecheck_invalid_type_in_typedecl) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, age:if32 }\n"
+    );
+    front_testdriver_new_main_source(&s);
+
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Type \"if32\" is not defined",
+            0, 31, 0, 34)
+    };
+
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
 START_TEST (test_typecheck_valid_assignment_from_block1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
@@ -261,6 +277,7 @@ Suite *analyzer_typecheck_suite_create(void)
                               setup_analyzer_tests_with_filelog,
                               teardown_analyzer_tests);
     tcase_add_test(t_custom_types_inv, test_typecheck_invalid_custom_type_constructor);
+    tcase_add_test(t_custom_types_inv, test_typecheck_invalid_type_in_typedecl);
 
     TCase *t_block_val = tcase_create("typecheck_valid_blocks");
     tcase_add_checked_fixture(t_block_val,
