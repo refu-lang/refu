@@ -34,7 +34,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     // create a rir expression to read the object value at the assignee's index position
     struct rir_value *ririndexval = rir_constantval_fromint(ctx->index);
     struct rir_expression *readobj = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_READOBJAT,
+        RIR_EXPRESSION_OBJMEMBERAT,
         &ctx->rir_ctx->last_assign_lhs->val,
         ririndexval,
         ctx->rir_ctx

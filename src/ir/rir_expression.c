@@ -135,7 +135,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_DIV:
     case RIR_EXPRESSION_CMP:
     case RIR_EXPRESSION_WRITE:
-    case RIR_EXPRESSION_READOBJAT:
+    case RIR_EXPRESSION_OBJMEMBERAT:
         if (!rir_binaryop_tostring(ctx, e)) {
             goto end;
         }

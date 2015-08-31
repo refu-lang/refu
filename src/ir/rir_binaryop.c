@@ -95,14 +95,14 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     // create a rir expression to read the object value at the assignee's index position
     struct rir_value *ririndexval = rir_constantval_fromint(index);
     struct rir_expression *readobj = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_READOBJAT,
+        RIR_EXPRESSION_OBJMEMBERAT,
         &lhs->val,
         ririndexval,
         ctx
     );
     rirctx_block_add(ctx, readobj);
 
-    // return the readobjat to be used by other rir expressions
+    // return the memberobjat to be used by other rir expressions
     RIRCTX_RETURN_EXPR(ctx, true, readobj);
 
 fail:
@@ -148,7 +148,7 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
     [RIR_EXPRESSION_CMP] = RF_STRING_STATIC_INIT("cmp"),
     [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
-    [RIR_EXPRESSION_READOBJAT] = RF_STRING_STATIC_INIT("readobjat"),
+    [RIR_EXPRESSION_OBJMEMBERAT] = RF_STRING_STATIC_INIT("objmemberat"),
 };
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
