@@ -42,6 +42,8 @@ struct rir_ctx {
     struct rir_fndecl *current_fn;
     struct rir_block *current_block;
     struct rir_block *next_block;
+    //! During rir typedef creation, defined type description is marked here to avoid double visiting
+    struct {darray(const struct rir_type*);} visited_rir_types;
     //! The symbol table of the current module
     const struct symbol_table *current_module_st;
     //! The current ast block object we are visiting
@@ -59,6 +61,8 @@ struct rir_ctx {
 };
 
 void rir_ctx_reset(struct rir_ctx *ctx);
+void rir_ctx_visit_type(struct rir_ctx *ctx, const struct rir_type *t);
+bool rir_ctx_type_visited(struct rir_ctx *ctx, const struct rir_type *t);
 
 #define RIRCTX_RETURN_EXPR(i_ctx_, i_result_, i_expression_)    \
     do {                                                        \

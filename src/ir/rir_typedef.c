@@ -6,40 +6,42 @@
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>
 
-static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t, struct rir *r)
+static bool rir_typedef_init(struct rir_typedef *def, struct rir_type *t, struct rir_ctx *ctx)
 {
     RF_ASSERT(!rir_type_is_elementary(t), "Typedef can't be created from an elementary type");
     RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
     RF_STRUCT_ZERO(def);
-    RFS_PUSH();
-    RFS_POP();
-    if (rir_type_is_sumtype(t)) {
-        def->is_union = true;
-    }
 
     if (t->category == COMPOSITE_RIR_DEFINED) {
+        if (rir_type_is_sumtype(t)) {
+            def->is_union = true;
+        }
         // if it's an actual typedef get the name and proceed to the first and only
         // subtype which is the actual type declaration
         def->name = rf_string_copy_out(t->name);
         RF_ASSERT(darray_size(t->subtypes) == 1, "defined type should have a single subtype");
         t = darray_item(t->subtypes, 0);
+        // to avoid double typedef creation for rir_type subtype description mark it
+        rir_ctx_visit_type(ctx, t);
     } else {
+        RFS_PUSH();
         def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
+        RFS_POP();
     }
-    if (!rir_type_to_arg_array(t, &def->arguments_list)) {
+    if (!rir_type_to_arg_array(t, &def->arguments_list, ctx->rir)) {
         return false;
     }
     // finally add the typedef to the rir's strmap
-    strmap_add(&r->map, def->name, def);
+    strmap_add(&ctx->rir->map, def->name, def);
     
     return true;
 }
 
-struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir *r)
+struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx)
 {
     struct rir_typedef *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_typedef_init(ret, t, r)) {
+    if (!rir_typedef_init(ret, t, ctx)) {
         free(ret);
         ret = NULL;
     }

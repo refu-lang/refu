@@ -209,7 +209,7 @@ static inline bool rir_type_op_is_sumtype(const struct rir_type *t)
     return darray_size(t->subtypes) && t->category == COMPOSITE_SUM_RIR_TYPE;
 }
 
-static inline bool rir_type_defined_is_sumtype(const struct rir_type *t)
+ bool rir_type_defined_is_sumtype(const struct rir_type *t)
 {
     RF_ASSERT(t->category == COMPOSITE_RIR_DEFINED, "Called with non defined type");
     RF_ASSERT(darray_size(t->subtypes) == 1,

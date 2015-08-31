@@ -18,12 +18,34 @@ static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct modul
     RF_STRUCT_ZERO(ctx);
     ctx->rir = r;
     ctx->current_module_st = &m->node->module.st;
+    darray_init(ctx->visited_rir_types);
+}
+
+static inline void rir_ctx_deinit(struct rir_ctx *ctx)
+{
+    darray_free(ctx->visited_rir_types);
 }
 
 void rir_ctx_reset(struct rir_ctx *ctx)
 {
     ctx->expression_idx = 0;
     ctx->label_idx = 0;
+}
+
+void rir_ctx_visit_type(struct rir_ctx *ctx, const struct rir_type *t)
+{
+    darray_append(ctx->visited_rir_types, t);
+}
+
+bool rir_ctx_type_visited(struct rir_ctx *ctx, const struct rir_type *t)
+{
+    const struct rir_type **type;
+    darray_foreach(type, ctx->visited_rir_types) {
+        if (rir_type_equals(*type, t, RIR_TYPECMP_SIMPLE)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 static bool rir_init(struct rir *r, struct module *m)
@@ -80,6 +102,7 @@ void rir_destroy(struct rir *r)
 
 static bool rir_process_do(struct rir *r, struct module *m)
 {
+    bool ret = false;
     struct ast_node *child;
     struct rir_fndecl *fndecl;
     struct rir_ctx ctx;
@@ -87,20 +110,15 @@ static bool rir_process_do(struct rir *r, struct module *m)
 
     rir_ctx_init(&ctx, r, m);
 
-    // for each non elementary rir type create a typedef/uniondef
+    // for each non elementary, non sum-type rir type create a typedef
     rir_types_list_for_each(r->rir_types_list, t) {
-        if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE ) {
-            struct rir_typedef *def = rir_typedef_create(t, r);
-            rf_ilist_add_tail(&r->typedefs,  &def->ln);
-#if 0
-            // TEMP TO SEE what types are created
-            printf(RF_STR_PF_FMT"", RF_STR_PF_ARG(rir_type_str_or_die(t)));
-            if (t->name) {
-                printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(t->name));
-            } else {
-                printf("\n");
+        if (!rir_type_is_elementary(t) && !rir_ctx_type_visited(&ctx, t) &&
+            t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
+            struct rir_typedef *def = rir_typedef_create(t, &ctx);
+            if (!def) {
+                goto end;
             }
-#endif
+            rf_ilist_add_tail(&r->typedefs,  &def->ln);
         }
     }
 
@@ -109,13 +127,17 @@ static bool rir_process_do(struct rir *r, struct module *m)
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
             fndecl = rir_fndecl_create(child, &ctx);
             if (!fndecl) {
-                return false;
+                goto end;
             }
             rf_ilist_add(&r->functions, &fndecl->ln);
         }
     }
 
-    return true;
+    // success
+    ret = true;
+end:
+    rir_ctx_deinit(&ctx);
+    return ret;
 }
 
 bool rir_process(struct compiler *c)
@@ -227,7 +249,7 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
 
 struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name)
 {
-    struct rir_ltype *type = rir_ltype_elem_create_from_string(name);
+    struct rir_ltype *type = rir_ltype_elem_create_from_string(name, false);
     if (type) {
         return type;
     }

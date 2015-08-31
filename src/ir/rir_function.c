@@ -35,11 +35,15 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         RFS_PUSH();
         struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(ret->arguments->type, true));
         RFS_POP();
+        if (!def) {
+            RF_ERROR("Could not find sum type definition in the RIR");
+            return false;
+        }
         struct rir_argument *arg = rir_argument_create_from_typedef(def);
         darray_init(ret->arguments_list);
         darray_append(ret->arguments_list, arg);
     } else {
-        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list)) {
+        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list, ctx->rir)) {
             return false;
         }
     }

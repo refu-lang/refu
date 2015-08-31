@@ -70,6 +70,7 @@ enum rir_type_category rir_type_op_from_type(const struct type *t);
  * Returns whether a type is a combination of other types
  */
 bool rir_type_is_sumtype(const struct rir_type *a);
+bool rir_type_defined_is_sumtype(const struct rir_type *t);
 
 enum rir_typecmp_options {
     RIR_TYPECMP_SIMPLE = 0x0,
