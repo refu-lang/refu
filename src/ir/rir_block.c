@@ -59,14 +59,14 @@ bool rir_block_exit_return_init(struct rir_block_exit *exit,
     return rir_return_init(&exit->retstmt, val, ctx);
 }
 
-static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_block_exit *exit)
+static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_block_exit *exitb)
 {
     bool ret = false;
     RFS_PUSH();
-    switch (exit->type) {
+    switch (exitb->type) {
     case RIR_BLOCK_EXIT_BRANCH:
-        if (exit->branch.dst) {
-            if (!rir_branch_tostring(ctx, &exit->branch)) {
+        if (exitb->branch.dst) {
+            if (!rir_branch_tostring(ctx, &exitb->branch)) {
                 goto end;
             }
         } else {
@@ -74,16 +74,16 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         }
         break;
     case RIR_BLOCK_EXIT_CONDBRANCH:
-        if (!rir_condbranch_tostring(ctx, &exit->condbranch)) {
+        if (!rir_condbranch_tostring(ctx, &exitb->condbranch)) {
             goto end;
         }
         break;
     case RIR_BLOCK_EXIT_RETURN:
-        if (exit->retstmt.ret.val) {
+        if (exitb->retstmt.ret.val) {
             if (!rf_stringx_append(
                     ctx->rir->buff,
                     RFS(RITOSTR_INDENT"return("RF_STR_PF_FMT")\n",
-                        RF_STR_PF_ARG(rir_value_string(&exit->retstmt.ret.val->val)))
+                        RF_STR_PF_ARG(rir_value_string(&exitb->retstmt.ret.val->val)))
                 )) {
                 goto end;
             }
