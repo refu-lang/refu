@@ -50,10 +50,13 @@ static struct rir_ltype elementary_ptr_types[] = {
 #undef RIR_LTYPE_PTRELEMINIT
 };
 
+i_INLINE_INS bool rir_ltype_is_elementary(const struct rir_ltype *t);
+
 static void rir_ltype_elem_init(struct rir_ltype *t, enum elementary_type etype)
 {
     t->category = RIR_LTYPE_ELEMENTARY;
     t->etype = etype;
+    t->is_pointer = false;
 }
 
 struct rir_ltype *rir_ltype_elem_create_from_string(const struct RFstring *name, bool is_pointer)
@@ -67,17 +70,18 @@ struct rir_ltype *rir_ltype_elem_create(enum elementary_type etype, bool is_poin
     return is_pointer ? &elementary_ptr_types[etype] : &elementary_types[etype];
 }
 
-static void rir_ltype_comp_init(struct rir_ltype *t, const struct rir_typedef *def)
+static void rir_ltype_comp_init(struct rir_ltype *t, const struct rir_typedef *def, bool is_pointer)
 {
     t->category = RIR_LTYPE_COMPOSITE;
     t->tdef = def;
+    t->is_pointer = is_pointer;
 }
 
-struct rir_ltype *rir_ltype_comp_create(struct rir_typedef *def)
+struct rir_ltype *rir_ltype_comp_create(const struct rir_typedef *def, bool is_pointer)
 {
     struct rir_ltype *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_ltype_comp_init(ret, def);
+    rir_ltype_comp_init(ret, def, is_pointer);
     return ret;
 }
 
@@ -114,7 +118,7 @@ static void rir_argument_init(struct rir_argument *a, const struct rir_type *typ
         const struct RFstring *s = type_get_unique_type_str(type->type, true);
         struct rir_typedef *def = rir_typedef_byname(r, s);
         RF_ASSERT_OR_EXIT(def, "typedef should have been found by name");
-        rir_ltype_comp_init(&a->type, def);
+        rir_ltype_comp_init(&a->type, def, false);
         a->name = rf_string_create("GENERATED_NAME");
     }
 }
@@ -132,7 +136,7 @@ struct rir_argument *rir_argument_create_from_typedef(const struct rir_typedef *
     struct rir_argument *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     ret->name = d->name;
-    rir_ltype_comp_init(&ret->type, d);
+    rir_ltype_comp_init(&ret->type, d, false);
     return ret;
 }
 

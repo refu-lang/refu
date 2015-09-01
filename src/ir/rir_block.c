@@ -382,13 +382,11 @@ static bool rir_block_init(struct rir_block *b,
     rf_ilist_head_init(&b->expressions);
     ctx->current_block = b;
     if (!function_beginning) {
-        if (!rir_value_init(&b->label, RIR_VALUE_LABEL, b, ctx)) {
+        if (!rir_value_label_init(&b->label, b, ctx)) {
             return false;
         }
     } else {
-        if (!rir_value_init(&b->label, RIR_VALUE_NIL, NULL, ctx)) {
-            return false;
-        }
+        rir_value_nil_init(&b->label);
     }
 
     struct ast_node *child;
@@ -444,7 +442,7 @@ bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b)
 {
     struct rir_expression *expr;
     rirtostr_ctx_visit_block(ctx, b);
-    if (b->label.type == RIR_VALUE_LABEL) {
+    if (b->label.category == RIR_VALUE_LABEL) {
         if (!rir_value_tostring(ctx->rir, &b->label)) {
             return false;
         }

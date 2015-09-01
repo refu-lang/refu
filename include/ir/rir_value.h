@@ -16,8 +16,12 @@ enum rir_valtype {
 };
 
 struct rir_value {
-    enum rir_valtype type;
+    //! General category of this value
+    enum rir_valtype category;
+    //! A string to represent the value in the generated IR file
     struct RFstring id;
+    //! The type of the value
+    struct rir_ltype *type;
     union {
         struct ast_constant constant;
         struct rir_expression *expr;
@@ -25,11 +29,11 @@ struct rir_value {
     };
 };
 
-bool rir_value_init(struct rir_value *v, enum rir_valtype type, void *obj, struct rir_ctx *ctx);
+bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, struct rir_ctx *ctx);
 bool rir_value_label_init_string(struct rir_value *v, struct rir_block *b, const struct RFstring *s, struct rir_ctx *ctx);
-
-struct rir_value *rir_value_create(enum rir_valtype type, struct rir_expression *e, struct rir_ctx *ctx);
+bool rir_value_label_init(struct rir_value *v, struct rir_block *b, struct rir_ctx *ctx);
 bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c);
+void rir_value_nil_init(struct rir_value *v);
 
 void rir_value_deinit(struct rir_value *v);
 void rir_value_destroy(struct rir_value *v);

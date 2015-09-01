@@ -46,11 +46,10 @@ struct rir_expression *rir_binaryop_create_nonast(enum rir_expression_type type,
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_binaryop_init(&ret->binaryop, a, b);
     if (!rir_expression_init(ret, type, ctx)) {
         free(ret);
         ret = NULL;
-    } else {
-        rir_binaryop_init(&ret->binaryop, a, b);
     }
     return ret;
 }
@@ -153,7 +152,7 @@ static const struct RFstring rir_bop_type_strings[] = {
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
-    if (e->val.type == RIR_VALUE_NIL) {
+    if (e->val.category == RIR_VALUE_NIL) {
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(RITOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",

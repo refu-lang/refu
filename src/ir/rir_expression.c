@@ -16,18 +16,16 @@ bool rir_expression_init(struct rir_expression *expr,
     expr->type = type;
     switch (expr->type) {
     case RIR_EXPRESSION_CONSTANT:
-        if (!rir_value_init(&expr->val, RIR_VALUE_CONSTANT, expr, ctx)) {
+        if (!rir_value_constant_init(&expr->val, &expr->constant)) {
             return false;
         }
         break;
     case RIR_EXPRESSION_WRITE:
     case RIR_EXPRESSION_RETURN:
-        if (!rir_value_init(&expr->val, RIR_VALUE_NIL, expr, ctx)) {
-            return false;
-        }
+        rir_value_nil_init(&expr->val);
         break;
     default:
-        if (!rir_value_init(&expr->val, RIR_VALUE_VARIABLE, expr, ctx)) {
+        if (!rir_value_variable_init(&expr->val, expr, ctx)) {
             return false;
         }
     }
@@ -49,13 +47,12 @@ void rir_expression_destroy(struct rir_expression *expr)
     }
 }
 
-static inline bool rir_alloca_init(struct rir_alloca *obj,
+static inline void rir_alloca_init(struct rir_alloca *obj,
                                    const struct rir_ltype *type,
                                    uint64_t num)
 {
     obj->type = type;
     obj->num = num;
-    return true;
 }
 
 struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
@@ -64,11 +61,8 @@ struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_alloca_init(&ret->alloca, type, num);
     rir_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx);
-    if (!rir_alloca_init(&ret->alloca, type, num)) {
-        free(ret);
-        ret = NULL;
-    }
     return ret;
 }
 
@@ -81,10 +75,10 @@ bool rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val,
                      struct rir_ctx *ctx)
 {
+    ret->ret.val = val;
     if (!rir_expression_init(ret, RIR_EXPRESSION_RETURN, ctx)) {
         return false;
     }
-    ret->ret.val = val;
     return true;
 }
 
@@ -119,6 +113,11 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
+    case RIR_EXPRESSION_READ:
+        if (!rf_stringx_append_cstr(ctx->rir->buff, "read()")) {
+            goto end;
+        }
+        break;
     case RIR_EXPRESSION_CONSTRUCT:
         if (!rf_stringx_append(ctx->rir->buff, RFS("construct"))) {
             goto end;
@@ -144,7 +143,6 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_LOGIC_AND:
     case RIR_EXPRESSION_LOGIC_OR:
     case RIR_EXPRESSION_RETURN:
-    case RIR_EXPRESSION_READ:
     case RIR_EXPRESSION_PLACEHOLDER:
         if (!rf_stringx_append(ctx->rir->buff, RFS("NOT_IMPLEMENTED\n"))) {
             goto end;

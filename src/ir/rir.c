@@ -258,7 +258,7 @@ struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *na
     if (!def) {
         return NULL;
     }
-    return rir_ltype_comp_create(def);
+    return rir_ltype_comp_create(def, false);
 }
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)

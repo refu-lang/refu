@@ -19,7 +19,7 @@ struct rir_value *rir_constantval_fromint(int64_t n)
     struct rir_value *ret;
     struct ast_constant c;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->type = RIR_VALUE_CONSTANT;
+    ret->category = RIR_VALUE_CONSTANT;
     ast_constant_init_int(&c, n);
     return rir_value_constant_init(ret, &c) ? ret : NULL;
 }

@@ -26,9 +26,14 @@ struct rir_ltype {
     };
 };
 
+i_INLINE_DECL bool rir_ltype_is_elementary(const struct rir_ltype *t)
+{
+    return t->category == RIR_LTYPE_ELEMENTARY;
+}
+
 struct rir_ltype *rir_ltype_elem_create(enum elementary_type etype, bool is_pointer);
 struct rir_ltype *rir_ltype_elem_create_from_string(const struct RFstring *name, bool is_pointer);
-struct rir_ltype *rir_ltype_comp_create(struct rir_typedef *def);
+struct rir_ltype *rir_ltype_comp_create(const struct rir_typedef *def, bool is_pointer);
 
 size_t rir_ltype_bytesize(const struct rir_ltype *a);
 const struct RFstring *rir_ltype_string(const struct rir_ltype *t);
