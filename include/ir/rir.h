@@ -83,5 +83,5 @@ void rirtostr_ctx_visit_block(struct rirtostr_ctx *ctx, const struct rir_block *
 bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block *b);
 
 //! Represents one indentation level in the resulting string representation
-#define RITOSTR_INDENT "    "
+#define RIRTOSTR_INDENT "    "
 #endif

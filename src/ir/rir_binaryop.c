@@ -31,12 +31,24 @@ enum binaryop_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
     return binaryop_operation_to_rir[op->type];
 }
 
-static inline void rir_binaryop_init(struct rir_binaryop *rbop,
+static inline bool rir_binaryop_init(struct rir_binaryop *rbop,
+                                     enum rir_expression_type type,
                                      const struct rir_value *a,
-                                     const struct rir_value *b)
+                                     const struct rir_value *b,
+                                     struct rir_ctx *ctx)
 {
+    if (type == RIR_EXPRESSION_WRITE && b->type->is_pointer) {
+        // for write operations on a memory location first create a read from memory
+        struct rir_expression *rexpr = rir_read_create(b, ctx);
+        if (!rexpr) {
+            return false;
+        }
+        rirctx_block_add(ctx, rexpr);
+        b = &rexpr->val;
+    }
     rbop->a = a;
     rbop->b = b;
+    return true;
 }
 
 struct rir_expression *rir_binaryop_create_nonast(enum rir_expression_type type,
@@ -46,12 +58,17 @@ struct rir_expression *rir_binaryop_create_nonast(enum rir_expression_type type,
 {
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_binaryop_init(&ret->binaryop, a, b);
+    if (!rir_binaryop_init(&ret->binaryop, type, a, b, ctx)) {
+        goto fail;
+    }
     if (!rir_expression_init(ret, type, ctx)) {
-        free(ret);
-        ret = NULL;
+        goto fail;
     }
     return ret;
+
+fail:
+    free(ret);
+    return NULL;
 }
 
 struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
@@ -124,11 +141,15 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
     if (!rir_process_ast_node(op->right, ctx)) {
         goto fail;
     }
-    // for some specific type of rhs all of the writting should have already been done
     if (op->right->type == AST_FUNCTION_CALL) {
+        // for function call rhs all of the writting should have already been done
         RIRCTX_RETURN_EXPR(ctx, true, NULL);
     }
     struct rir_expression *rexpr = ctx->returned_expr;
+    /* if (rexpr->type == RIR_EXPRESSION_ALLOCA) { */
+    /*     // for operations on an alloca, location first read the memory */
+    /*     rexpr = rir_read_create(&rexpr->val, ctx); */
+    /* } */
     struct rir_expression *e = rir_binaryop_create(op, &lexpr->val, &rexpr->val, ctx);
     if (!e) {
         goto fail;
@@ -155,7 +176,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
     if (e->val.category == RIR_VALUE_NIL) {
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RITOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
@@ -165,7 +186,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
     } else {
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RITOSTR_INDENT RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),

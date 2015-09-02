@@ -92,6 +92,15 @@ void rir_ltype_destroy(struct rir_ltype *t)
     }
 }
 
+struct rir_ltype *rir_ltype_create_from_other(const struct rir_ltype *other, bool is_pointer)
+{
+    if (other->category == RIR_LTYPE_ELEMENTARY) {
+        return rir_ltype_elem_create(other->etype, is_pointer);
+    } else { // composite
+        return rir_ltype_comp_create(other->tdef, is_pointer);
+    }
+}
+
 size_t rir_ltype_bytesize(const struct rir_ltype *a)
 {
     // TOO

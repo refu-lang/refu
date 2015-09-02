@@ -41,7 +41,7 @@ bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c)
 
 bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, struct rir_ctx *ctx)
 {
-    bool ret = true;
+    bool ret = false;
     v->category = RIR_VALUE_VARIABLE;
     v->expr = e;
     if (!rf_string_initv(&v->id, "$%d", ctx->expression_idx++)) {
@@ -49,14 +49,17 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, stru
     }
     switch (v->expr->type) {
     case RIR_EXPRESSION_ALLOCA:
-        if (v->expr->alloca.type->category == RIR_LTYPE_ELEMENTARY) {
-            v->type = rir_ltype_elem_create(v->expr->alloca.type->etype, true);
-        } else { // composite
-            v->type = rir_ltype_comp_create(v->expr->alloca.type->tdef, true);
-        }
+        v->type = rir_ltype_create_from_other(v->expr->alloca.type, true);
         break;
     case RIR_EXPRESSION_CMP:
         v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_BOOL, false);
+        break;
+    case RIR_EXPRESSION_READ:
+        if (!v->expr->read.memory->type->is_pointer) {
+            RF_ERROR("Tried to rir read from a location not in memory");
+            goto end;
+        }
+        v->type = rir_ltype_create_from_other(v->expr->alloca.type, false);
         break;
     case RIR_EXPRESSION_ADD:
     case RIR_EXPRESSION_SUB:
@@ -71,6 +74,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, stru
     }
     // finally add it to the rir strmap
     ret = rir_strmap_addexpr_from_id(ctx, &v->id, e);
+end:
     return ret;
 }
 

@@ -55,6 +55,16 @@ static inline void rir_alloca_init(struct rir_alloca *obj,
     obj->num = num;
 }
 
+struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
+                                       struct rir_ctx *ctx)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->read.memory = memory_to_read;
+    rir_expression_init(ret, RIR_EXPRESSION_READ, ctx);
+    return ret;
+}
+
 struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
@@ -106,7 +116,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_ALLOCA:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RITOSTR_INDENT RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(rir_ltype_string(e->alloca.type)))
             )) {
@@ -114,7 +124,12 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
         }
         break;
     case RIR_EXPRESSION_READ:
-        if (!rf_stringx_append_cstr(ctx->rir->buff, "read()")) {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = read(" RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_value_string(e->read.memory)))
+            )) {
             goto end;
         }
         break;

@@ -52,9 +52,16 @@ struct rir_binaryop {
     const struct rir_value *b;
 };
 
+struct rir_read {
+    //! Memory value to read from
+    const struct rir_value *memory;
+};
+
 struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
+struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
+                                       struct rir_ctx *ctx);
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
 bool rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val,
@@ -66,6 +73,7 @@ struct rir_expression {
         struct rir_fncall fncall;
         struct rir_alloca alloca;
         struct rir_binaryop binaryop;
+        struct rir_read read;
         struct rir_return ret;
         // kind of ugly but it's exactly what we need
         struct ast_constant constant;

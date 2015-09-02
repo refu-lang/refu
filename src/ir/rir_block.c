@@ -82,13 +82,13 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         if (exitb->retstmt.ret.val) {
             if (!rf_stringx_append(
                     ctx->rir->buff,
-                    RFS(RITOSTR_INDENT"return("RF_STR_PF_FMT")\n",
+                    RFS(RIRTOSTR_INDENT"return("RF_STR_PF_FMT")\n",
                         RF_STR_PF_ARG(rir_value_string(&exitb->retstmt.ret.val->val)))
                 )) {
                 goto end;
             }
         } else {
-            if (!rf_stringx_append_cstr(ctx->rir->buff, RITOSTR_INDENT"return()\n")) {
+            if (!rf_stringx_append_cstr(ctx->rir->buff, RIRTOSTR_INDENT"return()\n")) {
                 goto end;
             }
         }
