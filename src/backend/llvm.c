@@ -174,7 +174,7 @@ static bool bllvm_ir_to_asm(struct compiler_args *args)
 
 static bool backend_asm_to_exec(struct compiler_args *args)
 {
-    return transformation_step_do(args, "gcc", "s", "exe", "-L"RF_CLIB_ROOT" -lrefu");
+    return transformation_step_do(args, "gcc", "s", "exe", "-L"RF_CLIB_ROOT" -lrefu -static");
 }
 
 bool bllvm_generate(struct modules_arr *modules, struct compiler_args *args)

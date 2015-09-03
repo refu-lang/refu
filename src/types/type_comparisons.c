@@ -247,7 +247,7 @@ static bool type_elementary_compare(const struct type *fromtype,
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
-        // no other implicit conversions allowed in patter matching
+        // no other implicit conversions allowed in pattern matching
         if (reason == TYPECMP_PATTERN_MATCHING) {
             goto end;
         }
@@ -355,6 +355,31 @@ static bool type_same_categories_compare(const struct type *from,
     TYPECMP_RETURN(false);
 }
 
+/**
+ * Check if the 2 types are both operators with similar layout
+ */
+static inline bool type_operators_similar_layout(const struct type *from,
+                                                 const struct type *to)
+{
+    if (from->category != TYPE_CATEGORY_OPERATOR) {
+        return false;
+    }
+    if (to->category != TYPE_CATEGORY_OPERATOR) {
+        return false;
+    }
+    if (from->operator.type != to->operator.type) {
+        return false;
+    }
+    if (type_category_equals(from->operator.left, to->operator.left->category)) {
+        return false;
+    }
+    if (type_category_equals(from->operator.right, to->operator.right->category)) {
+        return false;
+    }
+    return true;
+}
+
+// a special check for sum type operators. Other operators always return false
 static bool type_compare_to_operator(const struct type *from,
 									 const struct type_operator *to,
                                      enum comparison_reason reason)
@@ -369,16 +394,36 @@ static bool type_compare_to_operator(const struct type *from,
         bool left_result = type_compare(from, to->left, new_reason);
         if (left_result && !g_typecmp_ctx.conversion_at_final_match) {
             // had an exact match
+            if (type_operators_similar_layout(from, to->left)) {
+                TYPECMP_RETSET_SUCCESS(to->left);
+            }
+            // else
             return true;
         }
 
         bool right_result = type_compare(from, to->right, new_reason);
         if (right_result && !g_typecmp_ctx.conversion_at_final_match) {
-            // had an exact match
+            if (type_operators_similar_layout(from, to->right)) {
+                TYPECMP_RETSET_SUCCESS(to->right);
+            }
+            // else
             return true;
         }
-        // no exact match, but still check if there was a conversion match
-        return left_result || right_result;
+        // no exact match, but still if either side matched even with conversion
+        // we succeed for this special case
+        if (left_result) {
+            if (type_operators_similar_layout(from, to->left)) {
+                TYPECMP_RETSET_SUCCESS(to->left);
+            }
+            // else
+            return true;
+        } else if (right_result) {
+            if (type_operators_similar_layout(from, to->right)) {
+                TYPECMP_RETSET_SUCCESS(to->right);
+            }
+            // else
+            return true;
+        }
     }
     return false;
 }
