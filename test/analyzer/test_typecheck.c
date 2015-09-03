@@ -4,6 +4,8 @@
 #include <string.h>
 
 #include <info/msg.h>
+#include <ast/function.h>
+#include <ast/operators.h>
 
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
@@ -114,8 +116,71 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
         "}\n"
     );
     front_testdriver_new_main_source(&s);
-
     ck_assert_typecheck_ok();
+
+    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
+    ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
+    struct ast_node *block = ast_fnimpl_body_get(fn_impl);
+    struct ast_node *bop1 = ast_node_get_child(block, 0);
+    struct ast_node *bop2 = ast_node_get_child(block, 1);
+    ck_assert(ast_node_is_specific_binaryop(bop1, BINARYOP_ASSIGN));
+    ck_assert(ast_node_is_specific_binaryop(bop2, BINARYOP_ASSIGN));
+    struct ast_node *ctor1 = ast_binaryop_right(bop1);
+    struct ast_node *ctor2 = ast_binaryop_right(bop2);
+    ck_assert(ctor1->type = AST_FUNCTION_CALL);
+    ck_assert(ctor2->type = AST_FUNCTION_CALL);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    ck_assert(type_compare(ctor1->fncall.params_type, t_string, TYPECMP_IDENTICAL));
+    ck_assert(type_compare(ctor2->fncall.params_type, t_u32, TYPECMP_IDENTICAL));
+} END_TEST
+
+START_TEST(test_typecheck_valid_custom_sum_type_constructor2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type person { name:string, b:u64 | id:u32, foo:f64}"
+        "fn do_something()\n"
+        "{\n"
+        "a:person = person(\"Celina\", 53342)\n"
+        "b:person = person(13, 54.231)\n"
+        "}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    ck_assert_typecheck_ok();
+
+    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
+    ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
+    struct ast_node *block = ast_fnimpl_body_get(fn_impl);
+    struct ast_node *bop1 = ast_node_get_child(block, 0);
+    struct ast_node *bop2 = ast_node_get_child(block, 1);
+    ck_assert(ast_node_is_specific_binaryop(bop1, BINARYOP_ASSIGN));
+    ck_assert(ast_node_is_specific_binaryop(bop2, BINARYOP_ASSIGN));
+    struct ast_node *ctor1 = ast_binaryop_right(bop1);
+    struct ast_node *ctor2 = ast_binaryop_right(bop2);
+    ck_assert(ctor1->type = AST_FUNCTION_CALL);
+    ck_assert(ctor2->type = AST_FUNCTION_CALL);
+
+    static const struct RFstring id_name = RF_STRING_STATIC_INIT("name");
+    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
+    static const struct RFstring id_id = RF_STRING_STATIC_INIT("id");
+    static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_leaf_string = testsupport_analyzer_type_create_leaf(&id_name, t_string);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_leaf_u64 = testsupport_analyzer_type_create_leaf(&id_b, t_u64);
+
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_leaf_u32 = testsupport_analyzer_type_create_leaf(&id_id, t_u32);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_leaf_f64 = testsupport_analyzer_type_create_leaf(&id_foo, t_f64);
+
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_leaf_string,
+                                                                     t_leaf_u64);
+    struct type *t_prod_2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_leaf_u32,
+                                                                     t_leaf_f64);
+    ck_assert(type_compare(ctor1->fncall.params_type, t_prod_1, TYPECMP_IDENTICAL));
+    ck_assert(type_compare(ctor2->fncall.params_type, t_prod_2, TYPECMP_IDENTICAL));
 } END_TEST
 
 START_TEST(test_typecheck_invalid_custom_type_constructor) {
@@ -271,6 +336,7 @@ Suite *analyzer_typecheck_suite_create(void)
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_and_fncall2);
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_type_constructor);
     tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_sum_type_constructor);
+    tcase_add_test(t_custom_types_val, test_typecheck_valid_custom_sum_type_constructor2);
 
     TCase *t_custom_types_inv = tcase_create("typecheck_invalid_custom_types");
     tcase_add_checked_fixture(t_custom_types_inv,
