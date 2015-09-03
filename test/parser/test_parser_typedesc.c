@@ -64,8 +64,7 @@ START_TEST(test_acc_typedesc_no_colon) {
 }END_TEST
 
 START_TEST(test_acc_typedesc_fail1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_main_source(rf_string_empty_get());
 
     ck_test_fail_parse_noerr_as(typedesc);
 }END_TEST

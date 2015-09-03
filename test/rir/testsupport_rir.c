@@ -45,11 +45,10 @@ void setup_rir_tests_with_filelog()
 }
 void setup_rir_tests_no_source()
 {
-    const struct RFstring s = RF_STRING_STATIC_INIT("");
     setup_analyzer_tests_no_stdlib();
     ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
                   "Failed to initialize the rir test driver");
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_main_source(rf_string_empty_get());
     testsupport_analyzer_prepare();
 }
 

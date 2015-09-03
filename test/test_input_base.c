@@ -85,8 +85,7 @@ START_TEST(test_acc_ws_none_empty) {
     struct front_ctx *front;
     struct inpoffset *off;
     struct RFstringx *str;
-    static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    front = front_testdriver_new_main_source(&s);
+    front = front_testdriver_new_main_source(rf_string_empty_get());
     f = front->file;
     ck_assert_msg(f, "Failed to assign string to file ");
 

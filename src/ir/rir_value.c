@@ -68,6 +68,26 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, stru
         RF_ASSERT(rir_ltype_is_elementary(v->expr->binaryop.a->type), "Expected elementary type to be used in either part of rir binary op");
         v->type = rir_ltype_elem_create(v->expr->binaryop.a->type->etype, false);
         break;
+    case RIR_EXPRESSION_OBJMEMBERAT:
+        RF_ASSERT(rir_ltype_is_composite(v->expr->objmemberat.objmemory->type), "Expected composite type at objmemberat");
+        v->type = rir_ltype_copy_from_other(
+            rir_ltype_comp_member_type(
+                v->expr->objmemberat.objmemory->type,
+                v->expr->objmemberat.idx
+            )
+        );
+        break;
+    case RIR_EXPRESSION_UNIONMEMBERAT:
+        // for now value type determining is the same as objmemberat.
+        // the memberat index does not take into account the union index
+        RF_ASSERT(rir_ltype_is_composite(v->expr->objmemberat.objmemory->type), "Expected composite type at unionmemberat");
+        v->type = rir_ltype_copy_from_other(
+            rir_ltype_comp_member_type(
+                v->expr->objmemberat.objmemory->type,
+                v->expr->objmemberat.idx
+            )
+        );
+        break;
     default:
         RF_ASSERT(false, "TODO: Unimplemented rir expression to value conversion");
         break;
@@ -122,7 +142,6 @@ bool rir_value_tostring(struct rir *r, const struct rir_value *v)
 
 const struct RFstring *rir_value_string(const struct rir_value *v)
 {
-    static const struct RFstring empty = RF_STRING_STATIC_INIT("");
     switch (v->category) {
     case RIR_VALUE_CONSTANT:
     case RIR_VALUE_VARIABLE:
@@ -131,6 +150,12 @@ const struct RFstring *rir_value_string(const struct rir_value *v)
     case RIR_VALUE_NIL:
         break;
     }
-    return &empty;
+    return rf_string_empty_get();
 }
   
+int64_t rir_value_constant_int_get(const struct rir_value *v)
+{
+    RF_ASSERT(v->category == RIR_VALUE_CONSTANT, "Expected a constant value");
+    RF_ASSERT(v->constant.type == CONSTANT_NUMBER_INTEGER, "Expected an integer constant");
+    return v->constant.value.integer;
+}

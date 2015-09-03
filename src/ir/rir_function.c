@@ -49,7 +49,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     }
 
 
-    const struct rir_argument **arg;
+    struct rir_argument **arg;
     if (rir_type_is_sumtype(ret->arguments)) {
         // TODO
     } else {

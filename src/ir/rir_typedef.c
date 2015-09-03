@@ -70,3 +70,17 @@ bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t)
     }
     return true;
 }
+
+bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t2)
+{
+    // Probably we can avoid comparing argument lists since names are guaranteed
+    // to be unique
+    return rf_string_equal(t1->name, t2->name) && t1->is_union == t2->is_union;
+    // if not we would also need to check something like:
+    // rir_argsarr_equal(&t1->arguments_list, &t2->arguments_list)
+}
+
+const struct rir_argument *rir_typedef_argat(const struct rir_typedef *t, unsigned int i)
+{
+    return darray_size(t->arguments_list) > i ? darray_item(t->arguments_list, i) : NULL;
+}

@@ -95,7 +95,7 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     struct rir_typedef *def = strmap_get(&ctx->rir->map, type_defined_get_name(owner_type));
 
     // find the index of the right part of member access
-    const struct rir_argument **arg;
+    struct rir_argument **arg;
     unsigned int index = 0;
     darray_foreach(arg, def->arguments_list) {
         if (rf_string_equal(rightstr, (*arg)->name)) {
@@ -109,17 +109,11 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_value *ririndexval = rir_constantval_fromint(index);
-    struct rir_expression *readobj = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_OBJMEMBERAT,
-        &lhs->val,
-        ririndexval,
-        ctx
-    );
-    rirctx_block_add(ctx, readobj);
+    struct rir_expression *e = rir_objmemberat_create(&lhs->val, index, ctx);
+    rirctx_block_add(ctx, e);
 
     // return the memberobjat to be used by other rir expressions
-    RIRCTX_RETURN_EXPR(ctx, true, readobj);
+    RIRCTX_RETURN_EXPR(ctx, true, e);
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -168,7 +162,6 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
     [RIR_EXPRESSION_CMP] = RF_STRING_STATIC_INIT("cmp"),
     [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
-    [RIR_EXPRESSION_OBJMEMBERAT] = RF_STRING_STATIC_INIT("objmemberat"),
 };
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

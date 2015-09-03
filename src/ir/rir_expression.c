@@ -22,6 +22,7 @@ bool rir_expression_init(struct rir_expression *expr,
         break;
     case RIR_EXPRESSION_WRITE:
     case RIR_EXPRESSION_RETURN:
+    case RIR_EXPRESSION_SETUNIONIDX:
         rir_value_nil_init(&expr->val);
         break;
     default:
@@ -61,7 +62,10 @@ struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     ret->read.memory = memory_to_read;
-    rir_expression_init(ret, RIR_EXPRESSION_READ, ctx);
+    if (!rir_expression_init(ret, RIR_EXPRESSION_READ, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
@@ -72,13 +76,61 @@ struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
     struct rir_expression *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     rir_alloca_init(&ret->alloca, type, num);
-    rir_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx);
+    if (!rir_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
 static inline void rir_alloca_deinit(struct rir_expression *obj)
 {
     return;// TODO
+}
+
+struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->setunionidx.unimemory = unimemory;
+    ret->setunionidx.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_SETUNIONIDX, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->objmemberat.objmemory = objmemory;
+    ret->objmemberat.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_OBJMEMBERAT, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
+                                                uint32_t idx,
+                                                struct rir_ctx *ctx)
+{
+    struct rir_expression *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    ret->unionmemberat.unimemory = unimemory;
+    ret->unionmemberat.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_UNIONMEMBERAT, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
 }
 
 bool rir_return_init(struct rir_expression *ret,
@@ -110,6 +162,38 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     switch(e->type) {
     case RIR_EXPRESSION_FNCALL:
         if (!rf_stringx_append(ctx->rir->buff, RFS("fncall"))) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_SETUNIONIDX:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT"setunionidx(" RF_STR_PF_FMT ", %" PRId32 ")\n",
+                    RF_STR_PF_ARG(rir_value_string(e->setunionidx.unimemory)),
+                    e->setunionidx.idx)
+            )) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_OBJMEMBERAT:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = objmemberat(" RF_STR_PF_FMT ", %" PRId32 ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_value_string(e->objmemberat.objmemory)),
+                    e->setunionidx.idx)
+            )) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_UNIONMEMBERAT:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = unionmemberat(" RF_STR_PF_FMT ", %" PRId32 ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_value_string(e->unionmemberat.unimemory)),
+                    e->setunionidx.idx)
+            )) {
             goto end;
         }
         break;
@@ -149,7 +233,6 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_DIV:
     case RIR_EXPRESSION_CMP:
     case RIR_EXPRESSION_WRITE:
-    case RIR_EXPRESSION_OBJMEMBERAT:
         if (!rir_binaryop_tostring(ctx, e)) {
             goto end;
         }

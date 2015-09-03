@@ -3,6 +3,7 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir_type.h>
 #include <types/type.h>
+#include <ast/function.h>
 #include <Data_Structures/darray.h>
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>
@@ -51,6 +52,11 @@ static struct rir_ltype elementary_ptr_types[] = {
 };
 
 i_INLINE_INS bool rir_ltype_is_elementary(const struct rir_ltype *t);
+i_INLINE_INS bool rir_ltype_is_composite(const struct rir_ltype *t);
+bool rir_ltype_is_union(const struct rir_ltype *t)
+{
+    return t->category == RIR_LTYPE_COMPOSITE && t->tdef->is_union;
+}
 
 static void rir_ltype_elem_init(struct rir_ltype *t, enum elementary_type etype)
 {
@@ -101,6 +107,36 @@ struct rir_ltype *rir_ltype_create_from_other(const struct rir_ltype *other, boo
     }
 }
 
+struct rir_ltype *rir_ltype_copy_from_other(const struct rir_ltype *other)
+{
+    if (other->category == RIR_LTYPE_ELEMENTARY) {
+        return rir_ltype_elem_create(other->etype, other->is_pointer);
+    } else { // composite
+        return rir_ltype_comp_create(other->tdef, other->is_pointer);
+    }
+}
+
+bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b)
+{
+    if (a->category != b->category) {
+        return false;
+    }
+    if (a->is_pointer != b->is_pointer) {
+        return false;
+    }
+
+    if (a->category == RIR_LTYPE_ELEMENTARY) {
+        if (a->etype != b->etype) {
+            return false;
+        }
+    } else { // composite type
+        if (!rir_typedef_equal(a->tdef, b->tdef)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 size_t rir_ltype_bytesize(const struct rir_ltype *a)
 {
     // TOO
@@ -116,13 +152,53 @@ const struct RFstring *rir_ltype_string(const struct rir_ltype *t)
     }
 }
 
+const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, unsigned int i)
+{
+    RF_ASSERT(rir_ltype_is_composite(t), "Expected composite type");
+    const struct rir_argument *arg = rir_typedef_argat(t->tdef, i);
+    return arg ? &arg->type : NULL;
+}
+
+int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, const struct rir *r)
+{
+    RF_ASSERT(rir_ltype_is_union(t), "Expected a union type");
+    const struct type *matched = ast_fncall_params_type(n);
+    struct rir_argument **arg;
+    struct args_arr t_args;
+    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, r)) {
+        return -1;
+    }
+
+    int index = 0;
+    darray_foreach(arg, t->tdef->arguments_list) {
+        RF_ASSERT((*arg)->type.category == RIR_LTYPE_COMPOSITE,
+                  "each of the union's members should be its own typedef");
+        //now check if this is the type that matches the function call
+        if (rir_argsarr_equal(&t_args, &(*arg)->type.tdef->arguments_list)) {
+            goto end;
+        }
+        ++index;
+    }
+    // failure
+    index = -1;
+
+end:
+    rir_argsarr_deinit(&t_args);
+    return index;
+}
+
+
 
 static void rir_argument_init(struct rir_argument *a, const struct rir_type *type, const struct rir *r)
 {
+    static const struct RFstring noname = RF_STRING_STATIC_INIT("noname");
     if (rir_type_is_elementary(type)) {
-        RF_ASSERT(type->name, "An elementary type should always be accompanied by a name");
         rir_ltype_elem_init(&a->type, (enum elementary_type)type->category);
-        a->name = type->name;
+        if (type->name) {
+            a->name = type->name;
+        } else {
+            a->name = &noname;
+        }
     } else {
         const struct RFstring *s = type_get_unique_type_str(type->type, true);
         struct rir_typedef *def = rir_typedef_byname(r, s);
@@ -201,7 +277,7 @@ bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr)
 {
     size_t i = 0;
     size_t args_num = darray_size(*arr);
-    const struct rir_argument **arg;
+    struct rir_argument **arg;
     darray_foreach(arg, *arr) {
         if (!rir_argument_tostring(ctx, *arg)) {
             return false;
@@ -213,4 +289,28 @@ bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr)
         }
     }
     return true;
+}
+
+bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
+{
+    size_t size = darray_size(*arr1);
+    if (size != darray_size(*arr2)) {
+        return false;
+    }
+
+    for (int i = 0; i < size; ++i) {
+        if (!rir_ltype_equal(&darray_item(*arr1, i)->type, &darray_item(*arr2, i)->type)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void rir_argsarr_deinit(struct args_arr *arr)
+{
+    struct rir_argument **arg;
+    darray_foreach(arg, *arr) {
+        rir_argument_destroy(*arg);
+    }
+    darray_free(*arr);
 }

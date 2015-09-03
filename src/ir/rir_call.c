@@ -3,17 +3,22 @@
 #include <ir/rir_block.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_argument.h>
 #include <ast/function.h>
 #include <types/type.h>
 
 struct args_to_val_ctx {
     struct rir_ctx *rir_ctx;
+    //! left hand of assignment
+    struct rir_expression *lhs;
+    //! index of the argument we are iterating
     unsigned index;
 };
 
-void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_ctx *rir_ctx)
+void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_expression *lhs, struct rir_ctx *rir_ctx)
 {
     ctx->rir_ctx = rir_ctx;
+    ctx->lhs = lhs;
     ctx->index = 0;
 }
 static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_ctx *ctx)
@@ -32,23 +37,29 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
         return false;
     }
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_value *ririndexval = rir_constantval_fromint(ctx->index);
-    struct rir_expression *readobj = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_OBJMEMBERAT,
+    struct rir_expression *readobj = rir_objmemberat_create(
         &ctx->rir_ctx->last_assign_lhs->val,
-        ririndexval,
+        ctx->index,
         ctx->rir_ctx
     );
+    if (!readobj) {
+        RF_ERROR("Failed to create rir expression to read an object's value");
+        return false;
+    }
     rirctx_block_add(ctx->rir_ctx, readobj);
-    // write the arge expression to the position
+    // write the arg expression to the position
     struct rir_expression *e = rir_binaryop_create_nonast(
         RIR_EXPRESSION_WRITE,
         &readobj->val,
         &argexpr->val,
         ctx->rir_ctx
     );
+    if (!e) {
+        RF_ERROR("Failed to create expression to write to an object's member");
+        return false;
+    }
     rirctx_block_add(ctx->rir_ctx, e);
-    
+
     ++ctx->index;
     return true;
 }
@@ -67,14 +78,43 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
         return false;
     }
 
-    struct args_to_val_ctx argsctx;
-    args_to_val_ctx_init(&argsctx, ctx);
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
-        if (type_is_sumtype(fn_type)) {
-            RF_ASSERT(false, "TODO");
-        } else {
-            ast_fncall_for_each_arg(n, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
+        struct rir_expression *lhs = ctx->last_assign_lhs;
+        if (!lhs) {
+            RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
+            return false;
         }
+
+        struct args_to_val_ctx argsctx;
+        if (type_is_sumtype(fn_type)) {
+
+            RF_ASSERT(lhs->type == RIR_EXPRESSION_ALLOCA, "Constructor of a sum type should assign to an alloca expression");
+            RF_ASSERT(rir_ltype_is_composite(lhs->val.type), "Constructor should assign to a composite type");
+            int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->val.type, n, ctx->rir);
+            if (union_idx == -1) {
+                RF_ERROR("RIR sum constructor not matching any part of the original type");
+                return false;
+            }
+            // create code to set the  union's index with the matching type
+            struct rir_expression *e = rir_setunionidx_create(&lhs->val, union_idx, ctx);
+            if (!e) {
+                return false;
+            }
+            rirctx_block_add(ctx, e);
+            // create code to load the appropriate union subtype for reading
+            e = rir_unionmemberat_create(&lhs->val, union_idx, ctx);
+            if (!e) {
+                return false;
+            }
+            lhs = e;
+        }
+
+        // now for whichever object (normal type, or union type sutype) is loaded as left hand side
+        // assign from constructor's arguments
+        args_to_val_ctx_init(&argsctx, lhs, ctx);
+        ast_fncall_for_each_arg(n, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
+    } else { // normal function call
+        RF_ASSERT(false, "TODO");
     }
     return true;
 }

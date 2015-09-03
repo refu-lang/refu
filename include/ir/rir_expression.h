@@ -20,6 +20,8 @@ enum rir_expression_type {
     RIR_EXPRESSION_WRITE,
     RIR_EXPRESSION_READ,
     RIR_EXPRESSION_OBJMEMBERAT,
+    RIR_EXPRESSION_SETUNIONIDX,
+    RIR_EXPRESSION_UNIONMEMBERAT,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
@@ -57,9 +59,33 @@ struct rir_read {
     const struct rir_value *memory;
 };
 
+struct rir_objmemberat {
+    const struct rir_value *objmemory;
+    uint32_t idx;
+};
+
+struct rir_setunionidx {
+    const struct rir_value *unimemory;
+    uint32_t idx;
+};
+
+struct rir_unionmemberat {
+    const struct rir_value *unimemory;
+    uint32_t idx;
+};
+
 struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
+struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx);
+struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
+                                                uint32_t idx,
+                                                struct rir_ctx *ctx);
+struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx);
 struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
                                        struct rir_ctx *ctx);
 struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
@@ -72,6 +98,9 @@ struct rir_expression {
     union {
         struct rir_fncall fncall;
         struct rir_alloca alloca;
+        struct rir_setunionidx setunionidx;
+        struct rir_unionmemberat unionmemberat;
+        struct rir_objmemberat objmemberat;
         struct rir_binaryop binaryop;
         struct rir_read read;
         struct rir_return ret;

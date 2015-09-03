@@ -127,8 +127,7 @@ START_TEST(test_symbol_table_lookup_non_existing) {
     struct symbol_table st;
     static const struct RFstring id1s = RF_STRING_STATIC_INIT("I_dont_exist");
     static const struct RFstring id2s = RF_STRING_STATIC_INIT("neither_do_I");
-    static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_main_source(rf_string_empty_get());
     testsupport_analyzer_prepare();
 
     ck_assert(symbol_table_init(&st, front_testdriver_module()));
@@ -270,8 +269,7 @@ START_TEST(test_symbol_table_many_symbols) {
     struct symbol_table_record *rec;
     unsigned int i;
     struct symbol_table st;
-    static const struct RFstring s = RF_STRING_STATIC_INIT("");
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_main_source(rf_string_empty_get());
     testsupport_analyzer_prepare();
 
     ck_assert(symbol_table_init(&st, front_testdriver_module()));

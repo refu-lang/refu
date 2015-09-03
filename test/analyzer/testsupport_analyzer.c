@@ -52,12 +52,11 @@ void setup_analyzer_tests_no_stdlib()
 
 void setup_analyzer_tests_no_source()
 {
-    const struct RFstring s = RF_STRING_STATIC_INIT("");
     setup_front_tests();
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
     // empty source file
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_main_source(rf_string_empty_get());
     // and since it's empty get to the analysis stage (some tests need this)
     testsupport_analyzer_prepare();
 }
