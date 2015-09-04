@@ -146,9 +146,13 @@ size_t rir_ltype_bytesize(const struct rir_ltype *a)
 const struct RFstring *rir_ltype_string(const struct rir_ltype *t)
 {
     if (t->category == RIR_LTYPE_ELEMENTARY) {
-        return type_elementary_get_str(t->etype);
+        return RFS(RF_STR_PF_FMT"%s",
+                   RF_STR_PF_ARG(type_elementary_get_str(t->etype)),
+                   t->is_pointer ? "*" : "");
     } else {
-        return t->tdef->name;
+        return RFS(RF_STR_PF_FMT"%s",
+                   RF_STR_PF_ARG((t->tdef->name)),
+                   t->is_pointer ? "*" : "");
     }
 }
 

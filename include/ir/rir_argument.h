@@ -45,6 +45,15 @@ struct rir_ltype *rir_ltype_copy_from_other(const struct rir_ltype *other);
 struct rir_ltype *rir_ltype_create_from_other(const struct rir_ltype *other, bool is_pointer);
 
 size_t rir_ltype_bytesize(const struct rir_ltype *a);
+
+/**
+ * Create a temporary string representation of the type
+ *
+ * @note This call needs to be enclosed in RFS_PUSH/RFS_POP
+ *
+ * @param t         The type whose representation to get
+ * @return          A string representing @a t
+ */
 const struct RFstring *rir_ltype_string(const struct rir_ltype *t);
 
 const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, unsigned int i);

@@ -166,7 +166,21 @@ static const struct RFstring rir_bop_type_strings[] = {
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
-    if (e->val.category == RIR_VALUE_NIL) {
+    bool ret = false;
+    RFS_PUSH();
+
+    if (e->type == RIR_EXPRESSION_WRITE) {
+        const struct RFstring *memtype_s = rir_ltype_string(e->binaryop.a->type);
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT "write(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
+                    RF_STR_PF_ARG(memtype_s),
+                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
+            )) {
+            goto end;
+        }
+    } else if (e->val.category == RIR_VALUE_NIL) {
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
@@ -174,7 +188,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
             )) {
-            return false;
+            goto end;
         }
     } else {
         if (!rf_stringx_append(
@@ -185,9 +199,12 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
                     RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
             )) {
-            return false;
+            goto end;
         }
     }
 
-    return true;
+    ret = true;
+end:
+    RFS_POP();
+    return ret;
 }
