@@ -2,6 +2,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
 #include <ir/rir_type.h>
+#include <ir/rir_object.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
@@ -53,6 +54,7 @@ static bool rir_init(struct rir *r, struct module *m)
     RF_STRUCT_ZERO(r);
     strmap_init(&r->map);
     rf_ilist_head_init(&r->functions);
+    rf_ilist_head_init(&r->objects);
     rf_ilist_head_init(&r->typedefs);
     // create the rir types list from the types set for this module
     if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
@@ -82,14 +84,14 @@ static void rir_deinit(struct rir *r)
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
         rir_fndecl_destroy(fn);
     }
-    struct rir_typedef *def;
-    struct rir_typedef *deftmp;
-    rf_ilist_for_each_safe(&r->typedefs, def, deftmp, ln) {
-        rir_typedef_destroy(def);
-    }
-    // strmap members are typedefs and functions, all of which are in their own lists
-    // so at the moment there is no need to iterate the map and free them here
-    strmap_clear(&r->map);
+
+    // TODO
+    // all other rir objects are in the global rir object list so destroy them
+    /* struct rir_object *obj; */
+    /* struct rir_object *tmpobj; */
+    /* rf_ilist_for_each_safe(&r->objects, obj, tmpobj, ln) { */
+    /*     rir_object_destroy(obj); */
+    /* } */
 }
 
 void rir_destroy(struct rir *r)

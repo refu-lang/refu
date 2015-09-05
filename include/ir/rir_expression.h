@@ -74,7 +74,7 @@ struct rir_unionmemberat {
     uint32_t idx;
 };
 
-struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
+struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
@@ -88,10 +88,9 @@ struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
                                               struct rir_ctx *ctx);
 struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
                                        struct rir_ctx *ctx);
-struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
-bool rir_return_init(struct rir_expression *ret,
-                     const struct rir_expression *val,
-                     struct rir_ctx *ctx);
+struct rir_object *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
+void rir_return_init(struct rir_expression *ret,
+                     const struct rir_expression *val);
 
 struct rir_expression {
     enum rir_expression_type type;
@@ -112,7 +111,7 @@ struct rir_expression {
     struct RFilist_node ln;
 };
 
-bool rir_expression_init(struct rir_expression *expr,
+bool rir_expression_init(struct rir_object *expr,
                          enum rir_expression_type type,
                          struct rir_ctx *ctx);
 void rir_expression_destroy(struct rir_expression *expr);

@@ -2,6 +2,7 @@
 #include <Utils/memory.h>
 #include <Utils/sanity.h>
 #include <ir/rir.h>
+#include <ir/rir_object.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_value.h>
 #include <ir/rir_function.h>
@@ -51,12 +52,11 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
     }
 }
 
-bool rir_block_exit_return_init(struct rir_block_exit *exit,
-                                const struct rir_expression *val,
-                                struct rir_ctx *ctx)
+void rir_block_exit_return_init(struct rir_block_exit *exit,
+                                const struct rir_expression *val)
 {
     exit->type = RIR_BLOCK_EXIT_RETURN;
-    return rir_return_init(&exit->retstmt, val, ctx);
+    rir_return_init(&exit->retstmt, val);
 }
 
 static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_block_exit *exitb)
@@ -254,7 +254,7 @@ static bool rir_process_vardecl(const struct ast_node *n,
         RF_ERROR("Could not find the type that an alloc() command should allocate in the RIR");
         return false;
     }
-    struct rir_expression *alloca = rir_alloca_create(
+    struct rir_object *alloca = rir_alloca_create_obj(
         allocated_type,
         1,
         ctx
@@ -262,11 +262,12 @@ static bool rir_process_vardecl(const struct ast_node *n,
     if (!alloca) {
         goto fail;
     }
-    if (!strmap_add(&ctx->current_fn->id_map, id_str, alloca)) {
+    if (!strmap_add(&ctx->current_fn->ast_map, id_str, alloca)) {
+        RF_ERROR("Could not add vardecl to function ast string map");
         goto fail;
     }
-    rirctx_block_add(ctx, alloca);
-    RIRCTX_RETURN_EXPR(ctx, true, alloca);
+    rirctx_block_add(ctx, &alloca->expr);
+    RIRCTX_RETURN_EXPR(ctx, true, &alloca->expr);
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -275,13 +276,12 @@ fail:
 static bool rir_process_return(const struct ast_node *n,
                                struct rir_ctx *ctx)
 {
-    const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
     if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     struct rir_expression *ret_val = ctx->returned_expr;
     // write the return value to the return slot
-    struct rir_expression *ret_slot = strmap_get(&ctx->current_fn->id_map, &returnval_str);
+    struct rir_expression *ret_slot = rir_fnmap_get_returnslot(ctx);
     if (!ret_slot) {
         RF_ERROR("Could not find the returnvalue of a function in the string map");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -306,12 +306,13 @@ static bool rir_process_constant(const struct ast_node *n,
 bool rir_process_identifier(const struct ast_node *n,
                             struct rir_ctx *ctx)
 {
-    struct rir_expression *expr = strmap_get(&ctx->current_fn->id_map, ast_identifier_str(n));
+    struct rir_object *expr = strmap_get(&ctx->current_fn->ast_map, ast_identifier_str(n));
+    RF_ASSERT(expr->category == RIR_OBJ_EXPRESSION, "Exprected expression object");
     if (!expr) {
         RF_ERROR("An identifier was not found in the strmap during rir creation");
         return NULL;
     }
-    RIRCTX_RETURN_EXPR(ctx, true, expr);
+    RIRCTX_RETURN_EXPR(ctx, true, &expr->expr);
 }
 
 bool rir_process_ast_node(const struct ast_node *n,
@@ -344,45 +345,53 @@ bool rir_process_ast_node(const struct ast_node *n,
     return false;
 }
 
-struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx)
+struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx)
 {
     const struct RFstring fend_label = RF_STRING_STATIC_INIT("%function_end");
-    struct rir_block *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    RF_STRUCT_ZERO(ret);
-    ctx->current_block = ret;
-    rf_ilist_head_init(&ret->expressions);
-    if (!rir_value_label_init_string(&ret->label, ret, &fend_label, ctx)) {
+    struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->rir);
+    if (!ret) {
+        free(ret);
+        ret = NULL;
+    }
+    struct rir_block *b = &ret->block;
+    RF_STRUCT_ZERO(b);
+    ctx->current_block = b;
+    rf_ilist_head_init(&b->expressions);
+    if (!rir_value_label_init_string(&ret->block.label, ret, &fend_label, ctx)) {
         free (ret);
         ret = NULL;
     }
 
     // current block's exit should be the return
-    const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
     struct rir_expression *ret_slot = NULL;
     if (has_return) {
-        ret_slot = strmap_get(&ctx->current_fn->id_map, &returnval_str);
+        ret_slot = rir_fnmap_get_returnslot(ctx);
         if (!ret_slot) {
             RF_ERROR("Could not find the returnvalue of a function in the string map");
             RIRCTX_RETURN_EXPR(ctx, false, NULL);
         }
     }
-    if (!rir_block_exit_return_init(&ret->exit, ret_slot, ctx)) {
-        RIRCTX_RETURN_EXPR(ctx, false, NULL);
-    }
+    rir_block_exit_return_init(&ret->block.exit, ret_slot);
     return ret;
 }
 
-static bool rir_block_init(struct rir_block *b,
+struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_block_functionend_create_obj(has_return, ctx);
+    return obj ? &obj->block : NULL;
+}
+
+static bool rir_block_init(struct rir_object *obj,
                            const struct ast_node *n,
                            bool function_beginning,
                            struct rir_ctx *ctx)
 {
+    struct rir_block *b = &obj->block;
     RF_STRUCT_ZERO(b);
     rf_ilist_head_init(&b->expressions);
     ctx->current_block = b;
     if (!function_beginning) {
-        if (!rir_value_label_init(&b->label, b, ctx)) {
+        if (!rir_value_label_init(&b->label, obj, ctx)) {
             return false;
         }
     } else {
@@ -409,17 +418,30 @@ static bool rir_block_init(struct rir_block *b,
     return true;
 }
 
+struct rir_object *rir_block_create_obj(const struct ast_node *n,
+                                        bool function_beginning,
+                                        struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->rir);
+    if (!ret) {
+        goto fail;
+    }
+    if (!rir_block_init(ret, n, function_beginning, ctx)) {
+        goto fail;
+    }
+    return ret;
+
+fail:
+    free(ret);
+    return NULL;
+}
+
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    bool function_beginning,
                                    struct rir_ctx *ctx)
 {
-    struct rir_block *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_block_init(ret, n, function_beginning, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
+    struct rir_object *obj = rir_block_create_obj(n, function_beginning, ctx);
+    return obj ? &obj->block : NULL;
 }
 
 static void rir_block_deinit(struct rir_block* b)

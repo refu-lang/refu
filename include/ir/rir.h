@@ -19,6 +19,8 @@ struct rir {
     struct RFilist_head functions;
     //! List of type definitions
     struct RFilist_head typedefs;
+    //! List of all rir objects
+    struct RFilist_head objects;
     //! Map from strings to rir objects.
     struct rirobj_strmap map;
     //! Buffer string to hold the string representation when asked. Can be NULL.

@@ -1,17 +1,27 @@
 #include <ir/rir_constant.h>
 #include <ir/rir.h>
+#include <ir/rir_object.h>
 #include <ir/rir_expression.h>
 #include <Utils/memory.h>
 #include <ast/ast.h>
 #include <ast/constants.h>
 
-struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx)
+static struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->constant = c->constant;
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+
+    ret->expr.constant = c->constant;
     rir_expression_init(ret, RIR_EXPRESSION_CONSTANT, ctx);
     return ret;
+}
+
+struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_constant_create_obj(c, ctx);
+    return obj ? &obj->expr : NULL;
 }
 
 struct rir_value *rir_constantval_fromint(int64_t n)

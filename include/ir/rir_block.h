@@ -33,9 +33,8 @@ bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
                                     struct rir_expression *cond,
                                     struct rir_value *taken,
                                     struct rir_value *fallthrough);
-bool rir_block_exit_return_init(struct rir_block_exit *exit,
-                                const struct rir_expression *val,
-                                struct rir_ctx *ctx);
+void rir_block_exit_return_init(struct rir_block_exit *exit,
+                                const struct rir_expression *val);
 
 struct rir_block {
     struct rir_block_exit exit;
@@ -57,9 +56,13 @@ struct rir_block {
  * @param function_start  If true, then this is the first block of a function
  * @param ctx             The rir ctx for traversal
  */
+struct rir_object *rir_block_create_obj(const struct ast_node *n,
+                                    bool function_beginning,
+                                    struct rir_ctx *ctx);
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    bool function_beginning,
                                    struct rir_ctx *ctx);
+struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx);
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);
 
 /**

@@ -1,5 +1,6 @@
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
+#include <ir/rir_object.h>
 #include <ir/rir_value.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_function.h>
@@ -8,13 +9,24 @@
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
+void rir_expression_init_with_nilval(struct rir_expression *e,
+                                     enum rir_expression_type type)
+{
+    RF_ASSERT(type == RIR_EXPRESSION_WRITE ||
+              type == RIR_EXPRESSION_RETURN ||
+              type == RIR_EXPRESSION_SETUNIONIDX,
+              "Expression which should not have a nil value given to function");
+    e->type = type;
+    rir_value_nil_init(&e->val);
+}
 
-bool rir_expression_init(struct rir_expression *expr,
+bool rir_expression_init(struct rir_object *obj,
                          enum rir_expression_type type,
                          struct rir_ctx *ctx)
 {
+    struct rir_expression *expr = &obj->expr;
     expr->type = type;
-    switch (expr->type) {
+    switch (obj->expr.type) {
     case RIR_EXPRESSION_CONSTANT:
         if (!rir_value_constant_init(&expr->val, &expr->constant)) {
             return false;
@@ -26,7 +38,7 @@ bool rir_expression_init(struct rir_expression *expr,
         rir_value_nil_init(&expr->val);
         break;
     default:
-        if (!rir_value_variable_init(&expr->val, expr, ctx)) {
+        if (!rir_value_variable_init(&expr->val, obj, ctx)) {
             return false;
         }
     }
@@ -56,12 +68,15 @@ static inline void rir_alloca_init(struct rir_alloca *obj,
     obj->num = num;
 }
 
-struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
-                                       struct rir_ctx *ctx)
+static struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
+                                          struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->read.memory = memory_to_read;
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        free(ret);
+        return NULL;
+    }
+    ret->expr.read.memory = memory_to_read;
     if (!rir_expression_init(ret, RIR_EXPRESSION_READ, ctx)) {
         free(ret);
         ret = NULL;
@@ -69,13 +84,22 @@ struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
     return ret;
 }
 
-struct rir_expression *rir_alloca_create(const struct rir_ltype *type,
-                                         uint64_t num,
-                                         struct rir_ctx *ctx)
+struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
+                                   struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_alloca_init(&ret->alloca, type, num);
+    struct rir_object *obj = rir_read_create_obj(memory_to_read, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
+struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
+                                             uint64_t num,
+                                             struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    rir_alloca_init(&ret->expr.alloca, type, num);
     if (!rir_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx)) {
         free(ret);
         ret = NULL;
@@ -88,15 +112,42 @@ static inline void rir_alloca_deinit(struct rir_expression *obj)
     return;// TODO
 }
 
+static struct rir_object *rir_setunionidx_create_obj(const struct rir_value *unimemory,
+                                                     uint32_t idx,
+                                                     struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.setunionidx.unimemory = unimemory;
+    ret->expr.setunionidx.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_SETUNIONIDX, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->setunionidx.unimemory = unimemory;
-    ret->setunionidx.idx = idx;
-    if (!rir_expression_init(ret, RIR_EXPRESSION_SETUNIONIDX, ctx)) {
+    struct rir_object *obj = rir_setunionidx_create_obj(unimemory, idx, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
+static struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
+                                                     uint32_t idx,
+                                                     struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.objmemberat.objmemory = objmemory;
+    ret->expr.objmemberat.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_OBJMEMBERAT, ctx)) {
         free(ret);
         ret = NULL;
     }
@@ -107,11 +158,21 @@ struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->objmemberat.objmemory = objmemory;
-    ret->objmemberat.idx = idx;
-    if (!rir_expression_init(ret, RIR_EXPRESSION_OBJMEMBERAT, ctx)) {
+    struct rir_object *obj = rir_objmemberat_create_obj(objmemory, idx, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
+static struct rir_object *rir_unionmemberat_create_obj(const struct rir_value *unimemory,
+                                                       uint32_t idx,
+                                                       struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.unionmemberat.unimemory = unimemory;
+    ret->expr.unionmemberat.idx = idx;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_UNIONMEMBERAT, ctx)) {
         free(ret);
         ret = NULL;
     }
@@ -122,37 +183,15 @@ struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemor
                                                 uint32_t idx,
                                                 struct rir_ctx *ctx)
 {
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->unionmemberat.unimemory = unimemory;
-    ret->unionmemberat.idx = idx;
-    if (!rir_expression_init(ret, RIR_EXPRESSION_UNIONMEMBERAT, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
+    struct rir_object *obj = rir_unionmemberat_create_obj(unimemory, idx, ctx);
+    return obj ? &obj->expr : NULL;
 }
 
-bool rir_return_init(struct rir_expression *ret,
-                     const struct rir_expression *val,
-                     struct rir_ctx *ctx)
+void rir_return_init(struct rir_expression *ret,
+                     const struct rir_expression *val)
 {
     ret->ret.val = val;
-    if (!rir_expression_init(ret, RIR_EXPRESSION_RETURN, ctx)) {
-        return false;
-    }
-    return true;
-}
-
-struct rir_expression *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx)
-{
-    struct rir_expression *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_return_init(ret, val, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
+    rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
 }
 
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

@@ -5,6 +5,7 @@
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_argument.h>
+#include <ir/rir_object.h>
 #include <ir/rir.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
@@ -20,7 +21,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
     darray_init(ret->blocks);
     strmap_init(&ret->map);
-    strmap_init(&ret->id_map);
+    strmap_init(&ret->ast_map);
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *args = ast_fndecl_args_get(decl);
     struct ast_node *returns = ast_fndecl_return_get(decl);
@@ -39,7 +40,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
-        struct rir_argument *arg = rir_argument_create_from_typedef(def);
+        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx->rir);
         darray_init(ret->arguments_list);
         darray_append(ret->arguments_list, arg);
     } else {
@@ -49,21 +50,22 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     }
 
 
-    struct rir_argument **arg;
+    struct rir_object **arg;
     if (rir_type_is_sumtype(ret->arguments)) {
         // TODO
     } else {
         darray_foreach(arg, ret->arguments_list) {
-            const struct rir_ltype *arg_type = &(*arg)->type;
-            struct rir_expression *e = rir_alloca_create(arg_type, rir_ltype_bytesize(arg_type), ctx);
-            strmap_add(&ctx->current_fn->id_map, (*arg)->name, e);
+            if (!strmap_add(&ctx->current_fn->ast_map, (*arg)->arg.name, *arg)) {
+                RF_ERROR("Could not add argument to function ast string map");
+                return false;
+            }
         }
     }
 
     // if we got a return value allocate space for it
     if (returns) {
         const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
-        struct rir_expression *alloca = rir_alloca_create(
+        struct rir_object *alloca = rir_alloca_create_obj(
             rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT)),
             1,
             ctx
@@ -71,7 +73,8 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         if (!alloca) {
             return false;
         }
-        if (!strmap_add(&ctx->current_fn->id_map, &returnval_str, alloca)) {
+        if (!rir_fnmap_addobj(ctx, &returnval_str, alloca)) {
+            RF_ERROR("Could not add return val to function string map");
             return false;
         }
     }
@@ -115,19 +118,11 @@ struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *c
     return ret;
 }
 
-static bool free_map_member(struct RFstring *id,
-                            struct rir_expression *e,
-                            void *user_arg)
-{
-    (void) user_arg;
-    rir_expression_destroy(e);
-    return true;
-}
-
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
-    strmap_iterate(&f->map, free_map_member, NULL);
+    // not clearing the members of the maps. They should be cleared from the global list
     strmap_clear(&f->map);
+    strmap_clear(&f->ast_map);
     darray_clear(f->blocks);
 }
 

@@ -19,10 +19,9 @@ struct rir_fndecl {
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
     //! Stringmap from rir identifiers to rir objects
-    //! Owns the rir objects and the rir identifier.
-    //! They will be destroyed at function destruction
     struct rirobj_strmap map;
-    struct rirobj_strmap id_map;
+    //! Stringmap for strings from the ast pass to rir object
+    struct rirobj_strmap ast_map;
     //! Label pointing to the function's end
     struct rir_value *end_label;
     //! Control to be entered into the rir functions list.

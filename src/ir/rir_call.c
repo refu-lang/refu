@@ -4,6 +4,7 @@
 #include <ir/rir_binaryop.h>
 #include <ir/rir_constant.h>
 #include <ir/rir_argument.h>
+#include <ir/rir_object.h>
 #include <ast/function.h>
 #include <types/type.h>
 

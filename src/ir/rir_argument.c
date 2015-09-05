@@ -2,6 +2,7 @@
 #include <ir/rir.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_type.h>
+#include <ir/rir_object.h>
 #include <types/type.h>
 #include <ast/function.h>
 #include <Data_Structures/darray.h>
@@ -163,11 +164,11 @@ const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, un
     return arg ? &arg->type : NULL;
 }
 
-int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, const struct rir *r)
+int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir *r)
 {
     RF_ASSERT(rir_ltype_is_union(t), "Expected a union type");
     const struct type *matched = ast_fncall_params_type(n);
-    struct rir_argument **arg;
+    struct rir_object **arg;
     struct args_arr t_args;
     if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, r)) {
         return -1;
@@ -175,10 +176,10 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
 
     int index = 0;
     darray_foreach(arg, t->tdef->arguments_list) {
-        RF_ASSERT((*arg)->type.category == RIR_LTYPE_COMPOSITE,
+        RF_ASSERT((*arg)->arg.type.category == RIR_LTYPE_COMPOSITE,
                   "each of the union's members should be its own typedef");
         //now check if this is the type that matches the function call
-        if (rir_argsarr_equal(&t_args, &(*arg)->type.tdef->arguments_list)) {
+        if (rir_argsarr_equal(&t_args, &(*arg)->arg.type.tdef->arguments_list)) {
             goto end;
         }
         ++index;
@@ -212,20 +213,26 @@ static void rir_argument_init(struct rir_argument *a, const struct rir_type *typ
     }
 }
 
-struct rir_argument *rir_argument_create(const struct rir_type *t, const struct rir *r)
+struct rir_object *rir_argument_create(const struct rir_type *t, struct rir *r)
 {
-    struct rir_argument *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_argument_init(ret, t, r);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, r);
+    if (!ret) {
+        free(ret);
+        ret = NULL;
+    }
+    rir_argument_init(&ret->arg, t, r);
     return ret;
 }
 
-struct rir_argument *rir_argument_create_from_typedef(const struct rir_typedef *d)
+struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir *r)
 {
-    struct rir_argument *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->name = d->name;
-    rir_ltype_comp_init(&ret->type, d, false);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, r);
+    if (!ret) {
+        free(ret);
+        ret = NULL;
+    }
+    ret->arg.name = d->name;
+    rir_ltype_comp_init(&ret->arg.type, d, false);
     return ret;
 }
 
@@ -250,12 +257,12 @@ bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *
     return ret;
 }
 
-bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, const struct rir *r)
+bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir *r)
 {
     RF_ASSERT(type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
               "Called with illegal rir type");
     struct rir_type **subtype;
-    struct rir_argument *arg;
+    struct rir_object *arg;
     darray_init(*arr);
     if (darray_size(type->subtypes) == 0) {
         if (!rir_type_is_trivial(type)) {
@@ -281,9 +288,10 @@ bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr)
 {
     size_t i = 0;
     size_t args_num = darray_size(*arr);
-    struct rir_argument **arg;
+    struct rir_object **arg;
     darray_foreach(arg, *arr) {
-        if (!rir_argument_tostring(ctx, *arg)) {
+        RF_ASSERT((*arg)->category == RIR_OBJ_ARGUMENT, "Expected a rir argument object");
+        if (!rir_argument_tostring(ctx, &(*arg)->arg)) {
             return false;
         }
         if (++i != args_num) {
@@ -303,7 +311,7 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     }
 
     for (int i = 0; i < size; ++i) {
-        if (!rir_ltype_equal(&darray_item(*arr1, i)->type, &darray_item(*arr2, i)->type)) {
+        if (!rir_ltype_equal(&darray_item(*arr1, i)->arg.type, &darray_item(*arr2, i)->arg.type)) {
             return false;
         }
     }
@@ -312,9 +320,9 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
 
 void rir_argsarr_deinit(struct args_arr *arr)
 {
-    struct rir_argument **arg;
+    struct rir_object **arg;
     darray_foreach(arg, *arr) {
-        rir_argument_destroy(*arg);
+        rir_argument_destroy(&(*arg)->arg);
     }
     darray_free(*arr);
 }

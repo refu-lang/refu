@@ -24,14 +24,14 @@ struct rir_value {
     struct rir_ltype *type;
     union {
         struct ast_constant constant;
-        struct rir_expression *expr;
+        struct rir_object *obj;
         struct rir_block *label_dst;
     };
 };
 
-bool rir_value_variable_init(struct rir_value *v, struct rir_expression *e, struct rir_ctx *ctx);
-bool rir_value_label_init_string(struct rir_value *v, struct rir_block *b, const struct RFstring *s, struct rir_ctx *ctx);
-bool rir_value_label_init(struct rir_value *v, struct rir_block *b, struct rir_ctx *ctx);
+bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_ctx *ctx);
+bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
+bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, struct rir_ctx *ctx);
 bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c);
 void rir_value_nil_init(struct rir_value *v);
 

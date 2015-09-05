@@ -3,45 +3,50 @@
 
 #include <Data_Structures/strmap.h>
 
-struct rir_expression;
+struct rir_object;
 struct symbol_table_record;
 struct rir_ctx;
 struct rir_block;
 
-struct rir_symbol {
-    struct RFstring *id;
-    struct rir_expression *e;
-};
 
 struct rirobj_strmap {
-    STRMAP_MEMBERS(void*);
+    STRMAP_MEMBERS(struct rir_object*);
+};
+
+struct rirtdef_strmap {
+    STRMAP_MEMBERS(struct rir_typedef*);
 };
 
 /**
- * Add a rir object(expression) to the current rir strmap
+ * Add a rir object to the current rir function strmap
  *
  * @param ctx            The rir_ctx containing the string map
  * @param id             The string with which to add the object
- * @param e              The rir expression to add
+ * @param obj            The rir object to add
  * @return               false if we run out of memory (errno = ENOMEM), or
  *                       (more normally) if that string already appears in
  *                       the map (EEXIST).
  */
-bool rir_strmap_addexpr_from_id(struct rir_ctx *ctx,
-                                const struct RFstring *id,
-                                struct rir_expression *e);
+bool rir_fnmap_addobj(struct rir_ctx *ctx,
+                      const struct RFstring *id,
+                      struct rir_object *obj);
 
 /**
- * Add a rir object(block) to the current rir strmap
+ * Add a rir object to the rir strmap
  *
  * @param ctx            The rir_ctx containing the string map
  * @param id             The string with which to add the object
- * @param e              The rir block to add
+ * @param obj            The rir object to add
  * @return               false if we run out of memory (errno = ENOMEM), or
  *                       (more normally) if that string already appears in
  *                       the map (EEXIST).
  */
-bool rir_strmap_addblock_from_id(struct rir_ctx *ctx,
-                                const struct RFstring *id,
-                                struct rir_block *b);
+bool rir_map_addobj(struct rir_ctx *ctx,
+                    const struct RFstring *id,
+                    struct rir_object *obj);
+
+struct rir_object *rir_fnmap_getobj(struct rir_ctx *ctx,
+                                    const struct RFstring *id);
+
+struct rir_expression *rir_fnmap_get_returnslot(struct rir_ctx *ctx);
 #endif

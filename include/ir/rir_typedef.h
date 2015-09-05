@@ -17,7 +17,7 @@ struct rir_typedef {
 };
 
 struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx);
-void rir_typedef_destroy(struct rir_typedef *t);
+void rir_typedef_deinit(struct rir_typedef *t);
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);
 bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t2);
