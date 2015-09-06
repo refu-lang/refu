@@ -83,6 +83,9 @@ struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
 struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
                                                 uint32_t idx,
                                                 struct rir_ctx *ctx);
+struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx);
 struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx);

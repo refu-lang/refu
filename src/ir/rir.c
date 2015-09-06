@@ -49,6 +49,24 @@ bool rir_ctx_type_visited(struct rir_ctx *ctx, const struct rir_type *t)
     return false;
 }
 
+
+static struct rir_value *rir_ctx_lastobj_get(struct rir_object *obj)
+{
+    if (!obj) {
+        return NULL;
+    }
+    return rir_object_value(obj);
+}
+struct rir_value *rir_ctx_lastval_get(const struct rir_ctx *ctx)
+{
+    return rir_ctx_lastobj_get(ctx->returned_obj);
+}
+struct rir_value *rir_ctx_lastassignval_get(const struct rir_ctx *ctx)
+{
+    return rir_ctx_lastobj_get(ctx->last_assign_obj);
+}
+
+
 static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
@@ -114,6 +132,15 @@ static bool rir_process_do(struct rir *r, struct module *m)
 
     // for each non elementary, non sum-type rir type create a typedef
     rir_types_list_for_each(r->rir_types_list, t) {
+        // TODO: this check should go away ... is temporary due to rir_types_list_init()
+        // actually putting two copies of a rir sum type in the list. Please fix!!
+        if (t->category == COMPOSITE_RIR_DEFINED) {
+            struct rir_object *checkdef = strmap_get(&ctx.rir->map, t->name);
+            if (checkdef) {
+                continue;
+            }
+        }
+
         if (!rir_type_is_elementary(t) && !rir_ctx_type_visited(&ctx, t) &&
             t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
             struct rir_typedef *def = rir_typedef_create(t, &ctx);

@@ -31,11 +31,13 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
         def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
         RFS_POP();
     }
-    if (!rir_type_to_arg_array(t, &def->arguments_list, ctx->rir)) {
+    if (!rir_type_to_arg_array(t, &def->arguments_list, ctx)) {
         return false;
     }
     // finally add the typedef to the rir's strmap
-    rir_map_addobj(ctx, def->name, obj);
+    if (!strmap_add(&ctx->rir->map, def->name, obj)) {
+        return false;
+    }
     
     return true;
 }

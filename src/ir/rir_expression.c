@@ -137,9 +137,9 @@ struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
     return obj ? &obj->expr : NULL;
 }
 
-static struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
-                                                     uint32_t idx,
-                                                     struct rir_ctx *ctx)
+struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
+                                              uint32_t idx,
+                                              struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {

@@ -27,7 +27,7 @@ bool rir_block_exit_init_branch(struct rir_block_exit *exit,
 }
 
 bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
-                                    struct rir_expression *cond,
+                                    struct rir_value *cond,
                                     struct rir_value *taken,
                                     struct rir_value *fallthrough)
 {
@@ -119,7 +119,11 @@ static struct rir_block *rir_process_elif(const struct ast_node *n, struct rir_c
     if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
         goto fail;
     }
-    struct rir_expression *cond = ctx->returned_expr;
+    struct rir_value *cond = rir_ctx_lastval_get(ctx);
+    if (!cond) {
+        RF_ERROR("A condition value was not created");
+        goto fail;
+    }
     struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), false, ctx);
     if (!taken) {
         goto fail;
@@ -183,7 +187,11 @@ static bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
     if (!rir_process_ast_node(ast_ifexpr_condition_get(n), ctx)) {
         goto fail;
     }
-    struct rir_expression *cond = ctx->returned_expr;
+    struct rir_value *cond = rir_ctx_lastval_get(ctx);
+    if (!cond) {
+        RF_ERROR("A condition value must have been created");
+        goto fail;
+    }
     struct rir_block *taken = rir_block_create(ast_ifexpr_taken_block_get(n), false, ctx);
     if (!taken) {
         goto fail;
@@ -267,7 +275,7 @@ static bool rir_process_vardecl(const struct ast_node *n,
         goto fail;
     }
     rirctx_block_add(ctx, &alloca->expr);
-    RIRCTX_RETURN_EXPR(ctx, true, &alloca->expr);
+    RIRCTX_RETURN_EXPR(ctx, true, alloca);
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -279,14 +287,14 @@ static bool rir_process_return(const struct ast_node *n,
     if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    struct rir_expression *ret_val = ctx->returned_expr;
+    struct rir_value *ret_val = rir_ctx_lastval_get(ctx);
     // write the return value to the return slot
     struct rir_expression *ret_slot = rir_fnmap_get_returnslot(ctx);
     if (!ret_slot) {
         RF_ERROR("Could not find the returnvalue of a function in the string map");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    struct rir_expression *e = rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, &ret_val->val, ctx);
+    struct rir_expression *e = rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, ret_val, ctx);
     rirctx_block_add(ctx, e);
     // jump to the return
     if (!rir_block_exit_init_branch(&ctx->current_block->exit, ctx->current_fn->end_label)) {
@@ -299,20 +307,19 @@ static bool rir_process_return(const struct ast_node *n,
 static bool rir_process_constant(const struct ast_node *n,
                                  struct rir_ctx *ctx)
 {
-    struct rir_expression *ret_expr = rir_constant_create(n, ctx);
+    struct rir_object *ret_expr = rir_constant_create_obj(n, ctx);
     RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
 }
 
 bool rir_process_identifier(const struct ast_node *n,
                             struct rir_ctx *ctx)
 {
-    struct rir_object *expr = strmap_get(&ctx->current_fn->ast_map, ast_identifier_str(n));
-    RF_ASSERT(expr->category == RIR_OBJ_EXPRESSION, "Exprected expression object");
-    if (!expr) {
+    struct rir_object *obj = strmap_get(&ctx->current_fn->ast_map, ast_identifier_str(n));
+    if (!obj) {
         RF_ERROR("An identifier was not found in the strmap during rir creation");
         return NULL;
     }
-    RIRCTX_RETURN_EXPR(ctx, true, &expr->expr);
+    RIRCTX_RETURN_EXPR(ctx, true, obj);
 }
 
 bool rir_process_ast_node(const struct ast_node *n,

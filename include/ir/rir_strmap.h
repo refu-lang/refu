@@ -18,21 +18,8 @@ struct rirtdef_strmap {
 };
 
 /**
- * Add a rir object to the current rir function strmap
- *
- * @param ctx            The rir_ctx containing the string map
- * @param id             The string with which to add the object
- * @param obj            The rir object to add
- * @return               false if we run out of memory (errno = ENOMEM), or
- *                       (more normally) if that string already appears in
- *                       the map (EEXIST).
- */
-bool rir_fnmap_addobj(struct rir_ctx *ctx,
-                      const struct RFstring *id,
-                      struct rir_object *obj);
-
-/**
- * Add a rir object to the rir strmap
+ * Add a rir object to the current rir function strmap or if we are not in a function
+ * to the global rir map
  *
  * @param ctx            The rir_ctx containing the string map
  * @param id             The string with which to add the object
@@ -45,8 +32,9 @@ bool rir_map_addobj(struct rir_ctx *ctx,
                     const struct RFstring *id,
                     struct rir_object *obj);
 
-struct rir_object *rir_fnmap_getobj(struct rir_ctx *ctx,
-                                    const struct RFstring *id);
+
+struct rir_object *rir_map_getobj(struct rir_ctx *ctx,
+                                  const struct RFstring *id);
 
 struct rir_expression *rir_fnmap_get_returnslot(struct rir_ctx *ctx);
 #endif

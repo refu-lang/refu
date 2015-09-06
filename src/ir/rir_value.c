@@ -15,7 +15,7 @@ bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, co
     if (!rf_string_copy_in(&v->id, s)) {
         return false;
     }
-    return rir_fnmap_addobj(ctx, &v->id, obj);
+    return rir_map_addobj(ctx, &v->id, obj);
 }
 
 bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c)
@@ -95,11 +95,13 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
             RF_ASSERT(false, "TODO: Unimplemented rir expression to value conversion");
             break;
         }
+    } else if (obj->category == RIR_OBJ_ARGUMENT) {
+        v->type = &obj->arg.type;
     } else {
         RF_ASSERT(false, "TODO ... should this even ever happen?");
     }
     // finally add it to the rir strmap
-    ret = rir_fnmap_addobj(ctx, &v->id, obj);
+    ret = rir_map_addobj(ctx, &v->id, obj);
 
 end:
     return ret;
@@ -113,7 +115,7 @@ bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, struct ri
     if (!rf_string_initv(&v->id, "%%label_%d", ctx->label_idx++)) {
         return false;
     }
-    return rir_fnmap_addobj(ctx, &v->id, obj);
+    return rir_map_addobj(ctx, &v->id, obj);
 }
 
 void rir_value_nil_init(struct rir_value *v)

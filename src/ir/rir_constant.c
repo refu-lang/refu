@@ -6,7 +6,7 @@
 #include <ast/ast.h>
 #include <ast/constants.h>
 
-static struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_ctx *ctx)
+struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {

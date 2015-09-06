@@ -91,6 +91,14 @@ struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
     return rir_binaryop_create_nonast(rir_binaryop_type_from_ast(op), a, b, ctx);
 }
 
+struct rir_object *rir_binaryop_create_obj(const struct ast_binaryop *op,
+                                           const struct rir_value *a,
+                                           const struct rir_value *b,
+                                           struct rir_ctx *ctx)
+{
+    return rir_binaryop_create_nonast_obj(rir_binaryop_type_from_ast(op), a, b, ctx);
+}
+
 static bool rir_process_memberaccess(const struct ast_binaryop *op,
                                      struct rir_ctx *ctx)
 {
@@ -101,7 +109,7 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     if (!rir_process_identifier(op->left, ctx)) {
         goto fail;
     }
-    const struct rir_expression *lhs = ctx->returned_expr;
+    const struct rir_value *lhs_val = rir_ctx_lastval_get(ctx);
     const struct RFstring *rightstr = ast_identifier_str(op->right);
     const struct type *owner_type = ast_node_get_type_or_die(op->left, AST_TYPERETR_DEFAULT);
     struct rir_typedef *def = strmap_get(&ctx->rir->map, type_defined_get_name(owner_type));
@@ -121,8 +129,8 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_expression *e = rir_objmemberat_create(&lhs->val, index, ctx);
-    rirctx_block_add(ctx, e);
+    struct rir_object *e = rir_objmemberat_create_obj(lhs_val, index, ctx);
+    rirctx_block_add(ctx, &e->expr);
 
     // return the memberobjat to be used by other rir expressions
     RIRCTX_RETURN_EXPR(ctx, true, e);
@@ -142,8 +150,12 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
     if (!rir_process_ast_node(op->left, ctx)) {
         goto fail;
     }
-    struct rir_expression *lexpr = ctx->returned_expr;
-    ctx->last_assign_lhs = lexpr;
+    struct rir_value *lval = rir_ctx_lastval_get(ctx);
+    if (!lval) {
+        RF_ERROR("A left value should have been created for a binary operation");
+        goto fail;
+    }
+    ctx->last_assign_obj = ctx->returned_obj;
     if (!rir_process_ast_node(op->right, ctx)) {
         goto fail;
     }
@@ -151,12 +163,12 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         // for function call rhs all of the writting should have already been done
         RIRCTX_RETURN_EXPR(ctx, true, NULL);
     }
-    struct rir_expression *rexpr = ctx->returned_expr;
-    struct rir_expression *e = rir_binaryop_create(op, &lexpr->val, &rexpr->val, ctx);
+    struct rir_value *rval = rir_ctx_lastval_get(ctx);
+    struct rir_object *e = rir_binaryop_create_obj(op, lval, rval, ctx);
     if (!e) {
         goto fail;
     }
-    rirctx_block_add(ctx, e);
+    rirctx_block_add(ctx, &e->expr);
     RIRCTX_RETURN_EXPR(ctx, true, e);
 
 fail:

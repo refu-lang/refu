@@ -164,13 +164,13 @@ const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, un
     return arg ? &arg->type : NULL;
 }
 
-int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir *r)
+int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir_ctx *ctx)
 {
     RF_ASSERT(rir_ltype_is_union(t), "Expected a union type");
     const struct type *matched = ast_fncall_params_type(n);
     struct rir_object **arg;
     struct args_arr t_args;
-    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, r)) {
+    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, ctx)) {
         return -1;
     }
 
@@ -188,15 +188,16 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     index = -1;
 
 end:
-    rir_argsarr_deinit(&t_args);
+    rir_argsarr_deinit(&t_args, ctx->rir);
     return index;
 }
 
 
 
-static void rir_argument_init(struct rir_argument *a, const struct rir_type *type, const struct rir *r)
+static bool rir_argument_init(struct rir_object *obj, const struct rir_type *type, struct rir_ctx *ctx)
 {
     static const struct RFstring noname = RF_STRING_STATIC_INIT("noname");
+    struct rir_argument *a = &obj->arg;
     if (rir_type_is_elementary(type)) {
         rir_ltype_elem_init(&a->type, (enum elementary_type)type->category);
         if (type->name) {
@@ -206,39 +207,42 @@ static void rir_argument_init(struct rir_argument *a, const struct rir_type *typ
         }
     } else {
         const struct RFstring *s = type_get_unique_type_str(type->type, true);
-        struct rir_typedef *def = rir_typedef_byname(r, s);
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, s);
         RF_ASSERT_OR_EXIT(def, "typedef should have been found by name");
         rir_ltype_comp_init(&a->type, def, false);
         a->name = rf_string_create("GENERATED_NAME");
     }
+    return rir_value_variable_init(&a->val, obj, ctx);
 }
 
-struct rir_object *rir_argument_create(const struct rir_type *t, struct rir *r)
+struct rir_object *rir_argument_create(const struct rir_type *t, struct rir_ctx *ctx)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, r);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, ctx->rir);
     if (!ret) {
-        free(ret);
-        ret = NULL;
+        return NULL;
     }
-    rir_argument_init(&ret->arg, t, r);
+    rir_argument_init(ret, t, ctx);
     return ret;
 }
 
-struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir *r)
+struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir_ctx *ctx)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, r);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, ctx->rir);
     if (!ret) {
+        return NULL;
+    }
+    if (!rir_value_variable_init(&ret->arg.val, ret, ctx)) {
         free(ret);
-        ret = NULL;
+        return NULL;
     }
     ret->arg.name = d->name;
     rir_ltype_comp_init(&ret->arg.type, d, false);
     return ret;
 }
 
-void rir_argument_destroy(struct rir_argument *a)
+void rir_argument_deinit(struct rir_argument *a)
 {
-    free(a);
+    // TODO
 }
 
 bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg)
@@ -257,7 +261,7 @@ bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *
     return ret;
 }
 
-bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir *r)
+bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir_ctx *ctx)
 {
     RF_ASSERT(type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
               "Called with illegal rir type");
@@ -266,7 +270,7 @@ bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, st
     darray_init(*arr);
     if (darray_size(type->subtypes) == 0) {
         if (!rir_type_is_trivial(type)) {
-            if (!(arg = rir_argument_create(type, r))) {
+            if (!(arg = rir_argument_create(type, ctx))) {
                 return false;
             }
             darray_append(*arr, arg);
@@ -274,7 +278,7 @@ bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, st
     } else if (type->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
         darray_foreach(subtype, type->subtypes) {
             if (!rir_type_is_trivial(*subtype)) {
-                if (!(arg = rir_argument_create(*subtype, r))) {
+                if (!(arg = rir_argument_create(*subtype, ctx))) {
                     return false;
                 }
                 darray_append(*arr, arg);
@@ -318,11 +322,12 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     return true;
 }
 
-void rir_argsarr_deinit(struct args_arr *arr)
+void rir_argsarr_deinit(struct args_arr *arr, struct rir *r)
 {
     struct rir_object **arg;
     darray_foreach(arg, *arr) {
-        rir_argument_destroy(&(*arg)->arg);
+        // TODO: Fix ME .. this should get removed and destroyed
+        /* rir_object_listrem_destroy(*arg, r); */
     }
     darray_free(*arr);
 }

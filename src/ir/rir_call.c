@@ -11,12 +11,12 @@
 struct args_to_val_ctx {
     struct rir_ctx *rir_ctx;
     //! left hand of assignment
-    struct rir_expression *lhs;
+    struct rir_value *lhs;
     //! index of the argument we are iterating
     unsigned index;
 };
 
-void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_expression *lhs, struct rir_ctx *rir_ctx)
+static void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_value *lhs, struct rir_ctx *rir_ctx)
 {
     ctx->rir_ctx = rir_ctx;
     ctx->lhs = lhs;
@@ -28,18 +28,19 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     if (!rir_process_ast_node(n, ctx->rir_ctx)) {
         return false;
     }
-    if (!ctx->rir_ctx->returned_expr) {
+    struct rir_value *argexprval = rir_ctx_lastval_get(ctx->rir_ctx);
+    if (!argexprval) {
         RF_ERROR("Could not create rir expression from constructor argument");
         return false;
     }
-    struct rir_expression *argexpr = ctx->rir_ctx->returned_expr;
-    if (!ctx->rir_ctx->last_assign_lhs) {
+    struct rir_value *lassignval = rir_ctx_lastassignval_get(ctx->rir_ctx);
+    if (!lassignval) {
         RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
         return false;
     }
     // create a rir expression to read the object value at the assignee's index position
     struct rir_expression *readobj = rir_objmemberat_create(
-        &ctx->rir_ctx->last_assign_lhs->val,
+        lassignval,
         ctx->index,
         ctx->rir_ctx
     );
@@ -52,7 +53,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     struct rir_expression *e = rir_binaryop_create_nonast(
         RIR_EXPRESSION_WRITE,
         &readobj->val,
-        &argexpr->val,
+        argexprval,
         ctx->rir_ctx
     );
     if (!e) {
@@ -80,7 +81,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
     }
 
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
-        struct rir_expression *lhs = ctx->last_assign_lhs;
+        struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
         if (!lhs) {
             RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
             return false;
@@ -89,25 +90,24 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
         struct args_to_val_ctx argsctx;
         if (type_is_sumtype(fn_type)) {
 
-            RF_ASSERT(lhs->type == RIR_EXPRESSION_ALLOCA, "Constructor of a sum type should assign to an alloca expression");
-            RF_ASSERT(rir_ltype_is_composite(lhs->val.type), "Constructor should assign to a composite type");
-            int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->val.type, n, ctx->rir);
+            RF_ASSERT(rir_ltype_is_composite(lhs->type), "Constructor should assign to a composite type");
+            int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->type, n, ctx);
             if (union_idx == -1) {
                 RF_ERROR("RIR sum constructor not matching any part of the original type");
                 return false;
             }
             // create code to set the  union's index with the matching type
-            struct rir_expression *e = rir_setunionidx_create(&lhs->val, union_idx, ctx);
+            struct rir_expression *e = rir_setunionidx_create(lhs, union_idx, ctx);
             if (!e) {
                 return false;
             }
             rirctx_block_add(ctx, e);
             // create code to load the appropriate union subtype for reading
-            e = rir_unionmemberat_create(&lhs->val, union_idx, ctx);
+            e = rir_unionmemberat_create(lhs, union_idx, ctx);
             if (!e) {
                 return false;
             }
-            lhs = e;
+            lhs = &e->val;
         }
 
         // now for whichever object (normal type, or union type sutype) is loaded as left hand side

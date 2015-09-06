@@ -40,11 +40,11 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
-        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx->rir);
+        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
         darray_init(ret->arguments_list);
         darray_append(ret->arguments_list, arg);
     } else {
-        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list, ctx->rir)) {
+        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list, ctx)) {
             return false;
         }
     }
@@ -73,7 +73,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         if (!alloca) {
             return false;
         }
-        if (!rir_fnmap_addobj(ctx, &returnval_str, alloca)) {
+        if (!rir_map_addobj(ctx, &returnval_str, alloca)) {
             RF_ERROR("Could not add return val to function string map");
             return false;
         }

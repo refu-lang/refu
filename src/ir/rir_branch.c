@@ -55,7 +55,7 @@ bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
 }
 
 bool rir_condbranch_init(struct rir_condbranch *b,
-                         struct rir_expression *cond,
+                         struct rir_value *cond,
                          struct rir_value *taken,
                          struct rir_value *fallthrough)
 {
@@ -65,7 +65,7 @@ bool rir_condbranch_init(struct rir_condbranch *b,
     return true;
 }
 
-struct rir_condbranch *rir_condbranch_create(struct rir_expression *cond,
+struct rir_condbranch *rir_condbranch_create(struct rir_value *cond,
                                              struct rir_value *taken,
                                              struct rir_value *fallthrough)
 {
@@ -80,7 +80,7 @@ struct rir_condbranch *rir_condbranch_create(struct rir_expression *cond,
 
 void rir_condbranch_deinit(struct rir_condbranch *b)
 {
-    rir_expression_destroy(b->cond);
+
 }
 
 void rir_condbranch_destroy(struct rir_condbranch *b)
@@ -95,7 +95,7 @@ bool rir_condbranch_tostring(struct rirtostr_ctx *ctx, const struct rir_condbran
     bool ret = rf_stringx_append(
         ctx->rir->buff,
         RFS(RIRTOSTR_INDENT"condbranch("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
-            RF_STR_PF_ARG(rir_value_string(&b->cond->val)),
+            RF_STR_PF_ARG(rir_value_string(b->cond)),
             RF_STR_PF_ARG(rir_value_string(b->taken)),
             RF_STR_PF_ARG(rir_value_string(b->fallthrough))
         ));

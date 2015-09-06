@@ -28,4 +28,21 @@ struct rir_object {
 
 struct rir_object *rir_object_create(enum rir_obj_category category, struct rir *r);
 void rir_object_destroy(struct rir_object *obj);
+
+struct rir_value *rir_object_value(struct rir_object *obj);
+
+/**
+ * Will remove a rir object from the global rir object list
+ *
+ * @param obj        The object to remove from the list
+ * @param r          The rir handle
+ */
+void rir_object_listrem(struct rir_object *obj, struct rir *r);
+/**
+ * Will remove a rir object from the global rir object list and destroy the memory
+ *
+ * @param obj        The object to remove from the list
+ * @param r          The rir handle
+ */
+void rir_object_listrem_destroy(struct rir_object *obj, struct rir *r);
 #endif
