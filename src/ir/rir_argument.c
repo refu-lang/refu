@@ -188,7 +188,7 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     index = -1;
 
 end:
-    rir_argsarr_deinit(&t_args, ctx->rir);
+    rir_argsarr_deinit(&t_args, ctx);
     return index;
 }
 
@@ -322,12 +322,11 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     return true;
 }
 
-void rir_argsarr_deinit(struct args_arr *arr, struct rir *r)
+void rir_argsarr_deinit(struct args_arr *arr, struct rir_ctx *ctx)
 {
     struct rir_object **arg;
     darray_foreach(arg, *arr) {
-        // TODO: Fix ME .. this should get removed and destroyed
-        /* rir_object_listrem_destroy(*arg, r); */
+        rir_object_listrem_destroy(*arg, ctx);
     }
     darray_free(*arr);
 }

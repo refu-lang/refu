@@ -84,5 +84,5 @@ struct args_arr {darray(struct rir_object*);};
 bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir_ctx *ctx);
 bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr);
 bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2);
-void rir_argsarr_deinit(struct args_arr *arr, struct rir *r);
+void rir_argsarr_deinit(struct args_arr *arr, struct rir_ctx *ctx);
 #endif

@@ -35,14 +35,14 @@ struct rir_value *rir_object_value(struct rir_object *obj);
  * Will remove a rir object from the global rir object list
  *
  * @param obj        The object to remove from the list
- * @param r          The rir handle
+ * @param ctx        The rir context
  */
-void rir_object_listrem(struct rir_object *obj, struct rir *r);
+void rir_object_listrem(struct rir_object *obj, struct rir_ctx *ctx);
 /**
  * Will remove a rir object from the global rir object list and destroy the memory
  *
  * @param obj        The object to remove from the list
- * @param r          The rir handle
+ * @param ctx        The rir context
  */
-void rir_object_listrem_destroy(struct rir_object *obj, struct rir *r);
+void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx);
 #endif
