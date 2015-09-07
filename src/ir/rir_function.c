@@ -24,37 +24,37 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     strmap_init(&ret->ast_map);
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *args = ast_fndecl_args_get(decl);
-    struct ast_node *returns = ast_fndecl_return_get(decl);
-    ret->arguments = args
+    struct ast_node *ast_returns = ast_fndecl_return_get(decl);
+    const struct rir_type *arguments = args
         ? type_get_rir_or_die(ast_node_get_type(args, AST_TYPERETR_DEFAULT))
         : NULL;
-    ret->returns = returns
-        ? type_get_rir_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT))
+    const struct rir_type *return_type = ast_returns
+        ? type_get_rir_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT))
         : NULL;
 
-    if (rir_type_is_sumtype(ret->arguments)) {
+    if (rir_type_is_sumtype(arguments)) {
         RFS_PUSH();
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(ret->arguments->type, true));
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(arguments->type, true));
         RFS_POP();
         if (!def) {
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
         struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
-        darray_init(ret->arguments_list);
-        darray_append(ret->arguments_list, arg);
+        darray_init(ret->arguments);
+        darray_append(ret->arguments, arg);
     } else {
-        if (!rir_type_to_arg_array(ret->arguments, &ret->arguments_list, ctx)) {
+        if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
             return false;
         }
     }
 
 
     struct rir_object **arg;
-    if (rir_type_is_sumtype(ret->arguments)) {
+    if (rir_type_is_sumtype(arguments)) {
         // TODO
     } else {
-        darray_foreach(arg, ret->arguments_list) {
+        darray_foreach(arg, ret->arguments) {
             if (!strmap_add(&ctx->current_fn->ast_map, (*arg)->arg.name, *arg)) {
                 RF_ERROR("Could not add argument to function ast string map");
                 return false;
@@ -62,14 +62,16 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         }
     }
 
-    // if we got a return value allocate space for it
-    if (returns) {
+    // if we got a return value allocate space for it. Assume single return values fow now
+    // TODO: Take into account multiple return values
+    if (return_type) {
         const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
-        struct rir_object *alloca = rir_alloca_create_obj(
-            rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT)),
-            1,
-            ctx
-        );
+        ret->return_type = rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT));
+        if (!ret->return_type) {
+            RF_ERROR("Could not find function's rir return type");
+            return false;
+        }
+        struct rir_object *alloca = rir_alloca_create_obj(ret->return_type, 1, ctx);
         if (!alloca) {
             return false;
         }
@@ -77,11 +79,17 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
             RF_ERROR("Could not add return val to function string map");
             return false;
         }
+    } else {
+        ret->return_type = rir_ltype_elem_create(ELEMENTARY_TYPE_NIL, false);
+        if (!ret->return_type) {
+            RF_ERROR("Could not find function's rir return type");
+            return false;
+        }
     }
 
     // create the end block
     struct rir_block *end_block;
-    if (!(end_block = rir_block_functionend_create(returns ? true : false, ctx))) {
+    if (!(end_block = rir_block_functionend_create(ast_returns ? true : false, ctx))) {
         RF_ERROR("Failed to create a RIR function's end block");
         return false;
     }
@@ -155,7 +163,7 @@ bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (!rir_argsarr_tostring(ctx, &f->arguments_list)) {
+    if (!rir_argsarr_tostring(ctx, &f->arguments)) {
         return false;
     }
 
@@ -163,13 +171,8 @@ bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
         goto end;
     }
 
-    if (f->returns) {
-        if (!rf_stringx_append(
-            ctx->rir->buff,
-            rir_type_str_or_die(f->returns)
-            )){
-            goto end;
-        }
+    if (!rf_stringx_append(ctx->rir->buff, rir_ltype_string(f->return_type))){
+        goto end;
     }
 
     if (!rf_stringx_append(ctx->rir->buff, &close_paren)) {

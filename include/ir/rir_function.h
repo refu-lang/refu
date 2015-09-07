@@ -13,9 +13,10 @@ struct rir;
 
 struct rir_fndecl {
     const struct RFstring *name;
-    const struct rir_type* arguments;
-    const struct rir_type* returns;
-    struct args_arr arguments_list;
+    //! Array of the function's arguments
+    struct args_arr arguments;
+    //! Return type of the function
+    struct rir_ltype *return_type;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
     //! Stringmap from rir identifiers to rir objects
