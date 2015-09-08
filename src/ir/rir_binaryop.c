@@ -155,7 +155,9 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         RF_ERROR("A left value should have been created for a binary operation");
         goto fail;
     }
-    ctx->last_assign_obj = ctx->returned_obj;
+    if (op->type == BINARYOP_ASSIGN) {
+        ctx->last_assign_obj = ctx->returned_obj;
+    }
     if (!rir_process_ast_node(op->right, ctx)) {
         goto fail;
     }
@@ -163,15 +165,22 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         // for function call rhs all of the writting should have already been done
         RIRCTX_RETURN_EXPR(ctx, true, NULL);
     }
+    if (op->type == BINARYOP_ASSIGN && op->right->type == AST_MATCH_EXPRESSION) {
+        // for assignments from a match expression we should be done
+        RIRCTX_RETURN_EXPR(ctx, true, NULL);
+    }
     struct rir_value *rval = rir_ctx_lastval_get(ctx);
     struct rir_object *e = rir_binaryop_create_obj(op, lval, rval, ctx);
     if (!e) {
         goto fail;
     }
+
     rirctx_block_add(ctx, &e->expr);
+    ctx->last_assign_obj = NULL;
     RIRCTX_RETURN_EXPR(ctx, true, e);
 
 fail:
+    ctx->last_assign_obj = NULL;
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
 

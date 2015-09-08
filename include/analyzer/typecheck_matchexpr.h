@@ -24,7 +24,7 @@ struct pattern_matching_ctx {
 };
 bool pattern_matching_ctx_init(struct pattern_matching_ctx *ctx,
                                const struct symbol_table *st,
-                               const struct ast_node *matchexpr);
+                               struct ast_node *matchexpr);
 void pattern_matching_ctx_deinit(struct pattern_matching_ctx *ctx);
 
 #endif

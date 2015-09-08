@@ -61,17 +61,16 @@ static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx
 
 bool pattern_matching_ctx_init(struct pattern_matching_ctx *ctx,
                                const struct symbol_table *table,
-                               const struct ast_node *matchexpr)
+                               struct ast_node *matchexpr)
 {
     rf_objset_init(&ctx->parts, type);
     rf_objset_init(&ctx->matched, type);
     ctx->last_matched_case = NULL;
     ctx->match_is_over = false;
 
-    // now populate the parts set
-    const struct type *match_type = ast_matchexpr_matched_type(matchexpr, table);
-    RF_ASSERT(match_type, "match expression match type could not be determined");
-    if (!pattern_matching_ctx_populate_parts(ctx, match_type)) {
+    // now set the matching type for the match expression and populate the parts set
+    const struct type *matched_type = ast_matchexpr_matched_type_compute(matchexpr, table);
+    if (!pattern_matching_ctx_populate_parts(ctx, matched_type)) {
         return false;
     }
     return true;
@@ -257,8 +256,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         AST_TYPERETR_DEFAULT
     );
     const struct type *match_type = ast_matchexpr_matched_type(
-        analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx),
-        ctx->current_st->parent
+        analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
     const struct RFstring *match_type_str = ast_matchexpr_matched_type_str(
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)

@@ -57,6 +57,9 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
         case RIR_EXPRESSION_CMP:
             v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_BOOL, false);
             break;
+        case RIR_EXPRESSION_GETUNIONIDX:
+            v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_INT_64, false);
+            break;
         case RIR_EXPRESSION_READ:
             if (!expr->read.memory->type->is_pointer) {
                 RF_ERROR("Tried to rir read from a location not in memory");

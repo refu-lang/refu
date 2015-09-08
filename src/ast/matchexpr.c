@@ -15,6 +15,7 @@ struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
     ast_node_register_child(ret, pattern, matchcase.pattern);
     ast_node_register_child(ret, expression, matchcase.expression);
     ret->matchcase.matched_type = NULL;
+    ret->matchcase.match_idx = -1;
 
     return ret;
 }
@@ -24,6 +25,7 @@ i_INLINE_INS const struct type *ast_matchcase_matched_type(const struct ast_node
 i_INLINE_INS struct ast_node *ast_matchcase_expression(const struct ast_node *n);
 i_INLINE_INS struct symbol_table *ast_matchcase_symbol_table_get(const struct ast_node *n);
 i_INLINE_INS void *ast_matchcase_symbol_table_set(struct ast_node *n, struct symbol_table *st);
+i_INLINE_INS int ast_matchcase_index_get(const struct ast_node *n);
 
 struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,
@@ -35,6 +37,7 @@ struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
         return NULL;
     }
     ret->matchexpr.match_cases_num = 0;
+    ret->matchexpr.matching_type = NULL;
     if (id) {
         ast_node_register_child(ret, id, matchexpr.identifier_or_fnargtype);
     } else {
@@ -51,17 +54,25 @@ i_INLINE_INS struct ast_node *ast_matchexpr_headless_args(const struct ast_node 
 i_INLINE_INS void ast_matchexpr_set_fnargs(struct ast_node *n,
                                            struct ast_node *fn_args);
 
-const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
-                                              const struct symbol_table *st)
+const struct type *ast_matchexpr_matched_type_compute(struct ast_node *n,
+                                                      const struct symbol_table *st)
 {
-    if (ast_matchexpr_has_header(n)) {
-        return type_lookup_identifier_string(
-            ast_identifier_str(n->matchexpr.identifier_or_fnargtype),
-            st
-        );
+    // make sure we don't get two times in here
+    RF_ASSERT(!n->matchexpr.matching_type, "A match expression's matching type has already been computed");
+    const struct type *matching_type = ast_matchexpr_has_header(n)
+       ? matching_type = type_lookup_identifier_string(
+           ast_identifier_str(n->matchexpr.identifier_or_fnargtype),
+           st
+       )
+       :
+       // else it's the type of the function arguments themselves
+       ast_node_get_type(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF);
+    if (!matching_type) {
+        RF_ERROR("Failure to compute a matchexpression's matching type");
+        return NULL;
     }
-    // else it's the type of the function arguments themselves
-    return ast_node_get_type(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF);
+    n->matchexpr.matching_type = matching_type;
+    return matching_type;
 }
 
 const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
@@ -76,6 +87,8 @@ const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
     );
 }
 
+i_INLINE_INS const struct type *ast_matchexpr_matched_type(const struct ast_node *n);
+
 const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
 {
     if (ast_matchexpr_has_header(n)) {
@@ -88,6 +101,24 @@ const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
             AST_TYPERETR_AS_LEAF
         ), true
     );
+}
+
+bool ast_matchexpr_cases_indices_set(struct ast_node *n)
+{
+    struct ast_matchexpr_it it;
+    struct ast_node *mcase;
+    const struct rir_type *matchexp_type = type_get_rir_or_die(ast_matchexpr_matched_type(n));
+    
+    ast_matchexpr_foreach(n, &it, mcase) {
+        const struct rir_type *matched_type = type_get_rir_or_die(mcase->matchcase.matched_type);
+        int index = rir_type_childof_type(matched_type, matchexp_type);
+        if (index == -1) {
+            RF_ERROR("Failed to match a case's type to the matchexpr type during RIR formation");
+            return false;
+        }
+        mcase->matchcase.match_idx = index;
+    }
+    return true;
 }
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)

@@ -21,6 +21,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_READ,
     RIR_EXPRESSION_OBJMEMBERAT,
     RIR_EXPRESSION_SETUNIONIDX,
+    RIR_EXPRESSION_GETUNIONIDX,
     RIR_EXPRESSION_UNIONMEMBERAT,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
@@ -69,6 +70,10 @@ struct rir_setunionidx {
     uint32_t idx;
 };
 
+struct rir_getunionidx {
+    const struct rir_value *unimemory;
+};
+
 struct rir_unionmemberat {
     const struct rir_value *unimemory;
     uint32_t idx;
@@ -79,6 +84,8 @@ struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
                                               uint32_t idx,
+                                              struct rir_ctx *ctx);
+struct rir_expression *rir_getunionidx_create(const struct rir_value *unimemory,
                                               struct rir_ctx *ctx);
 struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
                                                 uint32_t idx,
@@ -101,6 +108,7 @@ struct rir_expression {
         struct rir_fncall fncall;
         struct rir_alloca alloca;
         struct rir_setunionidx setunionidx;
+        struct rir_getunionidx getunionidx;
         struct rir_unionmemberat unionmemberat;
         struct rir_objmemberat objmemberat;
         struct rir_binaryop binaryop;

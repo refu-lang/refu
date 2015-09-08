@@ -40,6 +40,13 @@ i_INLINE_DECL void *ast_matchcase_symbol_table_set(struct ast_node *n, struct sy
     return n->matchcase.st = st;
 }
 
+i_INLINE_DECL int ast_matchcase_index_get(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_CASE);
+    RF_ASSERT(n->matchcase.match_idx != -1, "The index of the match case should have been set by now");
+    return n->matchcase.match_idx;
+}
+
 struct ast_node *ast_matchexpr_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,
                                       struct ast_node *id);
@@ -96,19 +103,36 @@ i_INLINE_DECL void ast_matchexpr_set_fnargs(struct ast_node *n,
 }
 
 /**
- * Get the type that is being matched for @a n
+ * Get the type that is being matched for @a n and save it as part of the expression.
  *
  * If this is a headless match expression then this is the type of the function
- * arguments, else it's the type of the identifier
+ * arguments, else it's the type of the identifier.
+ *
+ * @param n        The matchexpression whose matching type to compute and store
+ * @param st       The symbol table to search for types while computing
+ * @return         Returns the stored match expression in case of success.
  */
-const struct type *ast_matchexpr_matched_type(const struct ast_node *n,
-                                              const struct symbol_table *st);
+const struct type *ast_matchexpr_matched_type_compute(struct ast_node *n,
+                                                      const struct symbol_table *st);
 /**
  * Get the string representation of the type that is being matched for @a n
  *
  * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
  */
 const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n);
+
+/**
+ * Returns the matched type of a match expression.
+ * To be called only after @ref ast_matchexpr_matched_type_compute()
+ * @param n        The match expression whose matched type to return
+ * @return         The matched type
+ */
+i_INLINE_DECL const struct type *ast_matchexpr_matched_type(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    RF_ASSERT(n->matchexpr.matching_type, "Match expression's matching type not yet computed");
+    return n->matchexpr.matching_type;
+}
 
 /**
  * Get the string representation of the value of the type
@@ -121,6 +145,15 @@ const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n);
  * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
  */
 const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n);
+
+/**
+ * Determines the matched index of the type for each case. To be called
+ * only during the rir forming stage.
+ *
+ * @param n          The match expression whose cases to have the indices set
+ * @return           True for success and false for failure
+ */
+bool ast_matchexpr_cases_indices_set(struct ast_node *n);
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
 

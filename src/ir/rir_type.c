@@ -261,7 +261,6 @@ bool rir_type_equals(const struct rir_type *a,
         return false;
     }
 
-
     if (darray_size(a->subtypes) != darray_size(b->subtypes)) {
         return false;
     }
@@ -280,7 +279,7 @@ int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe
 {
     struct rir_type **subtype;
     int i = 0;
-    darray_foreach(subtype, maybe_parent->subtypes) {
+    darray_foreach(subtype, rir_type_contents(maybe_parent)->subtypes) {
         if (rir_type_equals(t, *subtype, RIR_TYPECMP_SIMPLE)) {
             return i;
         }

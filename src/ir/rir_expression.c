@@ -137,6 +137,28 @@ struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
     return obj ? &obj->expr : NULL;
 }
 
+static struct rir_object *rir_getunionidx_create_obj(const struct rir_value *unimemory,
+                                                     struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.getunionidx.unimemory = unimemory;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_GETUNIONIDX, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct rir_expression *rir_getunionidx_create(const struct rir_value *unimemory,
+                                              struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_getunionidx_create_obj(unimemory, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
 struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx)
@@ -210,6 +232,16 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 RFS(RIRTOSTR_INDENT"setunionidx(" RF_STR_PF_FMT ", %" PRId32 ")\n",
                     RF_STR_PF_ARG(rir_value_string(e->setunionidx.unimemory)),
                     e->setunionidx.idx)
+            )) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_GETUNIONIDX:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT " = getunionidx(" RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_value_string(e->getunionidx.unimemory)))
             )) {
             goto end;
         }
