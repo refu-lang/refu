@@ -14,14 +14,15 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
                             struct rir_ctx *ctx)
 {
+    bool success = false;
     RF_STRUCT_ZERO(ret);
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     rir_ctx_reset(ctx);
     ctx->current_fn = ret;
+    rir_ctx_push_st(ctx, ast_fnimpl_symbol_table_get(n));
     ret->name = ast_fndecl_name_str(ast_fnimpl_fndecl_get(n));
     darray_init(ret->blocks);
     strmap_init(&ret->map);
-    strmap_init(&ret->ast_map);
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *args = ast_fndecl_args_get(decl);
     struct ast_node *ast_returns = ast_fndecl_return_get(decl);
@@ -38,26 +39,27 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         RFS_POP();
         if (!def) {
             RF_ERROR("Could not find sum type definition in the RIR");
-            return false;
+            goto end;
         }
         struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
         darray_init(ret->arguments);
         darray_append(ret->arguments, arg);
     } else {
         if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
-            return false;
+            goto end;
         }
     }
 
 
-    struct rir_object **arg;
     if (rir_type_is_sumtype(arguments)) {
         // TODO
     } else {
+        // no need to create allocas for the arguments, but still need to set them in the rir symbol table
+        struct rir_object **arg;
         darray_foreach(arg, ret->arguments) {
-            if (!strmap_add(&ctx->current_fn->ast_map, (*arg)->arg.name, *arg)) {
-                RF_ERROR("Could not add argument to function ast string map");
-                return false;
+            if (!rir_ctx_st_setobj(ctx, (*arg)->arg.name, *arg)) {
+                RF_ERROR("Could not add RIR argument object to function's symbol table");
+                goto end;
             }
         }
     }
@@ -69,21 +71,21 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         ret->return_type = rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT));
         if (!ret->return_type) {
             RF_ERROR("Could not find function's rir return type");
-            return false;
+            goto end;
         }
         struct rir_object *alloca = rir_alloca_create_obj(ret->return_type, 1, ctx);
         if (!alloca) {
-            return false;
+            goto end;
         }
         if (!rir_map_addobj(ctx, &returnval_str, alloca)) {
             RF_ERROR("Could not add return val to function string map");
-            return false;
+            goto end;
         }
     } else {
         ret->return_type = rir_ltype_elem_create(ELEMENTARY_TYPE_NIL, false);
         if (!ret->return_type) {
             RF_ERROR("Could not find function's rir return type");
-            return false;
+            goto end;
         }
     }
 
@@ -91,7 +93,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     struct rir_block *end_block;
     if (!(end_block = rir_block_functionend_create(ast_returns ? true : false, ctx))) {
         RF_ERROR("Failed to create a RIR function's end block");
-        return false;
+        goto end;
     }
     ret->end_label = &end_block->label;
 
@@ -99,20 +101,23 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     struct rir_block *first_block  = rir_block_create(ast_fnimpl_body_get(n), true, ctx);
     if (!first_block) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
-        return false;
+        goto end;
     }
 
     // if first block of the function does not have an exit, connect it to the end
     if (!rir_block_exit_initialized(first_block)) {
         if (!rir_block_exit_init_branch(&first_block->exit, ret->end_label)) {
-            return false;
+            goto end;
         }
     }
 
     // add the function_end block as last in the block
     rir_fndecl_add_block(ret, end_block);
 
-    return true;
+    success = true;
+end:
+    rir_ctx_pop_st(ctx);
+    return success;
 }
 
 struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *ctx)
@@ -130,7 +135,6 @@ static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
     // not clearing the members of the maps. They should be cleared from the global list
     strmap_clear(&f->map);
-    strmap_clear(&f->ast_map);
     darray_clear(f->blocks);
 }
 

@@ -18,19 +18,113 @@ static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct modul
 {
     RF_STRUCT_ZERO(ctx);
     ctx->rir = r;
-    ctx->current_module_st = &m->node->module.st;
+    darray_init(ctx->st_stack);
+    rir_ctx_push_st(ctx, &m->node->module.st);
     darray_init(ctx->visited_rir_types);
 }
 
 static inline void rir_ctx_deinit(struct rir_ctx *ctx)
 {
     darray_free(ctx->visited_rir_types);
+    darray_free(ctx->st_stack);
 }
 
 void rir_ctx_reset(struct rir_ctx *ctx)
 {
     ctx->expression_idx = 0;
     ctx->label_idx = 0;
+}
+
+void rir_ctx_push_st(struct rir_ctx *ctx, struct symbol_table *st)
+{
+    darray_append(ctx->st_stack, st);
+}
+
+struct symbol_table *rir_ctx_pop_st(struct rir_ctx *ctx)
+{
+    RF_ASSERT(darray_size(ctx->st_stack) > 0, "Tried to pop from an empty stack");
+    return darray_pop(ctx->st_stack);
+}
+
+struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx)
+{
+    return darray_top(ctx->st_stack);
+}
+
+bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)
+{
+    struct symbol_table_record *rec = symbol_table_lookup_record(rir_ctx_curr_st(ctx), id, NULL);
+    if (!rec) {
+        return false;
+    }
+    rec->rirobj = obj;
+    return true;
+}
+
+bool rir_ctx_st_newobj(struct rir_ctx *ctx, const struct RFstring *id, struct type *t, struct rir_object *obj)
+{
+
+    struct symbol_table_record *rec = symbol_table_record_create_from_type(rir_ctx_curr_st(ctx), id, t);
+    if (!rec) {
+        return false;
+    }
+    rec->rirobj = obj;
+    if (!symbol_table_add_record(rir_ctx_curr_st(ctx), rec)) {
+        return false;
+    }
+    return true;
+}
+
+struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring *id)
+{
+    struct symbol_table_record *rec = symbol_table_lookup_record(rir_ctx_curr_st(ctx), id, NULL);
+    return rec ? rec->rirobj : NULL;
+}
+
+static void rir_symbol_table_create_allocas_do(struct symbol_table_record *rec,
+                                               struct rir_ctx *ctx)
+{
+    struct rir_ltype *type = rir_ltype_create_from_type(symbol_table_record_type(rec), ctx);
+    RF_ASSERT_OR_EXIT(type, "Could not create a rir_ltype during symbol table iteration");
+    struct rir_object *alloca = rir_alloca_create_obj(type, 1, ctx);
+    RF_ASSERT_OR_EXIT(alloca, "Could not create an alloca object during symbol table iteration");
+    rec->rirobj = alloca;
+}
+
+static void rir_symbol_table_add_allocas_do(struct symbol_table_record *rec,
+                                            struct rir_ctx *ctx)
+{
+    RF_ASSERT(rec->rirobj && rec->rirobj->category == RIR_OBJ_EXPRESSION,
+              "Expected an expression rir object");
+    rirctx_block_add(ctx, &rec->rirobj->expr);
+}
+
+static void rir_symbol_table_create_and_add_allocas_do(struct symbol_table_record *rec,
+                                                       struct rir_ctx *ctx)
+{
+    rir_symbol_table_create_allocas_do(rec, ctx);
+    rir_symbol_table_add_allocas_do(rec, ctx);
+}
+
+void rir_ctx_st_create_allocas(struct rir_ctx *ctx)
+{
+    symbol_table_iterate(rir_ctx_curr_st(ctx),
+                         (htable_iter_cb)rir_symbol_table_create_allocas_do,
+                         ctx);
+}
+
+void rir_ctx_st_add_allocas(struct rir_ctx *ctx)
+{
+    symbol_table_iterate(rir_ctx_curr_st(ctx),
+                         (htable_iter_cb)rir_symbol_table_add_allocas_do,
+                         ctx);
+}
+
+void rir_ctx_st_create_and_add_allocas(struct rir_ctx *ctx)
+{
+    symbol_table_iterate(rir_ctx_curr_st(ctx),
+                         (htable_iter_cb)rir_symbol_table_create_and_add_allocas_do,
+                         ctx);
 }
 
 void rir_ctx_visit_type(struct rir_ctx *ctx, const struct rir_type *t)

@@ -147,6 +147,13 @@ struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
     return NULL;
 }
 
+bool ast_match_expr_next_case_is_last(const struct ast_node *matchexpr,
+                                      struct ast_matchexpr_it *it)
+{
+    AST_NODE_ASSERT_TYPE(matchexpr, AST_MATCH_EXPRESSION);
+    return it->ln->next->next == &it->lh->n;
+}
+
 struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
                                          struct ast_matchexpr_it *it)
 {

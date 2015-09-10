@@ -97,7 +97,7 @@ struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
     return ret;
 }
 
-static struct symbol_table_record *symbol_table_record_create_from_type(
+struct symbol_table_record *symbol_table_record_create_from_type(
     struct symbol_table *st,
     const struct RFstring *id,
     struct type *t)

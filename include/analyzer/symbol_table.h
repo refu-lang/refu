@@ -25,8 +25,9 @@ struct symbol_table_record {
     const struct ast_node *node;
     //! Description of the type the identifier refers to
     struct type *data;
-
-    /* -- needed by the backends -- */
+    //! The rir object used for this symbol, or NULL if not set
+    struct rir_object *rirobj;
+    /* -- Deprecated -- TODO: Remove when rir connects directly to the backend */
     //! Refu backend handle. Information stored by the backend for specific id
     //! + @c LLVM: It's an LLVMValueRef
     void *backend_handle;
@@ -43,6 +44,11 @@ struct symbol_table_record *symbol_table_record_create(
     struct module *mod,
     const struct ast_node *node,
     const struct RFstring *id);
+
+struct symbol_table_record *symbol_table_record_create_from_type(
+    struct symbol_table *st,
+    const struct RFstring *id,
+    struct type *t);
 
 void symbol_table_record_destroy(struct symbol_table_record *rec,
                                  struct symbol_table *st);

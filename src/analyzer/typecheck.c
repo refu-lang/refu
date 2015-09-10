@@ -803,7 +803,7 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
 static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
                                               struct analyzer_traversal_ctx *ctx)
 {
-    struct type *t;
+    const struct type *t;
     t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
     if (!t) {
         RF_ERROR("Function declaration name not found in the symbol table at impossible point");

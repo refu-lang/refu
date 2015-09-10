@@ -26,14 +26,23 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
         t = darray_item(t->subtypes, 0);
         // to avoid double typedef creation for rir_type subtype description mark it
         rir_ctx_visit_type(ctx, t);
+        // set the typedef rir object in the symbol table
+        if (!rir_ctx_st_setobj(ctx, def->name, obj)) {
+            return false;
+        }
     } else {
         RFS_PUSH();
         def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
         RFS_POP();
+        // since this is a new, "internally created" type create a new symbol table record
+        if (!rir_ctx_st_newobj(ctx, def->name, (struct type*)t->type, obj)) {
+            return false;
+        }
     }
     if (!rir_type_to_arg_array(t, &def->arguments_list, ctx)) {
         return false;
     }
+
     // finally add the typedef to the rir's strmap
     if (!strmap_add(&ctx->rir->map, def->name, obj)) {
         return false;

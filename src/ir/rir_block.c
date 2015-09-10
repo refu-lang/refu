@@ -15,6 +15,7 @@
 #include <ast/type.h>
 #include <ast/matchexpr.h>
 #include <ast/vardecl.h>
+#include <ast/block.h>
 #include <ast/operators.h>
 #include <ast/returnstmt.h>
 #include <types/type.h>
@@ -232,58 +233,56 @@ fail:
 static bool rir_process_vardecl(const struct ast_node *n,
                                 struct rir_ctx *ctx)
 {
+    // Just return the value from the symbol table
     struct ast_node *left = ast_types_left(ast_vardecl_desc_get(n));
-    const struct RFstring *id_str = ast_identifier_str(left);
-    RFS_PUSH();
-    struct RFstring *type_str = type_str_or_die(ast_node_get_type_or_die(left, AST_TYPERETR_DEFAULT), TSTR_DEFAULT);
-    struct rir_ltype *allocated_type = rir_type_byname(ctx->rir, type_str);
-    RFS_POP();
-    if (!allocated_type) {
-        RF_ERROR("Could not find the type that an alloc() command should allocate in the RIR");
-        return false;
+    const struct RFstring *id = ast_identifier_str(left);
+    struct rir_object *varobj = rir_ctx_st_getobj(ctx, id);
+    if (!varobj) {
+        RF_ERROR("Could not find a vardecl's RIR object in the symbol table");
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    struct rir_object *alloca = rir_alloca_create_obj(
-        allocated_type,
-        1,
-        ctx
-    );
-    if (!alloca) {
-        goto fail;
-    }
-    if (!strmap_add(&ctx->current_fn->ast_map, id_str, alloca)) {
-        RF_ERROR("Could not add vardecl to function ast string map");
-        goto fail;
-    }
-    rirctx_block_add(ctx, &alloca->expr);
-    RIRCTX_RETURN_EXPR(ctx, true, alloca);
-
-fail:
-    RIRCTX_RETURN_EXPR(ctx, false, NULL);
+    RIRCTX_RETURN_EXPR(ctx, true, varobj);
 }
 
 static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
                                                struct rir_value *uni_idx,
                                                struct ast_matchexpr_it *it,
+                                               struct rir_block *before_block,
                                                struct rir_block *after_block,
                                                struct ast_node *mcase,
                                                struct rir_ctx *ctx)
 {
+    struct rir_expression *cmp = NULL;
     struct rir_block *this_block = ctx->current_block;
-    // Create index comparison for match case
-    struct rir_value *case_idx = rir_constantval_fromint(ast_matchcase_index_get(mcase));
-    struct rir_expression *cmp = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_CMP,
-        uni_idx,
-        case_idx,
-        ctx
-    );
-    rirctx_block_add(ctx, cmp);
+    bool need_case_cmp = !ast_match_expr_next_case_is_last(mexpr, it) || this_block == before_block;
+    if (need_case_cmp) {
+        if (this_block != before_block) {
+            //create new empty block for the comparisons
+            this_block = rir_block_create(NULL, false, ctx);
+        }
+        // Create index comparison for match case
+        struct rir_value *case_idx = rir_constantval_fromint(ast_matchcase_index_get(mcase));
+        cmp = rir_binaryop_create_nonast(
+            RIR_EXPRESSION_CMP,
+            uni_idx,
+            case_idx,
+            ctx
+        );
+        rirctx_block_add(ctx, cmp);
+    }
 
+    // use this match case symbol table now
+    rir_ctx_push_st(ctx, ast_matchcase_symbol_table_get(mcase));
+    // create allocas for symbols of this st
+    rir_ctx_st_create_allocas(ctx);
     struct ast_node *case_expr = ast_matchcase_expression(mcase);
     struct rir_block *taken = rir_block_create(case_expr, false, ctx);
     if (!taken) {
         return NULL;
     }
+    // add the allocas of the symbols to the taken block (should be the current)
+    rir_ctx_st_add_allocas(ctx);
+
     // if there is an assignment to a match expression
     if (ctx->last_assign_obj) {
         struct rir_expression *e = rir_binaryop_create_nonast(
@@ -298,19 +297,25 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
         rirctx_block_add(ctx, e);
     }
 
+    // stop using this match case symbol table
+    rir_ctx_pop_st(ctx);
+
+    if (!rir_block_exit_init_branch(&taken->exit, &after_block->label)) {
+        return NULL;
+    }
+
     //try to get next case
     struct ast_node *next_case = ast_matchexpr_next_case(mexpr, it);
     if (next_case) {
-        struct rir_block *next_case_block = rir_process_matchcase(mexpr, uni_idx, it, after_block, next_case, ctx);
-        if (!rir_block_exit_init_condbranch(&this_block->exit, &cmp->val, &taken->label, &next_case_block->label)) {
-            return NULL;
+        struct rir_block *next_case_block = rir_process_matchcase(mexpr, uni_idx, it, before_block, after_block, next_case, ctx);
+        if (need_case_cmp) {
+            if (!rir_block_exit_init_condbranch(&this_block->exit, &cmp->val, &taken->label, &next_case_block->label)) {
+                return NULL;
+            }
         }
     } else {
-        if (!rir_block_exit_init_condbranch(&this_block->exit, &cmp->val, &taken->label, &after_block->label)) {
-            return NULL;
-        }
         // last taken needs to also connect to the after
-        // TODO: Last taken should also have a conditional. Maybe only with a specific argument
+        // TODO: Last taken should also have a conditional. Maybe only with a specific compiler argument
         // we should check if the sum type actually matched anything and if not terminate the program
         if (!rir_block_exit_init_branch(&taken->exit, &after_block->label)) {
             return NULL;
@@ -331,8 +336,7 @@ static bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
     if (ast_matchexpr_has_header(n)) {
         // if it's a normal match expression
         const struct RFstring *matched_value_str = ast_matchexpr_matched_value_str(n);
-        matched_obj = strmap_get(&ctx->current_fn->ast_map, matched_value_str);
-        if (!matched_obj) {
+        if (!(matched_obj = rir_ctx_st_getobj(ctx, matched_value_str))) {
             RF_ERROR("Match expression identifier was not found in the strmap during rir creation");
             goto fail;
         }
@@ -357,6 +361,7 @@ static bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
     struct rir_block *first_case_block = rir_process_matchcase(n,
                                                                &uni_idx->val,
                                                                &it,
+                                                               ctx->current_block,
                                                                after_block,
                                                                mcase,
                                                                ctx);
@@ -405,10 +410,10 @@ static bool rir_process_constant(const struct ast_node *n,
 bool rir_process_identifier(const struct ast_node *n,
                             struct rir_ctx *ctx)
 {
-    struct rir_object *obj = strmap_get(&ctx->current_fn->ast_map, ast_identifier_str(n));
+    struct rir_object *obj = rir_ctx_st_getobj(ctx, ast_identifier_str(n));
     if (!obj) {
         RF_ERROR("An identifier was not found in the strmap during rir creation");
-        return NULL;
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     RIRCTX_RETURN_EXPR(ctx, true, obj);
 }
@@ -515,14 +520,19 @@ static bool rir_block_init(struct rir_object *obj,
     if (n) {
         // add basic block to the current function
         rir_fndecl_add_block(ctx->current_fn, b);
-        ctx->current_ast_block = n;
 		if (n->type == AST_BLOCK) {
+            ctx->current_ast_block = n;
+            // set current symbol table
+            rir_ctx_push_st(ctx, ast_block_symbol_table_get((struct ast_node*)n));
+            // create allocas for block's symbols and populate the symbol table with rir objects
+            rir_ctx_st_create_and_add_allocas(ctx);
 			// for each expression of the block create a rir expression and add it to the block
 			rf_ilist_for_each(&n->children, child, lh) {
 				if (!rir_process_ast_node(child, ctx)) {
 					return false;
 				}
 			}
+            rir_ctx_pop_st(ctx);
         } else if (n->type == AST_MATCH_EXPRESSION) {
             // for now ignore match expression as body
             return true;

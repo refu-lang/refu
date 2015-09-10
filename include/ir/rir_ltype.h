@@ -39,6 +39,7 @@ void rir_ltype_elem_init(struct rir_ltype *t, enum elementary_type etype);
 struct rir_ltype *rir_ltype_elem_create(enum elementary_type etype, bool is_pointer);
 struct rir_ltype *rir_ltype_elem_create_from_string(const struct RFstring *name, bool is_pointer);
 struct rir_ltype *rir_ltype_comp_create(const struct rir_typedef *def, bool is_pointer);
+struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ctx *ctx);
 void rir_ltype_comp_init(struct rir_ltype *t, const struct rir_typedef *def, bool is_pointer);
 
 struct rir_ltype *rir_ltype_copy_from_other(const struct rir_ltype *other);

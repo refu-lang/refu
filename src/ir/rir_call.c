@@ -33,14 +33,9 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
         RF_ERROR("Could not create rir expression from constructor argument");
         return false;
     }
-    struct rir_value *lassignval = rir_ctx_lastassignval_get(ctx->rir_ctx);
-    if (!lassignval) {
-        RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
-        return false;
-    }
     // create a rir expression to read the object value at the assignee's index position
     struct rir_expression *readobj = rir_objmemberat_create(
-        lassignval,
+        ctx->lhs,
         ctx->index,
         ctx->rir_ctx
     );
@@ -71,10 +66,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
     const struct RFstring *fn_name = ast_fncall_name(n);
     const struct type *fn_type;
     // if we are in a block start check from there. If not simply search in the module
-    const struct symbol_table *st = ctx->current_block
-        ? &ctx->current_ast_block->block.st
-        : ctx->current_module_st;
-    fn_type = type_lookup_identifier_string(fn_name, st);
+    fn_type = type_lookup_identifier_string(fn_name, rir_ctx_curr_st(ctx));
     if (!fn_type) {
         RF_ERROR("No function call of a given name could be found");
         return false;
@@ -107,6 +99,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
             if (!e) {
                 return false;
             }
+            rirctx_block_add(ctx, e);
             lhs = &e->val;
         }
 

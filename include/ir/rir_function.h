@@ -21,8 +21,6 @@ struct rir_fndecl {
     struct {darray(struct rir_block*);} blocks;
     //! Stringmap from rir identifiers to rir objects
     struct rirobj_strmap map;
-    //! Stringmap for strings from the ast pass to rir object
-    struct rirobj_strmap ast_map;
     //! Label pointing to the function's end
     struct rir_value *end_label;
     //! Control to be entered into the rir functions list.

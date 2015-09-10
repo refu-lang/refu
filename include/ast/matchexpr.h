@@ -182,6 +182,13 @@ struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
                                          struct ast_matchexpr_it *it);
 
 /**
+ * @return True if the what @ref ast_matchexpr_next_case() would return would be
+ *         the last case and false otherwise
+ */
+bool ast_match_expr_next_case_is_last(const struct ast_node *matchexpr,
+                                      struct ast_matchexpr_it *it);
+
+/**
  * Iterate all matchcases
  * @param matchexpr_    The match expression whose cases to iterate
  * @param iterator_     A matchexpr iterator to utilize for the iteration

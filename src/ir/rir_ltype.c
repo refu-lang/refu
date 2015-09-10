@@ -1,4 +1,5 @@
 #include <ir/rir_ltype.h>
+#include <ir/rir.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_object.h>
 #include <types/type.h>
@@ -84,6 +85,23 @@ struct rir_ltype *rir_ltype_comp_create(const struct rir_typedef *def, bool is_p
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     rir_ltype_comp_init(ret, def, is_pointer);
     return ret;
+}
+
+struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ctx *ctx)
+{
+    if (t->category == TYPE_CATEGORY_ELEMENTARY) {
+        return rir_ltype_elem_create(t->elementary.etype, false);
+    } else if (t->category == TYPE_CATEGORY_DEFINED) {
+        struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
+        if (!tdef_obj) {
+            RF_ERROR("Could not find typedef identifier RIR object in symbol table");
+            return NULL;
+        }
+        return rir_ltype_comp_create(&tdef_obj->tdef, false);
+    } else {
+        RF_CRITICAL_FAIL("Unexpected type category");
+        return NULL;
+    }
 }
 
 void rir_ltype_destroy(struct rir_ltype *t)
