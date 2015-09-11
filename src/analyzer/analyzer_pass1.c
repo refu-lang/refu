@@ -153,7 +153,7 @@ static bool analyzer_populate_symbol_table_typeelement(struct analyzer_traversal
         // don't do anything for right part of leaves that are simply identifiers
         return true;
     default:
-        RF_ASSERT(false, "Case should never happen");
+        RF_CRITICAL_FAIL("Case should never happen");
         return false;
     }
 }

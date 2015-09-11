@@ -45,7 +45,7 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n)
     RF_ASSERT(n->state >= AST_NODE_STATE_ANALYZER_PASS1,
               "calling function at wrong part of processing pipeline");
 
-    RF_ASSERT(false, "function not implemented");
+    RF_CRITICAL_FAIL("function not implemented yet");
     return NULL;
 #if 0 // this is not used anywhere atm. If that changes either pass the module
       // or each node should know which module it belongs to.

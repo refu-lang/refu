@@ -574,7 +574,7 @@ static struct RFstring *type_str_do(const struct type *t, int options)
     case TYPE_CATEGORY_WILDCARD:
         return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
     default:
-        RF_ASSERT(false, "TODO: Not yet implemented");
+        RF_CRITICAL_FAIL("TODO: Not yet implemented");
         break;
     }
 
@@ -742,7 +742,7 @@ bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg)
         }
         break;
     default:
-        RF_ASSERT(false, "Not implemented type category for postorder iteration");
+        RF_CRITICAL_FAIL("Not implemented type category for postorder iteration");
         return false;
     }
 
@@ -776,7 +776,7 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
         }
         return type_traverse(t->operator.right, pre_cb, post_cb, user_arg);
     default:
-        RF_ASSERT(false, "Not implemented type category for postorder iteration");
+        RF_CRITICAL_FAIL("Not implemented type category for postorder iteration");
         return false;
     }
 

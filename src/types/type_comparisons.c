@@ -312,7 +312,7 @@ static bool type_elementary_compare(const struct type *fromtype,
     case ELEMENTARY_TYPE_NIL:
         break;
     default:
-        RF_ASSERT(false, "Invalid elementary type at comparisons");
+        RF_CRITICAL_FAIL("Invalid elementary type at comparisons");
         break;
     }
 
@@ -345,10 +345,10 @@ static bool type_same_categories_compare(const struct type *from,
             type_compare(from->defined.type, to->defined.type, reason);
     case TYPE_CATEGORY_GENERIC:
         //TODO
-        RF_ASSERT(false, "Not yet implemented");
+        RF_CRITICAL_FAIL("Not yet implemented");
         break;
     default:
-        RF_ASSERT(false, "Illegal type category");
+        RF_CRITICAL_FAIL("Illegal type category");
         break;
     }
 

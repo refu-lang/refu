@@ -47,7 +47,7 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealOEQ;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at equality comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at equality comparison code generation");
             return NULL;
         }
         break;
@@ -62,7 +62,7 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealONE;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at unequality comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at unequality comparison code generation");
             return NULL;
         }
         break;
@@ -79,7 +79,7 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealOGT;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at greater than comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at greater than comparison code generation");
             return NULL;
         }
         break;
@@ -96,7 +96,7 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealOGE;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at greater than or equal comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at greater than or equal comparison code generation");
             return NULL;
         }
         break;
@@ -113,7 +113,7 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealOLT;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at less than comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at less than comparison code generation");
             return NULL;
         }
         break;
@@ -130,13 +130,13 @@ static LLVMValueRef bllvm_compile_comparison(struct ast_node *n,
             llvm_real_compare_type = LLVMRealOLE;
             break;
         default:
-            RF_ASSERT(false, "Illegal operand types at less than or equal comparison code generation");
+            RF_CRITICAL_FAIL("Illegal operand types at less than or equal comparison code generation");
             return NULL;
         }
         break;
 
     default:
-        RF_ASSERT(false, "Illegal binary operation type at comparison code generation");
+        RF_CRITICAL_FAIL("Illegal binary operation type at comparison code generation");
         return NULL;
     }
 
@@ -170,7 +170,8 @@ static LLVMValueRef bllvm_compile_member_access(struct ast_node *n,
         offset += 1;
     }
 
-    RF_ASSERT(false, "Typechecking should have made sure no invalid member access exists");
+    // should never get here
+    RF_CRITICAL_FAIL("Typechecking should have made sure no invalid member access exists");
     return NULL;
 }
 
@@ -208,7 +209,7 @@ LLVMValueRef bllvm_compile_assign_llvm(LLVMValueRef from,
             bllvm_store(from, to, ctx);
         }
     } else {
-        RF_ASSERT(false, "Not yet implemented");
+        RF_CRITICAL_FAIL("Not yet implemented");
     }
 
     // hm what should compiling an assignment return?
@@ -275,7 +276,7 @@ LLVMValueRef bllvm_compile_bop(struct ast_node *n,
     case BINARYOP_CMP_LTEQ:
         return bllvm_compile_comparison(n, ctx);
     default:
-        RF_ASSERT(false, "Illegal binary operation type at LLVM code generation");
+        RF_CRITICAL_FAIL("Illegal binary operation type at LLVM code generation");
         break;
     }
     return NULL;
@@ -316,7 +317,7 @@ LLVMValueRef bllvm_compile_uop(struct ast_node *n,
         // do nothing? What exactly is a plus unary op doing?
         break;
     default:
-        RF_ASSERT(false, "Illegal unary operation type at LLVM code generation");
+        RF_CRITICAL_FAIL("Illegal unary operation type at LLVM code generation");
         break;
     }
     // error or do nothing

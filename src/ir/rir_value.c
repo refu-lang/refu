@@ -101,7 +101,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
     } else if (obj->category == RIR_OBJ_ARGUMENT) {
         v->type = &obj->arg.type;
     } else {
-        RF_ASSERT(false, "TODO ... should this even ever happen?");
+        RF_CRITICAL_FAIL("TODO ... should this even ever happen?");
     }
     // finally add it to the rir strmap
     ret = rir_map_addobj(ctx, &v->id, obj);

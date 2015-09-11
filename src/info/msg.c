@@ -200,7 +200,7 @@ const struct RFstring *info_msg_type_to_str(enum info_msg_type type)
         i = 4;
         break;
     default:
-        RF_ASSERT(false, "Illegal info_msg_type");
+        RF_CRITICAL_FAIL("Illegal info_msg_type");
         return NULL;
     }
     return &info_msg_type_strings[i];

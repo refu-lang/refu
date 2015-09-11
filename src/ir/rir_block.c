@@ -443,7 +443,7 @@ bool rir_process_ast_node(const struct ast_node *n,
         // Do nothing in these cases
         return true;
     default:
-        RF_ASSERT(false, "Not yet implemented expression for RIR");
+        RF_CRITICAL_FAIL("Not yet implemented expression for RIR");
     }
     return false;
 }

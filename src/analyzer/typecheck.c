@@ -758,9 +758,9 @@ static enum traversal_cb_res typecheck_binaryop(struct ast_node *n,
         return typecheck_member_access(n, left, right, ctx);
 
     default:
-        RF_ASSERT(false, "Typechecking for unimplemented binary "
-                  "operator "RF_STR_PF_FMT,
-                  RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+        RF_CRITICAL_FAIL("Typechecking for unimplemented binary "
+                         "operator "RF_STR_PF_FMT,
+                         RF_STR_PF_ARG(ast_binaryop_opstr(n)));
         return TRAVERSAL_CB_FATAL_ERROR;
     }
 
@@ -791,9 +791,9 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
     case UNARYOP_DEC:
         return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
     default:
-        RF_ASSERT(false, "Typechecking for unimplemented unary "
-                  "operator "RF_STR_PF_FMT,
-                  RF_STR_PF_ARG(ast_unaryop_opstr(n)));
+        RF_CRITICAL_FAIL("Typechecking for unimplemented unary "
+                         "operator "RF_STR_PF_FMT,
+                         RF_STR_PF_ARG(ast_unaryop_opstr(n)));
         return TRAVERSAL_CB_FATAL_ERROR;
     }
 

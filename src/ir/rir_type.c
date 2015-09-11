@@ -79,13 +79,13 @@ static bool rir_type_init_iteration(struct rir_type *type,
         }
         break;
     case TYPE_CATEGORY_MODULE:
-        RF_ASSERT(false, "Module types not supported in the IR");
+        RF_CRITICAL_FAIL("Module types not supported in the IR");
         break;
     case TYPE_CATEGORY_FOREIGN_FUNCTION:
-        RF_ASSERT(false, "Foreign function types not supported in the IR yet");
+        RF_CRITICAL_FAIL("Foreign function types not supported in the IR yet");
         break;
     case TYPE_CATEGORY_GENERIC:
-        RF_ASSERT(false, "Generic types not supported in the IR yet");
+        RF_CRITICAL_FAIL("Generic types not supported in the IR yet");
         break;
     }
     return true;
@@ -198,7 +198,7 @@ enum rir_type_category rir_type_op_from_type(const struct type *t)
     case TYPEOP_IMPLICATION:
         return COMPOSITE_IMPLICATION_RIR_TYPE;
     default:
-        RF_ASSERT(false, "Illegal type operation encountered");
+        RF_CRITICAL_FAIL("Illegal type operation encountered");
         return -1;
     }
 }
@@ -456,7 +456,7 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         rir_type_cmp_ctx_idx_plus1(ctx);
         break;
     default:
-        RF_ASSERT(false, "Illegal type category for comparison");
+        RF_CRITICAL_FAIL("Illegal type category for comparison");
         return false;
     }
     return true;
@@ -532,7 +532,7 @@ static inline const struct RFstring *rir_type_op_to_str(const struct rir_type *t
     case COMPOSITE_IMPLICATION_RIR_TYPE:
         return type_op_str(TYPEOP_IMPLICATION);
     default:
-        RF_ASSERT(false, "Invalid rir_type at rir_type_op_to_str()");
+        RF_CRITICAL_FAIL("Invalid rir_type at rir_type_op_to_str()");
         break;
     }
 
@@ -601,7 +601,7 @@ struct RFstring *rir_type_str(const struct rir_type *t)
                   RF_STR_PF_ARG(s))
             : NULL;
     default:
-        RF_ASSERT(false, "Invalid rir_type at rir_type_str()");
+        RF_CRITICAL_FAIL("Invalid rir_type at rir_type_str()");
         break;
     }
     return NULL;

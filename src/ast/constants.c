@@ -82,7 +82,7 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
     case CONSTANT_BOOLEAN:
         return type_elementary_get_type_constant(ELEMENTARY_TYPE_BOOL);
     default:
-        RF_ASSERT(false, "Invalid constant type");
+        RF_CRITICAL_FAIL("Invalid constant type");
         break;
     }
     return NULL;

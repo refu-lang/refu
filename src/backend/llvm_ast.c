@@ -78,10 +78,10 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
         return LLVMVoidType();
 
     default:
-        RF_ASSERT(false,
-                  "Unsupported elementary type \""RF_STR_PF_FMT"\" "
-                  "during LLVM conversion",
-                  RF_STR_PF_ARG(type_elementary_get_str(etype)));
+        RF_CRITICAL_FAIL(
+            "Unsupported elementary type \""RF_STR_PF_FMT"\" "
+            "during LLVM conversion",
+            RF_STR_PF_ARG(type_elementary_get_str(etype)));
         break;
     }
     return NULL;
@@ -109,7 +109,7 @@ LLVMTypeRef bllvm_type_from_type(const struct type *type,
         ret = LLVMGetTypeByName(ctx->llvm_mod, name);
         RFS_POP();
     } else {
-        RF_ASSERT(false, "Not yet implemented type");
+        RF_CRITICAL_FAIL("Not yet implemented type");
     }
 
     RF_ASSERT(ret, "The above functions should never fail");
@@ -165,9 +165,8 @@ LLVMValueRef bllvm_compile_explicit_cast(const struct type *cast_type,
                 ? bllvm_get_boolean_str(true, ctx)
                 : bllvm_get_boolean_str(false, ctx);
         default:
-            RF_ASSERT(false,
-                      "Illegal constant number type encountered at code generation");
-                    
+            RF_CRITICAL_FAIL("Illegal constant number type encountered at code generation");
+            break;
         }
 
         ret_str = bllvm_create_global_const_string(temps, ctx);
@@ -199,7 +198,7 @@ LLVMValueRef bllvm_compile_explicit_cast(const struct type *cast_type,
     }
 
     // else
-    RF_ASSERT(false, "Illegal cast, should not get here");
+    RF_CRITICAL_FAIL("IIllegal cast, should not get here");
     return NULL;
 }
 
@@ -336,7 +335,7 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
             ctx->current_value = LLVMConstInt(LLVMInt1Type(), ast_constant_get_bool(n), 0);
             break;
         default:
-            RF_ASSERT(false, "Invalid constant type");
+            RF_CRITICAL_FAIL("Invalid constant type");
             break;
         }
         return ctx->current_value;
@@ -356,7 +355,7 @@ LLVMValueRef bllvm_compile_expression(struct ast_node *n,
     case AST_MATCH_EXPRESSION:
         return bllvm_compile_matchexpr(n, ctx);
     default:
-        RF_ASSERT(false, "Illegal node type at LLVM code generation");
+        RF_CRITICAL_FAIL("Illegal node type at LLVM code generation");
         break;
     }
     return NULL;
