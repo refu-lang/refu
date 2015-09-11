@@ -128,7 +128,7 @@ i_INLINE_DECL const struct rir_type *type_get_rir_or_die(const struct type *type
         return rir_type_get_elementary(type_elementary(type));
     }
     if (!type->rir_type) {
-        RF_ASSERT_OR_EXIT(false, "Requested rir_type is NULL.");
+        RF_CRITICAL_FAIL("Requested rir_type is NULL.");
     }
     return type->rir_type;
 }

@@ -210,7 +210,7 @@ i_INLINE_DECL const struct type *rir_type_get_type_or_die(const struct rir_type 
         if (rir_type_is_elementary(type)) {
             return type_elementary_get_type((enum elementary_type)type->category);
         }
-        RF_ASSERT_OR_EXIT(false, "rir type contains no normal type.");
+        RF_CRITICAL_FAIL("rir type contains no normal type.");
     }
     return type->type;
 }

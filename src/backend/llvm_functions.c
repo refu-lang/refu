@@ -198,7 +198,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
         return bllvm_compile_explicit_cast(fn_type, args, ctx);
     }
 
-    RF_ASSERT_OR_EXIT(false, "should never get here");
+    RF_CRITICAL_FAIL("should never get here");
     return NULL;
 }
 

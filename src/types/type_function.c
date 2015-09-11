@@ -33,7 +33,7 @@ struct type *type_function_get_argtype(const struct type *t)
         } else if (rf_string_equal(t->foreignfn.name, &sforeign_pstr)) {
             return type_elementary_get_type(ELEMENTARY_TYPE_STRING);
         } else {
-            RF_ASSERT_OR_EXIT(false, "Attempted to request args of illegal foreign function");
+            RF_CRITICAL_FAIL("Attempted to request args of illegal foreign function");
             return NULL;
         }
     }

@@ -164,7 +164,7 @@ static bool type_init_from_typeelem(struct type *t,
         // e.g.:  foo:(i32 | string)
         return type_init_from_typeelem(t, ast_typedesc_desc_get(typeelem), m, st, genrdecl);
     default:
-        RF_ASSERT_OR_EXIT(false, "Case should never happen");
+        RF_CRITICAL_FAIL("Case should never happen");
         break;
     }
     return false;

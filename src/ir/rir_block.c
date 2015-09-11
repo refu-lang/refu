@@ -96,7 +96,7 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         }
         break;
     case RIR_BLOCK_EXIT_INVALID:
-        RF_ASSERT_OR_EXIT(false, "Should never happen");
+        RF_CRITICAL_FAIL("Should never happen");
         goto end;
     }
 

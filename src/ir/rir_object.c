@@ -37,7 +37,7 @@ struct rir_value *rir_object_value(struct rir_object *obj)
     case RIR_OBJ_ARGUMENT:
         return &obj->arg.val;
     default:
-        RF_ASSERT_OR_EXIT(false, "Unexpected rir object value");
+        RF_CRITICAL_FAIL("Unexpected rir object value");
         break;
     }
     return NULL;

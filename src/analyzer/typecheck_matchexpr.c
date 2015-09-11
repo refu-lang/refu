@@ -52,7 +52,7 @@ static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx
     case TYPE_CATEGORY_ELEMENTARY:
             return true;
     default:
-        RF_ASSERT_OR_EXIT(false, "should never happen");
+        RF_CRITICAL_FAIL("should never happen");
         break;
     }
 
@@ -165,7 +165,7 @@ static bool pattern_match_types(const struct type *pattern,
         }
         break;
     default:
-        RF_ASSERT_OR_EXIT(false, "generic or wildcard as target type should never occur");
+        RF_CRITICAL_FAIL("generic or wildcard as target type should never occur");
         break;
     }
 
@@ -229,7 +229,7 @@ static bool pattern_match_type_operators(const struct type *pattern,
     case TYPEOP_SUM:
         return pattern_match_type_sumop(pattern, target, ctx);
     default:
-        RF_ASSERT_OR_EXIT(false, "This case should never occur");
+        RF_CRITICAL_FAIL("This case should never occur");
         break;
     }
     return true;
