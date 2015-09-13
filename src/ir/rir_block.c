@@ -259,6 +259,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
         if (this_block != before_block) {
             //create new empty block for the comparisons
             this_block = rir_block_create(NULL, false, ctx);
+            rir_fndecl_add_block(ctx->current_fn, this_block);
         }
         // Create index comparison for match case
         struct rir_value *case_idx = rir_constantval_fromint(ast_matchcase_index_get(mcase));
@@ -312,6 +313,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
             if (!rir_block_exit_init_condbranch(&this_block->exit, &cmp->val, &taken->label, &next_case_block->label)) {
                 return NULL;
             }
+            return this_block;
         }
     } else {
         // last taken needs to also connect to the after

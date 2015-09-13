@@ -46,6 +46,7 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         darray_append(ret->arguments, arg);
     } else {
         if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
+            RF_ERROR("Could not turn types to function arg array in the RIR");
             goto end;
         }
     }

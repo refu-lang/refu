@@ -6,6 +6,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
+#include <types/type.h>
 #include <Utils/memory.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
@@ -221,9 +222,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rir_fndecl *fndecl;
     struct rir_ctx ctx;
     struct rir_type *t;
-
     rir_ctx_init(&ctx, r, m);
-
     // for each non elementary, non sum-type rir type create a typedef
     rir_types_list_for_each(r->rir_types_list, t) {
         // TODO: this check should go away ... is temporary due to rir_types_list_init()
@@ -234,22 +233,22 @@ static bool rir_process_do(struct rir *r, struct module *m)
                 continue;
             }
         }
-
         if (!rir_type_is_elementary(t) && !rir_ctx_type_visited(&ctx, t) &&
             t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
             struct rir_typedef *def = rir_typedef_create(t, &ctx);
             if (!def) {
+                RF_ERROR("Failed to create a RIR typedef");
                 goto end;
             }
             rf_ilist_add_tail(&r->typedefs,  &def->ln);
         }
     }
-
     // for each function of the module, create a rir equivalent
     rf_ilist_for_each(&m->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
             fndecl = rir_fndecl_create(child, &ctx);
             if (!fndecl) {
+                RF_ERROR("Failed to create a RIR fndecl");
                 goto end;
             }
             rf_ilist_add(&r->functions, &fndecl->ln);
@@ -269,6 +268,8 @@ bool rir_process(struct compiler *c)
     struct module *mod;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
         if (!rir_process_do(mod->rir, mod)) {
+            RF_ERROR("Failed to create the RIR for module \""RF_STR_PF_FMT"\"",
+                     module_name(mod));
             return false;
         }
     }
