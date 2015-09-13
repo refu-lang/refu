@@ -189,6 +189,11 @@ bool ast_match_expr_next_case_is_last(const struct ast_node *matchexpr,
                                       struct ast_matchexpr_it *it);
 
 /**
+ * @return The match case at index @a i or NULL if it does not exist
+ */
+struct ast_node *ast_matchexpr_get_case(const struct ast_node *n, unsigned int i);
+
+/**
  * Iterate all matchcases
  * @param matchexpr_    The match expression whose cases to iterate
  * @param iterator_     A matchexpr iterator to utilize for the iteration

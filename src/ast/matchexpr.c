@@ -11,7 +11,7 @@ struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
     if (!ret) {
         return NULL;
     }
-   
+
     ast_node_register_child(ret, pattern, matchcase.pattern);
     ast_node_register_child(ret, expression, matchcase.expression);
     ret->matchcase.matched_type = NULL;
@@ -108,7 +108,7 @@ bool ast_matchexpr_cases_indices_set(struct ast_node *n)
     struct ast_matchexpr_it it;
     struct ast_node *mcase;
     const struct rir_type *matchexp_type = type_get_rir_or_die(ast_matchexpr_matched_type(n));
-    
+
     ast_matchexpr_foreach(n, &it, mcase) {
         const struct rir_type *matched_type = type_get_rir_or_die(mcase->matchcase.matched_type);
         int index = rir_type_childof_type(matched_type, matchexp_type);
@@ -164,4 +164,18 @@ struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
     }
     it->ln = it->ln->next;
     return rf_ilist_node_to_off(it->ln, rf_ilist_off_var(ret, lh));
+}
+
+struct ast_node *ast_matchexpr_get_case(const struct ast_node *n, unsigned int i)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
+    struct ast_matchexpr_it it;
+    unsigned int count = 0;
+    struct ast_node *mcase;
+    ast_matchexpr_foreach(n, &it, mcase) {
+        if (count++ == i) {
+            return mcase;
+        }
+    }
+    return NULL;
 }

@@ -9,10 +9,23 @@
 #include <types/type_comparisons.h>
 #include <types/type.h>
 
+static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx,
+                                                const struct type *t);
 static inline bool pattern_matching_ctx_add_part(struct pattern_matching_ctx *ctx,
                                                  const struct type *t)
 {
-    return rf_objset_add(&ctx->parts, type, t);
+    // never add a sum as part, always break down into components
+    if (type_is_sumop(t)) {
+        if (!pattern_matching_ctx_populate_parts(ctx, t)) {
+            return false;
+        }
+    } else {
+        if (!rf_objset_add(&ctx->parts, type, t)) {
+            RF_ERROR("Internal error, could not add type to parts set.");
+            return false;
+        }
+    }
+    return true;
 }
 
 static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx,
@@ -33,15 +46,8 @@ static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx
                 target_r = target_r->leaf.type;
             }
             // add the sum operands as different parts of the type in the set
-            if (!pattern_matching_ctx_add_part(ctx, target_l)) {
-                RF_ERROR("Internal error, could not add type to parts set.");
-                return false;
-            }
-            if (!pattern_matching_ctx_add_part(ctx, target_r)) {
-                RF_ERROR("Internal error, could not add type to parts set.");
-                return false;
-            }
-            return true;
+            return pattern_matching_ctx_add_part(ctx, target_l) &&
+                pattern_matching_ctx_add_part(ctx, target_r);
         } else {
             return pattern_matching_ctx_populate_parts(ctx, t->operator.left) &&
                 pattern_matching_ctx_populate_parts(ctx, t->operator.right);
@@ -56,7 +62,7 @@ static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx
         break;
     }
 
-    return false;    
+    return false;
 }
 
 bool pattern_matching_ctx_init(struct pattern_matching_ctx *ctx,
@@ -126,10 +132,15 @@ static inline bool pattern_matching_ctx_set_matched(struct pattern_matching_ctx 
                                                     const struct type *match_type,
                                                     const struct type *pattern_type)
 {
+    // sum types should never be added as a match themselves, so just skip
+    if (type_is_sumop(match_type)) {
+        return true;
+    }
     if (rf_objset_get(&ctx->matched, type, match_type)) {
         return true;
     }
-    if (pattern_type->category == TYPE_CATEGORY_WILDCARD || pattern_type->category == TYPE_CATEGORY_OPERATOR) {
+    if (pattern_type->category == TYPE_CATEGORY_WILDCARD ||
+        pattern_type->category == TYPE_CATEGORY_OPERATOR) {
         ctx->last_matched_case = match_type;
     } else {
         ctx->last_matched_case = pattern_type;
@@ -248,7 +259,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     if (rf_objset_equal(&ctx->matching_ctx.matched, &ctx->matching_ctx.parts, type)) {
         // case is useless. Already an error but let's check if it would even match.
         // If it does not match it's a more important error and will be shown instead.
-        useless_case = true;        
+        useless_case = true;
     }
     RFS_PUSH();
     const struct type *case_pattern_type = ast_node_get_type_or_die(
@@ -267,7 +278,6 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         AST_TYPERETR_DEFAULT
     );
     RF_ASSERT(case_pattern_type, "a type for the match case pattern should have been determined");
-
     if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                      "Match case \""RF_STR_PF_FMT"\" can not be matched to the "
@@ -290,6 +300,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     }
     // keep the type that this match case matched to
     n->matchcase.matched_type = ctx->matching_ctx.last_matched_case;
+    RF_ASSERT(!type_is_sumop(n->matchcase.matched_type), "A matched type should never itself be a sum type");
     traversal_node_set_type(n, res_type, ctx);
     ret = TRAVERSAL_CB_OK;
 
