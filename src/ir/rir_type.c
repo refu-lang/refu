@@ -288,9 +288,9 @@ int rir_type_childof_type(const struct rir_type *t, const struct rir_type *maybe
     return -1;
 }
 
-// very temporary macro to allow visualization of rir type comparison. Will go away
-/* #define TEMP_RIR_DEBUG 1 */
-#ifdef TEMP_RIR_DEBUG
+// temporary macro to trace the logic of equality type to rir type equality comparison
+/* #define RF_DEBUG_TRACE_RIR_TYPE_EQUALS */
+#ifdef RF_DEBUG_TRACE_RIR_TYPE_EQUALS
 #define DD(...) do { RFS_PUSH(); RF_CDEBUG(__VA_ARGS__); RFS_POP();}while(0)
 #else
 #define DD(...) 
@@ -326,12 +326,27 @@ static inline const struct rir_type *rir_type_cmp_ctx_current_type(struct rir_ty
 static inline void rir_type_cmp_ctx_idx_plus1(struct rir_type_cmp_ctx *ctx)
 {
     darray_top(ctx->indices) = darray_top(ctx->indices) + 1;
+    DD("type \""RF_STR_PF_FMT"\" at index [%lu] += 1 --> %u\n",
+       RF_STR_PF_ARG(rir_type_str_or_die(darray_top(ctx->rir_types))),
+       darray_size(ctx->indices) - 1, darray_top(ctx->indices));
 }
 
 static inline void rir_type_cmp_ctx_go_up(struct rir_type_cmp_ctx *ctx, struct type *t)
 {
-    enum rir_type_category op = rir_type_op_from_type(t);
+    enum rir_type_category op = t->category == TYPE_CATEGORY_DEFINED
+        ? rir_type_op_from_type(t->defined.type)
+        : rir_type_op_from_type(t);
     if (op != ctx->current_rir_op) {
+#ifdef RF_DEBUG_TRACE_RIR_TYPE_EQUALS
+        if (darray_size(ctx->rir_types) > 1) {
+            DD("ctx type going up. Switching from \""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\".\n",
+               RF_STR_PF_ARG(rir_type_str_or_die(darray_top(ctx->rir_types))),
+               RF_STR_PF_ARG(rir_type_str_or_die(darray_item(ctx->rir_types, darray_size(ctx->rir_types) - 2))));
+        } else {
+            DD("ctx type going up. Switching out \""RF_STR_PF_FMT"\" which was the last type .\n",
+               RF_STR_PF_ARG(rir_type_str_or_die(darray_top(ctx->rir_types))));
+        }
+#endif
         (void)darray_pop(ctx->indices);
         (void)darray_pop(ctx->rir_types);
 
@@ -355,6 +370,16 @@ void rir_type_cmp_ctx_deinit(struct rir_type_cmp_ctx *ctx)
     darray_free(ctx->indices);
 }
 
+/**
+ * The pre callback is called during the comparison traversal "going downwards"
+ * in the type. It contains the logic that checks if a type is properly separated
+ * into subtypes as expected for the given type argument. Modifies the comparison
+ * context accordingly
+ *
+ * @param t        The part of the original type we are comparing at this moment
+ * @param ctx      The comparison context holding all the necessary information
+ * @return         true if comparison can continue, false if we got a comparison failure
+ */
 bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
     const struct rir_type *current_rir = rir_type_cmp_ctx_current_type(ctx);
@@ -391,17 +416,25 @@ bool rir_type_cmp_pre_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         if (current_rir->category != COMPOSITE_RIR_DEFINED) {
             return false;
         }
-
         if (!rf_string_equal(current_rir->name, t->defined.name)) {
             return false;
         }
-
         rir_type_cmp_ctx_push_type(ctx, current_rir->subtypes.item[0]);
     }
     // for other type categories do nothing
     return true;
 }
 
+/**
+ * The post callback is called during the comparison traversal "going upwards"
+ * in the type. It contains the logic that performs all the basic checks for each
+ * leaf element of the type. It also modifies the comparison context accoridngly
+ * so that we always know where in the comparison we are located.
+ *
+ * @param t        The part of the original type we are comparing at this moment
+ * @param ctx      The comparison context holding all the necessary information
+ * @return         true if comparison can continue, false if we got a comparison failure
+ */
 bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
 {
     const struct rir_type *curr_rir;
@@ -428,6 +461,8 @@ bool rir_type_cmp_post_cb(struct type *t, struct rir_type_cmp_ctx *ctx)
         return curr_rir->category == RIR_TYPE_WILDCARD;
 
     case TYPE_CATEGORY_DEFINED:
+        rir_type_cmp_ctx_go_up(ctx, t);
+        break;
     case TYPE_CATEGORY_MODULE:
 
         break;
@@ -473,6 +508,8 @@ bool rir_type_equals_type(const struct rir_type *r_type,
         return false;
     }
 
+    // traverse the normal type, comparing at each step with the rir type
+    // for equality.
     rir_type_cmp_ctx_init(&ctx, r_type);
     ret = type_traverse(
         (struct type*)n_type,

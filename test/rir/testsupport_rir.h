@@ -47,6 +47,16 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
                                     const char* filename,
                                     unsigned int line);
 
+#define ck_assert_rir_type_equals_type(i_rirt_, i_t_, i_str_)           \
+    do {                                                                \
+        ck_assert_msg(rir_type_equals_type(i_rirt_, i_t_, i_str_),      \
+                      "Expected rir type \""RF_STR_PF_FMT"\" to be equal " \
+                      "to normal type \""RF_STR_PF_FMT"\".",            \
+                      RF_STR_PF_ARG(rir_type_str_or_die(i_rirt_)),      \
+                      RF_STR_PF_ARG(type_str_or_die(i_t_, TSTR_DEFAULT)) \
+        );                                                              \
+    } while (0)
+
 i_INLINE_DECL struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d)
 {
     return front_testdriver_module()->types_set;
