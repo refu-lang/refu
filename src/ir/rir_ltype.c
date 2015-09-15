@@ -169,10 +169,10 @@ const struct RFstring *rir_ltype_string(const struct rir_ltype *t)
     }
 }
 
-const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, unsigned int i)
+const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, uint32_t idx)
 {
     RF_ASSERT(rir_ltype_is_composite(t), "Expected composite type");
-    const struct rir_argument *arg = rir_typedef_argat(t->tdef, i);
+    const struct rir_argument *arg = rir_typedef_argat(t->tdef, idx);
     return arg ? &arg->type : NULL;
 }
 

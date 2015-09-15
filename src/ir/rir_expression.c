@@ -113,7 +113,7 @@ static inline void rir_alloca_deinit(struct rir_expression *obj)
 }
 
 static struct rir_object *rir_setunionidx_create_obj(const struct rir_value *unimemory,
-                                                     uint32_t idx,
+                                                     const struct rir_value *idx,
                                                      struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
@@ -130,7 +130,7 @@ static struct rir_object *rir_setunionidx_create_obj(const struct rir_value *uni
 }
 
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
-                                              uint32_t idx,
+                                              const struct rir_value *idx,
                                               struct rir_ctx *ctx)
 {
     struct rir_object *obj = rir_setunionidx_create_obj(unimemory, idx, ctx);

@@ -6,6 +6,7 @@
 #include <types/type_decls.h>
 
 struct rir_ctx;
+struct rir_value;
 
 enum rir_ltype_category {
     RIR_LTYPE_ELEMENTARY,
@@ -58,7 +59,7 @@ size_t rir_ltype_bytesize(const struct rir_ltype *a);
  */
 const struct RFstring *rir_ltype_string(const struct rir_ltype *t);
 
-const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, unsigned int i);
+const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, uint32_t idx);
 int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir_ctx *ctx);
 
 void rir_ltype_destroy(struct rir_ltype *t);

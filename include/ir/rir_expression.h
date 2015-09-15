@@ -67,7 +67,7 @@ struct rir_objmemberat {
 
 struct rir_setunionidx {
     const struct rir_value *unimemory;
-    uint32_t idx;
+    const struct rir_value *idx;
 };
 
 struct rir_getunionidx {
@@ -83,7 +83,7 @@ struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
-                                              uint32_t idx,
+                                              const struct rir_value *idx,
                                               struct rir_ctx *ctx);
 struct rir_expression *rir_getunionidx_create(const struct rir_value *unimemory,
                                               struct rir_ctx *ctx);

@@ -89,7 +89,8 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
                 return false;
             }
             // create code to set the  union's index with the matching type
-            struct rir_expression *e = rir_setunionidx_create(lhs, union_idx, ctx);
+            struct rir_value *rir_idx_const = rir_constantval_fromint(union_idx);
+            struct rir_expression *e = rir_setunionidx_create(lhs, rir_idx_const, ctx);
             if (!e) {
                 return false;
             }
