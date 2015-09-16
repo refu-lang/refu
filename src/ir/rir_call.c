@@ -1,12 +1,15 @@
 #include <ir/rir_call.h>
 #include <ir/rir.h>
+#include <ir/rir_argument.h>
 #include <ir/rir_block.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_constant.h>
-#include <ir/rir_argument.h>
+#include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <ast/function.h>
 #include <types/type.h>
+
+/* -- code to process a constructor call -- */
 
 struct args_to_val_ctx {
     struct rir_ctx *rir_ctx;
@@ -61,6 +64,107 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     return true;
 }
 
+
+static bool rir_process_ctorcall(const struct ast_node *n, const struct type *fn_type, struct rir_ctx *ctx)
+{
+    struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
+    if (!lhs) {
+        RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
+        return false;
+    }
+
+    struct args_to_val_ctx argsctx;
+    if (type_is_sumtype(fn_type)) {
+
+        RF_ASSERT(rir_ltype_is_composite(lhs->type), "Constructor should assign to a composite type");
+        int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->type, n, ctx);
+        if (union_idx == -1) {
+            RF_ERROR("RIR sum constructor not matching any part of the original type");
+            return false;
+        }
+        // create code to set the  union's index with the matching type
+        struct rir_value *rir_idx_const = rir_constantval_fromint(union_idx);
+        struct rir_expression *e = rir_setunionidx_create(lhs, rir_idx_const, ctx);
+        if (!e) {
+            return false;
+        }
+        rirctx_block_add(ctx, e);
+        // create code to load the appropriate union subtype for reading
+        e = rir_unionmemberat_create(lhs, union_idx, ctx);
+        if (!e) {
+            return false;
+        }
+        rirctx_block_add(ctx, e);
+        lhs = &e->val;
+    }
+
+    // now for whichever object (normal type, or union type sutype) is loaded as left hand side
+    // assign from constructor's arguments
+    args_to_val_ctx_init(&argsctx, lhs, ctx);
+    ast_fncall_for_each_arg(n, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
+    return true;
+}
+
+/* -- code to process a normal function call -- */
+
+struct fncall_args_toarr_ctx {
+    struct rir_ctx *rirctx;
+    struct value_arr *arr;
+};
+
+static void fncall_args_toarr_ctx_init(struct fncall_args_toarr_ctx *ctx,
+                                       struct rir_ctx *rirctx,
+                                       struct value_arr *arr)
+{
+    ctx->rirctx = rirctx;
+    ctx->arr = arr;
+    darray_init(*arr);
+}
+
+static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_args_toarr_ctx *ctx)
+{
+    if (!rir_process_ast_node(n, ctx->rirctx)) {
+        return false;
+    }
+    struct rir_value *argexprval = rir_ctx_lastval_get(ctx->rirctx);
+    if (!argexprval) {
+        RF_ERROR("Could not create rir expression from constructor argument");
+        return false;
+    }
+    darray_append(*ctx->arr, argexprval);
+    return true;
+}
+
+struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+
+    // copy the name in
+    if (!rf_string_copy_in(&ret->expr.call.name, ast_fncall_name(n))) {
+        goto fail;
+    }
+
+    // turn the function call args into a rir value array
+    struct fncall_args_toarr_ctx fncarg_ctx;
+    fncall_args_toarr_ctx_init(&fncarg_ctx, ctx, &ret->expr.call.args);
+    if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
+        goto fail;
+    }
+
+    // now initialize the rir expression part of the struct
+    if (!rir_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
+        goto fail;
+    }
+
+    return ret;
+fail:
+    free(ret);
+    return NULL;
+}
+
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
 {
     const struct RFstring *fn_name = ast_fncall_name(n);
@@ -73,43 +177,59 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
     }
 
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
-        struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
-        if (!lhs) {
-            RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
+        if (!rir_process_ctorcall(n, fn_type, ctx)) {
             return false;
         }
-
-        struct args_to_val_ctx argsctx;
-        if (type_is_sumtype(fn_type)) {
-
-            RF_ASSERT(rir_ltype_is_composite(lhs->type), "Constructor should assign to a composite type");
-            int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->type, n, ctx);
-            if (union_idx == -1) {
-                RF_ERROR("RIR sum constructor not matching any part of the original type");
-                return false;
-            }
-            // create code to set the  union's index with the matching type
-            struct rir_value *rir_idx_const = rir_constantval_fromint(union_idx);
-            struct rir_expression *e = rir_setunionidx_create(lhs, rir_idx_const, ctx);
-            if (!e) {
-                return false;
-            }
-            rirctx_block_add(ctx, e);
-            // create code to load the appropriate union subtype for reading
-            e = rir_unionmemberat_create(lhs, union_idx, ctx);
-            if (!e) {
-                return false;
-            }
-            rirctx_block_add(ctx, e);
-            lhs = &e->val;
-        }
-
-        // now for whichever object (normal type, or union type sutype) is loaded as left hand side
-        // assign from constructor's arguments
-        args_to_val_ctx_init(&argsctx, lhs, ctx);
-        ast_fncall_for_each_arg(n, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
     } else { // normal function call
-        RF_ASSERT(false, "TODO");
+        struct rir_object *cobj = rir_call_create_obj_from_ast(n, ctx);
+        if (!cobj) {
+            return false;
+        }
+        rirctx_block_add(ctx, &cobj->expr);
     }
     return true;
+}
+
+bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *cexpr)
+{
+    bool ret = false;
+    RFS_PUSH();
+    if (rir_value_is_nil(&cexpr->val)) {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT"call("RF_STR_PF_FMT, RF_STR_PF_ARG(&cexpr->call.name)))) {
+            goto end;
+        }
+    } else {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = call("RF_STR_PF_FMT,
+                    RF_STR_PF_ARG(rir_value_string(&cexpr->val)),
+                    RF_STR_PF_ARG(&cexpr->call.name)))) {
+            goto end;
+        }
+    }
+
+    struct rir_value **arg_val;
+    darray_foreach(arg_val, cexpr->call.args) {
+        if (!rf_stringx_append(ctx->rir->buff, RFS(", "RF_STR_PF_FMT, RF_STR_PF_ARG(rir_value_string(*arg_val))))) {
+            goto end;
+        }
+    }
+    if (!rf_stringx_append_cstr(ctx->rir->buff, ")\n")) {
+        goto end;
+    }
+    // success
+    ret = true;
+
+end:
+    RFS_POP();
+    return ret;
+}
+
+struct rir_ltype *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
+{
+    struct rir_fndecl *decl = rir_fndecl_byname(ctx->rir, &c->name);
+    RF_ASSERT(decl, "At this point in the RIR the function declaration should have been found");
+    return decl->return_type;
 }

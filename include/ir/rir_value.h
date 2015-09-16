@@ -1,6 +1,8 @@
 #ifndef LFR_IR_RIR_VALUE_H
 #define LFR_IR_RIR_VALUE_H
 
+#include <Definitions/inline.h>
+#include <Data_Structures/darray.h>
 #include <String/rf_str_decl.h>
 #include <ast/constants_decls.h>
 
@@ -28,6 +30,8 @@ struct rir_value {
         struct rir_block *label_dst;
     };
 };
+//! An array of values
+struct value_arr {darray(struct rir_value*);};
 
 bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_ctx *ctx);
 bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
@@ -42,4 +46,9 @@ bool rir_value_tostring(struct rir *r, const struct rir_value *v);
 const struct RFstring *rir_value_string(const struct rir_value *v);
 
 int64_t rir_value_constant_int_get(const struct rir_value *v);
+
+i_INLINE_DECL bool rir_value_is_nil(const struct rir_value *v)
+{
+    return v->category == RIR_VALUE_NIL;
+}
 #endif

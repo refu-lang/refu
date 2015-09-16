@@ -5,15 +5,15 @@
 #include <stdint.h>
 #include <ast/constants_decls.h>
 #include <ir/rir_value.h>
+#include <ir/rir_argument.h>
 
 struct ast_node;
 struct rir;
 struct rir_ctx;
 struct rirtostr_ctx;
-struct rir_ltype;
 
 enum rir_expression_type {
-    RIR_EXPRESSION_FNCALL,
+    RIR_EXPRESSION_CALL,
     RIR_EXPRESSION_ALLOCA,
     RIR_EXPRESSION_RETURN,
     RIR_EXPRESSION_CONSTRUCT,
@@ -36,9 +36,16 @@ enum rir_expression_type {
 };
 
 
-struct rir_fncall {
-    const struct RFstring *name;
-    // TODO: define the fncall members
+/**
+ *  RIR call specific members of an expression.
+ *  @note: The return value which is also the value of the function call
+ *  is part of the containing expression and not of this struct
+ */
+struct rir_call {
+    //! Name of the function call
+    struct RFstring name;
+    //! An array of values that comprise this call's arguments
+    struct value_arr args;
 };
 
 struct rir_alloca {
@@ -79,6 +86,7 @@ struct rir_unionmemberat {
     uint32_t idx;
 };
 
+
 struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
@@ -105,7 +113,7 @@ void rir_return_init(struct rir_expression *ret,
 struct rir_expression {
     enum rir_expression_type type;
     union {
-        struct rir_fncall fncall;
+        struct rir_call call;
         struct rir_alloca alloca;
         struct rir_setunionidx setunionidx;
         struct rir_getunionidx getunionidx;

@@ -1,6 +1,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir.h>
 #include <ir/rir_object.h>
+#include <ir/rir_call.h>
 #include <ir/rir_value.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_function.h>
@@ -221,8 +222,8 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     bool ret = false;
     RFS_PUSH();
     switch(e->type) {
-    case RIR_EXPRESSION_FNCALL:
-        if (!rf_stringx_append(ctx->rir->buff, RFS("fncall"))) {
+    case RIR_EXPRESSION_CALL:
+        if (!rir_call_tostring(ctx, e)) {
             goto end;
         }
         break;

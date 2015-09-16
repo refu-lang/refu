@@ -360,6 +360,17 @@ bool rir_print(struct compiler *c)
     return true;
 }
 
+struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name)
+{
+    struct rir_fndecl *fn;
+    rf_ilist_for_each(&r->functions, fn, ln) {
+        if (rf_string_equal(name, fn->name)) {
+            return fn;
+        }
+    }
+    return NULL;
+}
+
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name)
 {
     struct rir_typedef *def;

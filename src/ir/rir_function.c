@@ -10,6 +10,46 @@
 #include <ir/rir_strmap.h>
 #include <types/type.h>
 
+static bool rir_fndecl_init_args(struct rir_fndecl *ret, const struct ast_node *ast_args, struct rir_ctx *ctx)
+{
+    if (!ast_args) {
+        darray_init(ret->arguments);
+        return true;
+    }
+    const struct rir_type *arguments = type_get_rir_or_die(ast_node_get_type(ast_args, AST_TYPERETR_DEFAULT));
+    if (rir_type_is_sumtype(arguments)) {
+        RFS_PUSH();
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(arguments->type, true));
+        RFS_POP();
+        if (!def) {
+            RF_ERROR("Could not find sum type definition in the RIR");
+            return false;
+        }
+        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
+        darray_init(ret->arguments);
+        darray_append(ret->arguments, arg);
+    } else {
+        if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
+            RF_ERROR("Could not turn types to function arg array in the RIR");
+            return false;
+        }
+    }
+
+    if (rir_type_is_sumtype(arguments)) {
+        // TODO
+    } else {
+        // no need to create allocas for the arguments, but still need to set them in the rir symbol table
+        struct rir_object **arg;
+        darray_foreach(arg, ret->arguments) {
+            if (!rir_ctx_st_setobj(ctx, (*arg)->arg.name, *arg)) {
+                RF_ERROR("Could not add RIR argument object to function's symbol table");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct ast_node *n,
                             struct rir_ctx *ctx)
@@ -26,44 +66,12 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
     struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *args = ast_fndecl_args_get(decl);
     struct ast_node *ast_returns = ast_fndecl_return_get(decl);
-    const struct rir_type *arguments = args
-        ? type_get_rir_or_die(ast_node_get_type(args, AST_TYPERETR_DEFAULT))
-        : NULL;
+    if (!rir_fndecl_init_args(ret, args, ctx)) {
+        goto end;
+    }
     const struct rir_type *return_type = ast_returns
         ? type_get_rir_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT))
         : NULL;
-
-    if (rir_type_is_sumtype(arguments)) {
-        RFS_PUSH();
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(arguments->type, true));
-        RFS_POP();
-        if (!def) {
-            RF_ERROR("Could not find sum type definition in the RIR");
-            goto end;
-        }
-        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
-        darray_init(ret->arguments);
-        darray_append(ret->arguments, arg);
-    } else {
-        if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
-            RF_ERROR("Could not turn types to function arg array in the RIR");
-            goto end;
-        }
-    }
-
-
-    if (rir_type_is_sumtype(arguments)) {
-        // TODO
-    } else {
-        // no need to create allocas for the arguments, but still need to set them in the rir symbol table
-        struct rir_object **arg;
-        darray_foreach(arg, ret->arguments) {
-            if (!rir_ctx_st_setobj(ctx, (*arg)->arg.name, *arg)) {
-                RF_ERROR("Could not add RIR argument object to function's symbol table");
-                goto end;
-            }
-        }
-    }
 
     // if we got a return value allocate space for it. Assume single return values fow now
     // TODO: Take into account multiple return values

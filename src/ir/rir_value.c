@@ -1,5 +1,6 @@
 #include <ir/rir_value.h>
 #include <ir/rir.h>
+#include <ir/rir_call.h>
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <ir/rir_argument.h>
@@ -66,6 +67,10 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
                 goto end;
             }
             v->type = rir_ltype_create_from_other(expr->alloca.type, false);
+            break;
+        case RIR_EXPRESSION_CALL:
+            // figure out the type
+            v->type = rir_ltype_create_from_other(rir_call_return_type(&expr->call, ctx), false);
             break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:
@@ -172,3 +177,5 @@ int64_t rir_value_constant_int_get(const struct rir_value *v)
     RF_ASSERT(v->constant.type == CONSTANT_NUMBER_INTEGER, "Expected an integer constant");
     return v->constant.value.integer;
 }
+
+i_INLINE_INS bool rir_value_is_nil(const struct rir_value *v);
