@@ -76,6 +76,9 @@ refu_src = [
     'ir/rir_value.c',
     'ir/rir_ltype.c',
     'ir/rir_typedef.c',
+    'ir/rir_process.c',
+    'ir/rir_process_cond.c',
+    'ir/rir_process_match.c',
 
     'serializer/serializer.c',
     'serializer/astprinter.c',
