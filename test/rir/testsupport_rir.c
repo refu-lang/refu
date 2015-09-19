@@ -31,6 +31,13 @@ static void rir_testdriver_deinit(struct rir_testdriver *d)
     darray_free(d->rir_types);
 }
 
+void setup_rir_tests()
+{
+    setup_analyzer_tests();
+    ck_assert_msg(rir_testdriver_init(&i_rir_test_driver_, get_front_testdriver(), get_analyzer_testdriver()),
+                  "Failed to initialize the rir test driver");
+}
+
 void setup_rir_tests_no_stdlib()
 {
     setup_analyzer_tests_no_stdlib();
@@ -149,7 +156,7 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
     unsigned int count = 0;
     struct rir_type *t;
     bool found;
-    rir_types_list_for_each(front_testdriver_module()->rir->rir_types_list, t) {
+    rir_types_list_for_each(front_testdriver_rir()->rir_types_list, t) {
         RFS_PUSH();
         found = false;
         for (i = 0; i < expected_num; ++i) {

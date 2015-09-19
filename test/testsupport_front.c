@@ -94,6 +94,11 @@ struct lexer *front_testdriver_lexer()
     return get_front_testdriver()->current_front->lexer;
 }
 
+struct rir *front_testdriver_rir()
+{
+    return front_testdriver_module()->rir;
+}
+
 struct ast_node *front_testdriver_root()
 {
     return get_front_testdriver()->current_front->root;

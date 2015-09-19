@@ -173,7 +173,7 @@ LLVMValueRef bllvm_compile_functioncall(struct ast_node *n,
                 ctx,
                 bllvm_sum_fncall_args_to_type(
                     n,
-                    rir_types_list_get_type(ctx->mod->rir->rir_types_list, fn_args_type, NULL),
+                    rir_types_list_get_type(&ctx->mod->rir->rir_types_list->lh, fn_args_type, NULL),
                     type_get_unique_type_str(fn_args_type, false),
                     ctx)
             );

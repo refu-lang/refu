@@ -30,13 +30,19 @@ struct rir_type *rir_type_alloc();
  * @return                     The newly allocated rir type or NULL in failure.
  */
 struct rir_type *rir_type_create(struct type *input,
-                                 const struct RFstring *name);
+                                 const struct RFstring *name,
+                                 struct RFilist_head* list);
+struct rir_type *rir_type_find_or_create(struct type *check_type,
+                                         const struct RFstring *name,
+                                         struct RFilist_head *list,
+                                         bool *found);
 /**
  * Initialize a rir_type
  */
 bool rir_type_init(struct rir_type *type,
                    struct type *input,
-                   const struct RFstring *name);
+                   const struct RFstring *name,
+                   struct RFilist_head* list);
 /**
  * Initialize a rir_type without proceeding to initialize its children
  *
@@ -49,6 +55,13 @@ bool rir_type_init_before_iteration(struct rir_type *type,
 
 void rir_type_dealloc(struct rir_type *t);
 void rir_type_destroy(struct rir_type *t);
+/**
+ * Special destruction function to also check the list while destroying a type
+ * @param t        The type to check for destruction.
+ * @param list     If @a t is not inside the list it is destroyed. If it is,
+ *                 destruction is left for later.
+ */
+void rir_type_destroy_check_list(struct rir_type *t, struct RFilist_head *list);
 void rir_type_deinit(struct rir_type *t);
 
 /**
@@ -181,11 +194,22 @@ i_INLINE_DECL bool rir_type_is_true_elementary(const struct rir_type *t)
 {
     return rir_type_is_elementary(t) && !(t->category == RIR_TYPE_WILDCARD);
 }
+/**
+ * Check if the type is one of the statically allocated elementary types
+ */
+bool rir_type_statically_alloced(struct rir_type *t);
 
 i_INLINE_DECL bool rir_type_is_category(const struct rir_type *t,
                                         enum rir_type_category category)
 {
     return t->category == category;
+}
+
+i_INLINE_DECL bool rir_type_is_operator(const struct rir_type *t)
+{
+    return t->category == COMPOSITE_PRODUCT_RIR_TYPE ||
+        t->category == COMPOSITE_SUM_RIR_TYPE ||
+        t->category == COMPOSITE_IMPLICATION_RIR_TYPE;
 }
 
 /**

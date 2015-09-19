@@ -275,6 +275,7 @@ START_TEST (test_typecheck_access_fieldname_in_typeop) {
     testsupport_types_equal(c1->matchcase.matched_type, t_c1);
 } END_TEST
 
+
 START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {s:string}\n"

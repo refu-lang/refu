@@ -6,17 +6,55 @@
 #include <ast/type.h>
 #include <analyzer/type_set.h>
 
+#include <ir/rir_types_list.h>
+
 #include <types/type.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
 
+struct rir_type *rir_type_find_or_create(struct type *check_type,
+                                         const struct RFstring *name,
+                                         struct RFilist_head *list,
+                                         bool *found)
+{
+    struct rir_type *iter_rir_type;
+    iter_rir_type = rir_types_list_get_type(list, check_type, name);
+    *found = true;
+    if (!iter_rir_type) {
+        *found = false;
+        iter_rir_type = rir_type_create(check_type, name, list);
+    }
+    return iter_rir_type;
+}
+
+static inline bool rir_type_find_or_create_append(struct rir_type *parent,
+                                                  struct type *check_type,
+                                                  const struct RFstring *name,
+                                                  struct RFilist_head *list)
+{
+    bool equivalent_in_list;
+    struct rir_type *type = rir_type_find_or_create(check_type, name, list, &equivalent_in_list);
+    if (!type) {
+        RF_ERROR("Could not find or create a rir type");
+        return false;
+    }
+    if (!rir_types_list_has(list, type) && !equivalent_in_list) {
+        rf_ilist_add_tail(list, &type->ln);
+        type->indexed = true;
+    }
+    darray_append(parent->subtypes, type);
+    return true;
+}
+
 static bool rir_type_init_iteration(struct rir_type *type,
                                     struct type *input,
                                     const struct RFstring *name,
-                                    enum rir_type_category *previous_type_op)
+                                    enum rir_type_category *previous_type_op,
+                                    struct RFilist_head *list)
 {
     enum rir_type_category op_category;
     struct rir_type *new_type;
+    bool equivalent_in_list;
     switch(input->category) {
     case TYPE_CATEGORY_ELEMENTARY:
         if (type_elementary(input) == ELEMENTARY_TYPE_NIL) {
@@ -24,8 +62,12 @@ static bool rir_type_init_iteration(struct rir_type *type,
         }
         // else wildcards and elementary are treated the same
     case TYPE_CATEGORY_WILDCARD:
-            new_type = rir_type_create(input, name);
-            darray_append(type->subtypes, new_type);
+        new_type = rir_type_create(input, name, list);
+        darray_append(type->subtypes, new_type);
+        if (!rir_types_list_has(list, new_type)) {
+            rf_ilist_add_tail(list, &new_type->ln);
+            new_type->indexed = true;
+        }
         break;
     case TYPE_CATEGORY_DEFINED:
         type->category = COMPOSITE_RIR_DEFINED;
@@ -33,12 +75,7 @@ static bool rir_type_init_iteration(struct rir_type *type,
         // here since rir_type_create() gets the type of the defined, we have to
         // manually set tne rir type of input
         input->rir_type = type;
-        new_type = rir_type_create(input->defined.type, NULL);
-        if (!new_type) {
-            return false;
-        }
-        darray_append(type->subtypes, new_type);
-        break;
+        return rir_type_find_or_create_append(type, input->defined.type, NULL, list);
     case TYPE_CATEGORY_OPERATOR:
         op_category = rir_type_op_from_type(input);
 
@@ -47,7 +84,7 @@ static bool rir_type_init_iteration(struct rir_type *type,
             new_type = type;
             new_type->category = op_category;
         } else if (*previous_type_op != op_category) {
-            new_type = rir_type_create(input, NULL);
+            new_type = rir_type_find_or_create(input, NULL, list, &equivalent_in_list);
             new_type->category = op_category;
             *previous_type_op = op_category;
             darray_append(type->subtypes, new_type);
@@ -57,27 +94,24 @@ static bool rir_type_init_iteration(struct rir_type *type,
             new_type->category = op_category;
         }
 
-        if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op)) {
+        if (!rir_type_init_iteration(new_type, input->operator.left, NULL, previous_type_op, list)) {
             return false;
         }
 
         if (*previous_type_op != op_category) {
-            new_type = rir_type_create(input->operator.right, NULL);
+            new_type = rir_type_find_or_create(input->operator.right, NULL, list, &equivalent_in_list);
             *previous_type_op = op_category;
             darray_append(type->subtypes, new_type);
             return true;
         }
 
-        if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op)) {
+        if (!rir_type_init_iteration(new_type, input->operator.right, NULL, previous_type_op, list)) {
             return false;
         }
         break;
 
     case TYPE_CATEGORY_LEAF:
-        if (!rir_type_init_iteration(type, input->leaf.type, input->leaf.id, previous_type_op)) {
-            return false;
-        }
-        break;
+        return rir_type_find_or_create_append(type, input->leaf.type, input->leaf.id, list);
     case TYPE_CATEGORY_MODULE:
         RF_CRITICAL_FAIL("Module types not supported in the IR");
         break;
@@ -102,7 +136,7 @@ bool rir_type_init_before_iteration(struct rir_type *type,
     type->type = input;
     // keep the rir type version of the type
     input->rir_type = type;
-    // for elementary types there is nothing to inialize
+    // for elementary types there is nothing to initialize
     if (input->category == TYPE_CATEGORY_ELEMENTARY) {
         type->category = (enum rir_type_category) type_elementary(input);
         return false;
@@ -121,7 +155,8 @@ bool rir_type_init_before_iteration(struct rir_type *type,
 
 bool rir_type_init(struct rir_type *type,
                    struct type *input,
-                   const struct RFstring *name)
+                   const struct RFstring *name,
+                   struct RFilist_head* list)
 {
 
     if (!rir_type_init_before_iteration(type, input, name)) {
@@ -129,7 +164,7 @@ bool rir_type_init(struct rir_type *type,
     }
     // iterate the subtypes
     enum rir_type_category previous_type_op = RIR_TYPE_CATEGORY_COUNT;
-    if (!rir_type_init_iteration(type, input, name, &previous_type_op)) {
+    if (!rir_type_init_iteration(type, input, name, &previous_type_op, list)) {
         return false;
     }
 
@@ -144,14 +179,15 @@ struct rir_type *rir_type_alloc()
 }
 
 struct rir_type *rir_type_create(struct type *input,
-                                 const struct RFstring *name)
+                                 const struct RFstring *name,
+                                 struct RFilist_head* list)
 {
     struct rir_type *ret = rir_type_alloc();
     if (!ret) {
         RF_ERROR("Failed at rir_type allocation");
         return NULL;
     }
-    if (!rir_type_init(ret, input, name)) {
+    if (!rir_type_init(ret, input, name, list)) {
         RF_ERROR("Failed at rir_type initialization");
         rir_type_dealloc(ret);
     }
@@ -162,8 +198,31 @@ void rir_type_dealloc(struct rir_type *t)
 {
     free(t);
 }
+
+static void rir_type_deinit_check_list(struct rir_type *t, struct RFilist_head *list)
+{
+    struct rir_type **subtype;
+    darray_foreach(subtype, t->subtypes) {
+        if (!rf_ilist_has(list, &(*subtype)->ln)) {
+            rir_type_destroy_check_list(*subtype, list);
+        }
+    }
+    darray_free(t->subtypes);
+}
+
+void rir_type_destroy_check_list(struct rir_type *t, struct RFilist_head *list)
+{
+    if (rir_type_statically_alloced(t)) {
+        return;
+    }
+    rir_type_deinit_check_list(t, list);
+    rir_type_dealloc(t);
+}
 void rir_type_destroy(struct rir_type *t)
 {
+    if (rir_type_statically_alloced(t)) {
+        return;
+    }
     rir_type_deinit(t);
     rir_type_dealloc(t);
 }
@@ -175,7 +234,6 @@ void rir_type_deinit(struct rir_type *t)
             rir_type_destroy(*subtype);
         }
     }
-
     darray_free(t->subtypes);
 }
 
@@ -651,6 +709,7 @@ static struct rir_type i_rir_elementary_types[] = {
     [i_type] = {                                    \
         .category = (enum rir_type_category)i_type, \
         .type = NULL,                               \
+        .name = NULL,                               \
     }
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_UINT_8),
@@ -674,10 +733,20 @@ const struct rir_type *rir_type_get_elementary(enum elementary_type etype)
 {
     return &i_rir_elementary_types[etype];
 }
+
+bool rir_type_statically_alloced(struct rir_type *t)
+{
+    if (t >= &i_rir_elementary_types[0] && t <= &i_rir_elementary_types[ELEMENTARY_TYPE_NIL] + sizeof(struct rir_type)) {
+        return true;
+    }
+    return false;
+}
+
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);
 i_INLINE_INS bool rir_type_is_true_elementary(const struct rir_type *t);
 i_INLINE_INS bool rir_type_is_category(const struct rir_type *t,
-                                        enum rir_type_category category);
+                                       enum rir_type_category category);
+i_INLINE_INS bool rir_type_is_operator(const struct rir_type *t);
 i_INLINE_INS bool rir_type_is_trivial(const struct rir_type *t);
 i_INLINE_INS const struct type *rir_type_get_type_or_die(const struct rir_type *type);
 

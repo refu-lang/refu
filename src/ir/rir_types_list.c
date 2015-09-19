@@ -29,13 +29,44 @@ struct rir_type elementary_rir_types_[] = {
 };
 #undef ELEMENTARY_RIR_TYPE_INIT
 
+static void rir_type_purge_from_subtypes(struct RFilist_head *list, struct rir_type *t, struct rir_type *itype)
+{
+    struct rir_type **subtype;
+    bool found = true;
+    while (found) {
+        found = false;
+        unsigned int i = 0;
+        darray_foreach(subtype, itype->subtypes) {
+            rir_type_purge_from_subtypes(list, t, *subtype);
+            if (*subtype == t) {
+                found = true;
+                break;
+            }
+            ++i;
+        }
+        if (found) {
+            darray_remove(itype->subtypes, i);
+        }
+    }
+}
+
+void rir_types_list_purge(struct RFilist_head *list, struct rir_type *t)
+{
+    // iterate all types of the list and delete it if found in their subtypes
+    struct rir_type *itype;
+    rf_ilist_for_each(list, itype, ln) {
+        rir_type_purge_from_subtypes(list, t, itype);
+    }
+}
+
 void rir_types_list_deinit(struct rir_types_list *l)
 {
-    struct rir_type *t;
-    struct rir_type *tmp;
-
-    rf_ilist_for_each_safe(&l->lh, t, tmp, ln) {
-        rir_type_destroy(t);
+    struct rir_type *t = rf_ilist_pop(&l->lh, struct rir_type, ln);
+    while (t) {
+        rir_types_list_purge(&l->lh, t);
+        /* rir_type_destroy(t); */
+        rir_type_destroy_check_list(t, &l->lh);
+        t = rf_ilist_pop(&l->lh, struct rir_type, ln);
     }
 }
 
@@ -51,7 +82,7 @@ struct rir_type *rir_types_list_get_defined(struct rir_types_list *list,
     return NULL;
 }
 
-struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
+struct rir_type *rir_types_list_get_type(struct RFilist_head *list,
                                          const struct type *type,
                                          const struct RFstring *name)
 {
@@ -60,7 +91,7 @@ struct rir_type *rir_types_list_get_type(struct rir_types_list *list,
     if (!name && type->category == TYPE_CATEGORY_ELEMENTARY) {
         return &elementary_rir_types_[type_elementary(type)];
     }
-    rf_ilist_for_each(&list->lh, iter_rir_type, ln) {
+    rf_ilist_for_each(list, iter_rir_type, ln) {
         if (rir_type_equals_type(iter_rir_type, type, name)) {
                 return iter_rir_type;
         }
@@ -110,7 +141,7 @@ static inline void rir_types_list_remtmp_add(struct rir_type *remt,
  * @return            Returns either the same type or a type that's considered
  *                    equal to the given type and has been found in the list
  */
-static inline struct rir_type *rir_types_list_has(struct RFilist_head *list, struct rir_type *t)
+struct rir_type *rir_types_list_has(struct RFilist_head *list, struct rir_type *t)
 {
     struct rir_type *it;
     rf_ilist_for_each(list, it, ln) {
@@ -181,15 +212,19 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
             continue;
         }
 
-        created_rir_type = rir_type_create(t, NULL);
+        bool equivalent_in_list;
+        created_rir_type = rir_type_find_or_create(t, NULL, &tmpl, &equivalent_in_list);
         DDC("-->created rir type: "RF_STR_PF_FMT"\n",
                RF_STR_PF_ARG(rir_type_str_or_die(created_rir_type)));
         if (!created_rir_type) {
-            RF_ERROR("Failed to create a rir type during transition Refu IR.");
+            RF_ERROR("Failed to create a rir type during transition to Refu IR.");
             return false;
         }
-        rf_ilist_add_tail(&tmpl, &created_rir_type->ln);
-        created_rir_type->indexed = true;
+        /* if (!rir_types_list_has(&tmpl, created_rir_type)) { */
+        if (!equivalent_in_list) {
+            rf_ilist_add_tail(&tmpl, &created_rir_type->ln);
+            created_rir_type->indexed = true;
+        }
     }
 
     // TODO: This whole thing here smells ... when I find time should improve.

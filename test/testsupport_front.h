@@ -57,6 +57,10 @@ struct parser *front_testdriver_parser();
  */
 struct lexer *front_testdriver_lexer();
 /**
+ * Get the rir of the current front_ctx being tested
+ */
+struct rir *front_testdriver_rir();
+/**
  * Get the ast root of the current front_ctx
  */
 struct ast_node *front_testdriver_root();

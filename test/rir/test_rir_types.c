@@ -6,6 +6,8 @@
 #include <String/rf_str_core.h>
 #include <ast/ast.h>
 #include <ast/function.h>
+#include <ir/rir.h>
+#include <ir/rir_types_list.h>
 
 #include "testsupport_rir.h"
 
@@ -30,7 +32,7 @@ START_TEST (test_types_list_simple1) {
     struct rir_type *fn_ret = testsupport_rir_type_create(ELEMENTARY_RIR_TYPE_UINT_64, NULL, true);
     testsupport_rir_type_add_subtype(fn, fn_ret, true);
 
-    struct rir_type *expected_types[] = {fn, fn_arg};
+    struct rir_type *expected_types[] = {fn, fn_arg, fn_ret};
     rir_testdriver_compare_lists(expected_types);
 } END_TEST
 
@@ -163,6 +165,36 @@ START_TEST(test_types_list_type_reuse_products_and_sums) {
                                          t_sum_1, t_foo, t_bar, t_foobar, t_prod_3
     };
     rir_testdriver_compare_lists(expected_types);
+} END_TEST
+
+START_TEST(test_rir_type_defined_always_one_subtype) {
+    // This program was causing a bug where a composite rir type was found twice
+    // in the rir types list and had 2 subtypes
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "module amod {\n"
+        "type atype {\n"
+        "a:u64, b:f32 | c:i64, d:u64\n"
+        "}\n"
+        "fn foo(a:atype)->u64 { return 1}\n"
+        "}"
+    );
+    front_testdriver_new_source(&s);
+    ck_assert_typecheck_ok();
+
+    // make sure type is only once in the list and contains 1 subtype
+    struct rir_type *t;
+    bool found = false;
+    rir_types_list_for_each(front_testdriver_rir()->rir_types_list, t) {
+        if (t->category == COMPOSITE_RIR_DEFINED) {
+            ck_assert_msg(!found, "atype was found twice in the rir types list");
+            ck_assert_rf_str_eq_cstr(t->name, "atype");
+            ck_assert_msg(darray_size(t->subtypes) == 1,
+                          "Composite rir type \""RF_STR_PF_FMT"\" should only have 1 subtype",
+                          RF_STR_PF_ARG(rir_type_str_or_die(t)));
+            found = true;
+        }
+    }
+
 } END_TEST
 
 START_TEST(test_rir_type_equals_type1) {
@@ -487,7 +519,6 @@ START_TEST(test_rir_type_childof_type) {
 
 } END_TEST
 
-
 Suite *rir_types_suite_create(void)
 {
     Suite *s = suite_create("rir_types");
@@ -500,7 +531,7 @@ Suite *rir_types_suite_create(void)
     /* tcase_add_test(type_lists, test_types_list_simple2); */
     tcase_add_test(type_lists, test_types_list_type_reuse);
     tcase_add_test(type_lists, test_types_list_type_reuse_products_and_sums);
-
+    tcase_add_test(type_lists, test_rir_type_defined_always_one_subtype);
 
     TCase *type_comparison = tcase_create("rir_types_comparison");
     tcase_add_checked_fixture(type_comparison,
@@ -512,12 +543,13 @@ Suite *rir_types_suite_create(void)
     tcase_add_test(type_comparison, test_rir_type_equals_type4);
     tcase_add_test(type_comparison, test_rir_type_equals_type5);
 
-    TCase *type_misc = tcase_create("rir_types_misc");
+    TCase *type_misc = tcase_create("rir_types_misc_no_source");
     tcase_add_checked_fixture(type_misc,
                               setup_rir_tests_no_source,
                               teardown_rir_tests);
     tcase_add_test(type_misc, test_rir_type_childof_type);
     tcase_add_test(type_misc, test_rir_type_doesnotequal_subsum_type);
+
 
     suite_add_tcase(s, type_lists);
     suite_add_tcase(s, type_comparison);
