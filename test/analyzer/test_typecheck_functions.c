@@ -227,6 +227,27 @@ START_TEST(test_typecheck_invalid_function_call_with_sum_args) {
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
+START_TEST (test_typecheck_calling_one_defined_type_fn) {
+    // this test checks for a bug where the leaf type was not traversed correctly
+    // and the foo() function call typechecking failed
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type atype {\n"
+        "    a:u64, b:f32 | c:i64, d:u64\n"
+        "}\n"
+        "fn foo(a:atype) -> u64\n"
+        "    a:u64, b:f32 => a\n"
+        "    c:i64, d:u64 => d\n"
+        "fn boo() -> u64\n"
+        "{\n"
+        "    a:atype = atype(45, 2.312)\n"
+        "    ret:u64 = foo(a)\n"
+        "    return ret\n"
+        "}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    ck_assert_typecheck_ok();
+} END_TEST
+
 START_TEST (test_typecheck_valid_function_impl) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "fn do_something(name:string, age:u16, height:u16, weight:u16, vegetarian:bool) -> u32\n"
@@ -334,12 +355,6 @@ Suite *analyzer_typecheck_functions_suite_create(void)
 {
     Suite *s = suite_create("typecheck_functions");
 
-    TCase *temp = tcase_create("temp_typecheck");
-    tcase_add_checked_fixture(temp,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
-    tcase_add_test(temp, test_typecheck_valid_function_call_print_string);
-
     TCase *t_call_val = tcase_create("typecheck_valid_function_calls");
     tcase_add_checked_fixture(t_call_val,
                               setup_analyzer_tests,
@@ -347,7 +362,7 @@ Suite *analyzer_typecheck_functions_suite_create(void)
     tcase_add_test(t_call_val, test_typecheck_valid_function_call0);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call1);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call2);
-    /* tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_string); */
+    tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_string);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call_print_int);
     tcase_add_test(t_call_val, test_typecheck_valid_function_call_with_sum_args);
 
@@ -361,6 +376,12 @@ Suite *analyzer_typecheck_functions_suite_create(void)
     tcase_add_test(t_call_inv, test_typecheck_invalid_function_call_with_nil_arg_and_ret);
     tcase_add_test(t_call_inv, test_typecheck_invalid_function_call_undeclared_identifier);
     tcase_add_test(t_call_inv, test_typecheck_invalid_function_call_with_sum_args);
+
+    TCase *t_call_misc = tcase_create("typecheck_function_calls_misc");
+    tcase_add_checked_fixture(t_call_misc,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_call_misc, test_typecheck_calling_one_defined_type_fn);
 
     TCase *t_impl_val = tcase_create("typecheck_valid_function_implementations");
     tcase_add_checked_fixture(t_impl_val,
@@ -386,10 +407,10 @@ Suite *analyzer_typecheck_functions_suite_create(void)
 
     suite_add_tcase(s, t_call_val);
     suite_add_tcase(s, t_call_inv);
+    suite_add_tcase(s, t_call_misc);
     suite_add_tcase(s, t_impl_val);
     suite_add_tcase(s, t_impl_matchbody_val);
     suite_add_tcase(s, t_impl_inv);
-    suite_add_tcase(s, temp);
 
     return s;
 }

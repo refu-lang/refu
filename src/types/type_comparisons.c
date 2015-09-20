@@ -341,8 +341,7 @@ static bool type_same_categories_compare(const struct type *from,
     case TYPE_CATEGORY_LEAF:
         return type_leaf_compare(&from->leaf, &to->leaf, reason);
     case TYPE_CATEGORY_DEFINED:
-        return rf_string_equal(from->defined.name, to->defined.name) &&
-            type_compare(from->defined.type, to->defined.type, reason);
+        return rf_string_equal(from->defined.name, to->defined.name);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         RF_CRITICAL_FAIL("Not yet implemented");
@@ -473,6 +472,14 @@ static inline enum type_initial_check_result type_category_check(const struct ty
                 ret = TYPES_ARE_EQUAL;
             }
         } else if (to->category == TYPE_CATEGORY_ELEMENTARY && from->category == TYPE_CATEGORY_LEAF) {
+            if (type_same_categories_compare(from->leaf.type, to, reason)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+        } else if (from->category == TYPE_CATEGORY_DEFINED && to->category == TYPE_CATEGORY_LEAF && to->leaf.type->category == TYPE_CATEGORY_DEFINED) {
+            if (type_same_categories_compare(from, to->leaf.type, reason)) {
+                ret = TYPES_ARE_EQUAL;
+            }
+        } else if (to->category == TYPE_CATEGORY_DEFINED && from->category == TYPE_CATEGORY_LEAF && from->leaf.type->category == TYPE_CATEGORY_DEFINED) {
             if (type_same_categories_compare(from->leaf.type, to, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
