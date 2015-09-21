@@ -226,8 +226,10 @@ i_INLINE_DECL bool type_is_sumtype(const struct type *t)
  */
 i_INLINE_DECL const struct type *type_get_nth_type_or_die(const struct type *t, unsigned int index)
 {
-    RF_ASSERT_OR_EXIT(t->rir_type, "Type's rir_type does not exist");
-    const struct rir_type *rtype = rir_type_get_nth_type_or_die(t->rir_type, index);
+    const struct rir_type *rtype = rir_type_get_nth_type_or_die(
+        type_get_rir_or_die(t),
+        index
+    );
     return rtype->type;
 }
 
@@ -240,8 +242,7 @@ i_INLINE_DECL const struct type *type_get_nth_type_or_die(const struct type *t, 
  */
 i_INLINE_DECL const struct RFstring *type_get_nth_name_or_die(const struct type *t, unsigned int index)
 {
-    RF_ASSERT_OR_EXIT(t->rir_type, "Type's rir_type does not exist");
-    return rir_type_get_nth_name_or_die(t->rir_type, index);
+    return rir_type_get_nth_name_or_die(type_get_rir_or_die(t), index);
 }
 
 /* -- type traversal functions -- */

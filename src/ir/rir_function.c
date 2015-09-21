@@ -8,6 +8,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 #include <ir/rir_strmap.h>
+#include <ast/matchexpr.h>
 #include <types/type.h>
 
 static bool rir_fndecl_init_args(struct rir_fndecl *ret, const struct ast_node *ast_args, struct rir_ctx *ctx)
@@ -28,16 +29,13 @@ static bool rir_fndecl_init_args(struct rir_fndecl *ret, const struct ast_node *
         struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
         darray_init(ret->arguments);
         darray_append(ret->arguments, arg);
+        // also set the rir object in the symbol table
+        rir_ctx_st_setrecobj(ctx, ast_args, darray_item(ret->arguments, 0));
     } else {
         if (!rir_type_to_arg_array(arguments, &ret->arguments, ctx)) {
             RF_ERROR("Could not turn types to function arg array in the RIR");
             return false;
         }
-    }
-
-    if (rir_type_is_sumtype(arguments)) {
-        // TODO
-    } else {
         // no need to create allocas for the arguments, but still need to set them in the rir symbol table
         struct rir_object **arg;
         darray_foreach(arg, ret->arguments) {

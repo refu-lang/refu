@@ -98,6 +98,13 @@ struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ct
             return NULL;
         }
         return rir_ltype_comp_create(&tdef_obj->tdef, false);
+    } else if (t->category == TYPE_CATEGORY_OPERATOR) {
+        struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t, true));
+        if (!tdef_obj) {
+            RF_ERROR("Could not find operator type, equivalent typedef  RIR object in symbol table");
+            return NULL;
+        }
+        return rir_ltype_comp_create(&tdef_obj->tdef, false);
     } else {
         RF_CRITICAL_FAIL("Unexpected type category");
         return NULL;

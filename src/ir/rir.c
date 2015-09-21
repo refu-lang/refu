@@ -21,12 +21,10 @@ static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct modul
     ctx->rir = r;
     darray_init(ctx->st_stack);
     rir_ctx_push_st(ctx, &m->node->module.st);
-    darray_init(ctx->visited_rir_types);
 }
 
 static inline void rir_ctx_deinit(struct rir_ctx *ctx)
 {
-    darray_free(ctx->visited_rir_types);
     darray_free(ctx->st_stack);
 }
 
@@ -50,6 +48,17 @@ struct symbol_table *rir_ctx_pop_st(struct rir_ctx *ctx)
 struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx)
 {
     return darray_top(ctx->st_stack);
+}
+
+bool rir_ctx_st_setrecobj(struct rir_ctx *ctx, const struct ast_node *desc, struct rir_object *obj)
+{
+
+    struct symbol_table_record *rec = symbol_table_lookup_typedesc(rir_ctx_curr_st(ctx), desc, NULL);
+    if (!rec) {
+        return false;
+    }
+    rec->rirobj = obj;
+    return true;
 }
 
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)
@@ -82,8 +91,8 @@ struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring 
     return rec ? rec->rirobj : NULL;
 }
 
-static void rir_symbol_table_create_allocas_do(struct symbol_table_record *rec,
-                                               struct rir_ctx *ctx)
+static void rir_strec_create_allocas(struct symbol_table_record *rec,
+                                     struct rir_ctx *ctx)
 {
     struct rir_ltype *type = rir_ltype_create_from_type(symbol_table_record_type(rec), ctx);
     RF_ASSERT_OR_EXIT(type, "Could not create a rir_ltype during symbol table iteration");
@@ -92,58 +101,41 @@ static void rir_symbol_table_create_allocas_do(struct symbol_table_record *rec,
     rec->rirobj = alloca;
 }
 
-static void rir_symbol_table_add_allocas_do(struct symbol_table_record *rec,
-                                            struct rir_ctx *ctx)
+void rir_strec_add_allocas(struct symbol_table_record *rec,
+                           struct rir_ctx *ctx)
 {
     RF_ASSERT(rec->rirobj && rec->rirobj->category == RIR_OBJ_EXPRESSION,
               "Expected an expression rir object");
     rirctx_block_add(ctx, &rec->rirobj->expr);
 }
 
-static void rir_symbol_table_create_and_add_allocas_do(struct symbol_table_record *rec,
-                                                       struct rir_ctx *ctx)
+static void rir_strec_create_and_add_allocas(struct symbol_table_record *rec,
+                                      struct rir_ctx *ctx)
 {
-    rir_symbol_table_create_allocas_do(rec, ctx);
-    rir_symbol_table_add_allocas_do(rec, ctx);
+    rir_strec_create_allocas(rec, ctx);
+    rir_strec_add_allocas(rec, ctx);
 }
 
 void rir_ctx_st_create_allocas(struct rir_ctx *ctx)
 {
     symbol_table_iterate(rir_ctx_curr_st(ctx),
-                         (htable_iter_cb)rir_symbol_table_create_allocas_do,
+                         (htable_iter_cb)rir_strec_create_allocas,
                          ctx);
 }
 
 void rir_ctx_st_add_allocas(struct rir_ctx *ctx)
 {
     symbol_table_iterate(rir_ctx_curr_st(ctx),
-                         (htable_iter_cb)rir_symbol_table_add_allocas_do,
+                         (htable_iter_cb)rir_strec_add_allocas,
                          ctx);
 }
 
 void rir_ctx_st_create_and_add_allocas(struct rir_ctx *ctx)
 {
     symbol_table_iterate(rir_ctx_curr_st(ctx),
-                         (htable_iter_cb)rir_symbol_table_create_and_add_allocas_do,
+                         (htable_iter_cb)rir_strec_create_and_add_allocas,
                          ctx);
 }
-
-void rir_ctx_visit_type(struct rir_ctx *ctx, const struct rir_type *t)
-{
-    darray_append(ctx->visited_rir_types, t);
-}
-
-bool rir_ctx_type_visited(struct rir_ctx *ctx, const struct rir_type *t)
-{
-    const struct rir_type **type;
-    darray_foreach(type, ctx->visited_rir_types) {
-        if (rir_type_equals(*type, t, RIR_TYPECMP_SIMPLE)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 
 static struct rir_value *rir_ctx_lastobj_get(struct rir_object *obj)
 {
@@ -225,16 +217,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     rir_ctx_init(&ctx, r, m);
     // for each non elementary, non sum-type rir type create a typedef
     rir_types_list_for_each(r->rir_types_list, t) {
-        // TODO: this check should go away ... is temporary due to rir_types_list_init()
-        // actually putting two copies of a rir sum type in the list. Please fix!!
-        if (t->category == COMPOSITE_RIR_DEFINED) {
-            struct rir_object *checkdef = strmap_get(&ctx.rir->map, t->name);
-            if (checkdef) {
-                continue;
-            }
-        }
-        if (!rir_type_is_elementary(t) && !rir_ctx_type_visited(&ctx, t) &&
-            t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
+        if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
             struct rir_typedef *def = rir_typedef_create(t, &ctx);
             if (!def) {
                 RF_ERROR("Failed to create a RIR typedef");

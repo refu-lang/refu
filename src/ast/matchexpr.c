@@ -54,6 +54,19 @@ i_INLINE_INS struct ast_node *ast_matchexpr_headless_args(const struct ast_node 
 i_INLINE_INS void ast_matchexpr_set_fnargs(struct ast_node *n,
                                            struct ast_node *fn_args);
 
+struct symbol_table_record* ast_matchexpr_headless_strec(const struct ast_node *n,
+                                                         const struct symbol_table *st)
+{
+    bool at_first;
+    struct symbol_table_record *rec = symbol_table_lookup_typedesc(
+        st,
+        ast_matchexpr_headless_args(n),
+        &at_first
+    );
+    RF_ASSERT(at_first, "Headless typedesc should have been found at the first symbol table");
+    return rec;
+}
+
 const struct type *ast_matchexpr_matched_type_compute(struct ast_node *n,
                                                       const struct symbol_table *st)
 {
@@ -95,7 +108,7 @@ const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
         return ast_identifier_str(ast_matchexpr_identifier(n));
     }
     // else it's an anonymous type matching
-    return type_get_unique_value_str(
+    return type_get_unique_type_str(
         ast_node_get_type_or_die(
             n->matchexpr.identifier_or_fnargtype,
             AST_TYPERETR_AS_LEAF

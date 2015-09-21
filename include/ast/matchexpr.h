@@ -86,13 +86,14 @@ i_INLINE_DECL struct ast_node *ast_matchexpr_identifier(const struct ast_node *n
 }
 
 /**
- * If this is a headless match expression Will return the function's arguments
+ * Only for a headless match expression Will return the function's arguments
  * type declaration whose body the match expression consists
  */
 i_INLINE_DECL struct ast_node *ast_matchexpr_headless_args(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
-    return ast_matchexpr_has_header(n) ? NULL : n->matchexpr.identifier_or_fnargtype;
+    RF_ASSERT(!ast_matchexpr_has_header(n), "Called with non-headless match expression");
+    return n->matchexpr.identifier_or_fnargtype;
 }
 
 i_INLINE_DECL void ast_matchexpr_set_fnargs(struct ast_node *n,
@@ -101,6 +102,17 @@ i_INLINE_DECL void ast_matchexpr_set_fnargs(struct ast_node *n,
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
     n->matchexpr.identifier_or_fnargtype = fn_args;
 }
+
+/**
+ * Only for headless match expressions, get the symbol table record for the type.
+ *
+ * @param n            The headless match expression
+ * @param st           The symbol table at which to search
+ * @return             The symbol table record for the headless match expression's
+ *                     type description or NULL if it's not found
+ */
+struct symbol_table_record* ast_matchexpr_headless_strec(const struct ast_node *n,
+                                                         const struct symbol_table *st);
 
 /**
  * Get the type that is being matched for @a n and save it as part of the expression.

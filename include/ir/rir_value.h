@@ -44,6 +44,7 @@ void rir_value_destroy(struct rir_value *v);
 
 bool rir_value_tostring(struct rir *r, const struct rir_value *v);
 const struct RFstring *rir_value_string(const struct rir_value *v);
+struct rir_block *rir_value_label_dst(const struct rir_value *v);
 
 int64_t rir_value_constant_int_get(const struct rir_value *v);
 

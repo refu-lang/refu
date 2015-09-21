@@ -153,33 +153,37 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
                                     unsigned int line)
 {
     unsigned int i;
-    unsigned int count = 0;
     struct rir_type *t;
-    bool found;
-    rir_types_list_for_each(front_testdriver_rir()->rir_types_list, t) {
-        RFS_PUSH();
-        found = false;
+    unsigned int count = rf_ilist_size(&front_testdriver_rir()->rir_types_list->lh);
+    RFS_PUSH();
+    if (expected_num >= count) {
         for (i = 0; i < expected_num; ++i) {
-            if (rir_type_equals(t, expected_types[i], RIR_TYPECMP_NAMES)) {
-                found = true;
-                break;
+            if (!rir_types_list_has(&front_testdriver_rir()->rir_types_list->lh, expected_types[i])) {
+                ck_abort_msg("Expected rir type ["RF_STR_PF_FMT"] was not found in the "
+                             "created rire list from %s:%u",
+                             RF_STR_PF_ARG(rir_type_str_or_die(expected_types[i])),
+                             filename,
+                             line);
             }
         }
-        ck_assert_msg(found, "Encountered rir type ["RF_STR_PF_FMT"] was not found in the "
-                      "expected types list from  %s:%u",
-                      RF_STR_PF_ARG(rir_type_str_or_die(t)),
-                      filename,
-                      line);
-        count ++;
-        RFS_POP();
+    } else {
+        bool found;
+        rir_types_list_for_each(front_testdriver_rir()->rir_types_list, t) {
+            found = false;
+            for (i = 0; i < expected_num; ++i) {
+                if (rir_type_equals(t, expected_types[i], RIR_TYPECMP_NAMES)) {
+                    found = true;
+                    break;
+                }
+            }
+            ck_assert_msg(found, "Encountered rir type ["RF_STR_PF_FMT"] was not found in the "
+                          "expected types list from  %s:%u",
+                          RF_STR_PF_ARG(rir_type_str_or_die(t)),
+                          filename,
+                          line);
+        }
     }
-    ck_assert_msg(expected_num == count,
-        "Number of expected rir types (%u) does not "
-        "match the number of created types (%u) from %s:%u",
-        expected_num,
-        count,
-        filename,
-        line);
+    RFS_POP();
     return true;
 }
 

@@ -15,19 +15,16 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
     RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
     RF_STRUCT_ZERO(def);
 
+    def->is_union = rir_type_is_sumtype(t);
     if (t->category == COMPOSITE_RIR_DEFINED) {
-        if (rir_type_is_sumtype(t)) {
-            def->is_union = true;
-        }
         // if it's an actual typedef get the name and proceed to the first and only
         // subtype which is the actual type declaration
         def->name = rf_string_copy_out(t->name);
         RF_ASSERT(darray_size(t->subtypes) == 1, "defined type should have a single subtype");
         t = darray_item(t->subtypes, 0);
-        // to avoid double typedef creation for rir_type subtype description mark it
-        rir_ctx_visit_type(ctx, t);
         // set the typedef rir object in the symbol table
         if (!rir_ctx_st_setobj(ctx, def->name, obj)) {
+            RF_ERROR("Failed to set the typedef rir object in the symbol table");
             return false;
         }
     } else {
@@ -36,15 +33,18 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
         RFS_POP();
         // since this is a new, "internally created" type create a new symbol table record
         if (!rir_ctx_st_newobj(ctx, def->name, (struct type*)t->type, obj)) {
+            RF_ERROR("Failed to create new symbol table record for a rir created type");
             return false;
         }
     }
     if (!rir_type_to_arg_array(t, &def->arguments_list, ctx)) {
+        RF_ERROR("Failed to turn a type to an arg array");
         return false;
     }
 
     // finally add the typedef to the rir's strmap
     if (!strmap_add(&ctx->rir->map, def->name, obj)) {
+        RF_ERROR("Failed to add a typedef to the rir strmap");
         return false;
     }
     

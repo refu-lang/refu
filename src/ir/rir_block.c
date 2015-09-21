@@ -180,8 +180,8 @@ static bool rir_block_init(struct rir_object *obj,
 			}
             rir_ctx_pop_st(ctx);
         } else if (n->type == AST_MATCH_EXPRESSION) {
-            // for now ignore match expression as body
-            return true;
+            // process match expression as body
+            return rir_process_matchexpr((struct ast_node*)n, ctx);
 		} else {
 			// other expressions, process only one
 			if (!rir_process_ast_node(n, ctx)) {

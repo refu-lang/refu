@@ -46,8 +46,6 @@ struct rir_ctx {
     struct rir_fndecl *current_fn;
     struct rir_block *current_block;
     struct rir_block *next_block;
-    //! During rir typedef creation, defined type description is marked here to avoid double visiting
-    struct {darray(const struct rir_type*);} visited_rir_types;
     //! Stack of symbol table pointers, to remember current symbol table during rir formation
     struct {darray(struct symbol_table*);} st_stack;
     //! The current ast block object we are visiting
@@ -65,8 +63,6 @@ struct rir_ctx {
 };
 
 void rir_ctx_reset(struct rir_ctx *ctx);
-void rir_ctx_visit_type(struct rir_ctx *ctx, const struct rir_type *t);
-bool rir_ctx_type_visited(struct rir_ctx *ctx, const struct rir_type *t);
 struct rir_value *rir_ctx_lastval_get(const struct rir_ctx *c);
 struct rir_value *rir_ctx_lastassignval_get(const struct rir_ctx *c);
 void rir_ctx_push_st(struct rir_ctx *ctx, struct symbol_table *st);
@@ -74,10 +70,13 @@ struct symbol_table *rir_ctx_pop_st(struct rir_ctx *ctx);
 struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx);
 bool rir_ctx_st_newobj(struct rir_ctx *ctx, const struct RFstring *id, struct type *t, struct rir_object *obj);
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj);
+bool rir_ctx_st_setrecobj(struct rir_ctx *ctx, const struct ast_node *desc, struct rir_object *obj);
 struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring *id);
 void rir_ctx_st_create_allocas(struct rir_ctx *ctx);
 void rir_ctx_st_add_allocas(struct rir_ctx *ctx);
 void rir_ctx_st_create_and_add_allocas(struct rir_ctx *ctx);
+void rir_strec_add_allocas(struct symbol_table_record *rec,
+                           struct rir_ctx *ctx);
 
 #define RIRCTX_RETURN_EXPR(i_ctx_, i_result_, i_obj_)   \
     do {                                                \

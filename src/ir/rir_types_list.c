@@ -114,6 +114,22 @@ struct rir_type *rir_types_list_get_type(struct RFilist_head *list,
 #endif
 
 /**
+ * Check if a types' equal exists in the list and if not add the type
+ * @param list      The list to append to
+ * @param type      The type to check if an equal exists inside the list and if
+ *                  it does not add it there
+ */
+static inline void rir_types_list_add_if_equal_not_exists(struct RFilist_head *list,
+                                                          struct rir_type *type)
+{
+    if (!rir_types_list_has(list, type)) {
+        rf_ilist_add_tail(list, &type->ln);
+    } else {
+        rir_type_destroy(type);
+    }
+}
+
+/**
  * Remove from temporary list and add to rir types list
  * @param remt      The type to remove from one list and add to the other
  * @param tmplist   The list to remove it from
@@ -124,7 +140,7 @@ static inline void rir_types_list_remtmp_add(struct rir_type *remt,
                                              struct rir_types_list *list)
 {
     rf_ilist_delete_from(tmplist, &remt->ln);
-    rf_ilist_add_tail(&list->lh, &remt->ln);
+    rir_types_list_add_if_equal_not_exists(&list->lh, remt);
 }
 
 /**
@@ -145,7 +161,7 @@ struct rir_type *rir_types_list_has(struct RFilist_head *list, struct rir_type *
 {
     struct rir_type *it;
     rf_ilist_for_each(list, it, ln) {
-        if (rir_type_equals(t, it, RIR_TYPECMP_SIMPLE)) {
+        if (rir_type_equals(t, it, RIR_TYPECMP_NAMES)) {
             return it;
         }
     }
@@ -220,10 +236,11 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
             RF_ERROR("Failed to create a rir type during transition to Refu IR.");
             return false;
         }
-        /* if (!rir_types_list_has(&tmpl, created_rir_type)) { */
         if (!equivalent_in_list) {
             rf_ilist_add_tail(&tmpl, &created_rir_type->ln);
             created_rir_type->indexed = true;
+        } else {
+            rir_type_destroy(created_rir_type);
         }
     }
 
@@ -245,7 +262,7 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
         // if the type's subtypes/dependencies are not in the list yet add them
         // before adding this type
         rir_type_add_dependecies_to_list(iter_rir_type, &tmpl, rir_types);
-        rf_ilist_add_tail(&rir_types->lh, &iter_rir_type->ln);
+        rir_types_list_add_if_equal_not_exists(&rir_types->lh, iter_rir_type);
         // get next type
         iter_rir_type = rf_ilist_pop(&tmpl, struct rir_type, ln);
     }
@@ -255,6 +272,21 @@ bool rir_types_list_init(struct rir_types_list *rir_types,
     printf("\n>>Newly re-ordered list follows:\n\n");
     rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
         DDR("--> " RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rir_type_str_or_die(iter_rir_type)));
+    }
+#endif
+
+#ifdef RF_OPTION_DEBUG
+    // only in debug mode and until this type of rir list creation goes away we should
+    // double check that this method always generates a list with no repeated types
+    struct rir_type *ctype;
+    rf_ilist_for_each(&rir_types->lh, iter_rir_type, ln) {
+        rf_ilist_for_each(&rir_types->lh, ctype, ln) {
+            if (iter_rir_type != ctype && rir_type_equals(iter_rir_type, ctype, RIR_TYPECMP_NAMES)){
+                RF_CRITICAL_FAIL("RIR typelist creation was not properly done. Type \""
+                                 RF_STR_PF_FMT"\" was found twice in the list.",
+                                 RF_STR_PF_ARG(rir_type_str_or_die(ctype)));
+            }
+        }
     }
 #endif
     return true;

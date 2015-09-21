@@ -170,6 +170,12 @@ const struct RFstring *rir_value_string(const struct rir_value *v)
     }
     return rf_string_empty_get();
 }
+
+struct rir_block *rir_value_label_dst(const struct rir_value *v)
+{
+    RF_ASSERT(v->category == RIR_VALUE_LABEL, "Expected a label value");
+    return v->label_dst;
+}
   
 int64_t rir_value_constant_int_get(const struct rir_value *v)
 {
