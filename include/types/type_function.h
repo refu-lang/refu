@@ -13,8 +13,7 @@ struct module;
 i_INLINE_DECL bool type_is_function(const struct type *t)
 {
     return (t->category == TYPE_CATEGORY_OPERATOR &&
-            t->operator.type == TYPEOP_IMPLICATION) ||
-        t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
+            t->operator.type == TYPEOP_IMPLICATION);
 }
 
 /**
@@ -94,14 +93,5 @@ void type_function_init(struct type *t, struct type *arg_type, struct type *ret_
  *                 malformed expression type or @n is out of bounds
  */
 const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int n);
-
-
-struct type *type_foreign_function_create(struct module *mod, const struct RFstring *name);
-bool type_foreign_function_allowed(const struct type *t);
-i_INLINE_DECL bool type_is_foreign_function(const struct type *t)
-{
-    return t->category == TYPE_CATEGORY_FOREIGN_FUNCTION;
-}
-
 
 #endif

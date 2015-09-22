@@ -655,7 +655,6 @@ bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
-    case TYPE_CATEGORY_FOREIGN_FUNCTION:
     case TYPE_CATEGORY_MODULE:
         // Do nothing
         break;
@@ -692,7 +691,6 @@ enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_GENERIC:
     case TYPE_CATEGORY_WILDCARD:
-    case TYPE_CATEGORY_FOREIGN_FUNCTION:
     case TYPE_CATEGORY_MODULE:
         // Do nothing
         break;
@@ -759,7 +757,6 @@ bool type_traverse(struct type *t, type_iterate_cb pre_cb,
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_LEAF:
     case TYPE_CATEGORY_MODULE:
-    case TYPE_CATEGORY_FOREIGN_FUNCTION:
     case TYPE_CATEGORY_WILDCARD:
         break;
     case TYPE_CATEGORY_DEFINED:

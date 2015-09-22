@@ -14,29 +14,10 @@ i_INLINE_INS void type_function_set_rettype(struct type *t, struct type *other);
 
 static const struct RFstring s_function_ = RF_STRING_STATIC_INIT("function");
 static const struct RFstring s_ctor_ = RF_STRING_STATIC_INIT("constructor");
-static const struct RFstring sforeign_pint64 = RF_STRING_STATIC_INIT("rf_stdlib_print_int64");
-static const struct RFstring sforeign_puint64 = RF_STRING_STATIC_INIT("rf_stdlib_print_uint64");
-static const struct RFstring sforeign_pdouble = RF_STRING_STATIC_INIT("rf_stdlib_print_double");
-static const struct RFstring sforeign_pstr = RF_STRING_STATIC_INIT("rf_stdlib_print_string");
 
 struct type *type_function_get_argtype(const struct type *t)
 {
     RF_ASSERT(type_is_function(t), "Non function type detected");
-    if (t->category == TYPE_CATEGORY_FOREIGN_FUNCTION) {
-        // should allow only same foreign functions as in type_foreign_function_allowed()
-        if (rf_string_equal(t->foreignfn.name, &sforeign_pint64)) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_INT_64);
-        } else if (rf_string_equal(t->foreignfn.name, &sforeign_puint64)) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_UINT_64);
-        } else if (rf_string_equal(t->foreignfn.name, &sforeign_pdouble)) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_FLOAT_64);
-        } else if (rf_string_equal(t->foreignfn.name, &sforeign_pstr)) {
-            return type_elementary_get_type(ELEMENTARY_TYPE_STRING);
-        } else {
-            RF_CRITICAL_FAIL("Attempted to request args of illegal foreign function");
-            return NULL;
-        }
-    }
     return t->operator.left;
 }
 
@@ -102,30 +83,3 @@ const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int 
 
     return do_type_fnargs_get_argtype_n(&t->operator, n);
 }
-
-
-struct type *type_foreign_function_create(struct module *mod, const struct RFstring *name)
-{
-    struct type *ret;
-    ret = type_alloc(mod);
-    if (!ret) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
-    }
-
-    ret->category = TYPE_CATEGORY_FOREIGN_FUNCTION;
-    ret->foreignfn.name = name;
-    // do not add foreign function type to the types list at the moment
-    /* analyzer_types_set_add(mod, ret); */
-    return ret;
-}
-
-bool type_foreign_function_allowed(const struct type *t)
-{    
-    return rf_string_equal(t->foreignfn.name, &sforeign_pint64)    ||
-           rf_string_equal(t->foreignfn.name, &sforeign_puint64)   ||
-           rf_string_equal(t->foreignfn.name, &sforeign_pdouble)   ||
-           rf_string_equal(t->foreignfn.name, &sforeign_pstr);
-}
-
-i_INLINE_INS bool type_is_foreign_function(const struct type *t);

@@ -44,7 +44,6 @@ enum type_category {
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
-    TYPE_CATEGORY_FOREIGN_FUNCTION,     /* type of a foreign function */
     TYPE_CATEGORY_MODULE                /* type of a module */
 };
 

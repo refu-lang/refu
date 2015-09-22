@@ -115,9 +115,6 @@ static bool rir_type_init_iteration(struct rir_type *type,
     case TYPE_CATEGORY_MODULE:
         RF_CRITICAL_FAIL("Module types not supported in the IR");
         break;
-    case TYPE_CATEGORY_FOREIGN_FUNCTION:
-        RF_CRITICAL_FAIL("Foreign function types not supported in the IR yet");
-        break;
     case TYPE_CATEGORY_GENERIC:
         RF_CRITICAL_FAIL("Generic types not supported in the IR yet");
         break;
