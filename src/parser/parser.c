@@ -61,3 +61,9 @@ i_INLINE_INS bool parser_has_syntax_error(struct parser *parser);
 i_INLINE_INS bool parser_has_syntax_error_reset(struct parser *parser);
 
 i_INLINE_INS void parser_inject_input_file(struct parser *p, struct inpfile *f);
+
+void parser_info_rollback(struct parser *parser)
+{
+    info_ctx_rollback(parser->info);
+    parser->have_syntax_err = false;
+}

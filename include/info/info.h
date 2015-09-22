@@ -1,6 +1,7 @@
 #ifndef LFR_INFO_H
 #define LFR_INFO_H
 
+#include <Data_Structures/darray.h>
 #include <RFintrusive_list.h>
 #include <RFstring.h>
 
@@ -15,6 +16,7 @@ enum info_msg_type {
 
 struct inplocation;
 struct inplocation_mark;
+struct info_msg;
 
 struct info_ctx {
     RFilist_head msg_list;
@@ -22,7 +24,7 @@ struct info_ctx {
     int verbose_level;
     struct RFstringx buff;
     bool syntax_error; /* maybe to avoid searching the whole list? */
-
+    struct {darray(struct info_msg*);} last_msgs_arr;
     // a pointer to the file all the info messages will refer to (not owned)
     struct inpfile *file;
 };
@@ -44,6 +46,21 @@ bool i_info_ctx_add_msg(struct info_ctx *ctx,
  * Remove the last @a num messages from the info context
  */
 void info_ctx_rem_messages(struct info_ctx *ctx, size_t num);
+
+/**
+ * Push the current info messages status so that it can later be either popped or rolled back
+ */
+void info_ctx_push(struct info_ctx *ctx);
+/**
+ * Pop the current info message status so that a previous push's effects are undone.
+ * Will not delete any messages.
+ */
+void info_ctx_pop(struct info_ctx *ctx);
+/**
+ * Rollback the info message status to the last push. Will delete all messages after the last push.
+ */
+void info_ctx_rollback(struct info_ctx *ctx);
+
 
 bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);

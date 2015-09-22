@@ -88,21 +88,30 @@ START_TEST (test_acc_import_statements) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "import mod1, mod2\n"
         "import mod3\n"
-        "foreign_import a_function\n"
+        "foreign_import a_function(u64)\n"
     );
     front_testdriver_new_main_source(&s);
 
     struct ast_node *id_mod1 = testsupport_parser_identifier_create(0, 7, 0, 10);
     struct ast_node *id_mod2 = testsupport_parser_identifier_create(0, 13, 0, 16);
     struct ast_node *id_mod3 = testsupport_parser_identifier_create(1, 7, 1, 10);
-    struct ast_node *id_fn = testsupport_parser_identifier_create(2, 15, 2, 24);
+    // TODO: finish, left in the middle
+    struct ast_node *id_fn_name = testsupport_parser_identifier_create(2, 15, 2, 24);
+    testsupport_parser_xidentifier_create_simple(arg_id, 2, 26, 2, 28);
+    testsupport_parser_node_create(fn, fndecl, 2, 15, 2, 29,
+                                   FNDECL_PARTOF_FOREIGN_IMPORT,
+                                   id_fn_name,
+                                   NULL,
+                                   arg_id,
+                                   NULL
+    );
     testsupport_parser_node_create(imp1, import, 0, 0, 0, 16, false);
     ast_node_add_child(imp1, id_mod1);
     ast_node_add_child(imp1, id_mod2);
     testsupport_parser_node_create(imp2, import, 1, 0, 1, 10, false);
     ast_node_add_child(imp2, id_mod3);
-    testsupport_parser_node_create(imp3, import, 2, 0, 2, 24, true);
-    ast_node_add_child(imp3, id_fn);
+    testsupport_parser_node_create(imp3, import, 2, 0, 2, 29, true);
+    ast_node_add_child(imp3, fn);
 
     struct ast_node *expected_root = ast_root_create(front_testdriver_file());
     ast_node_add_child(expected_root, imp1);
@@ -141,7 +150,7 @@ START_TEST (test_acc_import_statements_fail2) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "Expected an identifier at foreign_import statement",
+            "Expected an identifier or a function declaration at foreign_import statement",
             0, 20),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,

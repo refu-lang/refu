@@ -68,6 +68,15 @@ i_INLINE_DECL bool parser_has_syntax_error_reset(struct parser *parser)
     return ret;
 }
 
+/**
+ * Acts just like info_ctx_rollback() except it also resets the has_syntax_error
+ * variable.
+ *
+ * TODO: Make this smarter, get rid of the has_syntax_error logic and just use the
+ * rollback mechanism if possible
+ */
+void parser_info_rollback(struct parser *parser);
+
 i_INLINE_DECL void parser_inject_input_file(struct parser *p, struct inpfile *f)
 {
     p->file = f;

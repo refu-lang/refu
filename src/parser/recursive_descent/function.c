@@ -28,7 +28,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     tok = lexer_lookahead(p->lexer, 1);
     if (fndecl_position != FNDECL_PARTOF_FOREIGN_IMPORT) {
         if (!tok || tok->type != TOKEN_KW_FUNCTION) {
-            return NULL;
+            goto err;
         }
         //consume function keyword
         lexer_next_token(p->lexer);

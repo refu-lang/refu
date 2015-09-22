@@ -7,21 +7,28 @@
 #include <inplocation.h>
 #include <inpfile.h>
 
-struct info_ctx *info_ctx_create(struct inpfile *f)
+static bool info_ctx_init(struct info_ctx *ctx, struct inpfile *f)
 {
-    struct info_ctx *ctx;
-
-    RF_MALLOC(ctx, sizeof(*ctx), return NULL);
+    RF_STRUCT_ZERO(ctx);
+    darray_init(ctx->last_msgs_arr);
     rf_ilist_head_init(&ctx->msg_list);
-    ctx->msg_num = 0;
     if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_INITIAL_SIZE, "")) {
-        free(ctx);
-        RF_ERRNOMEM();
-        return NULL;
+        return false;
     }
     ctx->syntax_error = false;
     ctx->file = f;
+    return true;
+}
 
+struct info_ctx *info_ctx_create(struct inpfile *f)
+{
+    struct info_ctx *ctx;
+    RF_MALLOC(ctx, sizeof(*ctx), return NULL);
+    if (!info_ctx_init(ctx, f)) {
+        free(ctx);
+        ctx = NULL;
+        RF_ERRNOMEM();
+    }
     return ctx;
 }
 
@@ -33,6 +40,7 @@ void info_ctx_destroy(struct info_ctx *ctx)
     rf_ilist_for_each_safe(&ctx->msg_list, m, tmp, ln) {
         info_msg_destroy(m);
     }
+    darray_free(ctx->last_msgs_arr);
     rf_stringx_deinit(&ctx->buff);
     free(ctx);
 }
@@ -87,6 +95,33 @@ void info_ctx_rem_messages(struct info_ctx *ctx, size_t num)
         ++i;
     }
 }
+
+void info_ctx_push(struct info_ctx *ctx)
+{
+    // get the current last message in the list
+    struct info_msg *lastmsg = rf_ilist_tail(&ctx->msg_list, struct info_msg, ln);
+    // add it to the pushed last messages array
+    darray_append(ctx->last_msgs_arr, lastmsg);
+}
+
+void info_ctx_pop(struct info_ctx *ctx)
+{
+    RF_ASSERT(!darray_empty(ctx->last_msgs_arr), "info_ctx_pop called with empty array");
+    (void)darray_pop(ctx->last_msgs_arr);
+}
+
+void info_ctx_rollback(struct info_ctx *ctx)
+{
+    RF_ASSERT(!darray_empty(ctx->last_msgs_arr), "info_ctx_pop called with empty array");
+    struct info_msg *untilmsg = darray_pop(ctx->last_msgs_arr);
+    // now remove all messages after this message (non inclusive)
+    struct info_msg *tailmsg = rf_ilist_tail(&ctx->msg_list, struct info_msg, ln);
+    while ((tailmsg = rf_ilist_tail(&ctx->msg_list, struct info_msg, ln)) &&
+           tailmsg != untilmsg) {
+        info_msg_destroy(rf_ilist_pop_back(&ctx->msg_list, struct info_msg, ln));
+    }
+}
+
 
 bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type)
 {

@@ -30,8 +30,11 @@ struct ast_node *parser_acc_import(struct parser *p)
 
     do {
         // try to parse a function declaration
+        info_ctx_push(p->info);
         child = parser_acc_fndecl(p, FNDECL_PARTOF_FOREIGN_IMPORT);
         if (!child) {
+            // if you can't try to parse only an identifier
+            parser_info_rollback(p);
             child = parser_acc_identifier(p);
             if (!child) {
                 parser_synerr(
@@ -44,6 +47,8 @@ struct ast_node *parser_acc_import(struct parser *p)
                 );
                 goto fail_free;
             }
+        } else {
+            info_ctx_pop(p->info);
         }
         ast_node_add_child(import, child);
         end = ast_node_endmark(child);
