@@ -12,6 +12,7 @@ enum fndecl_position {
     FNDECL_STANDALONE,
     FNDECL_PARTOF_IMPL,
     FNDECL_PARTOF_TYPECLASS,
+    FNDECL_PARTOF_FOREIGN_IMPORT
 };
 
 struct ast_fndecl {

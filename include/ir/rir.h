@@ -16,7 +16,7 @@ struct type;
 struct rir {
     //! A list of all rir types of the file
     struct rir_types_list *rir_types_list;
-    //! List of functions
+    //! List of function declarations/definitions
     struct RFilist_head functions;
     //! List of type definitions
     struct RFilist_head typedefs;
@@ -43,7 +43,7 @@ struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *na
 
 struct rir_ctx {
     struct rir *rir;
-    struct rir_fndecl *current_fn;
+    struct rir_fndef *current_fn;
     struct rir_block *current_block;
     struct rir_block *next_block;
     //! Stack of symbol table pointers, to remember current symbol table during rir formation

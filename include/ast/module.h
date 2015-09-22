@@ -20,6 +20,12 @@ i_INLINE_DECL bool ast_import_is_foreign(const struct ast_node *n)
     return n->import.foreign;
 }
 
+i_INLINE_DECL bool ast_node_is_foreign_import(const struct ast_node *n)
+{
+
+    return n->type == AST_IMPORT && n->import.foreign;
+}
+
 /* -- ast module functions -- */
 struct ast_node *ast_module_create(const struct inplocation_mark *start,
                                    const struct inplocation_mark *end,

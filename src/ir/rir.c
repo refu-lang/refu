@@ -211,7 +211,6 @@ static bool rir_process_do(struct rir *r, struct module *m)
 {
     bool ret = false;
     struct ast_node *child;
-    struct rir_fndecl *fndecl;
     struct rir_ctx ctx;
     struct rir_type *t;
     rir_ctx_init(&ctx, r, m);
@@ -226,15 +225,29 @@ static bool rir_process_do(struct rir *r, struct module *m)
             rf_ilist_add_tail(&r->typedefs,  &def->ln);
         }
     }
+
+    // for each of the foreign imported functions create a rir declaration
+    struct ast_node **foreigndecl;
+    struct rir_fndecl *fndecl;
+    darray_foreach(foreigndecl, m->foreignfn_arr) {
+        fndecl = rir_fndecl_create(*foreigndecl, &ctx);
+        if (!fndecl) {
+            RF_ERROR("Failed to create a RIR function declaration");
+            goto end;
+        }
+        rf_ilist_add_tail(&r->functions, &fndecl->ln);
+    }
+
     // for each function of the module, create a rir equivalent
+    struct rir_fndef *fndef;
     rf_ilist_for_each(&m->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
-            fndecl = rir_fndecl_create(child, &ctx);
-            if (!fndecl) {
-                RF_ERROR("Failed to create a RIR fndecl");
+            fndef = rir_fndef_create(child, &ctx);
+            if (!fndef) {
+                RF_ERROR("Failed to create a RIR function definition");
                 goto end;
             }
-            rf_ilist_add(&r->functions, &fndecl->ln);
+            rf_ilist_add_tail(&r->functions, &fndef->decl.ln);
         }
     }
 
@@ -314,11 +327,11 @@ struct RFstring *rir_tostring(struct rir *r)
         }
     }
 
-    struct rir_fndecl *fn;
-    rf_ilist_for_each(&r->functions, fn, ln) {
-        if (!rir_fndecl_tostring(&ctx, fn)) {
+    struct rir_fndecl *decl;
+    rf_ilist_for_each(&r->functions, decl, ln) {
+        if (!rir_function_tostring(&ctx, decl)) {
             RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
-                     RF_STR_PF_ARG(fn->name));
+                     RF_STR_PF_ARG(decl->name));
             goto fail_free_ctx;
         }
     }

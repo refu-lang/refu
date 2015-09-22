@@ -24,6 +24,7 @@ static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *
     m->node = n;
     m->front = front;
     darray_init(m->dependencies);
+    darray_init(m->foreignfn_arr);
     // add to the compiler's modules
     darray_append(compiler_instance_get()->modules, m);
 
@@ -83,6 +84,7 @@ static void module_deinit(struct module *m)
         rir_destroy(m->rir);
     }
 
+    darray_free(m->foreignfn_arr);
     darray_free(m->dependencies);
 }
 
@@ -90,6 +92,17 @@ void module_destroy(struct module* m)
 {
     module_deinit(m);
     free(m);
+}
+
+void module_add_foreign_import(struct module *m, struct ast_node *import)
+{
+    RF_ASSERT(ast_node_is_foreign_import(import), "Expected a foreign import node");
+    struct ast_node *child;
+    rf_ilist_for_each(&import->children, child, lh) {
+        // for now foreign import should only import function decls
+        AST_NODE_ASSERT_TYPE(child, AST_FUNCTION_DECLARATION);
+        darray_append(m->foreignfn_arr, child);
+    }
 }
 
 bool module_add_import(struct module *m, struct ast_node *import)

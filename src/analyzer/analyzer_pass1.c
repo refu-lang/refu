@@ -164,19 +164,11 @@ static inline bool analyzer_populate_symbol_table_typedesc(struct analyzer_trave
     return analyzer_populate_symbol_table_typeelement(ctx, ast_typedesc_desc_get(n));
 }
 
-static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
-                                                struct ast_node *n)
+static bool analyzer_symbol_table_add_fndecl(struct analyzer_traversal_ctx *ctx,
+                                             struct ast_node *n)
 {
     struct symbol_table_record *rec;
     const struct RFstring *fn_name;
-    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
-
-    // initialize this function's symbol table
-    if (!ast_fndecl_symbol_table_init(n, ctx->m)) {
-        RF_ERROR("Could not initialize symbol table for function declaration node");
-        return false;
-    }
-
     fn_name = ast_fndecl_name_str(n);
     rec = symbol_table_lookup_record(ctx->current_st, fn_name, NULL);
 
@@ -201,22 +193,20 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     return true;
 }
 
-static bool analyzer_populate_symbol_table_import(struct analyzer_traversal_ctx *ctx,
-                                                  struct ast_node *n)
+static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
+                                                struct ast_node *n)
 {
-    if (ast_import_is_foreign(n)) {
-        // insert foreign functions to the global symbol table
-        struct ast_node *child;
-        rf_ilist_for_each(&n->children, child, lh) {
-            if (!symbol_table_add_foreignfn(
-                    ctx->current_st,
-                    child,
-                    ctx->m)) {
-                return false;
-            }
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
+    // initialize this function's symbol table, except if this is a foreign import function
+    if (!parent || !ast_node_is_foreign_import(parent)) {
+        if (!ast_fndecl_symbol_table_init(n, ctx->m)) {
+            RF_ERROR("Could not initialize symbol table for function declaration node");
+            return false;
         }
     }
-    return true;
+    // add function to the symbol table
+    return analyzer_symbol_table_add_fndecl(ctx, n);
 }
 
 static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
@@ -297,11 +287,6 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
                   "Attempting to create literal hash for node in a wrong state "
                   "of processing");
         if (!ast_string_literal_hash_create(n, ctx->m)) {
-            return false;
-        }
-        break;
-    case AST_IMPORT:
-        if (!analyzer_populate_symbol_table_import(ctx, n)) {
             return false;
         }
         break;

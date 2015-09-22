@@ -71,7 +71,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
         if (this_block != before_block) {
             //create new empty block for the comparisons
             this_block = rir_block_create(NULL, false, ctx);
-            rir_fndecl_add_block(ctx->current_fn, this_block);
+            rir_fndef_add_block(ctx->current_fn, this_block);
         }
         // Create index comparison for match case
         cmp = rir_binaryop_create_nonast(
@@ -94,8 +94,6 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
     if (!taken) {
         return NULL;
     }
-    // add the allocas of the symbols to the taken block (should be the current)
-    rir_ctx_st_add_allocas(ctx);
     // Get the type of this match case and read the union's subobject
     const struct type *mcmatch_type = ast_matchcase_matched_type(mcase);
     struct rir_expression *acc_subtype = rir_unionmemberat_create(
@@ -203,7 +201,7 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
     // for normal matchexpr, after_block was an empty block so let's add it to the function now
     if (ast_matchexpr_has_header(n)) {
         ctx->current_block = after_block;
-        rir_fndecl_add_block(ctx->current_fn, after_block);
+        rir_fndef_add_block(ctx->current_fn, after_block);
     }
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
 fail:

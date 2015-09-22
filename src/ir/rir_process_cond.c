@@ -98,7 +98,7 @@ static struct rir_block *rir_process_elif(const struct ast_node *ast_cond,
     if (!(old_block = rir_block_create(NULL, false, ctx))) {
         return NULL;
     }
-    rir_fndecl_add_block(ctx->current_fn, old_block);
+    rir_fndef_add_block(ctx->current_fn, old_block);
     return rir_process_conditional_ast(ast_cond, ast_taken, ast_fallthrough, old_block, ctx);
 }
 
@@ -121,7 +121,7 @@ bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
 
     ctx->current_block = ctx->next_block;
     // since next_block was an empty block let's add it to the function now
-    rir_fndecl_add_block(ctx->current_fn, ctx->next_block);
+    rir_fndef_add_block(ctx->current_fn, ctx->next_block);
     ctx->next_block = NULL;
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
 

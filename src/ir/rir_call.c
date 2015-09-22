@@ -181,9 +181,6 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
         if (!rir_process_ctorcall(n, fn_type, ctx)) {
             return false;
         }
-    } else if (type_is_foreign_function(fn_type)) {
-        // TODO: later. For now ignore foreign function calls
-        return true;
     } else { // normal function call
         struct rir_object *cobj = rir_call_create_obj_from_ast(n, ctx);
         if (!cobj) {

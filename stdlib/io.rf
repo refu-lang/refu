@@ -1,6 +1,6 @@
 module stdlib {
 
-foreign_import rf_stdlib_print_int64, rf_stdlib_print_uint64, rf_stdlib_print_string
+foreign_import rf_stdlib_print_int64(i64), rf_stdlib_print_uint64(u64), rf_stdlib_print_string(string)
 
 fn print(a:i64 | b:u64 | s:string)
     a:i64    => rf_stdlib_print_int64(a)

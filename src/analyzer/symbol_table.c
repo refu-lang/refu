@@ -223,27 +223,6 @@ bool symbol_table_add_record(struct symbol_table *t,
     return true;
 }
 
-bool symbol_table_add_foreignfn(struct symbol_table *st,
-                                struct ast_node *node,
-                                struct module *mod)
-{
-        struct symbol_table_record *rec;
-        const struct RFstring *id = ast_identifier_str(node);
-        struct type *t = type_foreign_function_create(mod, id);
-        rec = symbol_table_record_create_from_type(st, id, t);
-        if (!rec) {
-            RF_ERROR("Symbol table record creation failed");
-            return false;
-        }
-        if (!symbol_table_add_record(st, rec)) {
-            RF_ERROR("Symbol table record addition failed");
-            return false;
-        }
-        // also set the type of identifier (which should be a foreign function)
-        node->expression_type = t;
-        return true;
-}
-
 bool symbol_table_add_type(struct symbol_table *st,
                            struct module *mod,
                            const struct RFstring *id,

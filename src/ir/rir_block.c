@@ -165,29 +165,32 @@ static bool rir_block_init(struct rir_object *obj,
     struct ast_node *child;
     if (n) {
         // add basic block to the current function
-        rir_fndecl_add_block(ctx->current_fn, b);
-		if (n->type == AST_BLOCK) {
+        rir_fndef_add_block(ctx->current_fn, b);
+        if (n->type == AST_BLOCK) {
             ctx->current_ast_block = n;
             // set current symbol table
             rir_ctx_push_st(ctx, ast_block_symbol_table_get((struct ast_node*)n));
             // create allocas for block's symbols and populate the symbol table with rir objects
             rir_ctx_st_create_and_add_allocas(ctx);
-			// for each expression of the block create a rir expression and add it to the block
-			rf_ilist_for_each(&n->children, child, lh) {
-				if (!rir_process_ast_node(child, ctx)) {
-					return false;
-				}
-			}
+            // for each expression of the block create a rir expression and add it to the block
+            rf_ilist_for_each(&n->children, child, lh) {
+                if (!rir_process_ast_node(child, ctx)) {
+                    return false;
+                }
+            }
             rir_ctx_pop_st(ctx);
         } else if (n->type == AST_MATCH_EXPRESSION) {
             // process match expression as body
             return rir_process_matchexpr((struct ast_node*)n, ctx);
-		} else {
-			// other expressions, process only one
-			if (!rir_process_ast_node(n, ctx)) {
-				return false;
-			}
-		}
+        } else {
+            // this should only happen when called as a leg of a match expression
+            // first of all add the allocas of the symbols to the block
+            rir_ctx_st_add_allocas(ctx);
+            // and then process the expression
+            if (!rir_process_ast_node(n, ctx)) {
+                return false;
+            }
+        }
     }
 
     return true;

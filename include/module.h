@@ -23,6 +23,8 @@ struct module {
     struct rir *rir;
     //! A dynamic array of all the modules this module depends on
     struct modules_arr dependencies;
+    //! A dynamic array of foreign functions this module needs
+    struct {darray(struct ast_node*);} foreignfn_arr;
 
     /* -- Members used only for the analysis stage of the module -- */
     /* Memory pools */
@@ -48,6 +50,13 @@ struct module {
 struct module *module_create(struct ast_node *n, struct front_ctx *front);
 void module_destroy(struct module* m);
 
+/**
+ * Add a foreign import statement's contents to a module
+ *
+ * @param m            The module to add the import to
+ * @param import       The foreign import node to add
+ */
+void module_add_foreign_import(struct module *m, struct ast_node *import);
 bool module_add_import(struct module *m, struct ast_node *import);
 const struct RFstring *module_name(const struct module *m);
 struct symbol_table *module_symbol_table(const struct module *m);

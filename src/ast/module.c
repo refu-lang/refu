@@ -15,6 +15,7 @@ struct ast_node *ast_import_create(const struct inplocation_mark *start,
 }
 
 i_INLINE_INS bool ast_import_is_foreign(const struct ast_node *n);
+i_INLINE_INS bool ast_node_is_foreign_import(const struct ast_node *n);
 
 /* -- ast module functions -- */
 struct ast_node *ast_module_create(const struct inplocation_mark *start,

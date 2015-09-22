@@ -12,7 +12,7 @@
 
 struct ast_node *parser_acc_import(struct parser *p)
 {
-    struct ast_node *id;
+    struct ast_node *child;
     struct ast_node *import;
     const struct inplocation_mark *end = NULL;
     lexer_push(p->lexer);
@@ -29,20 +29,24 @@ struct ast_node *parser_acc_import(struct parser *p)
     }
 
     do {
-        id = parser_acc_identifier(p);
-        if (!id) {
-            parser_synerr(
-                p,
-                lexer_last_token_end(p->lexer),
-                NULL,
-                ast_import_is_foreign(import)
-                    ? "Expected an identifier at foreign_import statement"
+        // try to parse a function declaration
+        child = parser_acc_fndecl(p, FNDECL_PARTOF_FOREIGN_IMPORT);
+        if (!child) {
+            child = parser_acc_identifier(p);
+            if (!child) {
+                parser_synerr(
+                    p,
+                    lexer_last_token_end(p->lexer),
+                    NULL,
+                    ast_import_is_foreign(import)
+                    ? "Expected an identifier or a function declaration at foreign_import statement"
                     : "Expected an identifier at import statement"
-            );
-            goto fail_free;
+                );
+                goto fail_free;
+            }
         }
-        ast_node_add_child(import, id);
-        end = ast_node_endmark(id);
+        ast_node_add_child(import, child);
+        end = ast_node_endmark(child);
     } while (lexer_expect_token(p->lexer, TOKEN_OP_COMMA));
     ast_node_set_end(import, end);
 
@@ -69,7 +73,7 @@ static struct ast_node *parser_acc_module_statement(struct parser *p)
     } else if (TOKENS_ARE_FNDECL_OR_IMPL(tok, tok2)) {
         stmt = parser_acc_fnimpl(p);
     }
-        
+
     return stmt;
 }
 

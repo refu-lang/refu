@@ -24,14 +24,17 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     const struct inplocation_mark *start;
     const struct inplocation_mark *end;
 
-    tok = lexer_lookahead(p->lexer, 1);
-    if (!tok || tok->type != TOKEN_KW_FUNCTION) {
-        return NULL;
-    }
-    start = token_get_start(tok);
     lexer_push(p->lexer);
-    //consume function keyword
-    lexer_next_token(p->lexer);
+    tok = lexer_lookahead(p->lexer, 1);
+    if (fndecl_position != FNDECL_PARTOF_FOREIGN_IMPORT) {
+        if (!tok || tok->type != TOKEN_KW_FUNCTION) {
+            return NULL;
+        }
+        //consume function keyword
+        lexer_next_token(p->lexer);
+    }
+    // start should be either start of fn, or start of next token (an identifier)
+    start = token_get_start(tok);
 
     name = parser_acc_identifier(p);
     if (!name) {
