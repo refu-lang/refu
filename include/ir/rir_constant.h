@@ -12,7 +12,8 @@ struct rirtostr_ctx;
 
 struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_ctx *ctx);
 struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx);
-struct rir_value *rir_constantval_fromint(int64_t n);
+struct rir_value *rir_constantval_create_fromint(int64_t n);
+bool rir_constantval_init_fromint(struct rir_value *v, int64_t n);
 
 bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
 

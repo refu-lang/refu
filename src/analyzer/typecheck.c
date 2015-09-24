@@ -564,7 +564,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             goto fail;
         }
-
+        n->fncall.is_explicit_conversion = true;
     } else {
         //check that the types of its arguments do indeed match
         fn_declared_args_type = type_callable_get_argtype(fn_type);

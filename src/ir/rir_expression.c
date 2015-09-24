@@ -39,7 +39,7 @@ bool rir_expression_init(struct rir_object *obj,
         rir_value_nil_init(&expr->val);
         break;
     default:
-        if (!rir_value_variable_init(&expr->val, obj, ctx)) {
+        if (!rir_value_variable_init(&expr->val, obj, NULL, ctx)) {
             return false;
         }
     }
@@ -217,6 +217,32 @@ void rir_return_init(struct rir_expression *ret,
     rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
 }
 
+static struct rir_object *rir_conversion_create_obj(const struct rir_ltype *totype,
+                                                    const struct rir_value *convval,
+                                                    struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.convert.totype = totype;
+    ret->expr.convert.convval = convval;
+    if (!rir_expression_init(ret, RIR_EXPRESSION_CONVERT, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct rir_expression *rir_conversion_create(const struct rir_ltype *totype,
+                                             const struct rir_value *convval,
+                                             struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_conversion_create_obj(totype, convval, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
+
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
     bool ret = false;
@@ -230,9 +256,9 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_SETUNIONIDX:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT"setunionidx(" RF_STR_PF_FMT ", %" PRId32 ")\n",
+                RFS(RIRTOSTR_INDENT"setunionidx(" RF_STR_PF_FMT ", %" PRId64 ")\n",
                     RF_STR_PF_ARG(rir_value_string(e->setunionidx.unimemory)),
-                    e->setunionidx.idx)
+                    e->setunionidx.idx->constant.value.integer)
             )) {
             goto end;
         }
@@ -289,8 +315,14 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
-    case RIR_EXPRESSION_CONSTRUCT:
-        if (!rf_stringx_append(ctx->rir->buff, RFS("construct"))) {
+    case RIR_EXPRESSION_CONVERT:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = convert("RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
+                    RF_STR_PF_ARG(rir_value_string(&e->val)),
+                    RF_STR_PF_ARG(rir_ltype_string(e->convert.totype)),
+                    RF_STR_PF_ARG(rir_value_string(e->convert.convval))
+                ))) {
             goto end;
         }
         break;

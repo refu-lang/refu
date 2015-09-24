@@ -24,14 +24,23 @@ struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_value *rir_constantval_fromint(int64_t n)
+struct rir_value *rir_constantval_create_fromint(int64_t n)
 {
     struct rir_value *ret;
-    struct ast_constant c;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->category = RIR_VALUE_CONSTANT;
+    if (!rir_constantval_init_fromint(ret, n)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+bool rir_constantval_init_fromint(struct rir_value *v, int64_t n)
+{
+    struct ast_constant c;
+    v->category = RIR_VALUE_CONSTANT;
     ast_constant_init_int(&c, n);
-    return rir_value_constant_init(ret, &c) ? ret : NULL;
+    return rir_value_constant_init(v, &c);
 }
 
 bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

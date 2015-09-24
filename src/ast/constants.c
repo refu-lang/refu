@@ -45,6 +45,23 @@ i_INLINE_INS void ast_constant_init_int(struct ast_constant *c, int64_t n);
 i_INLINE_INS void ast_constant_init_float(struct ast_constant *c, double n);
 i_INLINE_INS void ast_constant_init_bool(struct ast_constant *c, bool n);
 
+const struct RFstring *ast_constant_string(const struct ast_constant *c)
+{
+    const struct RFstring *ret;
+    switch(c->type) {
+    case CONSTANT_NUMBER_FLOAT:
+        ret = RFS("%f", c->value.floating);
+        break;
+    case CONSTANT_NUMBER_INTEGER:
+        ret = RFS("%"PRId64, c->value.integer);
+        break;
+    case CONSTANT_BOOLEAN:
+        ret = RFS("%s", c->value.boolean ? "true" : "false");
+        break;
+    }
+    return ret;
+}
+
 const struct type * ast_constant_get_storagetype(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);

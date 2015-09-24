@@ -395,13 +395,14 @@ bool compiler_process()
     }
 #endif
 
+    // process the rir
+    if (!rir_process(c)) {
+        RF_ERROR("Failed to process the Refu IR");
+        return false;
+    }
+
     if (compiler_args_print_rir(c->args)) {
-        // for now process the rir only when we want to print it.
-        // when we properly connect it with the llvm it should always happen
-        if (!rir_process(c)) {
-            RF_ERROR("Failed to process the Refu IR");
-            return false;
-        }
+        // print the RIR string representation and quit. Move somewhere else..?
         if (!rir_print(c)) {
             RF_ERROR("Failed to print the Refu IR");
             return false;

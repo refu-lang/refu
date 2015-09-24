@@ -159,7 +159,7 @@ bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b)
 
 size_t rir_ltype_bytesize(const struct rir_ltype *a)
 {
-    // TOO
+    // TODO
     return 4;
 }
 
@@ -180,7 +180,7 @@ const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, ui
 {
     RF_ASSERT(rir_ltype_is_composite(t), "Expected composite type");
     const struct rir_argument *arg = rir_typedef_argat(t->tdef, idx);
-    return arg ? &arg->type : NULL;
+    return arg ? rir_argument_type(arg) : NULL;
 }
 
 int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir_ctx *ctx)
@@ -194,12 +194,18 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     }
 
     int index = 0;
+    struct rir_ltype *argtype;
     darray_foreach(arg, t->tdef->arguments_list) {
-        RF_ASSERT((*arg)->arg.type.category == RIR_LTYPE_COMPOSITE,
-                  "each of the union's members should be its own typedef");
-        //now check if this is the type that matches the function call
-        if (rir_argsarr_equal(&t_args, &(*arg)->arg.type.tdef->arguments_list)) {
-            goto end;
+        //check if this is the type that matches the function call
+        argtype = rir_argument_type(&(*arg)->arg);
+        if (argtype->category == RIR_LTYPE_ELEMENTARY) {
+            if (darray_size(t_args) == 1 && rir_ltype_equal(argtype, rir_argument_type(&darray_item(t_args, 0)->arg))) {
+                goto end;
+            }
+        } else { // composite
+            if (rir_argsarr_equal(&t_args, &argtype->tdef->arguments_list)) {
+                goto end;
+            }
         }
         ++index;
     }

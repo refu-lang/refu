@@ -17,7 +17,7 @@ static bool rir_fndecl_init_args(struct args_arr *argsarr, const struct ast_node
         darray_init(*argsarr);
         return true;
     }
-    const struct rir_type *arguments = type_get_rir_or_die(ast_node_get_type(ast_args, AST_TYPERETR_DEFAULT));
+    const struct rir_type *arguments = type_get_rir_or_die(ast_node_get_type(ast_args, AST_TYPERETR_AS_LEAF));
     if (rir_type_is_sumtype(arguments)) {
         RFS_PUSH();
         struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(arguments->type, true));

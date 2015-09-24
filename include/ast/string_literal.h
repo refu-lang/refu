@@ -15,13 +15,13 @@ bool ast_string_literal_hash_create(struct ast_node *lit, struct module *m);
 
 #include <ast/ast.h>
 i_INLINE_DECL const struct RFstring *
-ast_string_literal_get_str(struct ast_node *lit)
+ast_string_literal_get_str(const struct ast_node *lit)
 {
     AST_NODE_ASSERT_TYPE(lit, AST_STRING_LITERAL);
     return &lit->string_literal.string;
 }
 
-i_INLINE_DECL uint32_t ast_string_literal_get_hash(struct ast_node *lit)
+i_INLINE_DECL uint32_t ast_string_literal_get_hash(const struct ast_node *lit)
 {
     AST_NODE_ASSERT_TYPE(lit, AST_STRING_LITERAL);
     return lit->string_literal.hash;

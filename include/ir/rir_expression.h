@@ -16,7 +16,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_CALL,
     RIR_EXPRESSION_ALLOCA,
     RIR_EXPRESSION_RETURN,
-    RIR_EXPRESSION_CONSTRUCT,
+    RIR_EXPRESSION_CONVERT,
     RIR_EXPRESSION_WRITE,
     RIR_EXPRESSION_READ,
     RIR_EXPRESSION_OBJMEMBERAT,
@@ -57,6 +57,13 @@ struct rir_return {
     const struct rir_expression *val;
 };
 
+struct rir_convert {
+    //! Type to convert to
+    const struct rir_ltype *totype;
+    //! Value to convert
+    const struct rir_value *convval;
+};
+
 struct rir_binaryop {
     const struct rir_value *a;
     const struct rir_value *b;
@@ -90,29 +97,39 @@ struct rir_unionmemberat {
 struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
+
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
                                               const struct rir_value *idx,
                                               struct rir_ctx *ctx);
 struct rir_expression *rir_getunionidx_create(const struct rir_value *unimemory,
                                               struct rir_ctx *ctx);
+
 struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
                                                 uint32_t idx,
                                                 struct rir_ctx *ctx);
+
 struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx);
 struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
                                               uint32_t idx,
                                               struct rir_ctx *ctx);
+
 struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
                                        struct rir_ctx *ctx);
+
 struct rir_object *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
 void rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val);
 
+struct rir_expression *rir_conversion_create(const struct rir_ltype *totype,
+                                             const struct rir_value *convval,
+                                             struct rir_ctx *ctx);
+
 struct rir_expression {
     enum rir_expression_type type;
     union {
+        struct rir_convert convert;
         struct rir_call call;
         struct rir_alloca alloca;
         struct rir_setunionidx setunionidx;

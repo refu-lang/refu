@@ -5,6 +5,7 @@
 #include <ir/rir_argument.h>
 #include <ir/rir_block.h>
 #include <ir/rir_typedef.h>
+#include <ir/rir_global.h>
 #include <RFintrusive_list.h>
 
 enum rir_obj_category {
@@ -12,6 +13,7 @@ enum rir_obj_category {
     RIR_OBJ_ARGUMENT,
     RIR_OBJ_BLOCK,
     RIR_OBJ_TYPEDEF,
+    RIR_OBJ_GLOBAL,
 };
 
 struct rir_object {
@@ -21,6 +23,7 @@ struct rir_object {
         struct rir_argument arg;
         struct rir_block block;
         struct rir_typedef tdef;
+        struct rir_global global;
     };
     //! Control to be added to the list of all rir objects
     struct RFilist_node ln;

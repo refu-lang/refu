@@ -4,6 +4,7 @@
 #include <RFintrusive_list.h>
 #include <Data_Structures/darray.h>
 #include <ir/rir_strmap.h>
+#include <String/rf_str_decl.h>
 
 struct module;
 struct compiler;
@@ -13,9 +14,12 @@ struct RFstringx;
 struct ast_node;
 struct type;
 
+struct rir_arr {darray(struct rir*);};
 struct rir {
     //! A list of all rir types of the file
     struct rir_types_list *rir_types_list;
+    //! Array of all global variable declarations for the module
+    struct {darray(struct rir_object*);} globals;
     //! List of function declarations/definitions
     struct RFilist_head functions;
     //! List of type definitions
@@ -24,6 +28,10 @@ struct rir {
     struct RFilist_head objects;
     //! Map from strings to rir objects.
     struct rirobj_strmap map;
+    //! A dynamic array of all other rir modules this rir module depends on
+    struct rir_arr dependencies;
+    //! Name of the module this RIR object represents.
+    struct RFstring name;
     //! Buffer string to hold the string representation when asked. Can be NULL.
     struct RFstringx *buff;
 };
@@ -37,9 +45,10 @@ bool rir_process(struct compiler *c);
 bool rir_print(struct compiler *c);
 
 struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name);
+struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
 struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name);
-
+struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *lit);
 
 struct rir_ctx {
     struct rir *rir;

@@ -1,5 +1,5 @@
-#ifndef LFR_IR_CALL
-#define LFR_IR_CALL
+#ifndef LFR_IR_CALL_H
+#define LFR_IR_CALL_H
 
 #include <stdbool.h>
 #include <stdint.h>

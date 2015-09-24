@@ -21,6 +21,14 @@ i_INLINE_DECL struct ast_node *ast_constant_create_boolean_from_tok(struct token
     return ast_constant_create_boolean(token_get_loc(tok), tok->type == TOKEN_KW_TRUE);
 }
 
+/**
+ * Get a string representation of the constant
+ *
+ * Since this creates a temporary string, the call needs to be enclosed in
+ * RFS_PUSH() and RFS_POP()
+ */
+const struct RFstring *ast_constant_string(const struct ast_constant *c);
+
 //! Depending on the size of the constant literal, get the smallest type that would fit it
 const struct type *ast_constant_get_storagetype(struct ast_node *n);
 

@@ -1,6 +1,7 @@
 #include <ir/rir_process.h>
 #include <ir/rir.h>
 #include <ir/rir_binaryop.h>
+#include <ir/rir_unaryop.h>
 #include <ir/rir_block.h>
 #include <ir/rir_constant.h>
 #include <ir/rir_function.h>
@@ -8,6 +9,7 @@
 #include <ast/returnstmt.h>
 #include <ast/type.h>
 #include <ast/vardecl.h>
+#include <ast/string_literal.h>
 
 static bool rir_process_vardecl(const struct ast_node *n,
                                 struct rir_ctx *ctx)
@@ -64,6 +66,17 @@ bool rir_process_identifier(const struct ast_node *n,
     RIRCTX_RETURN_EXPR(ctx, true, obj);
 }
 
+static bool rir_process_strlit(const struct ast_node *n,
+                               struct rir_ctx *ctx)
+{
+    struct rir_object *litobj = rir_strlit_obj(ctx->rir, n);
+    if (!litobj) {
+        RF_ERROR("A string literal was not found in the global string literals");
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
+    }
+    RIRCTX_RETURN_EXPR(ctx, true, litobj);
+}
+
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx)
 {
@@ -74,6 +87,8 @@ bool rir_process_ast_node(const struct ast_node *n,
         return rir_process_vardecl(n, ctx);
     case AST_BINARY_OPERATOR:
         return rir_process_binaryop(&n->binaryop, ctx);
+    case AST_UNARY_OPERATOR:
+        return rir_process_unaryop(&n->unaryop, ctx);
     case AST_RETURN_STATEMENT:
         return rir_process_return(n, ctx);
     case AST_CONSTANT:
@@ -84,6 +99,8 @@ bool rir_process_ast_node(const struct ast_node *n,
         return rir_process_fncall(n, ctx);
     case AST_MATCH_EXPRESSION:
         return rir_process_matchexpr((struct ast_node*)n, ctx);
+    case AST_STRING_LITERAL:
+        return rir_process_strlit(n, ctx);
     case AST_CONDITIONAL_BRANCH:
     case AST_MATCH_CASE:
         // Do nothing in these cases
@@ -93,3 +110,5 @@ bool rir_process_ast_node(const struct ast_node *n,
     }
     return false;
 }
+i_INLINE_INS struct rir_value *rir_processret_ast_node(const struct ast_node *n,
+                                                        struct rir_ctx *ctx);

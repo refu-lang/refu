@@ -25,6 +25,9 @@ void rir_object_destroy(struct rir_object *obj)
     case RIR_OBJ_TYPEDEF:
         rir_typedef_deinit(&obj->tdef);
         break;
+    case RIR_OBJ_GLOBAL:
+        rir_global_deinit(&obj->global);
+        break;
     }
     free(obj);
 }
@@ -36,6 +39,8 @@ struct rir_value *rir_object_value(struct rir_object *obj)
         return &obj->expr.val;
     case RIR_OBJ_ARGUMENT:
         return &obj->arg.val;
+    case RIR_OBJ_GLOBAL:
+        return &obj->global.val;
     default:
         RF_CRITICAL_FAIL("Unexpected rir object value");
         break;

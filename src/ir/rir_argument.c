@@ -9,9 +9,11 @@
 static bool rir_argument_init(struct rir_object *obj, const struct rir_type *type, struct rir_ctx *ctx)
 {
     static const struct RFstring noname = RF_STRING_STATIC_INIT("noname");
+    static const struct RFstring genname = RF_STRING_STATIC_INIT("GENERATED_NAME");
     struct rir_argument *a = &obj->arg;
+    struct rir_ltype *argtype;
     if (rir_type_is_elementary(type)) {
-        rir_ltype_elem_init(&a->type, (enum elementary_type)type->category);
+        argtype = rir_ltype_elem_create((enum elementary_type)type->category, false);
         if (type->name) {
             a->name = type->name;
         } else {
@@ -21,10 +23,10 @@ static bool rir_argument_init(struct rir_object *obj, const struct rir_type *typ
         const struct RFstring *s = type_get_unique_type_str(type->type, true);
         struct rir_typedef *def = rir_typedef_byname(ctx->rir, s);
         RF_ASSERT_OR_EXIT(def, "typedef should have been found by name");
-        rir_ltype_comp_init(&a->type, def, false);
-        a->name = rf_string_create("GENERATED_NAME");
+        argtype = rir_ltype_comp_create(def, false);
+        a->name = &genname;
     }
-    return rir_value_variable_init(&a->val, obj, ctx);
+    return rir_value_variable_init(&a->val, obj, argtype, ctx);
 }
 
 struct rir_object *rir_argument_create(const struct rir_type *t, struct rir_ctx *ctx)
@@ -33,7 +35,10 @@ struct rir_object *rir_argument_create(const struct rir_type *t, struct rir_ctx 
     if (!ret) {
         return NULL;
     }
-    rir_argument_init(ret, t, ctx);
+    if (!rir_argument_init(ret, t, ctx)) {
+        free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
@@ -43,35 +48,43 @@ struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d,
     if (!ret) {
         return NULL;
     }
-    if (!rir_value_variable_init(&ret->arg.val, ret, ctx)) {
+    struct rir_ltype *argtype = rir_ltype_comp_create(d, false);
+    if (!rir_value_variable_init(&ret->arg.val, ret, argtype, ctx)) {
         free(ret);
         return NULL;
     }
     ret->arg.name = d->name;
-    rir_ltype_comp_init(&ret->arg.type, d, false);
     return ret;
 }
 
 void rir_argument_deinit(struct rir_argument *a)
 {
-    // TODO
+    rir_value_deinit(&a->val);
 }
 
 bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg)
 {
     bool ret = true;
-    if (arg->type.category == RIR_LTYPE_ELEMENTARY) {
+    struct rir_ltype *type = rir_argument_type(arg);
+    if (type->category == RIR_LTYPE_ELEMENTARY) {
         ret = rf_stringx_append(
             ctx->rir->buff,
             RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
                 RF_STR_PF_ARG(arg->name),
-                RF_STR_PF_ARG(type_elementary_get_str(arg->type.etype))));
+                RF_STR_PF_ARG(type_elementary_get_str(type->etype))));
     } else {
-        rf_stringx_append(ctx->rir->buff, arg->type.tdef->name);
+        rf_stringx_append(ctx->rir->buff, type->tdef->name);
     }
-
     return ret;
 }
+
+
+i_INLINE_INS struct rir_ltype *rir_argument_type(const struct rir_argument *arg);
+
+
+
+
+/* -- Functions dealing with argument arrays -- */
 
 bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir_ctx *ctx)
 {
@@ -126,8 +139,9 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
         return false;
     }
 
-    for (int i = 0; i < size; ++i) {
-        if (!rir_ltype_equal(&darray_item(*arr1, i)->arg.type, &darray_item(*arr2, i)->arg.type)) {
+    for (unsigned i = 0; i < size; ++i) {
+        if (!rir_ltype_equal(rir_argument_type(&darray_item(*arr1, i)->arg),
+                             rir_argument_type(&darray_item(*arr2, i)->arg))) {
             return false;
         }
     }

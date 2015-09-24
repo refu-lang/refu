@@ -65,7 +65,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
     struct rir_expression *cmp = NULL;
     struct rir_block *this_block = ctx->current_block;
     uint32_t case_idx = ast_matchcase_index_get(mcase);
-    struct rir_value *case_rir_idx = rir_constantval_fromint(ast_matchcase_index_get(mcase));
+    struct rir_value *case_rir_idx = rir_constantval_create_fromint(ast_matchcase_index_get(mcase));
     bool need_case_cmp = !ast_match_expr_next_case_is_last(mexpr, it) || this_block == before_block;
     if (need_case_cmp) {
         if (this_block != before_block) {

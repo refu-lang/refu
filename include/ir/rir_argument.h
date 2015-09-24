@@ -13,10 +13,9 @@ struct rir;
 
 //! Represents a leaf argument on the IR. e.g. a:i32
 struct rir_argument {
-    //! The type of the leaf
-    struct rir_ltype type;
-    //! An optional name for the argument.
+    //! An optional name for the argument. Always point to other strings. No need for destruction.
     const struct RFstring *name;
+    //! The argument's value
     struct rir_value val;
 };
 
@@ -24,6 +23,11 @@ struct rir_object *rir_argument_create(const struct rir_type *type, struct rir_c
 struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir_ctx *ctx);
 void rir_argument_deinit(struct rir_argument *a);
 bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg);
+
+i_INLINE_DECL struct rir_ltype *rir_argument_type(const struct rir_argument *arg)
+{
+    return arg->val.type;
+}
 
 /* -- Functions dealing with argument arrays -- */
 

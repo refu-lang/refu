@@ -167,7 +167,7 @@ bool root_symbol_table_init(struct symbol_table *t)
     t->mod = NULL;
     t->pool = rf_fixed_memorypool_create(sizeof(struct symbol_table_record),
                                          RECORDS_TABLE_POOL_CHUNK_SIZE);
-    return true;    
+    return t->pool;
 }
 
 void symbol_table_deinit(struct symbol_table *t)
@@ -190,7 +190,7 @@ bool symbol_table_add_node(struct symbol_table *t,
     bool at_first;
 
     // this check may be redundant due to the way symbol tables are
-    // created in symbol_table_creation.c BUT better safe than sorry
+    // created in symbol_table_creation. BUT better safe than sorry
     rec = symbol_table_lookup_record(t, id, &at_first);
     RF_ASSERT_OR_CRITICAL(!(rec && at_first), return false,
                           "Attempted to add an already existing node"

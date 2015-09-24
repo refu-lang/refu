@@ -23,5 +23,5 @@ bool ast_string_literal_hash_create(struct ast_node *n, struct module *m)
     return rf_objset_add(&m->string_literals_set, string, &n->string_literal.string);
 }
 
-i_INLINE_INS const struct RFstring *ast_string_literal_get_str(struct ast_node *lit);
-i_INLINE_INS uint32_t ast_string_literal_get_hash(struct ast_node *lit);
+i_INLINE_INS const struct RFstring *ast_string_literal_get_str(const struct ast_node *lit);
+i_INLINE_INS uint32_t ast_string_literal_get_hash(const struct ast_node *lit);

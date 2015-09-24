@@ -55,6 +55,8 @@ struct ast_fncall {
     //! Type that matched this particular function call's parameters
     //! during typechecking.
     const struct type *params_type;
+    //! Set by typecheking if this is an explicit conversion
+    bool is_explicit_conversion;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

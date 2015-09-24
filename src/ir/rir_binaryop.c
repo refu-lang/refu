@@ -5,6 +5,7 @@
 #include <ir/rir_block.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_process.h>
 #include <ast/operators.h>
 #include <types/type.h>
 
@@ -112,7 +113,11 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     const struct rir_value *lhs_val = rir_ctx_lastval_get(ctx);
     const struct RFstring *rightstr = ast_identifier_str(op->right);
     const struct type *owner_type = ast_node_get_type_or_die(op->left, AST_TYPERETR_DEFAULT);
-    struct rir_typedef *def = strmap_get(&ctx->rir->map, type_defined_get_name(owner_type));
+    struct rir_typedef *def = rir_typedef_frommap(ctx->rir, type_defined_get_name(owner_type));
+    if (!def) {
+        RF_ERROR("Could not find rir typedef for a member access type");
+        goto fail;
+    }
 
     // find the index of the right part of member access
     struct rir_object **arg;
@@ -147,10 +152,7 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         return rir_process_memberaccess(op, ctx);
     }
 
-    if (!rir_process_ast_node(op->left, ctx)) {
-        goto fail;
-    }
-    struct rir_value *lval = rir_ctx_lastval_get(ctx);
+    struct rir_value *lval = rir_processret_ast_node(op->left, ctx);
     if (!lval) {
         RF_ERROR("A left value should have been created for a binary operation");
         goto fail;
@@ -172,6 +174,7 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
     struct rir_value *rval = rir_ctx_lastval_get(ctx);
     struct rir_object *e = rir_binaryop_create_obj(op, lval, rval, ctx);
     if (!e) {
+        RF_ERROR("Failed to create a rir binary operation");
         goto fail;
     }
 

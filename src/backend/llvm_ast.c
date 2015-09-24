@@ -408,7 +408,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
     if (rf_string_equal(name, &s_stdlib)) {
-        // create some global definitions and variable
+        // create some global definitions that the stdlib should offer
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");
             LLVMDisposeModule(ctx->llvm_mod);

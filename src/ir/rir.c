@@ -6,12 +6,14 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
+#include <ir/rir_utils.h>
 #include <types/type.h>
 #include <Utils/memory.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
+#include <ast/string_literal.h>
 #include <module.h>
 #include <compiler.h>
 
@@ -20,7 +22,7 @@ static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct modul
     RF_STRUCT_ZERO(ctx);
     ctx->rir = r;
     darray_init(ctx->st_stack);
-    rir_ctx_push_st(ctx, &m->node->module.st);
+    rir_ctx_push_st(ctx, module_symbol_table(m));
 }
 
 static inline void rir_ctx_deinit(struct rir_ctx *ctx)
@@ -161,6 +163,8 @@ static bool rir_init(struct rir *r, struct module *m)
     rf_ilist_head_init(&r->functions);
     rf_ilist_head_init(&r->objects);
     rf_ilist_head_init(&r->typedefs);
+    darray_init(r->globals);
+    darray_init(r->dependencies);
     // create the rir types list from the types set for this module
     if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
         return false;
@@ -183,12 +187,15 @@ static void rir_deinit(struct rir *r)
 {
     struct rir_fndecl *fn;
     struct rir_fndecl *tmp;
+    darray_free(r->globals);
+    darray_free(r->dependencies);
     if (r->rir_types_list) {
         rir_types_list_destroy(r->rir_types_list);
     }
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
         rir_fndecl_destroy(fn);
     }
+    rf_string_deinit(&r->name);
 
     // TODO
     // all other rir objects are in the global rir object list so destroy them
@@ -214,6 +221,34 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rir_ctx ctx;
     struct rir_type *t;
     rir_ctx_init(&ctx, r, m);
+    // assign the name to this rir
+    if (!rf_string_copy_in(&r->name, module_name(m))) {
+        RF_ERROR("Could not assign a name to a RIR module object");
+        return false;
+    }
+    // for each of the module's dependencies, add equivalent rir dependencies
+    struct module **dep;
+    darray_foreach(dep, m->dependencies) {
+        RF_ASSERT((*dep)->rir, "A dependency's RIR was not calculated");
+        darray_append(r->dependencies, (*dep)->rir);
+    }
+
+    // for all string literals in the module create global strings to be
+    // reused in case a literal is used more than once
+    struct rf_objset_iter it;
+    struct RFstring *s;
+    rf_objset_foreach(&m->string_literals_set, &it, s) {
+        RFS_PUSH();
+        struct rir_object *gstring = rir_global_create(
+            rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
+            RFS("gstr_%u", rf_hash_str_stable(s, 0)),
+            s,
+            &ctx
+        );
+        darray_append(r->globals, gstring);
+        RFS_POP();
+    }
+
     // for each non elementary, non sum-type rir type create a typedef
     rir_types_list_for_each(r->rir_types_list, t) {
         if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
@@ -260,7 +295,11 @@ end:
 
 bool rir_process(struct compiler *c)
 {
-    // for each module of the compiler do rir to string
+    // create some utilities needed by all the rir modules
+    if (!rir_utils_create()) {
+        return false;
+    }
+    // for each module of the compiler process the rir
     struct module *mod;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
         if (!rir_process_do(mod->rir, mod)) {
@@ -316,9 +355,19 @@ struct RFstring *rir_tostring(struct rir *r)
         RF_ERROR("Failed to create the string buffer for rir outputting");
         return NULL;
     }
-
     struct rirtostr_ctx ctx;
     rirtostr_ctx_init(&ctx, r);
+
+    // output globals
+    struct rir_object **global;
+    darray_foreach(global, r->globals) {
+        if (!rir_global_tostring(&ctx, &(*global)->global)) {
+            RF_ERROR("Failed to turn a rir global to a string");
+            goto fail_free_ctx;
+        }
+    }
+
+    // output typedefinitions
     struct rir_typedef *def;
     rf_ilist_for_each(&r->typedefs, def, ln) {
         if (!rir_typedef_tostring(&ctx, def)) {
@@ -327,6 +376,7 @@ struct RFstring *rir_tostring(struct rir *r)
         }
     }
 
+    // output functions
     struct rir_fndecl *decl;
     rf_ilist_for_each(&r->functions, decl, ln) {
         if (!rir_function_tostring(&ctx, decl)) {
@@ -358,13 +408,35 @@ bool rir_print(struct compiler *c)
 
 struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name)
 {
+    static const struct RFstring stdlib_s = RF_STRING_STATIC_INIT("stdlib");
     struct rir_fndecl *fn;
     rf_ilist_for_each(&r->functions, fn, ln) {
         if (rf_string_equal(name, fn->name)) {
             return fn;
         }
     }
+
+    // if not found here search in the first of the dependencies which should be the stdlib
+    if (darray_size(r->dependencies) != 0) {
+        struct rir *dep = darray_item(r->dependencies, 0);
+        RF_ASSERT(rf_string_equal(&dep->name, &stdlib_s),
+        "The first dependency should be the standard library");
+        rf_ilist_for_each(&dep->functions, fn, ln) {
+            if (rf_string_equal(name, fn->name)) {
+                return fn;
+            }
+        }
+    }
     return NULL;
+}
+
+struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name)
+{
+    struct rir_object *obj = strmap_get(&r->map, name);
+    if (!(obj && obj->category == RIR_OBJ_TYPEDEF)) {
+        return NULL;
+    }
+    return &obj->tdef;
 }
 
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name)
@@ -390,6 +462,22 @@ struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *na
         return NULL;
     }
     return rir_ltype_comp_create(def, false);
+}
+
+struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)
+{
+    struct rir_object **g;
+    struct rir_object *ret = NULL;
+    RFS_PUSH();
+    struct RFstring *cmp = RFS("gstr_%u", ast_string_literal_get_hash(n));
+    darray_foreach(g, r->globals) {
+        if (rf_string_equal(cmp, rir_global_name(&(*g)->global))) {
+            ret = *g;
+            break;
+        }
+    }
+    RFS_POP();
+    return ret;
 }
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)
