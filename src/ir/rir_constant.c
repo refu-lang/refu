@@ -12,10 +12,8 @@ struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_
     if (!ret) {
         return NULL;
     }
-
-    ret->expr.constant = c->constant;
-    rir_expression_init(ret, RIR_EXPRESSION_CONSTANT, ctx);
-    return ret;
+    ret->expr.type = RIR_EXPRESSION_CONSTANT;
+    return rir_value_constant_init(&ret->expr.val, &c->constant) ? ret : NULL;
 }
 
 struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx)
@@ -47,15 +45,15 @@ bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
 {
     bool ret = false;
     RF_ASSERT(e->type == RIR_EXPRESSION_CONSTANT, "Expected constant");
-    switch (e->constant.type) {
+    switch (e->val.constant.type) {
     case CONSTANT_NUMBER_INTEGER:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%" PRId64, e->constant.value.integer));
+        ret = rf_stringx_append(ctx->rir->buff, RFS("%" PRId64, e->val.constant.value.integer));
         break;
     case CONSTANT_NUMBER_FLOAT:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%f", e->constant.value.floating));
+        ret = rf_stringx_append(ctx->rir->buff, RFS("%f", e->val.constant.value.floating));
         break;
     case CONSTANT_BOOLEAN:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%s", e->constant.value.boolean ? "true" : "false"));
+        ret = rf_stringx_append(ctx->rir->buff, RFS("%s", e->val.constant.value.boolean ? "true" : "false"));
         break;
     }
     return ret;

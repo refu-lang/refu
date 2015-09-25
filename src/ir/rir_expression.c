@@ -29,9 +29,7 @@ bool rir_expression_init(struct rir_object *obj,
     expr->type = type;
     switch (obj->expr.type) {
     case RIR_EXPRESSION_CONSTANT:
-        if (!rir_value_constant_init(&expr->val, &expr->constant)) {
-            return false;
-        }
+        RF_CRITICAL_FAIL("Rir constants should only be initialized by rir_constant_create");
         break;
     case RIR_EXPRESSION_WRITE:
     case RIR_EXPRESSION_RETURN:
@@ -93,8 +91,8 @@ struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
 }
 
 struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
-                                             uint64_t num,
-                                             struct rir_ctx *ctx)
+                                         uint64_t num,
+                                         struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {

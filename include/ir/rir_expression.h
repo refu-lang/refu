@@ -139,8 +139,6 @@ struct rir_expression {
         struct rir_binaryop binaryop;
         struct rir_read read;
         struct rir_return ret;
-        // kind of ugly but it's exactly what we need
-        struct ast_constant constant;
     };
     struct rir_value val;
     // Control to be added to expression list of a rir block
