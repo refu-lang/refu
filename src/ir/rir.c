@@ -14,6 +14,7 @@
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
 #include <ast/string_literal.h>
+#include <utils/common_strings.h>
 #include <module.h>
 #include <compiler.h>
 
@@ -408,7 +409,6 @@ bool rir_print(struct compiler *c)
 
 struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name)
 {
-    static const struct RFstring stdlib_s = RF_STRING_STATIC_INIT("stdlib");
     struct rir_fndecl *fn;
     rf_ilist_for_each(&r->functions, fn, ln) {
         if (rf_string_equal(name, fn->name)) {
@@ -419,7 +419,7 @@ struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring 
     // if not found here search in the first of the dependencies which should be the stdlib
     if (darray_size(r->dependencies) != 0) {
         struct rir *dep = darray_item(r->dependencies, 0);
-        RF_ASSERT(rf_string_equal(&dep->name, &stdlib_s),
+        RF_ASSERT(rf_string_equal(&dep->name, &g_str_stdlib),
         "The first dependency should be the standard library");
         rf_ilist_for_each(&dep->functions, fn, ln) {
             if (rf_string_equal(name, fn->name)) {

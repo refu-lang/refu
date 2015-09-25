@@ -2,8 +2,9 @@
 
 #include <Utils/fixed_memory_pool.h>
 
+#include <utils/common_strings.h>
 #include <compiler.h>
-#include <compiler_globals.h>
+#include <utils/common_strings.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/module.h>
@@ -130,7 +131,7 @@ bool module_add_import(struct module *m, struct ast_node *import)
 
 const struct RFstring *module_name(const struct module *m)
 {
-    return m->node->type == AST_ROOT ? compiler_main_str() : ast_module_name(m->node);
+    return m->node->type == AST_ROOT ? &g_str_main : ast_module_name(m->node);
 }
 
 struct symbol_table *module_symbol_table(const struct module *m)
@@ -154,13 +155,12 @@ struct inpfile *module_get_file(const struct module *m)
 
 bool module_is_main(const struct module *m)
 {
-    return rf_string_equal(module_name(m), compiler_main_str());
+    return rf_string_equal(module_name(m), &g_str_main);
 }
 
 bool module_add_stdlib(struct module *m)
 {
-    static const struct RFstring stdlib_s = RF_STRING_STATIC_INIT("stdlib");
-    struct module *other_mod = compiler_module_get(&stdlib_s);
+    struct module *other_mod = compiler_module_get(&g_str_stdlib);
     if (!other_mod) {
         RF_ERROR("stdlib was requested but could not be found in the parsed compiler modules");
         return false;

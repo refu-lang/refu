@@ -34,6 +34,7 @@
 #include <types/type_comparisons.h>
 #include <types/type.h>
 
+#include <utils/common_strings.h>
 #include <ir/rir_type.h>
 
 #include <backend/llvm.h>
@@ -397,7 +398,6 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
 {
     struct ast_node *child;
     // temporary. Name checking should be abstracted elsewhere
-    const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
     RFS_PUSH();
     const char *mod_name = rf_string_cstr_from_buff_or_die(module_name(module));
     if (!mod_name) {
@@ -407,7 +407,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct module *module,
     ctx->llvm_mod = LLVMModuleCreateWithName(mod_name);
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
-    if (rf_string_equal(name, &s_stdlib)) {
+    if (rf_string_equal(name, &g_str_stdlib)) {
         // create some global definitions that the stdlib should offer
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");

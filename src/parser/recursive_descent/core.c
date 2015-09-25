@@ -9,7 +9,7 @@
 #include <lexer/lexer.h>
 #include <front_ctx.h>
 #include <compiler.h>
-#include <compiler_globals.h>
+#include <utils/common_strings.h>
 
 #include "common.h"
 #include "type.h"
@@ -25,7 +25,7 @@ static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
     bool *main_found = user_arg;
     n->state = AST_NODE_STATE_AFTER_PARSING;
     if (n->type == AST_FUNCTION_DECLARATION) {
-        if (rf_string_equal(ast_fndecl_name_str(n), compiler_main_str())) {
+        if (rf_string_equal(ast_fndecl_name_str(n), &g_str_main)) {
             *main_found = true;
         }
     }

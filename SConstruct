@@ -9,7 +9,6 @@ gperf_src = ['lexer/tokens_htable.gperf',
              'types/elementary_types_htable.gperf']
 refu_src = [
     'compiler.c',
-    'compiler_globals.c',
     'compiler_args.c',
 
     'module.c',
@@ -46,6 +45,7 @@ refu_src = [
 
     'utils/traversal.c',
     'utils/string_set.c',
+    'utils/common_strings.c',
 
     'analyzer/analyzer.c',
     'analyzer/symbol_table.c',

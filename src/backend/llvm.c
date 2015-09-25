@@ -15,6 +15,7 @@
 #include <compiler_args.h>
 #include <front_ctx.h>
 #include <module.h>
+#include <utils/common_strings.h>
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
@@ -65,7 +66,6 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
     struct LLVMOpaqueModule *stdlib_module;
-    const struct RFstring s_stdlib = RF_STRING_STATIC_INIT("stdlib");
     const struct RFstring s_main = RF_STRING_STATIC_INIT("mainmodule");
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
@@ -79,7 +79,7 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
     darray_foreach(mod, *modules) {
         llvm_traversal_ctx_set_singlepass(&ctx, *mod);
         llvm_module = blvm_create_module(*mod, &ctx,
-                                         index == 0 ? &s_stdlib : &s_main,
+                                         index == 0 ? &g_str_stdlib : &s_main,
                                          index == 0 ? NULL : stdlib_module);
         if (!llvm_module) {
             ERROR("Failed to form the LLVM IR ast");
