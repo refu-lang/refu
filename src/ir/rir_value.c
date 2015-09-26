@@ -151,8 +151,12 @@ void rir_value_nil_init(struct rir_value *v)
 
 void rir_value_deinit(struct rir_value *v)
 {
-    rf_string_deinit(&v->id);
-    rir_ltype_destroy(v->type);
+    if (v->category != RIR_VALUE_NIL) {
+        rf_string_deinit(&v->id);
+        if (v->category != RIR_VALUE_LABEL) {
+            rir_ltype_destroy(v->type);
+        }
+    }
 }
 
 void rir_value_destroy(struct rir_value *v)

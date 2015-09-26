@@ -23,7 +23,7 @@ struct rir_value {
     enum rir_valtype category;
     //! A string to represent the value in the generated IR file
     struct RFstring id;
-    //! The type of the value
+    //! The type of the value. Or NULL if this is a label or a NIL value
     struct rir_ltype *type;
     union {
         struct ast_constant constant;

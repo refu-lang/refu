@@ -216,6 +216,13 @@ static bool rir_fndef_init(struct rir_fndef *ret,
         goto end;
     }
 
+    // if during processing a next_block was created but not populated, connect to the end
+    if (ctx->next_block && !rir_block_exit_initialized(ctx->next_block)) {
+        if (!rir_block_exit_init_branch(&ctx->next_block->exit, ret->end_label)) {
+            goto end;
+        }
+    }
+
     // if first block of the function does not have an exit, connect it to the end
     if (!rir_block_exit_initialized(first_block)) {
         if (!rir_block_exit_init_branch(&first_block->exit, ret->end_label)) {

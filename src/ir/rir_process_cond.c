@@ -78,10 +78,7 @@ static struct rir_block *rir_process_conditional_ast(const struct ast_node *ast_
                                                      struct rir_block *old_block,
                                                      struct rir_ctx *ctx)
 {
-    if (!rir_process_ast_node(ast_cond, ctx)) {
-        return NULL;
-    }
-    struct rir_value *cond = rir_ctx_lastval_get(ctx);
+    struct rir_value *cond = rir_processret_ast_node(ast_cond, ctx);
     if (!cond) {
         RF_ERROR("A condition value must have been created");
         return NULL;
@@ -105,7 +102,6 @@ static struct rir_block *rir_process_elif(const struct ast_node *ast_cond,
 bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_block *old_block = ctx->current_block;
-    RF_ASSERT(!ctx->next_block, "next block should be empty here");
     if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
         goto fail;
     }
@@ -122,7 +118,6 @@ bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
     ctx->current_block = ctx->next_block;
     // since next_block was an empty block let's add it to the function now
     rir_fndef_add_block(ctx->current_fn, ctx->next_block);
-    ctx->next_block = NULL;
     RIRCTX_RETURN_EXPR(ctx, true, NULL);
 
 fail:

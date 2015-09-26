@@ -22,4 +22,5 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx);
  */
 struct rir_ltype *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx);
 
+void rir_call_deinit(struct rir_call *c);
 #endif

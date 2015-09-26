@@ -262,3 +262,9 @@ struct rir_ltype *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
     RF_ASSERT(decl, "At this point in the RIR the function declaration should have been found");
     return decl->return_type;
 }
+
+void rir_call_deinit(struct rir_call *c)
+{
+    rf_string_deinit(&c->name);
+    // the args are rir objects themselves so will be freed from global list
+}

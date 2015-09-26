@@ -17,10 +17,13 @@ void rir_object_destroy(struct rir_object *obj)
 {
     switch(obj->category) {
     case RIR_OBJ_EXPRESSION:
+        rir_expression_deinit(&obj->expr);
         break;
     case RIR_OBJ_ARGUMENT:
+        rir_argument_deinit(&obj->arg);
         break;
     case RIR_OBJ_BLOCK:
+        rir_block_deinit(&obj->block);
         break;
     case RIR_OBJ_TYPEDEF:
         rir_typedef_deinit(&obj->tdef);

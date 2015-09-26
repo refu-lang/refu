@@ -7,6 +7,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_argument.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_call.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -45,18 +46,16 @@ bool rir_expression_init(struct rir_object *obj,
 }
 
 
-static void rir_expression_deinit(struct rir_expression *expr)
+void rir_expression_deinit(struct rir_expression *expr)
 {
-    // TODO
-}
-
-void rir_expression_destroy(struct rir_expression *expr)
-{
-    rir_expression_deinit(expr);
-    // return expresssions get initialized on the stack so no need to free
-    if (expr->type != RIR_EXPRESSION_RETURN) {
-        free(expr);
+    switch (expr->type) {
+    case RIR_EXPRESSION_CALL:
+        rir_call_deinit(&expr->call);
+        break;
+    default:
+        break;
     }
+    rir_value_deinit(&expr->val);
 }
 
 static inline void rir_alloca_init(struct rir_alloca *obj,

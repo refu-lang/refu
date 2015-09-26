@@ -33,10 +33,10 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
     case RIR_BLOCK_EXIT_CONDBRANCH:
         rir_condbranch_deinit(&exit->condbranch);
         break;
-    case RIR_BLOCK_EXIT_RETURN:
     case RIR_BLOCK_EXIT_INVALID:
-        // TODO
-        RF_ASSERT(false, "Not yet implemented");
+        RF_ASSERT(false, "Should never happen");
+    case RIR_BLOCK_EXIT_RETURN:
+        // the return stmt should be a global rir object so is freed from global rir objects list
         break;
     }
 }
@@ -222,14 +222,11 @@ struct rir_block *rir_block_create(const struct ast_node *n,
     return obj ? &obj->block : NULL;
 }
 
-static void rir_block_deinit(struct rir_block* b)
+void rir_block_deinit(struct rir_block* b)
 {
-    struct rir_expression *expr;
-    struct rir_expression *tmp;
-    rf_ilist_for_each_safe(&b->expressions, expr, tmp, ln) {
-        rir_expression_destroy(expr);
-    }
+    // block expressions are part of global oject list and will be destroyed there
     rir_block_exit_deinit(&b->exit);
+    rir_value_deinit(&b->label);
 }
 
 void rir_block_destroy(struct rir_block* b)

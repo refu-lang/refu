@@ -198,13 +198,12 @@ static void rir_deinit(struct rir *r)
     }
     rf_string_deinit(&r->name);
 
-    // TODO
     // all other rir objects are in the global rir object list so destroy them
-    /* struct rir_object *obj; */
-    /* struct rir_object *tmpobj; */
-    /* rf_ilist_for_each_safe(&r->objects, obj, tmpobj, ln) { */
-    /*     rir_object_destroy(obj); */
-    /* } */
+    struct rir_object *obj;
+    struct rir_object *tmpobj;
+    rf_ilist_for_each_safe(&r->objects, obj, tmpobj, ln) {
+        rir_object_destroy(obj);
+    }
 }
 
 void rir_destroy(struct rir *r)

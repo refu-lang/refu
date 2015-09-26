@@ -38,7 +38,7 @@ void rir_block_exit_return_init(struct rir_block_exit *exit,
 
 struct rir_block {
     struct rir_block_exit exit;
-    //! The block's label. If having a nil value
+    //! The block's label value, or a nil value if this is the first block of a function.
     struct rir_value label;
     //! List of rir expressions
     struct RFilist_head expressions;
@@ -65,10 +65,8 @@ struct rir_block *rir_block_create(const struct ast_node *n,
 struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx);
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);
 
-/**
- * Destroy this block and all blocks this connects to
- */
 void rir_block_destroy(struct rir_block* b);
+void rir_block_deinit(struct rir_block* b);
 
 bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
