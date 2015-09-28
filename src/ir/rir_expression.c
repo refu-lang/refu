@@ -214,9 +214,9 @@ void rir_return_init(struct rir_expression *ret,
     rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
 }
 
-static struct rir_object *rir_conversion_create_obj(const struct rir_ltype *totype,
-                                                    const struct rir_value *convval,
-                                                    struct rir_ctx *ctx)
+static struct rir_object *rir_convert_create_obj(const struct rir_ltype *totype,
+                                                 const struct rir_value *convval,
+                                                 struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {
@@ -231,11 +231,11 @@ static struct rir_object *rir_conversion_create_obj(const struct rir_ltype *toty
     return ret;
 }
 
-struct rir_expression *rir_conversion_create(const struct rir_ltype *totype,
-                                             const struct rir_value *convval,
-                                             struct rir_ctx *ctx)
+struct rir_expression *rir_convert_create(const struct rir_ltype *totype,
+                                          const struct rir_value *convval,
+                                          struct rir_ctx *ctx)
 {
-    struct rir_object *obj = rir_conversion_create_obj(totype, convval, ctx);
+    struct rir_object *obj = rir_convert_create_obj(totype, convval, ctx);
     return obj ? &obj->expr : NULL;
 }
 

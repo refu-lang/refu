@@ -22,7 +22,7 @@ struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_value *rir_constantval_create_fromint(int64_t n)
+struct rir_value *rir_constantval_create_fromint(int64_t n, struct rir *r)
 {
     struct rir_value *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
@@ -30,6 +30,8 @@ struct rir_value *rir_constantval_create_fromint(int64_t n)
         free(ret);
         ret = NULL;
     }
+    // note that this value will need destruction
+    rir_freevalues_add(r, ret);
     return ret;
 }
 

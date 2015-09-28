@@ -20,6 +20,8 @@ struct rir {
     struct rir_types_list *rir_types_list;
     //! Array of all global variable declarations for the module
     struct {darray(struct rir_object*);} globals;
+    //! Pointers to values that don't belong to any rir object. Will be destroyed at the end
+    struct {darray(struct rir_value*);} free_values;
     //! List of function declarations/definitions
     struct RFilist_head functions;
     //! List of type definitions
@@ -49,6 +51,8 @@ struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstri
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
 struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name);
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *lit);
+
+void rir_freevalues_add(struct rir *r, struct rir_value *v);
 
 struct rir_ctx {
     struct rir *rir;

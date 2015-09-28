@@ -166,6 +166,7 @@ static bool rir_init(struct rir *r, struct module *m)
     rf_ilist_head_init(&r->typedefs);
     darray_init(r->globals);
     darray_init(r->dependencies);
+    darray_init(r->free_values);
     // create the rir types list from the types set for this module
     if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
         return false;
@@ -190,13 +191,21 @@ static void rir_deinit(struct rir *r)
     struct rir_fndecl *tmp;
     darray_free(r->globals);
     darray_free(r->dependencies);
+    strmap_clear(&r->map);
     if (r->rir_types_list) {
         rir_types_list_destroy(r->rir_types_list);
     }
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
-        rir_fndecl_destroy(fn);
+        rir_function_destroy(fn);
     }
     rf_string_deinit(&r->name);
+
+    // free all free standing rir value
+    struct rir_value **val;
+    darray_foreach(val, r->free_values) {
+        rir_value_destroy(*val);
+    }
+    darray_free(r->free_values);
 
     // all other rir objects are in the global rir object list so destroy them
     struct rir_object *obj;
@@ -477,6 +486,11 @@ struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)
     }
     RFS_POP();
     return ret;
+}
+
+void rir_freevalues_add(struct rir *r, struct rir_value *v)
+{
+    darray_append(r->free_values, v);
 }
 
 void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)

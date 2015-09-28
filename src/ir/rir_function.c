@@ -310,3 +310,12 @@ bool rir_function_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *d)
     }
     return rir_fndef_tostring(ctx, rir_fndecl_to_fndef(d));
 }
+
+void rir_function_destroy(struct rir_fndecl *d)
+{
+    if (d->plain_decl) {
+        rir_fndecl_destroy(d);
+    } else {
+        rir_fndef_destroy(rir_fndecl_to_fndef(d));
+    }
+}

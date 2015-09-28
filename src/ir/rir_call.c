@@ -91,7 +91,7 @@ static bool rir_process_ctorcall(const struct ast_node *n, const struct type *fn
             return false;
         }
         // create code to set the  union's index with the matching type
-        struct rir_value *rir_idx_const = rir_constantval_create_fromint(union_idx);
+        struct rir_value *rir_idx_const = rir_constantval_create_fromint(union_idx, ctx->rir);
         struct rir_expression *e = rir_setunionidx_create(lhs, rir_idx_const, ctx);
         if (!e) {
             return false;
@@ -181,7 +181,7 @@ static bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ct
         return false;
     }
     // create the conversion
-    struct rir_expression *e = rir_conversion_create(
+    struct rir_expression *e = rir_convert_create(
         rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
         argexprval,
         ctx

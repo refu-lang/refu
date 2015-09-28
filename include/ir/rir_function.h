@@ -56,4 +56,5 @@ i_INLINE_DECL struct rir_fndef *rir_fndecl_to_fndef(const struct rir_fndecl* d)
 /* -- Generic Methods that will work for both declaration and definitions -- */
 
 bool rir_function_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *fn);
+void rir_function_destroy(struct rir_fndecl *d);
 #endif
