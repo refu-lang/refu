@@ -374,7 +374,7 @@ bool compiler_process()
     
     // add the standard library to the front contexts
     struct front_ctx *stdlib_front;
-    const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
+    static const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
     if (!(stdlib_front = compiler_new_front(c, &stdlib))) {
         RF_ERROR("Failed to add standard library to the front_ctxs");
         return false;

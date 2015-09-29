@@ -69,7 +69,7 @@ i_INLINE_DECL struct ast_node *analyzer_traversal_ctx_get_nth_parent_or_die(
     unsigned int num,
     struct analyzer_traversal_ctx *ctx)
 {
-    RF_ASSERT((int)darray_size(ctx->parent_nodes) - 2 - num >= 0,
+    RF_ASSERT((int)darray_size(ctx->parent_nodes) - 2 - (int)num >= 0,
               "Non-existant parent requested");
     return darray_item(ctx->parent_nodes, darray_size(ctx->parent_nodes) - 2 - num);
 }

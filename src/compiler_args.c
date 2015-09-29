@@ -70,7 +70,7 @@ void compiler_args_deinit(struct compiler_args *args)
         rf_string_destroy(args->output);
     }
     unsigned i;
-    for (i = 0; i < args->positional_file->count; ++i) {
+    for (i = 0; i < (unsigned)args->positional_file->count; ++i) {
         rf_string_deinit(&args->input_files[i]);
     }
     free(args->input_files);

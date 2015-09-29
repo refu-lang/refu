@@ -356,7 +356,7 @@ struct rir_type_cmp_ctx {
     enum rir_type_category current_rir_op;
     //! A stack of the currently visited rir types
     struct {darray(const struct rir_type*);} rir_types;
-    //! A stack of the indices of the currently visited rir types
+    //! A stack of the indices of the currently visited rir types. -1 for uninitialized
     darray(int) indices;
 };
 
@@ -574,7 +574,7 @@ bool rir_type_equals_type(const struct rir_type *r_type,
     );
     // if we are at the end of a rir_type operator comparison that has subtypes
     // then check if all of has been covered. If not then it's not a match
-    if (ret && darray_top(ctx.indices) != -1 && darray_top(ctx.indices)  != darray_size(rir_type_contents(r_type)->subtypes)) {
+    if (ret && darray_top(ctx.indices) != -1 && (unsigned)darray_top(ctx.indices) != darray_size(rir_type_contents(r_type)->subtypes)) {
         DD("at end of comparison %d != %lu -> return false;\n", darray_top(ctx.indices), darray_size(rir_type_contents(r_type)->subtypes));
         ret = false;
     }

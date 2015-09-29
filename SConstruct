@@ -144,8 +144,8 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
                           ' executionengine interpreter native linker')
-    # if llvm-config added -pedantic flag remove it
-    remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic'])
+    # llvm-config adds some flags we don't need so remove them
+    remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic', '-Wwrite-strings'])
     linker_exec = 'g++'
 
 # add src prefix before the sources that reside at src/

@@ -20,23 +20,23 @@ bool inpstr_init_from_source(struct inpstr *s,
 {
     static const struct RFstring nl = RF_STRING_STATIC_INIT("\n");
     struct RFarray arr;
+    int lc;
     RF_ARRAY_TEMP_INIT(&arr, uint32_t, 128);
     if (!rf_stringx_from_string_in(&s->str, input_str)) {
         return false;
     }
 
-    s->lines_num = rf_string_count(input_str, &nl, 0, &arr, 0);
-    if (s->lines_num == -1) {
+    if ((lc = rf_string_count(input_str, &nl, 0, &arr, 0)) == -1) {
         return false;
     }
-    s->lines_num +=1;
+    s->lines_num = lc + 1;
     RF_MALLOC(s->lines, sizeof(uint32_t) * s->lines_num, return false);
 
 
     if (s->lines_num == 1) { //we got nothing to copy from, so don't
         s->lines[0] = 0;
     } else {
-        int i;
+        unsigned i;
         s->lines[0] = 0;
         for (i = 1; i < s->lines_num; ++i) {
             s->lines[i] = rf_array_at_unsafe(&arr, i - 1, uint32_t) + 1;
