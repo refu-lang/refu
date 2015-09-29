@@ -1,4 +1,4 @@
-from build_extra.config import set_debug_mode
+from build_extra.config import set_debug_mode, remove_envvar_values
 import os
 
 Import('env clib_static')
@@ -144,6 +144,8 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
                           ' executionengine interpreter native linker')
+    # if llvm-config added -pedantic flag remove it
+    remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic'])
     linker_exec = 'g++'
 
 # add src prefix before the sources that reside at src/
