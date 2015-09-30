@@ -266,5 +266,6 @@ struct rir_ltype *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
 void rir_call_deinit(struct rir_call *c)
 {
     rf_string_deinit(&c->name);
+    darray_free(c->args);
     // the args are rir objects themselves so will be freed from global list
 }

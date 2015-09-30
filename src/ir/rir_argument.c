@@ -148,11 +148,16 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     return true;
 }
 
-void rir_argsarr_deinit(struct args_arr *arr, struct rir_ctx *ctx)
+void rir_argsarr_deinit_remobjs(struct args_arr *arr, struct rir_ctx *ctx)
 {
     struct rir_object **arg;
     darray_foreach(arg, *arr) {
         rir_object_listrem_destroy(*arg, ctx);
     }
+    darray_free(*arr);
+}
+
+void rir_argsarr_deinit(struct args_arr *arr)
+{
     darray_free(*arr);
 }

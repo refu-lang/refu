@@ -100,7 +100,7 @@ struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *c
 
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
-    darray_clear(f->arguments);
+    darray_free(f->arguments);
 }
 
 void rir_fndecl_destroy(struct rir_fndecl *f)
@@ -254,7 +254,7 @@ static void rir_fndef_deinit(struct rir_fndef *f)
 {
     // not clearing the members of the maps. They should be cleared from the global list
     strmap_clear(&f->map);
-    darray_clear(f->blocks);
+    darray_free(f->blocks);
     rir_fndecl_deinit(&f->decl);
 }
 

@@ -73,6 +73,7 @@ struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx)
 void rir_typedef_deinit(struct rir_typedef *t)
 {
     rf_string_destroy(t->name);
+    rir_argsarr_deinit(&t->arguments_list);
 }
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t)

@@ -157,6 +157,9 @@ void rir_value_deinit(struct rir_value *v)
             rir_ltype_destroy(v->type);
         }
     }
+    if (v->category == RIR_VALUE_LITERAL) {
+        rf_string_deinit(&v->literal);
+    }
 }
 
 void rir_value_destroy(struct rir_value *v)

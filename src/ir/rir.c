@@ -113,7 +113,7 @@ void rir_strec_add_allocas(struct symbol_table_record *rec,
 }
 
 static void rir_strec_create_and_add_allocas(struct symbol_table_record *rec,
-                                      struct rir_ctx *ctx)
+                                             struct rir_ctx *ctx)
 {
     rir_strec_create_allocas(rec, ctx);
     rir_strec_add_allocas(rec, ctx);
@@ -200,7 +200,7 @@ static void rir_deinit(struct rir *r)
     }
     rf_string_deinit(&r->name);
 
-    // free all free standing rir value
+    // free all free standing rir values
     struct rir_value **val;
     darray_foreach(val, r->free_values) {
         rir_value_destroy(*val);
@@ -304,7 +304,7 @@ end:
 
 bool rir_process(struct compiler *c)
 {
-    // create some utilities needed by all the rir modules
+    // create some utilities needed by all the rir modules. Freed at compiler_deinit.
     if (!rir_utils_create()) {
         return false;
     }

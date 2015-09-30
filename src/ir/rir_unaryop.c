@@ -20,19 +20,19 @@ bool rir_process_unaryop(const struct ast_unaryop *op, struct rir_ctx *ctx)
         RF_CRITICAL_FAIL("TODO -- not yet implemented");
         break;
     case UNARYOP_INC:
-        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_ADD, opval, g_rir_const_1, ctx))) {
+        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_ADD, opval, &g_rir_const_1, ctx))) {
             RF_ERROR("Failed to create rir expression out of increase unary operation");
             goto fail;
         }
         break;
     case UNARYOP_DEC:
-        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_ADD, opval, g_rir_const_m1, ctx))) {
+        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_ADD, opval, &g_rir_const_m1, ctx))) {
             RF_ERROR("Failed to create rir expression out of decreate unary operation");
             goto fail;
         }
         break;
     case UNARYOP_MINUS:
-        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_MUL, opval, g_rir_const_m1, ctx))) {
+        if (!(exprobj = rir_binaryop_create_nonast_obj(RIR_EXPRESSION_MUL, opval, &g_rir_const_m1, ctx))) {
             RF_ERROR("Failed to create rir expression out of minus unary operation");
             goto fail;
         }

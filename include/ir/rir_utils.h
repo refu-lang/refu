@@ -2,10 +2,10 @@
 #define LFR_IR_UTILS_H
 
 #include <stdbool.h>
-struct rir_value;
+#include <ir/rir_value.h>
 
-struct rir_value *g_rir_const_1;
-struct rir_value *g_rir_const_m1;
+extern struct rir_value g_rir_const_1;
+extern struct rir_value g_rir_const_m1;
 
 /**
  * Initialize all the utils needed by all rir functions

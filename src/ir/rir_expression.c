@@ -52,6 +52,9 @@ void rir_expression_deinit(struct rir_expression *expr)
     case RIR_EXPRESSION_CALL:
         rir_call_deinit(&expr->call);
         break;
+    case RIR_EXPRESSION_ALLOCA:
+        rir_ltype_destroy(expr->alloca.type);
+        break;
     default:
         break;
     }
@@ -59,7 +62,7 @@ void rir_expression_deinit(struct rir_expression *expr)
 }
 
 static inline void rir_alloca_init(struct rir_alloca *obj,
-                                   const struct rir_ltype *type,
+                                   struct rir_ltype *type,
                                    uint64_t num)
 {
     obj->type = type;
@@ -67,7 +70,7 @@ static inline void rir_alloca_init(struct rir_alloca *obj,
 }
 
 static struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
-                                          struct rir_ctx *ctx)
+                                              struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {
@@ -89,7 +92,7 @@ struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
+struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
 {

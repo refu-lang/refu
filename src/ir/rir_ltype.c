@@ -213,6 +213,6 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     index = -1;
 
 end:
-    rir_argsarr_deinit(&t_args, ctx);
+    rir_argsarr_deinit_remobjs(&t_args, ctx);
     return index;
 }

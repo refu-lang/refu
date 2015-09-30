@@ -49,7 +49,7 @@ struct rir_call {
 };
 
 struct rir_alloca {
-    const struct rir_ltype *type;
+    struct rir_ltype *type;
     uint64_t num;
 };
 
@@ -94,7 +94,7 @@ struct rir_unionmemberat {
 };
 
 
-struct rir_object *rir_alloca_create_obj(const struct rir_ltype *type,
+struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 

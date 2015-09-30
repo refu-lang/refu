@@ -13,6 +13,7 @@
 #include <serializer/serializer.h>
 #include <backend/llvm.h>
 #include <ir/rir.h>
+#include <ir/rir_utils.h>
 
 struct rir_module;
 static struct compiler *g_compiler_instance = NULL;
@@ -136,7 +137,9 @@ static void compiler_deinit(struct compiler *c)
     darray_foreach(mod, c->modules) {
         module_destroy(*mod);
     }
+    // free rir utilities created at rir_process for all rir modules
     darray_free(c->modules);
+    rir_utils_destroy();
 
 
     serializer_destroy(c->serializer);
