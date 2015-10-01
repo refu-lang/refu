@@ -28,7 +28,12 @@ enum rir_expression_type {
     RIR_EXPRESSION_SUB,
     RIR_EXPRESSION_MUL,
     RIR_EXPRESSION_DIV,
-    RIR_EXPRESSION_CMP,
+    RIR_EXPRESSION_CMP_EQ,
+    RIR_EXPRESSION_CMP_NE,
+    RIR_EXPRESSION_CMP_GE,
+    RIR_EXPRESSION_CMP_GT,
+    RIR_EXPRESSION_CMP_LE,
+    RIR_EXPRESSION_CMP_LT,
     RIR_EXPRESSION_LOGIC_AND,
     RIR_EXPRESSION_LOGIC_OR,
     // PLACEHOLDER, should not make it into actual production
@@ -54,6 +59,7 @@ struct rir_alloca {
 };
 
 struct rir_return {
+    //! The expression to return or NULL if it's a return without expression
     const struct rir_expression *val;
 };
 

@@ -512,8 +512,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         }
         break;
     case AST_CONSTANT:
-        ctype = ast_constant_get_type(got);
-        if (ctype != ast_constant_get_type(expect)) {
+        ctype = ast_constant_get_type(&got->constant);
+        if (ctype != ast_constant_get_type(&expect->constant)) {
             ck_astcheck_abort(filename, line,
                               "constant number type mismatch for token at "
                               INPLOCATION_FMT2,
@@ -525,8 +525,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         {
             int64_t expect_v;
             int64_t got_v;
-            ck_assert(ast_constant_get_integer(expect, &expect_v));
-            ck_assert(ast_constant_get_integer(got, &got_v));
+            ck_assert(ast_constant_get_integer(&expect->constant, &expect_v));
+            ck_assert(ast_constant_get_integer(&got->constant, &got_v));
             if (expect_v != got_v) {
                 ck_astcheck_abort(
                     filename, line,
@@ -540,8 +540,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         {
             double expect_v;
             double got_v;
-            ck_assert(ast_constant_get_float(expect, &expect_v));
-            ck_assert(ast_constant_get_float(got, &got_v));
+            ck_assert(ast_constant_get_float(&expect->constant, &expect_v));
+            ck_assert(ast_constant_get_float(&got->constant, &got_v));
             if (!DBLCMP_EQ(expect_v, got_v)) {
                 ck_astcheck_abort(
                     filename, line,
@@ -552,8 +552,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         break;
         case CONSTANT_BOOLEAN:
         {
-            bool expect_v = ast_constant_get_bool(expect);
-            bool got_v = ast_constant_get_bool(got);
+            bool expect_v = ast_constant_get_bool(&expect->constant);
+            bool got_v = ast_constant_get_bool(&got->constant);
             if (expect_v != got_v) {
                 ck_astcheck_abort(
                     filename, line,

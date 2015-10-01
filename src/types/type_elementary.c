@@ -146,13 +146,14 @@ enum elementary_type_category type_elementary_get_category(const struct type *t)
     return ELEMENTARY_TYPE_CATEGORY_OTHER;
 }
 
-i_INLINE_INS bool type_elementary_is_int(const struct type_elementary *t);
+i_INLINE_INS bool elementary_type_is_int(enum elementary_type etype);
 i_INLINE_INS bool type_elementary_has_explicit_conversion(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_int_is_unsigned(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_unsigned(const struct type_elementary *t);
 i_INLINE_INS bool type_elementary_is_signed(const struct type_elementary *t);
-i_INLINE_INS bool type_elementary_is_float(const struct type_elementary *t);
-i_INLINE_INS bool type_elementary_is_numeric(const struct type_elementary *t);
+i_INLINE_INS bool elementary_type_is_float(enum elementary_type etype);
+i_INLINE_INS bool elementary_type_is_numeric(enum elementary_type etype);
+i_INLINE_INS int elementary_type_to_bytesize(enum elementary_type etype);
 i_INLINE_INS int type_elementary_bytesize(const struct type_elementary *t);
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);

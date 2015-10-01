@@ -201,7 +201,7 @@ static bool type_elementary_compare(const struct type *fromtype,
     case ELEMENTARY_TYPE_INT_64:
     case ELEMENTARY_TYPE_UINT_64:
         // int to int
-        if (type_elementary_is_int(to)) {
+        if (elementary_type_is_int(to->etype)) {
             // implicit conversion from bigger to smaller type is allowed also in pattern marching
             if (type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
 
@@ -253,7 +253,7 @@ static bool type_elementary_compare(const struct type *fromtype,
         }
 
         // an int is implicitly convertible to a float
-        if (type_elementary_is_float(to)) {
+        if (elementary_type_is_float(to->etype)) {
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
@@ -273,12 +273,12 @@ static bool type_elementary_compare(const struct type *fromtype,
     case ELEMENTARY_TYPE_FLOAT_32:
     case ELEMENTARY_TYPE_FLOAT_64:
         // float to float is okay
-        if (type_elementary_is_float(to)) {
+        if (elementary_type_is_float(to->etype)) {
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
         // only explicit float to int
-        if (type_elementary_is_int(to) && reason == TYPECMP_EXPLICIT_CONVERSION) {
+        if (elementary_type_is_int(to->etype) && reason == TYPECMP_EXPLICIT_CONVERSION) {
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
 
@@ -300,7 +300,7 @@ static bool type_elementary_compare(const struct type *fromtype,
             current_error_type = TYPECMP_ERRXPLAIN_SECOND_IMPLICIT;
             break;
         }
-        if (type_elementary_is_int(to)) { // we can convert from bool to int
+        if (elementary_type_is_int(to->etype)) { // we can convert from bool to int
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
         // we can explicitly convert from bool to string

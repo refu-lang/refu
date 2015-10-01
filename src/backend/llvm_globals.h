@@ -5,16 +5,20 @@
 #include <stdint.h>
 
 struct llvm_traversal_ctx;
+struct rir;
 struct RFstring;
 struct LLVMOpaqueValue;
 
 bool bllvm_create_globals(struct llvm_traversal_ctx *ctx);
-bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx);
+bool bllvm_create_module_types(struct rir *r, struct llvm_traversal_ctx *ctx);
+bool bllvm_create_module_globals(struct rir* r, struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueValue *bllvm_create_global_const_string(const struct RFstring *string,
+struct LLVMOpaqueValue *bllvm_create_global_const_string(const struct RFstring *string_name,
+                                                         const struct RFstring *string_val,
                                                          struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_create_global_const_string_with_hash(
-    const struct RFstring *string,
+    const struct RFstring *string_name,
+    const struct RFstring *string_val,
     uint32_t hash,
     struct llvm_traversal_ctx *ctx);
 

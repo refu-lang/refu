@@ -69,7 +69,12 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
         case RIR_EXPRESSION_ALLOCA:
             v->type = rir_ltype_create_from_other(expr->alloca.type, true);
             break;
-        case RIR_EXPRESSION_CMP:
+        case RIR_EXPRESSION_CMP_EQ:
+        case RIR_EXPRESSION_CMP_NE:
+        case RIR_EXPRESSION_CMP_GE:
+        case RIR_EXPRESSION_CMP_GT:
+        case RIR_EXPRESSION_CMP_LE:
+        case RIR_EXPRESSION_CMP_LT:
             v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_BOOL, false);
             break;
         case RIR_EXPRESSION_GETUNIONIDX:

@@ -48,6 +48,8 @@ static struct rir_ltype elementary_ptr_types[] = {
 };
 
 i_INLINE_INS bool rir_ltype_is_elementary(const struct rir_ltype *t);
+i_INLINE_INS bool rir_ltype_is_specific_elementary(const struct rir_ltype *t,
+                                                   enum elementary_type etype);
 i_INLINE_INS bool rir_ltype_is_composite(const struct rir_ltype *t);
 bool rir_ltype_is_union(const struct rir_ltype *t)
 {
@@ -157,10 +159,12 @@ bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b)
     return true;
 }
 
-size_t rir_ltype_bytesize(const struct rir_ltype *a)
+size_t rir_ltype_bytesize(const struct rir_ltype *t)
 {
-    // TODO
-    return 4;
+    if (t->category == RIR_LTYPE_ELEMENTARY) {
+        return elementary_type_to_bytesize(t->etype);
+    }
+    return rir_typedef_bytesize(t->tdef);
 }
 
 const struct RFstring *rir_ltype_string(const struct rir_ltype *t)

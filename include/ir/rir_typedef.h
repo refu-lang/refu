@@ -23,4 +23,6 @@ bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);
 bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t2);
 const struct rir_argument *rir_typedef_argat(const struct rir_typedef *t, unsigned int i);
 
+size_t rir_typedef_bytesize(const struct rir_typedef *t);
+
 #endif

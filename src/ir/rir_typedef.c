@@ -4,6 +4,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
+#include <math/math.h>
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>
@@ -105,4 +106,27 @@ bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t
 const struct rir_argument *rir_typedef_argat(const struct rir_typedef *t, unsigned int i)
 {
     return darray_size(t->arguments_list) > i ? &darray_item(t->arguments_list, i)->arg : NULL;
+}
+
+size_t rir_typedef_bytesize(const struct rir_typedef *t)
+{
+    struct rir_object **arg;
+    struct rir_ltype *argtype;
+    size_t sz;
+    if (t->is_union) {
+        //find size of biggest type of the union
+        sz = 0;
+        darray_foreach(arg, t->arguments_list) {
+            argtype = rir_argument_type(&(*arg)->arg);
+            sz = rf_max(sz, rir_ltype_bytesize(argtype));
+        }
+        return sz + sizeof(uint32_t); // size is that, plus size of the index
+    }
+    // else size of a normal typedef is sum of all its type sizes
+    sz = 0;
+    darray_foreach(arg, t->arguments_list) {
+        argtype = rir_argument_type(&(*arg)->arg);
+        sz += rir_ltype_bytesize(argtype);
+    }
+    return sz;
 }

@@ -17,27 +17,29 @@
 #include <types/type.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
+#include <ir/rir.h>
+#include <ir/rir_global.h>
+#include <ir/rir_object.h>
+#include <ir/rir_typedef.h>
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
 
 #define DEFAULT_PTR_ADDRESS_SPACE 0
 
-static bool bllvm_create_module_types(struct llvm_traversal_ctx *ctx)
+bool bllvm_create_module_types(struct rir *r, struct llvm_traversal_ctx *ctx)
 {
-    struct type *t;
-    struct rf_objset_iter it;
-    rf_objset_foreach(ctx->mod->types_set, &it, t) {
-        if (t->category == TYPE_CATEGORY_DEFINED) {
-            if (!bllvm_compile_typedecl(type_defined_get_name(t), t, ctx)) {
-                return false;
-            }
+    struct rir_typedef *def;
+    rf_ilist_for_each(&r->typedefs, def, ln) {
+        if (!bllvm_compile_typedef(def, ctx)) {
+            return false;
         }
     }
     return true;
 }
 
-static LLVMValueRef bllvm_add_global_strbuff(char *str_data, size_t str_len,
+static LLVMValueRef bllvm_add_global_strbuff(char *str_data,
+                                             size_t str_len,
                                              char *optional_name,
                                              struct llvm_traversal_ctx *ctx)
 {
@@ -55,17 +57,17 @@ static LLVMValueRef bllvm_add_global_strbuff(char *str_data, size_t str_len,
 }
 
 LLVMValueRef bllvm_create_global_const_string_with_hash(
-    const struct RFstring *string,
+    const struct RFstring *string_name,
+    const struct RFstring *string_val,
     uint32_t hash,
     struct llvm_traversal_ctx *ctx)
 {
-    unsigned int length = rf_string_length_bytes(string);
+    unsigned int length = rf_string_length_bytes(string_val);
     struct RFstring *s;
-
-    RFS_PUSH();
     s = RFS_NT_OR_DIE("strbuff_%u", hash);
+    RFS_PUSH();
     LLVMValueRef global_stringbuff = bllvm_add_global_strbuff(
-        rf_string_cstr_from_buff_or_die(string),
+        rf_string_cstr_from_buff_or_die(string_val),
         length,
         rf_string_data(s),
         ctx
@@ -83,7 +85,6 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
     LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->llvm_mod, "string"),
                                                     string_struct_layout, 2);
 
-    s = RFS_NT_OR_DIE("gstr_%u", hash);
     LLVMValueRef global_val = LLVMAddGlobal(ctx->llvm_mod,
                                             LLVMGetTypeByName(ctx->llvm_mod, "string"),
                                             rf_string_data(s));
@@ -92,12 +93,14 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
     return global_val;
 }
 
-LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string,
+LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string_name,
+                                              const struct RFstring *string_val,
                                               struct llvm_traversal_ctx *ctx)
 {
     return bllvm_create_global_const_string_with_hash(
-        string,
-        rf_hash_str_stable(string, 0),
+        string_name,
+        string_val,
+        rf_hash_str_stable(string_val, 0),
         ctx
     );
 }
@@ -196,9 +199,6 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
                       llvm_traversal_ctx_get_params(ctx),
                       llvm_traversal_ctx_get_param_count(ctx),
                       true);
-    // also add "true" and "false" as global constant string literals
-    bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_TRUE), ctx);
-    bllvm_create_global_const_string(tokentype_to_str(TOKEN_KW_FALSE), ctx);
     // create some global functions
     if (!bllvm_create_global_functions(ctx)) {
         RF_ERROR("Could not create global functions");
@@ -207,19 +207,15 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
     return true;
 }
 
-bool bllvm_create_module_globals(struct llvm_traversal_ctx *ctx)
+bool bllvm_create_module_globals(struct rir *r, struct llvm_traversal_ctx *ctx)
 {
     // create all constant strings
-    llvm_traversal_ctx_reset_params(ctx);
-    struct rf_objset_iter it;
-    struct RFstring *s;
-    rf_objset_foreach(&ctx->mod->string_literals_set, &it, s) {
-        bllvm_create_global_const_string(s, ctx);
-    }
-
-    if (!bllvm_create_module_types(ctx)) {
-        RF_ERROR("Could not create global types");
-        return false;
+    struct rir_object **global;
+    darray_foreach(global, r->globals) {
+        struct rir_global *g = &(*global)->global;
+        RF_ASSERT(rir_ltype_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
+                  "For now only global strings can exist");
+        bllvm_create_global_const_string(&g->val.id, &g->val.literal, ctx);
     }
     return true;
 }

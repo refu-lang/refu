@@ -2,12 +2,16 @@
 #define LFR_BACKEND_LLVM_TYPES_H
 
 #include <Data_Structures/htable.h>
+#include <types/type_decls.h>
 
 struct RFstring;
 struct rir_type;
+struct rir_ltype;
 struct type;
 struct llvm_traversal_ctx;
 struct LLVMOpaqueType;
+struct rir_typedef;
+struct args_arr;
 
 struct rir_types_map {
     //! Hash for the map
@@ -42,17 +46,14 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
                                          struct rir_type *rtype);
 
 /**
- * Compile either a normal type declaration or an anonymous type
+ * Compiles a typedef
  *
- * @param name        Provide the name of the type to create
- * @param type        [optional] Can provide the type to declare here.
- *                    IF it's NULL then the type is searched for in the types list
+ * @param def         The typedef to compile
  * @param ctx         The llvm traversal context
  * @return            The LLVM type for the compiled struct or NULL in error
  */
-struct LLVMOpaqueType *bllvm_compile_typedecl(const struct RFstring *name,
-                                              const struct type *type,
-                                              struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType *bllvm_compile_typedef(const struct rir_typedef *def,
+                                             struct llvm_traversal_ctx *ctx);
 
 /**
  * Compile a type as internal type declaration
@@ -76,17 +77,22 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
                                                     struct llvm_traversal_ctx *ctx);
 
 /**
- * Given a simple rir type get its defined member types as an array of LLVMTypeRefs
+ * Given a rir argument array create the equivalent llvm type array
  *
  * @warning Uses the context's parameters array.
  * Call llvm_traversal_ctx_reset_params(ctx) to clear right after using.
  *
- * @param type        The rir type whose members to get. Must not be a sum type
+ * @param args        The rir arguments array
  * @param ctx         The llvm traversal context
  */
-struct LLVMOpaqueType **bllvm_simple_member_types(const struct rir_type *type,
-                                                  struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueType **bllvm_rir_args_to_types(const struct args_arr *args,
+                                                struct llvm_traversal_ctx *ctx);
 
+struct LLVMOpaqueType *bllvm_type_from_rir_ltype(const struct rir_ltype *type,
+                                                 struct llvm_traversal_ctx *ctx);
+
+struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
+                                                struct llvm_traversal_ctx *ctx);
 
 /**
  * Given an LLVMType check if it's any int type

@@ -36,10 +36,10 @@ struct rir_fndef {
     struct rir_fndecl decl;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
-    //! Stringmap from rir identifiers to rir objects
-    struct rirobj_strmap map;
     //! Label pointing to the function's end
     struct rir_value *end_label;
+    //! Stringmap from rir identifiers to rir objects
+    struct rirobj_strmap map;
 };
 
 

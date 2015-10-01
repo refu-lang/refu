@@ -75,7 +75,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
         }
         // Create index comparison for match case
         cmp = rir_binaryop_create_nonast(
-            RIR_EXPRESSION_CMP,
+            RIR_EXPRESSION_CMP_EQ,
             uni_idx,
             case_rir_idx,
             ctx

@@ -32,6 +32,7 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
     darray_init(ctx->params);
     darray_init(ctx->values);
     rir_types_map_init(&ctx->types_map);
+    strmap_init(&ctx->valmap);
 }
 
 static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
@@ -50,6 +51,7 @@ static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *
     darray_init(ctx->params);
     darray_init(ctx->values);
     rir_types_map_init(&ctx->types_map);
+    strmap_init(&ctx->valmap);
 }
 
 static inline void llvm_traversal_ctx_reset_singlepass(struct llvm_traversal_ctx *ctx)
@@ -59,6 +61,7 @@ static inline void llvm_traversal_ctx_reset_singlepass(struct llvm_traversal_ctx
     rir_types_map_deinit(&ctx->types_map);
     darray_free(ctx->params);
     darray_free(ctx->values);
+    strmap_clear(&ctx->valmap);
 }
 
 static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args *args)
@@ -78,7 +81,7 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
     llvm_traversal_ctx_init(&ctx, args);
     darray_foreach(mod, *modules) {
         llvm_traversal_ctx_set_singlepass(&ctx, *mod);
-        llvm_module = blvm_create_module(*mod, &ctx,
+        llvm_module = blvm_create_module((*mod)->rir, &ctx,
                                          index == 0 ? &g_str_stdlib : &s_main,
                                          index == 0 ? NULL : stdlib_module);
         if (!llvm_module) {

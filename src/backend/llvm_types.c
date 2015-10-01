@@ -16,6 +16,8 @@
 
 #include <ir/rir_types_list.h>
 #include <ir/rir_type.h>
+#include <ir/rir_typedef.h>
+#include <ir/rir_object.h>
 
 static inline size_t rir_types_map_hash_(const void *elem, void *priv)
 {
@@ -61,80 +63,17 @@ static LLVMTypeRef bllvm_create_struct(const struct RFstring *name)
     return llvm_type;
 }
 
-static LLVMTypeRef bllvm_compile_simple_typedecl(const struct RFstring *name,
-                                                 const struct type *type,
-                                                 struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_compile_typedef(const struct rir_typedef *def,
+                                  struct llvm_traversal_ctx *ctx)
 {
-    if (!type) {
-        type = symbol_table_lookup_defined_type(ctx->current_st, name, NULL);
+    // else it's the same thing but just need to add an extra index for the union
+    LLVMTypeRef llvm_type = bllvm_create_struct(def->name);
+    LLVMTypeRef *members = bllvm_rir_args_to_types(&def->arguments_list, ctx);
+    if (def->is_union) { // add the member selector in the beginning
+        llvm_traversal_ctx_prepend_param(ctx, LLVMInt32Type());
     }
-    RF_ASSERT(!type_is_sumtype(type), "Should not be called with sumtype");
-    LLVMTypeRef llvm_type = bllvm_create_struct(name);
-    LLVMTypeRef *members = bllvm_simple_member_types(type_get_rir_or_die(type), ctx);
     LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
     llvm_traversal_ctx_reset_params(ctx);
-    return llvm_type;
-}
-
-LLVMTypeRef bllvm_compile_internal_typedecl(const struct type *type,
-                                            struct llvm_traversal_ctx *ctx)
-{
-    LLVMTypeRef ret;
-    RFS_PUSH();
-    ret = bllvm_compile_typedecl(
-        type_get_unique_type_str(type, false),
-        type,
-        ctx
-    );
-    RFS_POP();
-    return ret;
-}
-
-LLVMTypeRef bllvm_compile_typedecl(const struct RFstring *name,
-                                   const struct type *type,
-                                   struct llvm_traversal_ctx *ctx)
-{
-    if (!type) {
-        type = symbol_table_lookup_defined_type(ctx->current_st, name, NULL);
-    }
-
-    if (!type_is_sumtype(type)) {
-        return bllvm_compile_simple_typedecl(name, type, ctx);
-    }
-    const struct rir_type *rtype = type_get_rir_or_die(type);
-    // if it's a sum type we have to add the selector variable to the
-    // body and also create structures of all the possible subtypes and
-    // provide the biggest one as the body (+ the selector)
-    struct rir_type **subtype;
-    const struct rir_type *contents = rtype->category == COMPOSITE_RIR_DEFINED
-        ? darray_item(rtype->subtypes, 0) // contents of a defined type
-        : rtype;                          // anonymous type is itself the contents
-    unsigned long long max_storage_size = 0;
-    darray_foreach(subtype, contents->subtypes) {
-
-        LLVMTypeRef subtype_llvm_type = rir_types_map_get(&ctx->types_map, *subtype);
-        if (!subtype_llvm_type) {
-            subtype_llvm_type = bllvm_compile_internal_typedecl(
-                rir_type_get_type_or_die(*subtype), ctx
-            );
-            if (!subtype_llvm_type) {
-                return NULL;
-            }
-            // put it in the map
-            rir_types_map_add(&ctx->types_map, *subtype, subtype_llvm_type);
-        }
-        unsigned long long this_size = LLVMStoreSizeOfType(ctx->target_data, subtype_llvm_type);
-        if (this_size > max_storage_size) {
-            max_storage_size = this_size;
-        }
-    }
-    RF_ASSERT(max_storage_size != 0, "Loop did not run?");
-    // make an array to fit the biggest sum
-    LLVMTypeRef body = LLVMArrayType(LLVMInt8Type(), max_storage_size);
-    LLVMTypeRef llvm_type = bllvm_create_struct(name);
-    // the struct needs enough space to fit the biggest sum operand + int32 for selector
-    LLVMTypeRef llvm_struct_contents[] = { body, LLVMInt32Type() };
-    LLVMStructSetBody(llvm_type, llvm_struct_contents, 2, true);
     return llvm_type;
 }
 
@@ -164,18 +103,77 @@ struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
     return llvm_traversal_ctx_get_params(ctx);
 }
 
-
-LLVMTypeRef *bllvm_simple_member_types(const struct rir_type *type,
-                                       struct llvm_traversal_ctx *ctx)
+LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
+                                     struct llvm_traversal_ctx *ctx)
 {
-    const struct rir_type *actual_type = type;
-    if (type->category == COMPOSITE_RIR_DEFINED) {
-        RF_ASSERT(darray_size(type->subtypes) == 1,
-                  "A defined type should always have 1 direct subtype");
-        actual_type = darray_item(type->subtypes, 0);
+    switch(etype) {
+        // LLVM does not differentiate between signed and unsigned
+    case ELEMENTARY_TYPE_INT_8:
+    case ELEMENTARY_TYPE_UINT_8:
+        return LLVMInt8Type();
+    case ELEMENTARY_TYPE_INT_16:
+    case ELEMENTARY_TYPE_UINT_16:
+        return LLVMInt16Type();
+    case ELEMENTARY_TYPE_INT_32:
+    case ELEMENTARY_TYPE_UINT_32:
+        return LLVMInt32Type();
+    case ELEMENTARY_TYPE_INT:
+    case ELEMENTARY_TYPE_UINT:
+    case ELEMENTARY_TYPE_INT_64:
+    case ELEMENTARY_TYPE_UINT_64:
+        return LLVMInt64Type();
+
+    case ELEMENTARY_TYPE_FLOAT_32:
+        return LLVMFloatType();
+    case ELEMENTARY_TYPE_FLOAT_64:
+        return LLVMDoubleType();
+
+    case ELEMENTARY_TYPE_STRING:
+        return LLVMGetTypeByName(ctx->llvm_mod, "string");
+
+    case ELEMENTARY_TYPE_BOOL:
+        return LLVMInt1Type();
+    case ELEMENTARY_TYPE_NIL:
+        return LLVMVoidType();
+
+    default:
+        RF_CRITICAL_FAIL(
+            "Unsupported elementary type \""RF_STR_PF_FMT"\" "
+            "during LLVM conversion",
+            RF_STR_PF_ARG(type_elementary_get_str(etype)));
+        break;
     }
-    RF_ASSERT(!rir_type_is_sumtype(actual_type), "Called with sum type contents");
-    return bllvm_type_to_subtype_array(actual_type, ctx);
+    return NULL;
+}
+
+LLVMTypeRef bllvm_type_from_rir_ltype(const struct rir_ltype *type,
+                                      struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef ret;
+    if (type->category == RIR_LTYPE_ELEMENTARY) {
+        return bllvm_elementary_to_type(type->etype, ctx);
+    } else if (type->category == RIR_LTYPE_COMPOSITE) {
+        RFS_PUSH();
+        ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(type->tdef->name));
+        RF_ASSERT(ret, "Type should have already been declared in LLVM");
+        RFS_POP();
+        return ret;
+    } else {
+        RF_CRITICAL_FAIL("Unexpected rir ltype encountered");
+    }
+}
+
+LLVMTypeRef *bllvm_rir_args_to_types(const struct args_arr *arr,
+                                     struct llvm_traversal_ctx *ctx)
+{
+    llvm_traversal_ctx_reset_params(ctx);
+    struct rir_object **arg;
+    LLVMTypeRef llvm_type;
+    darray_foreach(arg, *arr) {
+        llvm_type = bllvm_type_from_rir_ltype((*arg)->arg.val.type, ctx);
+        llvm_traversal_ctx_add_param(ctx, llvm_type);
+    }
+    return llvm_traversal_ctx_get_params(ctx);
 }
 
 bool bllvm_type_is_int(const struct LLVMOpaqueType *type)

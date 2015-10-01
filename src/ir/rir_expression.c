@@ -335,7 +335,12 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_SUB:
     case RIR_EXPRESSION_MUL:
     case RIR_EXPRESSION_DIV:
-    case RIR_EXPRESSION_CMP:
+    case RIR_EXPRESSION_CMP_EQ:
+    case RIR_EXPRESSION_CMP_NE:
+    case RIR_EXPRESSION_CMP_GE:
+    case RIR_EXPRESSION_CMP_GT:
+    case RIR_EXPRESSION_CMP_LE:
+    case RIR_EXPRESSION_CMP_LT:
     case RIR_EXPRESSION_WRITE:
         if (!rir_binaryop_tostring(ctx, e)) {
             goto end;

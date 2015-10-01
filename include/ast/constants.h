@@ -52,40 +52,33 @@ i_INLINE_DECL void ast_constant_init_bool(struct ast_constant *c, bool n)
     c->value.boolean = n;
 }
 
-i_INLINE_DECL enum constant_type ast_constant_get_type(struct ast_node *n)
+i_INLINE_DECL enum constant_type ast_constant_get_type(const struct ast_constant *n)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
-    return n->constant.type;
+    return n->type;
 }
 
-i_INLINE_DECL bool ast_constant_get_float(struct ast_node *n, double *v)
+i_INLINE_DECL bool ast_constant_get_float(const struct ast_constant *n, double *v)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
-
-    if (n->constant.type != CONSTANT_NUMBER_FLOAT) {
+    if (n->type != CONSTANT_NUMBER_FLOAT) {
         return false;
     }
-    *v = n->constant.value.floating;
-
+    *v = n->value.floating;
     return true;
 }
 
-i_INLINE_DECL bool ast_constant_get_integer(struct ast_node *n, int64_t *v)
+i_INLINE_DECL bool ast_constant_get_integer(const struct ast_constant *n, int64_t *v)
 {
-    AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);
-
-    if (n->constant.type != CONSTANT_NUMBER_INTEGER) {
+    if (n->type != CONSTANT_NUMBER_INTEGER) {
         return false;
     }
-    *v = n->constant.value.integer;
-
+    *v = n->value.integer;
     return true;
 }
 
-i_INLINE_DECL bool ast_constant_get_bool(const struct ast_node *n)
+i_INLINE_DECL bool ast_constant_get_bool(const struct ast_constant *n)
 {
-    RF_ASSERT(n->type == AST_CONSTANT && n->constant.type == CONSTANT_BOOLEAN,
+    RF_ASSERT(n->type == CONSTANT_BOOLEAN,
               "Function called for invalid ast node");
-    return n->constant.value.boolean;
+    return n->value.boolean;
 }
 #endif

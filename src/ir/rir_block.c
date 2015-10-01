@@ -260,4 +260,12 @@ bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b)
     return true;
 }
 
+const struct RFstring *rir_block_label_str(const struct rir_block *b)
+{
+    if (b->label.category == RIR_VALUE_LABEL) {
+        return rir_value_string(&b->label);
+    }
+    return RFS("");
+}
+
 i_INLINE_INS bool rir_block_exit_initialized(const struct rir_block *b);

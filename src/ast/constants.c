@@ -105,7 +105,7 @@ const struct type * ast_constant_get_storagetype(struct ast_node *n)
     return NULL;
 }
 
-i_INLINE_INS enum constant_type ast_constant_get_type(struct ast_node *n);
-i_INLINE_INS bool ast_constant_get_float(struct ast_node *n, double *v);
-i_INLINE_INS bool ast_constant_get_integer(struct ast_node *n, int64_t *v);
-i_INLINE_INS bool ast_constant_get_bool(const struct ast_node *n);
+i_INLINE_INS enum constant_type ast_constant_get_type(const struct ast_constant *n);
+i_INLINE_INS bool ast_constant_get_float(const struct ast_constant *n, double *v);
+i_INLINE_INS bool ast_constant_get_integer(const struct ast_constant *n, int64_t *v);
+i_INLINE_INS bool ast_constant_get_bool(const struct ast_constant *n);

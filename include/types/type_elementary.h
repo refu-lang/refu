@@ -53,9 +53,9 @@ i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elemen
     return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.etype == etype;
 }
 
-i_INLINE_DECL bool type_elementary_is_int(const struct type_elementary *t)
+i_INLINE_DECL bool elementary_type_is_int(enum elementary_type etype)
 {
-    return t->etype <= ELEMENTARY_TYPE_UINT;
+    return etype <= ELEMENTARY_TYPE_UINT;
 }
 
 i_INLINE_DECL bool type_elementary_has_explicit_conversion(const struct type_elementary *t)
@@ -70,27 +70,28 @@ i_INLINE_DECL bool type_elementary_int_is_unsigned(const struct type_elementary 
 
 i_INLINE_DECL bool type_elementary_is_unsigned(const struct type_elementary *t)
 {
-    return type_elementary_is_int(t) && type_elementary_int_is_unsigned(t);
+    return elementary_type_is_int(t->etype) && type_elementary_int_is_unsigned(t);
 }
 
 i_INLINE_DECL bool type_elementary_is_signed(const struct type_elementary *t)
 {
-    return type_elementary_is_int(t) && (!type_elementary_int_is_unsigned(t));
+    return elementary_type_is_int(t->etype) && (!type_elementary_int_is_unsigned(t));
 }
 
-i_INLINE_DECL bool type_elementary_is_float(const struct type_elementary *t)
+i_INLINE_DECL bool elementary_type_is_float(enum elementary_type etype)
 {
-    return t->etype >= ELEMENTARY_TYPE_FLOAT_32 && t->etype <= ELEMENTARY_TYPE_FLOAT_64;
+    return etype >= ELEMENTARY_TYPE_FLOAT_32 && etype <= ELEMENTARY_TYPE_FLOAT_64;
 }
 
-i_INLINE_DECL bool type_elementary_is_numeric(const struct type_elementary *t)
+i_INLINE_DECL bool elementary_type_is_numeric(enum elementary_type etype)
 {
-    return t->etype >= ELEMENTARY_TYPE_INT_8 && t->etype <= ELEMENTARY_TYPE_FLOAT_64;
+    return etype >= ELEMENTARY_TYPE_INT_8 && etype <= ELEMENTARY_TYPE_FLOAT_64;
 }
 
-i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
+
+i_INLINE_DECL int elementary_type_to_bytesize(enum elementary_type etype)
 {
-    switch (t->etype) {
+    switch (etype) {
     case ELEMENTARY_TYPE_INT_8:
     case ELEMENTARY_TYPE_UINT_8:
         return 1;
@@ -113,9 +114,14 @@ i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
         return 1;
     case ELEMENTARY_TYPE_NIL:
         return 0;
-    default: // for strings and invalid type
+    default: // for invalid types
         return -1;
     }
+}
+
+i_INLINE_DECL int type_elementary_bytesize(const struct type_elementary *t)
+{
+    return elementary_type_to_bytesize(t->etype);
 }
 
 
@@ -133,7 +139,7 @@ i_INLINE_DECL bool type_is_simple_elementary(const struct type *t)
 i_INLINE_DECL bool type_is_numeric_elementary(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_ELEMENTARY &&
-        type_elementary_is_numeric(&t->elementary);
+        elementary_type_is_numeric(t->elementary.etype);
 }
 
 /**
@@ -170,7 +176,7 @@ i_INLINE_DECL bool type_is_unsigned_elementary(const struct type *t)
 i_INLINE_DECL bool type_is_floating_elementary(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_ELEMENTARY &&
-        type_elementary_is_float(&t->elementary);
+        elementary_type_is_float(t->elementary.etype);
 }
 
 /**

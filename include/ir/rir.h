@@ -28,14 +28,14 @@ struct rir {
     struct RFilist_head typedefs;
     //! List of all rir objects
     struct RFilist_head objects;
-    //! Map from strings to rir objects.
-    struct rirobj_strmap map;
     //! A dynamic array of all other rir modules this rir module depends on
     struct rir_arr dependencies;
     //! Name of the module this RIR object represents.
     struct RFstring name;
     //! Buffer string to hold the string representation when asked. Can be NULL.
     struct RFstringx *buff;
+    //! Map from strings to rir objects.
+    struct rirobj_strmap map;
 };
 
 struct RFstring *rir_tostring(struct rir *r);

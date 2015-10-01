@@ -30,6 +30,12 @@ i_INLINE_DECL bool rir_ltype_is_elementary(const struct rir_ltype *t)
     return t->category == RIR_LTYPE_ELEMENTARY;
 }
 
+i_INLINE_DECL bool rir_ltype_is_specific_elementary(const struct rir_ltype *t,
+                                                    enum elementary_type etype)
+{
+    return t->category == RIR_LTYPE_ELEMENTARY && t->etype == etype;
+}
+
 i_INLINE_DECL bool rir_ltype_is_composite(const struct rir_ltype *t)
 {
     return t->category == RIR_LTYPE_COMPOSITE;

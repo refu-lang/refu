@@ -79,4 +79,10 @@ i_INLINE_DECL bool rir_block_exit_initialized(const struct rir_block *b)
 {
     return b->exit.type != RIR_BLOCK_EXIT_INVALID;
 }
+
+/**
+ * @note: Should be enclosed in RFS_PUSH() and RFS_POP()
+ * @return the string for the rir block label or the empty string if there is none
+ */
+const struct RFstring *rir_block_label_str(const struct rir_block *b);
 #endif

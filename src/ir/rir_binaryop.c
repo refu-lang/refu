@@ -16,12 +16,12 @@ static const enum rir_expression_type binaryop_operation_to_rir[] = {
     [BINARYOP_MUL]               =   RIR_EXPRESSION_MUL,
     [BINARYOP_DIV]               =   RIR_EXPRESSION_DIV,
 
-    [BINARYOP_CMP_EQ]            =   RIR_EXPRESSION_CMP,
-    [BINARYOP_CMP_NEQ]           =   RIR_EXPRESSION_CMP,
-    [BINARYOP_CMP_GT]            =   RIR_EXPRESSION_CMP,
-    [BINARYOP_CMP_GTEQ]          =   RIR_EXPRESSION_CMP,
-    [BINARYOP_CMP_LT]            =   RIR_EXPRESSION_CMP,
-    [BINARYOP_CMP_LTEQ]          =   RIR_EXPRESSION_CMP,
+    [BINARYOP_CMP_EQ]            =   RIR_EXPRESSION_CMP_EQ,
+    [BINARYOP_CMP_NEQ]           =   RIR_EXPRESSION_CMP_NE,
+    [BINARYOP_CMP_GT]            =   RIR_EXPRESSION_CMP_GT,
+    [BINARYOP_CMP_GTEQ]          =   RIR_EXPRESSION_CMP_GE,
+    [BINARYOP_CMP_LT]            =   RIR_EXPRESSION_CMP_LT,
+    [BINARYOP_CMP_LTEQ]          =   RIR_EXPRESSION_CMP_LE,
 
     [BINARYOP_LOGIC_AND]         =   RIR_EXPRESSION_LOGIC_AND,
     [BINARYOP_LOGIC_OR]          =   RIR_EXPRESSION_LOGIC_OR,
@@ -192,7 +192,12 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),
     [RIR_EXPRESSION_MUL] = RF_STRING_STATIC_INIT("mul"),
     [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
-    [RIR_EXPRESSION_CMP] = RF_STRING_STATIC_INIT("cmp"),
+    [RIR_EXPRESSION_CMP_EQ] = RF_STRING_STATIC_INIT("cmpeq"),
+    [RIR_EXPRESSION_CMP_NE] = RF_STRING_STATIC_INIT("cmpne"),
+    [RIR_EXPRESSION_CMP_GT] = RF_STRING_STATIC_INIT("cmpgt"),
+    [RIR_EXPRESSION_CMP_GE] = RF_STRING_STATIC_INIT("cmpge"),
+    [RIR_EXPRESSION_CMP_LT] = RF_STRING_STATIC_INIT("cmplt"),
+    [RIR_EXPRESSION_CMP_LE] = RF_STRING_STATIC_INIT("cmple"),
     [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
 };
 

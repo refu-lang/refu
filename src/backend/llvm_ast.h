@@ -5,6 +5,7 @@
 
 #include <Definitions/inline.h>
 #include <Data_Structures/darray.h>
+#include <Data_Structures/strmap.h>
 #include <types/type_decls.h>
 #include <ir/rir_type_decls.h>
 #include "llvm_types.h"
@@ -19,6 +20,9 @@ struct compiler_args;
 struct analyzer;
 struct type;
 struct module;
+struct rir;
+struct rir_value;
+struct rir_expression;
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueTargetData;
@@ -26,6 +30,10 @@ struct LLVMOpaqueBuilder;
 struct LLVMOpaqueValue;
 struct LLVMOpaqueType;
 struct LLVMOpaqueBasicBlock;
+
+struct rirval_strmap {
+    STRMAP_MEMBERS(void*);
+};
 
 struct llvm_traversal_ctx {
     struct module *mod;
@@ -43,17 +51,16 @@ struct llvm_traversal_ctx {
 
     struct compiler_args *args;
     struct symbol_table *current_st;
+    //! Map from a rir value's id to llvm values
+    struct rirval_strmap valmap;
 };
 
 bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
-struct LLVMOpaqueModule *blvm_create_module(struct module *module,
+struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
                                             struct llvm_traversal_ctx *ctx,
                                             const struct RFstring *name,
                                             struct LLVMOpaqueModule *link_source);
-
-struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
-                                                struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueType *bllvm_type_from_type(const struct type *type,
                                             struct llvm_traversal_ctx *ctx);
@@ -84,6 +91,12 @@ static inline void llvm_traversal_ctx_add_param(struct llvm_traversal_ctx *ctx,
     darray_append(ctx->params, type);
 }
 
+static inline void llvm_traversal_ctx_prepend_param(struct llvm_traversal_ctx *ctx,
+                                                    struct LLVMOpaqueType *type)
+{
+    darray_prepend(ctx->params, type);
+}
+
 /**
  * Gets the values array from the llvm traversal ctx or NULL if
  * there are none
@@ -105,29 +118,26 @@ i_INLINE_DECL void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ct
     }
 }
 
-/* i_INLINE_DECL void llvm_traversal_ctx_add_value(struct llvm_traversal_ctx *ctx, */
 static inline void llvm_traversal_ctx_add_value(struct llvm_traversal_ctx *ctx,
                                                 struct LLVMOpaqueValue *value)
 {
     darray_append(ctx->values, value);
 }
 
+bool llvm_traversal_ctx_map_llvmval(struct llvm_traversal_ctx *ctx,
+                                    const struct rir_value *rv,
+                                    struct LLVMOpaqueValue *lv);
+bool llvm_traversal_ctx_map_llvmblock(struct llvm_traversal_ctx *ctx,
+                                      const struct rir_value *rv,
+                                      struct LLVMOpaqueBasicBlock *lb);
+
 enum llvm_expression_compile_options {
     //! If the node is a simple elementary identifier return its value and not the Alloca
     RFLLVM_OPTION_IDENTIFIER_VALUE = 0x1,
 };
 
-/**
- * Compile an AST node expression to LLVMValueRef
- *
- * @param n        The ast node to compile
- * @param ctx      The llvm traversal context
- * @param options  [Optional] Options to provide for the compilations. For defaults
- *                 just give 0. Possible options are described at @ref llvm_expression_compile_options
- */
-struct LLVMOpaqueValue *bllvm_compile_expression(struct ast_node *n,
-                                                 struct llvm_traversal_ctx *ctx,
-                                                 int options);
+struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
+                                              struct llvm_traversal_ctx *ctx);
 
 
 
@@ -142,10 +152,6 @@ void bllvm_compile_ifexpr(const struct ast_node *branch,
 
 void bllvm_compile_branch(const struct ast_node *branch,
                           struct llvm_traversal_ctx *ctx);
-
-struct LLVMOpaqueValue *bllvm_compile_explicit_cast(const struct type *cast_type,
-                                                    struct ast_node *args,
-                                                    struct llvm_traversal_ctx *ctx);
 
 /**
  * Will typecast @a val if needed to a specific elementary type
