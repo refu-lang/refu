@@ -30,13 +30,3 @@ struct rir_object *rir_map_getobj(struct rir_ctx *ctx,
     }
     return ret;
 }
-
-struct rir_expression *rir_fnmap_get_returnslot(struct rir_ctx *ctx)
-{
-    const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
-    struct rir_object *ret_slot = rir_map_getobj(ctx, &returnval_str);
-    if (!ret_slot || ret_slot->category != RIR_OBJ_EXPRESSION) {
-        return NULL;
-    }
-    return &ret_slot->expr;
-}

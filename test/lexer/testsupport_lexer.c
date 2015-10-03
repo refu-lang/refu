@@ -47,8 +47,8 @@ bool test_tokens_cmp(struct token *expected,
     } else if (expected->type == TOKEN_CONSTANT_INTEGER) {
         int64_t expect_v;
         int64_t got_v;
-        ck_assert(ast_constant_get_integer(&expected->value.v.constant, &expect_v));
-        ck_assert(ast_constant_get_integer(&got->value.v.constant, &got_v));
+        ck_assert(ast_constant_get_integer(&expected->value.v->constant, &expect_v));
+        ck_assert(ast_constant_get_integer(&got->value.v->constant, &got_v));
         if (expect_v != got_v) {
                 ck_lexer_abort(
                     filename, line,
@@ -60,8 +60,8 @@ bool test_tokens_cmp(struct token *expected,
     } else if (expected->type == TOKEN_CONSTANT_FLOAT) {
         double expect_v;
         double got_v;
-        ck_assert(ast_constant_get_float(&expected->value.v.constant, &expect_v));
-        ck_assert(ast_constant_get_float(&got->value.v.constant, &got_v));
+        ck_assert(ast_constant_get_float(&expected->value.v->constant, &expect_v));
+        ck_assert(ast_constant_get_float(&got->value.v->constant, &got_v));
         if (!DBLCMP_EQ(expect_v, got_v)) {
                 ck_lexer_abort(
                     filename, line,

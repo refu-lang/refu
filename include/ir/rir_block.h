@@ -38,7 +38,7 @@ void rir_block_exit_return_init(struct rir_block_exit *exit,
 
 struct rir_block {
     struct rir_block_exit exit;
-    //! The block's label value, or a nil value if this is the first block of a function.
+    //! The block's label value
     struct rir_value label;
     //! List of rir expressions
     struct RFilist_head expressions;
@@ -62,8 +62,10 @@ struct rir_object *rir_block_create_obj(const struct ast_node *n,
 struct rir_block *rir_block_create(const struct ast_node *n,
                                    bool function_beginning,
                                    struct rir_ctx *ctx);
-struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx);
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);
+struct rir_block *rir_block_matchcase_create(const struct ast_node *mcase,
+                                             struct rir_object *matched_rir_obj,
+                                             struct rir_ctx *ctx);
 
 void rir_block_destroy(struct rir_block* b);
 void rir_block_deinit(struct rir_block* b);
@@ -85,4 +87,9 @@ i_INLINE_DECL bool rir_block_exit_initialized(const struct rir_block *b)
  * @return the string for the rir block label or the empty string if there is none
  */
 const struct RFstring *rir_block_label_str(const struct rir_block *b);
+
+/**
+ * @return True if the block is the first block of a function
+ */
+bool rir_block_is_first(const struct rir_block *b);
 #endif

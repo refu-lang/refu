@@ -42,13 +42,13 @@ struct rir_object *rir_argument_create(const struct rir_type *t, struct rir_ctx 
     return ret;
 }
 
-struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir_ctx *ctx)
+struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, bool isptr, struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, ctx->rir);
     if (!ret) {
         return NULL;
     }
-    struct rir_ltype *argtype = rir_ltype_comp_create(d, false);
+    struct rir_ltype *argtype = rir_ltype_comp_create(d, isptr);
     if (!rir_value_variable_init(&ret->arg.val, ret, argtype, ctx)) {
         free(ret);
         return NULL;
@@ -73,7 +73,10 @@ bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *
                 RF_STR_PF_ARG(arg->name),
                 RF_STR_PF_ARG(type_elementary_get_str(type->etype))));
     } else {
-        rf_stringx_append(ctx->rir->buff, type->tdef->name);
+        const char *s = type->is_pointer ? "*" : "";
+        rf_stringx_append(
+            ctx->rir->buff,
+            RFS(RF_STR_PF_FMT"%s", RF_STR_PF_ARG(type->tdef->name), s));
     }
     return ret;
 }

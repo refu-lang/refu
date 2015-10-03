@@ -4,10 +4,31 @@
 
 #include <llvm-c/Core.h>
 #include <ir/rir_value.h>
+#include <ir/rir_function.h>
+#include "llvm_utils.h"
 
 void *bllvm_value_from_rir_value(const struct rir_value *v, struct llvm_traversal_ctx *ctx)
 {
-    return strmap_get(&ctx->valmap, &v->id);
+    // constant values are easy
+    if (v->category == RIR_VALUE_CONSTANT) {
+        return bllvm_compile_constant(&v->constant);
+    }
+    // otherwise search the mapping
+    void *ret =  strmap_get(&ctx->valmap, &v->id);
+    if (!ret) {
+        // if not found in rir val to llvm map, it may not have been added yet.
+        // This can happen for function arguments so check if value is one
+        int arg_idx;
+        if ((arg_idx = rir_fndef_value_to_argnum(ctx->current_rfn, v)) != -1) {
+            ret = LLVMGetParam(ctx->current_function, arg_idx);
+            // also add it to the rir val to llvm map
+            if (!llvm_traversal_ctx_map_llvmval(ctx, v, ret)) {
+                RF_ERROR("Failed to add a rir argument to rir value to llvm mapping");
+                ret = NULL;
+            }
+        }// else it's a failure, with ret == NULL */
+    }
+    return ret;
 }
 
 void *bllvm_value_from_rir_value_or_die(const struct rir_value *v, struct llvm_traversal_ctx *ctx)

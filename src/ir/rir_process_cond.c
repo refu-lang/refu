@@ -78,12 +78,12 @@ static struct rir_block *rir_process_conditional_ast(const struct ast_node *ast_
                                                      struct rir_block *old_block,
                                                      struct rir_ctx *ctx)
 {
-    struct rir_value *cond = rir_processret_ast_node(ast_cond, ctx);
+    const struct rir_value *cond = rir_process_ast_node_getreadval(ast_cond, ctx);
     if (!cond) {
         RF_ERROR("A condition value must have been created");
         return NULL;
     }
-    return rir_process_conditional(cond, ast_taken, ast_fallthrough, old_block, ctx);
+    return rir_process_conditional((struct rir_value*)cond, ast_taken, ast_fallthrough, old_block, ctx);
 }
 
 static struct rir_block *rir_process_elif(const struct ast_node *ast_cond,

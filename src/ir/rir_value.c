@@ -8,6 +8,7 @@
 #include <String/rf_str_core.h>
 #include <String/rf_str_manipulationx.h>
 #include <Utils/memory.h>
+#include <utils/common_strings.h>
 
 bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx)
 {
@@ -85,7 +86,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
                 RF_ERROR("Tried to rir read from a location not in memory");
                 goto end;
             }
-            v->type = rir_ltype_create_from_other(expr->alloca.type, false);
+            v->type = rir_ltype_create_from_other(expr->read.memory->type, false);
             break;
         case RIR_EXPRESSION_CALL:
             // figure out the type
@@ -100,22 +101,22 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
             break;
         case RIR_EXPRESSION_OBJMEMBERAT:
             RF_ASSERT(rir_ltype_is_composite(expr->objmemberat.objmemory->type), "Expected composite type at objmemberat");
-            v->type = rir_ltype_copy_from_other(
+            v->type = rir_ltype_create_from_other(
                 rir_ltype_comp_member_type(
                     expr->objmemberat.objmemory->type,
                     expr->objmemberat.idx
-                )
+                ), true
             );
             break;
         case RIR_EXPRESSION_UNIONMEMBERAT:
             // for now value type determining is the same as objmemberat.
             // the memberat index does not take into account the union index
             RF_ASSERT(rir_ltype_is_composite(expr->unionmemberat.unimemory->type), "Expected composite type at unionmemberat");
-            v->type = rir_ltype_copy_from_other(
+            v->type = rir_ltype_create_from_other(
                 rir_ltype_comp_member_type(
                     expr->unionmemberat.unimemory->type,
                     expr->unionmemberat.idx
-                )
+                ), true
             );
             break;
         default:
@@ -137,13 +138,19 @@ end:
     return ret;
 }
 
-bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, struct rir_ctx *ctx)
+bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, bool function_beginning, struct rir_ctx *ctx)
 {
     RF_ASSERT(obj->category == RIR_OBJ_BLOCK, "Expected rir block object");
     v->category = RIR_VALUE_LABEL;
     v->label_dst = &obj->block;
-    if (!rf_string_initv(&v->id, "%%label_%d", ctx->label_idx++)) {
-        return false;
+    if (function_beginning) {
+        if (!rf_string_copy_in(&v->id, &g_str_fnstart)) {
+            return false;
+        }
+    } else {
+        if (!rf_string_initv(&v->id, "label_%d", ctx->label_idx++)) {
+            return false;
+        }
     }
     return rir_map_addobj(ctx, &v->id, obj);
 }
@@ -176,9 +183,13 @@ void rir_value_destroy(struct rir_value *v)
 bool rir_value_tostring(struct rir *r, const struct rir_value *v)
 {
     switch (v->category) {
+    case RIR_VALUE_LABEL:
+        if (!rf_stringx_append(r->buff, RFS("%%"RF_STR_PF_FMT, RF_STR_PF_ARG(&v->id)))) {
+            return false;
+        }
+        break;
     case RIR_VALUE_CONSTANT:
     case RIR_VALUE_VARIABLE:
-    case RIR_VALUE_LABEL:
     case RIR_VALUE_LITERAL:
         if (!rf_stringx_append(r->buff, &v->id)) {
             return false;

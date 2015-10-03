@@ -5,5 +5,6 @@
 
 extern const struct RFstring g_str_main;
 extern const struct RFstring g_str_stdlib;
+extern const struct RFstring g_str_fnstart;
 
 #endif

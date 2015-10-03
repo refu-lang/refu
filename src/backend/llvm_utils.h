@@ -7,6 +7,7 @@ struct LLVMOpaqueModule;
 struct LLVMOpaqueBasicBlock;
 struct LLVMOpaqueValue;
 struct LLVMOpaqueType;
+struct LLVMOpaqueTargetData;
 
 struct rir_type;
 struct llvm_traversal_ctx;
@@ -130,4 +131,7 @@ void bllvm_nop(struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
                                             unsigned int member_num,
                                             struct llvm_traversal_ctx *ctx);
+
+unsigned long long  bllvm_type_storagesize(struct LLVMOpaqueTargetData *tdata,
+                                           struct LLVMOpaqueType *type);
 #endif

@@ -75,13 +75,31 @@ struct rir_binaryop {
     const struct rir_value *b;
 };
 
+/**
+ * Reads the contents of a memory area (pointer)
+ */
 struct rir_read {
     //! Memory value to read from
     const struct rir_value *memory;
 };
 
+/**
+ * Returns a pointer to an object's member at a given index
+ */
 struct rir_objmemberat {
+    //! The object's memory
     const struct rir_value *objmemory;
+    //! The index of the member to retrieve
+    uint32_t idx;
+};
+
+/**
+ * Just like @ref rir_objmemberat but for unions
+ */
+struct rir_unionmemberat {
+    //! The unions's memory
+    const struct rir_value *unimemory;
+    //! The index of the member to retrieve
     uint32_t idx;
 };
 
@@ -94,13 +112,11 @@ struct rir_getunionidx {
     const struct rir_value *unimemory;
 };
 
-struct rir_unionmemberat {
-    const struct rir_value *unimemory;
-    uint32_t idx;
-};
-
 
 struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
+                                         uint64_t num,
+                                         struct rir_ctx *ctx);
+struct rir_expression *rir_alloca_create(struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 
@@ -122,6 +138,8 @@ struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
                                               struct rir_ctx *ctx);
 
 struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
+                                       struct rir_ctx *ctx);
+struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
                                        struct rir_ctx *ctx);
 
 struct rir_object *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);

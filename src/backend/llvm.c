@@ -103,7 +103,6 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
             stdlib_module = llvm_module;
         }
         llvm_traversal_ctx_reset_singlepass(&ctx);
-
         ++index;
     }
 

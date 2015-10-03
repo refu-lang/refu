@@ -85,12 +85,12 @@ i_INLINE_INS struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_
 i_INLINE_INS unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx);
 
-
 static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
                                        const struct rir_value *rv,
                                        void *lv)
 {
     bool ret;
+    RF_ASSERT(rv->category != RIR_VALUE_NIL, "Nil RIR Value should never get here");
     ret = strmap_add(&ctx->valmap, &rv->id, lv);
     if (!ret) {
         if (errno == EEXIST) {
@@ -113,6 +113,11 @@ bool llvm_traversal_ctx_map_llvmblock(struct llvm_traversal_ctx *ctx,
                                       struct LLVMOpaqueBasicBlock *lv)
 {
     return llvm_traversal_ctx_map_val(ctx, rv, lv);
+}
+
+void llvm_traversal_ctx_reset_valmap(struct llvm_traversal_ctx *ctx)
+{
+    strmap_clear(&ctx->valmap);
 }
 
 LLVMValueRef bllvm_cast_value_to_elementary_maybe(LLVMValueRef val,
@@ -153,8 +158,7 @@ static struct LLVMOpaqueValue *bllvm_compile_conversion(const struct rir_express
     return llvm_ret_val;
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n,
-                                                      struct llvm_traversal_ctx *ctx)
+struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n)
 {
     int64_t int_val;
     double float_val;
@@ -204,8 +208,9 @@ static struct LLVMOpaqueValue *bllvm_compile_getunionidx(const struct rir_expres
     RF_ASSERT(expr->getunionidx.unimemory->type->is_pointer, "You can only get an index to a pointer");
     LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->getunionidx.unimemory, ctx);
     // the union index is the first member of the struct
-    LLVMValueRef llvm_idx_loc = bllvm_gep_to_struct(llvm_mval, 0, ctx);
-    return llvm_idx_loc;
+    LLVMValueRef llvm_idx_gep = bllvm_gep_to_struct(llvm_mval, 0, ctx);
+    // but since this was a gep you have to read it
+    return LLVMBuildLoad(ctx->builder, llvm_idx_gep, "");
 }
 
 static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(const struct rir_expression *expr,
@@ -214,8 +219,8 @@ static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(const struct rir_expr
     RF_ASSERT(expr->unionmemberat.unimemory->type->is_pointer, "You can only get an index to a pointer");
     LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->unionmemberat.unimemory, ctx);
     // get the member location, it's index is +1, in order to skip the selector index
-    LLVMValueRef llvm_member_loc = bllvm_gep_to_struct(llvm_mval, expr->unionmemberat.idx + 1, ctx);
-    return llvm_member_loc;
+    LLVMValueRef llvm_member_gep = bllvm_gep_to_struct(llvm_mval, expr->unionmemberat.idx + 1, ctx);
+    return llvm_member_gep;
 }
 
 struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
@@ -225,7 +230,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
     switch(expr->type) {
     case RIR_EXPRESSION_CONSTANT:
         RF_ASSERT(expr->val.category == RIR_VALUE_CONSTANT, "Constant expression should have a constant value");
-        llvmval = bllvm_compile_constant(&expr->val.constant, ctx);
+        llvmval = bllvm_compile_constant(&expr->val.constant);
         break;
     case RIR_EXPRESSION_CALL:
         llvmval = bllvm_compile_functioncall(&expr->call, ctx);
@@ -294,17 +299,18 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
     const char *mod_name = rf_string_cstr_from_buff_or_die(&rir->name);
     if (!mod_name) {
         RF_ERROR("Failure to create null terminated cstring from RFstring");
-        goto end;
+        RFS_POP();
+        return NULL;
     }
     ctx->llvm_mod = LLVMModuleCreateWithName(mod_name);
+    RFS_POP();
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
     if (rf_string_equal(name, &g_str_stdlib)) {
         // create some global definitions that the stdlib should offer
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");
-            LLVMDisposeModule(ctx->llvm_mod);
-            goto end;
+            goto fail;
         }
     } else {
         char *error = NULL;
@@ -312,7 +318,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
         // if an error occurs LLVMLinkModules() returns true ...
         if (true == LLVMLinkModules(ctx->llvm_mod, link_source, LLVMLinkerDestroySource, &error)) {
             bllvm_error("Could not link LLVM modules", &error);
-            goto end;
+            goto fail;
         }
         bllvm_error_dispose(&error);
     }
@@ -320,28 +326,27 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
     // create globals
     if (!bllvm_create_module_globals(rir, ctx)) {
         RF_ERROR("Failed to create module globals for LLVM");
-            LLVMDisposeModule(ctx->llvm_mod);
-            goto end;
+        goto fail;
     }
 
     // create module type definitions
     if (!bllvm_create_module_types(rir, ctx)) {
         RF_ERROR("Failed to create module types for LLVM");
-        LLVMDisposeModule(ctx->llvm_mod);
-        goto end;
+        goto fail;
     }
 
     if (!bllvm_create_module_functions(rir, ctx)) {
         RF_ERROR("Failed to create module functions for LLVM");
-        LLVMDisposeModule(ctx->llvm_mod);
-        goto end;
+        goto fail;
     }
 
     if (compiler_args_print_backend_debug(ctx->args)) {
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
     }
 
-end:
-    RFS_POP();
     return ctx->llvm_mod;
+
+fail:
+    LLVMDisposeModule(ctx->llvm_mod);
+    return NULL;
 }

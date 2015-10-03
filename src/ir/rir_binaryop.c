@@ -6,6 +6,7 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir_constant.h>
 #include <ir/rir_process.h>
+#include <ir/rir_utils.h>
 #include <ast/operators.h>
 #include <types/type.h>
 
@@ -134,7 +135,15 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_object *e = rir_objmemberat_create_obj(lhs_val, index, ctx);
+    struct rir_expression *member_ptr = rir_objmemberat_create(lhs_val, index, ctx);
+    if (!member_ptr) {
+        goto fail;
+    }
+    rirctx_block_add(ctx, member_ptr);
+    struct rir_object *e = rir_read_create_obj(&member_ptr->val, ctx);
+    if (!e) {
+        goto fail;
+    }
     rirctx_block_add(ctx, &e->expr);
 
     // return the memberobjat to be used by other rir expressions
@@ -152,7 +161,7 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         return rir_process_memberaccess(op, ctx);
     }
 
-    struct rir_value *lval = rir_processret_ast_node(op->left, ctx);
+    const struct rir_value *lval = rir_process_ast_node_getreadval(op->left, ctx);
     if (!lval) {
         RF_ERROR("A left value should have been created for a binary operation");
         goto fail;

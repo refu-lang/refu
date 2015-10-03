@@ -6,6 +6,8 @@
 #include <ir/rir_function.h>
 #include <ir/rir_process.h>
 #include <ast/block.h>
+#include <ast/matchexpr.h>
+#include <utils/common_strings.h>
 
 /* -- functions for rir_block_exit -- */
 bool rir_block_exit_init_branch(struct rir_block_exit *exit,
@@ -94,9 +96,9 @@ end:
     return ret;
 }
 
-struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx)
+static struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_ctx *ctx)
 {
-    const struct RFstring fend_label = RF_STRING_STATIC_INIT("%function_end");
+    const struct RFstring fend_label = RF_STRING_STATIC_INIT("function_end");
     struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->rir);
     if (!ret) {
         free(ret);
@@ -112,21 +114,65 @@ struct rir_object *rir_block_functionend_create_obj(bool has_return, struct rir_
     }
 
     // current block's exit should be the return
-    struct rir_expression *ret_slot = NULL;
+    struct rir_expression *read_return = NULL;
     if (has_return) {
-        ret_slot = rir_fnmap_get_returnslot(ctx);
-        if (!ret_slot) {
-            RF_ERROR("Could not find the returnvalue of a function in the string map");
-            RIRCTX_RETURN_EXPR(ctx, false, NULL);
+        read_return = rir_read_create(&ctx->current_fn->retslot_expr->val, ctx);
+        if (!read_return) {
+            RF_ERROR("Could not create a read from a function's return slot");
         }
+        rirctx_block_add(ctx, read_return);
     }
-    rir_block_exit_return_init(&ret->block.exit, ret_slot);
+    rir_block_exit_return_init(&ret->block.exit, read_return);
     return ret;
 }
 
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx)
 {
     struct rir_object *obj = rir_block_functionend_create_obj(has_return, ctx);
+    return obj ? &obj->block : NULL;
+}
+
+static struct rir_object *rir_block_matchcase_create_obj(const struct ast_node *mcase,
+                                                         struct rir_object *matched_rir_obj,
+                                                         struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->rir);
+    if (!ret) {
+        free(ret);
+        return NULL;
+    }
+    struct rir_block *b = &ret->block;
+    RF_STRUCT_ZERO(b);
+    rf_ilist_head_init(&b->expressions);
+    ctx->current_block = b;
+    if (!rir_value_label_init(&b->label, ret, false, ctx)) {
+        goto fail;
+    }
+    AST_NODE_ASSERT_TYPE(mcase, AST_MATCH_CASE);
+    // add basic block to the current function
+    rir_fndef_add_block(ctx->current_fn, b);
+    // populate the match case allocas
+    if (!rir_match_st_populate_allocas(mcase, matched_rir_obj, ctx)) {
+        RF_ERROR("Failed to populate a match case's alloca in the RIR");
+        goto fail;
+    }
+    // finally process the contents of the match expression
+    if (!rir_process_ast_node(ast_matchcase_expression(mcase), ctx)) {
+        RF_ERROR("Failed to process a match case's expression in the RIR");
+        goto fail;
+    }
+    return ret;
+
+fail:
+    free(ret);
+    return NULL;
+}
+
+struct rir_block *rir_block_matchcase_create(const struct ast_node *mcase,
+                                             struct rir_object *matched_rir_obj,
+                                             struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_block_matchcase_create_obj(mcase, matched_rir_obj, ctx);
     return obj ? &obj->block : NULL;
 }
 
@@ -154,12 +200,8 @@ static bool rir_block_init(struct rir_object *obj,
     RF_STRUCT_ZERO(b);
     rf_ilist_head_init(&b->expressions);
     ctx->current_block = b;
-    if (!function_beginning) {
-        if (!rir_value_label_init(&b->label, obj, ctx)) {
+    if (!rir_value_label_init(&b->label, obj, function_beginning, ctx)) {
             return false;
-        }
-    } else {
-        rir_value_nil_init(&b->label);
     }
 
     struct ast_node *child;
@@ -183,13 +225,7 @@ static bool rir_block_init(struct rir_object *obj,
             // process match expression as body
             return rir_process_matchexpr((struct ast_node*)n, ctx);
         } else {
-            // this should only happen when called as a leg of a match expression
-            // first of all add the allocas of the symbols to the block
-            rir_ctx_st_add_allocas(ctx);
-            // and then process the expression
-            if (!rir_process_ast_node(n, ctx)) {
-                return false;
-            }
+            RF_CRITICAL_FAIL("Should never get here");
         }
     }
 
@@ -269,3 +305,8 @@ const struct RFstring *rir_block_label_str(const struct rir_block *b)
 }
 
 i_INLINE_INS bool rir_block_exit_initialized(const struct rir_block *b);
+
+bool rir_block_is_first(const struct rir_block *b)
+{
+    return rf_string_equal(&b->label.id, &g_str_fnstart);
+}

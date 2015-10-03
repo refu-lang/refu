@@ -28,16 +28,27 @@ static inline void alloca_pop_ctx_init(struct alloca_pop_ctx *ctx,
 static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec,
                                                  struct alloca_pop_ctx *ctx)
 {
+    // create and add the alloca
+    rir_strec_create_allocas(rec, ctx->rirctx);
+    rir_strec_add_allocas(rec, ctx->rirctx);
     RF_ASSERT(rec->data, "Record should have a type");
     const struct rir_type *rtype = type_get_rir_or_die(rec->data);
     RF_ASSERT(rec->rirobj, "Record should have an associated rir object");
+    // populate alloca depending ohn match case
     struct rir_value *val;
     int idx = rir_type_childof_type(rtype, ctx->matched_case_rirtype);
     if (idx != -1) { // type child of matched type
         // create a rir expression to read the object value at the index position
-        struct rir_object *e = rir_objmemberat_create_obj(ctx->matched_case_rirobj, idx, ctx->rirctx);
-        rirctx_block_add(ctx->rirctx, &e->expr);
-        val = rir_object_value(e);
+        struct rir_expression *e = rir_objmemberat_create(ctx->matched_case_rirobj, idx, ctx->rirctx);
+        if (!e) {
+            RF_CRITICAL_FAIL("Could not create member access rir instruction");
+        }
+        rirctx_block_add(ctx->rirctx, e);
+        if (!(e = rir_read_create(&e->val, ctx->rirctx))) {
+            RF_CRITICAL_FAIL("Could not create read rir instruction");
+        }
+        rirctx_block_add(ctx->rirctx, e);
+        val = &e->val;
     } else if (rtype == ctx->matched_case_rirtype) { // type is actually matched type
         val = ctx->matched_case_rirobj;
     } else {
@@ -53,6 +64,30 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
     rirctx_block_add(ctx->rirctx, expr);
 }
 
+bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_object *matched_rir_obj, struct rir_ctx *ctx)
+{
+    struct rir_expression *e;
+    // Get the union member for the match
+    uint32_t case_idx = ast_matchcase_index_get(mcase);
+    const struct type *mcmatch_type = ast_matchcase_matched_type(mcase);
+    if (!(e = rir_unionmemberat_create(rir_object_value(matched_rir_obj), case_idx, ctx))) {
+        return false;
+    }
+    rirctx_block_add(ctx, e);
+    if (!(e = rir_read_create(&e->val, ctx))) {
+        return false;
+    }
+    rirctx_block_add(ctx, e);
+
+    // iterate the allocas and assign the proper values from the subobject
+    struct alloca_pop_ctx alloca_ctx;
+    alloca_pop_ctx_init(&alloca_ctx, ctx, type_get_rir_or_die(mcmatch_type), &e->val);
+    symbol_table_iterate(rir_ctx_curr_st(ctx),
+                         (htable_iter_cb)rir_symbol_table_populate_allocas_do,
+                         &alloca_ctx);
+    return true;
+}
+
 static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
                                                struct rir_object *matched_rir_obj,
                                                struct rir_value *uni_idx,
@@ -64,7 +99,6 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
 {
     struct rir_expression *cmp = NULL;
     struct rir_block *this_block = ctx->current_block;
-    uint32_t case_idx = ast_matchcase_index_get(mcase);
     struct rir_value *case_rir_idx = rir_constantval_create_fromint(ast_matchcase_index_get(mcase), ctx->rir);
     bool need_case_cmp = !ast_match_expr_next_case_is_last(mexpr, it) || this_block == before_block;
     if (need_case_cmp) {
@@ -85,29 +119,12 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
 
     // use this match case symbol table now
     rir_ctx_push_st(ctx, ast_matchcase_symbol_table_get(mcase));
-    // create allocas for symbols of this st
-    rir_ctx_st_create_allocas(ctx);
 
     // create the rir block for this case
-    struct ast_node *case_expr = ast_matchcase_expression(mcase);
-    struct rir_block *taken = rir_block_create(case_expr, false, ctx);
+    struct rir_block *taken = rir_block_matchcase_create(mcase, matched_rir_obj, ctx);
     if (!taken) {
         return NULL;
     }
-    // Get the type of this match case and read the union's subobject
-    const struct type *mcmatch_type = ast_matchcase_matched_type(mcase);
-    struct rir_expression *acc_subtype = rir_unionmemberat_create(
-        rir_object_value(matched_rir_obj),
-        case_idx,
-        ctx
-    );
-    rirctx_block_add(ctx, acc_subtype);
-    // now iterate the allocas and assign the proper values from the subobject
-    struct alloca_pop_ctx alloca_ctx;
-    alloca_pop_ctx_init(&alloca_ctx, ctx, type_get_rir_or_die(mcmatch_type), &acc_subtype->val);
-    symbol_table_iterate(rir_ctx_curr_st(ctx),
-                         (htable_iter_cb)rir_symbol_table_populate_allocas_do,
-                         &alloca_ctx);
 
     // if there is an assignment to a match expression
     if (ctx->last_assign_obj) {

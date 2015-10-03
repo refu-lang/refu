@@ -3,3 +3,4 @@
 
 const struct RFstring g_str_stdlib = RF_STRING_STATIC_INIT("stdlib");
 const struct RFstring g_str_main = RF_STRING_STATIC_INIT("main");
+const struct RFstring g_str_fnstart = RF_STRING_STATIC_INIT("function_start");

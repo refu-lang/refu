@@ -33,12 +33,16 @@ static bool rir_process_return(const struct ast_node *n,
     }
     struct rir_value *ret_val = rir_ctx_lastval_get(ctx);
     // write the return value to the return slot
-    struct rir_expression *ret_slot = rir_fnmap_get_returnslot(ctx);
-    if (!ret_slot) {
-        RF_ERROR("Could not find the returnvalue of a function in the string map");
+    if (!ctx->current_fn->retslot_expr) {
+        RF_ERROR("Could not find the return alloca of a function");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    struct rir_expression *e = rir_binaryop_create_nonast(RIR_EXPRESSION_WRITE, &ret_slot->val, ret_val, ctx);
+    struct rir_expression *e = rir_binaryop_create_nonast(
+        RIR_EXPRESSION_WRITE,
+        &ctx->current_fn->retslot_expr->val,
+        ret_val,
+        ctx
+    );
     rirctx_block_add(ctx, e);
     // jump to the return
     if (!rir_block_exit_init_branch(&ctx->current_block->exit, ctx->current_fn->end_label)) {
@@ -110,5 +114,10 @@ bool rir_process_ast_node(const struct ast_node *n,
     }
     return false;
 }
-i_INLINE_INS struct rir_value *rir_processret_ast_node(const struct ast_node *n,
-                                                        struct rir_ctx *ctx);
+
+i_INLINE_INS struct rir_expression *rir_process_ast_node_getexpr(const struct ast_node *n,
+                                                                 struct rir_ctx *ctx);
+i_INLINE_INS struct rir_value *rir_process_ast_node_getval(const struct ast_node *n,
+                                                           struct rir_ctx *ctx);
+i_INLINE_INS const struct rir_value *rir_process_ast_node_getreadval(const struct ast_node *n,
+                                                                     struct rir_ctx *ctx);

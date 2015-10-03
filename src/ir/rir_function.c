@@ -26,7 +26,7 @@ static bool rir_fndecl_init_args(struct args_arr *argsarr, const struct ast_node
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
-        struct rir_object *arg = rir_argument_create_from_typedef(def, ctx);
+        struct rir_object *arg = rir_argument_create_from_typedef(def, true, ctx);
         darray_init(*argsarr);
         darray_append(*argsarr, arg);
 
@@ -154,8 +154,8 @@ i_INLINE_INS bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir
 
 
 static bool rir_fndef_init(struct rir_fndef *ret,
-                              const struct ast_node *n,
-                              struct rir_ctx *ctx)
+                           const struct ast_node *n,
+                           struct rir_ctx *ctx)
 {
     bool success = false;
     RF_STRUCT_ZERO(ret);
@@ -179,20 +179,16 @@ static bool rir_fndef_init(struct rir_fndef *ret,
     // if we got a return value allocate space for it. Assume single return values fow now
     // TODO: Take into account multiple return values
     if (return_type) {
-        const struct RFstring returnval_str = RF_STRING_STATIC_INIT("$returnval");
         ret->decl.return_type = rir_type_byname(ctx->rir, type_str_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT), TSTR_DEFAULT));
         if (!ret->decl.return_type) {
             RF_ERROR("Could not find function's rir return type");
             goto end;
         }
-        struct rir_object *alloca = rir_alloca_create_obj(ret->decl.return_type, 1, ctx);
+        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, 1, ctx);
         if (!alloca) {
             goto end;
         }
-        if (!rir_map_addobj(ctx, &returnval_str, alloca)) {
-            RF_ERROR("Could not add return val to function string map");
-            goto end;
-        }
+        ret->retslot_expr = alloca;
     } else {
         ret->decl.return_type = rir_ltype_elem_create(ELEMENTARY_TYPE_NIL, false);
         if (!ret->decl.return_type) {
@@ -262,6 +258,19 @@ void rir_fndef_destroy(struct rir_fndef *f)
 {
     rir_fndef_deinit(f);
     free(f);
+}
+
+int rir_fndef_value_to_argnum(const struct rir_fndef *f, const struct rir_value *v)
+{
+    struct rir_object **arg;
+    int idx = 0;
+    darray_foreach(arg, f->decl.arguments) {
+        if (v == rir_object_value(*arg)) {
+            return idx;
+        }
+        ++idx;
+    }
+    return -1;
 }
 
 void rir_fndef_add_block(struct rir_fndef *f, struct rir_block *b)

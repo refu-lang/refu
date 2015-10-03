@@ -90,6 +90,8 @@ void rir_ctx_st_add_allocas(struct rir_ctx *ctx);
 void rir_ctx_st_create_and_add_allocas(struct rir_ctx *ctx);
 void rir_strec_add_allocas(struct symbol_table_record *rec,
                            struct rir_ctx *ctx);
+void rir_strec_create_allocas(struct symbol_table_record *rec,
+                              struct rir_ctx *ctx);
 
 #define RIRCTX_RETURN_EXPR(i_ctx_, i_result_, i_obj_)   \
     do {                                                \

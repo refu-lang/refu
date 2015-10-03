@@ -10,7 +10,7 @@
 bool rir_process_unaryop(const struct ast_unaryop *op, struct rir_ctx *ctx)
 {
     struct rir_object *exprobj;
-    struct rir_value *opval = rir_processret_ast_node(op->operand, ctx);
+    const struct rir_value *opval = rir_process_ast_node_getreadval(op->operand, ctx);
     if (!opval) {
         RF_ERROR("A value should have been created for a unary operation operand");
         goto fail;

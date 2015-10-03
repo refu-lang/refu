@@ -30,39 +30,37 @@ static void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_value *
 static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_ctx *ctx)
 {
     // for each argument, process the ast node and create the rir arg expression
-    struct rir_value *argexprval = rir_processret_ast_node(n, ctx->rirctx);
+    const struct rir_value *argexprval = rir_process_ast_node_getreadval(n, ctx->rirctx);
     if (!argexprval) {
         RF_ERROR("Could not create rir expression from constructor argument");
         return false;
     }
 
+    struct rir_expression *e;
     // find the target value to write to
     struct rir_value *targetval;
     if (ctx->lhs->type->category == RIR_LTYPE_COMPOSITE) {
         // if lhs type is composite create expression to read its index from the lhs composite type
-        struct rir_expression *readobj = rir_objmemberat_create(
-            ctx->lhs,
-            ctx->index,
-            ctx->rirctx
-        );
-        if (!readobj) {
+        if (!(e = rir_objmemberat_create(ctx->lhs, ctx->index, ctx->rirctx))) {
+            RF_ERROR("Failed to create rir expression to get rir object's member memory");
+            return false;
+        }
+        rirctx_block_add(ctx->rirctx, e);
+        if (!(e = rir_read_create(&e->val, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to read an object's value");
             return false;
         }
-        rirctx_block_add(ctx->rirctx, readobj);
-        targetval = &readobj->val;
+        targetval = &e->val;
     } else {
         RF_ASSERT(ctx->index == 0, "Only at 0 index can a non composite type have been found.");
         targetval = ctx->lhs;
     }
     // write the arg expression to the position
-    struct rir_expression *e = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_WRITE,
-        targetval,
-        argexprval,
-        ctx->rirctx
-    );
-    if (!e) {
+    if (!(e = rir_binaryop_create_nonast(
+              RIR_EXPRESSION_WRITE,
+              targetval,
+              argexprval,
+              ctx->rirctx))) {
         RF_ERROR("Failed to create expression to write to an object's member");
         return false;
     }
@@ -98,8 +96,12 @@ static bool rir_process_ctorcall(const struct ast_node *n, const struct type *fn
         }
         rirctx_block_add(ctx, e);
         // create code to load the appropriate union subtype for reading
-        e = rir_unionmemberat_create(lhs, union_idx, ctx);
-        if (!e) {
+        struct rir_expression *ummbr_ptr = rir_unionmemberat_create(lhs, union_idx, ctx);
+        if (!ummbr_ptr) {
+            return false;
+        }
+        rirctx_block_add(ctx, ummbr_ptr);
+        if (!(e = rir_read_create(&ummbr_ptr->val, ctx))) {
             return false;
         }
         rirctx_block_add(ctx, e);
@@ -130,12 +132,12 @@ static void fncall_args_toarr_ctx_init(struct fncall_args_toarr_ctx *ctx,
 
 static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_args_toarr_ctx *ctx)
 {
-    struct rir_value *argexprval = rir_processret_ast_node(n, ctx->rirctx);
+    const struct rir_value *argexprval = rir_process_ast_node_getreadval(n, ctx->rirctx);
     if (!argexprval) {
         RF_ERROR("Could not create rir expression from fncall argument");
         return false;
     }
-    darray_append(*ctx->arr, argexprval);
+    darray_append(*ctx->arr, (struct rir_value*)argexprval);
     return true;
 }
 
@@ -175,7 +177,7 @@ static bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ct
     RF_ASSERT(ast_node_get_type(args, AST_TYPERETR_DEFAULT)->category != TYPE_CATEGORY_OPERATOR,
               "A conversion call should only have a single argument");
     // process that argument
-    struct rir_value *argexprval = rir_processret_ast_node(args, ctx);
+    const struct rir_value *argexprval = rir_process_ast_node_getreadval(args, ctx);
     if (!argexprval) {
         RF_ERROR("Could not create rir expression from conversion call argument");
         return false;

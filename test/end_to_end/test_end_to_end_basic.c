@@ -18,7 +18,7 @@ START_TEST (test_smoke) {
     };
     ck_end_to_end_run(inputs, 42);
 } END_TEST
-
+#if 0
 START_TEST (test_addition) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -656,7 +656,7 @@ START_TEST (test_matchexpr_in_functions) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("change friends");
     ck_end_to_end_run(inputs, 0, &output);
 } END_TEST
-
+#endif
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -666,12 +666,14 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_basic, test_smoke);
+#if 0
     tcase_add_test(st_basic, test_addition);
     tcase_add_test(st_basic, test_multiple_real_arithmetic);
     tcase_add_test(st_basic, test_negative_integer_constants);
     tcase_add_test(st_basic, test_print_string);
     tcase_add_test(st_basic, test_print_string_literal);
     tcase_add_test(st_basic, test_print_integer);
+
 
     TCase *st_basic_types = tcase_create("end_to_end_basic_types");
     tcase_add_checked_fixture(st_basic_types,
@@ -734,8 +736,10 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_match_expr, test_matchexpr_1);
     tcase_add_test(st_match_expr, test_matchexpr_2);
     tcase_add_test(st_match_expr, test_matchexpr_in_functions);
+#endif
 
     suite_add_tcase(s, st_basic);
+#if 0
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_functions);
     suite_add_tcase(s, st_control_flow);
@@ -743,6 +747,6 @@ Suite *end_to_end_basic_suite_create(void)
     suite_add_tcase(s, st_explicit_conversions);
     suite_add_tcase(s, st_unary_operations);
     suite_add_tcase(s, st_match_expr);
-
+#endif
     return s;
 }

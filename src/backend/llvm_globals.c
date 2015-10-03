@@ -64,8 +64,8 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
 {
     unsigned int length = rf_string_length_bytes(string_val);
     struct RFstring *s;
-    s = RFS_NT_OR_DIE("strbuff_%u", hash);
     RFS_PUSH();
+    s = RFS_NT_OR_DIE("strbuff_%u", hash);
     LLVMValueRef global_stringbuff = bllvm_add_global_strbuff(
         rf_string_cstr_from_buff_or_die(string_val),
         length,
@@ -123,34 +123,6 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
     LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
 }
 
-static void bllvm_create_global_print_decl(struct llvm_traversal_ctx *ctx)
-{
-    LLVMTypeRef pint64_args[] = { LLVMInt64Type()};
-    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_int64",
-                    LLVMFunctionType(LLVMVoidType(),
-                                     pint64_args,
-                                     1,
-                                     false));
-    LLVMTypeRef puint64_args[] = { LLVMInt64Type()};
-    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_uint64",
-                    LLVMFunctionType(LLVMVoidType(),
-                                     puint64_args,
-                                     1,
-                                     false));
-    LLVMTypeRef pdouble_args[] = { LLVMDoubleType()};
-    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_double",
-                    LLVMFunctionType(LLVMVoidType(),
-                                     pdouble_args,
-                                     1,
-                                     false));
-    LLVMTypeRef pstring_args[] = { LLVMPointerType(LLVMGetTypeByName(ctx->llvm_mod, "string"), 0) };
-    LLVMAddFunction(ctx->llvm_mod, "rf_stdlib_print_string",
-                    LLVMFunctionType(LLVMVoidType(),
-                                     pstring_args,
-                                     1,
-                                     false));
-}
-
 static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
 {
     // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
@@ -178,8 +150,6 @@ static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                                      false));
     /* -- add donothing() -- */
     bllcm_create_global_donothing_decl(ctx);
-    /* -- add print() -- */
-    bllvm_create_global_print_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */
     bllvm_create_global_memcpy_decl(ctx);
     return true;

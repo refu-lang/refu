@@ -22,7 +22,7 @@ void bllvm_type_debug(LLVMTypeRef t, const char *type_name, struct llvm_traversa
     printf("[DEBUG]: Type \"%s\" is %s with store size %llu \n",
            type_name,
            str,
-           LLVMStoreSizeOfType(ctx->target_data, t));
+           bllvm_type_storagesize(ctx->target_data, t));
     fflush(stdout);
     LLVMDisposeMessage(str);
 }
@@ -217,4 +217,10 @@ struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
 {
     LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), member_num, 0) };
     return LLVMBuildGEP(ctx->builder, ptr, indices, 2, "");    
+}
+
+unsigned long long  bllvm_type_storagesize(struct LLVMOpaqueTargetData *tdata,
+                                           struct LLVMOpaqueType *type)
+{
+    return type == LLVMVoidType() ? 0 : LLVMStoreSizeOfType(tdata, type);
 }

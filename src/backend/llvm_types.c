@@ -1,5 +1,6 @@
 #include "llvm_types.h"
 #include "llvm_ast.h"
+#include "llvm_utils.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
@@ -54,7 +55,7 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
 
 static LLVMTypeRef bllvm_create_struct(const struct RFstring *name)
 {
-    char *name_cstr;
+    const char *name_cstr;
     RFS_PUSH();
     name_cstr = rf_string_cstr_from_buff_or_die(name);
     LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
@@ -66,13 +67,14 @@ static LLVMTypeRef bllvm_create_struct(const struct RFstring *name)
 LLVMTypeRef bllvm_compile_typedef(const struct rir_typedef *def,
                                   struct llvm_traversal_ctx *ctx)
 {
+    llvm_traversal_ctx_reset_params(ctx);
     // else it's the same thing but just need to add an extra index for the union
     LLVMTypeRef llvm_type = bllvm_create_struct(def->name);
-    LLVMTypeRef *members = bllvm_rir_args_to_types(&def->arguments_list, ctx);
+    bllvm_rir_args_to_types(&def->arguments_list, ctx);
     if (def->is_union) { // add the member selector in the beginning
         llvm_traversal_ctx_prepend_param(ctx, LLVMInt32Type());
     }
-    LLVMStructSetBody(llvm_type, members, llvm_traversal_ctx_get_param_count(ctx), true);
+    LLVMStructSetBody(llvm_type, llvm_traversal_ctx_get_params(ctx), llvm_traversal_ctx_get_param_count(ctx), true);
     llvm_traversal_ctx_reset_params(ctx);
     return llvm_type;
 }
@@ -151,16 +153,21 @@ LLVMTypeRef bllvm_type_from_rir_ltype(const struct rir_ltype *type,
 {
     LLVMTypeRef ret;
     if (type->category == RIR_LTYPE_ELEMENTARY) {
-        return bllvm_elementary_to_type(type->etype, ctx);
+        ret = bllvm_elementary_to_type(type->etype, ctx);
     } else if (type->category == RIR_LTYPE_COMPOSITE) {
         RFS_PUSH();
         ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(type->tdef->name));
         RF_ASSERT(ret, "Type should have already been declared in LLVM");
         RFS_POP();
-        return ret;
     } else {
         RF_CRITICAL_FAIL("Unexpected rir ltype encountered");
+        return NULL;
     }
+    // if it's a pointer to the type
+    if (type->is_pointer) {
+        ret = LLVMPointerType(ret, 0);
+    }
+    return ret;
 }
 
 LLVMTypeRef *bllvm_rir_args_to_types(const struct args_arr *arr,

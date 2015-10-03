@@ -34,6 +34,10 @@ LLVMValueRef bllvm_compile_functioncall(const struct rir_call *call,
         RF_ERROR("Could not find an llvm function by name");
         return NULL;
     }
+    if (!bllvm_value_arr_to_values(&call->args, ctx)) {
+        RF_ERROR("Could not turn rir call arguments to llvm values");
+        return NULL;
+    }
     ret = LLVMBuildCall(ctx->builder,
                         llvm_fn,
                         llvm_traversal_ctx_get_values(ctx),
@@ -107,6 +111,7 @@ static bool llvm_create_blockexit(const struct rir_block_exit *e, struct llvm_tr
 
 static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_ctx *ctx)
 {
+    LLVMValueRef llvmval;
     // create and enter the block
     RFS_PUSH();
     LLVMBasicBlockRef llvm_b = LLVMAppendBasicBlock(
@@ -115,27 +120,57 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
     RFS_POP();
     bllvm_enter_block(ctx, llvm_b);
     // also add the block to the map
-    if (!llvm_traversal_ctx_map_llvmblock(ctx, &b->label, llvm_b)) {
+    if(!llvm_traversal_ctx_map_llvmblock(ctx, &b->label, llvm_b)) {
         RF_ERROR("Failed to map a rir block to an llvm block");
         return false;
     }
-    // now create llvm expressions out of the rir expressions of the block
-    struct rir_expression *expr;
-    rf_ilist_for_each(&b->expressions, expr, ln) {
-        LLVMValueRef llvmval = bllvm_compile_rirexpr(expr, ctx);
+    // if it's the first block of a function, alloca the return value.
+    // In the RIR code it "just exists", just like the arguments allocas, so
+    // we have to do it manually here
+    if (rir_block_is_first(b) && ctx->current_rfn->retslot_expr) {
+        llvmval = LLVMBuildAlloca(
+            ctx->builder,
+            bllvm_type_from_rir_ltype(ctx->current_rfn->retslot_expr->alloca.type, ctx),
+            ""
+        );
         if (!llvmval) {
             return false;
         }
+        if (!llvm_traversal_ctx_map_llvmval(ctx, &ctx->current_rfn->retslot_expr->val, llvmval)) {
+            RF_ERROR("Could not map return rir alloca to llvm alloca");
+            return false;
+        }
     }
-    // and finally create the block exit
+
+    // now create llvm expressions out of the rir expressions of the block
+    struct rir_expression *expr;
+    rf_ilist_for_each(&b->expressions, expr, ln) {
+        if (!(llvmval = bllvm_compile_rirexpr(expr, ctx))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool llvm_connect_block(const struct rir_block *b, struct llvm_traversal_ctx *ctx)
+{
+    LLVMBasicBlockRef llvm_b = bllvm_value_from_rir_value_or_die(&b->label, ctx);
+    bllvm_enter_block(ctx, llvm_b);
     return llvm_create_blockexit(&b->exit, ctx);
 }
 
 static bool bllvm_create_fndef(const struct rir_fndef *fn, struct llvm_traversal_ctx *ctx)
 {
     struct rir_block **b;
+    // create all blocks and their contents
     darray_foreach(b, fn->blocks) {
         if (!llvm_create_block(*b, ctx)) {
+            return false;
+        }
+    }
+    // and now that they are created connect them
+    darray_foreach(b, fn->blocks) {
+        if (!llvm_connect_block(*b, ctx)) {
             return false;
         }
     }
@@ -145,9 +180,7 @@ static bool bllvm_create_fndef(const struct rir_fndef *fn, struct llvm_traversal
 static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef *arg_types = bllvm_rir_args_to_types(&fn->arguments, ctx);
-    if (!arg_types) {
-        return NULL;
-    }
+    // arg_types can also be null here, if the function has no arguments
     RFS_PUSH();
     LLVMValueRef llvmfn = LLVMAddFunction(
         ctx->llvm_mod,
@@ -167,16 +200,20 @@ bool bllvm_create_module_functions(struct rir *r, struct llvm_traversal_ctx *ctx
     struct rir_fndecl *decl;
     LLVMValueRef llvmfn;
     rf_ilist_for_each(&r->functions, decl, ln) {
+        // before every function make sure the rir to llvm value map is clear
+        llvm_traversal_ctx_reset_valmap(ctx);
         // create function declaration
         if (!(llvmfn = bllvm_create_fndecl(decl, ctx))) {
             RF_ERROR("Failed to create a function declaration in LLVM");
             return false;
         }
-        // make it the current function
-        ctx->current_function = llvmfn;
+
         // if it's also a function definition create a body for it
         if (!decl->plain_decl) {
-            if (!bllvm_create_fndef(rir_fndecl_to_fndef(decl), ctx)) {
+            // make it the current function
+            ctx->current_function = llvmfn;
+            ctx->current_rfn = rir_fndecl_to_fndef(decl);
+            if (!bllvm_create_fndef(ctx->current_rfn, ctx)) {
                 RF_ERROR("Failed to create a function definition in LLVM");
                 return false;
             }

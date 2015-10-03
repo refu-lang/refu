@@ -20,7 +20,7 @@ struct rir_argument {
 };
 
 struct rir_object *rir_argument_create(const struct rir_type *type, struct rir_ctx *ctx);
-struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, struct rir_ctx *ctx);
+struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, bool isptr, struct rir_ctx *ctx);
 void rir_argument_deinit(struct rir_argument *a);
 bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg);
 

@@ -13,4 +13,9 @@ extern struct rir_value g_rir_const_m1;
 bool rir_utils_create();
 void rir_utils_destroy();
 
+/**
+ * Get the value of the given expression. Performs a read if necessary
+ */
+const struct rir_value *rir_getread_val(const struct rir_expression *e, struct rir_ctx *ctx);
+
 #endif

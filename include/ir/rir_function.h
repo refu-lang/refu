@@ -36,6 +36,8 @@ struct rir_fndef {
     struct rir_fndecl decl;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
+    //! Rir expression of the return slot alloca. NULL if there is no return value.
+    struct rir_expression *retslot_expr;
     //! Label pointing to the function's end
     struct rir_value *end_label;
     //! Stringmap from rir identifiers to rir objects
@@ -46,6 +48,14 @@ struct rir_fndef {
 struct rir_fndef *rir_fndef_create(const struct ast_node *n, struct rir_ctx *ctx);
 void rir_fndef_destroy(struct rir_fndef *f);
 
+/**
+ * Given a rir value check if it corresponds to an argument of the function
+ * @param f        The function to check
+ * @param v        The rir value to check whether or not is an argument
+ *                 to the function
+ * @return         The number of the corresponding argument, or -1 for not found
+ */
+int rir_fndef_value_to_argnum(const struct rir_fndef *f, const struct rir_value *v);
 void rir_fndef_add_block(struct rir_fndef *f, struct rir_block *b);
 bool rir_fndef_tostring(struct rirtostr_ctx *ctx, const struct rir_fndef *f);
 i_INLINE_DECL struct rir_fndef *rir_fndecl_to_fndef(const struct rir_fndecl* d)

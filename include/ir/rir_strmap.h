@@ -35,6 +35,4 @@ bool rir_map_addobj(struct rir_ctx *ctx,
 
 struct rir_object *rir_map_getobj(struct rir_ctx *ctx,
                                   const struct RFstring *id);
-
-struct rir_expression *rir_fnmap_get_returnslot(struct rir_ctx *ctx);
 #endif

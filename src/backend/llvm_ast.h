@@ -13,6 +13,7 @@
 struct RFstring;
 
 struct ast_node;
+struct ast_constant;
 struct analyzer;
 struct symbol_table;
 struct symbol_table_record;
@@ -49,6 +50,8 @@ struct llvm_traversal_ctx {
     //! Map from rir type to LLVM structs
     struct rir_types_map types_map;
 
+    //! Current rir function
+    struct rir_fndef *current_rfn;
     struct compiler_args *args;
     struct symbol_table *current_st;
     //! Map from a rir value's id to llvm values
@@ -130,6 +133,7 @@ bool llvm_traversal_ctx_map_llvmval(struct llvm_traversal_ctx *ctx,
 bool llvm_traversal_ctx_map_llvmblock(struct llvm_traversal_ctx *ctx,
                                       const struct rir_value *rv,
                                       struct LLVMOpaqueBasicBlock *lb);
+void llvm_traversal_ctx_reset_valmap(struct llvm_traversal_ctx *ctx);
 
 enum llvm_expression_compile_options {
     //! If the node is a simple elementary identifier return its value and not the Alloca
@@ -145,6 +149,7 @@ void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
                              struct llvm_traversal_ctx *ctx);
 void bllvm_compile_block(const struct ast_node *block,
                          struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n);
 
 
 void bllvm_compile_ifexpr(const struct ast_node *branch,

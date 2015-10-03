@@ -94,8 +94,8 @@ struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring 
     return rec ? rec->rirobj : NULL;
 }
 
-static void rir_strec_create_allocas(struct symbol_table_record *rec,
-                                     struct rir_ctx *ctx)
+void rir_strec_create_allocas(struct symbol_table_record *rec,
+                              struct rir_ctx *ctx)
 {
     struct rir_ltype *type = rir_ltype_create_from_type(symbol_table_record_type(rec), ctx);
     RF_ASSERT_OR_EXIT(type, "Could not create a rir_ltype during symbol table iteration");
@@ -213,6 +213,10 @@ static void rir_deinit(struct rir *r)
     rf_ilist_for_each_safe(&r->objects, obj, tmpobj, ln) {
         rir_object_destroy(obj);
     }
+
+    if (r->buff) {
+        rf_stringx_destroy(r->buff);
+    }
 }
 
 void rir_destroy(struct rir *r)
@@ -323,12 +327,13 @@ bool rir_process(struct compiler *c)
 void rirtostr_ctx_reset(struct rirtostr_ctx *ctx)
 {
     darray_clear(ctx->visited_blocks);
+    darray_free(ctx->visited_blocks);
     darray_init(ctx->visited_blocks);
 }
 
 static inline void rirtostr_ctx_deinit(struct rirtostr_ctx *ctx)
 {
-    darray_clear(ctx->visited_blocks);
+    darray_free(ctx->visited_blocks);
 }
 
 void rirtostr_ctx_init(struct rirtostr_ctx *ctx, struct rir *r)
@@ -355,6 +360,7 @@ bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block
 
 struct RFstring *rir_tostring(struct rir *r)
 {
+    struct RFstring *ret = NULL;
     if (r->buff) {
         return RF_STRX2STR(r->buff);
     }
@@ -372,7 +378,7 @@ struct RFstring *rir_tostring(struct rir *r)
     darray_foreach(global, r->globals) {
         if (!rir_global_tostring(&ctx, &(*global)->global)) {
             RF_ERROR("Failed to turn a rir global to a string");
-            goto fail_free_ctx;
+            goto end;
         }
     }
 
@@ -381,7 +387,7 @@ struct RFstring *rir_tostring(struct rir *r)
     rf_ilist_for_each(&r->typedefs, def, ln) {
         if (!rir_typedef_tostring(&ctx, def)) {
             RF_ERROR("Failed to turn a rir typedef to a string");
-            goto fail_free_ctx;
+            goto end;
         }
     }
 
@@ -391,14 +397,15 @@ struct RFstring *rir_tostring(struct rir *r)
         if (!rir_function_tostring(&ctx, decl)) {
             RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
                      RF_STR_PF_ARG(decl->name));
-            goto fail_free_ctx;
+            goto end;
         }
     }
-    return RF_STRX2STR(r->buff);
+    // success
+    ret = RF_STRX2STR(r->buff);
 
-fail_free_ctx:
+end:
     rirtostr_ctx_deinit(&ctx);
-    return NULL;
+    return ret;
 }
 
 bool rir_print(struct compiler *c)

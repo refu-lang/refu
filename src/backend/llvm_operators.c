@@ -94,7 +94,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirbop(const struct rir_expression *expr,
     LLVMValueRef right = bllvm_value_from_rir_value_or_die(expr->binaryop.b, ctx);
     switch(expr->type) {
     case RIR_EXPRESSION_WRITE:
-        ret = LLVMBuildStore(ctx->builder, left, right);
+        ret = LLVMBuildStore(ctx->builder, right, left);
         break;
     case RIR_EXPRESSION_ADD:
         ret = LLVMBuildAdd(ctx->builder, left, right, "");

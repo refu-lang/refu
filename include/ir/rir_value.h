@@ -49,7 +49,7 @@ struct value_arr {darray(struct rir_value*);};
 bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_ltype *type, struct rir_ctx *ctx);
 bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value);
 bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
-bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, struct rir_ctx *ctx);
+bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, bool function_beginning, struct rir_ctx *ctx);
 bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c);
 void rir_value_nil_init(struct rir_value *v);
 
