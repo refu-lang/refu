@@ -134,6 +134,12 @@ i_INLINE_DECL const struct type *ast_fncall_params_type(const struct ast_node *n
     return n->fncall.params_type;
 }
 
+i_INLINE_DECL bool ast_fncall_is_sum(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    return n->fncall.sumcall;
+}
+
 typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);
 /**
  * Function call arguments iteration callback.

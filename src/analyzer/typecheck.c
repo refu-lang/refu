@@ -568,10 +568,11 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     } else {
         //check that the types of its arguments do indeed match
         fn_declared_args_type = type_callable_get_argtype(fn_type);
+        n->fncall.sumcall = type_is_sumop(fn_declared_args_type);
         typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
         if (!type_compare(fn_found_args_type,
                           fn_declared_args_type,
-                          type_is_sumop(fn_declared_args_type) ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
+                          n->fncall.sumcall ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
             analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                          RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
@@ -587,7 +588,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
             goto fail;
         }
         // the function call's matched type should be either a specific sum type
-        // that may have matched of the entirety of the called arguments
+        // that may have matched or the entirety of the called arguments
         if (!(n->fncall.params_type = typemp_ctx_get_matched_type())) {
             n->fncall.params_type = fn_found_args_type;
         }

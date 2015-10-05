@@ -12,13 +12,13 @@
 struct alloca_pop_ctx {
     struct rir_ctx *rirctx;
     const struct rir_type *matched_case_rirtype;
-    struct rir_value *matched_case_rirobj;
+    const struct rir_value *matched_case_rirobj;
 };
 
 static inline void alloca_pop_ctx_init(struct alloca_pop_ctx *ctx,
                                        struct rir_ctx *rirctx,
                                        const struct rir_type *matched_case_rirtype,
-                                       struct rir_value *matched_case_rirobj)
+                                       const struct rir_value *matched_case_rirobj)
 {
     ctx->rirctx = rirctx;
     ctx->matched_case_rirtype = matched_case_rirtype;
@@ -34,8 +34,8 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
     RF_ASSERT(rec->data, "Record should have a type");
     const struct rir_type *rtype = type_get_rir_or_die(rec->data);
     RF_ASSERT(rec->rirobj, "Record should have an associated rir object");
-    // populate alloca depending ohn match case
-    struct rir_value *val;
+    // populate alloca depending on match case
+    const struct rir_value *val;
     int idx = rir_type_childof_type(rtype, ctx->matched_case_rirtype);
     if (idx != -1) { // type child of matched type
         // create a rir expression to read the object value at the index position
@@ -44,11 +44,7 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
             RF_CRITICAL_FAIL("Could not create member access rir instruction");
         }
         rirctx_block_add(ctx->rirctx, e);
-        if (!(e = rir_read_create(&e->val, ctx->rirctx))) {
-            RF_CRITICAL_FAIL("Could not create read rir instruction");
-        }
-        rirctx_block_add(ctx->rirctx, e);
-        val = &e->val;
+        val = rir_getread_val(e, ctx->rirctx);
     } else if (rtype == ctx->matched_case_rirtype) { // type is actually matched type
         val = ctx->matched_case_rirobj;
     } else {
@@ -74,14 +70,11 @@ bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_obje
         return false;
     }
     rirctx_block_add(ctx, e);
-    if (!(e = rir_read_create(&e->val, ctx))) {
-        return false;
-    }
-    rirctx_block_add(ctx, e);
+    const struct rir_value *v = rir_getread_val(e, ctx);
 
     // iterate the allocas and assign the proper values from the subobject
     struct alloca_pop_ctx alloca_ctx;
-    alloca_pop_ctx_init(&alloca_ctx, ctx, type_get_rir_or_die(mcmatch_type), &e->val);
+    alloca_pop_ctx_init(&alloca_ctx, ctx, type_get_rir_or_die(mcmatch_type), v);
     symbol_table_iterate(rir_ctx_curr_st(ctx),
                          (htable_iter_cb)rir_symbol_table_populate_allocas_do,
                          &alloca_ctx);

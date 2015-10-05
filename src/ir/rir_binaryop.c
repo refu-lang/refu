@@ -40,8 +40,11 @@ static inline bool rir_binaryop_init(struct rir_binaryop *rbop,
                                      const struct rir_value *b,
                                      struct rir_ctx *ctx)
 {
-    if (type == RIR_EXPRESSION_WRITE && b->type->is_pointer) {
-        // for write operations on a memory location first create a read from memory
+    if (type == RIR_EXPRESSION_WRITE &&
+        !rir_ltype_is_specific_elementary(b->type, ELEMENTARY_TYPE_STRING) &&
+        b->type->is_pointer) {
+        // for write operations on a memory location first create a read from memory.
+        // string are as usually an exception, at least for now
         struct rir_expression *rexpr = rir_read_create(b, ctx);
         if (!rexpr) {
             return false;
@@ -135,19 +138,18 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_expression *member_ptr = rir_objmemberat_create(lhs_val, index, ctx);
-    if (!member_ptr) {
+    struct rir_object *member_ptr_obj = rir_objmemberat_create_obj(lhs_val, index, ctx);
+    if (!member_ptr_obj) {
         goto fail;
     }
-    rirctx_block_add(ctx, member_ptr);
-    struct rir_object *e = rir_read_create_obj(&member_ptr->val, ctx);
-    if (!e) {
+    rirctx_block_add(ctx, &member_ptr_obj->expr);
+    member_ptr_obj = rir_getread_obj(member_ptr_obj, ctx);
+    if (!member_ptr_obj) {
         goto fail;
     }
-    rirctx_block_add(ctx, &e->expr);
 
     // return the memberobjat to be used by other rir expressions
-    RIRCTX_RETURN_EXPR(ctx, true, e);
+    RIRCTX_RETURN_EXPR(ctx, true, member_ptr_obj);
 
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -161,7 +163,7 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         return rir_process_memberaccess(op, ctx);
     }
 
-    const struct rir_value *lval = rir_process_ast_node_getreadval(op->left, ctx);
+    const struct rir_value *lval = rir_process_ast_node_getval(op->left, ctx);
     if (!lval) {
         RF_ERROR("A left value should have been created for a binary operation");
         goto fail;

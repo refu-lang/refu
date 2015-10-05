@@ -94,6 +94,12 @@ struct LLVMOpaqueValue *bllvm_compile_rirbop(const struct rir_expression *expr,
     LLVMValueRef right = bllvm_value_from_rir_value_or_die(expr->binaryop.b, ctx);
     switch(expr->type) {
     case RIR_EXPRESSION_WRITE:
+        // Writting to a string needs special treatment right now
+        if (expr->type == RIR_EXPRESSION_WRITE &&
+            rir_ltype_is_specific_elementary(expr->binaryop.a->type, ELEMENTARY_TYPE_STRING)) {
+            bllvm_copy_string(right, left, ctx);
+            return right;
+        }
         ret = LLVMBuildStore(ctx->builder, right, left);
         break;
     case RIR_EXPRESSION_ADD:

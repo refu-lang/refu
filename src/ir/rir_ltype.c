@@ -193,7 +193,7 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     const struct type *matched = ast_fncall_params_type(n);
     struct rir_object **arg;
     struct args_arr t_args;
-    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, ctx)) {
+    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, ARGARR_AT_TYPEDESC, ctx)) {
         return -1;
     }
 

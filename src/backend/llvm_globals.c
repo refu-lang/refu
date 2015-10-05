@@ -87,7 +87,7 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
 
     LLVMValueRef global_val = LLVMAddGlobal(ctx->llvm_mod,
                                             LLVMGetTypeByName(ctx->llvm_mod, "string"),
-                                            rf_string_data(s));
+                                            rf_string_cstr_from_buff_or_die(string_name));
     LLVMSetInitializer(global_val, string_decl);
     RFS_POP();
     return global_val;
@@ -103,6 +103,20 @@ LLVMValueRef bllvm_create_global_const_string(const struct RFstring *string_name
         rf_hash_str_stable(string_val, 0),
         ctx
     );
+}
+
+struct LLVMOpaqueValue *bllvm_literal_to_global_string(const struct RFstring *lit,
+                                                       struct llvm_traversal_ctx *ctx)
+{
+    struct RFstring *s;
+    RFS_PUSH();
+    s = RFS_NT_OR_DIE("gstr_%u", rf_hash_str_stable(lit, 0));
+    LLVMValueRef ret = LLVMGetNamedGlobal(ctx->llvm_mod, rf_string_data(s));
+    RFS_POP();
+    if (!ret) {
+        RF_ERROR("Failed to retrieve a global string from a literal in LLVM");
+    }
+    return ret;
 }
 
 static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)

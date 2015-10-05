@@ -150,6 +150,8 @@ void llvm_symbols_iterate_cb(struct symbol_table_record *rec,
 void bllvm_compile_block(const struct ast_node *block,
                          struct llvm_traversal_ctx *ctx);
 struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n);
+struct LLVMOpaqueValue *bllvm_compile_literal(const struct RFstring *lit,
+                                              struct llvm_traversal_ctx *ctx);
 
 
 void bllvm_compile_ifexpr(const struct ast_node *branch,

@@ -13,6 +13,10 @@ void *bllvm_value_from_rir_value(const struct rir_value *v, struct llvm_traversa
     if (v->category == RIR_VALUE_CONSTANT) {
         return bllvm_compile_constant(&v->constant);
     }
+    // so are string literals
+    if (v->category == RIR_VALUE_LITERAL) {
+        return bllvm_compile_literal(&v->literal, ctx);
+    }
     // otherwise search the mapping
     void *ret =  strmap_get(&ctx->valmap, &v->id);
     if (!ret) {

@@ -57,6 +57,8 @@ struct ast_fncall {
     const struct type *params_type;
     //! Set by typecheking if this is an explicit conversion
     bool is_explicit_conversion;
+    //! Set by typechecking if this is a call to a function with sum type args
+    bool sumcall;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

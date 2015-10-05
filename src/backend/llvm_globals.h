@@ -22,6 +22,9 @@ struct LLVMOpaqueValue *bllvm_create_global_const_string_with_hash(
     uint32_t hash,
     struct llvm_traversal_ctx *ctx);
 
+struct LLVMOpaqueValue *bllvm_literal_to_global_string(const struct RFstring *lit,
+                                                       struct llvm_traversal_ctx *ctx);
+
 /**
  * @returns the global string for "true" or "false"
  */

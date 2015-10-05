@@ -69,9 +69,11 @@ bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *
     if (type->category == RIR_LTYPE_ELEMENTARY) {
         ret = rf_stringx_append(
             ctx->rir->buff,
-            RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
+            RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT"%s",
                 RF_STR_PF_ARG(arg->name),
-                RF_STR_PF_ARG(type_elementary_get_str(type->etype))));
+                RF_STR_PF_ARG(type_elementary_get_str(type->etype)),
+                type->is_pointer ? "*" : ""
+            ));
     } else {
         const char *s = type->is_pointer ? "*" : "";
         rf_stringx_append(
@@ -89,7 +91,10 @@ i_INLINE_INS struct rir_ltype *rir_argument_type(const struct rir_argument *arg)
 
 /* -- Functions dealing with argument arrays -- */
 
-bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir_ctx *ctx)
+bool rir_type_to_arg_array(const struct rir_type *type,
+                           struct args_arr *arr,
+                           enum argarr_create_reason reason,
+                           struct rir_ctx *ctx)
 {
     RF_ASSERT(type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
               "Called with illegal rir type");
@@ -101,6 +106,12 @@ bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, st
             if (!(arg = rir_argument_create(type, ctx))) {
                 return false;
             }
+            // If it's a string make sure it's passed by pointer to function calls
+            // TODO: at some point do away with this distinction (?)
+            if (reason == ARGARR_AT_FNDECL &&
+                rir_ltype_is_specific_elementary(arg->arg.val.type, ELEMENTARY_TYPE_STRING)) {
+                arg->arg.val.type = rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, true);
+            }
             darray_append(*arr, arg);
         }
     } else if (type->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
@@ -108,6 +119,12 @@ bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, st
             if (!rir_type_is_trivial(*subtype)) {
                 if (!(arg = rir_argument_create(*subtype, ctx))) {
                     return false;
+                }
+                // If it's a string make sure it's passed by pointer to function calls
+                // TODO: at some point do away with this distinction (?)
+                if (reason == ARGARR_AT_FNDECL &&
+                    rir_ltype_is_specific_elementary(arg->arg.val.type, ELEMENTARY_TYPE_STRING)) {
+                    arg->arg.val.type = rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, true);
                 }
                 darray_append(*arr, arg);
             }

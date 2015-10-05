@@ -46,11 +46,10 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
             return false;
         }
         rirctx_block_add(ctx->rirctx, e);
-        if (!(e = rir_read_create(&e->val, ctx->rirctx))) {
+        if (!(targetval = rir_getread_val(e, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to read an object's value");
             return false;
         }
-        targetval = &e->val;
     } else {
         RF_ASSERT(ctx->index == 0, "Only at 0 index can a non composite type have been found.");
         targetval = ctx->lhs;
@@ -101,11 +100,9 @@ static bool rir_process_ctorcall(const struct ast_node *n, const struct type *fn
             return false;
         }
         rirctx_block_add(ctx, ummbr_ptr);
-        if (!(e = rir_read_create(&ummbr_ptr->val, ctx))) {
+        if (!(lhs = rir_getread_val(ummbr_ptr, ctx))) {
             return false;
         }
-        rirctx_block_add(ctx, e);
-        lhs = &e->val;
     }
 
     // now for whichever object (normal type, or union type sutype) is loaded as left hand side
@@ -151,6 +148,30 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
     // copy the name in
     if (!rf_string_copy_in(&ret->expr.call.name, ast_fncall_name(n))) {
         goto fail;
+    }
+
+    if (ast_fncall_is_sum(n)) {
+        // if it's a call to a function with a sum type, get the type the call matched
+        RFS_PUSH();
+        struct rir_typedef *tdef = rir_typedef_byname(
+            ctx->rir, type_get_unique_type_str(ast_fncall_params_type(n), true)
+        );
+        RFS_POP();
+        if (!tdef) {
+            RF_ERROR("Could not get a sum call's matched typedef by name");
+            goto fail;
+        }
+        // create an alloca of that type
+        struct rir_expression *e = rir_alloca_create(rir_ltype_comp_create(tdef, false), 0, ctx);
+        if (!e) {
+            RF_ERROR("Failed to create a rir alloc instruction");
+            goto fail;
+        }
+        rirctx_block_add(ctx, e);
+        // TODO:
+        // populate it
+        // ...
+        // then pass that as the only argument to the call
     }
 
     // turn the function call args into a rir value array
@@ -214,6 +235,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
     } else { // normal function call
         struct rir_object *cobj = rir_call_create_obj_from_ast(n, ctx);
         if (!cobj) {
+            RF_ERROR("Could not create a rir function call instruction");
             return false;
         }
         rirctx_block_add(ctx, &cobj->expr);

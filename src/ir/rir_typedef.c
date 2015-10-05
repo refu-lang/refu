@@ -38,7 +38,7 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
             return false;
         }
     }
-    if (!rir_type_to_arg_array(t, &def->arguments_list, ctx)) {
+    if (!rir_type_to_arg_array(t, &def->arguments_list, ARGARR_AT_TYPEDESC, ctx)) {
         RF_ERROR("Failed to turn a type to an arg array");
         return false;
     }

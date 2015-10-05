@@ -16,7 +16,7 @@ bool rir_process_ast_node(const struct ast_node *n,
 
 /**
  * Process an ast node and return the generated rir expression. Will return
- * NULL if an expression was not generated
+ * NULL if an expression (or global)  was not generated
  */
 i_INLINE_DECL struct rir_expression *rir_process_ast_node_getexpr(const struct ast_node *n,
                                                                   struct rir_ctx *ctx)
@@ -25,7 +25,7 @@ i_INLINE_DECL struct rir_expression *rir_process_ast_node_getexpr(const struct a
         return NULL;
     }
     struct rir_object *obj = ctx->returned_obj;
-    if (!obj || obj->category != RIR_OBJ_EXPRESSION) {
+    if (!obj || (obj->category != RIR_OBJ_EXPRESSION && obj->category != RIR_OBJ_GLOBAL)) {
         return NULL;
     }
     return &obj->expr;

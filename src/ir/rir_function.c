@@ -35,7 +35,7 @@ static bool rir_fndecl_init_args(struct args_arr *argsarr, const struct ast_node
             rir_ctx_st_setrecobj(ctx, ast_args, darray_item(*argsarr, 0));
         }
     } else {
-        if (!rir_type_to_arg_array(arguments, argsarr, ctx)) {
+        if (!rir_type_to_arg_array(arguments, argsarr, ARGARR_AT_FNDECL, ctx)) {
             RF_ERROR("Could not turn types to function arg array in the RIR");
             return false;
         }

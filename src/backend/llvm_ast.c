@@ -184,6 +184,11 @@ struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n)
     return NULL;
 }
 
+struct LLVMOpaqueValue *bllvm_compile_literal(const struct RFstring *lit, struct llvm_traversal_ctx *ctx)
+{
+    return bllvm_literal_to_global_string(lit, ctx);
+}
+
 static struct LLVMOpaqueValue *bllvm_compile_objmemberat(const struct rir_expression *expr,
                                                          struct llvm_traversal_ctx *ctx)
 {
@@ -281,7 +286,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         break;
     }
     // add mapping from rir value id to llvm val if value exists
-    if (expr->val.category != RIR_VALUE_NIL) {
+    if (llvmval && expr->val.category != RIR_VALUE_NIL) {
         if (!llvm_traversal_ctx_map_llvmval(ctx, &expr->val, llvmval)) {
             return NULL;
         }
@@ -340,9 +345,9 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
         goto fail;
     }
 
-    if (compiler_args_print_backend_debug(ctx->args)) {
+    /* if (compiler_args_print_backend_debug(ctx->args)) { */
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
-    }
+    /* } */
 
     return ctx->llvm_mod;
 

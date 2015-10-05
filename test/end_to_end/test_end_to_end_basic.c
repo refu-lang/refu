@@ -18,7 +18,7 @@ START_TEST (test_smoke) {
     };
     ck_end_to_end_run(inputs, 42);
 } END_TEST
-#if 0
+
 START_TEST (test_addition) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -99,7 +99,7 @@ START_TEST (test_print_integer) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("324565");
     ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
-
+#if 0
 START_TEST (test_type_decl) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -666,7 +666,6 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_basic, test_smoke);
-#if 0
     tcase_add_test(st_basic, test_addition);
     tcase_add_test(st_basic, test_multiple_real_arithmetic);
     tcase_add_test(st_basic, test_negative_integer_constants);
@@ -674,7 +673,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic, test_print_string_literal);
     tcase_add_test(st_basic, test_print_integer);
 
-
+#if 0
     TCase *st_basic_types = tcase_create("end_to_end_basic_types");
     tcase_add_checked_fixture(st_basic_types,
                               setup_end_to_end_tests,

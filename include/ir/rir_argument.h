@@ -32,7 +32,26 @@ i_INLINE_DECL struct rir_ltype *rir_argument_type(const struct rir_argument *arg
 /* -- Functions dealing with argument arrays -- */
 
 struct args_arr {darray(struct rir_object*);};
-bool rir_type_to_arg_array(const struct rir_type *type, struct args_arr *arr, struct rir_ctx *ctx);
+
+enum argarr_create_reason {
+    ARGARR_AT_TYPEDESC,
+    ARGARR_AT_FNDECL,
+};
+
+/**
+ * Turns an (old) rir_type to a rir argument array
+ *
+ * @param type            The type to turn into a rir argument array
+ * @param arr             The argument array to create
+ * @param reason          The reason for creation. Used to specify where the array
+ *                        is going to be used
+ * @param ctx             The rir context
+ * @return                true for success
+ */
+bool rir_type_to_arg_array(const struct rir_type *type,
+                           struct args_arr *arr,
+                           enum argarr_create_reason reason,
+                           struct rir_ctx *ctx);
 bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr);
 bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2);
 /**
