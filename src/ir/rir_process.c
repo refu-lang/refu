@@ -115,8 +115,8 @@ bool rir_process_ast_node(const struct ast_node *n,
     return false;
 }
 
-i_INLINE_INS struct rir_expression *rir_process_ast_node_getexpr(const struct ast_node *n,
-                                                                 struct rir_ctx *ctx);
+i_INLINE_INS struct rir_object *rir_process_ast_node_getobj(const struct ast_node *n,
+                                                             struct rir_ctx *ctx);
 i_INLINE_INS struct rir_value *rir_process_ast_node_getval(const struct ast_node *n,
                                                            struct rir_ctx *ctx);
 i_INLINE_INS const struct rir_value *rir_process_ast_node_getreadval(const struct ast_node *n,

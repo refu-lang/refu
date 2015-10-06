@@ -55,6 +55,8 @@ struct ast_fncall {
     //! Type that matched this particular function call's parameters
     //! during typechecking.
     const struct type *params_type;
+    //! Type of the original function this call refers to. Set during typechecking
+    const struct type *declared_type;
     //! Set by typecheking if this is an explicit conversion
     bool is_explicit_conversion;
     //! Set by typechecking if this is a call to a function with sum type args

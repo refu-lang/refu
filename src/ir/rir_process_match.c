@@ -9,6 +9,29 @@
 #include <ast/matchexpr.h>
 #include <Utils/sanity.h>
 
+const struct rir_value *rir_sum_subtype(const struct rir_type *rtype,
+                                        const struct rir_type *matchtype,
+                                        const struct rir_value *typeobject,
+                                        struct rir_ctx *ctx)
+{
+    const struct rir_value *val = NULL;
+    int idx = rir_type_childof_type(rtype, matchtype);
+    if (!rir_ltype_is_elementary(typeobject->type) && idx != -1) { // type child of matched type
+        // create a rir expression to read the object value at the index position
+        struct rir_expression *e = rir_objmemberat_create(typeobject, idx, ctx);
+        if (!e) {
+            RF_CRITICAL_FAIL("Could not create member access rir instruction");
+        }
+        rirctx_block_add(ctx, e);
+        val = rir_getread_val(e, ctx);
+    } else if (rtype == matchtype || rir_ltype_is_elementary(typeobject->type)) { // type is actually matched type
+        val = typeobject;
+    } else {
+        RF_CRITICAL_FAIL("Type should either have been found as child of the case type or be equal to it");
+    }
+    return val;
+}
+
 struct alloca_pop_ctx {
     struct rir_ctx *rirctx;
     const struct rir_type *matched_case_rirtype;
@@ -35,21 +58,9 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
     const struct rir_type *rtype = type_get_rir_or_die(rec->data);
     RF_ASSERT(rec->rirobj, "Record should have an associated rir object");
     // populate alloca depending on match case
-    const struct rir_value *val;
-    int idx = rir_type_childof_type(rtype, ctx->matched_case_rirtype);
-    if (idx != -1) { // type child of matched type
-        // create a rir expression to read the object value at the index position
-        struct rir_expression *e = rir_objmemberat_create(ctx->matched_case_rirobj, idx, ctx->rirctx);
-        if (!e) {
-            RF_CRITICAL_FAIL("Could not create member access rir instruction");
-        }
-        rirctx_block_add(ctx->rirctx, e);
-        val = rir_getread_val(e, ctx->rirctx);
-    } else if (rtype == ctx->matched_case_rirtype) { // type is actually matched type
-        val = ctx->matched_case_rirobj;
-    } else {
-        RF_CRITICAL_FAIL("Type should either have been found as child of the case type or be equal to it");
-    }
+    const struct rir_value *val = rir_sum_subtype(
+        rtype, ctx->matched_case_rirtype, ctx->matched_case_rirobj, ctx->rirctx
+    );
     // and now write that to the alloca
     struct rir_expression *expr = rir_binaryop_create_nonast(
         RIR_EXPRESSION_WRITE,

@@ -15,20 +15,15 @@ bool rir_process_ast_node(const struct ast_node *n,
                           struct rir_ctx *ctx);
 
 /**
- * Process an ast node and return the generated rir expression. Will return
- * NULL if an expression (or global)  was not generated
+ * Process an ast node and return the generated rir object
  */
-i_INLINE_DECL struct rir_expression *rir_process_ast_node_getexpr(const struct ast_node *n,
-                                                                  struct rir_ctx *ctx)
+i_INLINE_DECL struct rir_object *rir_process_ast_node_getobj(const struct ast_node *n,
+                                                             struct rir_ctx *ctx)
 {
     if (!rir_process_ast_node(n, ctx)) {
         return NULL;
     }
-    struct rir_object *obj = ctx->returned_obj;
-    if (!obj || (obj->category != RIR_OBJ_EXPRESSION && obj->category != RIR_OBJ_GLOBAL)) {
-        return NULL;
-    }
-    return &obj->expr;
+    return ctx->returned_obj;
 }
 
 /**
@@ -37,10 +32,8 @@ i_INLINE_DECL struct rir_expression *rir_process_ast_node_getexpr(const struct a
 i_INLINE_DECL struct rir_value *rir_process_ast_node_getval(const struct ast_node *n,
                                                            struct rir_ctx *ctx)
 {
-    if (!rir_process_ast_node(n, ctx)) {
-        return NULL;
-    }
-    return rir_ctx_lastval_get(ctx);
+    struct rir_object *obj = rir_process_ast_node_getobj(n, ctx);
+    return obj ? rir_object_value(obj) : NULL;
 }
 
 /**
@@ -50,12 +43,12 @@ i_INLINE_DECL struct rir_value *rir_process_ast_node_getval(const struct ast_nod
 i_INLINE_DECL const struct rir_value *rir_process_ast_node_getreadval(const struct ast_node *n,
                                                                       struct rir_ctx *ctx)
 {
-    struct rir_expression *expr = rir_process_ast_node_getexpr(n, ctx);
-    if (!expr) {
-        RF_ERROR("Failed to create a rir expression");
-        return NULL;
-    }
-    return rir_getread_val(expr, ctx);
+    struct rir_object *obj = rir_process_ast_node_getobj(n, ctx);
+    RF_ASSERT(obj && (obj->category == RIR_OBJ_GLOBAL || obj->category == RIR_OBJ_EXPRESSION),
+              "At this point either a rir global or a rir expression object should have been generated");
+    return obj->category == RIR_OBJ_EXPRESSION
+        ? rir_getread_val(&obj->expr, ctx)
+        : rir_object_value(obj);
 }
 
 bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx);
@@ -63,4 +56,8 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx);
 bool rir_match_st_populate_allocas(const struct ast_node *mcase,
                                    struct rir_object *matched_rir_obj,
                                    struct rir_ctx *ctx);
+const struct rir_value *rir_sum_subtype(const struct rir_type *rtype,
+                                        const struct rir_type *matchtype,
+                                        const struct rir_value *typeobject,
+                                        struct rir_ctx *ctx);
 #endif

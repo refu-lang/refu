@@ -128,16 +128,34 @@ i_INLINE_DECL struct ast_node* ast_fncall_genr(struct ast_node *n)
     return n->fncall.genr;
 }
 
+/**
+ * @return the type of the parameters this function call has.
+ * @warning: Valid only after typechecking.
+ */
 i_INLINE_DECL const struct type *ast_fncall_params_type(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     return n->fncall.params_type;
 }
 
+/**
+ * @return if this is a call to a function that has sum type arguments
+ * @warning: Valid only after typechecking.
+ */
 i_INLINE_DECL bool ast_fncall_is_sum(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     return n->fncall.sumcall;
+}
+
+/**
+ * @return the original type of the function declaration this call refers to
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL const struct type *ast_fncall_type(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    return n->fncall.declared_type;
 }
 
 typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);

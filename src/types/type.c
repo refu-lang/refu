@@ -626,6 +626,8 @@ const struct RFstring *type_get_unique_type_str(const struct type *t, bool count
 {
     if (t->category == TYPE_CATEGORY_DEFINED) {
         t = t->defined.type;
+    } else if (t->category == TYPE_CATEGORY_ELEMENTARY) {
+        return type_elementary_get_str(t->elementary.etype);
     }
     return RFS_OR_DIE("internal_struct_%u", type_get_uid(t, count_leaf_id));
 }

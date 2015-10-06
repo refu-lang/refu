@@ -69,47 +69,55 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     return true;
 }
 
-
-static bool rir_process_ctorcall(const struct ast_node *n, const struct type *fn_type, struct rir_ctx *ctx)
+/**
+ * Populate an object's memory from arguments of an ast function call
+ * @param objmemory        The rir value of the object's memory to populate
+ * @param ast_call      The ast function call to populate from
+ * @param ctx           The rir ctx
+ * @return              True for success
+ */
+static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct ast_node *ast_call, struct rir_ctx *ctx)
 {
-    struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
-    if (!lhs) {
-        RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
-        return false;
-    }
-
     struct args_to_val_ctx argsctx;
-    if (type_is_sumtype(fn_type)) {
-
-        RF_ASSERT(rir_ltype_is_composite(lhs->type), "Constructor should assign to a composite type");
-        int union_idx = rir_ltype_union_matched_type_from_fncall(lhs->type, n, ctx);
+    if (type_is_sumtype(ast_fncall_type(ast_call))) {
+        RF_ASSERT(rir_ltype_is_composite(objmemory->type), "Constructor should assign to a composite type");
+        int union_idx = rir_ltype_union_matched_type_from_fncall(objmemory->type, ast_call, ctx);
         if (union_idx == -1) {
             RF_ERROR("RIR sum constructor not matching any part of the original type");
             return false;
         }
         // create code to set the  union's index with the matching type
         struct rir_value *rir_idx_const = rir_constantval_create_fromint(union_idx, ctx->rir);
-        struct rir_expression *e = rir_setunionidx_create(lhs, rir_idx_const, ctx);
+        struct rir_expression *e = rir_setunionidx_create(objmemory, rir_idx_const, ctx);
         if (!e) {
             return false;
         }
         rirctx_block_add(ctx, e);
         // create code to load the appropriate union subtype for reading
-        struct rir_expression *ummbr_ptr = rir_unionmemberat_create(lhs, union_idx, ctx);
+        struct rir_expression *ummbr_ptr = rir_unionmemberat_create(objmemory, union_idx, ctx);
         if (!ummbr_ptr) {
             return false;
         }
         rirctx_block_add(ctx, ummbr_ptr);
-        if (!(lhs = rir_getread_val(ummbr_ptr, ctx))) {
+        if (!(objmemory = rir_getread_val(ummbr_ptr, ctx))) {
             return false;
         }
     }
-
     // now for whichever object (normal type, or union type sutype) is loaded as left hand side
     // assign from constructor's arguments
-    args_to_val_ctx_init(&argsctx, lhs, ctx);
-    ast_fncall_for_each_arg(n, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
+    args_to_val_ctx_init(&argsctx, objmemory, ctx);
+    ast_fncall_for_each_arg(ast_call, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
     return true;
+}
+
+static bool rir_process_ctorcall(const struct ast_node *n, struct rir_ctx *ctx)
+{
+    struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
+    if (!lhs) {
+        RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
+        return false;
+    }
+    return rir_populate_from_astcall(lhs, n, ctx);
 }
 
 /* -- code to process a normal function call -- */
@@ -152,33 +160,31 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
 
     if (ast_fncall_is_sum(n)) {
         // if it's a call to a function with a sum type, get the type the call matched
-        RFS_PUSH();
-        struct rir_typedef *tdef = rir_typedef_byname(
-            ctx->rir, type_get_unique_type_str(ast_fncall_params_type(n), true)
-        );
-        RFS_POP();
-        if (!tdef) {
-            RF_ERROR("Could not get a sum call's matched typedef by name");
-            goto fail;
+        struct rir_ltype *sumtype = rir_ltype_create_from_type(ast_fncall_type(n), ctx);
+        if (!sumtype) {
+            RF_ERROR("Could not get the rir type of a sum function call");
         }
-        // create an alloca of that type
-        struct rir_expression *e = rir_alloca_create(rir_ltype_comp_create(tdef, false), 0, ctx);
+        // create an alloca for that type
+        struct rir_expression *e = rir_alloca_create(sumtype, 0, ctx);
         if (!e) {
-            RF_ERROR("Failed to create a rir alloc instruction");
+            RF_ERROR("Failed to create a rir alloca instruction");
             goto fail;
         }
         rirctx_block_add(ctx, e);
-        // TODO:
-        // populate it
-        // ...
+        // populate the memory of the sumtype
+        if (!rir_populate_from_astcall(&e->val, n, ctx)) {
+            RF_ERROR("Failed to rir union type's memory");
+        }
         // then pass that as the only argument to the call
-    }
-
-    // turn the function call args into a rir value array
-    struct fncall_args_toarr_ctx fncarg_ctx;
-    fncall_args_toarr_ctx_init(&fncarg_ctx, ctx, &ret->expr.call.args);
-    if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
-        goto fail;
+        darray_init(ret->expr.call.args);
+        darray_append(ret->expr.call.args, &e->val);
+    } else {
+        // turn the function call args into a rir value array
+        struct fncall_args_toarr_ctx fncarg_ctx;
+        fncall_args_toarr_ctx_init(&fncarg_ctx, ctx, &ret->expr.call.args);
+        if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
+            goto fail;
+        }
     }
 
     // now initialize the rir expression part of the struct
@@ -229,7 +235,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
     }
 
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
-        return rir_process_ctorcall(n, fn_type, ctx);
+        return rir_process_ctorcall(n, ctx);
     } else if (n->fncall.is_explicit_conversion) {
         return rir_process_convertcall(n, ctx);
     } else { // normal function call

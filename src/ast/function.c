@@ -101,6 +101,7 @@ i_INLINE_INS struct ast_node* ast_fncall_args(const struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_genr(struct ast_node *n);
 i_INLINE_INS const struct type *ast_fncall_params_type(const struct ast_node *n);
 i_INLINE_INS bool ast_fncall_is_sum(const struct ast_node *n);
+i_INLINE_INS const struct type *ast_fncall_type(const struct ast_node *n);
 
 static bool do_ast_fncall_for_each_arg(struct ast_node *arg, fncall_args_cb cb, void *user_arg)
 {

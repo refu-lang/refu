@@ -94,7 +94,7 @@ static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
     ret = strmap_add(&ctx->valmap, &rv->id, lv);
     if (!ret) {
         if (errno == EEXIST) {
-            RF_ERROR("Tried to add an already existing rir val to llvm val mapping");
+            RF_ERROR("Tried to add an already existing rir value string to the llvm val mapping");
         } else {
             RF_ERROR("Failed to add a rir val to llvm val mapping");
         }

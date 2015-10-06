@@ -5,15 +5,15 @@
 #include <ir/rir_value.h>
 #include <ir/rir_ltype.h>
 
+// TODO: Think if this couldn't really just be yet another rir expression.
+
 struct rirtostr_ctx;
 
 //! A global variable declaration for a module
 struct rir_global {
-    
     //! The value of the variable
     struct rir_value val;
 };
-
 
 struct rir_object *rir_global_create(struct rir_ltype *type,
                                      const struct RFstring *name,
