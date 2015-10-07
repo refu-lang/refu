@@ -55,11 +55,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
         targetval = ctx->lhs;
     }
     // write the arg expression to the position
-    if (!(e = rir_binaryop_create_nonast(
-              RIR_EXPRESSION_WRITE,
-              targetval,
-              argexprval,
-              ctx->rirctx))) {
+    if (!(e = rir_write_create(targetval, argexprval, ctx->rirctx))) {
         RF_ERROR("Failed to create expression to write to an object's member");
         return false;
     }

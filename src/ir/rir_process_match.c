@@ -62,12 +62,7 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
         rtype, ctx->matched_case_rirtype, ctx->matched_case_rirobj, ctx->rirctx
     );
     // and now write that to the alloca
-    struct rir_expression *expr = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_WRITE,
-        rir_object_value(rec->rirobj),
-        val,
-        ctx->rirctx
-    );
+    struct rir_expression *expr = rir_write_create(rir_object_value(rec->rirobj), val, ctx->rirctx);
     rirctx_block_add(ctx->rirctx, expr);
 }
 
@@ -132,8 +127,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
 
     // if there is an assignment to a match expression
     if (ctx->last_assign_obj) {
-        struct rir_expression *e = rir_binaryop_create_nonast(
-            RIR_EXPRESSION_WRITE,
+        struct rir_expression *e = rir_write_create(
             rir_object_value(ctx->last_assign_obj),
             rir_ctx_lastval_get(ctx),
             ctx

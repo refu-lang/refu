@@ -34,29 +34,6 @@ enum binaryop_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
     return binaryop_operation_to_rir[op->type];
 }
 
-static inline bool rir_binaryop_init(struct rir_binaryop *rbop,
-                                     enum rir_expression_type type,
-                                     const struct rir_value *a,
-                                     const struct rir_value *b,
-                                     struct rir_ctx *ctx)
-{
-    if (type == RIR_EXPRESSION_WRITE &&
-        !rir_ltype_is_specific_elementary(b->type, ELEMENTARY_TYPE_STRING) &&
-        b->type->is_pointer) {
-        // for write operations on a memory location first create a read from memory.
-        // string are as usually an exception, at least for now
-        struct rir_expression *rexpr = rir_read_create(b, ctx);
-        if (!rexpr) {
-            return false;
-        }
-        rirctx_block_add(ctx, rexpr);
-        b = &rexpr->val;
-    }
-    rbop->a = a;
-    rbop->b = b;
-    return true;
-}
-
 struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
                                                   const struct rir_value *a,
                                                   const struct rir_value *b,
@@ -66,9 +43,8 @@ struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
     if (!ret) {
         goto fail;
     }
-    if (!rir_binaryop_init(&ret->expr.binaryop, type, a, b, ctx)) {
-        goto fail;
-    }
+    ret->expr.binaryop.a = a;
+    ret->expr.binaryop.b = b;
     if (!rir_expression_init(ret, type, ctx)) {
         goto fail;
     }
@@ -158,6 +134,7 @@ fail:
 bool rir_process_binaryop(const struct ast_binaryop *op,
                           struct rir_ctx *ctx)
 {
+    struct rir_object *obj = NULL;
     // special treatment for member access
     if (op->type == BINARYOP_MEMBER_ACCESS) {
         return rir_process_memberaccess(op, ctx);
@@ -168,30 +145,37 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         RF_ERROR("A left value should have been created for a binary operation");
         goto fail;
     }
-    if (op->type == BINARYOP_ASSIGN) {
+    if (op->type == BINARYOP_ASSIGN) { // set the last assigned to object
         ctx->last_assign_obj = ctx->returned_obj;
     }
-    if (!rir_process_ast_node(op->right, ctx)) {
+    struct rir_value *rval = rir_process_ast_node_getval(op->right, ctx);
+    if (!rval) {
         goto fail;
     }
     if (op->right->type == AST_FUNCTION_CALL) {
         // for function call rhs all of the writting should have already been done
         RIRCTX_RETURN_EXPR(ctx, true, NULL);
     }
-    if (op->type == BINARYOP_ASSIGN && op->right->type == AST_MATCH_EXPRESSION) {
-        // for assignments from a match expression we should be done
-        RIRCTX_RETURN_EXPR(ctx, true, NULL);
-    }
-    struct rir_value *rval = rir_ctx_lastval_get(ctx);
-    struct rir_object *e = rir_binaryop_create_obj(op, lval, rval, ctx);
-    if (!e) {
-        RF_ERROR("Failed to create a rir binary operation");
-        goto fail;
+
+    if (op->type == BINARYOP_ASSIGN) { // assignment is a special case
+        if (op->right->type == AST_MATCH_EXPRESSION) {
+            // for assignments from a match expression we should be done
+            RIRCTX_RETURN_EXPR(ctx, true, NULL);
+        }
+        // else, create a rir_write
+        if (!(obj = rir_write_create_obj(lval, rval, ctx))) {
+            goto fail;
+        }
+    } else { // normal binary operator processing
+        if (!(obj = rir_binaryop_create_obj(op, lval, rval, ctx))) {
+            RF_ERROR("Failed to create a rir binary operation");
+            goto fail;
+        }
     }
 
-    rirctx_block_add(ctx, &e->expr);
+    rirctx_block_add(ctx, &obj->expr);
     ctx->last_assign_obj = NULL;
-    RIRCTX_RETURN_EXPR(ctx, true, e);
+    RIRCTX_RETURN_EXPR(ctx, true, obj);
 
 fail:
     ctx->last_assign_obj = NULL;
@@ -209,7 +193,6 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_CMP_GE] = RF_STRING_STATIC_INIT("cmpge"),
     [RIR_EXPRESSION_CMP_LT] = RF_STRING_STATIC_INIT("cmplt"),
     [RIR_EXPRESSION_CMP_LE] = RF_STRING_STATIC_INIT("cmple"),
-    [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
 };
 
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

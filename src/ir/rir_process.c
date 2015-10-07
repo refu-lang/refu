@@ -37,8 +37,7 @@ static bool rir_process_return(const struct ast_node *n,
         RF_ERROR("Could not find the return alloca of a function");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    struct rir_expression *e = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_WRITE,
+    struct rir_expression *e = rir_write_create(
         &ctx->current_fn->retslot_expr->val,
         ret_val,
         ctx

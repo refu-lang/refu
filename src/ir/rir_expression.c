@@ -92,6 +92,55 @@ struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
     return obj ? &obj->expr : NULL;
 }
 
+static inline bool rir_write_init(struct rir_write *w,
+                                  const struct rir_value *memory_to_write,
+                                  const struct rir_value *writeval,
+                                  struct rir_ctx *ctx)
+{
+    // for write operations on a memory location first create a read from memory.
+    // string are as usually an exception, at least for now
+    if (!rir_ltype_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
+        struct rir_expression *rexpr = rir_read_create(writeval, ctx);
+        if (!rexpr) {
+            return false;
+        }
+        rirctx_block_add(ctx, rexpr);
+        writeval = &rexpr->val;
+    }
+    w->memory = memory_to_write;
+    w->writeval = writeval;
+    return true;
+}
+
+struct rir_object *rir_write_create_obj(const struct rir_value *memory_to_write,
+                                        const struct rir_value *writeval,
+                                        struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    if (!ret) {
+        return NULL;
+    }
+    if (!rir_write_init(&ret->expr.write, memory_to_write, writeval, ctx)) {
+        goto fail;
+    }
+    if (!rir_expression_init(ret, RIR_EXPRESSION_WRITE, ctx)) {
+        goto fail;
+    }
+    return ret;
+
+fail:
+    free(ret);
+    return NULL;
+}
+
+struct rir_expression *rir_write_create(const struct rir_value *memory_to_write,
+                                        const struct rir_value *writeval,
+                                        struct rir_ctx *ctx)
+{
+    struct rir_object *obj = rir_write_create_obj(memory_to_write, writeval, ctx);
+    return obj ? &obj->expr : NULL;
+}
+
 struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
@@ -325,6 +374,17 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
+    case RIR_EXPRESSION_WRITE:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT "write(" RF_STR_PF_FMT ", "RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
+                    RF_STR_PF_ARG(rir_ltype_string(e->write.memory->type)),
+                    RF_STR_PF_ARG(rir_value_string(e->write.memory)),
+                    RF_STR_PF_ARG(rir_value_string(e->write.writeval)))
+            )) {
+            goto end;
+        }
+        break;
     case RIR_EXPRESSION_CONVERT:
         if (!rf_stringx_append(
                 ctx->rir->buff,
@@ -351,7 +411,6 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_CMP_GT:
     case RIR_EXPRESSION_CMP_LE:
     case RIR_EXPRESSION_CMP_LT:
-    case RIR_EXPRESSION_WRITE:
         if (!rir_binaryop_tostring(ctx, e)) {
             goto end;
         }

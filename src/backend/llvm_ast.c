@@ -255,6 +255,18 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         llvmval = LLVMBuildLoad(ctx->builder, bllvm_value_from_rir_value_or_die(expr->read.memory, ctx), "");
         break;
     case RIR_EXPRESSION_WRITE:
+    {
+        LLVMValueRef dstmemoryval = bllvm_value_from_rir_value_or_die(expr->write.memory, ctx);
+        LLVMValueRef fromval = bllvm_value_from_rir_value_or_die(expr->write.writeval, ctx);
+        // Writting to a string needs special treatment right now
+        if (rir_ltype_is_specific_elementary(expr->write.memory->type, ELEMENTARY_TYPE_STRING)) {
+            bllvm_copy_string(fromval, dstmemoryval, ctx);
+            llvmval = dstmemoryval;
+        } else {
+            llvmval = LLVMBuildStore(ctx->builder, fromval, dstmemoryval);
+        }
+    }
+        break;
     case RIR_EXPRESSION_ADD:
     case RIR_EXPRESSION_SUB:
     case RIR_EXPRESSION_MUL:
