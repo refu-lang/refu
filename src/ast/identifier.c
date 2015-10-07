@@ -42,8 +42,7 @@ const struct RFstring *ast_identifier_analyzed_str(const struct ast_node *n)
 {
     RF_ASSERT(n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
               "Unexpected ast node type");
-    RF_ASSERT(n->state >= AST_NODE_STATE_ANALYZER_PASS1,
-              "calling function at wrong part of processing pipeline");
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_ANALYZER_PASS1);
 
     RF_CRITICAL_FAIL("function not implemented yet");
     return NULL;

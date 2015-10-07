@@ -64,7 +64,7 @@ i_INLINE_DECL enum fndecl_position ast_fndecl_position_get(const struct ast_node
 i_INLINE_DECL unsigned ast_fndecl_argsnum_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
-    RF_ASSERT(n->state >= AST_NODE_STATE_RIR_END, "Getter() called before analysis ended."); 
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
     return n->fndecl.args_num;
 }
 
@@ -135,6 +135,7 @@ i_INLINE_DECL struct ast_node* ast_fncall_genr(struct ast_node *n)
 i_INLINE_DECL const struct type *ast_fncall_params_type(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
     return n->fncall.params_type;
 }
 
@@ -145,6 +146,7 @@ i_INLINE_DECL const struct type *ast_fncall_params_type(const struct ast_node *n
 i_INLINE_DECL bool ast_fncall_is_sum(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
     return n->fncall.sumcall;
 }
 
@@ -155,6 +157,7 @@ i_INLINE_DECL bool ast_fncall_is_sum(const struct ast_node *n)
 i_INLINE_DECL const struct type *ast_fncall_type(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
     return n->fncall.declared_type;
 }
 

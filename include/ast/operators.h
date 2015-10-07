@@ -67,6 +67,7 @@ i_INLINE_DECL struct ast_node *ast_binaryop_right(const struct ast_node *op)
 i_INLINE_DECL const struct type *ast_binaryop_common_type(struct ast_node *op)
 {
     AST_NODE_ASSERT_TYPE(op, AST_BINARY_OPERATOR);
+    AST_NODE_ASSERT_STATE(op, AST_NODE_STATE_RIR_END);
     return op->binaryop.common_type;
 }
 

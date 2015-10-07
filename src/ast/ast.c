@@ -11,35 +11,42 @@
 #include <RFmemory.h>
 
 static const struct RFstring ast_type_strings[] = {
-    RF_STRING_STATIC_INIT("root"),
-    RF_STRING_STATIC_INIT("block"),
-    RF_STRING_STATIC_INIT("variable declaration"),
-    RF_STRING_STATIC_INIT("return statement"),
-    RF_STRING_STATIC_INIT("type declaration"),
-    RF_STRING_STATIC_INIT("type operator"),
-    RF_STRING_STATIC_INIT("type leaf"),
-    RF_STRING_STATIC_INIT("type description"),
-    RF_STRING_STATIC_INIT("typeclass declaration"),
-    RF_STRING_STATIC_INIT("typeclass instance"),
-    RF_STRING_STATIC_INIT("generic declaration"),
-    RF_STRING_STATIC_INIT("generic type"),
-    RF_STRING_STATIC_INIT("generic attribute"),
-    RF_STRING_STATIC_INIT("function declaration"),
-    RF_STRING_STATIC_INIT("function implementation"),
-    RF_STRING_STATIC_INIT("function call"),
-    RF_STRING_STATIC_INIT("array reference"),
-    RF_STRING_STATIC_INIT("conditional branch"),
-    RF_STRING_STATIC_INIT("if expression"),
-    RF_STRING_STATIC_INIT("match expression"),
-    RF_STRING_STATIC_INIT("match case"),
-    RF_STRING_STATIC_INIT("module"),
-    RF_STRING_STATIC_INIT("import statement"),
-    RF_STRING_STATIC_INIT("annotated identifier"),
-    RF_STRING_STATIC_INIT("binary operator"),
-    RF_STRING_STATIC_INIT("unary operator"),
-    RF_STRING_STATIC_INIT("string literal"),
-    RF_STRING_STATIC_INIT("identifier"),
-    RF_STRING_STATIC_INIT("constant number"),
+    [AST_ROOT] = RF_STRING_STATIC_INIT("root"),
+    [AST_BLOCK] = RF_STRING_STATIC_INIT("block"),
+    [AST_VARIABLE_DECLARATION] = RF_STRING_STATIC_INIT("variable declaration"),
+    [AST_RETURN_STATEMENT] = RF_STRING_STATIC_INIT("return statement"),
+    [AST_TYPE_DECLARATION] = RF_STRING_STATIC_INIT("type declaration"),
+    [AST_TYPE_OPERATOR] = RF_STRING_STATIC_INIT("type operator"),
+    [AST_TYPE_LEAF] = RF_STRING_STATIC_INIT("type leaf"),
+    [AST_TYPE_DESCRIPTION] = RF_STRING_STATIC_INIT("type description"),
+    [AST_TYPECLASS_DECLARATION] = RF_STRING_STATIC_INIT("typeclass declaration"),
+    [AST_TYPECLASS_INSTANCE] = RF_STRING_STATIC_INIT("typeclass instance"),
+    [AST_GENERIC_DECLARATION] = RF_STRING_STATIC_INIT("generic declaration"),
+    [AST_GENERIC_TYPE] = RF_STRING_STATIC_INIT("generic type"),
+    [AST_GENERIC_ATTRIBUTE] = RF_STRING_STATIC_INIT("generic attribute"),
+    [AST_FUNCTION_DECLARATION] = RF_STRING_STATIC_INIT("function declaration"),
+    [AST_FUNCTION_IMPLEMENTATION] = RF_STRING_STATIC_INIT("function implementation"),
+    [AST_FUNCTION_CALL] = RF_STRING_STATIC_INIT("function call"),
+    [AST_ARRAY_REFERENCE] = RF_STRING_STATIC_INIT("array reference"),
+    [AST_CONDITIONAL_BRANCH] = RF_STRING_STATIC_INIT("conditional branch"),
+    [AST_IF_EXPRESSION] = RF_STRING_STATIC_INIT("if expression"),
+    [AST_MATCH_EXPRESSION] = RF_STRING_STATIC_INIT("match expression"),
+    [AST_MATCH_CASE] = RF_STRING_STATIC_INIT("match case"),
+    [AST_MODULE] = RF_STRING_STATIC_INIT("module"),
+    [AST_IMPORT] = RF_STRING_STATIC_INIT("import statement"),
+    [AST_XIDENTIFIER] = RF_STRING_STATIC_INIT("annotated identifier"),
+    [AST_BINARY_OPERATOR] = RF_STRING_STATIC_INIT("binary operator"),
+    [AST_UNARY_OPERATOR] = RF_STRING_STATIC_INIT("unary operator"),
+    [AST_STRING_LITERAL] = RF_STRING_STATIC_INIT("string literal"),
+    [AST_IDENTIFIER] = RF_STRING_STATIC_INIT("identifier"),
+    [AST_CONSTANT] = RF_STRING_STATIC_INIT("constant number"),
+};
+
+static const struct RFstring ast_state_strings[] = {
+    [AST_NODE_STATE_CREATED] = RF_STRING_STATIC_INIT("CREATED"),
+    [AST_NODE_STATE_AFTER_PARSING] = RF_STRING_STATIC_INIT("AFTER_PARSING"),
+    [AST_NODE_STATE_ANALYZER_PASS1] = RF_STRING_STATIC_INIT("ANALYZER_PASS1"),
+    [AST_NODE_STATE_RIR_END] = RF_STRING_STATIC_INIT("RIR_END")
 };
 
 #define AST_NODE_IS_LEAF(node_) ((node_)->type >= AST_STRING_LITERAL)
@@ -201,6 +208,11 @@ i_INLINE_INS const struct type *ast_node_get_type_or_nil(const struct ast_node *
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {
     return &ast_type_strings[type];
+}
+
+const struct RFstring *ast_nodestate_str(enum ast_node_state state)
+{
+    return &ast_state_strings[state];
 }
 
 const struct RFstring *ast_node_str(const struct ast_node *n)

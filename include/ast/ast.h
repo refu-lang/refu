@@ -33,6 +33,15 @@
               RF_STR_PF_ARG(ast_nodetype_str(type_)),                   \
               RF_STR_PF_ARG(ast_node_str(node_)))
 
+/**
+ * Performs an assert on the state of the AST node in debug mode
+ */
+#define AST_NODE_ASSERT_STATE(node_, state_)                            \
+    RF_ASSERT((node_)->state >= state_, "Illegal ast node state. Expected \"" \
+              "state >= "RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"", \
+              RF_STR_PF_ARG(ast_nodestate_str(state_)),                 \
+              RF_STR_PF_ARG(ast_nodestate_str((node_)->state)))
+
 #define AST_PRINT_DEPTHMUL 4
 
 struct ast_root {
@@ -278,6 +287,7 @@ i_INLINE_DECL const struct type *ast_node_get_type_or_nil(const struct ast_node 
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);
+const struct RFstring *ast_nodestate_str(enum ast_node_state state);
 const struct RFstring *ast_node_str(const struct ast_node *n);
 
 struct symbol_table *ast_node_symbol_table_get(struct ast_node *n);
