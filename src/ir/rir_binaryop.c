@@ -34,6 +34,32 @@ enum binaryop_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
     return binaryop_operation_to_rir[op->type];
 }
 
+static inline bool rir_binaryop_init(struct rir_binaryop *op,
+                                     const struct rir_value *a,
+                                     const struct rir_value *b,
+                                     struct rir_ctx *ctx)
+{
+    struct rir_expression *e;
+    // for operations on pointers, first create a read from memory
+    if (a->type->is_pointer) {
+        if (!(e = rir_read_create(a, ctx))) {
+            return false;
+        }
+        rirctx_block_add(ctx, e);
+        a = &e->val;
+    }
+    if (b->type->is_pointer) {
+        if (!(e = rir_read_create(b, ctx))) {
+            return false;
+        }
+        rirctx_block_add(ctx, e);
+        b = &e->val;
+    }
+    op->a = a;
+    op->b = b;
+    return true;
+}
+
 struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
                                                   const struct rir_value *a,
                                                   const struct rir_value *b,
@@ -43,8 +69,9 @@ struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
     if (!ret) {
         goto fail;
     }
-    ret->expr.binaryop.a = a;
-    ret->expr.binaryop.b = b;
+    if (!rir_binaryop_init(&ret->expr.binaryop, a, b, ctx)) {
+        goto fail;
+    }
     if (!rir_expression_init(ret, type, ctx)) {
         goto fail;
     }
