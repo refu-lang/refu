@@ -17,7 +17,7 @@ struct rir_global {
 
 struct rir_object *rir_global_create(struct rir_ltype *type,
                                      const struct RFstring *name,
-                                     void *value,
+                                     const void *value,
                                      struct rir_ctx *ctx);
 void rir_global_deinit(struct rir_global *global);
 bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g);
@@ -31,5 +31,7 @@ i_INLINE_DECL struct rir_ltype *rir_global_type(const struct rir_global *g)
 {
     return g->val.type;
 }
+
+struct rir_object *rir_global_add_string(struct rir_ctx *ctx, const struct RFstring *s);
 
 #endif

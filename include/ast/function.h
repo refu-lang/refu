@@ -4,6 +4,7 @@
 #include <ast/ast.h>
 #include <Utils/sanity.h>
 #include <ast/identifier.h>
+#include <types/type_decls.h>
 
 #include <analyzer/symbol_table.h>
 
@@ -159,6 +160,45 @@ i_INLINE_DECL const struct type *ast_fncall_type(const struct ast_node *n)
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
     return n->fncall.declared_type;
+}
+
+/**
+ * @return true if this function call is constructor call
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL bool ast_fncall_is_ctor(const struct ast_node *n)
+{
+    const struct type *t = ast_fncall_type(n);
+    return t ? t->category == TYPE_CATEGORY_DEFINED : false;
+}
+
+/**
+ * @return true if this ast_node is a constructor call
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL bool ast_node_is_ctor(const struct ast_node *n)
+{
+    return n->type == AST_FUNCTION_CALL ? ast_fncall_is_ctor(n) : false;
+}
+
+/**
+ * @return true if this function call is a conversion call
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL bool ast_fncall_is_conversion(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
+    return n->fncall.is_explicit_conversion;
+}
+
+/**
+ * @return true if this ast_node is a conversion call
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL bool ast_node_is_conversion(const struct ast_node *n)
+{
+    return n->type == AST_FUNCTION_CALL ? ast_fncall_is_conversion(n) : false;
 }
 
 typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);

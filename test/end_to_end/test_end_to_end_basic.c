@@ -182,7 +182,7 @@ START_TEST (test_function_creation_and_call_2arg) {
     };
     ck_end_to_end_run(inputs, 20, NULL);
 } END_TEST
-#if 0
+
 START_TEST (test_simple_if) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -515,7 +515,7 @@ START_TEST (test_explicit_conversion_to_u16) {
 START_TEST (test_explicit_conversion_to_string) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
-            "test_input_file.rf",
+        "test_input_file.rf",
 
         "fn main()->u32{\n"
         "    a:string = string(42)\n"
@@ -656,7 +656,7 @@ START_TEST (test_matchexpr_in_functions) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("change friends");
     ck_end_to_end_run(inputs, 0, &output);
 } END_TEST
-#endif
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -688,7 +688,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_functions, test_function_creation_and_call_noarg);
     tcase_add_test(st_functions, test_function_creation_and_call_1arg);
     tcase_add_test(st_functions, test_function_creation_and_call_2arg);
-#if 0
+
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,
                               setup_end_to_end_tests,
@@ -734,17 +734,15 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_match_expr, test_matchexpr_1);
     tcase_add_test(st_match_expr, test_matchexpr_2);
     tcase_add_test(st_match_expr, test_matchexpr_in_functions);
-#endif
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_functions);
-#if 0
     suite_add_tcase(s, st_control_flow);
     suite_add_tcase(s, st_comparisons);
     suite_add_tcase(s, st_explicit_conversions);
     suite_add_tcase(s, st_unary_operations);
     suite_add_tcase(s, st_match_expr);
-#endif
+
     return s;
 }

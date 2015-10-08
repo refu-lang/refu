@@ -19,6 +19,7 @@ struct rir {
     //! A list of all rir types of the file
     struct rir_types_list *rir_types_list;
     //! Array of all global variable declarations for the module
+    //! TODO: Split out a strmap for global string literals, and keep the rest for other type of global variables
     struct {darray(struct rir_object*);} globals;
     //! Pointers to values that don't belong to any rir object. Will be destroyed at the end
     struct {darray(struct rir_value*);} free_values;

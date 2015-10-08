@@ -9,6 +9,7 @@
 #include <ir/rir_process.h>
 #include <ir/rir_utils.h>
 #include <ast/operators.h>
+#include <ast/function.h>
 #include <types/type.h>
 
 
@@ -59,18 +60,18 @@ static inline bool rir_binaryop_init(struct rir_binaryop *op,
     // in addition if any of the two operands are not the same make a conversion
     // of the largest type, to the smallest type.
     if (!rir_ltype_equal(a->type, b->type)) {
+        struct rir_object *obj;
         if (rir_ltype_bytesize(a->type) >= rir_ltype_bytesize(b->type)) {
-            if (!(e = rir_convert_create(a, b->type, ctx))) {
+            if (!(obj = rir_convert_create_obj_maybeadd(a, b->type, ctx))) {
                 return false;
             }
-            a = &e->val;
+            a = rir_object_value(obj);
         } else {
-            if (!(e = rir_convert_create(b, a->type, ctx))) {
+            if (!(obj = rir_convert_create_obj_maybeadd(b, a->type, ctx))) {
                 return false;
             }
-            b = &e->val;
+            b = rir_object_value(obj);
         }
-        rirctx_block_add(ctx, e);
     }
     op->a = a;
     op->b = b;
@@ -196,14 +197,14 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
     if (!rval) {
         goto fail;
     }
-    if (op->right->type == AST_FUNCTION_CALL) {
-        // for function call rhs all of the writting should have already been done
-        RIRCTX_RETURN_EXPR(ctx, true, NULL);
-    }
 
     if (op->type == BINARYOP_ASSIGN) { // assignment is a special case
-        if (op->right->type == AST_MATCH_EXPRESSION) {
-            // for assignments from a match expression we should be done
+        if (op->right->type == AST_MATCH_EXPRESSION ||
+            (op->right->type == AST_FUNCTION_CALL &&
+             (ast_fncall_is_ctor(op->right) ||
+              !ast_fncall_is_conversion(op->right)
+             ))) {
+            // assignment from match expression, constructor calll need no more processing
             RIRCTX_RETURN_EXPR(ctx, true, NULL);
         }
         // else, create a rir_write

@@ -251,15 +251,10 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rf_objset_iter it;
     struct RFstring *s;
     rf_objset_foreach(&m->string_literals_set, &it, s) {
-        RFS_PUSH();
-        struct rir_object *gstring = rir_global_create(
-            rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
-            RFS("gstr_%u", rf_hash_str_stable(s, 0)),
-            s,
-            &ctx
-        );
-        darray_append(r->globals, gstring);
-        RFS_POP();
+        if (!rir_global_add_string(&ctx, s)) {
+            RF_ERROR("Failed to a global string literal to the RIR");
+            goto end;
+        }
     }
 
     // for each non elementary, non sum-type rir type create a typedef

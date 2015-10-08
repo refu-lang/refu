@@ -138,6 +138,7 @@ if local_env['LANG_BACKEND'] == 'LLVM':
         'backend/llvm_utils.c',
         'backend/llvm_globals.c',
         'backend/llvm_operators.c',
+        'backend/llvm_conversion.c',
         'backend/llvm_functions.c',
         'backend/llvm_types.c',
         'backend/llvm_values.c',

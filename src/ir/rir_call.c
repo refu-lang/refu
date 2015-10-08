@@ -205,31 +205,6 @@ fail:
     return NULL;
 }
 
-static bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
-{
-    struct ast_node *args = ast_fncall_args(n);
-    RF_ASSERT(ast_node_get_type(args, AST_TYPERETR_DEFAULT)->category != TYPE_CATEGORY_OPERATOR,
-              "A conversion call should only have a single argument");
-    // process that argument
-    const struct rir_value *argexprval = rir_process_ast_node_getreadval(args, ctx);
-    if (!argexprval) {
-        RF_ERROR("Could not create rir expression from conversion call argument");
-        RIRCTX_RETURN_EXPR(ctx, false, NULL);
-    }
-    // create the conversion
-    struct rir_object *obj = rir_convert_create_obj(
-        argexprval,
-        rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
-        ctx
-    );
-    if (!obj) {
-        RF_ERROR("Failed to create rir conversion expression");
-        RIRCTX_RETURN_EXPR(ctx, false, NULL);
-    }
-    rirctx_block_add(ctx, &obj->expr);
-    RIRCTX_RETURN_EXPR(ctx, true, obj);
-}
-
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
 {
     const struct RFstring *fn_name = ast_fncall_name(n);

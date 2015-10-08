@@ -1,6 +1,8 @@
 #include <ir/rir_global.h>
 #include <ir/rir.h>
 #include <ir/rir_object.h>
+
+#include <Utils/hash.h>
 #include <String/rf_str_core.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_manipulationx.h>
@@ -8,7 +10,7 @@
 static bool rir_global_init(struct rir_object *obj,
                             struct rir_ltype *type,
                             const struct RFstring *name,
-                            void *value)
+                            const void *value)
 {
     // only elementary types for now
     if (!rir_ltype_is_elementary(type)) {
@@ -26,7 +28,7 @@ static bool rir_global_init(struct rir_object *obj,
 
 struct rir_object *rir_global_create(struct rir_ltype *type,
                                      const struct RFstring *name,
-                                     void *value,
+                                     const void *value,
                                      struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_GLOBAL, ctx->rir);
@@ -64,3 +66,20 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
 
 i_INLINE_INS const struct RFstring *rir_global_name(const struct rir_global *g);
 i_INLINE_INS struct rir_ltype *rir_global_type(const struct rir_global *g);
+
+
+struct rir_object *rir_global_add_string(struct rir_ctx *ctx, const struct RFstring *s)
+{
+    RFS_PUSH();
+    struct rir_object *gstring = rir_global_create(
+        rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
+        RFS("gstr_%u", rf_hash_str_stable(s, 0)),
+        s,
+        ctx
+    );
+    if (gstring) { // success
+        darray_append(ctx->rir->globals, gstring);
+    }
+    RFS_POP();
+    return gstring;
+}

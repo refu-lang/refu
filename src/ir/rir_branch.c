@@ -55,7 +55,7 @@ bool rir_branch_tostring(struct rirtostr_ctx *ctx, const struct rir_branch *b)
 }
 
 bool rir_condbranch_init(struct rir_condbranch *b,
-                         struct rir_value *cond,
+                         const struct rir_value *cond,
                          struct rir_value *taken,
                          struct rir_value *fallthrough)
 {
@@ -65,7 +65,7 @@ bool rir_condbranch_init(struct rir_condbranch *b,
     return true;
 }
 
-struct rir_condbranch *rir_condbranch_create(struct rir_value *cond,
+struct rir_condbranch *rir_condbranch_create(const struct rir_value *cond,
                                              struct rir_value *taken,
                                              struct rir_value *fallthrough)
 {

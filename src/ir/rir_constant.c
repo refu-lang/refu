@@ -64,20 +64,26 @@ bool rir_constantval_init_fromint32(struct rir_value *v, int32_t n)
     return rir_value_constant_init(v, &c, ELEMENTARY_TYPE_INT_32);
 }
 
+const struct RFstring *rir_constant_string(const struct rir_value *val)
+{
+    RF_ASSERT(val->category == RIR_VALUE_CONSTANT, "Expected constant");
+    switch (val->constant.type) {
+    case CONSTANT_NUMBER_INTEGER:
+        return RFS("%" PRId64,val->constant.value.integer);
+    case CONSTANT_NUMBER_FLOAT:
+        return RFS("%.4f", val->constant.value.floating);
+    case CONSTANT_BOOLEAN:
+        return RFS("%s", val->constant.value.boolean ? "true" : "false");
+    }
+    RF_CRITICAL_FAIL("Illegal constan type. Should never happen");
+    return NULL;
+}
+
 bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
-    bool ret = false;
-    RF_ASSERT(e->type == RIR_EXPRESSION_CONSTANT, "Expected constant");
-    switch (e->val.constant.type) {
-    case CONSTANT_NUMBER_INTEGER:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%" PRId64, e->val.constant.value.integer));
-        break;
-    case CONSTANT_NUMBER_FLOAT:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%f", e->val.constant.value.floating));
-        break;
-    case CONSTANT_BOOLEAN:
-        ret = rf_stringx_append(ctx->rir->buff, RFS("%s", e->val.constant.value.boolean ? "true" : "false"));
-        break;
-    }
+    bool ret;
+    RFS_PUSH();
+    ret = rf_stringx_append(ctx->rir->buff, rir_constant_string(&e->val));
+    RFS_POP();
     return ret;
 }

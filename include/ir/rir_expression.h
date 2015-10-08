@@ -36,7 +36,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_CMP_LT,
     RIR_EXPRESSION_LOGIC_AND,
     RIR_EXPRESSION_LOGIC_OR,
-    // PLACEHOLDER, should not make it into actual production
+    // PLACEHOLDER, should not make it into any expression type
     RIR_EXPRESSION_PLACEHOLDER
 };
 

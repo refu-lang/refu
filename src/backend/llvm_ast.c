@@ -47,6 +47,7 @@
 #include "llvm_functions.h"
 #include "llvm_types.h"
 #include "llvm_values.h"
+#include "llvm_conversion.h"
 
 LLVMTypeRef bllvm_type_from_type(const struct type *type,
                                  struct llvm_traversal_ctx *ctx)
@@ -128,34 +129,6 @@ LLVMValueRef bllvm_cast_value_to_elementary_maybe(LLVMValueRef val,
               "Casting only to elementary types supported for now");
     LLVMTypeRef common_type = bllvm_elementary_to_type(type_elementary(t), ctx);
     return bllvm_cast_value_to_type_maybe(val, common_type, ctx);
-}
-
-static struct LLVMOpaqueValue *bllvm_compile_conversion(const struct rir_expression *expr,
-                                                        struct llvm_traversal_ctx *ctx)
-{
-    struct rir_ltype *fromtype = expr->convert.val->type;
-    const struct rir_ltype *totype = expr->convert.type;
-    LLVMValueRef llvm_conv_val = bllvm_value_from_rir_value_or_die(expr->convert.val, ctx);
-    LLVMTypeRef llvm_totype = bllvm_type_from_rir_ltype(totype, ctx);
-    LLVMValueRef llvm_ret_val = NULL;
-    if (rir_ltype_is_elementary(fromtype)) {
-        if (elementary_type_is_float(fromtype->etype)) {
-            llvm_ret_val =  LLVMBuildFPCast(ctx->builder, llvm_conv_val, llvm_totype, "");
-        } else if (elementary_type_is_int(fromtype->etype)) {
-            size_t fromsize = rir_ltype_bytesize(fromtype);
-            size_t tosize = rir_ltype_bytesize(totype);
-            if (fromsize < tosize) {
-                llvm_ret_val = LLVMBuildZExt(ctx->builder, llvm_conv_val, llvm_totype, "");
-            } else { //greater or equal size
-                llvm_ret_val = LLVMBuildTruncOrBitCast(ctx->builder, llvm_conv_val, llvm_totype, "");
-            }
-        } else {
-            RF_CRITICAL_FAIL("Unknown type of conversion");
-        }
-    } else {
-        RF_CRITICAL_FAIL("Unknown type of conversion");
-    }
-    return llvm_ret_val;
 }
 
 struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n,

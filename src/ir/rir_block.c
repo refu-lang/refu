@@ -18,7 +18,7 @@ bool rir_block_exit_init_branch(struct rir_block_exit *exit,
 }
 
 bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
-                                    struct rir_value *cond,
+                                    const struct rir_value *cond,
                                     struct rir_value *taken,
                                     struct rir_value *fallthrough)
 {
