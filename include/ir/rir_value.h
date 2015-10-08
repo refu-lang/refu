@@ -5,6 +5,7 @@
 #include <Data_Structures/darray.h>
 #include <String/rf_str_decl.h>
 #include <ast/constants_decls.h>
+#include <types/type_decls.h>
 
 struct rir;
 struct rir_ctx;
@@ -50,7 +51,17 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
 bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value);
 bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
 bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, bool function_beginning, struct rir_ctx *ctx);
-bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c);
+/**
+ * Initialize a constant value
+ * @param v        The value to initialize
+ * @param c        The ast_constant from whicn to populate the value
+ * @param type     Optional type information regarding the constant. This allows us
+ *                 to have constants smaller than i64 or f64. If not given
+ *                 (value = ELEMENTARY_TYPE_TYPES_COUNT) then the
+ *                 biggest type for the constant is used.
+ * @return         true for success
+ */
+bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, enum elementary_type type);
 void rir_value_nil_init(struct rir_value *v);
 
 void rir_value_deinit(struct rir_value *v);

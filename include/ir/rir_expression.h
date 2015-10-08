@@ -63,13 +63,6 @@ struct rir_return {
     const struct rir_expression *val;
 };
 
-struct rir_convert {
-    //! Type to convert to
-    const struct rir_ltype *totype;
-    //! Value to convert
-    const struct rir_value *convval;
-};
-
 struct rir_binaryop {
     const struct rir_value *a;
     const struct rir_value *b;
@@ -91,6 +84,16 @@ struct rir_write {
     const struct rir_value *memory;
     //! Value to write into that area
     const struct rir_value *writeval;
+};
+
+/**
+ * Converts a value from one type to another
+ */
+struct rir_convert {
+    //! Value to convert
+    const struct rir_value *val;
+    //! Type to convert the value to
+    const struct rir_ltype *type;
 };
 
 /**
@@ -163,8 +166,8 @@ struct rir_object *rir_return_create(const struct rir_expression *val, struct ri
 void rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val);
 
-struct rir_expression *rir_convert_create(const struct rir_ltype *totype,
-                                          const struct rir_value *convval,
+struct rir_expression *rir_convert_create(const struct rir_value *convval,
+                                          const struct rir_ltype *totype,
                                           struct rir_ctx *ctx);
 
 struct rir_expression {

@@ -83,7 +83,7 @@ static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct 
             return false;
         }
         // create code to set the  union's index with the matching type
-        struct rir_value *rir_idx_const = rir_constantval_create_fromint(union_idx, ctx->rir);
+        struct rir_value *rir_idx_const = rir_constantval_create_fromint32(union_idx, ctx->rir);
         struct rir_expression *e = rir_setunionidx_create(objmemory, rir_idx_const, ctx);
         if (!e) {
             return false;
@@ -207,8 +207,8 @@ static bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ct
     }
     // create the conversion
     struct rir_expression *e = rir_convert_create(
-        rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
         argexprval,
+        rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
         ctx
     );
     if (!e) {

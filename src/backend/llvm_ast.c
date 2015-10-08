@@ -133,9 +133,9 @@ LLVMValueRef bllvm_cast_value_to_elementary_maybe(LLVMValueRef val,
 static struct LLVMOpaqueValue *bllvm_compile_conversion(const struct rir_expression *expr,
                                                         struct llvm_traversal_ctx *ctx)
 {
-    struct rir_ltype *fromtype = expr->convert.convval->type;
-    const struct rir_ltype *totype = expr->convert.totype;
-    LLVMValueRef llvm_conv_val = bllvm_value_from_rir_value_or_die(expr->convert.convval, ctx);
+    struct rir_ltype *fromtype = expr->convert.val->type;
+    const struct rir_ltype *totype = expr->convert.type;
+    LLVMValueRef llvm_conv_val = bllvm_value_from_rir_value_or_die(expr->convert.val, ctx);
     LLVMTypeRef llvm_totype = bllvm_type_from_rir_ltype(totype, ctx);
     LLVMValueRef llvm_ret_val = NULL;
     if (rir_ltype_is_elementary(fromtype)) {
@@ -158,7 +158,9 @@ static struct LLVMOpaqueValue *bllvm_compile_conversion(const struct rir_express
     return llvm_ret_val;
 }
 
-struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n)
+struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n,
+                                               struct rir_ltype *type,
+                                               struct llvm_traversal_ctx *ctx)
 {
     int64_t int_val;
     double float_val;
@@ -168,8 +170,8 @@ struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n)
             RF_ERROR("Failed to convert a constant num node to integer number for LLVM");
         }
         return (int_val >= 0)
-            ? LLVMConstInt(LLVMInt32Type(), int_val, 0)
-            : LLVMConstNeg(LLVMConstInt(LLVMInt32Type(), (unsigned long long) -int_val, 0));
+            ? LLVMConstInt(bllvm_elementary_to_type(type->etype, ctx), int_val, 0)
+            : LLVMConstNeg(LLVMConstInt(bllvm_elementary_to_type(type->etype, ctx), (unsigned long long) -int_val, 0));
     case CONSTANT_NUMBER_FLOAT:
         if (!ast_constant_get_float(n, &float_val)) {
             RF_ERROR("Failed to convert a constant num node to float number for LLVM");
@@ -235,7 +237,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
     switch(expr->type) {
     case RIR_EXPRESSION_CONSTANT:
         RF_ASSERT(expr->val.category == RIR_VALUE_CONSTANT, "Constant expression should have a constant value");
-        llvmval = bllvm_compile_constant(&expr->val.constant);
+        llvmval = bllvm_compile_constant(&expr->val.constant, expr->val.type, ctx);
         break;
     case RIR_EXPRESSION_CALL:
         llvmval = bllvm_compile_functioncall(&expr->call, ctx);

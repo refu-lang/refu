@@ -5,6 +5,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir_argument.h>
 #include <ast/constants.h>
+#include <types/type_elementary.h>
 #include <String/rf_str_core.h>
 #include <String/rf_str_manipulationx.h>
 #include <Utils/memory.h>
@@ -21,18 +22,20 @@ bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, co
     return rir_map_addobj(ctx, &v->id, obj);
 }
 
-bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c)
+bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, enum elementary_type type)
 {
     bool ret;
     v->category = RIR_VALUE_CONSTANT;
     v->constant = *c;
     switch (v->constant.type) {
     case CONSTANT_NUMBER_INTEGER:
-        v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_INT_64, false);
+        RF_ASSERT(type == ELEMENTARY_TYPE_TYPES_COUNT || elementary_type_is_int(type), "Should have gotten an elementary type here");
+        v->type = rir_ltype_elem_create(type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_INT_64, false);
         ret = rf_string_initv(&v->id, "%"PRId64, v->constant.value.integer);
         break;
     case CONSTANT_NUMBER_FLOAT:
-        v->type = rir_ltype_elem_create(ELEMENTARY_TYPE_FLOAT_64, false);
+        RF_ASSERT(type == ELEMENTARY_TYPE_TYPES_COUNT || elementary_type_is_float(type), "Should have gotten a floating type here");
+        v->type = rir_ltype_elem_create(type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_FLOAT_64, false);
         ret = rf_string_initv(&v->id, "%f", v->constant.value.floating);
         break;
     case CONSTANT_BOOLEAN:
@@ -65,7 +68,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
         struct rir_expression *expr = &v->obj->expr;
         switch (v->obj->expr.type) {
         case RIR_EXPRESSION_CONVERT:
-            v->type = rir_ltype_create_from_other(expr->convert.totype, false);
+            v->type = rir_ltype_create_from_other(expr->convert.type, false);
             break;
         case RIR_EXPRESSION_ALLOCA:
             v->type = rir_ltype_create_from_other(expr->alloca.type, true);

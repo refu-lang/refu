@@ -52,7 +52,14 @@ void rir_ltype_comp_init(struct rir_ltype *t, const struct rir_typedef *def, boo
 struct rir_ltype *rir_ltype_copy_from_other(const struct rir_ltype *other);
 struct rir_ltype *rir_ltype_create_from_other(const struct rir_ltype *other, bool is_pointer);
 
+/**
+ * @return true if two types are equal. Does not take pointers into account
+ */
 bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b);
+/**
+ * @return true if two types are equal and also both pointers or not
+ */
+bool rir_ltype_identical(const struct rir_ltype *a, const struct rir_ltype *b);
 size_t rir_ltype_bytesize(const struct rir_ltype *a);
 
 /**

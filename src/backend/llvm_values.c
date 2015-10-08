@@ -11,7 +11,7 @@ void *bllvm_value_from_rir_value(const struct rir_value *v, struct llvm_traversa
 {
     // constant values are easy
     if (v->category == RIR_VALUE_CONSTANT) {
-        return bllvm_compile_constant(&v->constant);
+        return bllvm_compile_constant(&v->constant, v->type, ctx);
     }
     // so are string literals
     if (v->category == RIR_VALUE_LITERAL) {

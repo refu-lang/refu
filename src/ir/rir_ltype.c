@@ -143,10 +143,6 @@ bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b)
     if (a->category != b->category) {
         return false;
     }
-    if (a->is_pointer != b->is_pointer) {
-        return false;
-    }
-
     if (a->category == RIR_LTYPE_ELEMENTARY) {
         if (a->etype != b->etype) {
             return false;
@@ -157,6 +153,14 @@ bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b)
         }
     }
     return true;
+}
+
+bool rir_ltype_identical(const struct rir_ltype *a, const struct rir_ltype *b)
+{
+    if (a->is_pointer != b->is_pointer) {
+        return false;
+    }
+    return rir_ltype_equal(a, b);
 }
 
 size_t rir_ltype_bytesize(const struct rir_ltype *t)

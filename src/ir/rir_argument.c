@@ -160,8 +160,8 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     }
 
     for (unsigned i = 0; i < size; ++i) {
-        if (!rir_ltype_equal(rir_argument_type(&darray_item(*arr1, i)->arg),
-                             rir_argument_type(&darray_item(*arr2, i)->arg))) {
+        if (!rir_ltype_identical(rir_argument_type(&darray_item(*arr1, i)->arg),
+                                 rir_argument_type(&darray_item(*arr2, i)->arg))) {
             return false;
         }
     }

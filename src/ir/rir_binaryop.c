@@ -55,6 +55,22 @@ static inline bool rir_binaryop_init(struct rir_binaryop *op,
         rirctx_block_add(ctx, e);
         b = &e->val;
     }
+    // in addition if any of the two operands are not the same make a conversion
+    // of the largest type, to the smallest type.
+    if (!rir_ltype_equal(a->type, b->type)) {
+        if (rir_ltype_bytesize(a->type) >= rir_ltype_bytesize(b->type)) {
+            if (!(e = rir_convert_create(a, b->type, ctx))) {
+                return false;
+            }
+            a = &e->val;
+        } else {
+            if (!(e = rir_convert_create(b, a->type, ctx))) {
+                return false;
+            }
+            b = &e->val;
+        }
+        rirctx_block_add(ctx, e);
+    }
     op->a = a;
     op->b = b;
     return true;

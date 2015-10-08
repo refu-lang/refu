@@ -8,6 +8,7 @@
 #include <ir/rir_argument.h>
 #include <ir/rir_constant.h>
 #include <ir/rir_call.h>
+#include <ir/rir_ltype.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -97,15 +98,24 @@ static inline bool rir_write_init(struct rir_write *w,
                                   const struct rir_value *writeval,
                                   struct rir_ctx *ctx)
 {
+    struct rir_expression *e;
     // for write operations on a memory location first create a read from memory.
     // string are as usually an exception, at least for now
     if (!rir_ltype_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
-        struct rir_expression *rexpr = rir_read_create(writeval, ctx);
-        if (!rexpr) {
+        if (!(e = rir_read_create(writeval, ctx))) {
             return false;
         }
-        rirctx_block_add(ctx, rexpr);
-        writeval = &rexpr->val;
+        rirctx_block_add(ctx, e);
+        writeval = &e->val;
+    }
+    // if the types are not the same, make a conversion. Note: Validity of conversion
+    // should have been checked by the analysis stage of compilation
+    if (!rir_ltype_equal(writeval->type, memory_to_write->type)) {
+        if (!(e = rir_convert_create(writeval, rir_ltype_create_from_other(memory_to_write->type, false), ctx))) {
+            return false;
+        }
+        rirctx_block_add(ctx, e);
+        writeval = &e->val;
     }
     w->memory = memory_to_write;
     w->writeval = writeval;
@@ -274,16 +284,16 @@ void rir_return_init(struct rir_expression *ret,
     rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
 }
 
-static struct rir_object *rir_convert_create_obj(const struct rir_ltype *totype,
-                                                 const struct rir_value *convval,
+static struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
+                                                 const struct rir_ltype *totype,
                                                  struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {
         return NULL;
     }
-    ret->expr.convert.totype = totype;
-    ret->expr.convert.convval = convval;
+    ret->expr.convert.val = convval;
+    ret->expr.convert.type = totype;
     if (!rir_expression_init(ret, RIR_EXPRESSION_CONVERT, ctx)) {
         free(ret);
         ret = NULL;
@@ -291,11 +301,11 @@ static struct rir_object *rir_convert_create_obj(const struct rir_ltype *totype,
     return ret;
 }
 
-struct rir_expression *rir_convert_create(const struct rir_ltype *totype,
-                                          const struct rir_value *convval,
+struct rir_expression *rir_convert_create(const struct rir_value *convval,
+                                          const struct rir_ltype *totype,
                                           struct rir_ctx *ctx)
 {
-    struct rir_object *obj = rir_convert_create_obj(totype, convval, ctx);
+    struct rir_object *obj = rir_convert_create_obj(convval, totype, ctx);
     return obj ? &obj->expr : NULL;
 }
 
@@ -390,8 +400,8 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = convert("RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_ltype_string(e->convert.totype)),
-                    RF_STR_PF_ARG(rir_value_string(e->convert.convval))
+                    RF_STR_PF_ARG(rir_value_string(e->convert.val)),
+                    RF_STR_PF_ARG(rir_ltype_string(e->convert.type))
                 ))) {
             goto end;
         }

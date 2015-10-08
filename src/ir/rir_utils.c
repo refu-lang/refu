@@ -13,10 +13,10 @@ static bool utils_created = false;
 
 bool rir_utils_create()
 {
-    if (!rir_constantval_init_fromint(&g_rir_const_1, 1)) {
+    if (!rir_constantval_init_fromint32(&g_rir_const_1, 1)) {
         return false;
     }
-    if (!rir_constantval_init_fromint(&g_rir_const_m1, -1)) {
+    if (!rir_constantval_init_fromint32(&g_rir_const_m1, -1)) {
         return false;
     }
     utils_created = true;
