@@ -218,7 +218,7 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
         ctx->current_block = after_block;
         rir_fndef_add_block(ctx->current_fn, after_block);
     }
-    RIRCTX_RETURN_EXPR(ctx, true, NULL);
+    RIRCTX_RETURN_EXPR(ctx, true, matched_obj);
 fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
