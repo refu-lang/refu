@@ -359,9 +359,9 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
         goto fail;
     }
 
-    /* if (compiler_args_print_backend_debug(ctx->args)) { */
+    if (compiler_args_print_backend_debug(ctx->args)) {
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
-    /* } */
+    }
 
     return ctx->llvm_mod;
 

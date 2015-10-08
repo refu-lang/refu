@@ -72,6 +72,7 @@ refu_src = [
     'ir/rir_binaryop.c',
     'ir/rir_unaryop.c',
     'ir/rir_constant.c',
+    'ir/rir_convert.c',
     'ir/rir_branch.c',
     'ir/rir_strmap.c',
     'ir/rir_expression.c',

@@ -99,7 +99,7 @@ START_TEST (test_print_integer) {
     static const struct RFstring output = RF_STRING_STATIC_INIT("324565");
     ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
-#if 0
+
 START_TEST (test_type_decl) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -182,7 +182,7 @@ START_TEST (test_function_creation_and_call_2arg) {
     };
     ck_end_to_end_run(inputs, 20, NULL);
 } END_TEST
-
+#if 0
 START_TEST (test_simple_if) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -673,7 +673,6 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic, test_print_string_literal);
     tcase_add_test(st_basic, test_print_integer);
 
-#if 0
     TCase *st_basic_types = tcase_create("end_to_end_basic_types");
     tcase_add_checked_fixture(st_basic_types,
                               setup_end_to_end_tests,
@@ -689,7 +688,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_functions, test_function_creation_and_call_noarg);
     tcase_add_test(st_functions, test_function_creation_and_call_1arg);
     tcase_add_test(st_functions, test_function_creation_and_call_2arg);
-
+#if 0
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,
                               setup_end_to_end_tests,
@@ -738,9 +737,9 @@ Suite *end_to_end_basic_suite_create(void)
 #endif
 
     suite_add_tcase(s, st_basic);
-#if 0
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_functions);
+#if 0
     suite_add_tcase(s, st_control_flow);
     suite_add_tcase(s, st_comparisons);
     suite_add_tcase(s, st_explicit_conversions);

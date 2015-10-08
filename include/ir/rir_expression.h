@@ -166,10 +166,6 @@ struct rir_object *rir_return_create(const struct rir_expression *val, struct ri
 void rir_return_init(struct rir_expression *ret,
                      const struct rir_expression *val);
 
-struct rir_expression *rir_convert_create(const struct rir_value *convval,
-                                          const struct rir_ltype *totype,
-                                          struct rir_ctx *ctx);
-
 struct rir_expression {
     enum rir_expression_type type;
     union {

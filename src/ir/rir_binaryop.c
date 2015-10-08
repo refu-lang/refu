@@ -5,6 +5,7 @@
 #include <ir/rir_block.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_convert.h>
 #include <ir/rir_process.h>
 #include <ir/rir_utils.h>
 #include <ast/operators.h>

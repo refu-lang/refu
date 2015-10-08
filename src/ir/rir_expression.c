@@ -7,6 +7,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_argument.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_convert.h>
 #include <ir/rir_call.h>
 #include <ir/rir_ltype.h>
 #include <Utils/sanity.h>
@@ -108,14 +109,10 @@ static inline bool rir_write_init(struct rir_write *w,
         rirctx_block_add(ctx, e);
         writeval = &e->val;
     }
-    // if the types are not the same, make a conversion. Note: Validity of conversion
-    // should have been checked by the analysis stage of compilation
-    if (!rir_ltype_equal(writeval->type, memory_to_write->type)) {
-        if (!(e = rir_convert_create(writeval, rir_ltype_create_from_other(memory_to_write->type, false), ctx))) {
-            return false;
-        }
-        rirctx_block_add(ctx, e);
-        writeval = &e->val;
+    // if the types are not the same, make a conversion
+    if (!(writeval = rir_maybe_convert(writeval, memory_to_write->type, ctx))) {
+        RF_ERROR("Failed to convert a value in a rir_write instruction initialization");
+        return false;
     }
     w->memory = memory_to_write;
     w->writeval = writeval;
@@ -283,32 +280,6 @@ void rir_return_init(struct rir_expression *ret,
     ret->ret.val = val;
     rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
 }
-
-static struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
-                                                 const struct rir_ltype *totype,
-                                                 struct rir_ctx *ctx)
-{
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
-    if (!ret) {
-        return NULL;
-    }
-    ret->expr.convert.val = convval;
-    ret->expr.convert.type = totype;
-    if (!rir_expression_init(ret, RIR_EXPRESSION_CONVERT, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
-}
-
-struct rir_expression *rir_convert_create(const struct rir_value *convval,
-                                          const struct rir_ltype *totype,
-                                          struct rir_ctx *ctx)
-{
-    struct rir_object *obj = rir_convert_create_obj(convval, totype, ctx);
-    return obj ? &obj->expr : NULL;
-}
-
 
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {

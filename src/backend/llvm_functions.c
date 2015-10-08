@@ -34,10 +34,7 @@ LLVMValueRef bllvm_compile_functioncall(const struct rir_call *call,
         RF_ERROR("Could not find an llvm function by name");
         return NULL;
     }
-    if (!bllvm_value_arr_to_values(&call->args, ctx)) {
-        RF_ERROR("Could not turn rir call arguments to llvm values");
-        return NULL;
-    }
+    bllvm_value_arr_to_values(&call->args, ctx); // can be NULL if there are no args
     ret = LLVMBuildCall(ctx->builder,
                         llvm_fn,
                         llvm_traversal_ctx_get_values(ctx),

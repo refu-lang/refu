@@ -93,6 +93,8 @@ struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ct
 {
     if (t->category == TYPE_CATEGORY_ELEMENTARY) {
         return rir_ltype_elem_create(t->elementary.etype, false);
+    } else if (t->category == TYPE_CATEGORY_LEAF) {
+        return rir_ltype_create_from_type(t->leaf.type, ctx);
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {

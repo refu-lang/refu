@@ -4,6 +4,7 @@
 #include <ir/rir_block.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_constant.h>
+#include <ir/rir_convert.h>
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <ir/rir_process.h>
@@ -119,16 +120,19 @@ static bool rir_process_ctorcall(const struct ast_node *n, struct rir_ctx *ctx)
 /* -- code to process a normal function call -- */
 struct fncall_args_toarr_ctx {
     struct rir_ctx *rirctx;
+    const struct type *fndecl_type;
     struct value_arr *arr;
 };
 
 static void fncall_args_toarr_ctx_init(struct fncall_args_toarr_ctx *ctx,
+                                       const struct ast_node *ast_call,
                                        struct rir_ctx *rirctx,
                                        struct value_arr *arr)
 {
     ctx->rirctx = rirctx;
     ctx->arr = arr;
     darray_init(*arr);
+    ctx->fndecl_type = ast_fncall_type(ast_call);
 }
 
 static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_args_toarr_ctx *ctx)
@@ -136,6 +140,13 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
     const struct rir_value *argexprval = rir_process_ast_node_getreadval(n, ctx->rirctx);
     if (!argexprval) {
         RF_ERROR("Could not create rir expression from fncall argument");
+        return false;
+    }
+    const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
+        ? type_get_nth_type_or_die(ctx->fndecl_type, darray_size(*ctx->arr))
+        : ctx->fndecl_type;
+    if (!(argexprval = rir_maybe_convert(argexprval, rir_ltype_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
+        RF_ERROR("Could not create conversion for rir call argument");
         return false;
     }
     darray_append(*ctx->arr, (struct rir_value*)argexprval);
@@ -177,7 +188,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
     } else {
         // turn the function call args into a rir value array
         struct fncall_args_toarr_ctx fncarg_ctx;
-        fncall_args_toarr_ctx_init(&fncarg_ctx, ctx, &ret->expr.call.args);
+        fncall_args_toarr_ctx_init(&fncarg_ctx, n, ctx, &ret->expr.call.args);
         if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
             goto fail;
         }
@@ -203,20 +214,20 @@ static bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ct
     const struct rir_value *argexprval = rir_process_ast_node_getreadval(args, ctx);
     if (!argexprval) {
         RF_ERROR("Could not create rir expression from conversion call argument");
-        return false;
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     // create the conversion
-    struct rir_expression *e = rir_convert_create(
+    struct rir_object *obj = rir_convert_create_obj(
         argexprval,
         rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
         ctx
     );
-    if (!e) {
+    if (!obj) {
         RF_ERROR("Failed to create rir conversion expression");
-        return false;
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
-    rirctx_block_add(ctx, e);
-    return true;
+    rirctx_block_add(ctx, &obj->expr);
+    RIRCTX_RETURN_EXPR(ctx, true, obj);
 }
 
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
@@ -234,15 +245,15 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
         return rir_process_ctorcall(n, ctx);
     } else if (n->fncall.is_explicit_conversion) {
         return rir_process_convertcall(n, ctx);
-    } else { // normal function call
-        struct rir_object *cobj = rir_call_create_obj_from_ast(n, ctx);
-        if (!cobj) {
-            RF_ERROR("Could not create a rir function call instruction");
-            return false;
-        }
-        rirctx_block_add(ctx, &cobj->expr);
     }
-    return true;
+    // else normal function call
+    struct rir_object *cobj = rir_call_create_obj_from_ast(n, ctx);
+    if (!cobj) {
+        RF_ERROR("Could not create a rir function call instruction");
+        return false;
+    }
+    rirctx_block_add(ctx, &cobj->expr);
+    RIRCTX_RETURN_EXPR(ctx, true, cobj);
 }
 
 bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *cexpr)
