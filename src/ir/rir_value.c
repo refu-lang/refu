@@ -223,7 +223,7 @@ const struct RFstring *rir_value_actual_string(const struct rir_value *v)
     case RIR_VALUE_CONSTANT:
         return ast_constant_string(&v->constant);
     case RIR_VALUE_LITERAL:
-        return RFS("\""RF_STR_PF_FMT"\"", RF_STR_PF_ARG(&v->literal));
+        return &v->literal;
     case RIR_VALUE_VARIABLE:
     case RIR_VALUE_LABEL:
     case RIR_VALUE_NIL:

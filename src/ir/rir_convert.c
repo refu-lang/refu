@@ -31,8 +31,8 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
         // constant value to string conversion can be done easily here at compile time
         RFS_PUSH();
         const struct RFstring *temps = rir_constant_string(convval);
-        if (!(retobj = rir_global_add_string(ctx, temps))) {
-            RF_ERROR("Failed to add a global string literal to the RIR");
+        if (!(retobj = rir_global_addorget_string(ctx, temps))) {
+            RF_ERROR("Failed to add or get a global string literal to the RIR");
         }
         RFS_POP();
         return retobj;
@@ -73,7 +73,7 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
 
         // populate taken block
         ctx->current_block = taken_block;
-        if (!(obj = rir_global_add_string(ctx, &g_str_true))) {
+        if (!(obj = rir_global_addorget_string(ctx, &g_str_true))) {
             RF_ERROR("Failed to add a global string literal to the RIR");
             return NULL;
         }
@@ -89,7 +89,7 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
 
         // populate fallthrough block
         ctx->current_block = fallthrough_block;
-        if (!(obj = rir_global_add_string(ctx, &g_str_false))) {
+        if (!(obj = rir_global_addorget_string(ctx, &g_str_false))) {
             RF_ERROR("Failed to add a global string literal to the RIR");
             return NULL;
         }

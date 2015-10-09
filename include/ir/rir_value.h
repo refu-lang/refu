@@ -78,7 +78,8 @@ const struct RFstring *rir_value_string(const struct rir_value *v);
  * This may be possible only for a few value types. For the rest return NULL.
  *
  * Needs to be enclosed in RFS_PUSH() and RFS_POP() since it may create a
- * temporary string.
+ * temporary string. If you know the value is that of a string literal then
+ * enclosing is not needed.
  */
 const struct RFstring *rir_value_actual_string(const struct rir_value *v);
 

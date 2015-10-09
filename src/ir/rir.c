@@ -161,10 +161,10 @@ static bool rir_init(struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(r);
     strmap_init(&r->map);
+    strmap_init(&r->global_literals);
     rf_ilist_head_init(&r->functions);
     rf_ilist_head_init(&r->objects);
     rf_ilist_head_init(&r->typedefs);
-    darray_init(r->globals);
     darray_init(r->dependencies);
     darray_init(r->free_values);
     // create the rir types list from the types set for this module
@@ -189,9 +189,9 @@ static void rir_deinit(struct rir *r)
 {
     struct rir_fndecl *fn;
     struct rir_fndecl *tmp;
-    darray_free(r->globals);
     darray_free(r->dependencies);
     strmap_clear(&r->map);
+    strmap_clear(&r->global_literals);
     if (r->rir_types_list) {
         rir_types_list_destroy(r->rir_types_list);
     }
@@ -246,13 +246,18 @@ static bool rir_process_do(struct rir *r, struct module *m)
         darray_append(r->dependencies, (*dep)->rir);
     }
 
+    // add "true", "false" as global literals in the module
+    if (!rir_global_addorget_string(&ctx, &g_str_true) || !rir_global_addorget_string(&ctx, &g_str_false)) {
+        RF_ERROR("Failed to add \"true\", \"false\" global literals in the rir strmap");
+        goto end;
+    }
     // for all string literals in the module create global strings to be
     // reused in case a literal is used more than once
     struct rf_objset_iter it;
     struct RFstring *s;
     rf_objset_foreach(&m->string_literals_set, &it, s) {
-        if (!rir_global_add_string(&ctx, s)) {
-            RF_ERROR("Failed to a global string literal to the RIR");
+        if (!rir_global_addorget_string(&ctx, s)) {
+            RF_ERROR("Failed to add a global string literal to the RIR");
             goto end;
         }
     }
@@ -353,6 +358,15 @@ bool rirtostr_ctx_block_visited(struct rirtostr_ctx *ctx, const struct rir_block
     return false;
 }
 
+static bool itprint_literals_cb(const struct RFstring *member, struct rir_object *obj, struct rirtostr_ctx *ctx)
+{
+    if (!rir_global_tostring(ctx, &obj->global)) {
+        RF_ERROR("Failed to turn a rir global to a string");
+        return false;
+    }
+    return true;
+}
+
 struct RFstring *rir_tostring(struct rir *r)
 {
     struct RFstring *ret = NULL;
@@ -368,14 +382,8 @@ struct RFstring *rir_tostring(struct rir *r)
     struct rirtostr_ctx ctx;
     rirtostr_ctx_init(&ctx, r);
 
-    // output globals
-    struct rir_object **global;
-    darray_foreach(global, r->globals) {
-        if (!rir_global_tostring(&ctx, &(*global)->global)) {
-            RF_ERROR("Failed to turn a rir global to a string");
-            goto end;
-        }
-    }
+    // output global string literals
+    strmap_iterate(&r->global_literals, itprint_literals_cb, &ctx);
 
     // output typedefinitions
     struct rir_typedef *def;
@@ -476,18 +484,7 @@ struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *na
 
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)
 {
-    struct rir_object **g;
-    struct rir_object *ret = NULL;
-    RFS_PUSH();
-    struct RFstring *cmp = RFS("gstr_%u", ast_string_literal_get_hash(n));
-    darray_foreach(g, r->globals) {
-        if (rf_string_equal(cmp, rir_global_name(&(*g)->global))) {
-            ret = *g;
-            break;
-        }
-    }
-    RFS_POP();
-    return ret;
+    return strmap_get(&r->global_literals, ast_string_literal_get_str(n));
 }
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v)

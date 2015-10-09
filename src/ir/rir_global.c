@@ -54,7 +54,7 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
     RFS_PUSH();
     ret = rf_stringx_append(
         ctx->rir->buff,
-        RFS("global("RF_STR_PF_FMT", "RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
+        RFS("global("RF_STR_PF_FMT", "RF_STR_PF_FMT", \""RF_STR_PF_FMT"\")\n",
             RF_STR_PF_ARG(rir_global_name(g)),
             RF_STR_PF_ARG(rir_ltype_string(rir_global_type(g))),
             RF_STR_PF_ARG(rir_value_actual_string(&g->val)))
@@ -68,18 +68,26 @@ i_INLINE_INS const struct RFstring *rir_global_name(const struct rir_global *g);
 i_INLINE_INS struct rir_ltype *rir_global_type(const struct rir_global *g);
 
 
-struct rir_object *rir_global_add_string(struct rir_ctx *ctx, const struct RFstring *s)
+struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct RFstring *s)
 {
-    RFS_PUSH();
-    struct rir_object *gstring = rir_global_create(
-        rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
-        RFS("gstr_%u", rf_hash_str_stable(s, 0)),
-        s,
-        ctx
-    );
-    if (gstring) { // success
-        darray_append(ctx->rir->globals, gstring);
+    struct rir_object *gstring = strmap_get(&ctx->rir->global_literals, s);
+    if (!gstring) {
+        RFS_PUSH();
+        gstring = rir_global_create(
+            rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
+            RFS("gstr_%u", rf_hash_str_stable(s, 0)),
+            s,
+            ctx
+        );
+        if (gstring) {
+            // here we must make sure to not use @a s since it can be a temporary string
+            // and strmap_add does not copy the key string, but just points to it
+            if (!strmap_add(&ctx->rir->global_literals, &rir_object_value(gstring)->literal, gstring)) {
+                RF_ERROR("Failed to add a string literal to the global string map");
+                gstring = NULL;
+            }
+        }
+        RFS_POP();
     }
-    RFS_POP();
     return gstring;
 }

@@ -191,16 +191,19 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
     return true;
 }
 
+static bool iterate_literals_cb(const struct RFstring *member, struct rir_object *obj, struct llvm_traversal_ctx *ctx)
+{
+    struct rir_global *g = &obj->global;
+    RF_ASSERT(rir_ltype_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
+              "Found non string global in string literals map");
+    bllvm_create_global_const_string(&g->val.id, &g->val.literal, ctx);
+    return true;
+}
+
 bool bllvm_create_module_globals(struct rir *r, struct llvm_traversal_ctx *ctx)
 {
-    // create all constant strings
-    struct rir_object **global;
-    darray_foreach(global, r->globals) {
-        struct rir_global *g = &(*global)->global;
-        RF_ASSERT(rir_ltype_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
-                  "For now only global strings can exist");
-        bllvm_create_global_const_string(&g->val.id, &g->val.literal, ctx);
-    }
+    // iterate string literals maps to create all constant strings
+    strmap_iterate(&r->global_literals, iterate_literals_cb, ctx);
     return true;
 }
 
