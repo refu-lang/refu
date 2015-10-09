@@ -186,9 +186,9 @@ struct rir_expression {
     struct RFilist_node ln;
 };
 
-bool rir_expression_init(struct rir_object *expr,
-                         enum rir_expression_type type,
-                         struct rir_ctx *ctx);
+bool rir_object_expression_init(struct rir_object *expr,
+                                enum rir_expression_type type,
+                                struct rir_ctx *ctx);
 void rir_expression_deinit(struct rir_expression *expr);
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
 #endif

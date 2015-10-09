@@ -122,7 +122,7 @@ struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
         // if error, or conversion created additional rir instructions and not just a simple convert
         return ret;
     }
-    if (!rir_expression_init(ret, RIR_EXPRESSION_CONVERT, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CONVERT, ctx)) {
         free(ret);
         ret = NULL;
     }

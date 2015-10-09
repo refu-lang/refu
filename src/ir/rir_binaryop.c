@@ -90,7 +90,7 @@ struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
     if (!rir_binaryop_init(&ret->expr.binaryop, a, b, ctx)) {
         goto fail;
     }
-    if (!rir_expression_init(ret, type, ctx)) {
+    if (!rir_object_expression_init(ret, type, ctx)) {
         goto fail;
     }
     return ret;

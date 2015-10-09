@@ -195,7 +195,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
     }
 
     // now initialize the rir expression part of the struct
-    if (!rir_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
         goto fail;
     }
 
