@@ -203,7 +203,7 @@ static bool iterate_literals_cb(const struct RFstring *member, struct rir_object
 bool bllvm_create_module_globals(struct rir *r, struct llvm_traversal_ctx *ctx)
 {
     // iterate string literals maps to create all constant strings
-    strmap_iterate(&r->global_literals, iterate_literals_cb, ctx);
+    strmap_iterate(&r->global_literals, (strmap_it_cb)iterate_literals_cb, ctx);
     return true;
 }
 

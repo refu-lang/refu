@@ -383,7 +383,7 @@ struct RFstring *rir_tostring(struct rir *r)
     rirtostr_ctx_init(&ctx, r);
 
     // output global string literals
-    strmap_iterate(&r->global_literals, itprint_literals_cb, &ctx);
+    strmap_iterate(&r->global_literals, (strmap_it_cb)itprint_literals_cb, &ctx);
 
     // output typedefinitions
     struct rir_typedef *def;
