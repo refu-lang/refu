@@ -17,18 +17,24 @@ static bool rir_testdriver_init(struct rir_testdriver *d,
     d->front_driver = front_driver;
     d->analyzer_driver = analyzer_driver;
     darray_init(d->rir_types);
+    darray_init(d->target_rirs);
     return true;
 }
 
 static void rir_testdriver_deinit(struct rir_testdriver *d)
 {
-    struct rir_type **t;
-
     // free the driver's own types
+    struct rir_type **t;
     darray_foreach(t, d->rir_types) {
         rir_type_destroy(*t);
     }
     darray_free(d->rir_types);
+    // free the target rirs
+    struct rir **r;
+    darray_foreach(r, d->target_rirs) {
+        rir_destroy(*r);
+    }
+    darray_free(d->target_rirs);
 }
 
 void setup_rir_tests()
@@ -189,3 +195,20 @@ bool i_rir_testdriver_compare_lists(struct rir_type **expected_types,
 
 
 i_INLINE_INS struct rf_objset_type *testsupport_rir_typeset(const struct rir_testdriver *d);
+
+/* -- Functions that facilitate the specification of a target RIR -- */
+i_INLINE_INS void testsupport_rir_set_curr_module(struct rir *r);
+i_INLINE_INS void testsupport_rir_set_curr_fn(struct rir_fndef *fn);
+i_INLINE_INS void testsupport_rir_set_curr_block(struct rir_block *block);
+
+struct rir *testsupport_rir_add_module()
+{
+    struct rir_testdriver *tdr = get_rir_testdriver();
+    struct rir *r = rir_create(NULL);
+    if (!r) {
+        return NULL;
+    }
+    darray_append(tdr->target_rirs, r);
+    testsupport_rir_set_curr_module(r);
+    return r;
+}

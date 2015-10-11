@@ -28,6 +28,7 @@ Suite *types_suite_create(void);
 
 Suite *rir_types_suite_create(void);
 Suite *rir_finalized_ast_suite_create(void);
+Suite *rir_creation_simple_suite_create(void);
 
 Suite *end_to_end_basic_suite_create(void);
 Suite *end_to_end_module_suite_create(void);
@@ -104,6 +105,7 @@ int main(int argc, char **argv)
 
     srunner_add_suite(sr, rir_types_suite_create());
     srunner_add_suite(sr, rir_finalized_ast_suite_create());
+    srunner_add_suite(sr, rir_creation_simple_suite_create());
 
     srunner_add_suite(sr, end_to_end_basic_suite_create());
     srunner_add_suite(sr, end_to_end_module_suite_create());

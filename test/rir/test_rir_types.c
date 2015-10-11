@@ -14,7 +14,6 @@
 #include CLIB_TEST_HELPERS
 
 
-
 START_TEST (test_types_list_simple1) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(

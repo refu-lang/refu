@@ -398,8 +398,8 @@ bool compiler_process()
     }
 #endif
 
-    // process the rir
-    if (!rir_process(c)) {
+    // create the Refu Intermediate Format
+    if (!compiler_create_rir(c)) {
         RF_ERROR("Failed to process the Refu IR");
         return false;
     }

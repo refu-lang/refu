@@ -13,6 +13,7 @@ struct rir_expression;
 struct RFstringx;
 struct ast_node;
 struct type;
+struct rir_type;
 
 struct rir_arr {darray(struct rir*);};
 struct rir {
@@ -40,16 +41,26 @@ struct rir {
 
 struct RFstring *rir_tostring(struct rir *r);
 
+/**
+ * Create a rir module
+ *
+ * @param m            If we are creating the RIR module directly after AST
+ *                     parsing then this will point to the parsed module
+ *                     from which we will read the types set and create the
+ *                     rir types list. If not the rir_types list will be empty.
+ * @return             The allocated rir module
+ */
 struct rir *rir_create(struct module *m);
 void rir_destroy(struct rir* r);
 
-bool rir_process(struct compiler *c);
+bool compiler_create_rir();
 bool rir_print(struct compiler *c);
 
 struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
-struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name);
+struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *name);
+struct rir_ltype *rir_ltype_from_rir_type(const struct rir *r, const struct rir_type *t);
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *lit);
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v);

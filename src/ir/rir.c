@@ -6,6 +6,7 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
+#include <ir/rir_type.h>
 #include <ir/rir_utils.h>
 #include <types/type.h>
 #include <Utils/memory.h>
@@ -167,7 +168,10 @@ static bool rir_init(struct rir *r, struct module *m)
     rf_ilist_head_init(&r->typedefs);
     darray_init(r->dependencies);
     darray_init(r->free_values);
-    // create the rir types list from the types set for this module
+    if (!m) {
+        return true;
+    }
+    // create the rir types list from the types set for this module if one is given
     if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
         return false;
     }
@@ -278,7 +282,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct ast_node **foreigndecl;
     struct rir_fndecl *fndecl;
     darray_foreach(foreigndecl, m->foreignfn_arr) {
-        fndecl = rir_fndecl_create(*foreigndecl, &ctx);
+        fndecl = rir_fndecl_create_from_ast(*foreigndecl, &ctx);
         if (!fndecl) {
             RF_ERROR("Failed to create a RIR function declaration");
             goto end;
@@ -290,7 +294,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rir_fndef *fndef;
     rf_ilist_for_each(&m->node->children, child, lh) {
         if (child->type == AST_FUNCTION_IMPLEMENTATION) {
-            fndef = rir_fndef_create(child, &ctx);
+            fndef = rir_fndef_create_from_ast(child, &ctx);
             if (!fndef) {
                 RF_ERROR("Failed to create a RIR function definition");
                 goto end;
@@ -306,8 +310,9 @@ end:
     return ret;
 }
 
-bool rir_process(struct compiler *c)
+bool compiler_create_rir()
 {
+    struct compiler *c = compiler_instance_get();
     // create some utilities needed by all the rir modules. Freed at compiler_deinit.
     if (!rir_utils_create()) {
         return false;
@@ -468,7 +473,7 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
     return NULL;
 }
 
-struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *name)
+struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *name)
 {
     struct rir_ltype *type = rir_ltype_elem_create_from_string(name, false);
     if (type) {
@@ -480,6 +485,19 @@ struct rir_ltype *rir_type_byname(const struct rir *r, const struct RFstring *na
         return NULL;
     }
     return rir_ltype_comp_create(def, false);
+}
+
+struct rir_ltype *rir_ltype_from_rir_type(const struct rir *r, const struct rir_type *t)
+{
+    if (rir_type_is_true_elementary(t)) {
+        return rir_ltype_elem_create((enum elementary_type)t->category, false);
+    } else if (rir_type_is_operator(t)) {
+        return rir_ltype_byname(r, type_get_unique_type_str(t->type, true));
+    } else {
+        // here rir_type should have a name
+        RF_ASSERT(t->name, "Expected a rir_type to have a name");
+        return rir_ltype_byname(r, t->name);
+    }
 }
 
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)

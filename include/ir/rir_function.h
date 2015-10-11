@@ -23,7 +23,7 @@ struct rir_fndecl {
     //! Control to be entered into the rir functions list.
     struct RFilist_node ln;
 };
-struct rir_fndecl *rir_fndecl_create(const struct ast_node *n, struct rir_ctx *ctx);
+struct rir_fndecl *rir_fndecl_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
 void rir_fndecl_destroy(struct rir_fndecl *f);
 bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const struct rir_fndecl *f);
 i_INLINE_DECL bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
@@ -45,7 +45,7 @@ struct rir_fndef {
 };
 
 
-struct rir_fndef *rir_fndef_create(const struct ast_node *n, struct rir_ctx *ctx);
+struct rir_fndef *rir_fndef_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
 void rir_fndef_destroy(struct rir_fndef *f);
 
 /**
