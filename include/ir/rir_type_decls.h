@@ -38,9 +38,6 @@ enum rir_type_category {
  * It is represented by an array of subtypes and not by a tree. A single
  * rir_type can only contain subtypes that are connected by the same type
  * operation.
- *
- * TODO: In order to achieve this all possible composite types need to be defined
- * somewhere. Figure out where and do it.
  */
 struct rir_type {
     enum rir_type_category category;

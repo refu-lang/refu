@@ -59,12 +59,6 @@ symbol_table_record_id(struct symbol_table_record *rec)
     return rec->id;
 }
 
-i_INLINE_DECL enum type_category
-symbol_table_record_category(struct symbol_table_record *rec)
-{
-    return rec->data->category;
-}
-
 i_INLINE_DECL const struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec)
 {

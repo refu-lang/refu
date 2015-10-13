@@ -125,8 +125,6 @@ void symbol_table_record_destroy(struct symbol_table_record *rec,
 
 i_INLINE_INS const struct RFstring *
 symbol_table_record_id(struct symbol_table_record *rec);
-i_INLINE_INS enum type_category
-symbol_table_record_category(struct symbol_table_record *rec);
 i_INLINE_INS const struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec);
 i_INLINE_INS struct type *
