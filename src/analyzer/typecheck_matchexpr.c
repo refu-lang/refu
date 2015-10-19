@@ -7,6 +7,7 @@
 #include <analyzer/typecheck.h>
 
 #include <types/type_comparisons.h>
+#include <types/type_function.h>
 #include <types/type.h>
 
 static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx,
@@ -36,25 +37,25 @@ static bool pattern_matching_ctx_populate_parts(struct pattern_matching_ctx *ctx
         return pattern_matching_ctx_populate_parts(ctx, t->defined.type);
     case TYPE_CATEGORY_OPERATOR:
     {
+        struct type **operand;
         if (t->operator.type == TYPEOP_SUM) {
-            const struct type *target_l = t->operator.left;
-            const struct type *target_r = t->operator.right;
-            if (target_l->category == TYPE_CATEGORY_LEAF) {
-                target_l = target_l->leaf.type;
-            }
-            if (target_r->category == TYPE_CATEGORY_LEAF) {
-                target_r = target_r->leaf.type;
-            }
             // add the sum operands as different parts of the type in the set
-            return pattern_matching_ctx_add_part(ctx, target_l) &&
-                pattern_matching_ctx_add_part(ctx, target_r);
+            darray_foreach(operand, t->operator.operands) {
+                if (!pattern_matching_ctx_add_part(ctx, *operand)) {
+                    return false;
+                }
+            }
+            return true;
         } else {
-            return pattern_matching_ctx_populate_parts(ctx, t->operator.left) &&
-                pattern_matching_ctx_populate_parts(ctx, t->operator.right);
+            // go further into the operands
+            darray_foreach(operand, t->operator.operands) {
+                if (!pattern_matching_ctx_populate_parts(ctx, *operand)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
-    case TYPE_CATEGORY_LEAF:
-        return pattern_matching_ctx_populate_parts(ctx, t->leaf.type);
     case TYPE_CATEGORY_ELEMENTARY:
             return true;
     default:
@@ -157,17 +158,11 @@ static bool pattern_match_types(const struct type *pattern,
                                 const struct type *target,
                                 struct pattern_matching_ctx *ctx)
 {
-    if (pattern->category == TYPE_CATEGORY_LEAF) {
-        pattern = pattern->leaf.type;
-    }
-
     switch (target->category) {
     case TYPE_CATEGORY_DEFINED:
         return pattern_match_types(pattern, target->defined.type, ctx);
     case TYPE_CATEGORY_OPERATOR:
         return pattern_match_type_operators(pattern, target, ctx);
-    case TYPE_CATEGORY_LEAF:
-        return pattern_match_types(pattern, target->leaf.type, ctx);
     case TYPE_CATEGORY_ELEMENTARY:
         if (pattern->category == TYPE_CATEGORY_WILDCARD ||
             (pattern->category == TYPE_CATEGORY_ELEMENTARY &&
@@ -187,40 +182,47 @@ static bool pattern_match_type_sumop(const struct type *pattern,
                                      const struct type *target,
                                      struct pattern_matching_ctx *ctx)
 {
-    const struct type *pattern_l = pattern;
-    const struct type *pattern_r = pattern;
-    const struct type *target_l = target->operator.left;
-    const struct type *target_r = target->operator.right;
-    bool left = false;
-    bool right = false;
-    if (target_l->category == TYPE_CATEGORY_LEAF) {
-        target_l = target_l->leaf.type;
+    struct type **subt;
+    unsigned int idx = 0;
+    bool any_type_matched = false;
+    darray_foreach(subt, target->operator.operands) {
+        // if they are both sum types, compare each subtype, else the whole type
+        const struct type *pattern_t =
+        pattern->category == TYPE_CATEGORY_OPERATOR && pattern->operator.type == TYPEOP_SUM
+        ? type_get_subtype(pattern, idx)
+        : pattern;
+        if (pattern_match_types(pattern_t, *subt, ctx)) {
+            any_type_matched = true;
+            if (!pattern_matching_ctx_set_matched(ctx, *subt, pattern)) {
+                RF_ERROR("Internal error, could not add type to matched set.");
+                return false;
+            }
+        }
+        ++idx;
     }
-    if (target_r->category == TYPE_CATEGORY_LEAF) {
-        target_r = target_r->leaf.type;
-    }
+    return any_type_matched;
+}
 
-    if (pattern->category == TYPE_CATEGORY_OPERATOR &&
-        pattern->operator.type == target->operator.type) {
-        pattern_l = pattern->operator.left;
-        pattern_r = pattern->operator.right;
+static bool pattern_match_type_prodop(const struct type *pattern,
+                                      const struct type *target,
+                                      struct pattern_matching_ctx *ctx)
+{
+    if (!type_is_prodop(pattern)) {
+        return false; // can't match a target product OP to anything else
     }
-
-    left = pattern_match_types(pattern_l, target_l, ctx);
-    right = pattern_match_types(pattern_r, target_r, ctx);
-    if (left) {
-        if (!pattern_matching_ctx_set_matched(ctx, target_l, pattern)) {
-            RF_ERROR("Internal error, could not add type to matched set.");
+    struct type **subt;
+    unsigned int idx = 0;
+    darray_foreach(subt, target->operator.operands) {
+        const struct type *pattern_t = type_get_subtype(pattern, idx);
+        if (!pattern_t) {
             return false;
         }
-    }
-    if (right) {
-        if (!pattern_matching_ctx_set_matched(ctx, target_r, pattern)) {
-            RF_ERROR("Internal error, could not add type to matched set.");
+        if (!pattern_match_types(pattern_t, *subt, ctx)) {
             return false;
         }
+        ++idx;
     }
-    return left || right;
+    return true;
 }
 
 static bool pattern_match_type_operators(const struct type *pattern,
@@ -229,11 +231,22 @@ static bool pattern_match_type_operators(const struct type *pattern,
 {
     switch (target->operator.type) {
     case TYPEOP_PRODUCT:
+        return pattern_match_type_prodop(pattern, target, ctx);
     case TYPEOP_IMPLICATION:
+        // is a function type, so has only two subtypes
         if (pattern->category == TYPE_CATEGORY_OPERATOR &&
             pattern->operator.type == target->operator.type) {
-            return pattern_match_types(pattern->operator.left, target->operator.left, ctx) &&
-                pattern_match_types(pattern->operator.right, target->operator.right, ctx);
+            return
+                pattern_match_types(
+                    type_function_get_argtype(pattern),
+                    type_function_get_argtype(target),
+                    ctx
+                ) &&
+                pattern_match_types(
+                    type_function_get_rettype(pattern),
+                    type_function_get_rettype(target),
+                    ctx
+                );
         }
         // else it's a different operator or type so no match
         return false;
@@ -262,10 +275,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         useless_case = true;
     }
     RFS_PUSH();
-    const struct type *case_pattern_type = ast_node_get_type_or_die(
-        ast_matchcase_pattern(n),
-        AST_TYPERETR_DEFAULT
-    );
+    const struct type *case_pattern_type = ast_node_get_type_or_die(ast_matchcase_pattern(n));
     const struct type *match_type = ast_matchexpr_matched_type(
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
@@ -273,10 +283,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
         analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx)
     );
     // res_type can be NULL if the expression has void type. e.g.: print("foo")
-    const struct type *res_type = ast_node_get_type_or_die(
-        ast_matchcase_expression(n),
-        AST_TYPERETR_DEFAULT
-    );
+    const struct type *res_type = ast_node_get_type_or_die(ast_matchcase_expression(n));
     RF_ASSERT(case_pattern_type, "a type for the match case pattern should have been determined");
     if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
@@ -326,10 +333,7 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
     struct type *matchexpr_type = NULL;
     rf_objset_init(&case_types, type);
     ast_matchexpr_foreach(n, &it, mcase) {
-        case_type = (struct type*)ast_node_get_type_or_die(
-            ast_matchcase_expression(mcase),
-            AST_TYPERETR_DEFAULT
-        );
+        case_type = (struct type*)ast_node_get_type_or_die(ast_matchcase_expression(mcase));
         // Check if it's in the set. If yes skip this.
         if (rf_objset_get(&case_types, type, case_type)) {
             continue;

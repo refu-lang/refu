@@ -23,7 +23,7 @@ struct module;
 //! The size in bytes of the symbol table records memory pool
 #define RECORDS_TABLE_POOL_CHUNK_SIZE 2048
 
-struct  analyzer_traversal_ctx {
+struct analyzer_traversal_ctx {
     struct module *m;
     //! Remembers the current symbol table during ast traversal
     struct symbol_table *current_st;

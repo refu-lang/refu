@@ -79,7 +79,7 @@ const struct type *ast_matchexpr_matched_type_compute(struct ast_node *n,
        )
        :
        // else it's the type of the function arguments themselves
-       ast_node_get_type(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF);
+       ast_node_get_type(n->matchexpr.identifier_or_fnargtype);
     if (!matching_type) {
         RF_ERROR("Failure to compute a matchexpression's matching type");
         return NULL;
@@ -95,7 +95,7 @@ const struct RFstring *ast_matchexpr_matched_type_str(const struct ast_node *n)
     }
     // else it's the type of the function arguments themselves
     return type_str_or_die(
-        ast_node_get_type_or_die(n->matchexpr.identifier_or_fnargtype, AST_TYPERETR_AS_LEAF),
+        ast_node_get_type_or_die(n->matchexpr.identifier_or_fnargtype),
         TSTR_DEFAULT
     );
 }
@@ -110,8 +110,7 @@ const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
     // else it's an anonymous type matching
     return type_get_unique_type_str(
         ast_node_get_type_or_die(
-            n->matchexpr.identifier_or_fnargtype,
-            AST_TYPERETR_AS_LEAF
+            n->matchexpr.identifier_or_fnargtype
         ), true
     );
 }
@@ -120,11 +119,12 @@ bool ast_matchexpr_cases_indices_set(struct ast_node *n)
 {
     struct ast_matchexpr_it it;
     struct ast_node *mcase;
-    const struct rir_type *matchexp_type = type_get_rir_or_die(ast_matchexpr_matched_type(n));
 
     ast_matchexpr_foreach(n, &it, mcase) {
-        const struct rir_type *matched_type = type_get_rir_or_die(mcase->matchcase.matched_type);
-        int index = rir_type_childof_type(matched_type, matchexp_type);
+        int index = type_is_childof(
+            mcase->matchcase.matched_type,
+            ast_matchexpr_matched_type(n)
+        );
         if (index == -1) {
             RF_ERROR("Failed to match a case's type to the matchexpr type during RIR formation");
             return false;

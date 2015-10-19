@@ -5,8 +5,10 @@
 #include <String/rf_str_decl.h>
 #include <ast/operators_decls.h> // for binary operations enum
 #include <Data_Structures/intrusive_list.h>
+#include <Data_Structures/darray.h>
 
 struct rir_type;
+struct type;
 
 // NOTE: preserve order, some functions depend on it
 // order should be same as rir elementary types
@@ -39,7 +41,6 @@ enum typeop_type {
 
 enum type_category {
     TYPE_CATEGORY_OPERATOR = 0,         /* a type combination of other types */
-    TYPE_CATEGORY_LEAF,                 /* almost always part of another type */
     TYPE_CATEGORY_ELEMENTARY,           /* an elementary/builtin type */
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
@@ -54,15 +55,10 @@ struct type_elementary {
     bool is_constant;
 };
 
-struct type_leaf {
-    const struct RFstring *id;
-    struct type *type;
-};
-
 struct type_operator {
     enum typeop_type type;
-    struct type *left;
-    struct type *right;
+    //! Array of types constitute this type.
+    struct {darray(struct type*);} operands;
 };
 
 struct type_defined {
@@ -80,12 +76,9 @@ struct type_module {
 
 struct type {
     enum type_category category;
-    //! The RIR version of the type
-    const struct rir_type *rir_type;
     union {
         struct type_defined defined;
         struct type_operator operator;
-        struct type_leaf leaf;
         struct type_elementary elementary;
         struct type_foreignfn foreignfn;
         struct type_module module;

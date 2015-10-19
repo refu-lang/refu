@@ -1,6 +1,5 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir.h>
-#include <ir/rir_type.h>
 #include <ir/rir_object.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
@@ -9,20 +8,19 @@
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>
 
-static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct rir_ctx *ctx)
+static bool rir_typedef_init(struct rir_object *obj, struct type *t, struct rir_ctx *ctx)
 {
     struct rir_typedef *def = &obj->tdef;
-    RF_ASSERT(!rir_type_is_elementary(t), "Typedef can't be created from an elementary type");
-    RF_ASSERT(t->category != COMPOSITE_IMPLICATION_RIR_TYPE, "Typedef can't be created from an implication type");
+    RF_ASSERT(!type_is_elementary(t), "Typedef can't be created from an elementary type");
+    RF_ASSERT(!type_is_implop(t), "Typedef can't be created from an implication type");
     RF_STRUCT_ZERO(def);
 
-    def->is_union = rir_type_is_sumtype(t);
-    if (t->category == COMPOSITE_RIR_DEFINED) {
+    def->is_union = type_is_sumtype(t);
+    if (type_is_defined(t)) {
         // if it's an actual typedef get the name and proceed to the first and only
         // subtype which is the actual type declaration
-        def->name = rf_string_copy_out(t->name);
-        RF_ASSERT(darray_size(t->subtypes) == 1, "defined type should have a single subtype");
-        t = darray_item(t->subtypes, 0);
+        def->name = rf_string_copy_out(type_defined_get_name(t));
+        t = type_defined_get_type(t);
         // set the typedef rir object in the symbol table
         if (!rir_ctx_st_setobj(ctx, def->name, obj)) {
             RF_ERROR("Failed to set the typedef rir object in the symbol table");
@@ -30,10 +28,10 @@ static bool rir_typedef_init(struct rir_object *obj, struct rir_type *t, struct 
         }
     } else {
         RFS_PUSH();
-        def->name = rf_string_copy_out(type_get_unique_type_str(t->type, true));
+        def->name = rf_string_copy_out(type_get_unique_type_str(t, true));
         RFS_POP();
         // since this is a new, "internally created" type create a new symbol table record
-        if (!rir_ctx_st_newobj(ctx, def->name, (struct type*)t->type, obj)) {
+        if (!rir_ctx_st_newobj(ctx, def->name, t, obj)) {
             RF_ERROR("Failed to create new symbol table record for a rir created type");
             return false;
         }

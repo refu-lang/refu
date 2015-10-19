@@ -1,7 +1,6 @@
 #include <analyzer/type_set.h>
 #include <types/type.h>
 #include <types/type_comparisons.h>
-#include <ir/rir_type.h>
 
 
 i_INLINE_INS const void *type_objset_key(const struct type *t);

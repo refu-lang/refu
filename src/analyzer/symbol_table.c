@@ -52,7 +52,7 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     case AST_VARIABLE_DECLARATION:
     case AST_TYPE_DESCRIPTION:
     case AST_TYPE_LEAF:
-        rec->data = type_lookup_or_create(node, mod, st, NULL, false);
+        rec->data = type_lookup_or_create(node, mod, st, NULL);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
@@ -307,7 +307,7 @@ static const struct RFstring *symbol_table_extract_string_from_typedesc(const st
     } else if (typedesc->type == AST_TYPE_LEAF) {
         return ast_typeleaf_str(typedesc);
     } else if (typedesc->type == AST_TYPE_OPERATOR) {
-        return type_get_unique_value_str(ast_node_get_type(typedesc, AST_TYPERETR_AS_LEAF), true);
+        return type_get_unique_value_str(ast_node_get_type(typedesc), true);
     }
     return NULL;
 }

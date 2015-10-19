@@ -198,12 +198,9 @@ i_INLINE_INS const struct inplocation_mark *ast_node_startmark(const struct ast_
 i_INLINE_INS const struct inplocation_mark *ast_node_endmark(const struct ast_node *n);
 i_INLINE_INS enum ast_type ast_node_type(const struct ast_node *n);
 i_INLINE_INS bool ast_node_has_value(const struct ast_node *n);
-i_INLINE_INS const struct type *ast_node_get_type(const struct ast_node *n,
-                                                  enum type_retrieval_options opts);
-i_INLINE_INS const struct type *ast_node_get_type_or_die(const struct ast_node *n,
-                                                         enum type_retrieval_options opts);
-i_INLINE_INS const struct type *ast_node_get_type_or_nil(const struct ast_node *n,
-                                                         enum type_retrieval_options opts);
+i_INLINE_INS const struct type *ast_node_get_type(const struct ast_node *n);
+i_INLINE_INS const struct type *ast_node_get_type_or_die(const struct ast_node *n);
+i_INLINE_INS const struct type *ast_node_get_type_or_nil(const struct ast_node *n);
 
 const struct RFstring *ast_nodetype_str(enum ast_type type)
 {

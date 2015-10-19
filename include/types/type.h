@@ -8,13 +8,24 @@
 #include <utils/traversal.h>
 #include <types/type_decls.h>
 #include <types/type_elementary.h>
-#include <ir/rir_type.h>
 
 struct module;
 struct symbol_table;
 struct RFbuffer;
 
 extern const struct RFstring g_wildcard_s;
+
+struct type_creation_ctx {
+    struct type_operator *currop;
+};
+extern i_THREAD__ struct type_creation_ctx g_type_creation_ctx;
+
+i_INLINE_DECL void type_creation_ctx_init()
+{
+    g_type_creation_ctx.currop = NULL;
+}
+
+bool type_add_to_currop(struct type* t);
 
 /* -- type allocation functions -- */
 
@@ -51,24 +62,10 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
                                        struct symbol_table *st,
                                        struct ast_node *genrdecl);
 
-struct type *type_operator_create(struct module *m,
-                                  struct type *left_type,
-                                  struct type *right_type,
-                                  enum typeop_type type);
-
 struct type *type_operator_create_from_node(struct ast_node *n,
                                             struct module *m,
                                             struct symbol_table *st,
                                             struct ast_node *genrdecl);
-
-struct type *type_leaf_create(struct module *m,
-                              const struct RFstring *id,
-                              struct type *leaf_type);
-
-struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
-                                        struct module *m,
-                                        struct symbol_table *st,
-                                        struct ast_node *genrdecl);
 
 /* -- type getters -- */
 /**
@@ -83,20 +80,18 @@ struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
  * @param st           The symbol table to check for the type
  * @param genrdecl     An optional generic declaration node that describes @c n.
  *                     Can be NULL.
- * @param make_leaf    If true and @c n is a type description of a single
- *                     type_leaf say a:f64 then this will return a type leaf.
- *                     If false then this will just return the right part of the
- *                     description
  * @return             Return either the type of @c n or NULL if there was an error
  */
 struct type *type_lookup_or_create(const struct ast_node *n,
                                    struct module *m,
                                    struct symbol_table *st,
-                                   struct ast_node *genrdecl,
-                                   bool make_leaf);
+                                   struct ast_node *genrdecl);
 
 /**
- * Applies a type operator to 2 types and returns the result
+ * Applies a type operator to 2 types and returns the result. If either of the 2
+ * parameter types is the same type_op then the type is appended instead of 
+ * creating a new one.
+ *
  * @param type          The type operator to apply to @c left and @c right
  * @param left          The type to become left part of the operand
  * @param right         The type to become right part of the operand
@@ -114,24 +109,6 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
                                      struct module *mod,
                                      struct symbol_table *st,
                                      struct ast_node *genrdecl);
-
-/**
- * Gets the rir vesion of a type.
- *
- * If the rir type is nil but type is elementary we retrieve it from the rir
- * elementary table. If it's not but rir type is stil nil then something is wrong
- * and we quit with an error.
- */
-i_INLINE_DECL const struct rir_type *type_get_rir_or_die(const struct type *type)
-{
-    if (type->category == TYPE_CATEGORY_ELEMENTARY) {
-        return rir_type_get_elementary(type_elementary(type));
-    }
-    if (!type->rir_type) {
-        RF_CRITICAL_FAIL("Requested rir_type is NULL.");
-    }
-    return type->rir_type;
-}
 
 //! Options for invoking type_str()
 enum type_str_options {
@@ -197,7 +174,28 @@ const struct type *type_get_wildcard();
 /**
  * Gets the name of a defined type
  */
-const struct RFstring *type_defined_get_name(const struct type *t);
+i_INLINE_DECL const struct RFstring *type_defined_get_name(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
+    return t->defined.name;
+}
+
+/**
+ * Gets the containing type of a defined type
+ */
+i_INLINE_DECL const struct type *type_defined_get_type(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
+    return t->defined.type;
+}
+
+/**
+ * Query a type's operator type. If type is not an operator then TYPEOP_INVALID is returned
+ */
+i_INLINE_DECL enum typeop_type type_typeop_get(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_OPERATOR ? t->operator.type : TYPEOP_INVALID;
+}
 
 /**
  * Query if a type is a sum operator type
@@ -205,6 +203,19 @@ const struct RFstring *type_defined_get_name(const struct type *t);
 i_INLINE_DECL bool type_is_sumop(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_SUM;
+}
+
+/**
+ * Query if a type is a product operator type
+ */
+i_INLINE_DECL bool type_is_prodop(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_PRODUCT;
+}
+
+i_INLINE_DECL bool type_is_implop(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_IMPLICATION;
 }
 
 /**
@@ -218,84 +229,29 @@ i_INLINE_DECL bool type_is_sumtype(const struct type *t)
 }
 
 /**
- * Get the nth type of a type operation, or kill the program if it doesn't exist
- *
- * @warning This function must be called on a type after typechecking. Only then
- * will the rir_types have been created allowing the function to work. If not 
- * the program will crush with an error.
+ * @return the nth subtype of a type operation, or NULL if it does not exist or
+ * if the type is not a type operator
  */
-i_INLINE_DECL const struct type *type_get_nth_type_or_die(const struct type *t, unsigned int index)
+const struct type *type_get_subtype(const struct type *t, unsigned int index);
+
+/**
+ * @return the number of operands/subtypes a type operation has
+ */
+unsigned int type_get_subtypes_num(const struct type *t);
+
+/**
+ * @return The index of @a t inside @a maybe_parent if it's found and -1 if not
+ */
+int type_is_direct_childof(const struct type *t, const struct type *maybe_parent);
+
+/**
+ * Works just like @ref type_is_direct_childof() but also allows for @a to be a
+ * defined type
+ */
+i_INLINE_DECL int type_is_childof(const struct type *t, const struct type *maybe_parent)
 {
-    const struct rir_type *rtype = rir_type_get_nth_type_or_die(
-        type_get_rir_or_die(t),
-        index
-    );
-    return rtype->type;
+    return maybe_parent->category == TYPE_CATEGORY_DEFINED
+        ? type_is_direct_childof(t, maybe_parent->defined.type)
+        : type_is_direct_childof(t, maybe_parent);
 }
-
-/**
- * Get the nth type of a type operation, or kill the program if it doesn't exist
- *
- * @warning This function must be called on a type after typechecking. Only then
- * will the rir_types have been created allowing the function to work. If not 
- * the program will crush with an error.
- */
-i_INLINE_DECL const struct RFstring *type_get_nth_name_or_die(const struct type *t, unsigned int index)
-{
-    return rir_type_get_nth_name_or_die(type_get_rir_or_die(t), index);
-}
-
-/* -- type traversal functions -- */
-
-typedef bool (*type_iterate_cb) (struct type *t, void *user_arg);
-typedef bool (*leaf_type_cb) (struct type_leaf *t, void *user_arg);
-typedef enum traversal_cb_res (*leaf_type_nostop_cb) (const struct type_leaf *t, void *user_arg);
-
-/**
- * Iterate and call callback for each subtype leaf
- * @param t          The type whose subtypes to iterate
- * @param cb         The callback to call on each type leaf
- * @param user_arg   The input to the callback
- *
- * @return true for success and false if the callback fails anywhere
- */
-bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg);
-
-/**
- * Behaves just like @c type_for_each_leaf() but has different treatment of
- * callback return.
- * @param t          The type whose subtypes to iterate
- * @param cb         The callback to call on each type leaf
- * @param user_arg   The input to the callback
- *
- * @return true for success and false if the callback fails anywhere
- */
-enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_nostop_cb cb, void *user_arg);
-
-/**
- * Post order iteration of a given type
- * @param t            The type to traverse
- * @param cb           The callback to execute in a post order fashion for each node
- *                     of the type description
- * @param user_arg     An extra argument to provide to the callbacks
- *
- * @return             true if all callbacks returned succesfully and false otherwise
- */
-bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg);
-
-/**
- * Tteration of a given type, with callbacks both for when going down and up.
- * Traversal should be in order.
- * @param t            The type to traverse
- * @param pre_cb       The callback to execute in a pre order fashion for each node
- *                     of the type description
- * @param post_cb      The callback to execute in a post order fashion for each node
- *                     of the type description
- * @param user_arg     An extra argument to provide to the callbacks
- *
- * @return             true if all callbacks returned succesfully and false otherwise
- */
-bool type_traverse(struct type *t, type_iterate_cb pre_cb,
-                   type_iterate_cb post_cb, void *user_arg);
-
 #endif

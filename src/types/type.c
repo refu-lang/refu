@@ -3,6 +3,7 @@
 #include <Persistent/buffers.h>
 #include <Utils/fixed_memory_pool.h>
 #include <Utils/bits.h>
+#include <Definitions/threadspecific.h>
 
 #include <module.h>
 #include <analyzer/analyzer.h>
@@ -16,12 +17,23 @@
 
 #include <types/type_elementary.h>
 #include <types/type_function.h>
+#include <types/type_comparisons.h>
 
 
 const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
+i_THREAD__ struct type_creation_ctx g_type_creation_ctx;
+i_INLINE_INS void type_creation_ctx_init();
+
+bool type_add_to_currop(struct type* t)
+{
+    if (g_type_creation_ctx.currop) {
+        darray_append(g_type_creation_ctx.currop->operands, t);
+    }
+    return true;
+}
 
 /* -- forward declarations of functions -- */
-static bool type_operator_init_from_node(struct type_operator *t,
+static bool type_operator_init_from_node(struct type *t,
                                          const struct ast_node *n,
                                          struct module *m,
                                          struct symbol_table *st,
@@ -31,35 +43,30 @@ static bool type_operator_init_from_node(struct type_operator *t,
 struct function_args_ctx {
     struct symbol_table *st;
     struct module *module;
+    bool success;
 };
+
+static inline void function_args_ctx_init(struct function_args_ctx *ctx,
+                                          struct symbol_table *st,
+                                          struct module *m)
+{
+    ctx->st = st;
+    ctx->module = m;
+    ctx->success = true;
+}
 
 // Add all arguments to the symbol table. Leafs are added with key as their
 // ID and anonumous types are added with a unique value as their key
-static bool do_type_function_add_args_to_st(struct type *t, void *user)
+static bool type_function_add_args_to_st(const struct RFstring *name,
+                                         const struct ast_node *ast_desc,
+                                         struct type *t,
+                                         struct function_args_ctx *ctx)
 {
-    struct function_args_ctx *ctx = user;
-    if (t->category == TYPE_CATEGORY_LEAF) {
-        return symbol_table_add_type(ctx->st, ctx->module, t->leaf.id, t->leaf.type);
-    } else if (type_is_sumop(t)) {
-        return symbol_table_add_type(
-            ctx->st,
-            ctx->module,
-            type_get_unique_value_str(t, true),
-            t
-        );
-    }
-    return true;
-}
-
-static bool type_function_add_args_to_st(struct type *args_t,
-                                         struct module *m,
-                                         struct symbol_table *st)
-{
-    struct function_args_ctx ctx;
-    ctx.st = st;
-    ctx.module = m;
-
-    return type_traverse_postorder(args_t, do_type_function_add_args_to_st, &ctx);
+    (void)ast_desc;
+    ctx->success = symbol_table_add_type(
+        ctx->st, ctx->module, name, t
+    );
+    return ctx->success;
 }
 
 
@@ -78,70 +85,6 @@ void type_free(struct type *t, struct module *m)
 }
 
 /* -- type creation and initialization functions used internally -- */
-
-static bool type_leaf_init_from_node(struct type_leaf *leaf,
-                                     const struct ast_node *ast_typeleaf,
-                                     struct module *m,
-                                     struct symbol_table *st,
-                                     struct ast_node *genrdecl)
-{
-    struct ast_node *right;
-    struct ast_node *left;
-    AST_NODE_ASSERT_TYPE(ast_typeleaf, AST_TYPE_LEAF);
-    right = ast_typeleaf_right(ast_typeleaf);
-    left = ast_typeleaf_left(ast_typeleaf);
-
-    AST_NODE_ASSERT_TYPE(left, AST_IDENTIFIER);
-    leaf->id = ast_identifier_str(left);
-
-    if (right->type == AST_XIDENTIFIER) {
-        leaf->type = type_lookup_xidentifier(right, m, st, genrdecl);
-        if (!leaf->type) {
-            RF_ERROR("No type could be looked up for xidentifier \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_xidentifier_str(right)));
-            return false;
-        }
-
-    } else if (right->type == AST_TYPE_DESCRIPTION ||
-               right->type == AST_TYPE_OPERATOR) {
-        leaf->type = module_get_or_create_type(m, right, st, genrdecl);
-        if (!leaf->type) {
-            return false;
-        }
-
-    } else {
-        RF_ASSERT_OR_CRITICAL(false, return false,
-                              "Illegal ast node type \""RF_STR_PF_FMT"\""
-                              " detected as the right part of a type description",
-                              RF_STR_PF_ARG(ast_node_str(right)));
-    }
-
-    return true;
-}
-
-struct type *type_leaf_create_from_node(const struct ast_node *typedesc,
-                                        struct module *m,
-                                        struct symbol_table *st,
-                                        struct ast_node *genrdecl)
-{
-    struct type *ret;
-    ret = type_alloc(m);
-    if (!ret) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
-    }
-
-    ret->category = TYPE_CATEGORY_LEAF;
-    if (!type_leaf_init_from_node(&ret->leaf, typedesc, m, st, genrdecl)) {
-        type_free(ret, m);
-        return NULL;
-    }
-
-    // add it to the types list
-    module_types_set_add(m, ret);
-    return ret;
-}
-
 static bool type_init_from_typeelem(struct type *t,
                                     const struct ast_node *typeelem,
                                     struct module *m,
@@ -149,12 +92,8 @@ static bool type_init_from_typeelem(struct type *t,
                                     struct ast_node *genrdecl)
 {
     switch(typeelem->type) {
-    case AST_TYPE_LEAF:
-        t->category = TYPE_CATEGORY_LEAF;
-        return type_leaf_init_from_node(&t->leaf, typeelem, m, st, genrdecl);
     case AST_TYPE_OPERATOR:
-        t->category = TYPE_CATEGORY_OPERATOR;
-        return type_operator_init_from_node(&t->operator,
+        return type_operator_init_from_node(t,
                                             typeelem,
                                             m,
                                             st,
@@ -198,80 +137,65 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
     return ret;
 }
 
-static bool type_operator_init_from_node(struct type_operator *t,
-                                         const struct ast_node *n,
-                                         struct module *m,
-                                         struct symbol_table *st,
-                                         struct ast_node *genrdecl)
-{
-    struct type *left;
-    struct type *right;
-    AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
-
-    t->type = ast_typeop_op(n);
-    left = type_lookup_or_create(ast_typeop_left(n), m, st, genrdecl, true);
-    if (!left) {
-        return false;
-    }
-    right = type_lookup_or_create(ast_typeop_right(n), m, st, genrdecl, true);
-    if (!right) {
-        return false;
-    }
-
-    t->left = left;
-    t->right = right;
-
-    return true;
-}
-
 struct type *type_lookup_or_create(const struct ast_node *n,
                                    struct module *m,
                                    struct symbol_table *st,
-                                   struct ast_node *genrdecl,
-                                   bool make_leaf)
+                                   struct ast_node *genrdecl)
 {
+    struct type *ret = NULL;
     switch (n->type) {
     case AST_XIDENTIFIER:
-        return type_lookup_xidentifier(n, m, st, genrdecl);
+        ret = type_lookup_xidentifier(n, m, st, genrdecl);
     case AST_TYPE_LEAF:
-        return (make_leaf)
-            ? type_leaf_create_from_node(n, m, st, genrdecl)
-            : type_lookup_or_create(ast_typeleaf_right(n), m, st, genrdecl, make_leaf);
-        break;
+        ret =  module_get_or_create_type(m, ast_typeleaf_right(n), st, genrdecl);
     case AST_TYPE_DESCRIPTION:
-        return type_lookup_or_create(ast_typedesc_desc_get(n), m, st, genrdecl, make_leaf);
+        return type_lookup_or_create(ast_typedesc_desc_get(n), m, st, genrdecl);
     case AST_TYPE_OPERATOR:
-        return module_get_or_create_type(m, n, st, genrdecl);
+        ret = module_get_or_create_type(m, n, st, genrdecl);
     case AST_VARIABLE_DECLARATION:
-        return type_lookup_or_create(ast_vardecl_desc_get(n), m, st, genrdecl, false);
+        return type_lookup_or_create(ast_vardecl_desc_get(n), m, st, genrdecl);
     default:
         RF_ASSERT_OR_CRITICAL(false, return false, "Unexpected ast node type "
                               "\""RF_STR_PF_FMT"\" detected",
                               RF_STR_PF_ARG(ast_node_str(n)));
+        break;
     }
 
-    return NULL;
+    // we should get here only in the case of end type so add to current operator if existing
+    if (ret) {
+        type_add_to_currop(ret);
+    }
+    return ret;
 }
 
-struct type *type_create_from_operation(enum typeop_type type,
+struct type *type_create_from_operation(enum typeop_type typeop,
                                         struct type *left,
                                         struct type *right,
                                         struct module *m)
 {
     struct type *t;
-    // TODO: Somehow also check if the type is already existing in the analyzer
-    //       and if it is return it instead of creating it
-    t = type_alloc(m);
-    if (!t) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
+    if (left->category == TYPE_CATEGORY_OPERATOR && left->operator.type == typeop) {
+        darray_append(left->operator.operands, right);
+        t = left;
+    } else if (right->category == TYPE_CATEGORY_OPERATOR && right->operator.type == typeop) {
+        darray_prepend(right->operator.operands, left);
+        t = right;
+    } else { // create a new type
+    
+        // TODO: Somehow also check if the type is already existing in the analyzer
+        //       and if it is return it instead of creating it
+        t = type_alloc(m);
+        if (!t) {
+            RF_ERROR("Type allocation failed");
+            return NULL;
+        }
+
+        t->category = TYPE_CATEGORY_OPERATOR;
+        t->operator.type = typeop;
+        darray_init(t->operator.operands);
+        darray_append(t->operator.operands, left);
+        darray_append(t->operator.operands, right);
     }
-
-    t->category = TYPE_CATEGORY_OPERATOR;
-    t->operator.type = type;
-    t->operator.left = left;
-    t->operator.right = right;
-
     return t;
 }
 
@@ -316,8 +240,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
     t->defined.type = type_lookup_or_create(ast_typedecl_typedesc_get(n),
                                             m,
                                             st,
-                                            ast_typedecl_genrdecl_get(n),
-                                            true);
+                                            ast_typedecl_genrdecl_get(n));
     if (!t->defined.type) {
         RF_ERROR("Failed to create type for typedecl's typedescription");
         type_free(t, m);
@@ -341,22 +264,25 @@ static bool type_init_from_fndecl(struct type *t,
 
     // set argument type (left part of the operand)
     if (args) {
-        arg_type = type_lookup_or_create(args, m, st,
-                                         ast_fndecl_genrdecl_get(n),
-                                         true);
+        arg_type = type_lookup_or_create(args, m, st, ast_fndecl_genrdecl_get(n));
         if (!arg_type) {
             return false;
         }
         // also add the function's arguments to its symbol table
-        type_function_add_args_to_st(arg_type, m, ast_fndecl_symbol_table_get((struct ast_node*)n));
+        struct function_args_ctx ctx;
+        function_args_ctx_init(&ctx, ast_fndecl_symbol_table_get((struct ast_node*)n), m);
+        ast_type_foreach_arg(args, arg_type, (ast_type_cb)type_function_add_args_to_st, &ctx);
+        if (!ctx.success) {
+            RF_ERROR("Failed to add a function's arguments to its symbol table");
+            return false;
+        }
     } else {
         arg_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
     }
 
     if (ret) {
         ret_type = type_lookup_or_create(ret, m, st,
-                                         ast_fndecl_genrdecl_get(n),
-                                         true);
+                                         ast_fndecl_genrdecl_get(n));
         if (!ret_type) {
             return false;
         }
@@ -416,40 +342,30 @@ struct type *type_module_create(struct module *m, const struct RFstring *name)
     return t;
 }
 
-struct type *type_leaf_create(struct module *m,
-                              const struct RFstring *id,
-                              struct type *leaf_type)
+static bool type_operator_init_from_node(struct type *t,
+                                         const struct ast_node *n,
+                                         struct module *m,
+                                         struct symbol_table *st,
+                                         struct ast_node *genrdecl)
 {
-    struct type *t;
-    t = type_alloc(m);
-    if (!t) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
-    }
-    t->category = TYPE_CATEGORY_LEAF;
-    t->leaf.id = id;
-    t->leaf.type = leaf_type;
-    module_types_set_add(m, t);
-    return t;
-}
-
-struct type *type_operator_create(struct module *m,
-                                  struct type *left_type,
-                                  struct type *right_type,
-                                  enum typeop_type type)
-{
-    struct type *t;
-    t = type_alloc(m);
-    if (!t) {
-        RF_ERROR("Type allocation failed");
-        return NULL;
-    }
+    AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
+    
     t->category = TYPE_CATEGORY_OPERATOR;
-    t->operator.type = type;
-    t->operator.left = left_type;
-    t->operator.right = right_type;
-    module_types_set_add(m, t);
-    return t;
+    darray_init(t->operator.operands);
+    t->operator.type = ast_typeop_op(n);
+
+    g_type_creation_ctx.currop = &t->operator;
+    struct type *left = type_lookup_or_create(ast_typeop_left(n), m, st, genrdecl);
+    if (!left) {
+        return false;
+    }
+    g_type_creation_ctx.currop = &t->operator;
+    struct type *right = type_lookup_or_create(ast_typeop_right(n), m, st, genrdecl);
+    if (!right) {
+        return false;
+    }
+
+    return true;
 }
 
 struct type *type_operator_create_from_node(struct ast_node *n,
@@ -464,8 +380,7 @@ struct type *type_operator_create_from_node(struct ast_node *n,
         return NULL;
     }
 
-    t->category = TYPE_CATEGORY_OPERATOR;
-    if (!type_operator_init_from_node(&t->operator, n, m, st, genrdecl)) {
+    if (!type_operator_init_from_node(t, n, m, st, genrdecl)) {
         type_free(t, m);
         t = NULL;
     }
@@ -510,6 +425,7 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
     return NULL;
 
 }
+
 struct type *type_lookup_identifier_string(const struct RFstring *str,
                                            const struct symbol_table *st)
 {
@@ -543,31 +459,17 @@ static struct RFstring *type_str_do(const struct type *t, int options)
         return (struct RFstring*)type_elementary_get_str(t->elementary.etype);
     case TYPE_CATEGORY_OPERATOR:
     {
-        struct RFstring *sleft;
-        struct RFstring *sright;
-        sleft = type_str_do(t->operator.left, options);
-        sright = type_str_do(t->operator.right, options);
-        if (!sleft || !sright) {
-            return NULL;
+        struct RFstring *ret = RFS("");
+        size_t sz = 0;
+        struct type **subt;
+        darray_foreach(subt, t->operator.operands) {
+            ret = RFS(RF_STR_PF_FMT RF_STR_PF_FMT, RF_STR_PF_ARG(ret), RF_STR_PF_ARG(type_str_do(*subt, options)));
+            if (darray_size(t->operator.operands) != sz) {
+                ret = RFS(RF_STR_PF_FMT RF_STR_PF_FMT, RF_STR_PF_ARG(ret), RF_STR_PF_ARG(type_op_str(t->operator.type)));
+            }
+            ++sz;
         }
-
-        return RFS(RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-                   RF_STR_PF_ARG(sleft),
-                   RF_STR_PF_ARG(type_op_str(t->operator.type)),
-                   RF_STR_PF_ARG(sright));
-    }
-    case TYPE_CATEGORY_LEAF:
-    {
-        struct RFstring *sleaf_type;
-        sleaf_type = type_str_do(t->leaf.type, options);
-        if (!sleaf_type) {
-            return NULL;
-        }
-        return RF_BITFLAG_ON(options, TSTR_LEAF_ID)
-                ? RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT,
-                      RF_STR_PF_ARG(t->leaf.id),
-                      RF_STR_PF_ARG(sleaf_type))
-                : RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(sleaf_type));
+        return ret;
     }
     case TYPE_CATEGORY_DEFINED:
         return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
@@ -598,7 +500,7 @@ struct RFstring *type_str(const struct type *t, int options)
         return type_str_do(t, options);
     }
 }
-i_INLINE_INS const struct rir_type *type_get_rir_or_die(const struct type *type);
+
 i_INLINE_INS struct RFstring *type_str_or_die(const struct type *t, int options);
 
 size_t type_get_uid(const struct type *t, bool count_leaf_id)
@@ -632,152 +534,50 @@ const struct RFstring *type_get_unique_type_str(const struct type *t, bool count
     return RFS_OR_DIE("internal_struct_%u", type_get_uid(t, count_leaf_id));
 }
 
-static struct type g_wildcard_type = {.category=TYPE_CATEGORY_WILDCARD};
+static struct type g_wildcard_type = {.category = TYPE_CATEGORY_WILDCARD};
 const struct type *type_get_wildcard()
 {
     return &g_wildcard_type;
 }
 
-const struct RFstring *type_defined_get_name(const struct type *t)
+i_INLINE_INS const struct RFstring *type_defined_get_name(const struct type *t);
+i_INLINE_INS const struct type *type_defined_get_type(const struct type *t);
+
+const struct type *type_get_subtype(const struct type *t, unsigned int index)
 {
-    RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
-    return t->defined.name;
+    if (t->category != TYPE_CATEGORY_OPERATOR) {
+        return NULL;
+    }
+    if (index >= darray_size(t->operator.operands)) {
+        return NULL;
+    }
+    return darray_item(t->operator.operands, index);
 }
 
+unsigned int type_get_subtypes_num(const struct type *t)
+{
+    RF_ASSERT(t->category == TYPE_CATEGORY_OPERATOR, "Can't get operand of non-operator type");
+    return darray_size(t->operator.operands);
+}
+
+int type_is_direct_childof(const struct type *t, const struct type *maybe_parent)
+{
+    if (maybe_parent->category != TYPE_CATEGORY_OPERATOR) {
+        return false;
+    }
+    struct type **subt;
+    int idx = 0;
+    darray_foreach(subt, t->operator.operands) {
+        if (type_compare(*subt, maybe_parent, TYPECMP_GENERIC)) {
+            return idx;
+        }
+        ++idx;
+    }
+    return -1;
+}
+
+i_INLINE_INS enum typeop_type type_typeop_get(const struct type *t);
 i_INLINE_INS bool type_is_sumop(const struct type *t);
+i_INLINE_INS bool type_is_prodop(const struct type *t);
+i_INLINE_INS bool type_is_implop(const struct type *t);
 i_INLINE_INS bool type_is_sumtype(const struct type *t);
-i_INLINE_INS const struct type *type_get_nth_type_or_die(const struct type *t, unsigned int index);
-i_INLINE_INS const struct RFstring *type_get_nth_name_or_die(const struct type *t, unsigned int index);
-
-/* -- type traversal functions -- */
-
-bool type_for_each_leaf(struct type *t, leaf_type_cb cb, void *user_arg)
-{
-    switch(t->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-    case TYPE_CATEGORY_GENERIC:
-    case TYPE_CATEGORY_WILDCARD:
-    case TYPE_CATEGORY_MODULE:
-        // Do nothing
-        break;
-
-    case TYPE_CATEGORY_DEFINED:
-        if (!type_for_each_leaf(t->defined.type, cb, user_arg)) {
-            return false;
-        }
-        break;
-
-    case TYPE_CATEGORY_OPERATOR:
-        if (!type_for_each_leaf(t->operator.left, cb, user_arg)) {
-            return false;
-        }
-        if (!type_for_each_leaf(t->operator.right, cb, user_arg)) {
-            return false;
-        }
-        break;
-
-    case TYPE_CATEGORY_LEAF:
-        if (!cb(&t->leaf, user_arg)) {
-            return false;
-        }
-        break;
-    }
-
-    return true;
-}
-
-enum traversal_cb_res type_for_each_leaf_nostop(const struct type *t, leaf_type_nostop_cb cb, void *user_arg)
-{
-    enum traversal_cb_res rc = TRAVERSAL_CB_OK;
-    switch(t->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-    case TYPE_CATEGORY_GENERIC:
-    case TYPE_CATEGORY_WILDCARD:
-    case TYPE_CATEGORY_MODULE:
-        // Do nothing
-        break;
-
-    case TYPE_CATEGORY_DEFINED:
-        rc = type_for_each_leaf_nostop(t->defined.type, cb, user_arg);
-        if (traversal_stop(rc)) {
-            return rc;
-        }
-        break;
-
-    case TYPE_CATEGORY_OPERATOR:
-        rc = type_for_each_leaf_nostop(t->operator.left, cb, user_arg);
-        if (traversal_stop(rc)) {
-            return rc;
-        }
-        rc = type_for_each_leaf_nostop(t->operator.right, cb, user_arg);
-        if (traversal_stop(rc)) {
-            return rc;
-        }
-        break;
-
-    case TYPE_CATEGORY_LEAF:
-        return cb(&t->leaf, user_arg);
-    }
-
-    return rc;
-}
-
-bool type_traverse_postorder(struct type *t, type_iterate_cb cb, void *user_arg)
-{
-    switch(t->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-    case TYPE_CATEGORY_LEAF:
-        break;
-    case TYPE_CATEGORY_DEFINED:
-        if (!type_traverse_postorder(t->defined.type, cb, user_arg)) {
-            return false;
-        }
-        break;
-    case TYPE_CATEGORY_OPERATOR:
-        if (!type_traverse_postorder(t->operator.left, cb, user_arg)) {
-            return false;
-        }
-        if (!type_traverse_postorder(t->operator.right, cb, user_arg)) {
-            return false;
-        }
-        break;
-    default:
-        RF_CRITICAL_FAIL("Not implemented type category for postorder iteration");
-        return false;
-    }
-
-    return cb(t, user_arg);
-}
-
-bool type_traverse(struct type *t, type_iterate_cb pre_cb,
-                   type_iterate_cb post_cb, void *user_arg)
-{
-    if (!pre_cb(t, user_arg)) {
-        return false;
-    }
-    switch(t->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-    case TYPE_CATEGORY_LEAF:
-    case TYPE_CATEGORY_MODULE:
-    case TYPE_CATEGORY_WILDCARD:
-        break;
-    case TYPE_CATEGORY_DEFINED:
-        if (!type_traverse(t->defined.type, pre_cb, post_cb, user_arg)) {
-            return false;
-        }
-        break;
-    case TYPE_CATEGORY_OPERATOR:
-        if (!type_traverse(t->operator.left, pre_cb, post_cb, user_arg)) {
-            return false;
-        }
-        if (!post_cb(t, user_arg)) {
-            return false;
-        }
-        return type_traverse(t->operator.right, pre_cb, post_cb, user_arg);
-    default:
-        RF_CRITICAL_FAIL("Not implemented type category for postorder iteration");
-        return false;
-    }
-
-    return post_cb(t, user_arg);
-}

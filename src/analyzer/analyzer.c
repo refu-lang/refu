@@ -38,8 +38,10 @@ static void analyzer_finalize_fndecl(struct ast_node *n)
     // figure out the number of arguments
     struct ast_node *fn_args = ast_fndecl_args_get(n);
     if (fn_args) {
-        const struct rir_type *rtype = type_get_rir_or_die(ast_node_get_type(ast_fndecl_args_get(n), AST_TYPERETR_AS_LEAF));
-        n->fndecl.args_num = (darray_size(rtype->subtypes) == 0) ? 1 : darray_size(rtype->subtypes);
+        const struct type *t = ast_node_get_type(ast_fndecl_args_get(n));
+        n->fndecl.args_num = (darray_size(t->operator.operands) == 0)
+            ? 1
+            : darray_size(t->operator.operands);
     } else {
         n->fndecl.args_num = 0;
     }

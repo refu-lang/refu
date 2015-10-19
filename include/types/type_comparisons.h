@@ -38,8 +38,7 @@ enum comparison_reason {
 i_INLINE_DECL bool type_category_equals(const struct type* t,
                                         enum type_category category)
 {
-    return t->category == category ||
-           (t->category== TYPE_CATEGORY_LEAF && t->leaf.type->category == category);
+    return t->category == category;
 }
 
 /**

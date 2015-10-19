@@ -6,7 +6,7 @@
 #include <Data_Structures/darray.h>
 
 struct rir_ctx;
-struct rir_type;
+struct type;
 
 struct rir_typedef {
     struct RFstring *name;
@@ -16,7 +16,7 @@ struct rir_typedef {
     struct RFilist_node ln;
 };
 
-struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx);
+struct rir_typedef *rir_typedef_create(struct type *t, struct rir_ctx *ctx);
 void rir_typedef_deinit(struct rir_typedef *t);
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);

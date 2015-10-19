@@ -33,4 +33,5 @@ OBJSET_DEFINE_TYPE(type,
  */
 bool type_objset_has_convertable(const struct rf_objset_type *set,
                                  const struct type *type);
+
 #endif

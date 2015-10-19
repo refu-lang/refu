@@ -46,6 +46,14 @@ int type_elementary_identifier_p(const struct RFstring *id);
 enum elementary_type_category type_elementary_get_category(const struct type *t);
 
 /**
+ * Given a type, check if it's elementary
+ */
+i_INLINE_DECL bool type_is_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY;
+}
+
+/**
  * Given a type, check if it's a specific elementary type
  */
 i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elementary_type etype)

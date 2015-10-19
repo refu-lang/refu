@@ -1,12 +1,10 @@
 #include <ir/rir.h>
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
-#include <ir/rir_type.h>
 #include <ir/rir_object.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
-#include <ir/rir_type.h>
 #include <ir/rir_utils.h>
 #include <types/type.h>
 #include <Utils/memory.h>
@@ -16,6 +14,7 @@
 #include <ast/ast_utils.h>
 #include <ast/string_literal.h>
 #include <utils/common_strings.h>
+#include <analyzer/type_set.h>
 #include <module.h>
 #include <compiler.h>
 
@@ -171,10 +170,9 @@ static bool rir_init(struct rir *r, struct module *m)
     if (!m) {
         return true;
     }
-    // create the rir types list from the types set for this module if one is given
-    if (!(r->rir_types_list = rir_types_list_create(m->types_set))) {
-        return false;
-    }
+    // moves types set into the rir
+    r->types_set = m->types_set;
+    m->types_set = 0;
     return true;
 }
 
@@ -196,8 +194,9 @@ static void rir_deinit(struct rir *r)
     darray_free(r->dependencies);
     strmap_clear(&r->map);
     strmap_clear(&r->global_literals);
-    if (r->rir_types_list) {
-        rir_types_list_destroy(r->rir_types_list);
+    if (r->types_set) {
+        rf_objset_clear(r->types_set);
+        free(r->types_set);
     }
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
         rir_function_destroy(fn);
@@ -236,7 +235,6 @@ static bool rir_process_do(struct rir *r, struct module *m)
     bool ret = false;
     struct ast_node *child;
     struct rir_ctx ctx;
-    struct rir_type *t;
     rir_ctx_init(&ctx, r, m);
     // assign the name to this rir
     if (!rf_string_copy_in(&r->name, module_name(m))) {
@@ -267,8 +265,9 @@ static bool rir_process_do(struct rir *r, struct module *m)
     }
 
     // for each non elementary, non sum-type rir type create a typedef
-    rir_types_list_for_each(r->rir_types_list, t) {
-        if (!rir_type_is_elementary(t) && t->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
+    struct type *t;
+    rf_objset_foreach(r->types_set, &it, t) {
+        if (!type_is_elementary(t) && !type_is_implop(t)) {
             struct rir_typedef *def = rir_typedef_create(t, &ctx);
             if (!def) {
                 RF_ERROR("Failed to create a RIR typedef");

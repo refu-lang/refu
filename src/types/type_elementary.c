@@ -33,7 +33,6 @@ static struct type i_elementary_types[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)    \
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
-        .rir_type = NULL,                           \
         .elementary = {                             \
             .etype=i_type,                          \
             .is_constant = false                    \
@@ -60,7 +59,6 @@ static struct type i_elementary_types_constant[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(i_type)   \
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
-        .rir_type = NULL,                           \
         .elementary = {                             \
             .etype=i_type,                          \
             .is_constant = true                     \
@@ -155,6 +153,7 @@ i_INLINE_INS bool elementary_type_is_float(enum elementary_type etype);
 i_INLINE_INS bool elementary_type_is_numeric(enum elementary_type etype);
 i_INLINE_INS int elementary_type_to_bytesize(enum elementary_type etype);
 i_INLINE_INS int type_elementary_bytesize(const struct type_elementary *t);
+i_INLINE_INS bool type_is_elementary(const struct type *t);
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
 i_INLINE_INS bool type_is_numeric_elementary(const struct type *t);

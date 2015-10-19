@@ -30,8 +30,8 @@ i_INLINE_DECL bool type_is_callable(const struct type *t)
         type_is_explicitly_convertable_elementary(t);
 }
 
-//! Gets the type descriptions of the arguments of the function
 struct type *type_function_get_argtype(const struct type *t);
+struct type *type_function_get_rettype(const struct type *t);
 
 //! Gets the type description of the arguments of a callable type
 i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
@@ -45,18 +45,6 @@ i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
     return t->defined.type;
 }
 
-i_INLINE_DECL void type_function_set_argtype(struct type *t, struct type *other)
-{
-    RF_ASSERT(type_is_function(t), "Non function type detected");
-    t->operator.left = other;
-}
-
-i_INLINE_DECL struct type *type_function_get_rettype(const struct type *t)
-{
-    RF_ASSERT(type_is_function(t), "Non function type detected");
-    return t->operator.right;
-}
-
 i_INLINE_DECL struct type *type_callable_get_rettype(const struct type *t)
 {
     RF_ASSERT(type_is_callable(t), "Non callable type detected");
@@ -66,12 +54,6 @@ i_INLINE_DECL struct type *type_callable_get_rettype(const struct type *t)
     // else it's either a constructor of a defined type or explicit conversion,
     // so returned type is actually t
     return (struct type*)t;
-}
-
-i_INLINE_DECL void type_function_set_rettype(struct type *t, struct type *other)
-{
-    RF_ASSERT(type_is_function(t), "Non function type detected");
-    t->operator.right = other;
 }
 
 /**
@@ -84,14 +66,5 @@ const struct RFstring *type_callable_category_str(const struct type *t);
  * Initialize a type structure as a function type
  */
 void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type);
-
-/** 
- * Take a function call's argument type and return a particular argument out of it
- * @param t        A function call's argument type
- * @param n        The argument number, starting from 0.
- * @return         the type of a particular argument or NULL if there was a
- *                 malformed expression type or @n is out of bounds
- */
-const struct type *type_fnargs_get_argtype_n(const struct type *t, unsigned int n);
 
 #endif

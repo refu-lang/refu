@@ -42,6 +42,7 @@ refu_src = [
     'ast/returnstmt.c',
     'ast/module.c',
     'ast/ast_utils.c',
+    'ast/ast_type_traversal.c',
 
     'utils/traversal.c',
     'utils/string_set.c',
@@ -63,7 +64,6 @@ refu_src = [
     'ir/rir.c',
     'ir/rir_utils.c',
     'ir/rir_object.c',
-    'ir/rir_type.c',
     'ir/rir_argument.c',
     'ir/rir_types_list.c',
     'ir/rir_function.c',

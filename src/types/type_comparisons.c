@@ -131,16 +131,6 @@ const struct type *typemp_ctx_get_matched_type()
 
 i_INLINE_INS bool type_category_equals(const struct type* t,
                                        enum type_category category);
-static inline bool type_leaf_compare(const struct type_leaf *from,
-                                     const struct type_leaf *to,
-                                     enum comparison_reason reason)
-{
-    bool predicate = true;
-    if (reason == TYPECMP_IDENTICAL) {
-        predicate = rf_string_equal(from->id, to->id);
-    }
-    return predicate && type_compare(from->type, to->type, reason);
-}
 
 static bool type_operator_compare(const struct type *from,
                                   const struct type *to,
@@ -154,8 +144,19 @@ static bool type_operator_compare(const struct type *from,
         TYPECMP_RETURN(false);
     }
 
-    return type_compare(from->operator.left, to->operator.left, reason) &&
-        type_compare(from->operator.right, to->operator.right, reason);
+    if (type_get_subtypes_num(from) != type_get_subtypes_num(to)) {
+        TYPECMP_RETURN(false);
+    }
+
+    struct type **subt;
+    unsigned int idx = 0;
+    darray_foreach(subt, from->operator.operands) {
+        if (!type_compare(*subt, darray_item(to->operator.operands, idx), reason)) {
+            return false;
+        }
+        ++idx;
+    }
+    return true;
 }
 
 
@@ -338,8 +339,6 @@ static bool type_same_categories_compare(const struct type *from,
         return type_operator_compare(from, to, reason);
     case TYPE_CATEGORY_ELEMENTARY:
         return type_elementary_compare(from, to, reason);
-    case TYPE_CATEGORY_LEAF:
-        return type_leaf_compare(&from->leaf, &to->leaf, reason);
     case TYPE_CATEGORY_DEFINED:
         return rf_string_equal(from->defined.name, to->defined.name);
     case TYPE_CATEGORY_GENERIC:
@@ -354,30 +353,6 @@ static bool type_same_categories_compare(const struct type *from,
     TYPECMP_RETURN(false);
 }
 
-/**
- * Check if the 2 types are both operators with similar layout
- */
-static inline bool type_operators_similar_layout(const struct type *from,
-                                                 const struct type *to)
-{
-    if (from->category != TYPE_CATEGORY_OPERATOR) {
-        return false;
-    }
-    if (to->category != TYPE_CATEGORY_OPERATOR) {
-        return false;
-    }
-    if (from->operator.type != to->operator.type) {
-        return false;
-    }
-    if (type_category_equals(from->operator.left, to->operator.left->category)) {
-        return false;
-    }
-    if (type_category_equals(from->operator.right, to->operator.right->category)) {
-        return false;
-    }
-    return true;
-}
-
 // a special check for sum type operators. Other operators always return false
 static bool type_compare_to_operator(const struct type *from,
 									 const struct type_operator *to,
@@ -389,41 +364,14 @@ static bool type_compare_to_operator(const struct type *from,
         // one side of a sum operator)
         enum comparison_reason new_reason = reason == TYPECMP_PATTERN_MATCHING
             ? TYPECMP_PATTERN_MATCHING : TYPECMP_AFTER_IMPLICIT_CONVERSION;
-
-        bool left_result = type_compare(from, to->left, new_reason);
-        if (left_result && !g_typecmp_ctx.conversion_at_final_match) {
-            // had an exact match
-            if (type_operators_similar_layout(from, to->left)) {
-                TYPECMP_RETSET_SUCCESS(to->left);
+        struct type **subt;
+        darray_foreach(subt, to->operands) {
+            if (type_compare(from, *subt, new_reason)) {
+                TYPECMP_RETSET_SUCCESS(*subt);
             }
-            // else
-            return true;
-        }
-
-        bool right_result = type_compare(from, to->right, new_reason);
-        if (right_result && !g_typecmp_ctx.conversion_at_final_match) {
-            if (type_operators_similar_layout(from, to->right)) {
-                TYPECMP_RETSET_SUCCESS(to->right);
-            }
-            // else
-            return true;
-        }
-        // no exact match, but still if either side matched even with conversion
-        // we succeed for this special case
-        if (left_result) {
-            if (type_operators_similar_layout(from, to->left)) {
-                TYPECMP_RETSET_SUCCESS(to->left);
-            }
-            // else
-            return true;
-        } else if (right_result) {
-            if (type_operators_similar_layout(from, to->right)) {
-                TYPECMP_RETSET_SUCCESS(to->right);
-            }
-            // else
-            return true;
         }
     }
+        
     return false;
 }
 
@@ -467,23 +415,7 @@ static inline enum type_initial_check_result type_category_check(const struct ty
     if (reason != TYPECMP_IDENTICAL) {
         // A type can be compared to a leaf of the same type and to
         // a defined of the same type but should not be considered identical to it
-        if (from->category == TYPE_CATEGORY_ELEMENTARY && to->category == TYPE_CATEGORY_LEAF) {
-            if (type_same_categories_compare(from, to->leaf.type, reason)) {
-                ret = TYPES_ARE_EQUAL;
-            }
-        } else if (to->category == TYPE_CATEGORY_ELEMENTARY && from->category == TYPE_CATEGORY_LEAF) {
-            if (type_same_categories_compare(from->leaf.type, to, reason)) {
-                ret = TYPES_ARE_EQUAL;
-            }
-        } else if (from->category == TYPE_CATEGORY_DEFINED && to->category == TYPE_CATEGORY_LEAF && to->leaf.type->category == TYPE_CATEGORY_DEFINED) {
-            if (type_same_categories_compare(from, to->leaf.type, reason)) {
-                ret = TYPES_ARE_EQUAL;
-            }
-        } else if (to->category == TYPE_CATEGORY_DEFINED && from->category == TYPE_CATEGORY_LEAF && from->leaf.type->category == TYPE_CATEGORY_DEFINED) {
-            if (type_same_categories_compare(from->leaf.type, to, reason)) {
-                ret = TYPES_ARE_EQUAL;
-            }
-        } else if (from->category == TYPE_CATEGORY_DEFINED) {
+        if (from->category == TYPE_CATEGORY_DEFINED) {
             if (type_compare(from->defined.type, to, reason)) {
                 ret = TYPES_ARE_EQUAL;
             }
@@ -533,6 +465,40 @@ bool type_compare(const struct type *from,
     return ret;
 }
 
+struct ast_type_equality_ctx {
+    struct module *mod;
+    struct symbol_table *st;
+    struct ast_node *genrdecl;
+    enum comparison_reason options;
+};
+
+static inline void ast_type_equality_ctx_init(
+    struct ast_type_equality_ctx *ctx,
+    struct module *mod,
+    struct symbol_table *st,
+    struct ast_node *genrdecl,
+    enum comparison_reason options
+) {
+    ctx->mod = mod;
+    ctx->st = st;
+    ctx->genrdecl = genrdecl;
+    ctx->options = options;
+}
+
+static bool ast_type_equality_cb(
+    const struct RFstring *name,
+    const struct ast_node *desc,
+    struct type *t,
+    struct ast_type_equality_ctx *ctx)
+{
+    struct type *lookedup_t = type_lookup_xidentifier(desc, ctx->mod, ctx->st, ctx->genrdecl);
+    if (!lookedup_t) {
+        RF_ERROR("Failed to lookup type of an identifier");
+        return false;
+    }
+    return type_compare(t, lookedup_t, ctx->options);
+}
+
 bool type_equals_ast_node(struct type *t,
                           const struct ast_node *type_desc,
                           struct module *mod,
@@ -540,70 +506,7 @@ bool type_equals_ast_node(struct type *t,
                           struct ast_node *genrdecl,
                           enum comparison_reason options)
 {
-    struct type *looked_up_t;
-    switch(type_desc->type) {
-    case AST_TYPE_OPERATOR:
-        if (t->category != TYPE_CATEGORY_OPERATOR) {
-            return false;
-        }
-
-        if (t->operator.type != ast_typeop_op(type_desc)) {
-            return false;
-        }
-
-        return type_equals_ast_node(t->operator.left,
-                                    ast_typeop_left(type_desc),
-                                    mod, st, genrdecl, options) &&
-            type_equals_ast_node(t->operator.right,
-                                 ast_typeop_right(type_desc),
-                                 mod, st, genrdecl, options);
-    case AST_TYPE_LEAF:
-    {
-        AST_NODE_ASSERT_TYPE(ast_typeleaf_left(type_desc), AST_IDENTIFIER);
-        if (t->category != TYPE_CATEGORY_LEAF) {
-            return false;
-        }
-        return rf_string_equal(t->leaf.id, ast_identifier_str(ast_typeleaf_left(type_desc))) &&
-            type_equals_ast_node(
-                t,
-                ast_typeleaf_right(type_desc),
-                mod,
-                st,
-                genrdecl,
-                TYPECMP_IDENTICAL
-            );
-    }
-    case AST_TYPE_DESCRIPTION:
-        return type_equals_ast_node(t, ast_typedesc_desc_get(type_desc), mod, st, genrdecl, options);
-    case AST_TYPE_DECLARATION:
-        return type_equals_ast_node(
-            t,
-            ast_typedecl_typedesc_get(type_desc),
-            mod,
-            st,
-            genrdecl,
-            options
-        );
-    case AST_XIDENTIFIER:
-        looked_up_t = type_lookup_xidentifier(type_desc, mod, st, genrdecl);
-        if (!looked_up_t) {
-            RF_ERROR("Failed to lookup an identifier");
-            return false;
-        }
-
-        // if we get here due to a comparison with a typeleaf then the left
-        // identifier must have matched. Only type remains to be matched.
-        if (t->category == TYPE_CATEGORY_LEAF) {
-            t = t->leaf.type;
-        }
-
-        return type_compare(t, looked_up_t, options);
-    default:
-        break;
-    }
-
-    RF_ASSERT_OR_CRITICAL(false, return false,
-                          "Illegal ast node type \""RF_STR_PF_FMT"\""
-                          " detected instead of a type description",
-                          RF_STR_PF_ARG(ast_node_str(type_desc)));
+    struct ast_type_equality_ctx ctx;
+    ast_type_equality_ctx_init(&ctx, mod, st, genrdecl, options);
+    return ast_type_foreach_arg(type_desc, t, (ast_type_cb)ast_type_equality_cb, &ctx);
 }

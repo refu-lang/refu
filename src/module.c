@@ -186,6 +186,7 @@ struct type *module_get_or_create_type(struct module *mod,
               desc->type == AST_TYPE_OPERATOR ||
               desc->type == AST_TYPE_LEAF,
               "Unexpected ast node type");
+
     rf_objset_foreach(mod->types_set, &it, t) {
         if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_GENERIC)) {
             return t;
@@ -199,13 +200,9 @@ struct type *module_get_or_create_type(struct module *mod,
         return NULL;
     }
 
+    // TODO: Should it not have been added already by the proper creation function?
     // add it to the list
     module_types_set_add(mod, t);
-    if (desc->type == AST_TYPE_OPERATOR && ast_typeop_op(desc) == TYPEOP_SUM) {
-        // if it's a sum type also add the left and the right operand type
-        module_types_set_add(mod, t->operator.left);
-        module_types_set_add(mod, t->operator.right);
-    }
     return t;
 }
 
