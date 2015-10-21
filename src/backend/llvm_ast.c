@@ -29,7 +29,6 @@
 #include <ast/ifexpr.h>
 
 #include <ir/rir.h>
-#include <ir/rir_type.h>
 #include <ir/rir_expression.h>
 
 #include <types/type_function.h>
@@ -56,8 +55,6 @@ LLVMTypeRef bllvm_type_from_type(const struct type *type,
     LLVMTypeRef ret = NULL;
     if (type->category == TYPE_CATEGORY_ELEMENTARY) {
         ret = bllvm_elementary_to_type(type_elementary(type), ctx);
-    } else if (type->category == TYPE_CATEGORY_LEAF) {
-        ret = bllvm_type_from_type(type->leaf.type, ctx);
     } else if (type->category == TYPE_CATEGORY_DEFINED) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(type_defined_get_name(type));

@@ -13,8 +13,6 @@
 #include <ast/type.h>
 #include <types/type.h>
 #include <types/type_function.h>
-#include <ir/rir_types_list.h>
-#include <ir/rir_type.h>
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
 #include <ir/rir.h>
@@ -41,21 +39,6 @@ LLVMValueRef bllvm_compile_functioncall(const struct rir_call *call,
                         llvm_traversal_ctx_get_values_count(ctx),
                         "");
     return ret;
-}
-
-/**
- * Get the cstring name of a parameter of a type
- *
- * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
- * If the type is a sumtype then just create a dummy name same as the type name
- */
-static inline const struct RFstring *bllvm_param_name_str(const struct type *type,
-                                                          struct llvm_traversal_ctx *ctx,
-                                                          unsigned int i)
-{
-    return type_is_sumtype(type)
-        ? type_get_unique_value_str(type, false)
-        : type_get_nth_name_or_die(type, i);
 }
 
 LLVMTypeRef bllvm_function_type(LLVMValueRef fn)
@@ -176,7 +159,7 @@ static bool bllvm_create_fndef(const struct rir_fndef *fn, struct llvm_traversal
 
 static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct llvm_traversal_ctx *ctx)
 {
-    LLVMTypeRef *arg_types = bllvm_rir_args_to_types(&fn->arguments, ctx);
+    LLVMTypeRef *arg_types = bllvm_rir_to_llvm_types(&fn->argument_types, ctx);
     // arg_types can also be null here, if the function has no arguments
     RFS_PUSH();
     LLVMValueRef llvmfn = LLVMAddFunction(
@@ -185,7 +168,7 @@ static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct
         LLVMFunctionType(
             bllvm_type_from_rir_ltype(fn->return_type, ctx),
             arg_types,
-            darray_size(fn->arguments),
+            darray_size(fn->argument_types),
             false //no variable args for now
         ));
     RFS_POP();

@@ -56,8 +56,4 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx);
 bool rir_match_st_populate_allocas(const struct ast_node *mcase,
                                    struct rir_object *matched_rir_obj,
                                    struct rir_ctx *ctx);
-const struct rir_value *rir_sum_subtype(const struct rir_type *rtype,
-                                        const struct rir_type *matchtype,
-                                        const struct rir_value *typeobject,
-                                        struct rir_ctx *ctx);
 #endif

@@ -4,18 +4,17 @@
 #include <ir/rir_constant.h>
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
-#include <ir/rir_type.h>
 #include <types/type.h>
 #include <ast/matchexpr.h>
 #include <Utils/sanity.h>
 
-const struct rir_value *rir_sum_subtype(const struct rir_type *rtype,
-                                        const struct rir_type *matchtype,
+const struct rir_value *rir_sum_subtype(const struct type *rtype,
+                                        const struct type *matchtype,
                                         const struct rir_value *typeobject,
                                         struct rir_ctx *ctx)
 {
     const struct rir_value *val = NULL;
-    int idx = rir_type_childof_type(rtype, matchtype);
+    int idx = type_is_childof(rtype, matchtype);
     if (!rir_ltype_is_elementary(typeobject->type) && idx != -1) { // type child of matched type
         // create a rir expression to read the object value at the index position
         struct rir_expression *e = rir_objmemberat_create(typeobject, idx, ctx);
@@ -34,17 +33,17 @@ const struct rir_value *rir_sum_subtype(const struct rir_type *rtype,
 
 struct alloca_pop_ctx {
     struct rir_ctx *rirctx;
-    const struct rir_type *matched_case_rirtype;
+    const struct type *matched_case_type;
     const struct rir_value *matched_case_rirobj;
 };
 
 static inline void alloca_pop_ctx_init(struct alloca_pop_ctx *ctx,
                                        struct rir_ctx *rirctx,
-                                       const struct rir_type *matched_case_rirtype,
+                                       const struct type *matched_case_type,
                                        const struct rir_value *matched_case_rirobj)
 {
     ctx->rirctx = rirctx;
-    ctx->matched_case_rirtype = matched_case_rirtype;
+    ctx->matched_case_type = matched_case_type;
     ctx->matched_case_rirobj = matched_case_rirobj;
 }
 
@@ -55,11 +54,11 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
     rir_strec_create_allocas(rec, ctx->rirctx);
     rir_strec_add_allocas(rec, ctx->rirctx);
     RF_ASSERT(rec->data, "Record should have a type");
-    const struct rir_type *rtype = type_get_rir_or_die(rec->data);
+    const struct type *rtype = rec->data;
     RF_ASSERT(rec->rirobj, "Record should have an associated rir object");
     // populate alloca depending on match case
     const struct rir_value *val = rir_sum_subtype(
-        rtype, ctx->matched_case_rirtype, ctx->matched_case_rirobj, ctx->rirctx
+        rtype, ctx->matched_case_type, ctx->matched_case_rirobj, ctx->rirctx
     );
     // and now write that to the alloca
     struct rir_expression *expr = rir_write_create(rir_object_value(rec->rirobj), val, ctx->rirctx);
@@ -80,7 +79,7 @@ bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_obje
 
     // iterate the allocas and assign the proper values from the subobject
     struct alloca_pop_ctx alloca_ctx;
-    alloca_pop_ctx_init(&alloca_ctx, ctx, type_get_rir_or_die(mcmatch_type), v);
+    alloca_pop_ctx_init(&alloca_ctx, ctx, mcmatch_type, v);
     symbol_table_iterate(rir_ctx_curr_st(ctx),
                          (htable_iter_cb)rir_symbol_table_populate_allocas_do,
                          &alloca_ctx);

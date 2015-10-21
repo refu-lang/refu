@@ -10,7 +10,6 @@
 #include <types/type_elementary.h>
 #include <types/type_comparisons.h>
 #include <types/type.h>
-#include <ir/rir_type.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_ltype.h>
 

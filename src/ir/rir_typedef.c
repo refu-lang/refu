@@ -36,7 +36,7 @@ static bool rir_typedef_init(struct rir_object *obj, struct type *t, struct rir_
             return false;
         }
     }
-    if (!rir_type_to_arg_array(t, &def->arguments_list, ARGARR_AT_TYPEDESC, ctx)) {
+    if (!rir_typearr_from_type(&def->argument_types, t, ARGARR_AT_TYPEDESC, ctx)) {
         RF_ERROR("Failed to turn a type to an arg array");
         return false;
     }
@@ -50,7 +50,7 @@ static bool rir_typedef_init(struct rir_object *obj, struct type *t, struct rir_
     return true;
 }
 
-static struct rir_object *rir_typedef_create_obj(struct rir_type *t, struct rir_ctx *ctx)
+static struct rir_object *rir_typedef_create_obj(struct type *t, struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_TYPEDEF, ctx->rir);
     if (!ret) {
@@ -63,7 +63,7 @@ static struct rir_object *rir_typedef_create_obj(struct rir_type *t, struct rir_
     return ret;
 }
 
-struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx)
+struct rir_typedef *rir_typedef_create(struct type *t, struct rir_ctx *ctx)
 {
     struct rir_object *obj = rir_typedef_create_obj(t, ctx);
     return obj ? &obj->tdef : NULL;
@@ -72,7 +72,7 @@ struct rir_typedef *rir_typedef_create(struct rir_type *t, struct rir_ctx *ctx)
 void rir_typedef_deinit(struct rir_typedef *t)
 {
     rf_string_destroy(t->name);
-    rir_argsarr_deinit(&t->arguments_list);
+    rir_typearr_deinit(&t->argument_types);
 }
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t)
@@ -82,7 +82,7 @@ bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t)
             RFS("$"RF_STR_PF_FMT" = %s(",  RF_STR_PF_ARG(t->name), t->is_union ? "uniondef" : "typedef"))) {
         return false;
     }
-    if (!rir_argsarr_tostring(ctx, &t->arguments_list)) {
+    if (!rir_typearr_tostring(ctx, &t->argument_types)) {
         return false;
     }
 
@@ -108,23 +108,20 @@ const struct rir_ltype *rir_typedef_typeat(const struct rir_typedef *t, unsigned
 
 size_t rir_typedef_bytesize(const struct rir_typedef *t)
 {
-    struct rir_object **arg;
-    struct rir_ltype *argtype;
+    struct rir_ltype **argtype;
     size_t sz;
     if (t->is_union) {
         //find size of biggest type of the union
         sz = 0;
-        darray_foreach(arg, t->arguments_list) {
-            argtype = rir_argument_type(&(*arg)->arg);
-            sz = rf_max(sz, rir_ltype_bytesize(argtype));
+        darray_foreach(argtype, t->argument_types) {
+            sz = rf_max(sz, rir_ltype_bytesize(*argtype));
         }
         return sz + sizeof(uint32_t); // size is that, plus size of the index
     }
     // else size of a normal typedef is sum of all its type sizes
     sz = 0;
-    darray_foreach(arg, t->arguments_list) {
-        argtype = rir_argument_type(&(*arg)->arg);
-        sz += rir_ltype_bytesize(argtype);
+    darray_foreach(argtype, t->argument_types) {
+        sz += rir_ltype_bytesize(*argtype);
     }
     return sz;
 }

@@ -15,8 +15,6 @@
 #include <analyzer/symbol_table.h>
 #include <types/type.h>
 
-#include <ir/rir_types_list.h>
-#include <ir/rir_type.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_object.h>
 
@@ -70,39 +68,13 @@ LLVMTypeRef bllvm_compile_typedef(const struct rir_typedef *def,
     llvm_traversal_ctx_reset_params(ctx);
     // else it's the same thing but just need to add an extra index for the union
     LLVMTypeRef llvm_type = bllvm_create_struct(def->name);
-    bllvm_rir_args_to_types(&def->arguments_list, ctx);
+    bllvm_rir_to_llvm_types(&def->argument_types, ctx);
     if (def->is_union) { // add the member selector in the beginning
         llvm_traversal_ctx_prepend_param(ctx, LLVMInt32Type());
     }
     LLVMStructSetBody(llvm_type, llvm_traversal_ctx_get_params(ctx), llvm_traversal_ctx_get_param_count(ctx), true);
     llvm_traversal_ctx_reset_params(ctx);
     return llvm_type;
-}
-
-struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
-                                                    struct llvm_traversal_ctx *ctx)
-{
-    RF_ASSERT(type->category != COMPOSITE_RIR_DEFINED ||
-              type->category != COMPOSITE_SUM_RIR_TYPE ||
-              type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
-              "Called with illegal rir type");
-    LLVMTypeRef llvm_type;
-    struct rir_type **subtype;
-    llvm_traversal_ctx_reset_params(ctx);
-    if (darray_size(type->subtypes) == 0) {
-        llvm_type = bllvm_type_from_type(rir_type_get_type_or_die(type), ctx);
-        if (llvm_type != LLVMVoidType()) {
-            llvm_traversal_ctx_add_param(ctx, llvm_type);
-        }
-    } else {
-        darray_foreach(subtype, type->subtypes) {
-            llvm_type = bllvm_type_from_type(rir_type_get_type_or_die(*subtype), ctx);
-            if (llvm_type != LLVMVoidType()) {
-                llvm_traversal_ctx_add_param(ctx, llvm_type);
-            }
-        }
-    }
-    return llvm_traversal_ctx_get_params(ctx);
 }
 
 LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
@@ -170,14 +142,14 @@ LLVMTypeRef bllvm_type_from_rir_ltype(const struct rir_ltype *type,
     return ret;
 }
 
-LLVMTypeRef *bllvm_rir_args_to_types(const struct args_arr *arr,
+LLVMTypeRef *bllvm_rir_to_llvm_types(const struct rir_type_arr *arr,
                                      struct llvm_traversal_ctx *ctx)
 {
     llvm_traversal_ctx_reset_params(ctx);
-    struct rir_object **arg;
+    struct rir_ltype **argtype;
     LLVMTypeRef llvm_type;
-    darray_foreach(arg, *arr) {
-        llvm_type = bllvm_type_from_rir_ltype((*arg)->arg.val.type, ctx);
+    darray_foreach(argtype, *arr) {
+        llvm_type = bllvm_type_from_rir_ltype(*argtype, ctx);
         llvm_traversal_ctx_add_param(ctx, llvm_type);
     }
     return llvm_traversal_ctx_get_params(ctx);

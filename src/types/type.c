@@ -540,8 +540,9 @@ const struct type *type_get_wildcard()
     return &g_wildcard_type;
 }
 
+i_INLINE_INS bool type_is_defined(const struct type *t);
 i_INLINE_INS const struct RFstring *type_defined_get_name(const struct type *t);
-i_INLINE_INS const struct type *type_defined_get_type(const struct type *t);
+i_INLINE_INS struct type *type_defined_get_type(const struct type *t);
 
 const struct type *type_get_subtype(const struct type *t, unsigned int index)
 {
@@ -581,6 +582,7 @@ int type_is_direct_childof(const struct type *t, const struct type *maybe_parent
     }
     return -1;
 }
+i_INLINE_INS int type_is_childof(const struct type *t, const struct type *maybe_parent);
 
 i_INLINE_INS bool type_is_operator(const struct type *t);
 i_INLINE_INS enum typeop_type type_typeop_get(const struct type *t);

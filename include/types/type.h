@@ -171,6 +171,11 @@ const struct RFstring *type_get_unique_type_str(const struct type *t, bool count
  */
 const struct type *type_get_wildcard();
 
+i_INLINE_DECL bool type_is_defined(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_DEFINED;
+}
+
 /**
  * Gets the name of a defined type
  */
@@ -183,7 +188,7 @@ i_INLINE_DECL const struct RFstring *type_defined_get_name(const struct type *t)
 /**
  * Gets the containing type of a defined type
  */
-i_INLINE_DECL const struct type *type_defined_get_type(const struct type *t)
+i_INLINE_DECL struct type *type_defined_get_type(const struct type *t)
 {
     RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
     return t->defined.type;

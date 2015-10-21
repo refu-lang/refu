@@ -11,7 +11,7 @@ struct type;
 struct llvm_traversal_ctx;
 struct LLVMOpaqueType;
 struct rir_typedef;
-struct args_arr;
+struct rir_type_arr;;
 
 struct rir_types_map {
     //! Hash for the map
@@ -64,28 +64,17 @@ struct LLVMOpaqueType *bllvm_compile_typedef(const struct rir_typedef *def,
 struct LLVMOpaqueType *bllvm_compile_internal_typedecl(const struct type *type,
                                                        struct llvm_traversal_ctx *ctx);
 
-/**
- * Given a rir type return all its subtypes in an LLVMType Array.
- *
- * This is supposed to work only on non-sum type types
- *
- * @param type         The rir sum type whose operands to add to the array
- * @param ctx          The llvm traversal context
- * @return             An point to an array of LLVM Types held by the context
- */
-struct LLVMOpaqueType **bllvm_type_to_subtype_array(const struct rir_type *type,
-                                                    struct llvm_traversal_ctx *ctx);
 
 /**
- * Given a rir argument array create the equivalent llvm type array
+ * Given a rir type array create the equivalent llvm type array
  *
  * @warning Uses the context's parameters array.
  * Call llvm_traversal_ctx_reset_params(ctx) to clear right after using.
  *
- * @param args        The rir arguments array
+ * @param typearr        The rir arguments array
  * @param ctx         The llvm traversal context
  */
-struct LLVMOpaqueType **bllvm_rir_args_to_types(const struct args_arr *args,
+struct LLVMOpaqueType **bllvm_rir_to_llvm_types(const struct rir_type_arr *typearr,
                                                 struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueType *bllvm_type_from_rir_ltype(const struct rir_ltype *type,

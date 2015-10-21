@@ -15,8 +15,6 @@
 #include <analyzer/analyzer.h>
 #include <lexer/tokens.h>
 #include <types/type.h>
-#include <ir/rir_types_list.h>
-#include <ir/rir_type.h>
 #include <ir/rir.h>
 #include <ir/rir_global.h>
 #include <ir/rir_object.h>
