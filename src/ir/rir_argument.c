@@ -6,153 +6,80 @@
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>
 
-static bool rir_argument_init(struct rir_object *obj, const struct rir_type *type, struct rir_ctx *ctx)
+static bool rir_typearr_add_single(struct rir_type_arr *arr,
+                                   const struct type *type,
+                                   enum typearr_create_reason reason,
+                                   struct rir_ctx *ctx)
 {
-    static const struct RFstring noname = RF_STRING_STATIC_INIT("noname");
-    static const struct RFstring genname = RF_STRING_STATIC_INIT("GENERATED_NAME");
-    struct rir_argument *a = &obj->arg;
-    struct rir_ltype *argtype;
-    if (rir_type_is_elementary(type)) {
-        argtype = rir_ltype_elem_create((enum elementary_type)type->category, false);
-        if (type->name) {
-            a->name = type->name;
-        } else {
-            a->name = &noname;
-        }
-    } else {
-        const struct RFstring *s = type_get_unique_type_str(type->type, true);
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, s);
-        RF_ASSERT_OR_EXIT(def, "typedef should have been found by name");
-        argtype = rir_ltype_comp_create(def, false);
-        a->name = &genname;
-    }
-    return rir_value_variable_init(&a->val, obj, argtype, ctx);
-}
-
-struct rir_object *rir_argument_create(const struct rir_type *t, struct rir_ctx *ctx)
-{
-    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, ctx->rir);
-    if (!ret) {
-        return NULL;
-    }
-    if (!rir_argument_init(ret, t, ctx)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
-}
-
-struct rir_object *rir_argument_create_from_typedef(const struct rir_typedef *d, bool isptr, struct rir_ctx *ctx)
-{
-    struct rir_object *ret = rir_object_create(RIR_OBJ_ARGUMENT, ctx->rir);
-    if (!ret) {
-        return NULL;
-    }
-    struct rir_ltype *argtype = rir_ltype_comp_create(d, isptr);
-    if (!rir_value_variable_init(&ret->arg.val, ret, argtype, ctx)) {
-        free(ret);
-        return NULL;
-    }
-    ret->arg.name = d->name;
-    return ret;
-}
-
-void rir_argument_deinit(struct rir_argument *a)
-{
-    rir_value_deinit(&a->val);
-}
-
-bool rir_argument_tostring(struct rirtostr_ctx *ctx, const struct rir_argument *arg)
-{
-    bool ret = true;
-    struct rir_ltype *type = rir_argument_type(arg);
-    if (type->category == RIR_LTYPE_ELEMENTARY) {
-        ret = rf_stringx_append(
-            ctx->rir->buff,
-            RFS(RF_STR_PF_FMT":"RF_STR_PF_FMT"%s",
-                RF_STR_PF_ARG(arg->name),
-                RF_STR_PF_ARG(type_elementary_get_str(type->etype)),
-                type->is_pointer ? "*" : ""
-            ));
-    } else {
-        const char *s = type->is_pointer ? "*" : "";
-        rf_stringx_append(
-            ctx->rir->buff,
-            RFS(RF_STR_PF_FMT"%s", RF_STR_PF_ARG(type->tdef->name), s));
-    }
-    return ret;
-}
-
-
-i_INLINE_INS struct rir_ltype *rir_argument_type(const struct rir_argument *arg);
-
-
-
-
-/* -- Functions dealing with argument arrays -- */
-
-bool rir_type_to_arg_array(const struct rir_type *type,
-                           struct args_arr *arr,
-                           enum argarr_create_reason reason,
-                           struct rir_ctx *ctx)
-{
-    RF_ASSERT(type->category != COMPOSITE_IMPLICATION_RIR_TYPE,
-              "Called with illegal rir type");
-    struct rir_type **subtype;
-    struct rir_object *arg;
-    darray_init(*arr);
-    if (darray_size(type->subtypes) == 0) {
-        if (!rir_type_is_trivial(type)) {
-            if (!(arg = rir_argument_create(type, ctx))) {
-                return false;
-            }
+    struct rir_ltype *t;
+    if (type_is_elementary(type)) {
+        t = rir_ltype_elem_create(
+            type_elementary_get_category(type),
             // If it's a string make sure it's passed by pointer to function calls
             // TODO: at some point do away with this distinction (?)
-            if (reason == ARGARR_AT_FNDECL &&
-                rir_ltype_is_specific_elementary(arg->arg.val.type, ELEMENTARY_TYPE_STRING)) {
-                arg->arg.val.type = rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, true);
-            }
-            darray_append(*arr, arg);
-        }
-    } else if (type->category != COMPOSITE_IMPLICATION_RIR_TYPE) {
-        darray_foreach(subtype, type->subtypes) {
-            if (!rir_type_is_trivial(*subtype)) {
-                if (!(arg = rir_argument_create(*subtype, ctx))) {
-                    return false;
-                }
-                // If it's a string make sure it's passed by pointer to function calls
-                // TODO: at some point do away with this distinction (?)
-                if (reason == ARGARR_AT_FNDECL &&
-                    rir_ltype_is_specific_elementary(arg->arg.val.type, ELEMENTARY_TYPE_STRING)) {
-                    arg->arg.val.type = rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, true);
-                }
-                darray_append(*arr, arg);
-            }
-        }
+            reason == ARGARR_AT_FNDECL && type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)
+        );
+    } else {
+        t = rir_ltype_create_from_type(type, ctx);
     }
+    if (!t) {
+        return false;
+    }
+    darray_append(*arr, t);
     return true;
 }
 
-bool rir_argsarr_tostring(struct rirtostr_ctx *ctx, const struct args_arr *arr)
+bool rir_typearr_from_type(struct rir_type_arr *arr,
+                           const struct type *type,
+                           enum typearr_create_reason reason,
+                           struct rir_ctx *ctx)
 {
-    size_t i = 0;
-    size_t args_num = darray_size(*arr);
-    struct rir_object **arg;
-    darray_foreach(arg, *arr) {
-        RF_ASSERT((*arg)->category == RIR_OBJ_ARGUMENT, "Expected a rir argument object");
-        if (!rir_argument_tostring(ctx, &(*arg)->arg)) {
-            return false;
-        }
-        if (++i != args_num) {
-            if (!rf_stringx_append_cstr(ctx->rir->buff, ", ")) {
+    RF_ASSERT(!type_is_implop(type), "Called with illegal type");
+    struct type **subtype;
+    darray_init(*arr);
+    switch(type->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+    case TYPE_CATEGORY_DEFINED:
+        return rir_typearr_add_single(arr, type, reason, ctx);
+    case TYPE_CATEGORY_OPERATOR:
+        darray_foreach(subtype, type->operator.operands) {
+            if (!rir_typearr_add_single(arr, *subtype, reason, ctx)) {
                 return false;
             }
         }
+        return true;
+    default:
+        RF_CRITICAL_FAIL("Unexpected type category encountered");
+        break;
     }
-    return true;
+    return false;
 }
 
-bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
+bool rir_typearr_tostring(struct rirtostr_ctx *ctx, const struct rir_type_arr *arr)
+{
+    bool ret = false;
+    size_t i = 0;
+    size_t types_num = darray_size(*arr);
+    struct rir_ltype **type;
+    RFS_PUSH();
+    darray_foreach(type, *arr) {
+        if (!rf_stringx_append(ctx->rir->buff, rir_ltype_string(*type))) {
+            goto end;
+        }
+        if (++i != types_num) {
+            if (!rf_stringx_append_cstr(ctx->rir->buff, ", ")) {
+                goto end;
+            }
+        }
+    }
+    // success
+    ret = true;
+end:
+    RFS_POP();
+    return ret;
+}
+
+bool rir_typearr_equal(const struct rir_type_arr *arr1, const struct rir_type_arr *arr2)
 {
     size_t size = darray_size(*arr1);
     if (size != darray_size(*arr2)) {
@@ -160,24 +87,18 @@ bool rir_argsarr_equal(const struct args_arr *arr1, const struct args_arr *arr2)
     }
 
     for (unsigned i = 0; i < size; ++i) {
-        if (!rir_ltype_identical(rir_argument_type(&darray_item(*arr1, i)->arg),
-                                 rir_argument_type(&darray_item(*arr2, i)->arg))) {
+        if (!rir_ltype_identical(darray_item(*arr1, i), darray_item(*arr2, i))) {
             return false;
         }
     }
     return true;
 }
 
-void rir_argsarr_deinit_remobjs(struct args_arr *arr, struct rir_ctx *ctx)
+void rir_typearr_deinit(struct rir_type_arr *arr)
 {
-    struct rir_object **arg;
-    darray_foreach(arg, *arr) {
-        rir_object_listrem_destroy(*arg, ctx);
+    struct rir_ltype **t;
+    darray_foreach(t, *arr) {
+        rir_ltype_destroy(*t);
     }
-    darray_free(*arr);
-}
-
-void rir_argsarr_deinit(struct args_arr *arr)
-{
     darray_free(*arr);
 }

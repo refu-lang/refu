@@ -5,7 +5,7 @@
 #include <ir/rir_value.h>
 #include <ir/rir_ltype.h>
 
-// TODO: Think if this couldn't really just be yet another rir expression.
+// TODO: Rir global could be renamed to something else ...?
 
 struct rirtostr_ctx;
 

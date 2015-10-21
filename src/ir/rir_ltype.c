@@ -93,8 +93,6 @@ struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ct
 {
     if (t->category == TYPE_CATEGORY_ELEMENTARY) {
         return rir_ltype_elem_create(t->elementary.etype, false);
-    } else if (t->category == TYPE_CATEGORY_LEAF) {
-        return rir_ltype_create_from_type(t->leaf.type, ctx);
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {
@@ -189,31 +187,28 @@ const struct RFstring *rir_ltype_string(const struct rir_ltype *t)
 const struct rir_ltype *rir_ltype_comp_member_type(const struct rir_ltype *t, uint32_t idx)
 {
     RF_ASSERT(rir_ltype_is_composite(t), "Expected composite type");
-    const struct rir_argument *arg = rir_typedef_argat(t->tdef, idx);
-    return arg ? rir_argument_type(arg) : NULL;
+    return rir_typedef_typeat(t->tdef, idx);
 }
 
 int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const struct ast_node *n, struct rir_ctx *ctx)
 {
     RF_ASSERT(rir_ltype_is_union(t), "Expected a union type");
     const struct type *matched = ast_fncall_params_type(n);
-    struct rir_object **arg;
-    struct args_arr t_args;
-    if (!rir_type_to_arg_array(type_get_rir_or_die(matched), &t_args, ARGARR_AT_TYPEDESC, ctx)) {
+    struct rir_type_arr tarr;
+    if (!rir_typearr_from_type(&tarr, matched, ARGARR_AT_TYPEDESC, ctx)) {
         return -1;
     }
 
     int index = 0;
-    struct rir_ltype *argtype;
-    darray_foreach(arg, t->tdef->arguments_list) {
+    struct rir_ltype **argtype;
+    darray_foreach(argtype, t->tdef->argument_types) {
         //check if this is the type that matches the function call
-        argtype = rir_argument_type(&(*arg)->arg);
-        if (argtype->category == RIR_LTYPE_ELEMENTARY) {
-            if (darray_size(t_args) == 1 && rir_ltype_equal(argtype, rir_argument_type(&darray_item(t_args, 0)->arg))) {
+        if ((*argtype)->category == RIR_LTYPE_ELEMENTARY) {
+            if (darray_size(tarr) == 1 && rir_ltype_equal(*argtype, darray_item(tarr, 0))) {
                 goto end;
             }
         } else { // composite
-            if (rir_argsarr_equal(&t_args, &argtype->tdef->arguments_list)) {
+            if (rir_typearr_equal(&tarr, &(*argtype)->tdef->argument_types)) {
                 goto end;
             }
         }
@@ -223,6 +218,6 @@ int rir_ltype_union_matched_type_from_fncall(const struct rir_ltype *t, const st
     index = -1;
 
 end:
-    rir_argsarr_deinit_remobjs(&t_args, ctx);
+    rir_typearr_deinit(&tarr);
     return index;
 }

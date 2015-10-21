@@ -2,6 +2,7 @@
 #include <Utils/memory.h>
 #include <ast/ast.h>
 #include <ast/function.h>
+#include <ast/type.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_argument.h>
@@ -11,36 +12,71 @@
 #include <ast/matchexpr.h>
 #include <types/type.h>
 
-static bool rir_fndecl_init_args(struct args_arr *argsarr, const struct rir_type *args_type, bool foreign, struct rir_ctx *ctx)
+struct rir_type_fn_ctx {
+    struct rir_ctx *rirctx;
+};
+
+static inline void rir_type_fn_ctx_init(struct rir_type_fn_ctx *ctx,
+                                        struct rir_ctx *rirctx)
+{
+    ctx->rirctx = rirctx;
+}
+
+static bool rir_type_fn_cb(const struct RFstring *name,
+                           const struct ast_node *desc,
+                           struct type *t,
+                           struct rir_type_fn_ctx *ctx)
+{
+    struct rir_ltype *ltype = rir_ltype_create_from_type(t, ctx->rirctx);
+    if (!ltype) {
+        return false;
+    }
+    struct rir_object *objvar = rir_variable_create(ltype, ctx->rirctx);
+    if (!objvar) {
+        return false;
+    }
+    darray_append(ctx->rirctx->current_fn->variables, objvar);
+    return rir_ctx_st_setobj(ctx->rirctx, name, objvar);
+}
+
+static bool rir_fndecl_init_args(struct rir_type_arr *arr,
+                                 struct type *args_type,
+                                 const struct ast_node *ast_desc,
+                                 bool foreign,
+                                 struct rir_ctx *ctx)
 {
     if (!args_type) {
-        darray_init(*argsarr);
+        darray_init(*arr);
         return true;
     }
-    if (rir_type_is_sumtype(args_type)) {
+
+    if (type_is_sumtype(args_type)) {
         RFS_PUSH();
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(args_type->type, true));
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(args_type, true));
         RFS_POP();
         if (!def) {
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
-        struct rir_object *arg = rir_argument_create_from_typedef(def, true, ctx);
-        darray_init(*argsarr);
-        darray_append(*argsarr, arg);
+        struct rir_ltype *t;
+        if (!(t = rir_ltype_comp_create(def, true))) {
+            return false;
+        }
+        darray_init(*arr);
+        darray_append(*arr, t);
     } else {
-        if (!rir_type_to_arg_array(args_type, argsarr, ARGARR_AT_FNDECL, ctx)) {
+        if (!rir_typearr_from_type(arr, args_type, ARGARR_AT_FNDECL, ctx)) {
             RF_ERROR("Could not turn types to function arg array in the RIR");
             return false;
         }
         // no need to create allocas for the args_type, but still need to set them in the rir symbol table if it's not a foreign function
         if (!foreign) {
-            struct rir_object **arg;
-            darray_foreach(arg, *argsarr) {
-                if (!rir_ctx_st_setobj(ctx, (*arg)->arg.name, *arg)) {
-                    RF_ERROR("Could not add RIR argument object to function's symbol table");
-                    return false;
-                }
+            RF_ASSERT(ast_desc, "An ast type description should have been given at this point");
+            struct rir_type_fn_ctx fnctx;
+            rir_type_fn_ctx_init(&fnctx, ctx);
+            if (!ast_type_foreach_arg(ast_desc, args_type, (ast_type_cb)rir_type_fn_cb, &fnctx)) {
+                RF_ERROR("Failed to add rir types to a function's symbol tables");
+                return false;
             }
         }
     }
@@ -49,19 +85,20 @@ static bool rir_fndecl_init_args(struct args_arr *argsarr, const struct rir_type
 
 static bool rir_fndecl_init(struct rir_fndecl *ret,
                             const struct RFstring *name,
-                            const struct rir_type *arguments,
-                            const struct rir_type *return_type,
+                            struct type *arguments,
+                            const struct ast_node *ast_args_desc,
+                            const struct type *return_type,
                             bool foreign,
                             struct rir_ctx *ctx)
 {
     RF_STRUCT_ZERO(ret);
     ret->plain_decl = foreign;
     ret->name = name;
-    if (!rir_fndecl_init_args(&ret->arguments, arguments, foreign, ctx)) {
+    if (!rir_fndecl_init_args(&ret->argument_types, arguments, ast_args_desc, foreign, ctx)) {
         return false;
     }
     if (return_type) {
-        ret->return_type = rir_ltype_from_rir_type(ctx->rir, return_type);
+        ret->return_type = rir_ltype_create_from_type(return_type, ctx);
         if (!ret->return_type) {
             RF_ERROR("Could not find function's rir return type");
             return false;
@@ -77,14 +114,14 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
 }
 
 struct rir_fndecl *rir_fndecl_create(const struct RFstring *name,
-                                     const struct rir_type *arguments,
-                                     const struct rir_type *return_type,
+                                     struct type *arguments,
+                                     const struct type *return_type,
                                      bool foreign,
                                      struct rir_ctx *ctx)
 {
     struct rir_fndecl *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_fndecl_init(ret, name, arguments, return_type, foreign, ctx)) {
+    if (!rir_fndecl_init(ret, name, arguments, NULL, return_type, foreign, ctx)) {
         free(ret);
         ret = NULL;
     }
@@ -96,22 +133,26 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
                                      struct rir_ctx *ctx)
 {
     struct ast_node *ast_returns = ast_fndecl_return_get(n);
-    struct ast_node *ast_args = ast_fndecl_args_get(n);
+    const struct ast_node *ast_args = ast_fndecl_args_get(n);
     bool is_foreign = ast_fndecl_position_get(n) == FNDECL_PARTOF_FOREIGN_IMPORT;
     if (!rir_fndecl_init(
             ret,
             ast_fndecl_name_str(n),
-            ast_args ? type_get_rir_or_die(ast_node_get_type(ast_args, AST_TYPERETR_AS_LEAF)) : NULL,
-            ast_returns ? type_get_rir_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT)) : NULL,
+            ast_args ? (struct type*)ast_node_get_type(ast_args) : NULL,
+            ast_args,
+            ast_returns ? (struct type*)ast_node_get_type(ast_returns) : NULL,
             is_foreign,
             ctx
         )) {
         return false;
     }
     // also set the rir object in the symbol table if it's not just a foreign function
+    // TODO: Think if this should be here.
+#if 0
     if (!is_foreign && ast_args) {
         rir_ctx_st_setrecobj(ctx, ast_args, darray_item(ret->arguments, 0));
     }
+#endif
     return true;
 }
 
@@ -128,7 +169,7 @@ struct rir_fndecl *rir_fndecl_create_from_ast(const struct ast_node *n, struct r
 
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
-    darray_free(f->arguments);
+    darray_free(f->argument_types);
 }
 
 void rir_fndecl_destroy(struct rir_fndecl *f)
@@ -151,7 +192,7 @@ bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const 
         goto end;
     }
 
-    if (!rir_argsarr_tostring(ctx, &f->arguments)) {
+    if (!rir_typearr_tostring(ctx, &f->argument_types)) {
         return false;
     }
 
@@ -181,13 +222,14 @@ static inline void rir_fndef_init_common_intro(struct rir_fndef *ret,
 {
     RF_STRUCT_ZERO(ret);
     rir_ctx_reset(ctx);
+    darray_init(ret->variables);
     strmap_init(&ret->map);
     ctx->current_fn = ret;
 }
 
 static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
-                                                const struct rir_type *return_type,
-                                                struct rir_ctx *ctx)
+                                               const struct type *return_type,
+                                               struct rir_ctx *ctx)
 {
     darray_init(ret->blocks);
     // if we got a return value allocate space for it. Assume single return values fow now
@@ -204,20 +246,20 @@ static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
 
 static bool rir_fndef_init(struct rir_fndef *ret,
                            const struct RFstring *name,
-                           const struct rir_type *arguments,
-                           const struct rir_type *return_type,
+                           struct type *arguments,
+                           const struct type *return_type,
                            struct rir_ctx *ctx)
 {
     rir_fndef_init_common_intro(ret, ctx);
-    if (!rir_fndecl_init(&ret->decl, name, arguments, return_type, false, ctx)) {
+    if (!rir_fndecl_init(&ret->decl, name, arguments, NULL, return_type, false, ctx)) {
         return false;
     }
     return rir_fndef_init_common_outro(ret, return_type, ctx);
 }
 
 struct rir_fndef *rir_fndef_create(const struct RFstring *name,
-                                   const struct rir_type *arguments,
-                                   const struct rir_type *return_type,
+                                   struct type *arguments,
+                                   const struct type *return_type,
                                    struct rir_ctx *ctx)
 {
     struct rir_fndef *ret;
@@ -242,7 +284,7 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
         goto end;
     }
     if (!rir_fndef_init_common_outro(
-            ret, ast_returns ? type_get_rir_or_die(ast_node_get_type(ast_returns, AST_TYPERETR_DEFAULT)) : NULL,
+            ret, ast_returns ? ast_node_get_type(ast_returns) : NULL,
             ctx
         )) {
         goto end;
@@ -302,6 +344,7 @@ static void rir_fndef_deinit(struct rir_fndef *f)
     // not clearing the members of the maps. They should be cleared from the global list
     strmap_clear(&f->map);
     darray_free(f->blocks);
+    darray_free(f->variables);
     rir_fndecl_deinit(&f->decl);
 }
 
@@ -313,10 +356,10 @@ void rir_fndef_destroy(struct rir_fndef *f)
 
 int rir_fndef_value_to_argnum(const struct rir_fndef *f, const struct rir_value *v)
 {
-    struct rir_object **arg;
+    struct rir_object **var;
     int idx = 0;
-    darray_foreach(arg, f->decl.arguments) {
-        if (v == rir_object_value(*arg)) {
+    darray_foreach(var, f->variables) {
+        if (v == rir_object_value(*var)) {
             return idx;
         }
         ++idx;

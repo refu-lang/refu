@@ -13,7 +13,6 @@
 #include <ast/function.h>
 #include <types/type.h>
 #include <types/type_function.h>
-#include <ir/rir_types_list.h>
 #include <analyzer/analyzer.h>
 
 /* -- symbol table record related functions -- */

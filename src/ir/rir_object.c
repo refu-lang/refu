@@ -19,9 +19,6 @@ void rir_object_destroy(struct rir_object *obj)
     case RIR_OBJ_EXPRESSION:
         rir_expression_deinit(&obj->expr);
         break;
-    case RIR_OBJ_ARGUMENT:
-        rir_argument_deinit(&obj->arg);
-        break;
     case RIR_OBJ_BLOCK:
         rir_block_deinit(&obj->block);
         break;
@@ -30,6 +27,9 @@ void rir_object_destroy(struct rir_object *obj)
         break;
     case RIR_OBJ_GLOBAL:
         rir_global_deinit(&obj->global);
+        break;
+    case RIR_OBJ_VARIABLE:
+        rir_variable_deinit(&obj->variable);
         break;
     }
     free(obj);
@@ -40,10 +40,10 @@ struct rir_value *rir_object_value(struct rir_object *obj)
     switch (obj->category) {
     case RIR_OBJ_EXPRESSION:
         return &obj->expr.val;
-    case RIR_OBJ_ARGUMENT:
-        return &obj->arg.val;
     case RIR_OBJ_GLOBAL:
         return &obj->global.val;
+    case RIR_OBJ_VARIABLE:
+        return &obj->variable.val;
     default:
         RF_CRITICAL_FAIL("Unexpected rir object value");
         break;

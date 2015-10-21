@@ -189,6 +189,11 @@ i_INLINE_DECL const struct type *type_defined_get_type(const struct type *t)
     return t->defined.type;
 }
 
+i_INLINE_DECL bool type_is_operator(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_OPERATOR;
+}
+
 /**
  * Query a type's operator type. If type is not an operator then TYPEOP_INVALID is returned
  */
@@ -238,6 +243,16 @@ const struct type *type_get_subtype(const struct type *t, unsigned int index);
  * @return the number of operands/subtypes a type operation has
  */
 unsigned int type_get_subtypes_num(const struct type *t);
+
+/**
+ * Add a type as a subtype operand of a type operator
+ */
+void type_operator_add_operand(struct type_operator *p, struct type *c);
+i_INLINE_DECL void type_add_operand(struct type *p, struct type *c)
+{
+    RF_ASSERT(p->category == TYPE_CATEGORY_OPERATOR, "Expected a type operator");
+    return type_operator_add_operand(&p->operator, c);
+}
 
 /**
  * @return The index of @a t inside @a maybe_parent if it's found and -1 if not

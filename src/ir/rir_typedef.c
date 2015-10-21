@@ -101,9 +101,9 @@ bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t
     // rir_argsarr_equal(&t1->arguments_list, &t2->arguments_list)
 }
 
-const struct rir_argument *rir_typedef_argat(const struct rir_typedef *t, unsigned int i)
+const struct rir_ltype *rir_typedef_typeat(const struct rir_typedef *t, unsigned int i)
 {
-    return darray_size(t->arguments_list) > i ? &darray_item(t->arguments_list, i)->arg : NULL;
+    return darray_size(t->argument_types) > i ? darray_item(t->argument_types, i) : NULL;
 }
 
 size_t rir_typedef_bytesize(const struct rir_typedef *t)

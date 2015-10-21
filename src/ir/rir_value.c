@@ -126,8 +126,8 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
             RF_ASSERT(false, "TODO: Unimplemented rir expression to value conversion");
             break;
         }
-    } else if (obj->category == RIR_OBJ_ARGUMENT) {
-        // argument constructor create the type, so just assign it here
+    } else if (obj->category == RIR_OBJ_VARIABLE) {
+        // object variable constructor create the type, so just assign it here
         v->type = type;
     } else if (obj->category == RIR_OBJ_GLOBAL) {
         v->type = rir_ltype_copy_from_other(type);

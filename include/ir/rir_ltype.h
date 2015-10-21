@@ -13,7 +13,7 @@ enum rir_ltype_category {
     RIR_LTYPE_COMPOSITE,
 };
 
-//! Represents a leaf type in the IR. Essentially a much simpler for of rir_type.
+//! Represents a leaf type in the IR. Essentially a much simpler form of type
 struct rir_ltype {
     enum rir_ltype_category category;
     bool is_pointer;
@@ -57,7 +57,7 @@ struct rir_ltype *rir_ltype_create_from_other(const struct rir_ltype *other, boo
  */
 bool rir_ltype_equal(const struct rir_ltype *a, const struct rir_ltype *b);
 /**
- * @return true if two types are equal and also both pointers or not
+ * @return true if two types are equal and are also both pointers or not
  */
 bool rir_ltype_identical(const struct rir_ltype *a, const struct rir_ltype *b);
 size_t rir_ltype_bytesize(const struct rir_ltype *a);

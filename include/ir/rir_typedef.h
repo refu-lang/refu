@@ -11,7 +11,7 @@ struct type;
 struct rir_typedef {
     struct RFstring *name;
     bool is_union;
-    struct args_arr arguments_list;
+    struct rir_type_arr argument_types;
     //! Control to be entered into the rir typedefs list
     struct RFilist_node ln;
 };
@@ -21,7 +21,7 @@ void rir_typedef_deinit(struct rir_typedef *t);
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);
 bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t2);
-const struct rir_argument *rir_typedef_argat(const struct rir_typedef *t, unsigned int i);
+const struct rir_ltype *rir_typedef_typeat(const struct rir_typedef *t, unsigned int i);
 
 size_t rir_typedef_bytesize(const struct rir_typedef *t);
 

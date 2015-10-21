@@ -162,7 +162,7 @@ const struct rir_value *rir_maybe_convert(const struct rir_value *val,
 bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct ast_node *args = ast_fncall_args(n);
-    RF_ASSERT(ast_node_get_type(args, AST_TYPERETR_DEFAULT)->category != TYPE_CATEGORY_OPERATOR,
+    RF_ASSERT(ast_node_get_type(args)->category != TYPE_CATEGORY_OPERATOR,
               "A conversion call should only have a single argument");
     // process that argument
     const struct rir_value *argexprval = rir_process_ast_node_getreadval(args, ctx);
@@ -173,7 +173,7 @@ bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
     // create the conversion
     struct rir_object *obj = rir_convert_create_obj_maybeadd(
         argexprval,
-        rir_ltype_create_from_type(ast_node_get_type(n, AST_TYPERETR_DEFAULT), ctx),
+        rir_ltype_create_from_type(ast_node_get_type(n), ctx),
         ctx
     );
     if (!obj) {

@@ -10,6 +10,7 @@
 #include <ir/rir_utils.h>
 #include <ast/operators.h>
 #include <ast/function.h>
+#include <ast/type.h>
 #include <types/type.h>
 
 
@@ -125,6 +126,33 @@ struct rir_object *rir_binaryop_create_obj(const struct ast_binaryop *op,
     return rir_binaryop_create_nonast_obj(rir_binaryop_type_from_ast(op), a, b, ctx);
 }
 
+struct rir_member_access_ctx {
+    const struct RFstring *rightstr;
+    int found_idx;
+    int idx_counter;
+};
+
+static void rir_member_access_ctx_init(struct rir_member_access_ctx *ctx,
+                                       const struct RFstring *rightstr)
+{
+    ctx->rightstr = rightstr;
+    ctx->found_idx = -1;
+    ctx->idx_counter = 0;
+}
+
+static bool rir_member_access_cb(const struct RFstring *name,
+                                 const struct ast_node *desc,
+                                 struct type *t,
+                                 struct rir_member_access_ctx* ctx)
+{
+    if (rf_string_equal(ctx->rightstr, name)) {
+        ctx->found_idx = ctx->idx_counter;
+        return false; //to stop the iteration
+    }
+    ++ctx->idx_counter;
+    return true;
+}
+
 static bool rir_process_memberaccess(const struct ast_binaryop *op,
                                      struct rir_ctx *ctx)
 {
@@ -137,7 +165,7 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
     const struct rir_value *lhs_val = rir_ctx_lastval_get(ctx);
     const struct RFstring *rightstr = ast_identifier_str(op->right);
-    const struct type *owner_type = ast_node_get_type_or_die(op->left, AST_TYPERETR_DEFAULT);
+    const struct type *owner_type = ast_node_get_type_or_die(op->left);
     struct rir_typedef *def = rir_typedef_frommap(ctx->rir, type_defined_get_name(owner_type));
     if (!def) {
         RF_ERROR("Could not find rir typedef for a member access type");
@@ -145,21 +173,31 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // find the index of the right part of member access
-    struct rir_object **arg;
-    unsigned int index = 0;
-    darray_foreach(arg, def->arguments_list) {
-        if (rf_string_equal(rightstr, (*arg)->arg.name)) {
-            break;
-        }
-        ++index;
+    const struct ast_node *ast_desc = symbol_table_lookup_node(
+        rir_ctx_curr_st(ctx),
+        ast_identifier_str(op->left),
+        NULL
+    );
+    if (!ast_desc) {
+        RF_ERROR("Could not find ast type description for left part of member access");
+        goto fail;
     }
-    if (index == darray_size(def->arguments_list)) {
+    struct rir_member_access_ctx cbctx;
+    rir_member_access_ctx_init(&cbctx, rightstr);
+    ast_type_foreach_arg(
+        ast_desc,
+        (struct type*)ast_node_get_type_or_die(ast_desc),
+        (ast_type_cb)rir_member_access_cb,
+        &cbctx
+    );
+    
+    if (cbctx.found_idx == -1) {
         RF_ERROR("Could not find argument in typedef");
         goto fail;
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_object *member_ptr_obj = rir_objmemberat_create_obj(lhs_val, index, ctx);
+    struct rir_object *member_ptr_obj = rir_objmemberat_create_obj(lhs_val, cbctx.found_idx, ctx);
     if (!member_ptr_obj) {
         goto fail;
     }

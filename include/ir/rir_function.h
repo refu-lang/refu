@@ -14,8 +14,8 @@ struct rir;
 
 struct rir_fndecl {
     const struct RFstring *name;
-    //! Array of the function's arguments
-    struct args_arr arguments;
+    //! Array of the function's argument types
+    struct rir_type_arr argument_types;
     //! Return type of the function
     struct rir_ltype *return_type;
     //! Differentiate between rir objects that are only with a declaration (true), and those with a body (false)
@@ -31,9 +31,10 @@ i_INLINE_DECL bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct ri
     return rir_fndecl_nocheck_tostring(ctx, f->plain_decl, f);
 }
 
-
 struct rir_fndef {
     struct rir_fndecl decl;
+    //! Rir object variables of the arguments of the function
+    struct {darray(struct rir_object*);} variables;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
     //! Rir expression of the return slot alloca. NULL if there is no return value.

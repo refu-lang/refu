@@ -3,7 +3,6 @@
 #include <ir/rir_block.h>
 #include <ir/rir_object.h>
 #include <ir/rir_expression.h>
-#include <ir/rir_types_list.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_utils.h>
 #include <types/type.h>
@@ -486,16 +485,18 @@ struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *n
     return rir_ltype_comp_create(def, false);
 }
 
-struct rir_ltype *rir_ltype_from_rir_type(const struct rir *r, const struct rir_type *t)
+struct rir_ltype *rir_ltype_from_type(const struct rir *r, const struct type *t)
 {
-    if (rir_type_is_true_elementary(t)) {
-        return rir_ltype_elem_create((enum elementary_type)t->category, false);
-    } else if (rir_type_is_operator(t)) {
-        return rir_ltype_byname(r, type_get_unique_type_str(t->type, true));
-    } else {
-        // here rir_type should have a name
-        RF_ASSERT(t->name, "Expected a rir_type to have a name");
-        return rir_ltype_byname(r, t->name);
+    switch (t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
+        return rir_ltype_elem_create(type_elementary_get_category(t), false);
+    case TYPE_CATEGORY_OPERATOR:
+        return rir_ltype_byname(r, type_get_unique_type_str(t, true));
+    case TYPE_CATEGORY_DEFINED:
+        return rir_ltype_byname(r, type_defined_get_name(t));
+    default:
+        RF_CRITICAL_FAIL("Requested ltype from illegal type");
+        return NULL;
     }
 }
 

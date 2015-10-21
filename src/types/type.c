@@ -560,6 +560,12 @@ unsigned int type_get_subtypes_num(const struct type *t)
     return darray_size(t->operator.operands);
 }
 
+void type_operator_add_operand(struct type_operator *p, struct type *c)
+{
+    darray_append(p->operands, c);
+}
+i_INLINE_INS void type_add_operand(struct type *p, struct type *c);
+
 int type_is_direct_childof(const struct type *t, const struct type *maybe_parent)
 {
     if (maybe_parent->category != TYPE_CATEGORY_OPERATOR) {
@@ -576,6 +582,7 @@ int type_is_direct_childof(const struct type *t, const struct type *maybe_parent
     return -1;
 }
 
+i_INLINE_INS bool type_is_operator(const struct type *t);
 i_INLINE_INS enum typeop_type type_typeop_get(const struct type *t);
 i_INLINE_INS bool type_is_sumop(const struct type *t);
 i_INLINE_INS bool type_is_prodop(const struct type *t);

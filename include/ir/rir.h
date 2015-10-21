@@ -60,7 +60,6 @@ struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring 
 struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
 struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *name);
-struct rir_ltype *rir_ltype_from_rir_type(const struct rir *r, const struct rir_type *t);
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *lit);
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v);

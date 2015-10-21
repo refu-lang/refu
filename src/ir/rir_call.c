@@ -143,7 +143,7 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
         return false;
     }
     const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
-        ? type_get_nth_type_or_die(ctx->fndecl_type, darray_size(*ctx->arr))
+        ? type_get_subtype(ctx->fndecl_type, darray_size(*ctx->arr))
         : ctx->fndecl_type;
     if (!(argexprval = rir_maybe_convert(argexprval, rir_ltype_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
         RF_ERROR("Could not create conversion for rir call argument");
