@@ -296,10 +296,7 @@ START_TEST (test_typecheck_valid_function_impl_matchexp_body_3sum) {
     struct ast_node *mcase;
     ast_matchexpr_foreach(match, &it, mcase) {
         // make sure that pattern type and matched type are equal for all cases
-        const struct type *pattern_type = ast_node_get_type_or_die(
-            ast_matchcase_pattern(mcase),
-            AST_TYPERETR_DEFAULT
-        );
+        const struct type *pattern_type = ast_node_get_type_or_die(ast_matchcase_pattern(mcase));
         const struct type *matched_type = ast_matchcase_matched_type(mcase);
         ck_assert(type_compare(pattern_type, matched_type, TYPECMP_IDENTICAL));
     }

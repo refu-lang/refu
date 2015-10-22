@@ -508,7 +508,7 @@ size_t type_get_uid(const struct type *t, bool count_leaf_id)
     size_t ret;
     struct RFstring *str;
     RFS_PUSH();
-    str = count_leaf_id ? type_str_or_die(t, TSTR_LEAF_ID | TSTR_DEFINED_CONTENTS)
+    str = count_leaf_id ? type_str_or_die(t, TSTR_DEFINED_CONTENTS)
         : type_str_or_die(t, TSTR_DEFINED_CONTENTS);
     ret = rf_hash_str_stable(str, 0);
     RFS_POP();

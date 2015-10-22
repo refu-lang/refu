@@ -76,15 +76,9 @@ START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
     );
     TEST_TYPECHECK_GET_MEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
-    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
     struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
-    struct type *t_leaf_i32 = testsupport_analyzer_type_create_leaf(&id_a, t_i32);
     struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
-    struct type *t_leaf_bool = testsupport_analyzer_type_create_leaf(&id_b, t_bool);
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_leaf_i32,
-                                                                      t_leaf_bool);
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i32, t_bool);
     testsupport_types_same(c0->matchcase.matched_type, t_prod_1);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
@@ -105,15 +99,9 @@ START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
     );
     TEST_TYPECHECK_GET_MEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    static const struct RFstring id_a = RF_STRING_STATIC_INIT("a");
-    static const struct RFstring id_b = RF_STRING_STATIC_INIT("b");
     struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32, false);
-    struct type *t_leaf_i32 = testsupport_analyzer_type_create_leaf(&id_a, t_i32);
     struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
-    struct type *t_leaf_bool = testsupport_analyzer_type_create_leaf(&id_b, t_bool);
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_leaf_i32,
-                                                                      t_leaf_bool);
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i32, t_bool);
     testsupport_types_same(c0->matchcase.matched_type, t_prod_1);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);

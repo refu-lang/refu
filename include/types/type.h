@@ -113,8 +113,7 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
 //! Options for invoking type_str()
 enum type_str_options {
     TSTR_DEFAULT = 0x0,
-    TSTR_LEAF_ID = 0x1,          /*!< Print the id of leaves */
-    TSTR_DEFINED_CONTENTS = 0x2  /*!< Print the contents of a defined user type if first */
+    TSTR_DEFINED_CONTENTS = 0x1  /*!< Print the contents of a defined user type if first */
 };
 /**
  * Gets a string representation of the type

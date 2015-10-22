@@ -91,10 +91,9 @@ struct type *testsupport_analyzer_type_create_elementary(enum elementary_type et
     return t;
 }
 
-struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
-                                                       struct type *left,
-                                                       struct type *right)
+struct type *i_testsupport_analyzer_type_create_operator(enum typeop_type type, unsigned int argsn, ...)
 {
+    va_list valist;
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
     t = type_alloc(front_testdriver_module());
@@ -102,8 +101,14 @@ struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
 
     t->category = TYPE_CATEGORY_OPERATOR;
     t->operator.type = type;
-    t->operator.left = left;
-    t->operator.right = right;
+    darray_init(t->operator.operands);
+
+    va_start(valist, argsn);
+    unsigned int i;
+    for (i = 0; i < argsn; ++i) {
+        darray_append(t->operator.operands, va_arg(valist, struct type*));
+    }
+    va_end(valist);
 
     darray_append(adriver->types, t);
     return t;
@@ -120,22 +125,6 @@ struct type *testsupport_analyzer_type_create_defined(const struct RFstring *nam
     t->category = TYPE_CATEGORY_DEFINED;
     t->defined.name = name;
     t->defined.type = type;
-
-    darray_append(adriver->types, t);
-    return t;
-}
-
-struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
-                                                   struct type *type)
-{
-    struct analyzer_testdriver *adriver = get_analyzer_testdriver();
-    struct type *t;
-    t = type_alloc(front_testdriver_module());
-    ck_assert_msg(t, "Failed to allocate type");
-
-    t->category = TYPE_CATEGORY_LEAF;
-    t->leaf.id = id;
-    t->leaf.type = type;
 
     darray_append(adriver->types, t);
     return t;

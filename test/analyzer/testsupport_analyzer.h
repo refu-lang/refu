@@ -103,15 +103,14 @@ void teardown_analyzer_tests();
 struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype,
                                                          bool constant);
 
-struct type *testsupport_analyzer_type_create_operator(enum typeop_type type,
-                                                       struct type *left,
-                                                       struct type *right);
+#define testsupport_analyzer_type_create_operator(i_optype_, ...)       \
+    i_testsupport_analyzer_type_create_operator(i_optype_, RF_NARG(__VA_ARGS__), __VA_ARGS__)
+struct type *i_testsupport_analyzer_type_create_operator(enum typeop_type type,
+                                                         unsigned int argsn,
+                                                         ...);
 
 struct type *testsupport_analyzer_type_create_defined(const struct RFstring *name,
                                                       struct type *type);
-
-struct type *testsupport_analyzer_type_create_leaf(const struct RFstring *id,
-                                                   struct type *type);
 
 struct type *testsupport_analyzer_type_create_function(struct type *arg,
                                                        struct type *ret);

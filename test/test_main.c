@@ -26,7 +26,6 @@ Suite *analyzer_typecheck_operators_suite_create(void);
 Suite *analyzer_modules_suite_create(void);
 Suite *types_suite_create(void);
 
-Suite *rir_types_suite_create(void);
 Suite *rir_finalized_ast_suite_create(void);
 Suite *rir_creation_simple_suite_create(void);
 
@@ -103,7 +102,6 @@ int main(int argc, char **argv)
     srunner_add_suite(sr, analyzer_modules_suite_create());
     srunner_add_suite(sr, types_suite_create());
 
-    srunner_add_suite(sr, rir_types_suite_create());
     srunner_add_suite(sr, rir_finalized_ast_suite_create());
     srunner_add_suite(sr, rir_creation_simple_suite_create());
 
