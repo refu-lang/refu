@@ -89,7 +89,6 @@ struct symbol_table *rir_ctx_pop_st(struct rir_ctx *ctx);
 struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx);
 bool rir_ctx_st_newobj(struct rir_ctx *ctx, const struct RFstring *id, struct type *t, struct rir_object *obj);
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj);
-bool rir_ctx_st_setrecobj(struct rir_ctx *ctx, const struct ast_node *desc, struct rir_object *obj);
 struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring *id);
 void rir_ctx_st_create_allocas(struct rir_ctx *ctx);
 void rir_ctx_st_add_allocas(struct rir_ctx *ctx);

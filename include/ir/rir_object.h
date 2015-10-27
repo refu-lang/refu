@@ -50,4 +50,15 @@ void rir_object_listrem(struct rir_object *obj, struct rir_ctx *ctx);
  * @param ctx        The rir context
  */
 void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx);
+
+/**
+ * Will get the rir typedef from an object.
+ *
+ * @param obj        The object whose typedef to get
+ * @return           If @a obj is a @a RIR_OBJ_TYPEDEF then the typedef is
+ *                   directly returned. If it's a @a RIR_OBJ_VARIABLE then
+ *                   if the type is a tdef that is returned. In other cases
+ *                   NULL is returned.
+ */
+struct rir_typedef *rir_object_get_typedef(struct rir_object *obj);
 #endif

@@ -673,7 +673,7 @@ int type_is_direct_childof(const struct type *t, const struct type *maybe_parent
     struct type **subt;
     int idx = 0;
     darray_foreach(subt, maybe_parent->operator.operands) {
-        if (type_compare(*subt, t, TYPECMP_GENERIC)) {
+        if (type_compare(*subt, t, TYPECMP_IDENTICAL)) {
             return idx;
         }
         ++idx;

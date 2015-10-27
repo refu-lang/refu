@@ -52,17 +52,6 @@ struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx)
     return darray_top(ctx->st_stack);
 }
 
-bool rir_ctx_st_setrecobj(struct rir_ctx *ctx, const struct ast_node *desc, struct rir_object *obj)
-{
-
-    struct symbol_table_record *rec = symbol_table_lookup_typedesc(rir_ctx_curr_st(ctx), desc, NULL);
-    if (!rec) {
-        return false;
-    }
-    rec->rirobj = obj;
-    return true;
-}
-
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)
 {
     struct symbol_table_record *rec = symbol_table_lookup_record(rir_ctx_curr_st(ctx), id, NULL);
@@ -452,10 +441,10 @@ struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring 
 struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name)
 {
     struct rir_object *obj = strmap_get(&r->map, name);
-    if (!(obj && obj->category == RIR_OBJ_TYPEDEF)) {
+    if (!obj) {
         return NULL;
     }
-    return &obj->tdef;
+    return rir_object_get_typedef(obj);
 }
 
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name)

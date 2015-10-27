@@ -27,3 +27,5 @@ void rir_variable_deinit(struct rir_variable *var)
 {
     rir_value_deinit(&var->val);
 }
+
+i_INLINE_INS struct rir_ltype *rir_variable_type(struct rir_variable *v);

@@ -69,3 +69,17 @@ void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx)
     rir_object_listrem(obj, ctx);
     rir_object_destroy(obj);
 }
+
+struct rir_typedef *rir_object_get_typedef(struct rir_object *obj)
+{
+    if (obj->category == RIR_OBJ_TYPEDEF) {
+        return &obj->tdef;
+    } else if (obj->category == RIR_OBJ_VARIABLE) {
+        struct rir_ltype *vtype = rir_variable_type(&obj->variable);
+        if (!rir_ltype_is_composite(vtype)) {
+            return NULL;
+        }
+        return (struct rir_typedef*)vtype->tdef;
+    }
+    return NULL;
+}

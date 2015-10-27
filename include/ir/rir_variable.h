@@ -15,6 +15,9 @@ struct rir_variable {
 
 struct rir_object *rir_variable_create(struct rir_ltype *type, struct rir_ctx *ctx);
 void rir_variable_deinit(struct rir_variable *var);
-bool rir_variale_tostring(struct rirtostr_ctx *ctx, const struct rir_variable *g);
 
+i_INLINE_DECL struct rir_ltype *rir_variable_type(struct rir_variable *v)
+{
+    return v->val.type;
+}
 #endif

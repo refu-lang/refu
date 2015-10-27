@@ -69,9 +69,9 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
 /**
  * Populate an object's memory from arguments of an ast function call
  * @param objmemory        The rir value of the object's memory to populate
- * @param ast_call      The ast function call to populate from
- * @param ctx           The rir ctx
- * @return              True for success
+ * @param ast_call         The ast function call to populate from
+ * @param ctx              The rir ctx
+ * @return                 True for success
  */
 static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct ast_node *ast_call, struct rir_ctx *ctx)
 {

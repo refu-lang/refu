@@ -119,6 +119,9 @@ bool ast_matchexpr_cases_indices_set(struct ast_node *n)
 {
     struct ast_matchexpr_it it;
     struct ast_node *mcase;
+    struct {darray(int);} visited_indices;
+    bool ret = false;
+    darray_init(visited_indices);
 
     ast_matchexpr_foreach(n, &it, mcase) {
         int index = type_is_childof(
@@ -127,11 +130,26 @@ bool ast_matchexpr_cases_indices_set(struct ast_node *n)
         );
         if (index == -1) {
             RF_ERROR("Failed to match a case's type to the matchexpr type during RIR formation");
-            return false;
+            goto end;
         }
+        // Check if that index was already used in this expression
+        // TODO: Yes I know, linear array search is not the best thing to
+        //  do here but if this is ever a bottleneck a set of ints can be used
+        int *idx;
+        darray_foreach(idx, visited_indices) {
+            if (*idx == index) {
+                RF_ERROR("A match expression's index was used by two different cases. Should never happen");
+                goto end;
+            }
+        }
+        darray_append(visited_indices, index);
         mcase->matchcase.match_idx = index;
     }
-    return true;
+    //success
+    ret = true;
+end:
+    darray_free(visited_indices);
+    return ret;
 }
 
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase)
