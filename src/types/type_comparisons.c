@@ -209,7 +209,7 @@ static bool type_elementary_compare(const struct type *fromtype,
                 if (from->is_constant) {
                     // error
                     current_error_type = TYPECMP_ERRXPLAIN_LARGESMALL_CONSTANT;
-                    goto end;
+                    goto end_error_msg;
                 }
                 if (reason != TYPECMP_EXPLICIT_CONVERSION) {
                     // warning
@@ -229,7 +229,7 @@ static bool type_elementary_compare(const struct type *fromtype,
                 if (from->is_constant || reason == TYPECMP_PATTERN_MATCHING) {
                     // error
                     current_error_type = TYPECMP_ERRXPLAIN_SIGNEDUNSIGNED_CONSTANT;
-                    goto end;
+                    goto end_error_msg;
                 }
                 
                 if (reason != TYPECMP_EXPLICIT_CONVERSION) {
@@ -250,7 +250,7 @@ static bool type_elementary_compare(const struct type *fromtype,
 
         // no other implicit conversions allowed in pattern matching
         if (reason == TYPECMP_PATTERN_MATCHING) {
-            goto end;
+            goto end_error_msg;
         }
 
         // an int is implicitly convertible to a float
@@ -317,7 +317,8 @@ static bool type_elementary_compare(const struct type *fromtype,
         break;
     }
 
-end:
+
+end_error_msg:
     rf_stringx_assignv(&g_typecmp_ctx.err_buff,
                        "Unable to convert from \""RF_STR_PF_FMT"\" to \""
                        RF_STR_PF_FMT"\"%s",
@@ -325,6 +326,7 @@ end:
                        RF_STR_PF_ARG(type_elementary_get_str(to->etype)),
                        error_explanations[current_error_type]
     );
+end:
     TYPECMP_RETURN(false);
 }
 
@@ -365,10 +367,22 @@ static bool type_compare_to_operator(const struct type *from,
         enum comparison_reason new_reason = reason == TYPECMP_PATTERN_MATCHING
             ? TYPECMP_PATTERN_MATCHING : TYPECMP_AFTER_IMPLICIT_CONVERSION;
         struct type **subt;
+        struct type *converted_type = NULL;
         darray_foreach(subt, to->operands) {
             if (type_compare(from, *subt, new_reason)) {
-                TYPECMP_RETSET_SUCCESS(*subt);
+                if (g_typecmp_ctx.conversion_at_final_match) {
+                    converted_type = *subt;
+                } else {
+                    // only if it is an exact match stop
+                    TYPECMP_RETSET_SUCCESS(*subt);
+                }
             }
+        }
+        // if we get here it means that no exact match happened but let's check
+        // for a convertable type match
+        if (converted_type) {
+            // only if it is an exact match stop
+            TYPECMP_RETSET_SUCCESS(converted_type);
         }
     }
         

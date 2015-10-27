@@ -22,6 +22,16 @@ static inline void rir_type_fn_ctx_init(struct rir_type_fn_ctx *ctx,
     ctx->rirctx = rirctx;
 }
 
+static bool rir_function_add_variable(struct rir_ltype *ltype, const struct RFstring *name, struct rir_ctx *ctx)
+{
+    struct rir_object *objvar = rir_variable_create(ltype, ctx);
+    if (!objvar) {
+        return false;
+    }
+    darray_append(ctx->current_fn->variables, objvar);
+    return rir_ctx_st_setobj(ctx, name, objvar);
+}
+
 static bool rir_type_fn_cb(const struct RFstring *name,
                            const struct ast_node *desc,
                            struct type *t,
@@ -31,12 +41,7 @@ static bool rir_type_fn_cb(const struct RFstring *name,
     if (!ltype) {
         return false;
     }
-    struct rir_object *objvar = rir_variable_create(ltype, ctx->rirctx);
-    if (!objvar) {
-        return false;
-    }
-    darray_append(ctx->rirctx->current_fn->variables, objvar);
-    return rir_ctx_st_setobj(ctx->rirctx, name, objvar);
+    return rir_function_add_variable(ltype, name, ctx->rirctx);
 }
 
 static bool rir_fndecl_init_args(struct rir_type_arr *arr,
@@ -64,6 +69,10 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
         }
         darray_init(*arr);
         darray_append(*arr, t);
+        if (!rir_function_add_variable(t, type_get_unique_type_str(args_type, true), ctx)) {
+            RF_ERROR("Could not add sum type value to symbol table");
+            return false;
+        }
     } else {
         if (!rir_typearr_from_type(arr, args_type, ARGARR_AT_FNDECL, ctx)) {
             RF_ERROR("Could not turn types to function arg array in the RIR");
@@ -146,13 +155,6 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
         )) {
         return false;
     }
-    // also set the rir object in the symbol table if it's not just a foreign function
-    // TODO: Think if this should be here.
-#if 0
-    if (!is_foreign && ast_args) {
-        rir_ctx_st_setrecobj(ctx, ast_args, darray_item(ret->arguments, 0));
-    }
-#endif
     return true;
 }
 

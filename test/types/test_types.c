@@ -8,6 +8,7 @@
 
 #include <types/type.h>
 #include <types/type_elementary.h>
+#include <ast/type.h>
 
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
@@ -27,6 +28,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
     bool found;
     unsigned int found_types_size = 0;
     bool *found_indexes;
+    ck_assert_msg(m->types_set, "Module's type set was not created");
     RF_CALLOC(found_indexes, expected_types_size, sizeof(*found_indexes), return);
 
     rf_objset_foreach(m->types_set, &it, t) {
@@ -74,7 +76,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
 
 
 START_TEST (test_type_to_str) {
-    
+
     struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
     struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
@@ -336,7 +338,6 @@ START_TEST(test_composite_types_list_population) {
     struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
 
     const struct type *expected_types [] = { t_prod_1, t_func_1, t_foo };
-    
     ck_assert_type_set_equal(expected_types, front_testdriver_module());
 } END_TEST
 
@@ -427,16 +428,14 @@ START_TEST(test_composite_types_list_population4) {
                                                                       t_string);
     struct type *t_bar = testsupport_analyzer_type_create_defined(&id_bar, t_prod_2);
 
-    struct type *t_prod_3 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_i8,
-                                                                      t_string);
+
     struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
                                                                       t_prod_1,
-                                                                      t_prod_3);
+                                                                      t_prod_2);
     struct type *t_foobar = testsupport_analyzer_type_create_defined(&id_foobar, t_sum_1);
 
     const struct type *expected_types [] = { t_prod_1, t_prod_2, t_sum_1,
-                                             t_foo, t_bar, t_foobar, t_prod_3
+                                             t_foo, t_bar, t_foobar
     };
     ck_assert_type_set_equal(expected_types, front_testdriver_module());
 } END_TEST
@@ -487,6 +486,258 @@ START_TEST(test_determine_block_type2) {
                   "Expected the block's type to be an f64");
 } END_TEST
 
+
+struct test_traversal_cb_ctx {
+    unsigned int idx;
+    const struct RFstring *names;
+    struct type **types;
+};
+
+static void test_traversal_cb_ctx_init(
+    struct test_traversal_cb_ctx *ctx,
+    const struct RFstring *names,
+    struct type **types)
+{
+    ctx->idx = 0;
+    ctx->names = names;
+    ctx->types = types;
+}
+
+static bool test_traversal_cb(
+    const struct RFstring *name,
+    const struct ast_node *desc,
+    struct type *t,
+    struct test_traversal_cb_ctx *ctx)
+{
+    ck_assert_msg(
+        rf_string_equal(&ctx->names[ctx->idx], name),
+        "Ast type traversal index %u expected name "RF_STR_PF_FMT" but got "
+        RF_STR_PF_FMT".",
+        ctx->idx,
+        RF_STR_PF_ARG(&ctx->names[ctx->idx]),
+        RF_STR_PF_ARG(name)
+    );
+    ck_assert_msg(
+        type_compare(ctx->types[ctx->idx], t, TYPECMP_IDENTICAL),
+        "Ast type traversal index %u expected type "RF_STR_PF_FMT" but got "
+        RF_STR_PF_FMT".",
+        ctx->idx,
+        RF_STR_PF_ARG(type_str(ctx->types[ctx->idx], TSTR_DEFAULT)),
+        RF_STR_PF_ARG(type_str(t, TSTR_DEFAULT))
+    );
+    ++ctx->idx;
+    return true;
+}
+
+START_TEST(test_type_ast_traversal1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_i8,
+                                                                      t_string);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b")
+    };
+    struct type *expected_types [] = { t_i8, t_string };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
+START_TEST(test_type_ast_traversal2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string, c:f32}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                      t_i8,
+                                                                      t_string,
+                                                                      t_f32);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b"),
+        RF_STRING_STATIC_INIT("c"),
+    };
+    struct type *expected_types [] = { t_i8, t_string, t_f32 };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
+START_TEST(test_type_ast_traversal3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string, c:f32, d:u64}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                    t_i8,
+                                                                    t_string,
+                                                                    t_f32,
+                                                                    t_u64);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b"),
+        RF_STRING_STATIC_INIT("c"),
+        RF_STRING_STATIC_INIT("d"),
+    };
+    struct type *expected_types [] = { t_i8, t_string, t_f32, t_u64 };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
+START_TEST(test_type_ast_traversal4) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string | c:f32, d:u64}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_i8,
+                                                                     t_string);
+    struct type *t_prod2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_f32,
+                                                                     t_u64);
+    struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                   t_prod1,
+                                                                   t_prod2);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b"),
+        RF_STRING_STATIC_INIT("c"),
+        RF_STRING_STATIC_INIT("d"),
+    };
+    struct type *expected_types [] = { t_i8, t_string, t_f32, t_u64 };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
+START_TEST(test_type_ast_traversal5) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string, c:i64 | d:f32, e:u64, f:string, g:u8}\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_i8,
+                                                                     t_string,
+                                                                     t_i64);
+    struct type *t_prod2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_f32,
+                                                                     t_u64,
+                                                                     t_string,
+                                                                     t_u8);
+    struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                   t_prod1,
+                                                                   t_prod2);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b"),
+        RF_STRING_STATIC_INIT("c"),
+        RF_STRING_STATIC_INIT("d"),
+        RF_STRING_STATIC_INIT("e"),
+        RF_STRING_STATIC_INIT("f"),
+        RF_STRING_STATIC_INIT("g"),
+    };
+    struct type *expected_types [] = { t_i8, t_string, t_i64,
+                                       t_f32, t_u64, t_string, t_u8 };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
+START_TEST(test_type_ast_traversal6) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string, c:i64 | d:f32, e:u64, f:string, g:u8 | h:i8 | z:string }\n"
+    );
+    front_testdriver_new_main_source(&s);
+    testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
+
+    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
+    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8, false);
+    struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_i8,
+                                                                     t_string,
+                                                                     t_i64);
+    struct type *t_prod2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_f32,
+                                                                     t_u64,
+                                                                     t_string,
+                                                                     t_u8);
+    struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                   t_prod1,
+                                                                   t_prod2,
+                                                                   t_i8,
+                                                                   t_string);
+
+    struct ast_node *ast_desc = ast_typedecl_typedesc_get(ast_node_get_child(front_testdriver_module()->node, 0));
+    struct test_traversal_cb_ctx ctx;
+    const struct RFstring expected_names[] = {
+        RF_STRING_STATIC_INIT("a"),
+        RF_STRING_STATIC_INIT("b"),
+        RF_STRING_STATIC_INIT("c"),
+        RF_STRING_STATIC_INIT("d"),
+        RF_STRING_STATIC_INIT("e"),
+        RF_STRING_STATIC_INIT("f"),
+        RF_STRING_STATIC_INIT("g"),
+        RF_STRING_STATIC_INIT("h"),
+        RF_STRING_STATIC_INIT("z"),
+    };
+    struct type *expected_types [] = {
+        t_i8, t_string, t_i64,
+        t_f32, t_u64, t_string, t_u8,
+        t_i8,
+        t_string
+    };
+    test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
+    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+} END_TEST
+
 Suite *types_suite_create(void)
 {
     Suite *s = suite_create("types");
@@ -517,9 +768,19 @@ Suite *types_suite_create(void)
     tcase_add_test(st4, test_determine_block_type1);
     tcase_add_test(st4, test_determine_block_type2);
 
+    TCase *st5 = tcase_create("type_ast_traversal");
+    tcase_add_checked_fixture(st5, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
+    tcase_add_test(st5, test_type_ast_traversal1);
+    tcase_add_test(st5, test_type_ast_traversal2);
+    tcase_add_test(st5, test_type_ast_traversal3);
+    tcase_add_test(st5, test_type_ast_traversal4);
+    tcase_add_test(st5, test_type_ast_traversal5);
+    tcase_add_test(st5, test_type_ast_traversal6);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
     suite_add_tcase(s, st4);
+    suite_add_tcase(s, st5);
     return s;
 }

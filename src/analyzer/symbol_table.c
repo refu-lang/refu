@@ -63,6 +63,16 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         return false;
     }
 
+    if (node->type != AST_TYPE_DECLARATION && type_is_defined(rec->data)) {
+        // make sure that all records whose type is a type declaration point to the correct
+        // ast type declaration node
+        struct symbol_table_record *r = symbol_table_lookup_record(
+            st, type_defined_get_name(rec->data), NULL
+        );
+        RF_ASSERT(r, "A record for the typedef should already exist by this point");
+        rec->node = r->node;
+    }
+
     return true;
 }
 
@@ -223,7 +233,8 @@ bool symbol_table_add_record(struct symbol_table *t,
 bool symbol_table_add_type(struct symbol_table *st,
                            struct module *mod,
                            const struct RFstring *id,
-                           struct type *t)
+                           struct type *t,
+                           const struct ast_node *node_desc)
 {
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
@@ -246,6 +257,7 @@ bool symbol_table_add_type(struct symbol_table *st,
     if (!rec) {
         return false;
     }
+    rec->node = node_desc;
 
     if (!symbol_table_add_record(st, rec)) {
         symbol_table_record_destroy(rec, st);
@@ -253,6 +265,25 @@ bool symbol_table_add_type(struct symbol_table *st,
     }
 
     return true;
+}
+
+void symbol_table_record_print(const struct symbol_table_record *rec)
+{
+    printf("Symbol table record\n");
+    if (rec->id) {
+        printf("id: " RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rec->id));
+    }
+    if (rec->node) {
+        printf("node: %p\n", rec->node);
+    }
+    RFS_PUSH();
+    if (rec->data) {
+        printf("type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(rec->data, TSTR_DEFAULT)));
+    }
+    if (rec->rirobj) {
+        printf("rir_object: %p\n\n", rec->rirobj);
+    }
+    RFS_POP();
 }
 
 struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table *t,
@@ -306,7 +337,7 @@ static const struct RFstring *symbol_table_extract_string_from_typedesc(const st
     } else if (typedesc->type == AST_TYPE_LEAF) {
         return ast_typeleaf_str(typedesc);
     } else if (typedesc->type == AST_TYPE_OPERATOR) {
-        return type_get_unique_value_str(ast_node_get_type(typedesc), true);
+        return type_get_unique_type_str(ast_node_get_type(typedesc), true);
     }
     return NULL;
 }
@@ -343,6 +374,12 @@ const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 {
     htable_iterate_records(&t->table, cb, user);
+}
+
+void symbol_table_print(struct symbol_table *t)
+{
+    printf("\nPrinting records of a symbol table\n\n");
+    htable_iterate_records(&t->table, (htable_iter_cb)symbol_table_record_print, NULL);
 }
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,

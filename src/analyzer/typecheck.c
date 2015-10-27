@@ -281,6 +281,14 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
 
     // get ast type description of the left member
     const struct ast_node *desc = symbol_table_lookup_node(ctx->current_st, ast_identifier_str(left), NULL);
+    if (desc->type == AST_TYPE_LEAF) {
+        // if it's a typeleaf we need the type description of it's right member
+        desc = ast_typeleaf_right(desc);
+        if (desc->type == AST_XIDENTIFIER) {
+            // if it's an identifier we need to look it up again
+            desc = symbol_table_lookup_node(ctx->current_st, ast_identifier_str(desc), NULL);
+        }
+    }
     if (!desc) {
         // should not happen
         RF_ERROR("Could not retrieve ast description from the symbol table");
@@ -626,15 +634,11 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
         return TRAVERSAL_CB_ERROR;
     }
 
-    // at this stage the function declaration won't have been typechecked.
-    // Do it now .. which is not optimal since it will happen again when going upwards
-    // TODO: perhaps add a check in the typecheck reverse tree traversal to not visit
-    // certain subtrees if they are already typechecked.
-    if (!analyzer_typecheck(ctx->m, fn_decl)) {
+    fn_type = ast_node_get_type(fn_decl);
+    if (!fn_type) {
+        RF_ERROR("Function type should have been found here");
         return TRAVERSAL_CB_ERROR;
     }
-
-    fn_type = ast_node_get_type(fn_decl);
     const struct type *fn_ret_type = type_function_get_rettype(fn_type);
     const struct type *found_ret_type = ast_node_get_type(ast_returnstmt_expr_get(n));
 
@@ -903,9 +907,6 @@ bool analyzer_typecheck(struct module *mod, struct ast_node *n)
 {
     struct analyzer_traversal_ctx ctx;
     analyzer_traversal_ctx_init(&ctx, mod);
-    // since analyze pass is always going to be one per thread initialing
-    // thread local type creation context here should be okay
-    type_creation_ctx_init();
 
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
                     n,

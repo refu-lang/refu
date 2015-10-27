@@ -102,4 +102,6 @@ bool module_determine_dependencies(struct module *m, bool use_stdlib);
  */
 bool module_analyze(struct module *m);
 
+bool module_have_errors(const struct module *m);
+
 #endif

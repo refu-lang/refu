@@ -287,7 +287,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"foo\" to \"string\". Unable to convert from \"string\" to \"u32\".",
+            "\"foo\" to \"string\".",
             2, 4, 6, 4),
     };
     ck_assert_typecheck_with_messages(false, messages);
@@ -364,6 +364,7 @@ Suite *analyzer_typecheck_suite_create(void)
     suite_add_tcase(s, t_block_val);
     suite_add_tcase(s, t_block_inv);
     suite_add_tcase(s, t_if_val);
+
     return s;
 }
 

@@ -238,16 +238,14 @@ struct rir_object *rir_block_create_obj(const struct ast_node *n,
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->rir);
     if (!ret) {
-        goto fail;
+        return NULL;
     }
     if (!rir_block_init(ret, n, function_beginning, ctx)) {
-        goto fail;
+        RF_ERROR("Failed to initialize a rir block");
+        rir_object_listrem_destroy(ret, ctx);
+        ret = NULL;
     }
     return ret;
-
-fail:
-    free(ret);
-    return NULL;
 }
 
 struct rir_block *rir_block_create(const struct ast_node *n,

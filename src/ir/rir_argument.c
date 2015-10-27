@@ -14,7 +14,7 @@ static bool rir_typearr_add_single(struct rir_type_arr *arr,
     struct rir_ltype *t;
     if (type_is_elementary(type)) {
         t = rir_ltype_elem_create(
-            type_elementary_get_category(type),
+            type_elementary(type),
             // If it's a string make sure it's passed by pointer to function calls
             // TODO: at some point do away with this distinction (?)
             reason == ARGARR_AT_FNDECL && type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)

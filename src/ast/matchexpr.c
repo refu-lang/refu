@@ -63,7 +63,7 @@ struct symbol_table_record* ast_matchexpr_headless_strec(const struct ast_node *
         ast_matchexpr_headless_args(n),
         &at_first
     );
-    RF_ASSERT(at_first, "Headless typedesc should have been found at the first symbol table");
+    RF_ASSERT(rec, "Headless typedesc should have been found");
     return rec;
 }
 

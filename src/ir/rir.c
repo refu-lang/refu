@@ -156,7 +156,7 @@ struct rir_value *rir_ctx_lastassignval_get(const struct rir_ctx *ctx)
 }
 
 
-static bool rir_init(struct rir *r, struct module *m)
+static bool rir_init(struct rir *r)
 {
     RF_STRUCT_ZERO(r);
     strmap_init(&r->map);
@@ -166,20 +166,14 @@ static bool rir_init(struct rir *r, struct module *m)
     rf_ilist_head_init(&r->typedefs);
     darray_init(r->dependencies);
     darray_init(r->free_values);
-    if (!m) {
-        return true;
-    }
-    // moves types set into the rir
-    r->types_set = m->types_set;
-    m->types_set = 0;
     return true;
 }
 
-struct rir *rir_create(struct module *m)
+struct rir *rir_create()
 {
     struct rir *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_init(ret, m)) {
+    if (!rir_init(ret)) {
         free(ret);
         ret = NULL;
     }
@@ -234,6 +228,10 @@ static bool rir_process_do(struct rir *r, struct module *m)
     bool ret = false;
     struct ast_node *child;
     struct rir_ctx ctx;
+    // moves types set into the rir
+    r->types_set = m->types_set;
+    m->types_set = NULL;
+
     rir_ctx_init(&ctx, r, m);
     // assign the name to this rir
     if (!rf_string_copy_in(&r->name, module_name(m))) {
@@ -489,7 +487,7 @@ struct rir_ltype *rir_ltype_from_type(const struct rir *r, const struct type *t)
 {
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        return rir_ltype_elem_create(type_elementary_get_category(t), false);
+        return rir_ltype_elem_create(type_elementary(t), false);
     case TYPE_CATEGORY_OPERATOR:
         return rir_ltype_byname(r, type_get_unique_type_str(t, true));
     case TYPE_CATEGORY_DEFINED:

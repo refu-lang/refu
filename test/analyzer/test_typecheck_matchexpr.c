@@ -141,11 +141,11 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
     struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL, false);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i32,
-                                                                      t_bool);
-    struct type *t_prod_2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_prod_1,
-                                                                      t_string);
-    testsupport_types_equal(c2->matchcase.matched_type, t_prod_2);
+                                                                      t_bool,
+                                                                      t_string
+    );
+
+    testsupport_types_equal(c2->matchcase.matched_type, t_prod_1);
 } END_TEST
 
 START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
@@ -418,6 +418,7 @@ Suite *analyzer_typecheck_matchexpr_suite_create(void)
     suite_add_tcase(s, t_simple);
     suite_add_tcase(s, t_advanced);
     suite_add_tcase(s, t_inv);
+
     return s;
 }
 

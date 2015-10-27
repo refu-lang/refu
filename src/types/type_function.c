@@ -35,11 +35,6 @@ const struct RFstring *type_callable_category_str(const struct type *t)
     return &s_ctor_;
 }
 
-static inline bool type_is_product_op(const struct type *t)
-{
-    return t->category == TYPE_CATEGORY_OPERATOR && t->operator.type == TYPEOP_PRODUCT;
-}
-
 void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type)
 {
     t->category = TYPE_CATEGORY_OPERATOR;

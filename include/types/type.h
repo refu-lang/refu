@@ -15,15 +15,8 @@ struct RFbuffer;
 
 extern const struct RFstring g_wildcard_s;
 
-struct type_creation_ctx {
-    struct type_operator *currop;
-};
-extern i_THREAD__ struct type_creation_ctx g_type_creation_ctx;
-
-i_INLINE_DECL void type_creation_ctx_init()
-{
-    g_type_creation_ctx.currop = NULL;
-}
+void type_creation_ctx_init();
+void type_creation_ctx_deinit();
 
 bool type_add_to_currop(struct type* t);
 
@@ -53,10 +46,6 @@ struct type *type_function_create(struct module *m,
 
 struct type *type_module_create(struct module *m, const struct RFstring *name);
 
-struct type *type_create_from_typedesc(struct ast_node *typedesc,
-                                       struct module *m,
-                                       struct symbol_table *st,
-                                       struct ast_node *genrdecl);
 struct type *type_create_from_typeelem(const struct ast_node *typedesc,
                                        struct module *m,
                                        struct symbol_table *st,
@@ -196,6 +185,11 @@ i_INLINE_DECL struct type *type_defined_get_type(const struct type *t)
 i_INLINE_DECL bool type_is_operator(const struct type *t)
 {
     return t->category == TYPE_CATEGORY_OPERATOR;
+}
+
+i_INLINE_DECL struct type *typeop_to_type(struct type_operator *op)
+{
+    return container_of(op, struct type, operator);
 }
 
 /**

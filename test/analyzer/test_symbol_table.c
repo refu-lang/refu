@@ -344,7 +344,7 @@ START_TEST(test_fndecl_symbol_table) {
     struct type *tu64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
     struct type *tstring = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
     struct type *tu32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
-    struct type *op1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, tu64, tu32);
+    struct type *op1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, tu64, tstring);
     struct type *tfn = testsupport_analyzer_type_create_function(op1, tu32);
     ck_assert(analyzer_first_pass(front_testdriver_module()));
 
@@ -357,7 +357,6 @@ START_TEST(test_fndecl_symbol_table) {
 
     testsupport_symbol_table_lookup_record(st, &id2s, rec, true);
     testsupport_types_equal(symbol_table_record_type(rec), tstring);
-
 
     testsupport_symbol_table_lookup_record(st, &names, rec, false);
     testsupport_types_equal(symbol_table_record_type(rec), tfn);

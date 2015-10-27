@@ -32,7 +32,7 @@ static const enum rir_expression_type binaryop_operation_to_rir[] = {
     [BINARYOP_ASSIGN]            =   RIR_EXPRESSION_WRITE,
 };
 
-enum binaryop_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
+static enum rir_expression_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
 {
     return binaryop_operation_to_rir[op->type];
 }

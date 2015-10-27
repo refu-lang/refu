@@ -71,7 +71,7 @@ i_INLINE_INS void testsupport_rir_set_curr_block(struct rir_block *block);
 struct rir *testsupport_rir_add_module()
 {
     struct rir_testdriver *tdr = get_rir_testdriver();
-    struct rir *r = rir_create(NULL);
+    struct rir *r = rir_create();
     if (!r) {
         return NULL;
     }

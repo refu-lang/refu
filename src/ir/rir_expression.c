@@ -172,11 +172,6 @@ struct rir_expression *rir_alloca_create(struct rir_ltype *type,
     return obj ? &obj->expr : NULL;
 }
 
-static inline void rir_alloca_deinit(struct rir_expression *obj)
-{
-    return;// TODO
-}
-
 static struct rir_object *rir_setunionidx_create_obj(const struct rir_value *unimemory,
                                                      const struct rir_value *idx,
                                                      struct rir_ctx *ctx)

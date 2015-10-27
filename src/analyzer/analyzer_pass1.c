@@ -15,6 +15,18 @@
 
 #include <types/type_function.h>
 
+static inline void analyzer_traversal_ctx_prev_parent(struct analyzer_traversal_ctx *ctx)
+{
+    RF_ASSERT(darray_size(ctx->parent_nodes) != 0, "Tried to go beyond the root");
+    (void)darray_pop(ctx->parent_nodes);
+}
+
+static inline void analyzer_traversal_ctx_push_parent(struct analyzer_traversal_ctx *ctx,
+                                                      struct ast_node *n)
+{
+    darray_append(ctx->parent_nodes, n);
+}
+
 static bool analyzer_first_pass_do(struct ast_node *n,
                                    void *user_arg);
 
@@ -43,7 +55,9 @@ static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ct
     }
 
     if (!symbol_table_add_node(ctx->current_st, ctx->m, type_name, n)) {
-        RF_ERROR("Could not add a typedecl node to a symbol table");
+        if (!module_have_errors(ctx->m)) {
+            RF_ERROR("Could not add a typedecl node to a symbol table");
+        }
         return false;
     }
 
@@ -197,13 +211,9 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
                                                 struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
-    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
-    // initialize this function's symbol table, except if this is a foreign import function
-    if (!parent || !ast_node_is_foreign_import(parent)) {
-        if (!ast_fndecl_symbol_table_init(n, ctx->m)) {
-            RF_ERROR("Could not initialize symbol table for function declaration node");
-            return false;
-        }
+    if (!ast_fndecl_symbol_table_init(n, ctx->m)) {
+        RF_ERROR("Could not initialize symbol table for function declaration node");
+        return false;
     }
     // add function to the symbol table
     return analyzer_symbol_table_add_fndecl(ctx, n);
@@ -212,7 +222,7 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
 static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
 {
     struct analyzer_traversal_ctx *ctx = user_arg;
-
+    analyzer_traversal_ctx_push_parent(ctx, n);
     // act depending on the node type
     switch(n->type) {
         // nodes that change the current symbol table
@@ -260,7 +270,6 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
         break;
     case AST_TYPE_DECLARATION:
         if (!analyzer_populate_symbol_table_typedecl(ctx, n)) {
-            RF_ERROR("Could not populate symbol table for type declaration");
             return false;
         }
         break;
@@ -344,14 +353,14 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     }
 
     // go back to previous parent
-    (void)darray_pop(ctx->parent_nodes);
+    analyzer_traversal_ctx_prev_parent(ctx);
     return true;
 }
 
 bool analyzer_handle_traversal_descending(struct ast_node *n,
                                           struct analyzer_traversal_ctx *ctx)
 {
-    darray_append(ctx->parent_nodes, n);
+    analyzer_traversal_ctx_push_parent(ctx, n);
     switch(n->type) {
     case AST_ROOT:
         ctx->current_st = ast_root_symbol_table_get(n);

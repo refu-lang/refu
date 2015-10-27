@@ -50,6 +50,8 @@ struct symbol_table_record *symbol_table_record_create_from_type(
     const struct RFstring *id,
     struct type *t);
 
+void symbol_table_record_print(const struct symbol_table_record *rec);
+
 void symbol_table_record_destroy(struct symbol_table_record *rec,
                                  struct symbol_table *st);
 
@@ -117,7 +119,8 @@ bool symbol_table_add_node(struct symbol_table *t,
 bool symbol_table_add_type(struct symbol_table *st,
                            struct module *mod,
                            const struct RFstring *id,
-                           struct type *t);
+                           struct type *t,
+                           const struct ast_node *node_desc);
 
 bool symbol_table_add_record(struct symbol_table *t,
                              struct symbol_table_record *rec);
@@ -222,5 +225,10 @@ i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
     }
     return rec->data;
 }
+
+/**
+ * Print all records inside a symbol table. Used mostly for debugging
+ */
+void symbol_table_print(struct symbol_table *t);
 
 #endif

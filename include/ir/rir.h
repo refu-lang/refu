@@ -44,13 +44,9 @@ struct RFstring *rir_tostring(struct rir *r);
 /**
  * Create a rir module
  *
- * @param m            If we are creating the RIR module directly after AST
- *                     parsing then this will point to the parsed module
- *                     from which we will read the types set and create the
- *                     rir types list. If not the rir_types list will be empty.
  * @return             The allocated rir module
  */
-struct rir *rir_create(struct module *m);
+struct rir *rir_create();
 void rir_destroy(struct rir* r);
 
 bool compiler_create_rir();

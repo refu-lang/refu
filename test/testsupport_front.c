@@ -135,7 +135,7 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib, int rf_
         return false;
     }
 
-    struct front_ctx *stdlib_front;
+    struct front_ctx *stdlib_front = NULL;
     if (with_stdlib) {
         const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
         if (!(stdlib_front = compiler_new_front(d->compiler, &stdlib))) {

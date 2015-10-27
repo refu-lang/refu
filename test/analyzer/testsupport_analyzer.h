@@ -89,9 +89,9 @@ void teardown_analyzer_tests();
                       RF_STR_PF_ARG(typecmp_ctx_get_error()));          \
     } while(0)
 
-#define testsupport_types_same(got_, expect_)                                \
+#define testsupport_types_same(got_, expect_)                           \
     do {                                                                \
-        ck_assert_msg(type_compare(got_, expect_, TYPECMP_IDENTICAL),        \
+        ck_assert_msg(type_compare(got_, expect_, TYPECMP_IDENTICAL),   \
                       "expected type mismatch during identical comparison. Expected \"" \
                       RF_STR_PF_FMT"\" but got \"" RF_STR_PF_FMT"\" which caused a mismatch."RF_STR_PF_FMT, \
                       RF_STR_PF_ARG(type_str_or_die(expect_, TSTR_DEFAULT)), \

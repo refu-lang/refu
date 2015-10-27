@@ -148,7 +148,8 @@ if local_env['LANG_BACKEND'] == 'LLVM':
                           ' executionengine interpreter native linker')
     # llvm-config adds some flags we don't need so remove them
     remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic', '-Wwrite-strings'])
-    linker_exec = 'g++'
+    linker_exec = env['CXX']
+
 
 # add src prefix before the sources that reside at src/
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]

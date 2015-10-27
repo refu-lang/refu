@@ -181,14 +181,15 @@ struct type *module_get_or_create_type(struct module *mod,
                                        struct ast_node *genrdecl)
 {
     struct type *t;
+    if (desc->type == AST_TYPE_LEAF) {
+        desc = ast_typeleaf_right(desc);
+    }
+    if (desc->type == AST_XIDENTIFIER) {
+        return type_lookup_xidentifier(desc, mod, st, genrdecl);
+    }
     struct rf_objset_iter it;
-    RF_ASSERT(desc->type == AST_TYPE_DESCRIPTION ||
-              desc->type == AST_TYPE_OPERATOR ||
-              desc->type == AST_TYPE_LEAF,
-              "Unexpected ast node type");
-
     rf_objset_foreach(mod->types_set, &it, t) {
-        if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_GENERIC)) {
+        if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_IDENTICAL)) {
             return t;
         }
     }
@@ -196,7 +197,6 @@ struct type *module_get_or_create_type(struct module *mod,
     // else we have to create a new type
     t = type_create_from_node(desc, mod, st, genrdecl);
     if (!t) {
-        RF_ERROR("Failure to create a composite type");
         return NULL;
     }
 
@@ -246,20 +246,38 @@ bool module_determine_dependencies(struct module *m, bool use_stdlib)
 
 bool module_analyze(struct module *m)
 {
+    bool ret = false;
+    // since analyze pass is always going to be one per thread initializing
+    // thread local type creation context here should be okay
+    type_creation_ctx_init();
     // create symbol tables and change ast nodes ownership
     if (!analyzer_first_pass(m)) {
-        RF_ERROR("Failure at module analysis first pass");
-        return false;
+        if (!module_have_errors(m)) {
+            RF_ERROR("Failure at module analysis first pass");
+        }
+        goto end;
     }
 
     if (!analyzer_typecheck(m, m->node)) {
-        RF_ERROR("Failure at module's typechecking");
-        return false;
+        if (!module_have_errors(m)) {
+            RF_ERROR("Failure at module's typechecking");
+        }
+        goto end;
     }
 
     if (!analyzer_finalize(m)) {
         RF_ERROR("Failure at module's finalization");
-        return false;
+        goto end;
     }
-    return true;
+
+    // success
+    ret = true;
+end:
+    type_creation_ctx_deinit();
+    return ret;
+}
+
+bool module_have_errors(const struct module *m)
+{
+    return info_ctx_has(m->front->info, MESSAGE_SEMANTIC_ERROR | MESSAGE_SYNTAX_ERROR);
 }

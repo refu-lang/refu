@@ -81,7 +81,7 @@ bool analyzer_finalize(struct module *m)
         }
     }
 
-    m->rir = rir_create(m);
+    m->rir = rir_create();
     // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(
                     m->node,

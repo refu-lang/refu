@@ -207,8 +207,10 @@ static bool pattern_match_type_prodop(const struct type *pattern,
                                       const struct type *target,
                                       struct pattern_matching_ctx *ctx)
 {
-    if (!type_is_prodop(pattern)) {
-        return false; // can't match a target product OP to anything else
+    if (!type_is_prodop(pattern) ||
+        type_get_subtypes_num(pattern) != type_get_subtypes_num(target)) {
+        // a target product OP can only match with a product op of same size
+        return false;
     }
     struct type **subt;
     unsigned int idx = 0;
