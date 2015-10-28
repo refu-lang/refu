@@ -6,6 +6,7 @@
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
 
+#include <types/type_operators.h>
 #include <types/type_comparisons.h>
 #include <types/type_function.h>
 #include <types/type.h>

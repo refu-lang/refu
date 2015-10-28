@@ -2,6 +2,7 @@
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>
 #include <String/rf_str_core.h>

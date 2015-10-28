@@ -11,6 +11,7 @@
 #include <ast/type.h>
 
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <types/type_elementary.h>
 
 /* -- typecmp_ctx functions -- */

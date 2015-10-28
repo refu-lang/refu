@@ -18,6 +18,7 @@
 #include <ast/module.h>
 
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <types/type_comparisons.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>

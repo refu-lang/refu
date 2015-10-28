@@ -35,6 +35,7 @@
 #include <types/type_elementary.h>
 #include <types/type_utils.h>
 #include <types/type_comparisons.h>
+#include <types/type_operators.h>
 #include <types/type.h>
 
 #include <utils/common_strings.h>

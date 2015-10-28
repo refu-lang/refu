@@ -58,6 +58,7 @@ refu_src = [
     'types/type.c',
     'types/type_comparisons.c',
     'types/type_function.c',
+    'types/type_operators.c',
     'types/type_elementary.c',
     'types/type_utils.c',
 

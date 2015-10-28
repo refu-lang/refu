@@ -5,6 +5,7 @@
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <ast/matchexpr.h>
 #include <Utils/sanity.h>
 

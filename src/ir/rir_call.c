@@ -10,6 +10,7 @@
 #include <ir/rir_process.h>
 #include <ast/function.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <types/type_function.h>
 
 /* -- code to process a constructor call -- */

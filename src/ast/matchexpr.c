@@ -1,5 +1,6 @@
 #include <ast/matchexpr.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 
 struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,
                                       const struct inplocation_mark *end,

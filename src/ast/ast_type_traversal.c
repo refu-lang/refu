@@ -1,6 +1,7 @@
 #include <ast/type.h>
 #include <ast/ast.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 
 // temporary debugging macro
 // #define VISUALISE_DEBUG

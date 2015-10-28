@@ -3,6 +3,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <math/math.h>
 #include <Utils/memory.h>
 #include <String/rf_str_manipulationx.h>

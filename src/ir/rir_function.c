@@ -11,6 +11,7 @@
 #include <ir/rir_strmap.h>
 #include <ast/matchexpr.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 
 struct rir_type_fn_ctx {
     struct rir_ctx *rirctx;

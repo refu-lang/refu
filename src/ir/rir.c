@@ -6,6 +6,7 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir_utils.h>
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <Utils/memory.h>
 #include <Utils/fixed_memory_pool.h>
 #include <String/rf_str_common.h>
