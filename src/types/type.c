@@ -25,34 +25,44 @@ struct type_creation_ctx {
     //! A queue of type operators during creation
     struct {darray(struct type_operator*);} operators;
 };
-i_THREAD__ struct type_creation_ctx g_type_creation_ctx;
+i_THREAD__ struct type_creation_ctx *g_type_creation_ctx = NULL;
+
 void type_creation_ctx_init()
 {
-    darray_init(g_type_creation_ctx.operators);
+    RF_ASSERT_OR_EXIT(!g_type_creation_ctx, "Global type creation context was already initialized.");
+    g_type_creation_ctx = malloc(sizeof(struct type_creation_ctx));
+    RF_ASSERT_OR_EXIT(g_type_creation_ctx, "Could not allocate a global type creation context");
+    darray_init(g_type_creation_ctx->operators);
 }
 
 void type_creation_ctx_deinit()
 {
-    darray_clear(g_type_creation_ctx.operators);
-    darray_free(g_type_creation_ctx.operators);
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    darray_clear(g_type_creation_ctx->operators);
+    darray_free(g_type_creation_ctx->operators);
+    free(g_type_creation_ctx);
+    g_type_creation_ctx = NULL;
 }
 
 static inline void type_creation_ctx_push_op(struct type_operator *op)
 {
-    darray_append(g_type_creation_ctx.operators, op);
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    darray_append(g_type_creation_ctx->operators, op);
 }
 
 static inline void type_creation_ctx_pop_op()
 {
-    RF_ASSERT(darray_size(g_type_creation_ctx.operators) != 0, "Tried to pop non-existing typeop");
-    (void)darray_pop(g_type_creation_ctx.operators);
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    RF_ASSERT(darray_size(g_type_creation_ctx->operators) != 0, "Tried to pop non-existing typeop");
+    (void)darray_pop(g_type_creation_ctx->operators);
 }
 
 static struct type_operator *type_creation_ctx_top_op()
 {
-    return darray_size(g_type_creation_ctx.operators) == 0
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    return darray_size(g_type_creation_ctx->operators) == 0
         ? NULL
-        : darray_top(g_type_creation_ctx.operators);
+        : darray_top(g_type_creation_ctx->operators);
 }
 
 bool type_add_to_currop(struct type* t)
@@ -150,9 +160,13 @@ struct type *type_alloc(struct module *m)
     return ret;
 }
 
-void type_free(struct type *t, struct module *m)
+void type_free(struct type *t, struct rf_fixed_memorypool *pool)
 {
-    rf_fixed_memorypool_free_element(m->types_pool, t);
+    RF_ASSERT(pool, "Can't free type without a memory pool");
+    if (t->category == TYPE_CATEGORY_OPERATOR) {
+        darray_free(t->operator.operands);
+    }
+    rf_fixed_memorypool_free_element(pool, t);
 }
 
 /* -- type creation and initialization functions used internally -- */
@@ -219,7 +233,7 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
         return NULL;
     }
     if (!type_init_from_typeelem(ret, typedesc, m, st, genrdecl)) {
-        type_free(ret, m);
+        type_free(ret, m->types_pool);
         return NULL;
     }
 
@@ -272,21 +286,23 @@ struct type *type_create_from_operation(enum typeop_type typeop,
     } else if (right->category == TYPE_CATEGORY_OPERATOR && right->operator.type == typeop) {
         darray_prepend(right->operator.operands, left);
         t = right;
-    } else { // create a new type
-
-        // TODO: Somehow also check if the type is already existing in the analyzer
-        //       and if it is return it instead of creating it
+    } else if (!(t = type_objset_has_string(m->types_set, type_op_create_str(left, right, typeop)))) {
+        // else if the type [left OP right] is not already in the set create a new type
         t = type_alloc(m);
         if (!t) {
             RF_ERROR("Type allocation failed");
             return NULL;
         }
-
         t->category = TYPE_CATEGORY_OPERATOR;
         t->operator.type = typeop;
         darray_init(t->operator.operands);
         darray_append(t->operator.operands, left);
         darray_append(t->operator.operands, right);
+        // since now we create a totally new type we should add it to the set
+        if (!module_types_set_add(m, t)) {
+            RF_ERROR("Failed to add a newly created type to the module's set of types");
+            return NULL;
+        }
     }
     return t;
 }
@@ -336,7 +352,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
                                             st,
                                             ast_typedecl_genrdecl_get(n));
     if (!t->defined.type) {
-        type_free(t, m);
+        type_free(t, m->types_pool);
         return NULL;
     }
 
@@ -404,7 +420,7 @@ struct type *type_create_from_fndecl(const struct ast_node *n,
 
     if (!type_init_from_fndecl(t, n, m, st)) {
         RF_ERROR("Function type initialization failure");
-        type_free(t, m);
+        type_free(t, m->types_pool);
         return NULL;
     }
 
@@ -444,6 +460,7 @@ static bool type_operator_init_from_node(struct type *t,
                                          struct symbol_table *st,
                                          struct ast_node *genrdecl)
 {
+    bool ret = false;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
 
     t->category = TYPE_CATEGORY_OPERATOR;
@@ -453,15 +470,18 @@ static bool type_operator_init_from_node(struct type *t,
     type_creation_ctx_push_op(&t->operator);
     struct type *left = type_lookup_or_create(ast_typeop_left(n), m, st, genrdecl);
     if (!left) {
-        return false;
+        goto end;
     }
     struct type *right = type_lookup_or_create(ast_typeop_right(n), m, st, genrdecl);
     if (!right) {
-        return false;
+        goto end;
     }
-    type_creation_ctx_pop_op();
 
-    return true;
+    // success
+    ret = true;
+end:
+    type_creation_ctx_pop_op();
+    return ret;
 }
 
 struct type *type_operator_create_from_node(struct ast_node *n,
@@ -477,8 +497,8 @@ struct type *type_operator_create_from_node(struct ast_node *n,
     }
 
     if (!type_operator_init_from_node(t, n, m, st, genrdecl)) {
-        type_free(t, m);
-        t = NULL;
+        type_free(t, m->types_pool);
+        return NULL;
     }
 
     module_types_set_add(m, t);
@@ -596,8 +616,19 @@ struct RFstring *type_str(const struct type *t, int options)
         return type_str_do(t, options);
     }
 }
-
 i_INLINE_INS struct RFstring *type_str_or_die(const struct type *t, int options);
+
+struct RFstring *type_op_create_str(const struct type *t1,
+                                    const struct type *t2,
+                                    enum typeop_type optype)
+{
+    return RFS(
+        RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
+        RF_STR_PF_ARG(type_str_or_die(t1, TSTR_DEFAULT)),
+        RF_STR_PF_ARG(type_op_str(optype)),
+        RF_STR_PF_ARG(type_str_or_die(t2, TSTR_DEFAULT))
+    );
+}
 
 size_t type_get_uid(const struct type *t, bool count_leaf_id)
 {

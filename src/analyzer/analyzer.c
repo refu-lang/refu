@@ -67,20 +67,6 @@ static bool do_nothing(struct ast_node *n, void *user_arg) { return true; }
 
 bool analyzer_finalize(struct module *m)
 {
-    // for now copy types of all dependencies.
-    // TODO: Should be searching the dependencies when needed and not copy here
-    struct module **dependency;
-    darray_foreach(dependency, m->dependencies) {
-        struct rf_objset_iter it;
-        struct type *t;
-        rf_objset_foreach((*dependency)->types_set, &it, t) {
-            if (!rf_objset_add(m->types_set, type, t)) {
-                RF_ERROR("rf_objset_add() failure");
-                return false;
-            }
-        }
-    }
-
     m->rir = rir_create();
     // TODO: if we don't have any actual pre_callback then use ast_post_traverse_tree()
     bool ret = (TRAVERSAL_CB_OK == ast_traverse_tree_nostop_post_cb(

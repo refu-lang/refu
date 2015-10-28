@@ -12,6 +12,7 @@
 struct module;
 struct symbol_table;
 struct RFbuffer;
+struct rf_fixed_memorypool;
 
 extern const struct RFstring g_wildcard_s;
 
@@ -23,7 +24,7 @@ bool type_add_to_currop(struct type* t);
 /* -- type allocation functions -- */
 
 struct type *type_alloc(struct module *m);
-void type_free(struct type *t, struct module *m);
+void type_free(struct type *t, struct rf_fixed_memorypool *pool);
 
 /* -- various type creation and initialization functions -- */
 
@@ -79,7 +80,8 @@ struct type *type_lookup_or_create(const struct ast_node *n,
 /**
  * Applies a type operator to 2 types and returns the result. If either of the 2
  * parameter types is the same type_op then the type is appended instead of 
- * creating a new one.
+ * creating a new one. Also adds the type to the type set of the module if
+ * a new type is created an does not exist in the module's types already.
  *
  * @param type          The type operator to apply to @c left and @c right
  * @param left          The type to become left part of the operand
@@ -127,6 +129,17 @@ i_INLINE_DECL struct RFstring *type_str_or_die(const struct type *t, int options
     }
     return ret;
 }
+
+/**
+ * Create a string representation of applying @a type to @a t1 and @a t2
+ *
+ * Before this function you need to use @ref RFS_PUSH() in order
+ * to remember the temporary string buffer position and after it you need to
+ * pop it with @ref RFS_POP().
+ */
+struct RFstring *type_op_create_str(const struct type *t1,
+                                    const struct type *t2,
+                                    enum typeop_type type);
 
 /**
  * Get a unique id for this type for use as a hash/key in data structures.

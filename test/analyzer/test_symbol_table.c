@@ -440,8 +440,8 @@ Suite *analyzer_symboltable_suite_create(void)
 
     TCase *st1 = tcase_create("analyzer_symbol_table_simple_mechanics");
     tcase_add_checked_fixture(st1,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
+                              setup_analyzer_tests_before_firstpass,
+                              teardown_analyzer_tests_before_firstpass);
 
     tcase_add_test(st1, test_symbol_table_add);
     tcase_add_test(st1, test_symbol_table_lookup_non_existing);
@@ -449,8 +449,8 @@ Suite *analyzer_symboltable_suite_create(void)
 
     TCase *st2 = tcase_create("analyzer_symbol_table_populate");
     tcase_add_checked_fixture(st2,
-                              setup_analyzer_tests,
-                              teardown_analyzer_tests);
+                              setup_analyzer_tests_before_firstpass,
+                              teardown_analyzer_tests_before_firstpass);
     tcase_add_test(st2, test_block_symbol_table);
     tcase_add_test(st2, test_fndecl_symbol_table);
     tcase_add_test(st2, test_typedecl_symbol_table);
@@ -458,8 +458,8 @@ Suite *analyzer_symboltable_suite_create(void)
 
     TCase *st3 = tcase_create("analyzer_symbol_table_invalid_op");
     tcase_add_checked_fixture(st3,
-                              setup_analyzer_tests_with_filelog,
-                              teardown_analyzer_tests);
+                              setup_analyzer_tests_before_firstpass_with_filelog,
+                              teardown_analyzer_tests_before_firstpass);
     tcase_add_test(st3, test_symbol_table_add_existing);
 
     suite_add_tcase(s, st1);

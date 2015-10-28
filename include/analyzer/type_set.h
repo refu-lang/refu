@@ -6,6 +6,7 @@
 
 struct type;
 struct rir_type;
+struct rf_fixed_memorypool;
 
 i_INLINE_DECL const void *type_objset_key(const struct type *t)
 {
@@ -28,10 +29,32 @@ OBJSET_DEFINE_TYPE(type,
  * @param set        The type set in question
  * @param type       The type to check if can be converted to any other type
  *                   in the set
- * @return           True if @a type can be converted to a type in the set and
- *                   false otherwise
+ * @return           The type in the set that @a type can be converted to or
+ *                   NULL for failure.
  */
-bool type_objset_has_convertable(const struct rf_objset_type *set,
-                                 const struct type *type);
+struct type *type_objset_has_convertable(const struct rf_objset_type *set,
+                                         const struct type *type);
+/**
+ * Check if a type UID has a corresponding type in the set
+ *
+ * @param set         The set in which to search.
+ * @param uid         The UID to check for an existing type in the set
+ * @return            Either a type that matches this uid or NULL if the set
+ *                    does not contain such a type
+ */
+struct type *type_objset_has_uid(const struct rf_objset_type *set, size_t uid);
+
+/**
+ * Check if a type description as a string has a corresponding type in the set
+ *
+ * @param set         The set in which to search.
+ * @param desc        The string description of a type to check if it already
+ *                    exists in the set. The string description has to be
+ *                    in the canonical way that type_str() would output it.
+ */
+struct type *type_objset_has_string(const struct rf_objset_type *set, const struct RFstring *desc);
+
+void type_objset_destroy(struct rf_objset_type *set,
+                         struct rf_fixed_memorypool *types_pool);
 
 #endif

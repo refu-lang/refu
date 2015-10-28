@@ -7,6 +7,7 @@
 #include <ir/rir_utils.h>
 #include <types/type.h>
 #include <Utils/memory.h>
+#include <Utils/fixed_memory_pool.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_corex.h>
 #include <ast/ast.h>
@@ -176,10 +177,7 @@ static void rir_deinit(struct rir *r)
     darray_free(r->dependencies);
     strmap_clear(&r->map);
     strmap_clear(&r->global_literals);
-    if (r->types_set) {
-        rf_objset_clear(r->types_set);
-        free(r->types_set);
-    }
+
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
         rir_function_destroy(fn);
     }
@@ -202,6 +200,13 @@ static void rir_deinit(struct rir *r)
     if (r->buff) {
         rf_stringx_destroy(r->buff);
     }
+
+    if (r->types_set) {
+        type_objset_destroy(r->types_set, r->types_pool);
+    }
+    if (r->types_pool) {
+        rf_fixed_memorypool_destroy(r->types_pool);
+    }
 }
 
 void rir_destroy(struct rir *r)
@@ -212,14 +217,42 @@ void rir_destroy(struct rir *r)
 
 /* -- functions for finalizing the ast and creating the RIR -- */
 
+static inline void rir_move_from_module(struct rir *r, struct module *m)
+{
+    // move types set into the rir
+    r->types_set = m->types_set;
+    m->types_set = NULL;
+    // move types memory pool to the rir
+    r->types_pool = m->types_pool;
+    m->types_pool = 0;
+}
+
+static inline bool rir_create_typedefs(struct rf_objset_type *typeset,
+                                       struct RFilist_head *typedefs_list,
+                                       struct rir_ctx *ctx)
+{
+    struct rf_objset_iter it;
+    struct type *t;
+    rf_objset_foreach(typeset, &it, t) {
+        if (!type_is_elementary(t) && !type_is_implop(t)) {
+            struct rir_typedef *def = rir_typedef_create(t, ctx);
+            if (!def) {
+                RF_ERROR("Failed to create a RIR typedef");
+                return false;
+            }
+            rf_ilist_add_tail(typedefs_list,  &def->ln);
+        }
+    }
+    return true;
+}
+
 static bool rir_process_do(struct rir *r, struct module *m)
 {
     bool ret = false;
     struct ast_node *child;
     struct rir_ctx ctx;
-    // moves types set into the rir
-    r->types_set = m->types_set;
-    m->types_set = NULL;
+
+    rir_move_from_module(r, m);
 
     rir_ctx_init(&ctx, r, m);
     // assign the name to this rir
@@ -250,16 +283,16 @@ static bool rir_process_do(struct rir *r, struct module *m)
         }
     }
 
-    // for each non elementary, non sum-type rir type create a typedef
-    struct type *t;
-    rf_objset_foreach(r->types_set, &it, t) {
-        if (!type_is_elementary(t) && !type_is_implop(t)) {
-            struct rir_typedef *def = rir_typedef_create(t, &ctx);
-            if (!def) {
-                RF_ERROR("Failed to create a RIR typedef");
-                goto end;
-            }
-            rf_ilist_add_tail(&r->typedefs,  &def->ln);
+    // for each non elementary, non sum-type rir type in this module and its dependencies create a typedef
+    if (!rir_create_typedefs(r->types_set, &r->typedefs, &ctx)) {
+        RF_ERROR("Failed to create a RIR typedef");
+        goto end;
+    }
+    struct rir **rir_dep;
+    darray_foreach(rir_dep, r->dependencies) {
+        if (!rir_create_typedefs((*rir_dep)->types_set, &r->typedefs, &ctx)) {
+            RF_ERROR("Failed to create a RIR typedef");
+            goto end;
         }
     }
 

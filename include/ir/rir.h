@@ -19,6 +19,8 @@ struct rir_arr {darray(struct rir*);};
 struct rir {
     //! Set of all types of the file, moved here from struct module.
     struct rf_objset_type *types_set;
+    //! Memory pool for types. Moved here from struct module
+    struct rf_fixed_memorypool *types_pool;
     //! Map of all global string literals of the module
     struct rirobj_strmap global_literals;
     //! Pointers to values that don't belong to any rir object. Will be destroyed at the end

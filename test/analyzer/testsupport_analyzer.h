@@ -30,7 +30,10 @@ void setup_analyzer_tests();
 void setup_analyzer_tests_no_stdlib();
 void setup_analyzer_tests_with_filelog();
 void setup_analyzer_tests_no_source();
+void setup_analyzer_tests_before_firstpass();
+void setup_analyzer_tests_before_firstpass_with_filelog();
 void teardown_analyzer_tests();
+void teardown_analyzer_tests_before_firstpass();
 
 #define testsupport_show_front_errors(msg_)                             \
     do {                                                                \
@@ -117,7 +120,7 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
 
 /* -- general analyzer/front context of the compiler support*/
 
-#define ck_assert_analyzer_errors(expected_arr_) \
+#define ck_assert_analyzer_errors(expected_arr_)        \
     ck_assert_analyzer_errors_impl(                     \
         expected_arr_,                                  \
         sizeof(expected_arr_)/sizeof(struct info_msg),  \

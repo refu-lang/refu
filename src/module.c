@@ -70,15 +70,14 @@ static void module_deinit(struct module *m)
    if (m->symbol_table_records_pool) {
         rf_fixed_memorypool_destroy(m->symbol_table_records_pool);
     }
-    if (m->types_pool) {
-        rf_fixed_memorypool_destroy(m->types_pool);
-    }
     rf_objset_clear(&m->identifiers_set);
     rf_objset_clear(&m->string_literals_set);
 
     if (m->types_set) {
-        rf_objset_clear(m->types_set);
-        free(m->types_set);
+        type_objset_destroy(m->types_set, m->types_pool);
+    }
+    if (m->types_pool) {
+        rf_fixed_memorypool_destroy(m->types_pool);
     }
 
     if (m->rir) {

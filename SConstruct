@@ -206,6 +206,7 @@ unit_tests_files = [
     'analyzer/test_modules.c',
 
     'types/test_types.c',
+    'types/test_typeset.c',
 
     'rir/testsupport_rir.c',
     'rir/test_finalized_ast.c',

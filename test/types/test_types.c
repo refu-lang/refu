@@ -16,91 +16,6 @@
 
 #include CLIB_TEST_HELPERS
 
-static void ck_assert_type_set_equal_impl(const struct type **expected_types,
-                                          size_t expected_types_size,
-                                          struct module *m,
-                                          const char *filename,
-                                          unsigned int line)
-{
-    struct type *t;
-    struct rf_objset_iter it;
-    unsigned int i;
-    bool found;
-    unsigned int found_types_size = 0;
-    bool *found_indexes;
-    ck_assert_msg(m->types_set, "Module's type set was not created");
-    RF_CALLOC(found_indexes, expected_types_size, sizeof(*found_indexes), return);
-
-    rf_objset_foreach(m->types_set, &it, t) {
-        found = false;
-        for (i = 0; i < expected_types_size; ++i) {
-            if (type_compare(t, expected_types[i], TYPECMP_IDENTICAL)) {
-                found = true;
-
-                RFS_PUSH();
-                ck_assert_msg(!found_indexes[i],
-                              "Found a duplicate type entry in the list. Type: "
-                              RF_STR_PF_FMT,
-                              RF_STR_PF_ARG(type_str_or_die(expected_types[i], TSTR_DEFAULT)));
-                found_indexes[i] = true;
-                RFS_POP();
-                break;
-            }
-        }
-        if (!found) {
-            ck_abort_msg("Did not manage to find type "RF_STR_PF_FMT" "
-                         "in the expected types list from %s:%u",
-                         RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)),
-                         filename,
-                         line);
-        }
-        found_types_size ++;
-    }
-
-    for (i = 0; i < expected_types_size; ++i) {
-        RFS_PUSH();
-        ck_assert_msg(found_indexes[i],
-                      "Expected type "RF_STR_PF_FMT" was not found in the "
-                      "composite types list from %s:%u",
-                      RF_STR_PF_ARG(type_str_or_die(expected_types[i], TSTR_DEFAULT)),
-                      filename, line);
-        RFS_POP();
-    }
-    free(found_indexes);
-}
-
-#define ck_assert_type_set_equal(i_expected_types_, i_module_)      \
-    ck_assert_type_set_equal_impl(i_expected_types_,                  \
-                                  sizeof(i_expected_types_) / sizeof(struct type*), \
-                                  i_module_, __FILE__, __LINE__)
-
-
-START_TEST (test_type_to_str) {
-
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                     t_u32,
-                                                                     t_f64);
-    struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
-                                                                     t_f64,
-                                                                     t_string);
-    static const struct RFstring id_person =  RF_STRING_STATIC_INIT("person");
-    struct type *t_defined_1 = testsupport_analyzer_type_create_defined(&id_person,
-                                                                        t_sum_1);
-
-    struct RFstring *ts;
-    RFS_PUSH();
-    ck_assert((ts = type_str(t_u32, TSTR_DEFAULT)));
-    ck_assert_rf_str_eq_cstr(ts, "u32");
-    ck_assert((ts = type_str(t_prod_1, TSTR_DEFAULT)));
-    ck_assert_rf_str_eq_cstr(ts, "u32,f64");
-    ck_assert((ts = type_str(t_defined_1, TSTR_DEFAULT)));
-    ck_assert_rf_str_eq_cstr(ts, "person");
-    RFS_POP();
-} END_TEST
-
 START_TEST (test_type_comparison_identical) {
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
@@ -312,132 +227,6 @@ START_TEST (test_is_floating_elementary) {
     ck_assert(!type_is_floating_elementary(t_string));
     ck_assert(!type_is_floating_elementary(t_bool));
     ck_assert(!type_is_floating_elementary(t_nil));
-} END_TEST
-
-START_TEST(test_composite_types_list_population) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i64, b:f64}"
-        "fn do_something() -> u32\n"
-        "{\n"
-        "return 15"
-        "}\n"
-    );
-    front_testdriver_new_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i64, t_f64);
-
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL, false);
-    struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
-                                                                      t_nil,
-                                                                      t_u32);
-    static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
-    struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
-
-    const struct type *expected_types [] = { t_prod_1, t_func_1, t_foo };
-    ck_assert_type_set_equal(expected_types, front_testdriver_module());
-} END_TEST
-
-START_TEST(test_composite_types_list_population2) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i64, b:f64}"
-        "fn do_something(a:i64, b:f64) -> u32\n"
-        "{\n"
-        "return 15"
-        "}\n"
-        "type boo {a:i64, b:f64}"
-    );
-    front_testdriver_new_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i64, t_f64);
-
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
-    struct type *t_func_1 = testsupport_analyzer_type_create_operator(TYPEOP_IMPLICATION,
-                                                                      t_prod_1,
-                                                                      t_u32);
-
-    static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
-    static const struct RFstring id_boo =  RF_STRING_STATIC_INIT("boo");
-    struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
-    struct type *t_boo = testsupport_analyzer_type_create_defined(&id_boo, t_prod_1);
-
-    const struct type *expected_types [] = { t_prod_1, t_func_1, t_foo, t_boo};
-    ck_assert_type_set_equal(expected_types, front_testdriver_module());
-} END_TEST
-
-START_TEST(test_composite_types_list_population3) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
-    );
-    front_testdriver_new_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
-
-
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32, false);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
-
-
-    struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                    t_i64,
-                                                                    t_f64,
-                                                                    t_i8,
-                                                                    t_f32,
-                                                                    t_string);
-    static const struct RFstring id_foo =  RF_STRING_STATIC_INIT("foo");
-    struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod);
-
-    const struct type *expected_types [] = { t_prod, t_foo};
-    ck_assert_type_set_equal(expected_types, front_testdriver_module());
-} END_TEST
-
-START_TEST(test_composite_types_list_population4) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "type foo {a:i64, b:f64}\n"
-        "type bar {a:i8, b:string}\n"
-        "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
-    );
-    front_testdriver_new_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
-    static const struct RFstring id_bar = RF_STRING_STATIC_INIT("bar");
-    static const struct RFstring id_foobar = RF_STRING_STATIC_INIT("foobar");
-
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
-
-    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_i64,
-                                                                      t_f64);
-    struct type *t_foo = testsupport_analyzer_type_create_defined(&id_foo, t_prod_1);
-
-    struct type *t_prod_2 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
-                                                                      t_i8,
-                                                                      t_string);
-    struct type *t_bar = testsupport_analyzer_type_create_defined(&id_bar, t_prod_2);
-
-
-    struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
-                                                                      t_prod_1,
-                                                                      t_prod_2);
-    struct type *t_foobar = testsupport_analyzer_type_create_defined(&id_foobar, t_sum_1);
-
-    const struct type *expected_types [] = { t_prod_1, t_prod_2, t_sum_1,
-                                             t_foo, t_bar, t_foobar
-    };
-    ck_assert_type_set_equal(expected_types, front_testdriver_module());
 } END_TEST
 
 START_TEST(test_determine_block_type1) {
@@ -738,13 +527,50 @@ START_TEST(test_type_ast_traversal6) {
     ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
+START_TEST (test_type_to_str) {
+
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
+    struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
+                                                                     t_u32,
+                                                                     t_f64);
+    struct type *t_sum_1 = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
+                                                                     t_f64,
+                                                                     t_string);
+    static const struct RFstring id_person =  RF_STRING_STATIC_INIT("person");
+    struct type *t_defined_1 = testsupport_analyzer_type_create_defined(&id_person,
+                                                                        t_sum_1);
+
+    struct RFstring *ts;
+    RFS_PUSH();
+    ck_assert((ts = type_str(t_u32, TSTR_DEFAULT)));
+    ck_assert_rf_str_eq_cstr(ts, "u32");
+    ck_assert((ts = type_str(t_prod_1, TSTR_DEFAULT)));
+    ck_assert_rf_str_eq_cstr(ts, "u32,f64");
+    ck_assert((ts = type_str(t_defined_1, TSTR_DEFAULT)));
+    ck_assert_rf_str_eq_cstr(ts, "person");
+    RFS_POP();
+} END_TEST
+
+START_TEST (test_type_op_create_str) {
+
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    RFS_PUSH();
+    ck_assert_rf_str_eq_cstr(type_op_create_str(t_u32, t_f64, TYPEOP_PRODUCT), "u32,f64");
+    ck_assert_rf_str_eq_cstr(type_op_create_str(t_u32, t_f64, TYPEOP_SUM), "u32|f64");
+    ck_assert_rf_str_eq_cstr(type_op_create_str(t_u32, t_f64, TYPEOP_IMPLICATION), "u32->f64");
+    RFS_POP();
+} END_TEST
+
+
 Suite *types_suite_create(void)
 {
     Suite *s = suite_create("types");
 
-    TCase *st1 = tcase_create("types_general_tests");
+    TCase *st1 = tcase_create("types_comparison_tests");
     tcase_add_checked_fixture(st1, setup_analyzer_tests_no_source, teardown_analyzer_tests);
-    tcase_add_test(st1, test_type_to_str);
     tcase_add_test(st1, test_type_comparison_identical);
     tcase_add_test(st1, test_type_comparison_for_sum_fncall);
     tcase_add_test(st1, test_type_comparison_for_sum_fncall_with_conversion);
@@ -756,26 +582,24 @@ Suite *types_suite_create(void)
     tcase_add_test(st2, test_is_unsigned_elementary);
     tcase_add_test(st2, test_is_floating_elementary);
 
-    TCase *st3 = tcase_create("types_management_tests");
-    tcase_add_checked_fixture(st3, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
-    tcase_add_test(st3, test_composite_types_list_population);
-    tcase_add_test(st3, test_composite_types_list_population2);
-    tcase_add_test(st3, test_composite_types_list_population3);
-    tcase_add_test(st3, test_composite_types_list_population4);
+    TCase *st3 = tcase_create("type_determination");
+    tcase_add_checked_fixture(st3, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_test(st3, test_determine_block_type1);
+    tcase_add_test(st3, test_determine_block_type2);
 
-    TCase *st4 = tcase_create("type_determination");
-    tcase_add_checked_fixture(st4, setup_analyzer_tests, teardown_analyzer_tests);
-    tcase_add_test(st4, test_determine_block_type1);
-    tcase_add_test(st4, test_determine_block_type2);
+    TCase *st4 = tcase_create("type_ast_traversal");
+    tcase_add_checked_fixture(st4, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
+    tcase_add_test(st4, test_type_ast_traversal1);
+    tcase_add_test(st4, test_type_ast_traversal2);
+    tcase_add_test(st4, test_type_ast_traversal3);
+    tcase_add_test(st4, test_type_ast_traversal4);
+    tcase_add_test(st4, test_type_ast_traversal5);
+    tcase_add_test(st4, test_type_ast_traversal6);
 
-    TCase *st5 = tcase_create("type_ast_traversal");
-    tcase_add_checked_fixture(st5, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
-    tcase_add_test(st5, test_type_ast_traversal1);
-    tcase_add_test(st5, test_type_ast_traversal2);
-    tcase_add_test(st5, test_type_ast_traversal3);
-    tcase_add_test(st5, test_type_ast_traversal4);
-    tcase_add_test(st5, test_type_ast_traversal5);
-    tcase_add_test(st5, test_type_ast_traversal6);
+    TCase *st5 = tcase_create("type_strings");
+    tcase_add_checked_fixture(st5, setup_analyzer_tests_no_source, teardown_analyzer_tests);
+    tcase_add_test(st5, test_type_to_str);
+    tcase_add_test(st5, test_type_op_create_str);
 
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);

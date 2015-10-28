@@ -25,7 +25,7 @@ void analyzer_testdriver_deinit(struct analyzer_testdriver *d)
 {
     struct type **t;
     darray_foreach(t, d->types) {
-        type_free(*t, front_testdriver_module());
+        type_free(*t, front_testdriver_module()->types_pool);
     }
     darray_free(d->types);
 }
@@ -41,6 +41,22 @@ void setup_analyzer_tests()
     setup_front_tests();
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
+}
+
+void setup_analyzer_tests_before_firstpass()
+{
+    setup_front_tests();
+    ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
+                  "Failed to initialize the analyzer test driver");
+    type_creation_ctx_init();
+}
+
+void setup_analyzer_tests_before_firstpass_with_filelog()
+{
+    setup_front_tests_with_file_log();
+    ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
+                  "Failed to initialize the analyzer test driver");
+    type_creation_ctx_init();
 }
 
 void setup_analyzer_tests_no_stdlib()
@@ -70,6 +86,13 @@ void setup_analyzer_tests_with_filelog()
 
 void teardown_analyzer_tests()
 {
+    analyzer_testdriver_deinit(&i_analyzer_test_driver_);
+    teardown_front_tests();
+}
+
+void teardown_analyzer_tests_before_firstpass()
+{
+    type_creation_ctx_deinit();
     analyzer_testdriver_deinit(&i_analyzer_test_driver_);
     teardown_front_tests();
 }
