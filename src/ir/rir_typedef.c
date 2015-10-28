@@ -28,7 +28,7 @@ static bool rir_typedef_init(struct rir_object *obj, struct type *t, struct rir_
         }
     } else {
         RFS_PUSH();
-        def->name = rf_string_copy_out(type_get_unique_type_str(t, true));
+        def->name = rf_string_copy_out(type_get_unique_type_str(t));
         RFS_POP();
         // since this is a new, "internally created" type create a new symbol table record
         if (!rir_ctx_st_newobj(ctx, def->name, t, obj)) {

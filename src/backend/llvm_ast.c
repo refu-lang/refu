@@ -63,7 +63,7 @@ LLVMTypeRef bllvm_type_from_type(const struct type *type,
     } else if (type_is_sumtype(type)) {
         RFS_PUSH();
         name = rf_string_cstr_from_buff_or_die(
-            type_get_unique_type_str(type, false)
+            type_get_unique_type_str(type)
         );
         ret = LLVMGetTypeByName(ctx->llvm_mod, name);
         RFS_POP();

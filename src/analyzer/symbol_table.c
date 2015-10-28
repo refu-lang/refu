@@ -337,7 +337,7 @@ static const struct RFstring *symbol_table_extract_string_from_typedesc(const st
     } else if (typedesc->type == AST_TYPE_LEAF) {
         return ast_typeleaf_str(typedesc);
     } else if (typedesc->type == AST_TYPE_OPERATOR) {
-        return type_get_unique_type_str(ast_node_get_type(typedesc), true);
+        return type_get_unique_type_str(ast_node_get_type(typedesc));
     }
     return NULL;
 }

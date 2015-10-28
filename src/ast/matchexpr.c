@@ -111,7 +111,7 @@ const struct RFstring *ast_matchexpr_matched_value_str(const struct ast_node *n)
     return type_get_unique_type_str(
         ast_node_get_type_or_die(
             n->matchexpr.identifier_or_fnargtype
-        ), true
+        )
     );
 }
 

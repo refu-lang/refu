@@ -511,7 +511,7 @@ struct rir_ltype *rir_ltype_from_type(const struct rir *r, const struct type *t)
     case TYPE_CATEGORY_ELEMENTARY:
         return rir_ltype_elem_create(type_elementary(t), false);
     case TYPE_CATEGORY_OPERATOR:
-        return rir_ltype_byname(r, type_get_unique_type_str(t, true));
+        return rir_ltype_byname(r, type_get_unique_type_str(t));
     case TYPE_CATEGORY_DEFINED:
         return rir_ltype_byname(r, type_defined_get_name(t));
     default:

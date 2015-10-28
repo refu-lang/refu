@@ -630,35 +630,23 @@ struct RFstring *type_op_create_str(const struct type *t1,
     );
 }
 
-size_t type_get_uid(const struct type *t, bool count_leaf_id)
+size_t type_get_uid(const struct type *t)
 {
     size_t ret;
-    struct RFstring *str;
     RFS_PUSH();
-    str = count_leaf_id ? type_str_or_die(t, TSTR_DEFINED_CONTENTS)
-        : type_str_or_die(t, TSTR_DEFINED_CONTENTS);
-    ret = rf_hash_str_stable(str, 0);
+    ret = rf_hash_str_stable(type_str_or_die(t, TSTR_DEFINED_CONTENTS), 0);
     RFS_POP();
     return ret;
 }
 
-
-
-const struct RFstring *type_get_unique_value_str(const struct type *t, bool count_leaf_id)
-{
-    return t->category == TYPE_CATEGORY_DEFINED
-        ? RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t->defined.type, count_leaf_id))
-        : RFS_OR_DIE("internal_struct_val_%u", type_get_uid(t, count_leaf_id));
-}
-
-const struct RFstring *type_get_unique_type_str(const struct type *t, bool count_leaf_id)
+const struct RFstring *type_get_unique_type_str(const struct type *t)
 {
     if (t->category == TYPE_CATEGORY_DEFINED) {
         t = t->defined.type;
     } else if (t->category == TYPE_CATEGORY_ELEMENTARY) {
         return type_elementary_get_str(t->elementary.etype);
     }
-    return RFS_OR_DIE("internal_struct_%u", type_get_uid(t, count_leaf_id));
+    return RFS_OR_DIE("internal_struct_%u", type_get_uid(t));
 }
 
 static struct type g_wildcard_type = {.category = TYPE_CATEGORY_WILDCARD};

@@ -152,7 +152,7 @@ i_INLINE_DECL const struct type *ast_matchexpr_matched_type(const struct ast_nod
  * 
  * If the matched type is an identifier then the value is the identifier's string
  * and if it's an anonymous type then the value is the output of 
- * type_get_unique_value_str() on the type.
+ * type_get_unique_type_str() on the type.
  *
  * @warning Need to wrap this in RFS_PUSH() and RFS_POP()
  */

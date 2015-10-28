@@ -107,7 +107,7 @@ struct rir_ltype *rir_ltype_create_from_type(const struct type *t, struct rir_ct
         }
         return rir_ltype_comp_create(tdef, false);
     } else if (t->category == TYPE_CATEGORY_OPERATOR) {
-        struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t, true));
+        struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
             RF_ERROR("Could not find operator type, equivalent typedef RIR object in symbol table");
             return NULL;

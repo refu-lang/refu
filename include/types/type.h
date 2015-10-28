@@ -147,17 +147,8 @@ struct RFstring *type_op_create_str(const struct type *t1,
  * TODO: Needs improvement
  *
  * @param t              The type whose unique key to get.
- * @param count_leaf_id  If true then type's leaf ids contribute to uid generation
  */
-size_t type_get_uid(const struct type *t, bool count_leaf_id);
-
-/**
- * Query a unique value name for a type. If type is defined, its contents are used
- * in determining the unique string.
- *
- * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
- */
-const struct RFstring *type_get_unique_value_str(const struct type *t, bool count_leaf_id);
+size_t type_get_uid(const struct type *t);
 
 /**
  * Query a unique type name for a type. If type is defined, its contents are used
@@ -165,7 +156,7 @@ const struct RFstring *type_get_unique_value_str(const struct type *t, bool coun
  *
  * @warning Needs to be enclosed in RFS_PUSH()/RFS_POP()
  */
-const struct RFstring *type_get_unique_type_str(const struct type *t, bool count_leaf_id);
+const struct RFstring *type_get_unique_type_str(const struct type *t);
 
 /**
  * @returns the wildcard type '_'

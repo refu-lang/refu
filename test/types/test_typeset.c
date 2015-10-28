@@ -213,7 +213,7 @@ START_TEST(test_types_set_has_uid1) {
                                                                    t_i8,
                                                                    t_f32);
 
-    size_t uid = type_get_uid(t_sum, true);
+    size_t uid = type_get_uid(t_sum);
     ck_assert(type_objset_has_uid(front_testdriver_module()->types_set, uid));
 } END_TEST
 
@@ -240,7 +240,7 @@ START_TEST(test_types_set_has_uid2) {
                                                                    t_prod1,
                                                                    t_prod2);
 
-    size_t uid = type_get_uid(t_sum, true);
+    size_t uid = type_get_uid(t_sum);
     ck_assert(type_objset_has_uid(front_testdriver_module()->types_set, uid));
 } END_TEST
 

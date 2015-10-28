@@ -57,7 +57,7 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
 
     if (type_is_sumtype(args_type)) {
         RFS_PUSH();
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(args_type, true));
+        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(args_type));
         RFS_POP();
         if (!def) {
             RF_ERROR("Could not find sum type definition in the RIR");
@@ -69,7 +69,7 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
         }
         darray_init(*arr);
         darray_append(*arr, t);
-        if (!rir_function_add_variable(t, type_get_unique_type_str(args_type, true), ctx)) {
+        if (!rir_function_add_variable(t, type_get_unique_type_str(args_type), ctx)) {
             RF_ERROR("Could not add sum type value to symbol table");
             return false;
         }

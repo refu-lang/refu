@@ -7,7 +7,7 @@ i_INLINE_INS const void *type_objset_key(const struct type *t);
 
 size_t type_objset_hashfn(const struct type *t)
 {
-    return type_get_uid(t, true);
+    return type_get_uid(t);
 }
 
 bool type_objset_eqfn(const struct type *t1,
@@ -31,7 +31,7 @@ struct type *type_objset_has_convertable(const struct rf_objset_type *set, const
 
 static bool uid_cmp_fn(struct type *t, size_t *uid)
 {
-    return type_get_uid(t, true) == *uid;
+    return type_get_uid(t) == *uid;
 }
 
 struct type *type_objset_has_uid(const struct rf_objset_type *set, size_t uid)
