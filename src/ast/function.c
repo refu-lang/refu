@@ -109,7 +109,7 @@ i_INLINE_INS bool ast_node_is_conversion(const struct ast_node *n);
 
 static bool do_ast_fncall_for_each_arg(struct ast_node *arg, fncall_args_cb cb, void *user_arg)
 {
-    if (arg->type == AST_BINARY_OPERATOR) {
+    if (ast_node_is_specific_binaryop(arg, BINARYOP_COMMA)) {
         if (!do_ast_fncall_for_each_arg(ast_binaryop_left(arg), cb, user_arg)) {
             return false;
         }

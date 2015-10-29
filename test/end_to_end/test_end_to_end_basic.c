@@ -100,6 +100,22 @@ START_TEST (test_print_integer) {
     ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
+START_TEST (test_print_member_access) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "type person { name:string, age:u32}\n"
+            "fn main()->u32{\n"
+            "p:person = person(\"Moriarty\", 45)\n"
+            "print(p.name)\n"
+            "return p.age\n"
+            "}")
+    };
+    static const struct RFstring output = RF_STRING_STATIC_INIT("Moriarty");
+    ck_end_to_end_run(inputs, 45, &output);
+} END_TEST
+
 START_TEST (test_type_decl) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -669,9 +685,15 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic, test_addition);
     tcase_add_test(st_basic, test_multiple_real_arithmetic);
     tcase_add_test(st_basic, test_negative_integer_constants);
-    tcase_add_test(st_basic, test_print_string);
-    tcase_add_test(st_basic, test_print_string_literal);
-    tcase_add_test(st_basic, test_print_integer);
+
+    TCase *st_print = tcase_create("end_to_end_print");
+    tcase_add_checked_fixture(st_print,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_print, test_print_string);
+    tcase_add_test(st_print, test_print_string_literal);
+    tcase_add_test(st_print, test_print_integer);
+    tcase_add_test(st_print, test_print_member_access);
 
     TCase *st_basic_types = tcase_create("end_to_end_basic_types");
     tcase_add_checked_fixture(st_basic_types,
@@ -736,6 +758,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_match_expr, test_matchexpr_in_functions);
 
     suite_add_tcase(s, st_basic);
+    suite_add_tcase(s, st_print);
     suite_add_tcase(s, st_basic_types);
     suite_add_tcase(s, st_functions);
     suite_add_tcase(s, st_control_flow);
