@@ -120,19 +120,19 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
     return NULL;
 }
 
-LLVMTypeRef bllvm_type_from_rir_ltype(const struct rir_ltype *type,
+LLVMTypeRef bllvm_type_from_rir_type(const struct rir_type *type,
                                       struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ret;
-    if (type->category == RIR_LTYPE_ELEMENTARY) {
+    if (type->category == RIR_TYPE_ELEMENTARY) {
         ret = bllvm_elementary_to_type(type->etype, ctx);
-    } else if (type->category == RIR_LTYPE_COMPOSITE) {
+    } else if (type->category == RIR_TYPE_COMPOSITE) {
         RFS_PUSH();
         ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(type->tdef->name));
         RF_ASSERT(ret, "Type should have already been declared in LLVM");
         RFS_POP();
     } else {
-        RF_CRITICAL_FAIL("Unexpected rir ltype encountered");
+        RF_CRITICAL_FAIL("Unexpected rir type encountered");
         return NULL;
     }
     // if it's a pointer to the type
@@ -146,10 +146,10 @@ LLVMTypeRef *bllvm_rir_to_llvm_types(const struct rir_type_arr *arr,
                                      struct llvm_traversal_ctx *ctx)
 {
     llvm_traversal_ctx_reset_params(ctx);
-    struct rir_ltype **argtype;
+    struct rir_type **argtype;
     LLVMTypeRef llvm_type;
     darray_foreach(argtype, *arr) {
-        llvm_type = bllvm_type_from_rir_ltype(*argtype, ctx);
+        llvm_type = bllvm_type_from_rir_type(*argtype, ctx);
         llvm_traversal_ctx_add_param(ctx, llvm_type);
     }
     return llvm_traversal_ctx_get_params(ctx);

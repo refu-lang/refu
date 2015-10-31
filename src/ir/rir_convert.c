@@ -11,12 +11,12 @@
 #include <ast/function.h>
 
 static struct rir_object *rir_convert_init(const struct rir_value *convval,
-                                           const struct rir_ltype *totype,
+                                           const struct rir_type *totype,
                                            struct rir_ctx *ctx)
 {
     struct rir_object *retobj = NULL;
     // at the moment only conversion to string requires special work
-    if (!rir_ltype_is_specific_elementary(totype, ELEMENTARY_TYPE_STRING)) {
+    if (!rir_type_is_specific_elementary(totype, ELEMENTARY_TYPE_STRING)) {
         if ((!(retobj = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir)))) {
             return NULL;
         }
@@ -36,11 +36,11 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
         }
         RFS_POP();
         return retobj;
-    } else if (rir_ltype_is_specific_elementary(convval->type, ELEMENTARY_TYPE_BOOL)) {
+    } else if (rir_type_is_specific_elementary(convval->type, ELEMENTARY_TYPE_BOOL)) {
         struct rir_object *obj;
         // boolean to string conversion requires some branching logic
         retobj = rir_alloca_create_obj(
-            rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
+            rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
             0,
             ctx
         );
@@ -114,7 +114,7 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
 }
 
 struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
-                                          const struct rir_ltype *totype,
+                                          const struct rir_type *totype,
                                           struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_convert_init(convval, totype, ctx);
@@ -130,7 +130,7 @@ struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
 }
 
 struct rir_object *rir_convert_create_obj_maybeadd(const struct rir_value *convval,
-                                                   const struct rir_ltype *totype,
+                                                   const struct rir_type *totype,
                                                    struct rir_ctx *ctx)
 {
     struct rir_object *obj = rir_convert_create_obj(convval, totype, ctx);
@@ -145,12 +145,12 @@ struct rir_object *rir_convert_create_obj_maybeadd(const struct rir_value *convv
 }
 
 const struct rir_value *rir_maybe_convert(const struct rir_value *val,
-                                          const struct rir_ltype *checktype,
+                                          const struct rir_type *checktype,
                                           struct rir_ctx *ctx)
 {
-    if (!rir_ltype_equal(val->type, checktype)) {
+    if (!rir_type_equal(val->type, checktype)) {
         struct rir_object *obj;
-        if (!(obj = rir_convert_create_obj_maybeadd(val, rir_ltype_create_from_other(checktype, false), ctx))) {
+        if (!(obj = rir_convert_create_obj_maybeadd(val, rir_type_create_from_other(checktype, false), ctx))) {
             return NULL;
         }
         val = rir_object_value(obj);
@@ -173,7 +173,7 @@ bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
     // create the conversion
     struct rir_object *obj = rir_convert_create_obj_maybeadd(
         argexprval,
-        rir_ltype_create_from_type(ast_node_get_type(n), ctx),
+        rir_type_create_from_type(ast_node_get_type(n), ctx),
         ctx
     );
     if (!obj) {

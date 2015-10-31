@@ -25,7 +25,7 @@ struct rir_value {
     //! A string to represent the value in the generated IR file
     struct RFstring id;
     //! The type of the value. Or NULL if this is a label or a NIL value
-    struct rir_ltype *type;
+    struct rir_type *type;
     union {
         struct ast_constant constant;
         struct rir_object *obj;
@@ -47,7 +47,7 @@ struct value_arr {darray(struct rir_value*);};
  * @param ctx          The rir context
  * @return             True for succes, false otherwise
  */
-bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_ltype *type, struct rir_ctx *ctx);
+bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_type *type, struct rir_ctx *ctx);
 bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value);
 bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
 bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, bool function_beginning, struct rir_ctx *ctx);

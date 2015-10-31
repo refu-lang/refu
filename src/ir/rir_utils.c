@@ -44,7 +44,7 @@ struct rir_expression *rir_getread_expr(struct rir_expression *e, struct rir_ctx
     // gotta read the memory value from an alloca
     // unless it's a string, which is passed by pointer at least at the moment
     if (e->type == RIR_EXPRESSION_ALLOCA &&
-        !rir_ltype_is_specific_elementary(e->alloca.type, ELEMENTARY_TYPE_STRING)
+        !rir_type_is_specific_elementary(e->alloca.type, ELEMENTARY_TYPE_STRING)
     ) {
         struct rir_expression *read;
         read = rir_read_create(&e->val, ctx);
@@ -68,7 +68,7 @@ struct rir_object *rir_getread_obj(struct rir_object *o, struct rir_ctx *ctx)
     // gotta read the memory value from an alloca
     // unless it's a string, which is passed by pointer at least at the moment
     if (e->type == RIR_EXPRESSION_ALLOCA &&
-        !rir_ltype_is_specific_elementary(e->alloca.type, ELEMENTARY_TYPE_STRING)
+        !rir_type_is_specific_elementary(e->alloca.type, ELEMENTARY_TYPE_STRING)
     ) {
         struct rir_object *read;
         read = rir_read_create_obj(&e->val, ctx);

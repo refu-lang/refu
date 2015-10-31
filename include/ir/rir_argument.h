@@ -5,13 +5,13 @@
 #include <types/type_decls.h>
 #include <Data_Structures/darray.h>
 #include <ir/rir_value.h>
-#include <ir/rir_ltype.h>
+#include <ir/rir_type.h>
 
 struct rirtostr_ctx;
 struct type;
 struct rir;
 
-struct rir_type_arr {darray(struct rir_ltype*);};
+struct rir_type_arr {darray(struct rir_type*);};
 
 enum typearr_create_reason {
     ARGARR_AT_TYPEDESC,

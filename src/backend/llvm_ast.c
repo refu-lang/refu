@@ -130,7 +130,7 @@ LLVMValueRef bllvm_cast_value_to_elementary_maybe(LLVMValueRef val,
 }
 
 struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n,
-                                               struct rir_ltype *type,
+                                               struct rir_type *type,
                                                struct llvm_traversal_ctx *ctx)
 {
     int64_t int_val;
@@ -214,7 +214,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         llvmval = bllvm_compile_functioncall(&expr->call, ctx);
         break;
     case RIR_EXPRESSION_ALLOCA:
-        llvmval = LLVMBuildAlloca(ctx->builder, bllvm_type_from_rir_ltype(expr->alloca.type, ctx), "");
+        llvmval = LLVMBuildAlloca(ctx->builder, bllvm_type_from_rir_type(expr->alloca.type, ctx), "");
         break;
     case RIR_EXPRESSION_RETURN:
         // RIR expression return code should only be generated at the end of a basic block
@@ -232,7 +232,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         LLVMValueRef dstmemoryval = bllvm_value_from_rir_value_or_die(expr->write.memory, ctx);
         LLVMValueRef fromval = bllvm_value_from_rir_value_or_die(expr->write.writeval, ctx);
         // Writting to a string needs special treatment right now
-        if (rir_ltype_is_specific_elementary(expr->write.memory->type, ELEMENTARY_TYPE_STRING)) {
+        if (rir_type_is_specific_elementary(expr->write.memory->type, ELEMENTARY_TYPE_STRING)) {
             bllvm_copy_string(fromval, dstmemoryval, ctx);
             llvmval = dstmemoryval;
         } else {

@@ -60,9 +60,9 @@ static inline bool rir_binaryop_init(struct rir_binaryop *op,
     }
     // in addition if any of the two operands are not the same make a conversion
     // of the largest type, to the smallest type.
-    if (!rir_ltype_equal(a->type, b->type)) {
+    if (!rir_type_equal(a->type, b->type)) {
         struct rir_object *obj;
-        if (rir_ltype_bytesize(a->type) >= rir_ltype_bytesize(b->type)) {
+        if (rir_type_bytesize(a->type) >= rir_type_bytesize(b->type)) {
             if (!(obj = rir_convert_create_obj_maybeadd(a, b->type, ctx))) {
                 return false;
             }
@@ -283,7 +283,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
     bool ret = false;
     RFS_PUSH();
 
-    const struct RFstring *memtype_s = rir_ltype_string(e->binaryop.a->type);
+    const struct RFstring *memtype_s = rir_type_string(e->binaryop.a->type);
     if (e->val.category == RIR_VALUE_NIL) {
         if (!rf_stringx_append(
                 ctx->rir->buff,

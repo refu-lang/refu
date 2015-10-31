@@ -75,8 +75,8 @@ struct rir_typedef *rir_object_get_typedef(struct rir_object *obj)
     if (obj->category == RIR_OBJ_TYPEDEF) {
         return &obj->tdef;
     } else if (obj->category == RIR_OBJ_VARIABLE) {
-        struct rir_ltype *vtype = rir_variable_type(&obj->variable);
-        if (!rir_ltype_is_composite(vtype)) {
+        struct rir_type *vtype = rir_variable_type(&obj->variable);
+        if (!rir_type_is_composite(vtype)) {
             return NULL;
         }
         return (struct rir_typedef*)vtype->tdef;

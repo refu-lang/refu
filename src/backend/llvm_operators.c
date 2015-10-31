@@ -11,7 +11,7 @@
 #include <types/type_comparisons.h>
 #include <types/type.h>
 #include <ir/rir_expression.h>
-#include <ir/rir_ltype.h>
+#include <ir/rir_type.h>
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
@@ -22,10 +22,10 @@ LLVMValueRef bllvm_compile_comparison(const struct rir_expression *expr,
 {
     LLVMValueRef left = bllvm_value_from_rir_value_or_die(expr->binaryop.a, ctx);
     LLVMValueRef right = bllvm_value_from_rir_value_or_die(expr->binaryop.b, ctx);
-    struct rir_ltype *typea = expr->binaryop.a->type;
-    struct rir_ltype *typeb = expr->binaryop.b->type;
-    RF_ASSERT(rir_ltype_is_elementary(typea), "Backend comparisons should only happen with elementary types");
-    RF_ASSERT(rir_ltype_is_elementary(typeb), "Backend comparisons should only happen with elementary types");
+    struct rir_type *typea = expr->binaryop.a->type;
+    struct rir_type *typeb = expr->binaryop.b->type;
+    RF_ASSERT(rir_type_is_elementary(typea), "Backend comparisons should only happen with elementary types");
+    RF_ASSERT(rir_type_is_elementary(typeb), "Backend comparisons should only happen with elementary types");
     RF_ASSERT(typea->etype == typeb->etype, "Comparison should only happen with same type");
 
     // TODO: Maybe take into account signedness?

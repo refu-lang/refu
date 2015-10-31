@@ -9,7 +9,7 @@
 #include <ir/rir_constant.h>
 #include <ir/rir_convert.h>
 #include <ir/rir_call.h>
-#include <ir/rir_ltype.h>
+#include <ir/rir_type.h>
 #include <Utils/sanity.h>
 #include <ast/ast.h>
 
@@ -55,7 +55,7 @@ void rir_expression_deinit(struct rir_expression *expr)
         rir_call_deinit(&expr->call);
         break;
     case RIR_EXPRESSION_ALLOCA:
-        rir_ltype_destroy(expr->alloca.type);
+        rir_type_destroy(expr->alloca.type);
         break;
     default:
         break;
@@ -64,7 +64,7 @@ void rir_expression_deinit(struct rir_expression *expr)
 }
 
 static inline void rir_alloca_init(struct rir_alloca *obj,
-                                   struct rir_ltype *type,
+                                   struct rir_type *type,
                                    uint64_t num)
 {
     obj->type = type;
@@ -102,7 +102,7 @@ static inline bool rir_write_init(struct rir_write *w,
     struct rir_expression *e;
     // for write operations on a memory location first create a read from memory.
     // string are as usually an exception, at least for now
-    if (!rir_ltype_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
+    if (!rir_type_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
         if (!(e = rir_read_create(writeval, ctx))) {
             return false;
         }
@@ -148,7 +148,7 @@ struct rir_expression *rir_write_create(const struct rir_value *memory_to_write,
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
+struct rir_object *rir_alloca_create_obj(struct rir_type *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
 {
@@ -164,7 +164,7 @@ struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
     return ret;
 }
 
-struct rir_expression *rir_alloca_create(struct rir_ltype *type,
+struct rir_expression *rir_alloca_create(struct rir_type *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx)
 {
@@ -301,7 +301,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT " = getunionidx(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_ltype_string(e->getunionidx.unimemory->type)),
+                    RF_STR_PF_ARG(rir_type_string(e->getunionidx.unimemory->type)),
                     RF_STR_PF_ARG(rir_value_string(e->getunionidx.unimemory)))
             )) {
             goto end;
@@ -323,7 +323,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = unionmemberat(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ", %" PRId32 ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_ltype_string(e->unionmemberat.unimemory->type)),
+                    RF_STR_PF_ARG(rir_type_string(e->unionmemberat.unimemory->type)),
                     RF_STR_PF_ARG(rir_value_string(e->unionmemberat.unimemory)),
                     e->setunionidx.idx)
             )) {
@@ -335,7 +335,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_ltype_string(e->alloca.type)))
+                    RF_STR_PF_ARG(rir_type_string(e->alloca.type)))
             )) {
             goto end;
         }
@@ -354,7 +354,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT "write(" RF_STR_PF_FMT ", "RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_ltype_string(e->write.memory->type)),
+                    RF_STR_PF_ARG(rir_type_string(e->write.memory->type)),
                     RF_STR_PF_ARG(rir_value_string(e->write.memory)),
                     RF_STR_PF_ARG(rir_value_string(e->write.writeval)))
             )) {
@@ -367,7 +367,7 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                 RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = convert("RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
                     RF_STR_PF_ARG(rir_value_string(&e->val)),
                     RF_STR_PF_ARG(rir_value_string(e->convert.val)),
-                    RF_STR_PF_ARG(rir_ltype_string(e->convert.type))
+                    RF_STR_PF_ARG(rir_type_string(e->convert.type))
                 ))) {
             goto end;
         }

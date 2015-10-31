@@ -87,8 +87,8 @@ struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring 
 void rir_strec_create_allocas(struct symbol_table_record *rec,
                               struct rir_ctx *ctx)
 {
-    struct rir_ltype *type = rir_ltype_create_from_type(symbol_table_record_type(rec), ctx);
-    RF_ASSERT_OR_EXIT(type, "Could not create a rir_ltype during symbol table iteration");
+    struct rir_type *type = rir_type_create_from_type(symbol_table_record_type(rec), ctx);
+    RF_ASSERT_OR_EXIT(type, "Could not create a rir_type during symbol table iteration");
     struct rir_object *alloca = rir_alloca_create_obj(type, 1, ctx);
     RF_ASSERT_OR_EXIT(alloca, "Could not create an alloca object during symbol table iteration");
     rec->rirobj = alloca;
@@ -492,9 +492,9 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
     return NULL;
 }
 
-struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *name)
+struct rir_type *rir_type_byname(const struct rir *r, const struct RFstring *name)
 {
-    struct rir_ltype *type = rir_ltype_elem_create_from_string(name, false);
+    struct rir_type *type = rir_type_elem_create_from_string(name, false);
     if (type) {
         return type;
     }
@@ -503,20 +503,20 @@ struct rir_ltype *rir_ltype_byname(const struct rir *r, const struct RFstring *n
     if (!def) {
         return NULL;
     }
-    return rir_ltype_comp_create(def, false);
+    return rir_type_comp_create(def, false);
 }
 
-struct rir_ltype *rir_ltype_from_type(const struct rir *r, const struct type *t)
+struct rir_type *rir_type_from_type(const struct rir *r, const struct type *t)
 {
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        return rir_ltype_elem_create(type_elementary(t), false);
+        return rir_type_elem_create(type_elementary(t), false);
     case TYPE_CATEGORY_OPERATOR:
-        return rir_ltype_byname(r, type_get_unique_type_str(t));
+        return rir_type_byname(r, type_get_unique_type_str(t));
     case TYPE_CATEGORY_DEFINED:
-        return rir_ltype_byname(r, type_defined_get_name(t));
+        return rir_type_byname(r, type_defined_get_name(t));
     default:
-        RF_CRITICAL_FAIL("Requested ltype from illegal type");
+        RF_CRITICAL_FAIL("Requested rir_type from illegal type");
         return NULL;
     }
 }

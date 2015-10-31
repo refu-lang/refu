@@ -41,7 +41,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     struct rir_expression *e;
     // find the target value to write to
     struct rir_value *targetval;
-    if (ctx->lhs->type->category == RIR_LTYPE_COMPOSITE) {
+    if (ctx->lhs->type->category == RIR_TYPE_COMPOSITE) {
         // if lhs type is composite create expression to read its index from the lhs composite type
         if (!(e = rir_objmemberat_create(ctx->lhs, ctx->index, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to get rir object's member memory");
@@ -78,8 +78,8 @@ static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct 
 {
     struct args_to_val_ctx argsctx;
     if (type_is_sumtype(ast_fncall_type(ast_call))) {
-        RF_ASSERT(rir_ltype_is_composite(objmemory->type), "Constructor should assign to a composite type");
-        int union_idx = rir_ltype_union_matched_type_from_fncall(objmemory->type, ast_call, ctx);
+        RF_ASSERT(rir_type_is_composite(objmemory->type), "Constructor should assign to a composite type");
+        int union_idx = rir_type_union_matched_type_from_fncall(objmemory->type, ast_call, ctx);
         if (union_idx == -1) {
             RF_ERROR("RIR sum constructor not matching any part of the original type");
             return false;
@@ -146,7 +146,7 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
     const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
         ? type_get_subtype(ctx->fndecl_type, darray_size(*ctx->arr))
         : ctx->fndecl_type;
-    if (!(argexprval = rir_maybe_convert(argexprval, rir_ltype_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
+    if (!(argexprval = rir_maybe_convert(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
         RF_ERROR("Could not create conversion for rir call argument");
         return false;
     }
@@ -168,7 +168,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
 
     if (ast_fncall_is_sum(n)) {
         // if it's a call to a function with a sum type, get the type the call matched
-        struct rir_ltype *sumtype = rir_ltype_create_from_type(ast_fncall_type(n), ctx);
+        struct rir_type *sumtype = rir_type_create_from_type(ast_fncall_type(n), ctx);
         if (!sumtype) {
             RF_ERROR("Could not get the rir type of a sum function call");
         }
@@ -269,7 +269,7 @@ end:
     return ret;
 }
 
-struct rir_ltype *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
+struct rir_type *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
 {
     struct rir_fndecl *decl = rir_fndecl_byname(ctx->rir, &c->name);
     RF_ASSERT(decl, "At this point in the RIR the function declaration should have been found");

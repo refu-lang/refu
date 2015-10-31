@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <ir/rir_value.h>
-#include <ir/rir_ltype.h>
+#include <ir/rir_type.h>
 
 // TODO: Rir global could be renamed to something else ...?
 
@@ -15,7 +15,7 @@ struct rir_global {
     struct rir_value val;
 };
 
-struct rir_object *rir_global_create(struct rir_ltype *type,
+struct rir_object *rir_global_create(struct rir_type *type,
                                      const struct RFstring *name,
                                      const void *value,
                                      struct rir_ctx *ctx);
@@ -27,7 +27,7 @@ i_INLINE_DECL const struct RFstring *rir_global_name(const struct rir_global *g)
     return &g->val.id;
 }
 
-i_INLINE_DECL struct rir_ltype *rir_global_type(const struct rir_global *g)
+i_INLINE_DECL struct rir_type *rir_global_type(const struct rir_global *g)
 {
     return g->val.type;
 }

@@ -17,7 +17,7 @@ struct rir_fndecl {
     //! Array of the function's argument types
     struct rir_type_arr argument_types;
     //! Return type of the function
-    struct rir_ltype *return_type;
+    struct rir_type *return_type;
     //! Differentiate between rir objects that are only with a declaration (true), and those with a body (false)
     bool plain_decl;
     //! Control to be entered into the rir functions list.

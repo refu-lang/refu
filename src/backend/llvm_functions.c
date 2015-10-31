@@ -110,7 +110,7 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
     if (rir_block_is_first(b) && ctx->current_rfn->retslot_expr) {
         llvmval = LLVMBuildAlloca(
             ctx->builder,
-            bllvm_type_from_rir_ltype(ctx->current_rfn->retslot_expr->alloca.type, ctx),
+            bllvm_type_from_rir_type(ctx->current_rfn->retslot_expr->alloca.type, ctx),
             ""
         );
         if (!llvmval) {
@@ -166,7 +166,7 @@ static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct
         ctx->llvm_mod,
         rf_string_cstr_from_buff_or_die(fn->name),
         LLVMFunctionType(
-            bllvm_type_from_rir_ltype(fn->return_type, ctx),
+            bllvm_type_from_rir_type(fn->return_type, ctx),
             arg_types,
             darray_size(fn->argument_types),
             false //no variable args for now

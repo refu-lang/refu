@@ -23,9 +23,9 @@ static inline void rir_type_fn_ctx_init(struct rir_type_fn_ctx *ctx,
     ctx->rirctx = rirctx;
 }
 
-static bool rir_function_add_variable(struct rir_ltype *ltype, const struct RFstring *name, struct rir_ctx *ctx)
+static bool rir_function_add_variable(struct rir_type *rtype, const struct RFstring *name, struct rir_ctx *ctx)
 {
-    struct rir_object *objvar = rir_variable_create(ltype, ctx);
+    struct rir_object *objvar = rir_variable_create(rtype, ctx);
     if (!objvar) {
         return false;
     }
@@ -38,11 +38,11 @@ static bool rir_type_fn_cb(const struct RFstring *name,
                            struct type *t,
                            struct rir_type_fn_ctx *ctx)
 {
-    struct rir_ltype *ltype = rir_ltype_create_from_type(t, ctx->rirctx);
-    if (!ltype) {
+    struct rir_type *rtype = rir_type_create_from_type(t, ctx->rirctx);
+    if (!rtype) {
         return false;
     }
-    return rir_function_add_variable(ltype, name, ctx->rirctx);
+    return rir_function_add_variable(rtype, name, ctx->rirctx);
 }
 
 static bool rir_fndecl_init_args(struct rir_type_arr *arr,
@@ -64,8 +64,8 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
-        struct rir_ltype *t;
-        if (!(t = rir_ltype_comp_create(def, true))) {
+        struct rir_type *t;
+        if (!(t = rir_type_comp_create(def, true))) {
             return false;
         }
         darray_init(*arr);
@@ -108,13 +108,13 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         return false;
     }
     if (return_type) {
-        ret->return_type = rir_ltype_create_from_type(return_type, ctx);
+        ret->return_type = rir_type_create_from_type(return_type, ctx);
         if (!ret->return_type) {
             RF_ERROR("Could not find function's rir return type");
             return false;
         }
     } else {
-        ret->return_type = rir_ltype_elem_create(ELEMENTARY_TYPE_NIL, false);
+        ret->return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
         if (!ret->return_type) {
             RF_ERROR("Could not create nil type for a function's return");
             return false;
@@ -203,7 +203,7 @@ bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const 
         goto end;
     }
 
-    if (!rf_stringx_append(ctx->rir->buff, rir_ltype_string(f->return_type))){
+    if (!rf_stringx_append(ctx->rir->buff, rir_type_string(f->return_type))){
         goto end;
     }
 

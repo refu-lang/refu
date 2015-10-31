@@ -102,27 +102,27 @@ bool rir_typedef_equal(const struct rir_typedef *t1, const struct rir_typedef *t
     // rir_argsarr_equal(&t1->arguments_list, &t2->arguments_list)
 }
 
-const struct rir_ltype *rir_typedef_typeat(const struct rir_typedef *t, unsigned int i)
+const struct rir_type *rir_typedef_typeat(const struct rir_typedef *t, unsigned int i)
 {
     return darray_size(t->argument_types) > i ? darray_item(t->argument_types, i) : NULL;
 }
 
 size_t rir_typedef_bytesize(const struct rir_typedef *t)
 {
-    struct rir_ltype **argtype;
+    struct rir_type **argtype;
     size_t sz;
     if (t->is_union) {
         //find size of biggest type of the union
         sz = 0;
         darray_foreach(argtype, t->argument_types) {
-            sz = rf_max(sz, rir_ltype_bytesize(*argtype));
+            sz = rf_max(sz, rir_type_bytesize(*argtype));
         }
         return sz + sizeof(uint32_t); // size is that, plus size of the index
     }
     // else size of a normal typedef is sum of all its type sizes
     sz = 0;
     darray_foreach(argtype, t->argument_types) {
-        sz += rir_ltype_bytesize(*argtype);
+        sz += rir_type_bytesize(*argtype);
     }
     return sz;
 }

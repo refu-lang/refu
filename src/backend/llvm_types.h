@@ -6,7 +6,7 @@
 
 struct RFstring;
 struct rir_type;
-struct rir_ltype;
+struct rir_type;
 struct type;
 struct llvm_traversal_ctx;
 struct LLVMOpaqueType;
@@ -77,7 +77,7 @@ struct LLVMOpaqueType *bllvm_compile_internal_typedecl(const struct type *type,
 struct LLVMOpaqueType **bllvm_rir_to_llvm_types(const struct rir_type_arr *typearr,
                                                 struct llvm_traversal_ctx *ctx);
 
-struct LLVMOpaqueType *bllvm_type_from_rir_ltype(const struct rir_ltype *type,
+struct LLVMOpaqueType *bllvm_type_from_rir_type(const struct rir_type *type,
                                                  struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,

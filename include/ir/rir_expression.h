@@ -54,7 +54,7 @@ struct rir_call {
 };
 
 struct rir_alloca {
-    struct rir_ltype *type;
+    struct rir_type *type;
     uint64_t num;
 };
 
@@ -93,7 +93,7 @@ struct rir_convert {
     //! Value to convert
     const struct rir_value *val;
     //! Type to convert the value to
-    const struct rir_ltype *type;
+    const struct rir_type *type;
 };
 
 /**
@@ -126,10 +126,10 @@ struct rir_getunionidx {
 };
 
 
-struct rir_object *rir_alloca_create_obj(struct rir_ltype *type,
+struct rir_object *rir_alloca_create_obj(struct rir_type *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
-struct rir_expression *rir_alloca_create(struct rir_ltype *type,
+struct rir_expression *rir_alloca_create(struct rir_type *type,
                                          uint64_t num,
                                          struct rir_ctx *ctx);
 

@@ -8,12 +8,12 @@
 #include <String/rf_str_manipulationx.h>
 
 static bool rir_global_init(struct rir_object *obj,
-                            struct rir_ltype *type,
+                            struct rir_type *type,
                             const struct RFstring *name,
                             const void *value)
 {
     // only elementary types for now
-    if (!rir_ltype_is_elementary(type)) {
+    if (!rir_type_is_elementary(type)) {
         RF_ERROR("Tried to create a global non elementary type");
         return false;
     }
@@ -26,7 +26,7 @@ static bool rir_global_init(struct rir_object *obj,
     return rir_value_literal_init(&global->val, obj, name, value);
 }
 
-struct rir_object *rir_global_create(struct rir_ltype *type,
+struct rir_object *rir_global_create(struct rir_type *type,
                                      const struct RFstring *name,
                                      const void *value,
                                      struct rir_ctx *ctx)
@@ -56,7 +56,7 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
         ctx->rir->buff,
         RFS("global("RF_STR_PF_FMT", "RF_STR_PF_FMT", \""RF_STR_PF_FMT"\")\n",
             RF_STR_PF_ARG(rir_global_name(g)),
-            RF_STR_PF_ARG(rir_ltype_string(rir_global_type(g))),
+            RF_STR_PF_ARG(rir_type_string(rir_global_type(g))),
             RF_STR_PF_ARG(rir_value_actual_string(&g->val)))
     );
     RFS_POP();
@@ -65,7 +65,7 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
 
 
 i_INLINE_INS const struct RFstring *rir_global_name(const struct rir_global *g);
-i_INLINE_INS struct rir_ltype *rir_global_type(const struct rir_global *g);
+i_INLINE_INS struct rir_type *rir_global_type(const struct rir_global *g);
 
 
 struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct RFstring *s)
@@ -74,7 +74,7 @@ struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct 
     if (!gstring) {
         RFS_PUSH();
         gstring = rir_global_create(
-            rir_ltype_elem_create(ELEMENTARY_TYPE_STRING, false),
+            rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
             RFS("gstr_%u", rf_hash_str_stable(s, 0)),
             s,
             ctx

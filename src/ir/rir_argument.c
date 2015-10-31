@@ -12,16 +12,16 @@ static bool rir_typearr_add_single(struct rir_type_arr *arr,
                                    enum typearr_create_reason reason,
                                    struct rir_ctx *ctx)
 {
-    struct rir_ltype *t;
+    struct rir_type *t;
     if (type_is_elementary(type)) {
-        t = rir_ltype_elem_create(
+        t = rir_type_elem_create(
             type_elementary(type),
             // If it's a string make sure it's passed by pointer to function calls
             // TODO: at some point do away with this distinction (?)
             reason == ARGARR_AT_FNDECL && type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)
         );
     } else {
-        t = rir_ltype_create_from_type(type, ctx);
+        t = rir_type_create_from_type(type, ctx);
     }
     if (!t) {
         return false;
@@ -61,10 +61,10 @@ bool rir_typearr_tostring(struct rirtostr_ctx *ctx, const struct rir_type_arr *a
     bool ret = false;
     size_t i = 0;
     size_t types_num = darray_size(*arr);
-    struct rir_ltype **type;
+    struct rir_type **type;
     RFS_PUSH();
     darray_foreach(type, *arr) {
-        if (!rf_stringx_append(ctx->rir->buff, rir_ltype_string(*type))) {
+        if (!rf_stringx_append(ctx->rir->buff, rir_type_string(*type))) {
             goto end;
         }
         if (++i != types_num) {
@@ -88,7 +88,7 @@ bool rir_typearr_equal(const struct rir_type_arr *arr1, const struct rir_type_ar
     }
 
     for (unsigned i = 0; i < size; ++i) {
-        if (!rir_ltype_identical(darray_item(*arr1, i), darray_item(*arr2, i))) {
+        if (!rir_type_identical(darray_item(*arr1, i), darray_item(*arr2, i))) {
             return false;
         }
     }
@@ -97,9 +97,9 @@ bool rir_typearr_equal(const struct rir_type_arr *arr1, const struct rir_type_ar
 
 void rir_typearr_deinit(struct rir_type_arr *arr)
 {
-    struct rir_ltype **t;
+    struct rir_type **t;
     darray_foreach(t, *arr) {
-        rir_ltype_destroy(*t);
+        rir_type_destroy(*t);
     }
     darray_free(*arr);
 }

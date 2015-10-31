@@ -16,7 +16,7 @@ const struct rir_value *rir_sum_subtype(const struct type *rtype,
 {
     const struct rir_value *val = NULL;
     int idx = type_is_childof(rtype, matchtype);
-    if (!rir_ltype_is_elementary(typeobject->type) && idx != -1) { // type child of matched type
+    if (!rir_type_is_elementary(typeobject->type) && idx != -1) { // type child of matched type
         // create a rir expression to read the object value at the index position
         struct rir_expression *e = rir_objmemberat_create(typeobject, idx, ctx);
         if (!e) {
@@ -24,7 +24,7 @@ const struct rir_value *rir_sum_subtype(const struct type *rtype,
         }
         rirctx_block_add(ctx, e);
         val = rir_getread_val(e, ctx);
-    } else if (rtype == matchtype || rir_ltype_is_elementary(typeobject->type)) { // type is actually matched type
+    } else if (rtype == matchtype || rir_type_is_elementary(typeobject->type)) { // type is actually matched type
         val = typeobject;
     } else {
         RF_CRITICAL_FAIL("Type should either have been found as child of the case type or be equal to it");

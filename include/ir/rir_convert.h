@@ -5,12 +5,12 @@
 
 struct rir_expression;
 struct rir_value;
-struct rir_ltype;
+struct rir_type;
 struct rir_ctx;
 struct ast_node;
 
 struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
-                                          const struct rir_ltype *totype,
+                                          const struct rir_type *totype,
                                           struct rir_ctx *ctx);
 
 bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx);
@@ -25,7 +25,7 @@ bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx);
  *                       instruction is added and the conversion's value is returned
  */
 const struct rir_value *rir_maybe_convert(const struct rir_value *val,
-                                          const struct rir_ltype *checktype,
+                                          const struct rir_type *checktype,
                                           struct rir_ctx *ctx);
 
 /**
@@ -40,6 +40,6 @@ const struct rir_value *rir_maybe_convert(const struct rir_value *val,
  *                           conversion was done at compile time. Null in error.
  */
 struct rir_object *rir_convert_create_obj_maybeadd(const struct rir_value *convval,
-                                                   const struct rir_ltype *totype,
+                                                   const struct rir_type *totype,
                                                    struct rir_ctx *ctx);
 #endif
