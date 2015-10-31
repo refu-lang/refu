@@ -138,10 +138,6 @@ i_INLINE_INS const struct ast_node *
 symbol_table_record_node(struct symbol_table_record *rec);
 i_INLINE_INS struct type *
 symbol_table_record_type(struct symbol_table_record *rec);
-i_INLINE_INS void *
-symbol_table_record_get_backend_handle(struct symbol_table_record *rec);
-i_INLINE_INS void
-symbol_table_record_set_backend_handle(struct symbol_table_record *rec, void *handle);
 
 /* -- symbol table related functions -- */
 

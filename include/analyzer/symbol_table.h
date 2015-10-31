@@ -27,10 +27,6 @@ struct symbol_table_record {
     struct type *data;
     //! The rir object used for this symbol, or NULL if not set
     struct rir_object *rirobj;
-    /* -- Deprecated -- TODO: Remove when rir connects directly to the backend */
-    //! Refu backend handle. Information stored by the backend for specific id
-    //! + @c LLVM: It's an LLVMValueRef
-    void *backend_handle;
 };
 
 bool symbol_table_record_init(struct symbol_table_record *rec,
@@ -71,19 +67,6 @@ i_INLINE_DECL struct type *
 symbol_table_record_type(struct symbol_table_record *rec)
 {
     return rec->data;
-}
-
-i_INLINE_DECL void *
-symbol_table_record_get_backend_handle(struct symbol_table_record *rec)
-{
-    RF_ASSERT(rec->backend_handle, "Empty backend_handle detected");
-    return rec->backend_handle;
-}
-
-i_INLINE_DECL void
-symbol_table_record_set_backend_handle(struct symbol_table_record *rec, void *handle)
-{
-    rec->backend_handle = handle;
 }
 
 /* -- symbol table functionality -- */
