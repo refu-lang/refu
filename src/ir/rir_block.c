@@ -116,11 +116,16 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     // current block's exit should be the return
     struct rir_expression *read_return = NULL;
     if (has_return) {
-        read_return = rir_read_create(&ctx->current_fn->retslot_expr->val, ctx);
-        if (!read_return) {
-            RF_ERROR("Could not create a read from a function's return slot");
+        if (rir_type_is_composite(ctx->current_fn->retslot_expr->val.type)) {
+            // if returning a user type, return directly
+            read_return = ctx->current_fn->retslot_expr;
+        } else { // else read the value from the pointer
+            read_return = rir_read_create(&ctx->current_fn->retslot_expr->val, ctx);
+            if (!read_return) {
+                RF_ERROR("Could not create a read from a function's return slot");
+            }
+            rirctx_block_add(ctx, read_return);
         }
-        rirctx_block_add(ctx, read_return);
     }
     rir_block_exit_return_init(&ret->block.exit, read_return);
     return ret;
