@@ -103,6 +103,7 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     if (!ret) {
         free(ret);
         ret = NULL;
+        goto end;
     }
     struct rir_block *b = &ret->block;
     RF_STRUCT_ZERO(b);
@@ -111,6 +112,7 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     if (!rir_value_label_init_string(&ret->block.label, ret, &fend_label, ctx)) {
         free (ret);
         ret = NULL;
+        goto end;
     }
 
     // current block's exit should be the return
@@ -128,6 +130,9 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
         }
     }
     rir_block_exit_return_init(&ret->block.exit, read_return);
+    b->st = rir_ctx_curr_st(ctx);
+    RF_ASSERT(b->st, "Symbol table should not be NULL");
+end:
     return ret;
 }
 
@@ -166,6 +171,8 @@ static struct rir_object *rir_block_matchcase_create_obj(const struct ast_node *
         RF_ERROR("Failed to process a match case's expression in the RIR");
         goto fail;
     }
+    b->st = mcase->matchcase.st;
+    RF_ASSERT(b->st, "Symbol table should not be NULL");
     return ret;
 
 fail:
@@ -202,11 +209,12 @@ static bool rir_block_init(struct rir_object *obj,
                            struct rir_ctx *ctx)
 {
     struct rir_block *b = &obj->block;
+    bool ret = false;
     RF_STRUCT_ZERO(b);
     rf_ilist_head_init(&b->expressions);
     ctx->current_block = b;
     if (!rir_value_label_init(&b->label, obj, function_beginning, ctx)) {
-            return false;
+        goto end;
     }
 
     struct ast_node *child;
@@ -222,19 +230,29 @@ static bool rir_block_init(struct rir_object *obj,
             // for each expression of the block create a rir expression and add it to the block
             rf_ilist_for_each(&n->children, child, lh) {
                 if (!rir_process_ast_node(child, ctx)) {
-                    return false;
+                    goto end;
                 }
             }
+            b->st = rir_ctx_curr_st(ctx);
             rir_ctx_pop_st(ctx);
         } else if (n->type == AST_MATCH_EXPRESSION) {
             // process match expression as body
+            b->st = rir_ctx_curr_st(ctx);
+            RF_ASSERT(b->st, "Symbol table should not be NULL");
             return rir_process_matchexpr((struct ast_node*)n, ctx);
         } else {
             RF_CRITICAL_FAIL("Should never get here");
+            goto end;
         }
+    } else {
+        b->st = rir_ctx_curr_st(ctx);
     }
 
-    return true;
+    // success
+    ret = true;
+    RF_ASSERT(b->st, "Symbol table should not be NULL");
+end:
+    return ret;
 }
 
 struct rir_object *rir_block_create_obj(const struct ast_node *n,

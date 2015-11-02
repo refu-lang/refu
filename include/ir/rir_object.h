@@ -61,4 +61,9 @@ void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx);
  *                   NULL is returned.
  */
 struct rir_typedef *rir_object_get_typedef(struct rir_object *obj);
+
+/**
+ * @return the object category in a human readable string
+ */
+const struct RFstring *rir_object_category_str(const struct rir_object *obj);
 #endif

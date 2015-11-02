@@ -14,6 +14,7 @@
 #include <types/type.h>
 #include <types/type_function.h>
 #include <analyzer/analyzer.h>
+#include <ir/rir_object.h>
 
 /* -- symbol table record related functions -- */
 
@@ -270,14 +271,14 @@ void symbol_table_record_print(const struct symbol_table_record *rec)
         printf("id: " RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rec->id));
     }
     if (rec->node) {
-        printf("node: %p\n", rec->node);
+        printf("node: %p \""RF_STR_PF_FMT"\"\n", rec->node, RF_STR_PF_ARG(ast_node_str(rec->node)));
     }
     RFS_PUSH();
     if (rec->data) {
         printf("type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(rec->data, TSTR_DEFAULT)));
     }
     if (rec->rirobj) {
-        printf("rir_object: %p\n\n", rec->rirobj);
+        printf("rir_object: %p \""RF_STR_PF_FMT"\"\n", rec->rirobj, RF_STR_PF_ARG(rir_object_category_str(rec->rirobj)));
     }
     RFS_POP();
 }
@@ -374,6 +375,9 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 
 void symbol_table_print(struct symbol_table *t)
 {
+    if (symbol_table_is_empty(t)) {
+        return;
+    }
     printf("\nPrinting records of a symbol table\n\n");
     htable_iterate_records(&t->table, (htable_iter_cb)symbol_table_record_print, NULL);
 }
@@ -384,6 +388,7 @@ i_INLINE_INS void symbol_table_set_fndecl(struct symbol_table *t,
                                            struct ast_node *decl);
 i_INLINE_INS struct ast_node *symbol_table_get_fndecl(struct symbol_table *t);
 i_INLINE_INS bool symbol_table_is_root(const struct symbol_table *t);
+i_INLINE_INS bool symbol_table_is_empty(const struct symbol_table *t);
 i_INLINE_INS void symbol_table_swap_current(struct symbol_table **current_st_ptr,
                                             struct symbol_table *new_st);
 i_INLINE_INS struct type *symbol_table_lookup_type(struct symbol_table *t,

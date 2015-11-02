@@ -85,6 +85,10 @@ refu_src = [
     'ir/rir_process_cond.c',
     'ir/rir_process_match.c',
 
+    'ownership/ownership.c',
+    'ownership/ow_graph.c',
+    'ownership/ow_node.c',
+
     'serializer/serializer.c',
     'serializer/astprinter.c',
 ]
@@ -151,6 +155,13 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic', '-Wwrite-strings'])
     linker_exec = env['CXX']
 
+gv_object = None
+if local_env['has_graphviz']:
+    local_env.Append(CPPDEFINES={'RF_HAVE_GRAPHVIZ': None})
+    local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
+    gv_env = local_env.Clone()
+    gv_object = gv_env.Object([os.path.join(os.getcwd(), 'src', 'ownership/ow_graphviz.c')])
+
 
 # add src prefix before the sources that reside at src/
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]
@@ -171,7 +182,7 @@ Depends(refu_obj, gperf_result)
 
 # for now also create the executable in debug mode
 set_debug_mode(local_env, True)
-refu = local_env.Program("refu", refu_obj,
+refu = local_env.Program("refu", [refu_obj] + gv_object,
                          LIBPATH=local_env['CLIB_DIR'],
                          CC=linker_exec)
 local_env.Alias('refu', refu)

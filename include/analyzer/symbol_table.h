@@ -184,6 +184,11 @@ i_INLINE_DECL bool symbol_table_is_root(const struct symbol_table *t)
     return t->mod == NULL;
 }
 
+i_INLINE_DECL bool symbol_table_is_empty(const struct symbol_table *t)
+{
+    return htable_is_empty(&t->table);
+}
+
 /**
  * Convenience function to help swap a parent symbol table with its child while
  * traversing the AST downwards in symbol table creation. Never try to swap 

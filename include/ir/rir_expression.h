@@ -191,4 +191,5 @@ bool rir_object_expression_init(struct rir_object *expr,
                                 struct rir_ctx *ctx);
 void rir_expression_deinit(struct rir_expression *expr);
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
+struct rir_object *rir_expression_to_obj(struct rir_expression *expr);
 #endif

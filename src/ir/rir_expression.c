@@ -406,3 +406,8 @@ end:
     RFS_POP();
     return ret;
 }
+
+struct rir_object *rir_expression_to_obj(struct rir_expression *expr)
+{
+    return container_of(expr, struct rir_object, expr);
+}
