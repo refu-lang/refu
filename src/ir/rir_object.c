@@ -97,3 +97,11 @@ const struct RFstring *rir_object_category_str(const struct rir_object *obj)
 {
     return &rir_obj_category_strings[obj->category];
 }
+
+const struct RFstring *rir_object_string(const struct rir_object *obj)
+{
+    if (obj->category == RIR_OBJ_EXPRESSION) {
+        return rir_expression_type_string(&obj->expr);
+    }
+    return rir_object_category_str(obj);
+}

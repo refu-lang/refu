@@ -7,19 +7,21 @@
 #include <Utils/sanity.h>
 
 struct rir_value;
+struct rir_expression;
+struct ow_edge;
 
 struct ow_node {
-    struct rir_object *obj;
-    struct {darray(struct ow_node*);} next_nodes;
+    const struct rir_value *val;
+    struct {darray(struct ow_edge*);} edges;
 };
 
-void ow_node_init(struct ow_node *n, struct rir_object *obj);
-struct ow_node *ow_node_create(struct rir_object *obj);
+void ow_node_init(struct ow_node *n, const struct rir_value *nodeval);
+struct ow_node *ow_node_create(const struct rir_value *nodeval);
 
+void ow_node_deinit(struct ow_node *n);
 void ow_node_destroy(struct ow_node *n);
-void ow_node_destroy_recursive(struct ow_node *n);
 
-void ow_node_add(struct ow_node *n, struct ow_node *other);
+struct ow_node *ow_node_add_val_edge(struct ow_node *n, const struct rir_value *otherval, struct rir_expression *expr);
 
 
 
@@ -39,6 +41,6 @@ OBJSET_DEFINE_TYPE(ownode,
                    ownode_objset_hashfn,
                    ownode_objset_eqfn)
 
-struct ow_node *ownode_objset_has_value(const struct rf_objset_ownode *set, struct rir_value *v);
+struct ow_node *ownode_objset_has_value(const struct rf_objset_ownode *set, const struct rir_value *v);
 
 #endif

@@ -278,7 +278,7 @@ void symbol_table_record_print(const struct symbol_table_record *rec)
         printf("type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(rec->data, TSTR_DEFAULT)));
     }
     if (rec->rirobj) {
-        printf("rir_object: %p \""RF_STR_PF_FMT"\"\n", rec->rirobj, RF_STR_PF_ARG(rir_object_category_str(rec->rirobj)));
+        printf("rir_object: %p \""RF_STR_PF_FMT"\"\n", rec->rirobj, RF_STR_PF_ARG(rir_object_string(rec->rirobj)));
     }
     RFS_POP();
 }

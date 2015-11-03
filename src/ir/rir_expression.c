@@ -407,6 +407,37 @@ end:
     return ret;
 }
 
+static const struct RFstring rir_expression_type_strings[] = {
+    [RIR_EXPRESSION_CALL] = RF_STRING_STATIC_INIT("call"),
+    [RIR_EXPRESSION_ALLOCA] = RF_STRING_STATIC_INIT("alloca"),
+    [RIR_EXPRESSION_RETURN] = RF_STRING_STATIC_INIT("return"),
+    [RIR_EXPRESSION_CONVERT] = RF_STRING_STATIC_INIT("convert"),
+    [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
+    [RIR_EXPRESSION_READ] = RF_STRING_STATIC_INIT("read"),
+    [RIR_EXPRESSION_OBJMEMBERAT] = RF_STRING_STATIC_INIT("objmemberat"),
+    [RIR_EXPRESSION_SETUNIONIDX] = RF_STRING_STATIC_INIT("setunionidx"),
+    [RIR_EXPRESSION_GETUNIONIDX] = RF_STRING_STATIC_INIT("getunionidx"),
+    [RIR_EXPRESSION_UNIONMEMBERAT] = RF_STRING_STATIC_INIT("unionmemberat"),
+    [RIR_EXPRESSION_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
+    [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
+    [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),
+    [RIR_EXPRESSION_MUL] = RF_STRING_STATIC_INIT("mul"),
+    [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
+    [RIR_EXPRESSION_CMP_EQ] = RF_STRING_STATIC_INIT("cmpeq"),
+    [RIR_EXPRESSION_CMP_NE] = RF_STRING_STATIC_INIT("cmpne"),
+    [RIR_EXPRESSION_CMP_GE] = RF_STRING_STATIC_INIT("cmpge"),
+    [RIR_EXPRESSION_CMP_GT] = RF_STRING_STATIC_INIT("cmpgt"),
+    [RIR_EXPRESSION_CMP_LE] = RF_STRING_STATIC_INIT("cmple"),
+    [RIR_EXPRESSION_CMP_LT] = RF_STRING_STATIC_INIT("cmplt"),
+    [RIR_EXPRESSION_LOGIC_AND] = RF_STRING_STATIC_INIT("logicand"),
+    [RIR_EXPRESSION_LOGIC_OR] = RF_STRING_STATIC_INIT("logicor"),
+};
+
+const struct RFstring *rir_expression_type_string(const struct rir_expression *expr)
+{
+    return &rir_expression_type_strings[expr->type];
+}
+
 struct rir_object *rir_expression_to_obj(struct rir_expression *expr)
 {
     return container_of(expr, struct rir_object, expr);

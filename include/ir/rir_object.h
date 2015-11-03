@@ -66,4 +66,9 @@ struct rir_typedef *rir_object_get_typedef(struct rir_object *obj);
  * @return the object category in a human readable string
  */
 const struct RFstring *rir_object_category_str(const struct rir_object *obj);
+
+/**
+ * @return a string describing the rir object
+ */
+const struct RFstring *rir_object_string(const struct rir_object *obj);
 #endif

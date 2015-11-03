@@ -88,6 +88,7 @@ refu_src = [
     'ownership/ownership.c',
     'ownership/ow_graph.c',
     'ownership/ow_node.c',
+    'ownership/ow_edge.c',
 
     'serializer/serializer.c',
     'serializer/astprinter.c',
@@ -160,6 +161,7 @@ if local_env['has_graphviz']:
     local_env.Append(CPPDEFINES={'RF_HAVE_GRAPHVIZ': None})
     local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
     gv_env = local_env.Clone()
+    set_debug_mode(gv_env, True)
     gv_object = gv_env.Object([os.path.join(os.getcwd(), 'src', 'ownership/ow_graphviz.c')])
 
 
