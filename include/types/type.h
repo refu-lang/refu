@@ -104,7 +104,10 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
 //! Options for invoking type_str()
 enum type_str_options {
     TSTR_DEFAULT = 0x0,
-    TSTR_DEFINED_CONTENTS = 0x1  /*!< Print the contents of a defined user type if first */
+    //! Print both the defined type's name and it's contents
+    TSTR_DEFINED_WITH_CONTENTS,
+    //! Print only the defined type's contents
+    TSTR_DEFINED_ONLY_CONTENTS
 };
 /**
  * Gets a string representation of the type

@@ -93,7 +93,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
             break;
         case RIR_EXPRESSION_CALL:
             // figure out the type
-            v->type = rir_type_create_from_other(rir_call_return_type(&expr->call, ctx), false);
+            v->type = rir_type_copy_from_other(rir_call_return_type(&expr->call, ctx));
             break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:

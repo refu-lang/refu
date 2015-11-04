@@ -89,7 +89,7 @@ void rir_strec_create_allocas(struct symbol_table_record *rec,
 {
     struct rir_type *type = rir_type_create_from_type(symbol_table_record_type(rec), ctx);
     RF_ASSERT_OR_EXIT(type, "Could not create a rir_type during symbol table iteration");
-    struct rir_object *alloca = rir_alloca_create_obj(type, 1, ctx);
+    struct rir_object *alloca = rir_alloca_create_obj(type, rec->id, ctx);
     RF_ASSERT_OR_EXIT(alloca, "Could not create an alloca object during symbol table iteration");
     rec->rirobj = alloca;
 }

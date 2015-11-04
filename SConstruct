@@ -156,13 +156,20 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic', '-Wwrite-strings'])
     linker_exec = env['CXX']
 
-gv_object = None
-if local_env['has_graphviz']:
-    local_env.Append(CPPDEFINES={'RF_HAVE_GRAPHVIZ': None})
-    local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
-    gv_env = local_env.Clone()
-    set_debug_mode(gv_env, True)
-    gv_object = gv_env.Object([os.path.join(os.getcwd(), 'src', 'ownership/ow_graphviz.c')])
+gv_object = []
+if local_env['WITH_GRAPHVIZ']:
+    if local_env['has_graphviz']:
+        local_env.Append(CPPDEFINES={'RF_WITH_GRAPHVIZ': None})
+        local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
+        gv_env = local_env.Clone()
+        set_debug_mode(gv_env, True)
+        gv_object = gv_env.Object([os.path.join(os.getcwd(), 'src', 'ownership/ow_graphviz.c')])
+    else:
+        build_msg(
+            "Requested building with graphviz but graphviz was not found",
+            "Warning",
+            local_env
+        )
 
 
 # add src prefix before the sources that reside at src/

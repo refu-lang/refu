@@ -405,15 +405,16 @@ bool compiler_process()
         return false;
     }
 
+    // perform ownership analysis on the created IR
+    if (!ownership_pass(c)) {
+        RF_ERROR("Failed at ownership pass");
+        return false;
+    }
+
     if (compiler_args_print_rir(c->args)) {
         // print the RIR string representation and quit. Move somewhere else..?
         if (!rir_print(c)) {
             RF_ERROR("Failed to print the Refu IR");
-            return false;
-        }
-        // temporarily just put it here for testing
-        if (!ownership_pass(c)) {
-            RF_ERROR("Failed at ownership pass");
             return false;
         }
         // if we printed succesfully quit

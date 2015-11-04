@@ -113,6 +113,10 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
             RF_ERROR("Could not find function's rir return type");
             return false;
         }
+        // if user defined type, return as a pointer
+        if (ret->return_type->category == RIR_TYPE_COMPOSITE) {
+            ret->return_type->is_pointer = true;
+        }
     } else {
         ret->return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
         if (!ret->return_type) {
@@ -238,7 +242,7 @@ static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
     // if we got a return value allocate space for it. Assume single return values fow now
     // TODO: Take into account multiple return values
     if (return_type) {
-        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, 1, ctx);
+        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, ctx);
         if (!alloca) {
             return false;
         }

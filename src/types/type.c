@@ -602,17 +602,20 @@ static struct RFstring *type_str_do(const struct type *t, int options)
 
 struct RFstring *type_str(const struct type *t, int options)
 {
-    if (t->category == TYPE_CATEGORY_DEFINED &&
-        RF_BITFLAG_ON(options, TSTR_DEFINED_CONTENTS)) {
-
-        RF_BITFLAG_UNSET(options, TSTR_DEFINED_CONTENTS);
-        struct RFstring *sdefined = type_str_do(t->defined.type, options);
+    if (t->category == TYPE_CATEGORY_DEFINED && options == TSTR_DEFINED_WITH_CONTENTS) {
+        struct RFstring *sdefined = type_str_do(t->defined.type, TSTR_DEFAULT);
         if (!sdefined) {
             return NULL;
         }
         return RFS(RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
                    RF_STR_PF_ARG(t->defined.name),
                    RF_STR_PF_ARG(sdefined));
+    } else if (t->category == TYPE_CATEGORY_DEFINED && options == TSTR_DEFINED_ONLY_CONTENTS) {
+        struct RFstring *sdefined = type_str_do(t->defined.type, TSTR_DEFAULT);
+        if (!sdefined) {
+            return NULL;
+        }
+        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(sdefined));
     } else {
         return type_str_do(t, options);
     }
@@ -635,7 +638,7 @@ size_t type_get_uid(const struct type *t)
 {
     size_t ret;
     RFS_PUSH();
-    ret = rf_hash_str_stable(type_str_or_die(t, TSTR_DEFINED_CONTENTS), 0);
+    ret = rf_hash_str_stable(type_str_or_die(t, TSTR_DEFINED_WITH_CONTENTS), 0);
     RFS_POP();
     return ret;
 }

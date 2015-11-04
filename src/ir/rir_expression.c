@@ -65,10 +65,13 @@ void rir_expression_deinit(struct rir_expression *expr)
 
 static inline void rir_alloca_init(struct rir_alloca *obj,
                                    struct rir_type *type,
-                                   uint64_t num)
+                                   const struct RFstring *id)
 {
+    // everything by default is allocated in the stack. The ownership analysis
+    // lets us know what needs to be allocated in the heap
+    obj->alloc_location = RIR_ALLOC_STACK;
     obj->type = type;
-    obj->num = num;
+    obj->ast_id = id;
 }
 
 struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
@@ -149,14 +152,14 @@ struct rir_expression *rir_write_create(const struct rir_value *memory_to_write,
 }
 
 struct rir_object *rir_alloca_create_obj(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {
         return NULL;
     }
-    rir_alloca_init(&ret->expr.alloca, type, num);
+    rir_alloca_init(&ret->expr.alloca, type, id);
     if (!rir_object_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx)) {
         free(ret);
         ret = NULL;
@@ -165,10 +168,10 @@ struct rir_object *rir_alloca_create_obj(struct rir_type *type,
 }
 
 struct rir_expression *rir_alloca_create(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx)
 {
-    struct rir_object *obj = rir_alloca_create_obj(type, num, ctx);
+    struct rir_object *obj = rir_alloca_create_obj(type, id, ctx);
     return obj ? &obj->expr : NULL;
 }
 

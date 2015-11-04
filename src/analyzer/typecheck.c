@@ -603,7 +603,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                          RF_STR_PF_ARG(type_callable_category_str(fn_type)),
                          RF_STR_PF_ARG(fn_name),
                          RF_STR_PF_ARG(type_str_or_die(fn_found_args_type, TSTR_DEFAULT)),
-                         RF_STR_PF_ARG(type_str_or_die(fn_declared_args_type, TSTR_DEFAULT)),
+                         RF_STR_PF_ARG(type_str_or_die(fn_declared_args_type, TSTR_DEFINED_ONLY_CONTENTS)),
                          typecmp_ctx_have_error() ? ". " : "",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             RFS_POP();

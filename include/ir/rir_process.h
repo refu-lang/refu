@@ -47,7 +47,7 @@ i_INLINE_DECL const struct rir_value *rir_process_ast_node_getreadval(const stru
     RF_ASSERT(obj && (obj->category == RIR_OBJ_GLOBAL || obj->category == RIR_OBJ_EXPRESSION || obj->category == RIR_OBJ_VARIABLE),
               "At this point either a rir global or a rir expression object should have been generated");
     return obj->category == RIR_OBJ_EXPRESSION
-        ? rir_getread_val(&obj->expr, ctx)
+        ? rir_getread_exprval(&obj->expr, ctx)
         : rir_object_value(obj);
 }
 

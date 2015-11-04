@@ -326,6 +326,48 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
     return rec;
 }
 
+
+struct symbol_table_record *symbol_table_lookup_rirobj(const struct symbol_table *t,
+                                                       struct rir_object *obj)
+{
+    struct symbol_table_record *rec;
+    const struct symbol_table *lp_table = t;
+
+    // if we have an ID it can be a normal lookup
+    if (obj->category == RIR_OBJ_EXPRESSION &&
+        obj->expr.type == RIR_EXPRESSION_ALLOCA &&
+        obj->expr.alloca.ast_id != NULL) {
+
+        return symbol_table_lookup_record(t, obj->expr.alloca.ast_id, NULL);
+    }
+
+    // without a string ID we are forced to iterate :(
+    do {
+        struct htable_iter it;
+        htable_foreach(&lp_table->table, &it, rec) {
+            if (rec->rirobj == obj) {
+                return rec;
+            }
+        }
+    } while((lp_table = lp_table->parent) != NULL);
+
+    // if we reach the root and we got nothing then check modules we depend on
+    // TODO: this is not very well written. Don't like how I have an exception for
+    //       module names here. Also need to think how to handle specific inclusions
+    //       from modules.
+    if (t->mod) {
+        struct module **mod;
+        darray_foreach(mod, t->mod->dependencies) {
+            if ((rec = symbol_table_lookup_rirobj(module_symbol_table(*mod), obj))) {
+                return rec;
+            }
+            rec = NULL;
+        }
+    }
+
+    return rec;
+}
+
 // This function should be enclosed in RFS_PUSH() / RFS_POP()
 static const struct RFstring *symbol_table_extract_string_from_typedesc(const struct ast_node *typedesc)
 {

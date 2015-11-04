@@ -53,9 +53,19 @@ struct rir_call {
     struct value_arr args;
 };
 
+enum alloc_location {
+    RIR_ALLOC_STACK,
+    RIR_ALLOC_HEAP
+};
+
 struct rir_alloca {
+    //! Type to allocate
     struct rir_type *type;
-    uint64_t num;
+    //! Where to allocate the rir object
+    enum alloc_location alloc_location;
+    //! Id of the corresponding allocation in the actual code. If this alloca
+    //! has no corresponding ast id then this is NULL
+    const struct RFstring *ast_id;
 };
 
 struct rir_return {
@@ -127,10 +137,10 @@ struct rir_getunionidx {
 
 
 struct rir_object *rir_alloca_create_obj(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_alloca_create(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx);
 
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,

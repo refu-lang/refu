@@ -108,9 +108,15 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
     // In the RIR code it "just exists", just like the arguments allocas, so
     // we have to do it manually here
     if (rir_block_is_first(b) && ctx->current_rfn->retslot_expr) {
+        struct rir_type rettype = *ctx->current_rfn->retslot_expr->alloca.type;
+        if (rettype.category == RIR_TYPE_COMPOSITE) {
+            // then this should be also a pointer type. For this alloca we need to drop the pointer
+            rettype.is_pointer = false;
+        }
+
         llvmval = LLVMBuildAlloca(
             ctx->builder,
-            bllvm_type_from_rir_type(ctx->current_rfn->retslot_expr->alloca.type, ctx),
+            bllvm_type_from_rir_type(&rettype, ctx),
             ""
         );
         if (!llvmval) {

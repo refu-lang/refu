@@ -48,7 +48,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
             return false;
         }
         rirctx_block_add(ctx->rirctx, e);
-        if (!(targetval = rir_getread_val(e, ctx->rirctx))) {
+        if (!(targetval = rir_getread_exprval(e, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to read an object's value");
             return false;
         }
@@ -97,7 +97,7 @@ static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct 
             return false;
         }
         rirctx_block_add(ctx, ummbr_ptr);
-        if (!(objmemory = rir_getread_val(ummbr_ptr, ctx))) {
+        if (!(objmemory = rir_getread_exprval(ummbr_ptr, ctx))) {
             return false;
         }
     }
@@ -173,7 +173,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
             RF_ERROR("Could not get the rir type of a sum function call");
         }
         // create an alloca for that type
-        struct rir_expression *e = rir_alloca_create(sumtype, 0, ctx);
+        struct rir_expression *e = rir_alloca_create(sumtype, NULL, ctx);
         if (!e) {
             RF_ERROR("Failed to create a rir alloca instruction");
             goto fail;

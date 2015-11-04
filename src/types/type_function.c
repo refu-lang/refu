@@ -6,7 +6,7 @@
 
 i_INLINE_INS bool type_is_function(const struct type *t);
 i_INLINE_INS bool type_is_callable(const struct type *t);
-i_INLINE_INS struct type *type_callable_get_argtype(const struct type *t);
+i_INLINE_INS const struct type *type_callable_get_argtype(const struct type *t);
 i_INLINE_INS struct type *type_callable_get_rettype(const struct type *t);
 
 static const struct RFstring s_function_ = RF_STRING_STATIC_INIT("function");

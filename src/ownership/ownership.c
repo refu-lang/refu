@@ -7,12 +7,11 @@
 #include <Data_Structures/objset.h>
 
 #include "ow_graph.h"
-#if RF_HAVE_GRAPHVIZ
+#if RF_WITH_GRAPHVIZ
 #include "ow_graphviz.h"
 #endif
 
 struct objset_st { OBJSET_MEMBERS(struct symbol_table*); };
-
 
 
 struct ow_ctx {
@@ -46,18 +45,25 @@ static void ow_ctx_deinit()
     g_ow_ctx = NULL;
 }
 
-static inline bool ow_ctx_add_new(struct rir_value *n, struct rir_object *obj, const struct RFstring *fn_name)
+static inline bool ow_ctx_add_new(struct rir_expression *expr, const struct RFstring *fn_name, struct symbol_table *st)
 {
     RF_ASSERT(g_ow_ctx, "No global ownership context exists");
-    struct ow_graph *v = ow_graph_create(n, fn_name);
-    if (!v) {
+    // find the symbol table record for this rir object
+    struct symbol_table_record *rec = symbol_table_lookup_rirobj(st, rir_expression_to_obj(expr));
+    if (!rec) {
+        // at least for now, if no record was discovered we are not interested in
+        // creating a graph for this alloca
+        return true;
+    }
+    struct ow_graph *g = ow_graph_create(expr, fn_name, rec);
+    if (!g) {
         return false;
     }
-    darray_append(g_ow_ctx->graphs, v);
+    darray_append(g_ow_ctx->graphs, g);
     return true;
 }
 
-#if RF_HAVE_GRAPHVIZ
+#if RF_WITH_GRAPHVIZ
 bool ow_ctx_create_graphviz()
 {
     bool ret = false;
@@ -84,7 +90,7 @@ end:
  *
  * @param v              The value for which to check for attachment to a graph
  * @param dv             The value to put into the graph as a dependency
- * @param obj            The rir object that makes the transformation
+ * @param expr           The rir expression that should go at the connecting edge
  */
 static void ow_ctx_check_value(const struct rir_value *v, const struct rir_value *dv, struct rir_expression *expr)
 {
@@ -106,6 +112,24 @@ static inline void ow_ctx_check_value_from_expr(const struct rir_value *v, struc
     ow_ctx_check_value(v, &expr->val, expr);
 }
 
+/**
+ * Check if a value should go to a graph as an end node
+ *
+ * @param v              The value for which to check for attachment to a graph
+ * @param end_type       The end node type
+ * @param expr           The rir expression that should go at the connecting edge
+ */
+static void ow_ctx_check_value_as_end(const struct rir_value *v, enum ow_end_type end_type, const struct rir_expression *expr)
+{
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    struct ow_graph **graph;
+    darray_foreach(graph, g_ow_ctx->graphs) {
+        if (ow_graph_check_or_add_end(*graph, v, end_type, expr)) {
+            return; // stop searching if it gets added to any graph
+        }
+    }
+}
+
 void ow_ctx_check_expr(struct rir_expression *expr)
 {
     switch(expr->type) {
@@ -117,10 +141,6 @@ void ow_ctx_check_expr(struct rir_expression *expr)
             ow_ctx_check_value_from_expr(*val, expr);
         }
     }
-        break;
-    case RIR_EXPRESSION_SETUNIONIDX:
-        RF_ASSERT(false, "WHATOTODOHERE?");
-        // TODO
         break;
     case RIR_EXPRESSION_OBJMEMBERAT:
         ow_ctx_check_value_from_expr(expr->objmemberat.objmemory, expr);
@@ -144,6 +164,9 @@ void ow_ctx_check_expr(struct rir_expression *expr)
         ow_ctx_check_value_from_expr(expr->binaryop.a, expr);
         ow_ctx_check_value_from_expr(expr->binaryop.b, expr);
         break;
+    case RIR_EXPRESSION_RETURN:
+        // returns are handled at the end of each block's iteration (block exits)
+    case RIR_EXPRESSION_SETUNIONIDX:
     case RIR_EXPRESSION_GETUNIONIDX:
     case RIR_EXPRESSION_CONSTANT:
 
@@ -156,7 +179,6 @@ void ow_ctx_check_expr(struct rir_expression *expr)
 
     case RIR_EXPRESSION_LOGIC_AND:
     case RIR_EXPRESSION_LOGIC_OR:
-    case RIR_EXPRESSION_RETURN:
     case RIR_EXPRESSION_PLACEHOLDER:
         // no need to do anything
         break;
@@ -181,13 +203,18 @@ bool ow_function_pass(struct rir_fndef *f)
         rf_ilist_for_each(&(*b)->expressions, expr, ln) {
             // if it's an alloca add a new graph
             if (expr->type == RIR_EXPRESSION_ALLOCA) {
-                if (!ow_ctx_add_new(&expr->val, rir_expression_to_obj(expr), f->decl.name)) {
+                if (!ow_ctx_add_new(expr, f->decl.name, (*b)->st)) {
                     RF_ERROR("Error at adding a new ownership graph");
                     return false;
                 }
             } else { // in other cases see if it needs to go in a graph
                 ow_ctx_check_expr(expr);
             }
+        }
+        // also check if this is the return block
+        struct rir_expression *rexp = &(*b)->exit.retstmt;
+        if ((*b)->exit.type == RIR_BLOCK_EXIT_RETURN && rexp->ret.val) {
+            ow_ctx_check_value_as_end(&rexp->ret.val->val, OW_END_RETURN, rexp->ret.val);
         }
     }
     rf_objset_clear(&set);
@@ -203,7 +230,7 @@ bool ow_module_pass(struct rir *r)
         if (!decl->plain_decl && !ow_function_pass(rir_fndecl_to_fndef(decl))) {
             return false;
         }
-#if RF_HAVE_GRAPHVIZ
+#if RF_WITH_GRAPHVIZ
         // for now just always create the SVG graphs per function
         ow_ctx_create_graphviz();
 #endif
@@ -214,12 +241,9 @@ bool ow_module_pass(struct rir *r)
 bool ownership_pass(struct compiler *c)
 {
     struct module **mod;
-    static int n = 1;
     bool ret = false;
     ow_ctx_init();
     darray_foreach(mod, c->modules) {
-        printf("MODULE %d\n", n);
-        ++n;
         if (!ow_module_pass((*mod)->rir)) {
             goto end;
         }

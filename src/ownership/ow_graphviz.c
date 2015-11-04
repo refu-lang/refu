@@ -9,6 +9,7 @@
 struct gvz_ctx {
     GVC_t *gvc;
     FILE *f;
+    unsigned int gcount;
 };
 i_THREAD__ struct gvz_ctx *g_gvz_ctx = NULL;
 
@@ -18,17 +19,13 @@ bool ow_graphviz_init()
     g_gvz_ctx = malloc(sizeof(struct gvz_ctx));
     RF_ASSERT_OR_EXIT(g_gvz_ctx, "Could not allocate a global graphviz context");
     g_gvz_ctx->gvc = gvContext();
-    // for now let's keep the file in the main loop
-    /* g_gvz_ctx->f = fopen("TESTGRAPH.svg", "w"); */
-    /* return g_gvz_ctx->f; */
-    return true;
+    g_gvz_ctx->gcount = 0;
+    return g_gvz_ctx->gvc != NULL;
 }
 
 void ow_graphviz_deinit()
 {
     RF_ASSERT(g_gvz_ctx, "No global graphviz context exists");
-    // for now let's keep the file in the main loop
-    /* fclose(g_gvz_ctx->f); */
     // Unfortunately even if we do so, there is still a memory leak inside
     // the graphviz library as reported by this bug:
     // http://www.graphviz.org/mantisbt/view.php?id=2438
@@ -59,14 +56,18 @@ static inline Agedge_t *rf_agedge(Agraph_t *g, Agnode_t *from, Agnode_t *to, con
 static Agnode_t *rf_gv_add(struct ow_node *n, Agraph_t *g)
 {
     Agnode_t *agchild;
-    Agnode_t *agnode = rf_agnode(g, rir_value_string(n->val));
-    if (!agnode) {
-        return false;
+    Agnode_t *agnode;
+    if (n->type == OW_NTYPE_END) {
+        return rf_agnode(g, ow_node_end_type_str(n->end_type));
+    }
+
+    if (!(agnode = rf_agnode(g, rir_value_string(n->full.val)))) {
+        return NULL;
     }
     struct ow_edge **edge;
-    darray_foreach(edge, n->edges) {
+    darray_foreach(edge, n->full.edges) {
         if (!(agchild = rf_gv_add(&(*edge)->to, g))) {
-            return false;
+            return NULL;
         }
         rf_agedge(g, agnode, agchild, rir_expression_type_string((*edge)->edgeexpr));
     }
@@ -82,7 +83,7 @@ bool ow_graph_to_graphviz(struct ow_graph *inputg)
     RFS_PUSH();
     char buff[50];
     char *fnname = rf_string_cstr_from_buff_or_die(inputg->fn_name);
-    sprintf(buff, "TESTGRAPH_%s.svg", fnname);
+    sprintf(buff, "TESTGRAPH_%s_%u.svg", fnname, g_gvz_ctx->gcount++);
     f = fopen(buff, "w");
 
     g = agopen(fnname, Agdirected, NULL);
@@ -91,7 +92,6 @@ bool ow_graph_to_graphviz(struct ow_graph *inputg)
     gvLayoutJobs(g_gvz_ctx->gvc, g);
 
     // for now render to the file opened here
-    /* gvRender(g_gvz_ctx->gvc, g, "svg", g_gvz_ctx->f); */
     gvRender(g_gvz_ctx->gvc, g, "svg", f);
 
     gvFreeLayout(g_gvz_ctx->gvc, g);

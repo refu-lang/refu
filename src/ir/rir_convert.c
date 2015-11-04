@@ -41,7 +41,7 @@ static struct rir_object *rir_convert_init(const struct rir_value *convval,
         // boolean to string conversion requires some branching logic
         retobj = rir_alloca_create_obj(
             rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
-            0,
+            NULL,
             ctx
         );
         if (!retobj) {
