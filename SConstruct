@@ -163,7 +163,9 @@ if local_env['WITH_GRAPHVIZ']:
         local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
         gv_env = local_env.Clone()
         set_debug_mode(gv_env, True)
-        gv_object = gv_env.Object([os.path.join(os.getcwd(), 'src', 'ownership/ow_graphviz.c')])
+        gv_src = ['ownership/ow_graphviz.c']
+        gv_src = [os.path.join(os.getcwd(), 'src', x) for x in gv_src]
+        gv_object = gv_env.Object(gv_src)
     else:
         build_msg(
             "Requested building with graphviz but graphviz was not found",

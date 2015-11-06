@@ -190,15 +190,8 @@ void ow_ctx_check_expr(struct rir_expression *expr)
 
 bool ow_function_pass(struct rir_fndef *f)
 {
-    struct objset_st set;
-    rf_objset_init_default(&set);
     struct rir_block **b;
     darray_foreach(b, f->blocks) {
-        if (!rf_objset_get_default(&set, (*b)->st)) {
-            /* symbol_table_print((*b)->st); */
-            rf_objset_add_default(&set, (*b)->st);
-        }
-
         struct rir_expression *expr;
         rf_ilist_for_each(&(*b)->expressions, expr, ln) {
             // if it's an alloca add a new graph
@@ -217,7 +210,6 @@ bool ow_function_pass(struct rir_fndef *f)
             ow_ctx_check_value_as_end(&rexp->ret.val->val, OW_END_RETURN, rexp->ret.val);
         }
     }
-    rf_objset_clear(&set);
     return true;
 }
 
