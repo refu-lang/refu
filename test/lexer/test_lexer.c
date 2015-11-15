@@ -488,6 +488,50 @@ START_TEST(test_lexer_scan_zero_at_eof) {
 
 } END_TEST
 
+START_TEST(test_lexer_scan_zero_before_curly) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "fn main() -> u32 {return 0}"
+    );
+    front_testdriver_new_main_source(&s);
+    struct inpfile *f = front_testdriver_file();
+    struct token expected[] = {
+        {
+            .type=TOKEN_KW_FUNCTION,
+            .location=LOC_INIT(f, 0, 0, 0, 1),
+        },
+        TESTLEX_IDENTIFIER_INIT(0, 3, 0, 6, "main"),
+        {
+            .type=TOKEN_SM_OPAREN,
+            .location=LOC_INIT(f, 0, 7, 0, 7),
+        },
+        {
+            .type=TOKEN_SM_CPAREN,
+            .location=LOC_INIT(f, 0, 8, 0, 8),
+        },
+        {
+            .type=TOKEN_OP_IMPL,
+            .location=LOC_INIT(f, 0, 10, 0, 11),
+        },
+        TESTLEX_IDENTIFIER_INIT(0, 13, 0, 15, "u32"),
+        {
+            .type=TOKEN_SM_OCBRACE,
+            .location=LOC_INIT(f, 0, 17, 0, 17),
+        },
+        {
+            .type=TOKEN_KW_RETURN,
+            .location=LOC_INIT(f, 0, 18, 0, 23),
+        },
+        TESTLEX_INTEGER_INIT(0, 25, 0, 25, 0),
+        {
+            .type=TOKEN_SM_CCBRACE,
+            .location=LOC_INIT(f, 0, 26, 0, 26),
+        },
+    };
+    ck_assert_lexer_scan("Scanning failed");
+    testsupport_lexer_check_tokens(expected);
+
+} END_TEST
+
 START_TEST(test_lexer_push_pop) {
     static const struct RFstring s = RF_STRING_STATIC_INIT("if a < 2 { }");
     front_testdriver_new_main_source(&s);
@@ -667,6 +711,7 @@ Suite *lexer_suite_create(void)
     tcase_add_test(scan_edge, test_lexer_scan_float_with_tokens_in_between);
     tcase_add_test(scan_edge, test_lexer_scan_integer_close_to_member_access);
     tcase_add_test(scan_edge, test_lexer_scan_zero_at_eof);
+    tcase_add_test(scan_edge, test_lexer_scan_zero_before_curly);
 
     TCase *lexer_utils = tcase_create("lexer_utilities");
     tcase_add_checked_fixture(lexer_utils,

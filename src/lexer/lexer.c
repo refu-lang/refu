@@ -349,17 +349,17 @@ static bool lexer_get_numeric(struct lexer *l, char *p,
 
     if (sp < lim) {
         char *sp_1 = p + 1;
-        if (*sp == '0' && *sp_1 != '.' && !COND_WS(*sp_1)) {
-                if (*sp_1 == 'x') {
-                    return lexer_get_constant_int(l, p, lim, ret_p, negative,
-                                                  rf_string_to_uint_hex);
-                } else if (*sp_1 == 'b') {
-                    return lexer_get_constant_int(l, p, lim, ret_p, negative,
-                                                   rf_string_to_uint_bin);
-                }
-                // else oct
+        if (*sp == '0') {
+            if (*sp_1 == 'x') { // hex
+                return lexer_get_constant_int(l, p, lim, ret_p, negative,
+                                              rf_string_to_uint_hex);
+            } else if (*sp_1 == 'b') { //binary
+                return lexer_get_constant_int(l, p, lim, ret_p, negative,
+                                              rf_string_to_uint_bin);
+            } else if (COND_NUMERIC(*sp_1)) { // octal
                 return lexer_get_constant_int(l, p, lim, ret_p, negative,
                                               rf_string_to_uint_oct);
+            }
         }
     }
     return lexer_get_constant_int_or_float(l, p, lim, negative, ret_p);
