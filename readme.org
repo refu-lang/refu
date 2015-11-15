@@ -1,0 +1,7 @@
+#+TITLE: Refulang Core
+#+AUTHOR: Lefteris Karapetsas
+
+This is the main repository for the core of [[http://refu.co/spec.html][refulang]]. All PRs and issues regarding the core should 
+go here.
+
+It is also indexed for convenience under the [[https://github.com/LefterisJP/refulang][umbrella]] refulang project.
