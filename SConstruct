@@ -144,11 +144,11 @@ if local_env['LANG_BACKEND'] == 'LLVM':
         'backend/llvm_types.c',
         'backend/llvm_values.c',
     ]
-    local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     local_env.ParseConfig('llvm-config --libs --cflags --ldflags core analysis'
                           ' executionengine interpreter native linker')
     # llvm-config adds some flags we don't need so remove them
     remove_envvar_values(local_env, 'CCFLAGS', ['-pedantic', '-Wwrite-strings'])
+    local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     linker_exec = env['CXX']
 
 
