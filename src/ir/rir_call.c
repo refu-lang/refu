@@ -194,6 +194,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
             goto fail;
         }
     }
+    ret->expr.call.foreign = ast_fncall_is_foreign(n);
 
     // now initialize the rir expression part of the struct
     if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
@@ -219,7 +220,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
 
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
         return rir_process_ctorcall(n, ctx);
-    } else if (n->fncall.is_explicit_conversion) {
+    } else if (ast_fncall_is_conversion(n)) {
         return rir_process_convertcall(n, ctx);
     }
     // else normal function call
@@ -281,4 +282,9 @@ void rir_call_deinit(struct rir_call *c)
     rf_string_deinit(&c->name);
     darray_free(c->args);
     // the args are rir objects themselves so will be freed from global list
+}
+
+struct rir_expression *rir_call_to_expr(const struct rir_call *c)
+{
+    return container_of(c, struct rir_expression, call);
 }

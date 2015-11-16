@@ -10,20 +10,41 @@ struct rir_object;
 
 //! Graph attributes
 enum graph_attrs {
-    OW_ATTR_RETURNED = 0x1,
-    OW_ATTR_PASSED = 0x2,
+    OW_ATTR_RETURNED = 1,
+    OW_ATTR_PASSED = 2,
 };
 
+struct ow_passed_loc {
+    const struct rir_call *call;
+    struct ow_node *node;
+    unsigned int idx;
+};
+
+struct ow_passed_loc *ow_passed_loc_create(const struct rir_call *c,
+                                           struct ow_node *n,
+                                           unsigned int idx);
+void ow_passed_loc_destroy(struct ow_passed_loc *ploc);
+
 struct ow_graph {
+    //! Name of the function this graph's value starts from
     const struct RFstring *fn_name;
-    struct rir_expression *expr;
+    //! Rir object describing what this graph is for
+    struct rir_object *obj;
+    //! The root node of this graph
     struct ow_node *root;
+    //! Set of ownership nodes that are related to the root node of the graph.
+    //! Used to find if a node has a relation
     struct rf_objset_ownode set;
+    //! Graph attributes denoting what happens to the value
     int graph_attrs;
+    //! If the graph is marked as passing the value somewhere else these are the
+    //! locations to connect to
+    struct {darray(struct ow_passed_loc*);} passed_locations;
+    //! The symbol table record of the rir object the graph is for
     struct symbol_table_record *rec;
 };
 
-struct ow_graph *ow_graph_create(struct rir_expression *expr,
+struct ow_graph *ow_graph_create(struct rir_object *expr,
                                  const struct RFstring *name,
                                  struct symbol_table_record *rec);
 void ow_graph_destroy(struct ow_graph *g);
@@ -36,7 +57,8 @@ bool ow_graph_check_or_add_val(struct ow_graph *g,
 bool ow_graph_check_or_add_end(struct ow_graph *g,
                                const struct rir_value *v,
                                enum ow_end_type end_type,
-                               const struct rir_expression *edgexpr);
+                               const struct rir_expression *edgexpr,
+                               unsigned int idx);
 
 void ow_graph_set_attr(struct ow_graph *g, enum graph_attrs attr);
 

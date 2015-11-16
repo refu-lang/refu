@@ -1,31 +1,55 @@
 #include "ow_graph.h"
+#include "ow_debug.h"
+#include <ownership/ownership.h>
 #include <ir/rir_object.h>
+#include <String/rf_str_core.h>
 
-/* #define DD(...) printf(__VA_ARGS__) */
-#define DD(...)
 
-struct ow_graph *ow_graph_create(struct rir_expression *expr,
+struct ow_passed_loc *ow_passed_loc_create(const struct rir_call *c, struct ow_node *n, unsigned int idx)
+{
+    struct ow_passed_loc *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    RF_STRUCT_ZERO(ret);
+    ret->call = c;
+    ret->node = n;
+    ret->idx = idx;
+    return ret;
+}
+
+void ow_passed_loc_destroy(struct ow_passed_loc *ploc)
+{
+    free(ploc);
+}
+
+struct ow_graph *ow_graph_create(struct rir_object *obj,
                                  const struct RFstring *name,
                                  struct symbol_table_record *rec)
 {
     struct ow_graph *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
+    RF_STRUCT_ZERO(ret);
     ret->fn_name = name;
-    ret->expr = expr;
-    ret->root = ow_node_create(&expr->val);
+    ret->obj = obj;
+    ret->root = ow_node_create(name, rir_object_value(obj));
     ret->graph_attrs = 0;
     ret->rec = rec;
     if (!ret->root) {
         return false;
     }
+    darray_init(ret->passed_locations);
     rf_objset_init(&ret->set, ownode);
-    DD("Creating graph for value "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rir_value_string(&expr->val)));
+    OWDD("\n>>>Creating graph for value "RF_STR_PF_FMT"\n\n", RF_STR_PF_ARG(ow_node_id(ret->root)));
     rf_objset_add(&ret->set, ownode, ret->root);
     return ret;
 }
 
 void ow_graph_destroy(struct ow_graph *g)
 {
+    struct ow_passed_loc **ploc;
+    darray_foreach(ploc, g->passed_locations) {
+        ow_passed_loc_destroy(*ploc);
+    }
+    darray_free(g->passed_locations);
     ow_node_destroy(g->root);
     rf_objset_clear(&g->set);
     free(g);
@@ -37,19 +61,24 @@ bool ow_graph_check_or_add_val(struct ow_graph *g,
                                const struct rir_expression *edgexpr)
 {
     struct ow_node *n;
-    DD("Checking if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
-           RF_STR_PF_ARG(rir_value_string(v)),
-           RF_STR_PF_ARG(rir_value_string(&g->expr->val))
+    OWDD("Normal Checking in \""RF_STR_PF_FMT"()\" if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
+         RF_STR_PF_ARG(ow_curr_fnname()),
+         RF_STR_PF_ARG(rir_value_string(v)),
+         RF_STR_PF_ARG(ow_node_id(g->root))
     );
-    if (!(n = ownode_objset_has_value(&g->set, v))) {
-        DD("No it can't!\n");
+    if (!(n = ownode_objset_has_value(&g->set, ow_curr_fnname(), v))) {
+        OWDD("No it can't!\n");
         return false;
     }
-    DD("Yes it can.\n");
+    OWDD("Yes it can.\n");
     if (!(n = ow_node_add_val_edge(n, dependentv, edgexpr))) {
-        DD("Failed to add a new node as an edge");
+        OWDD("Failed to add a new node as an edge");
         return false;
     }
+    OWDD("Adding node with id \""RF_STR_PF_FMT"\" to the graph for value "RF_STR_PF_FMT"\n",
+       RF_STR_PF_ARG(ow_node_id(n)),
+       RF_STR_PF_ARG(ow_node_id(g->root))
+    );
     rf_objset_add(&g->set, ownode, n);
     return true;
 }
@@ -57,36 +86,53 @@ bool ow_graph_check_or_add_val(struct ow_graph *g,
 bool ow_graph_check_or_add_end(struct ow_graph *g,
                                const struct rir_value *v,
                                enum ow_end_type end_type,
-                               const struct rir_expression *edgexpr)
+                               const struct rir_expression *edgexpr,
+                               unsigned int idx)
 {
     struct ow_node *n;
-    DD("Checking if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
-           RF_STR_PF_ARG(rir_value_string(v)),
-           RF_STR_PF_ARG(rir_value_string(&g->expr->val))
+    OWDD("End Checking in \""RF_STR_PF_FMT"()\" if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
+         RF_STR_PF_ARG(ow_curr_fnname()),
+         RF_STR_PF_ARG(rir_value_string(v)),
+         RF_STR_PF_ARG(ow_node_id(g->root))
     );
-    if (!(n = ownode_objset_has_value(&g->set, v))) {
-        DD("No it can't!\n");
+    if (!(n = ownode_objset_has_value(&g->set, g->fn_name, v))) {
+        OWDD("No it can't!\n");
         return false;
     }
-    DD("Yes it can.\n");
+    OWDD("Yes it can.\n");
     if (!(n = ow_node_add_end_edge(n, end_type, edgexpr))) {
-        DD("Failed to add a new node as an edge");
+        OWDD("Failed to add a new node as an edge");
         return false;
     }
     switch (end_type) {
     case OW_END_RETURN:
         ow_graph_set_attr(g, OW_ATTR_RETURNED);
         break;
+    case OW_END_PASSED:
+    {
+        ow_graph_set_attr(g, OW_ATTR_PASSED);
+        RF_ASSERT(edgexpr->type == RIR_EXPRESSION_CALL, "A rir call should be here");
+        struct ow_passed_loc *ploc = ow_passed_loc_create(&edgexpr->call, n, idx);
+        darray_append(g->passed_locations, ploc);
+    }
+    break;
     }
     return true;
 }
 
 void ow_graph_set_attr(struct ow_graph *g, enum graph_attrs attr)
 {
+    switch(attr)  {
+    case OW_ATTR_RETURNED:
+        if (g->obj->category == RIR_OBJ_EXPRESSION && g->obj->expr.type == RIR_EXPRESSION_ALLOCA) {
+            // since the graph states the value is returned, allocation needs to be in the heap
+            g->obj->expr.alloca.alloc_location = RIR_ALLOC_HEAP;
+        }
+    break;
+    case OW_ATTR_PASSED:
+        break;
+    }
     RF_BITFLAG_SET(g->graph_attrs, attr);
-    RF_ASSERT(g->expr->type == RIR_EXPRESSION_ALLOCA, "An alloca should exist here");
-    // since the graph states the value is returned, allocation needs to be in the heap
-    g->expr->alloca.alloc_location = RIR_ALLOC_HEAP;
 }
 
 i_INLINE_INS bool ow_graph_has_attr(const struct ow_graph *g, enum graph_attrs attr);

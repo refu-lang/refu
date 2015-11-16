@@ -287,6 +287,7 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     rir_ctx_push_st(ctx, ast_fnimpl_symbol_table_get(n));
     const struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *ast_returns = ast_fndecl_return_get(decl);
+    ret->st = ast_fnimpl_symbol_table_get(n);
     if (!rir_fndecl_init_from_ast(&ret->decl, decl, ctx)) {
         goto end;
     }

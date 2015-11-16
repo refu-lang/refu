@@ -47,6 +47,16 @@ struct ast_fnimpl {
     struct symbol_table *st;
 };
 
+enum ast_fncall_type {
+    AST_FNCALL_NORMAL = 0,
+    //! Set by typecheking if this is an explicit conversion
+    AST_FNCALL_EXPLICIT_CONVERSION,
+    //! Set by typechecking if this is a call to a function with sum type args
+    AST_FNCALL_SUM,
+    //! Set by typecheking if this is a foreign function call
+    AST_FNCALL_FOREIGN,
+};
+
 struct ast_fncall {
     //! identifier of the name
     struct ast_node *name;
@@ -57,10 +67,8 @@ struct ast_fncall {
     const struct type *params_type;
     //! Type of the original function this call refers to. Set during typechecking
     const struct type *declared_type;
-    //! Set by typecheking if this is an explicit conversion
-    bool is_explicit_conversion;
-    //! Set by typechecking if this is a call to a function with sum type args
-    bool sumcall;
+    //! Type of call
+    enum ast_fncall_type type;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

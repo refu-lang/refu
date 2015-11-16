@@ -4,7 +4,9 @@
 #include <stdbool.h>
 
 struct compiler;
+struct RFstring;
 
 bool ownership_pass(struct compiler *c);
+const struct RFstring *ow_curr_fnname();
 
 #endif

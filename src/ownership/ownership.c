@@ -1,12 +1,15 @@
 #include <ownership/ownership.h>
 #include <compiler.h>
 #include <ir/rir.h>
+#include <ir/rir_object.h>
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
+#include <ir/rir_call.h>
 #include <analyzer/symbol_table.h>
 #include <Data_Structures/objset.h>
 
 #include "ow_graph.h"
+#include "ow_debug.h"
 #if RF_WITH_GRAPHVIZ
 #include "ow_graphviz.h"
 #endif
@@ -16,8 +19,15 @@ struct objset_st { OBJSET_MEMBERS(struct symbol_table*); };
 
 struct ow_ctx {
     struct {darray(struct ow_graph*);} graphs;
+    const struct RFstring *curr_fn_name;
 };
 i_THREAD__ struct ow_ctx *g_ow_ctx = NULL;
+
+const struct RFstring *ow_curr_fnname()
+{
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    return g_ow_ctx->curr_fn_name;
+}
 
 static void ow_ctx_init()
 {
@@ -45,22 +55,49 @@ static void ow_ctx_deinit()
     g_ow_ctx = NULL;
 }
 
-static inline bool ow_ctx_add_new(struct rir_expression *expr, const struct RFstring *fn_name, struct symbol_table *st)
+static inline bool ow_ctx_add_new(struct rir_object *obj, const struct RFstring *fn_name, struct symbol_table *st)
 {
     RF_ASSERT(g_ow_ctx, "No global ownership context exists");
     // find the symbol table record for this rir object
-    struct symbol_table_record *rec = symbol_table_lookup_rirobj(st, rir_expression_to_obj(expr));
+    struct symbol_table_record *rec = symbol_table_lookup_rirobj(st, obj);
     if (!rec) {
         // at least for now, if no record was discovered we are not interested in
         // creating a graph for this alloca
         return true;
     }
-    struct ow_graph *g = ow_graph_create(expr, fn_name, rec);
+    struct ow_graph *g = ow_graph_create(obj, fn_name, rec);
     if (!g) {
         return false;
     }
     darray_append(g_ow_ctx->graphs, g);
     return true;
+}
+
+static struct ow_graph *ow_ctx_graph_from_ploc(struct ow_passed_loc *ploc, struct ow_graph *from_graph)
+{
+    RF_ASSERT(!ploc->call->foreign, "Foreign function calls should not come here");
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    struct ow_graph **g;
+    OWDD("Trying to find ploc \""RF_STR_PF_FMT"\" in the following graphs:\n", RF_STR_PF_ARG(&ploc->call->name)); 
+    darray_foreach(g, g_ow_ctx->graphs) {
+        OWDD("Graph "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ow_node_id((*g)->root)));
+    }
+    darray_foreach(g, g_ow_ctx->graphs) {
+        RFS_PUSH();
+        if (rf_string_equal(&ploc->call->name, (*g)->fn_name) &&
+            (*g)->obj->category == RIR_OBJ_VARIABLE &&
+            rf_string_equal(rir_value_string(rir_object_value((*g)->obj)),
+                            RFS("$%u", ploc->idx))
+        ) {
+            RFS_POP();
+            // change ploc node to the actual node it should point to
+            ploc->node = (*g)->root;
+            return *g;
+        }
+        RFS_POP();
+    }
+    // else fail
+    return NULL;
 }
 
 #if RF_WITH_GRAPHVIZ
@@ -118,13 +155,17 @@ static inline void ow_ctx_check_value_from_expr(const struct rir_value *v, struc
  * @param v              The value for which to check for attachment to a graph
  * @param end_type       The end node type
  * @param expr           The rir expression that should go at the connecting edge
+ * @param idx            If this concerns parameter passing this is the parameter index. Else zero.
  */
-static void ow_ctx_check_value_as_end(const struct rir_value *v, enum ow_end_type end_type, const struct rir_expression *expr)
+static void ow_ctx_check_value_as_end(const struct rir_value *v,
+                                      enum ow_end_type end_type,
+                                      const struct rir_expression *expr,
+                                      unsigned int idx)
 {
     RF_ASSERT(g_ow_ctx, "No global ownership context exists");
     struct ow_graph **graph;
     darray_foreach(graph, g_ow_ctx->graphs) {
-        if (ow_graph_check_or_add_end(*graph, v, end_type, expr)) {
+        if (ow_graph_check_or_add_end(*graph, v, end_type, expr, idx)) {
             return; // stop searching if it gets added to any graph
         }
     }
@@ -132,13 +173,16 @@ static void ow_ctx_check_value_as_end(const struct rir_value *v, enum ow_end_typ
 
 void ow_ctx_check_expr(struct rir_expression *expr)
 {
+    OWDD("\n>>> Checking a new expression\n");
     switch(expr->type) {
     case RIR_EXPRESSION_CALL:
         // check if any of the call's arguments should be in the graph
     {
         struct rir_value **val;
+        unsigned int idx = 0;
         darray_foreach(val, expr->call.args) {
             ow_ctx_check_value_from_expr(*val, expr);
+            ow_ctx_check_value_as_end(*val, OW_END_PASSED, expr, idx++);
         }
     }
         break;
@@ -190,13 +234,22 @@ void ow_ctx_check_expr(struct rir_expression *expr)
 
 bool ow_function_pass(struct rir_fndef *f)
 {
+    struct rir_object **var;
+    g_ow_ctx->curr_fn_name = f->decl.name;
+    darray_foreach(var, f->variables) {
+        if (!ow_ctx_add_new(*var, f->decl.name, f->st)) {
+            RF_ERROR("Error at adding a new ownership graph");
+            return false;
+        }
+    }
+
     struct rir_block **b;
     darray_foreach(b, f->blocks) {
         struct rir_expression *expr;
         rf_ilist_for_each(&(*b)->expressions, expr, ln) {
             // if it's an alloca add a new graph
             if (expr->type == RIR_EXPRESSION_ALLOCA) {
-                if (!ow_ctx_add_new(expr, f->decl.name, (*b)->st)) {
+                if (!ow_ctx_add_new(rir_expression_to_obj(expr), f->decl.name, (*b)->st)) {
                     RF_ERROR("Error at adding a new ownership graph");
                     return false;
                 }
@@ -207,7 +260,7 @@ bool ow_function_pass(struct rir_fndef *f)
         // also check if this is the return block
         struct rir_expression *rexp = &(*b)->exit.retstmt;
         if ((*b)->exit.type == RIR_BLOCK_EXIT_RETURN && rexp->ret.val) {
-            ow_ctx_check_value_as_end(&rexp->ret.val->val, OW_END_RETURN, rexp->ret.val);
+            ow_ctx_check_value_as_end(&rexp->ret.val->val, OW_END_RETURN, rexp->ret.val, 0);
         }
     }
     return true;
@@ -218,15 +271,39 @@ bool ow_module_pass(struct rir *r)
     // output functions
     struct rir_fndecl *decl;
     rf_ilist_for_each(&r->functions, decl, ln) {
-        ow_ctx_reset(); // for now the graph is per function
         if (!decl->plain_decl && !ow_function_pass(rir_fndecl_to_fndef(decl))) {
             return false;
         }
+    }
+
+    struct ow_graph **graph;
+    // Now search all the graphs and see which are connecting and connect them
+    darray_foreach(graph, g_ow_ctx->graphs) {
+        struct ow_passed_loc **ploc;
+        darray_foreach(ploc, (*graph)->passed_locations) {
+            if ((*ploc)->call->foreign) {
+                continue;
+            }
+            // find the graph of the passed function
+            struct ow_graph *pgraph = ow_ctx_graph_from_ploc(*ploc, *graph);
+            if (!pgraph) {
+                RF_ERROR("Failed to find the graph from a passed location");
+                return false;
+            }
+            // connect them
+            if (!ow_node_connect_end_node((*graph)->root, rir_call_to_expr((*ploc)->call), (*ploc)->node)) {
+                RF_ERROR("Failed to connect nodes of two different graphs");
+                return false;
+            }
+        }
+    }
+    
 #if RF_WITH_GRAPHVIZ
+    rf_ilist_for_each(&r->functions, decl, ln) {
         // for now just always create the SVG graphs per function
         ow_ctx_create_graphviz();
-#endif
     }
+#endif
     return true;
 }
 
@@ -236,6 +313,7 @@ bool ownership_pass(struct compiler *c)
     bool ret = false;
     ow_ctx_init();
     darray_foreach(mod, c->modules) {
+        ow_ctx_reset(); // for now the graph is per module
         if (!ow_module_pass((*mod)->rir)) {
             goto end;
         }

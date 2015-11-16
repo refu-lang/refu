@@ -51,7 +51,7 @@ static const struct RFstring ast_state_strings[] = {
 
 #define AST_NODE_IS_LEAF(node_) ((node_)->type >= AST_STRING_LITERAL)
 
-void ast_node_init(struct ast_node * n, enum ast_type type)
+void ast_node_init(struct ast_node *n, enum ast_type type)
 {
     RF_STRUCT_ZERO(n);
     n->state = AST_NODE_STATE_CREATED;

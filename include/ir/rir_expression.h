@@ -51,6 +51,8 @@ struct rir_call {
     struct RFstring name;
     //! An array of values that comprise this call's arguments
     struct value_arr args;
+    //! True if this is a call to a foreign function
+    bool foreign;
 };
 
 enum alloc_location {
