@@ -95,7 +95,7 @@ bool ow_graph_check_or_add_end(struct ow_graph *g,
          RF_STR_PF_ARG(rir_value_string(v)),
          RF_STR_PF_ARG(ow_node_id(g->root))
     );
-    if (!(n = ownode_objset_has_value(&g->set, g->fn_name, v))) {
+    if (!(n = ownode_objset_has_value(&g->set, ow_curr_fnname(), v))) {
         OWDD("No it can't!\n");
         return false;
     }
@@ -106,10 +106,12 @@ bool ow_graph_check_or_add_end(struct ow_graph *g,
     }
     switch (end_type) {
     case OW_END_RETURN:
+        OWDD("End Checking was for RETURN\n");
         ow_graph_set_attr(g, OW_ATTR_RETURNED);
         break;
     case OW_END_PASSED:
     {
+        OWDD("End Checking was for CALL\n");
         ow_graph_set_attr(g, OW_ATTR_PASSED);
         RF_ASSERT(edgexpr->type == RIR_EXPRESSION_CALL, "A rir call should be here");
         struct ow_passed_loc *ploc = ow_passed_loc_create(&edgexpr->call, n, idx);
