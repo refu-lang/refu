@@ -12,7 +12,7 @@
 #include CLIB_TEST_HELPERS
 
 START_TEST (test_usage_1) {
-
+    // TODO: This test is still in progress
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type person {name:string, age:u32}\n"
         "fn puse(p:person)\n"

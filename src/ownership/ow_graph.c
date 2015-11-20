@@ -11,6 +11,7 @@ struct ow_passed_loc *ow_passed_loc_create(const struct rir_call *c, struct ow_n
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     RF_STRUCT_ZERO(ret);
     ret->call = c;
+    ret->from_node = n;
     ret->node = n;
     ret->idx = idx;
     return ret;

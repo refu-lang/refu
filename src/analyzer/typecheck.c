@@ -559,11 +559,13 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                      RF_STR_PF_ARG(fn_name));
         goto fail;
     }
-    // also check the ast node of the function declaration to get more information
-    const struct ast_node *fndecl = symbol_table_lookup_node(ctx->current_st, fn_name, NULL);
-    RF_ASSERT(fndecl, "Since fn_type was found so should fndecl be found here");
-    if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
-        n->fncall.type = AST_FNCALL_FOREIGN;
+    // also check the ast node of the function declaration to get more information if it's not a conversion
+    if (!type_is_explicitly_convertable_elementary(fn_type)) {
+        const struct ast_node *fndecl = symbol_table_lookup_node(ctx->current_st, fn_name, NULL);
+        RF_ASSERT(fndecl, "Since fn_type was found so should fndecl be found here");
+        if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
+            n->fncall.type = AST_FNCALL_FOREIGN;
+        }
     }
 
     fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args)

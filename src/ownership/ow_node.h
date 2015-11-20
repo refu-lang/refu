@@ -14,13 +14,18 @@ struct ow_edge;
 
 struct ow_node_full {
     const struct rir_value *val;
-    struct {darray(struct ow_edge*);} edges;
 };
 
 enum ow_end_type {
     OW_END_RETURN,
     OW_END_PASSED
 };
+
+struct ow_node_end {
+    enum ow_end_type type;
+    const struct RFstring *other_fn_name;
+};
+
 enum ow_node_type {
     OW_NTYPE_FULL,
     OW_NTYPE_END,
@@ -28,16 +33,16 @@ enum ow_node_type {
 struct ow_node {
     enum ow_node_type type;
     const struct RFstring *fnname;
+    struct {darray(struct ow_edge*);} edges;
     union {
         struct ow_node_full full;
-        enum ow_end_type end_type;
+        struct ow_node_end end;
     };
 };
 
 void ow_node_init(struct ow_node *n, const struct rir_value *nodeval);
-void ow_node_init_end(struct ow_node *n, enum ow_end_type end_type);
 struct ow_node *ow_node_create(const struct RFstring *fnname, const struct rir_value *nodeval);
-struct ow_node *ow_node_end_create(const struct RFstring *fnname, enum ow_end_type end_type);
+struct ow_node *ow_node_end_create(const struct RFstring *fnname, enum ow_end_type end_type, const struct RFstring *other_fn_name);
 
 bool ow_node_connect_node(struct ow_node *n, const struct rir_expression *expr, struct ow_node *other);
 bool ow_node_connect_end_node(struct ow_node *n, const struct rir_expression *expr, struct ow_node *other);

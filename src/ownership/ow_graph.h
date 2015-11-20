@@ -16,6 +16,7 @@ enum graph_attrs {
 
 struct ow_passed_loc {
     const struct rir_call *call;
+    struct ow_node *from_node;
     struct ow_node *node;
     unsigned int idx;
 };

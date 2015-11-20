@@ -57,19 +57,18 @@ static Agnode_t *rf_gv_add(struct ow_node *n, Agraph_t *g)
 {
     Agnode_t *agchild;
     Agnode_t *agnode;
-    if (n->type == OW_NTYPE_END) {
-        return rf_agnode(g, ow_node_end_type_str(n->end_type));
-    }
 
     if (!(agnode = rf_agnode(g, ow_node_id(n)))) {
         return NULL;
     }
     struct ow_edge **edge;
-    darray_foreach(edge, n->full.edges) {
+    darray_foreach(edge, n->edges) {
         if (!(agchild = rf_gv_add((*edge)->to, g))) {
             return NULL;
         }
-        rf_agedge(g, agnode, agchild, rir_expression_type_string((*edge)->edgeexpr));
+        RFS_PUSH();
+        rf_agedge(g, agnode, agchild, RFS("%u - "RF_STR_PF_FMT, (*edge)->counter, RF_STR_PF_ARG(rir_expression_type_string((*edge)->edgeexpr))));
+        RFS_POP();
     }
     return agnode;
 }

@@ -1,71 +1,74 @@
 #include "ow_node.h"
 #include "ow_edge.h"
 #include "ow_debug.h"
+#include <ownership/ownership.h>
 #include <ir/rir_object.h>
 #include <String/rf_str_core.h>
 
+static void ow_node_init_common(struct ow_node *n, const struct RFstring *fnname)
+{
+    darray_init(n->edges);
+    n->fnname = fnname;
+}
 
 void ow_node_init(struct ow_node *n, const struct rir_value *nodeval)
 {
     n->type = OW_NTYPE_FULL;
-    darray_init(n->full.edges);
     n->full.val = nodeval;
 }
 
-void ow_node_init_end(struct ow_node *n, enum ow_end_type end_type)
+static void ow_node_init_end(struct ow_node *n, enum ow_end_type end_type, const struct RFstring *other_fn_name)
 {
     n->type = OW_NTYPE_END;
-    n->end_type = end_type;
-
+    n->end.type = end_type;
+    n->end.other_fn_name = other_fn_name;
 }
 
 struct ow_node *ow_node_create(const struct RFstring *fnname, const struct rir_value *nodeval)
 {
     struct ow_node *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->fnname = fnname;
+    ow_node_init_common(ret, fnname);
     ow_node_init(ret, nodeval);
     return ret;
 }
 
-struct ow_node *ow_node_end_create(const struct RFstring *fnname, enum ow_end_type end_type)
+struct ow_node *ow_node_end_create(const struct RFstring *fnname, enum ow_end_type end_type, const struct RFstring *other_fn_name)
 {
     struct ow_node *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    ret->fnname = fnname;
-    ow_node_init_end(ret, end_type);
+    ow_node_init_common(ret, fnname);
+    ow_node_init_end(ret, end_type, other_fn_name);
     return ret;
 }
 
 bool ow_node_connect_node(struct ow_node *n, const struct rir_expression *expr, struct ow_node *other)
 {
-    struct ow_edge *e = ow_edge_create_from_node(expr, other);
+    struct ow_edge *e = ow_edge_create_from_node(expr, other, ow_expr_idx_inc());
     if (!e) {
         return false;
     }
-    darray_append(n->full.edges, e);
+    darray_append(n->edges, e);
     return true;
 }
 
 bool ow_node_connect_end_node(struct ow_node *n, const struct rir_expression *expr, struct ow_node *other)
 {
-    OWDD("Connect node \""RF_STR_PF_FMT"\" with \""RF_STR_PF_FMT"\"\n",
+    OWDD("Connect node \""RF_STR_PF_FMT"\" with \""RF_STR_PF_FMT"\" with counter: %u\n",
          RF_STR_PF_ARG(ow_node_id(n)),
-         RF_STR_PF_ARG(ow_node_id(other))
+         RF_STR_PF_ARG(ow_node_id(other)),
+         ow_expr_idx()
     );
     return ow_node_connect_node(n, expr, other);
 }
 
 void ow_node_deinit(struct ow_node *n)
 {
-    if (n->type == OW_NTYPE_END) {
-        return;
-    }
     struct ow_edge **e;
-    darray_foreach(e, n->full.edges) {
+    darray_foreach(e, n->edges) {
         ow_edge_destroy(*e);
     }
-    darray_free(n->full.edges);
+    darray_free(n->edges);
 }
 
 
@@ -80,22 +83,28 @@ void ow_node_destroy(struct ow_node *n)
 struct ow_node *ow_node_add_val_edge(struct ow_node *n, const struct rir_value *otherval, const struct rir_expression *expr)
 {
     RF_ASSERT(n->type != OW_NTYPE_END, "No end node should appear here");
-    struct ow_edge *e = ow_edge_create(expr, n->fnname, otherval);
+    OWDD("Create edge from  node \""RF_STR_PF_FMT"\" with counter: %u\n",
+         RF_STR_PF_ARG(ow_node_id(n)),
+         ow_expr_idx());
+    struct ow_edge *e = ow_edge_create(expr, n->fnname, otherval, ow_expr_idx_inc());
     if (!e) {
         return NULL;
     }
-    darray_append(n->full.edges, e);
+    darray_append(n->edges, e);
     return e->to;
 }
 
 struct ow_node *ow_node_add_end_edge(struct ow_node *n, enum ow_end_type end_type, const struct rir_expression *expr)
 {
     RF_ASSERT(n->type != OW_NTYPE_END, "No end node should appear here");
-    struct ow_edge *e = ow_endedge_create(expr, n->fnname, end_type);
+    OWDD("Create edge from  node \""RF_STR_PF_FMT"\" with counter: %u\n",
+         RF_STR_PF_ARG(ow_node_id(n)),
+         ow_expr_idx());
+    struct ow_edge *e = ow_endedge_create(expr, n->fnname, end_type, ow_expr_idx_inc());
     if (!e) {
         return NULL;
     }
-    darray_append(n->full.edges, e);
+    darray_append(n->edges, e);
     return e->to;
 }
 
@@ -111,7 +120,16 @@ const struct RFstring *ow_node_end_type_str(enum ow_end_type type)
 
 const struct RFstring *ow_node_id(const struct ow_node *n)
 {
-    RF_ASSERT(n->type != OW_NTYPE_END, "No end node should appear here");
+    if (n->type == OW_NTYPE_END) {
+        if (n->end.type == OW_END_PASSED) {
+            return RFS(RF_STR_PF_FMT" to "RF_STR_PF_FMT,
+                       RF_STR_PF_ARG(ow_node_end_type_str(n->end.type)),
+                       RF_STR_PF_ARG(n->end.other_fn_name)
+            );
+        } else {
+            return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(ow_node_end_type_str(n->end.type)));
+        }
+    }
     return RFS(RF_STR_PF_FMT"_"RF_STR_PF_FMT, RF_STR_PF_ARG(&n->full.val->id), RF_STR_PF_ARG(n->fnname));
 }
 

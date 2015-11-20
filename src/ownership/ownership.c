@@ -20,6 +20,7 @@ struct objset_st { OBJSET_MEMBERS(struct symbol_table*); };
 struct ow_ctx {
     struct {darray(struct ow_graph*);} graphs;
     const struct RFstring *curr_fn_name;
+    unsigned int rir_expr_idx;
 };
 i_THREAD__ struct ow_ctx *g_ow_ctx = NULL;
 
@@ -29,11 +30,30 @@ const struct RFstring *ow_curr_fnname()
     return g_ow_ctx->curr_fn_name;
 }
 
+void ow_reset_expr_idx()
+{
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    g_ow_ctx->rir_expr_idx = 0;
+}
+
+unsigned int ow_expr_idx_inc()
+{
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    return g_ow_ctx->rir_expr_idx++;
+}
+
+unsigned int ow_expr_idx()
+{
+    RF_ASSERT(g_ow_ctx, "No global ownership context exists");
+    return g_ow_ctx->rir_expr_idx;
+}
+
 static void ow_ctx_init()
 {
     RF_ASSERT_OR_EXIT(!g_ow_ctx, "Global Ownership context was already initialized.");
     g_ow_ctx = malloc(sizeof(struct ow_ctx));
     RF_ASSERT_OR_EXIT(g_ow_ctx, "Could not allocate a global ownership context");
+    RF_STRUCT_ZERO(g_ow_ctx);
     darray_init(g_ow_ctx->graphs);
 }
 
@@ -235,6 +255,7 @@ void ow_ctx_check_expr(struct rir_expression *expr)
 bool ow_function_pass(struct rir_fndef *f)
 {
     struct rir_object **var;
+    ow_reset_expr_idx();
     g_ow_ctx->curr_fn_name = f->decl.name;
     darray_foreach(var, f->variables) {
         if (!ow_ctx_add_new(*var, f->decl.name, f->st)) {
@@ -291,7 +312,8 @@ bool ow_module_pass(struct rir *r)
                 return false;
             }
             // connect them
-            if (!ow_node_connect_end_node((*graph)->root, rir_call_to_expr((*ploc)->call), (*ploc)->node)) {
+            /* if (!ow_node_connect_end_node((*graph)->root, rir_call_to_expr((*ploc)->call), (*ploc)->node)) { */
+            if (!ow_node_connect_end_node((*ploc)->from_node, rir_call_to_expr((*ploc)->call), (*ploc)->node)) {
                 RF_ERROR("Failed to connect nodes of two different graphs");
                 return false;
             }
