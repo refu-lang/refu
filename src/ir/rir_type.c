@@ -4,6 +4,7 @@
 #include <ir/rir_object.h>
 #include <types/type.h>
 #include <ast/function.h>
+#include <Utils/fixed_memory_pool.h>
 
 static struct rir_type elementary_types[] = {
 #define RIR_TYPE_ELEMINIT(i_type_)                                     \
@@ -63,6 +64,20 @@ void rir_type_elem_init(struct rir_type *t, enum elementary_type etype)
     t->is_pointer = false;
 }
 
+struct rir_type *rir_type_alloc(struct rir *r)
+{
+    struct rir_type *ret = rf_fixed_memorypool_alloc_element(r->rir_types_pool);
+    RF_STRUCT_ZERO(ret);
+    return ret;
+}
+
+void rir_type_destroy(struct rir_type *t, struct rir *r)
+{
+    if (t->category != RIR_TYPE_ELEMENTARY) {
+        rf_fixed_memorypool_free_element(r->rir_types_pool, t);
+    }
+}
+
 struct rir_type *rir_type_elem_create_from_string(const struct RFstring *name, bool is_pointer)
 {
     enum elementary_type etype = type_elementary_from_str(name);
@@ -81,10 +96,12 @@ void rir_type_comp_init(struct rir_type *t, const struct rir_typedef *def, bool 
     t->is_pointer = is_pointer;
 }
 
-struct rir_type *rir_type_comp_create(const struct rir_typedef *def, bool is_pointer)
+struct rir_type *rir_type_comp_create(const struct rir_typedef *def, struct rir *r, bool is_pointer)
 {
-    struct rir_type *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    struct rir_type *ret = rir_type_alloc(r);
+    if (!ret) {
+        return NULL;
+    }
     rir_type_comp_init(ret, def, is_pointer);
     return ret;
 }
@@ -105,7 +122,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, false);
+        return rir_type_comp_create(tdef, ctx->rir, false);
     } else if (t->category == TYPE_CATEGORY_OPERATOR) {
         struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
@@ -117,35 +134,28 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, false);
+        return rir_type_comp_create(tdef, ctx->rir, false);
     } else {
         RF_CRITICAL_FAIL("Unexpected type category");
         return NULL;
     }
 }
 
-void rir_type_destroy(struct rir_type *t)
-{
-    if (t->category != RIR_TYPE_ELEMENTARY) {
-        free(t);
-    }
-}
-
-struct rir_type *rir_type_create_from_other(const struct rir_type *other, bool is_pointer)
+struct rir_type *rir_type_create_from_other(const struct rir_type *other, struct rir *r, bool is_pointer)
 {
     if (other->category == RIR_TYPE_ELEMENTARY) {
         return rir_type_elem_create(other->etype, is_pointer);
     } else { // composite
-        return rir_type_comp_create(other->tdef, is_pointer);
+        return rir_type_comp_create(other->tdef, r, is_pointer);
     }
 }
 
-struct rir_type *rir_type_copy_from_other(const struct rir_type *other)
+struct rir_type *rir_type_copy_from_other(const struct rir_type *other, struct rir *r)
 {
     if (other->category == RIR_TYPE_ELEMENTARY) {
         return rir_type_elem_create(other->etype, other->is_pointer);
     } else { // composite
-        return rir_type_comp_create(other->tdef, other->is_pointer);
+        return rir_type_comp_create(other->tdef, r, other->is_pointer);
     }
 }
 
@@ -229,6 +239,6 @@ int rir_type_union_matched_type_from_fncall(const struct rir_type *t, const stru
     index = -1;
 
 end:
-    rir_typearr_deinit(&tarr);
+    rir_typearr_deinit(&tarr, ctx->rir);
     return index;
 }

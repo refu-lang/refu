@@ -155,6 +155,11 @@ static bool rir_init(struct rir *r)
     rf_ilist_head_init(&r->functions);
     rf_ilist_head_init(&r->objects);
     rf_ilist_head_init(&r->typedefs);
+    r->rir_types_pool = rf_fixed_memorypool_create(sizeof(struct rir_type),
+                                                   RIR_TYPES_POOL_CHUNK_SIZE);
+    if (!r->rir_types_pool) {
+        return false;
+    }
     darray_init(r->dependencies);
     darray_init(r->free_values);
     return true;
@@ -208,6 +213,7 @@ static void rir_deinit(struct rir *r)
     if (r->types_pool) {
         rf_fixed_memorypool_destroy(r->types_pool);
     }
+    rf_fixed_memorypool_destroy(r->rir_types_pool);
 }
 
 void rir_destroy(struct rir *r)
@@ -492,7 +498,7 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
     return NULL;
 }
 
-struct rir_type *rir_type_byname(const struct rir *r, const struct RFstring *name)
+struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name)
 {
     struct rir_type *type = rir_type_elem_create_from_string(name, false);
     if (type) {
@@ -503,10 +509,10 @@ struct rir_type *rir_type_byname(const struct rir *r, const struct RFstring *nam
     if (!def) {
         return NULL;
     }
-    return rir_type_comp_create(def, false);
+    return rir_type_comp_create(def, r, false);
 }
 
-struct rir_type *rir_type_from_type(const struct rir *r, const struct type *t)
+struct rir_type *rir_type_from_type(struct rir *r, const struct type *t)
 {
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:

@@ -6,6 +6,7 @@
 #include <types/type_decls.h>
 
 struct rir_ctx;
+struct rir;
 struct rir_value;
 
 enum rir_type_category {
@@ -13,7 +14,12 @@ enum rir_type_category {
     RIR_TYPE_COMPOSITE,
 };
 
-//! Represents a leaf type in the IR. Essentially a much simpler form of type
+/**
+ * Represents a leaf type in the IR. Essentially a much simpler form of type
+ *
+ * All rir types are owned by their respective memory and memory management is 
+ * left to the pool.
+ */
 struct rir_type {
     enum rir_type_category category;
     bool is_pointer;
@@ -45,12 +51,13 @@ bool rir_type_is_union(const struct rir_type *t);
 void rir_type_elem_init(struct rir_type *t, enum elementary_type etype);
 struct rir_type *rir_type_elem_create(enum elementary_type etype, bool is_pointer);
 struct rir_type *rir_type_elem_create_from_string(const struct RFstring *name, bool is_pointer);
-struct rir_type *rir_type_comp_create(const struct rir_typedef *def, bool is_pointer);
+struct rir_type *rir_type_comp_create(const struct rir_typedef *def, struct rir *r, bool is_pointer);
 struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx *ctx);
 void rir_type_comp_init(struct rir_type *t, const struct rir_typedef *def, bool is_pointer);
+void rir_type_destroy(struct rir_type *t, struct rir *r);
 
-struct rir_type *rir_type_copy_from_other(const struct rir_type *other);
-struct rir_type *rir_type_create_from_other(const struct rir_type *other, bool is_pointer);
+struct rir_type *rir_type_copy_from_other(const struct rir_type *other, struct rir *r);
+struct rir_type *rir_type_create_from_other(const struct rir_type *other, struct rir *r, bool is_pointer);
 
 /**
  * @return true if two types are equal. Does not take pointers into account
@@ -75,5 +82,4 @@ const struct RFstring *rir_type_string(const struct rir_type *t);
 const struct rir_type *rir_type_comp_member_type(const struct rir_type *t, uint32_t idx);
 int rir_type_union_matched_type_from_fncall(const struct rir_type *t, const struct ast_node *n, struct rir_ctx *ctx);
 
-void rir_type_destroy(struct rir_type *t);
 #endif

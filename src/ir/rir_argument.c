@@ -95,11 +95,14 @@ bool rir_typearr_equal(const struct rir_type_arr *arr1, const struct rir_type_ar
     return true;
 }
 
-void rir_typearr_deinit(struct rir_type_arr *arr)
+void rir_typearr_deinit(struct rir_type_arr *arr, struct rir *r)
 {
-    struct rir_type **t;
-    darray_foreach(t, *arr) {
-        rir_type_destroy(*t);
+    // If the rir context is passed then remove types from the memory pool
+    if (r) {
+        struct rir_type **t;
+        darray_foreach(t, *arr) {
+            rir_type_destroy(*t, r);
+        }
     }
     darray_free(*arr);
 }

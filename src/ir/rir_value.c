@@ -68,10 +68,10 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
         struct rir_expression *expr = &v->obj->expr;
         switch (v->obj->expr.type) {
         case RIR_EXPRESSION_CONVERT:
-            v->type = rir_type_create_from_other(expr->convert.type, false);
+            v->type = rir_type_create_from_other(expr->convert.type, ctx->rir, false);
             break;
         case RIR_EXPRESSION_ALLOCA:
-            v->type = rir_type_create_from_other(expr->alloca.type, true);
+            v->type = rir_type_create_from_other(expr->alloca.type, ctx->rir, true);
             break;
         case RIR_EXPRESSION_CMP_EQ:
         case RIR_EXPRESSION_CMP_NE:
@@ -89,11 +89,11 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
                 RF_ERROR("Tried to rir read from a location not in memory");
                 goto end;
             }
-            v->type = rir_type_create_from_other(expr->read.memory->type, false);
+            v->type = rir_type_create_from_other(expr->read.memory->type, ctx->rir, false);
             break;
         case RIR_EXPRESSION_CALL:
             // figure out the type
-            v->type = rir_type_copy_from_other(rir_call_return_type(&expr->call, ctx));
+            v->type = rir_type_copy_from_other(rir_call_return_type(&expr->call, ctx), ctx->rir);
             break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:
@@ -108,7 +108,9 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
                 rir_type_comp_member_type(
                     expr->objmemberat.objmemory->type,
                     expr->objmemberat.idx
-                ), true
+                ),
+                ctx->rir,
+                true
             );
             break;
         case RIR_EXPRESSION_UNIONMEMBERAT:
@@ -119,7 +121,9 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
                 rir_type_comp_member_type(
                     expr->unionmemberat.unimemory->type,
                     expr->unionmemberat.idx
-                ), true
+                ),
+                ctx->rir,
+                true
             );
             break;
         default:
@@ -130,7 +134,7 @@ bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct
         // object variable constructor create the type, so just assign it here
         v->type = type;
     } else if (obj->category == RIR_OBJ_GLOBAL) {
-        v->type = rir_type_copy_from_other(type);
+        v->type = rir_type_copy_from_other(type, ctx->rir);
     } else {
         RF_CRITICAL_FAIL("TODO ... should this even ever happen?");
     }
@@ -168,9 +172,6 @@ void rir_value_deinit(struct rir_value *v)
 {
     if (v->category != RIR_VALUE_NIL) {
         rf_string_deinit(&v->id);
-        if (v->category != RIR_VALUE_LABEL) {
-            rir_type_destroy(v->type);
-        }
     }
     if (v->category == RIR_VALUE_LITERAL) {
         rf_string_deinit(&v->literal);

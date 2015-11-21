@@ -74,10 +74,8 @@ void ow_node_deinit(struct ow_node *n)
 
 void ow_node_destroy(struct ow_node *n)
 {
-    if (n->type == OW_NTYPE_FULL) {
-        ow_node_deinit(n);
-        free(n);
-    }
+    ow_node_deinit(n);
+    free(n);
 }
 
 struct ow_node *ow_node_add_val_edge(struct ow_node *n, const struct rir_value *otherval, const struct rir_expression *expr)

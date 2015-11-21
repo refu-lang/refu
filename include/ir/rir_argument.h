@@ -35,5 +35,13 @@ bool rir_typearr_from_type(struct rir_type_arr *arr,
 bool rir_typearr_tostring(struct rirtostr_ctx *ctx, const struct rir_type_arr *arr);
 bool rir_typearr_equal(const struct rir_type_arr *arr1, const struct rir_type_arr *arr2);
 
-void rir_typearr_deinit(struct rir_type_arr *arr);
+/**
+ * Frees a type array
+ *
+ * @param arr            The rir type array to free
+ * @param r              The rir context or NULL. If the rir context is given
+ *                       then also the types of the array are individually freed
+ *                       since then the function has access to the memory pool
+ */
+void rir_typearr_deinit(struct rir_type_arr *arr, struct rir *r);
 #endif

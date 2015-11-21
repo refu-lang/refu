@@ -65,7 +65,7 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
             return false;
         }
         struct rir_type *t;
-        if (!(t = rir_type_comp_create(def, true))) {
+        if (!(t = rir_type_comp_create(def, ctx->rir, true))) {
             return false;
         }
         darray_init(*arr);

@@ -150,10 +150,28 @@ const struct rir_value *rir_maybe_convert(const struct rir_value *val,
 {
     if (!rir_type_equal(val->type, checktype)) {
         struct rir_object *obj;
-        if (!(obj = rir_convert_create_obj_maybeadd(val, rir_type_create_from_other(checktype, false), ctx))) {
+        if (!(obj = rir_convert_create_obj_maybeadd(val, rir_type_create_from_other(checktype, ctx->rir, false), ctx))) {
             return NULL;
         }
         val = rir_object_value(obj);
+    }
+    return val;
+}
+
+const struct rir_value *rir_maybe_convert_acquire_type(const struct rir_value *val,
+                                                       struct rir_type *checktype,
+                                                       struct rir_ctx *ctx)
+{
+    if (!rir_type_equal(val->type, checktype)) {
+        struct rir_object *obj;
+        checktype->is_pointer = false;
+        if (!(obj = rir_convert_create_obj_maybeadd(val, checktype, ctx))) {
+            return NULL;
+        }
+        val = rir_object_value(obj);
+    } else {
+        // since the function has acquired checktype and not assigning it anywhere
+        rir_type_destroy(checktype, ctx->rir);
     }
     return val;
 }
