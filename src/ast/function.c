@@ -105,7 +105,9 @@ i_INLINE_INS const struct type *ast_fncall_type(const struct ast_node *n);
 i_INLINE_INS bool ast_fncall_is_ctor(const struct ast_node *n);
 i_INLINE_INS bool ast_node_is_ctor(const struct ast_node *n);
 i_INLINE_INS bool ast_fncall_is_conversion(const struct ast_node *n);
+i_INLINE_INS bool ast_fncall_is_foreign(const struct ast_node *n);
 i_INLINE_INS bool ast_node_is_conversion(const struct ast_node *n);
+i_INLINE_INS bool ast_node_is_fncall_preprocessed(const struct ast_node *n);
 
 static bool do_ast_fncall_for_each_arg(struct ast_node *arg, fncall_args_cb cb, void *user_arg)
 {

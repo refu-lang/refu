@@ -85,6 +85,11 @@ refu_src = [
     'ir/rir_process_cond.c',
     'ir/rir_process_match.c',
 
+    'ownership/ownership.c',
+    'ownership/ow_graph.c',
+    'ownership/ow_node.c',
+    'ownership/ow_edge.c',
+
     'serializer/serializer.c',
     'serializer/astprinter.c',
 ]
@@ -151,6 +156,23 @@ if local_env['LANG_BACKEND'] == 'LLVM':
     local_env.Append(LIBS=['dl', 'z', 'ncurses'])
     linker_exec = env['CXX']
 
+gv_object = []
+if local_env['WITH_GRAPHVIZ']:
+    if local_env['has_graphviz']:
+        local_env.Append(CPPDEFINES={'RF_WITH_GRAPHVIZ': None})
+        local_env.Append(LIBS=['gvc', 'cgraph', 'cdt'])
+        gv_env = local_env.Clone()
+        set_debug_mode(gv_env, True)
+        gv_src = ['ownership/ow_graphviz.c']
+        gv_src = [os.path.join(os.getcwd(), 'src', x) for x in gv_src]
+        gv_object = gv_env.Object(gv_src)
+    else:
+        build_msg(
+            "Requested building with graphviz but graphviz was not found",
+            "Warning",
+            local_env
+        )
+
 
 # add src prefix before the sources that reside at src/
 refu_src = [os.path.join(os.getcwd(), "src", x) for x in refu_src]
@@ -171,7 +193,7 @@ Depends(refu_obj, gperf_result)
 
 # for now also create the executable in debug mode
 set_debug_mode(local_env, True)
-refu = local_env.Program("refu", refu_obj,
+refu = local_env.Program("refu", [refu_obj] + gv_object,
                          LIBPATH=local_env['CLIB_DIR'],
                          CC=linker_exec)
 local_env.Alias('refu', refu)
@@ -211,6 +233,7 @@ unit_tests_files = [
 
     'rir/testsupport_rir.c',
     'rir/test_finalized_ast.c',
+    'rir/test_ownership.c',
     'rir/creation/test_create_simple.c',
 
     'end_to_end/testsupport_end_to_end.c',

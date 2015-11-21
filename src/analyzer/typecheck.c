@@ -559,6 +559,14 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                      RF_STR_PF_ARG(fn_name));
         goto fail;
     }
+    // also check the ast node of the function declaration to get more information if it's not a conversion
+    if (!type_is_explicitly_convertable_elementary(fn_type)) {
+        const struct ast_node *fndecl = symbol_table_lookup_node(ctx->current_st, fn_name, NULL);
+        RF_ASSERT(fndecl, "Since fn_type was found so should fndecl be found here");
+        if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
+            n->fncall.type = AST_FNCALL_FOREIGN;
+        }
+    }
 
     fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args)
         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
@@ -585,16 +593,18 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             goto fail;
         }
-        n->fncall.is_explicit_conversion = true;
+        n->fncall.type = AST_FNCALL_EXPLICIT_CONVERSION;
     } else {
         //check that the types of its arguments do indeed match
         fn_declared_args_type = type_callable_get_argtype(fn_type);
         n->fncall.declared_type = fn_declared_args_type;
-        n->fncall.sumcall = type_is_sumop(fn_declared_args_type);
+        if (type_is_sumop(fn_declared_args_type)) {
+            n->fncall.type = AST_FNCALL_SUM;
+        }
         typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
         if (!type_compare(fn_found_args_type,
                           fn_declared_args_type,
-                          n->fncall.sumcall ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
+                          n->fncall.type == AST_FNCALL_SUM ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
             analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
                          RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
@@ -603,7 +613,7 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                          RF_STR_PF_ARG(type_callable_category_str(fn_type)),
                          RF_STR_PF_ARG(fn_name),
                          RF_STR_PF_ARG(type_str_or_die(fn_found_args_type, TSTR_DEFAULT)),
-                         RF_STR_PF_ARG(type_str_or_die(fn_declared_args_type, TSTR_DEFAULT)),
+                         RF_STR_PF_ARG(type_str_or_die(fn_declared_args_type, TSTR_DEFINED_ONLY_CONTENTS)),
                          typecmp_ctx_have_error() ? ". " : "",
                          RF_STR_PF_ARG(typecmp_ctx_get_error()));
             RFS_POP();

@@ -2,6 +2,7 @@
 #include <ir/rir.h>
 #include <ir/rir_function.h>
 #include <Utils/memory.h>
+#include <String/rf_str_core.h>
 
 struct rir_object *rir_object_create(enum rir_obj_category category, struct rir *r)
 {
@@ -82,4 +83,25 @@ struct rir_typedef *rir_object_get_typedef(struct rir_object *obj)
         return (struct rir_typedef*)vtype->tdef;
     }
     return NULL;
+}
+
+static const struct RFstring rir_obj_category_strings[] = {
+    [RIR_OBJ_EXPRESSION] = RF_STRING_STATIC_INIT("RIR expression object"),
+    [RIR_OBJ_BLOCK] = RF_STRING_STATIC_INIT("RIR block object"),
+    [RIR_OBJ_TYPEDEF] = RF_STRING_STATIC_INIT("RIR typedef object"),
+    [RIR_OBJ_GLOBAL] = RF_STRING_STATIC_INIT("RIR global object"),
+    [RIR_OBJ_VARIABLE] = RF_STRING_STATIC_INIT("RIR variable object")
+};
+
+const struct RFstring *rir_object_category_str(const struct rir_object *obj)
+{
+    return &rir_obj_category_strings[obj->category];
+}
+
+const struct RFstring *rir_object_string(const struct rir_object *obj)
+{
+    if (obj->category == RIR_OBJ_EXPRESSION) {
+        return rir_expression_type_string(&obj->expr);
+    }
+    return rir_object_category_str(obj);
 }

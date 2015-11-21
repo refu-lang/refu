@@ -14,6 +14,7 @@
 #include <types/type.h>
 #include <types/type_function.h>
 #include <analyzer/analyzer.h>
+#include <ir/rir_object.h>
 
 /* -- symbol table record related functions -- */
 
@@ -270,14 +271,14 @@ void symbol_table_record_print(const struct symbol_table_record *rec)
         printf("id: " RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rec->id));
     }
     if (rec->node) {
-        printf("node: %p\n", rec->node);
+        printf("node: %p \""RF_STR_PF_FMT"\"\n", rec->node, RF_STR_PF_ARG(ast_node_str(rec->node)));
     }
     RFS_PUSH();
     if (rec->data) {
         printf("type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(rec->data, TSTR_DEFAULT)));
     }
     if (rec->rirobj) {
-        printf("rir_object: %p\n\n", rec->rirobj);
+        printf("rir_object: %p \""RF_STR_PF_FMT"\"\n", rec->rirobj, RF_STR_PF_ARG(rir_object_string(rec->rirobj)));
     }
     RFS_POP();
 }
@@ -322,6 +323,48 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
         }
     }
     
+    return rec;
+}
+
+
+struct symbol_table_record *symbol_table_lookup_rirobj(const struct symbol_table *t,
+                                                       struct rir_object *obj)
+{
+    struct symbol_table_record *rec;
+    const struct symbol_table *lp_table = t;
+
+    // if we have an ID it can be a normal lookup
+    if (obj->category == RIR_OBJ_EXPRESSION &&
+        obj->expr.type == RIR_EXPRESSION_ALLOCA &&
+        obj->expr.alloca.ast_id != NULL) {
+
+        return symbol_table_lookup_record(t, obj->expr.alloca.ast_id, NULL);
+    }
+
+    // without a string ID we are forced to iterate :(
+    do {
+        struct htable_iter it;
+        htable_foreach(&lp_table->table, &it, rec) {
+            if (rec->rirobj == obj) {
+                return rec;
+            }
+        }
+    } while((lp_table = lp_table->parent) != NULL);
+
+    // if we reach the root and we got nothing then check modules we depend on
+    // TODO: this is not very well written. Don't like how I have an exception for
+    //       module names here. Also need to think how to handle specific inclusions
+    //       from modules.
+    if (t->mod) {
+        struct module **mod;
+        darray_foreach(mod, t->mod->dependencies) {
+            if ((rec = symbol_table_lookup_rirobj(module_symbol_table(*mod), obj))) {
+                return rec;
+            }
+            rec = NULL;
+        }
+    }
+
     return rec;
 }
 
@@ -374,6 +417,9 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 
 void symbol_table_print(struct symbol_table *t)
 {
+    if (symbol_table_is_empty(t)) {
+        return;
+    }
     printf("\nPrinting records of a symbol table\n\n");
     htable_iterate_records(&t->table, (htable_iter_cb)symbol_table_record_print, NULL);
 }
@@ -384,6 +430,7 @@ i_INLINE_INS void symbol_table_set_fndecl(struct symbol_table *t,
                                            struct ast_node *decl);
 i_INLINE_INS struct ast_node *symbol_table_get_fndecl(struct symbol_table *t);
 i_INLINE_INS bool symbol_table_is_root(const struct symbol_table *t);
+i_INLINE_INS bool symbol_table_is_empty(const struct symbol_table *t);
 i_INLINE_INS void symbol_table_swap_current(struct symbol_table **current_st_ptr,
                                             struct symbol_table *new_st);
 i_INLINE_INS struct type *symbol_table_lookup_type(struct symbol_table *t,

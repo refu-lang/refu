@@ -54,9 +54,6 @@ void rir_expression_deinit(struct rir_expression *expr)
     case RIR_EXPRESSION_CALL:
         rir_call_deinit(&expr->call);
         break;
-    case RIR_EXPRESSION_ALLOCA:
-        rir_type_destroy(expr->alloca.type);
-        break;
     default:
         break;
     }
@@ -65,10 +62,13 @@ void rir_expression_deinit(struct rir_expression *expr)
 
 static inline void rir_alloca_init(struct rir_alloca *obj,
                                    struct rir_type *type,
-                                   uint64_t num)
+                                   const struct RFstring *id)
 {
+    // everything by default is allocated in the stack. The ownership analysis
+    // lets us know what needs to be allocated in the heap
+    obj->alloc_location = RIR_ALLOC_STACK;
     obj->type = type;
-    obj->num = num;
+    obj->ast_id = id;
 }
 
 struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
@@ -149,14 +149,14 @@ struct rir_expression *rir_write_create(const struct rir_value *memory_to_write,
 }
 
 struct rir_object *rir_alloca_create_obj(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
     if (!ret) {
         return NULL;
     }
-    rir_alloca_init(&ret->expr.alloca, type, num);
+    rir_alloca_init(&ret->expr.alloca, type, id);
     if (!rir_object_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx)) {
         free(ret);
         ret = NULL;
@@ -165,10 +165,10 @@ struct rir_object *rir_alloca_create_obj(struct rir_type *type,
 }
 
 struct rir_expression *rir_alloca_create(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx)
 {
-    struct rir_object *obj = rir_alloca_create_obj(type, num, ctx);
+    struct rir_object *obj = rir_alloca_create_obj(type, id, ctx);
     return obj ? &obj->expr : NULL;
 }
 
@@ -405,4 +405,40 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
 end:
     RFS_POP();
     return ret;
+}
+
+static const struct RFstring rir_expression_type_strings[] = {
+    [RIR_EXPRESSION_CALL] = RF_STRING_STATIC_INIT("call"),
+    [RIR_EXPRESSION_ALLOCA] = RF_STRING_STATIC_INIT("alloca"),
+    [RIR_EXPRESSION_RETURN] = RF_STRING_STATIC_INIT("return"),
+    [RIR_EXPRESSION_CONVERT] = RF_STRING_STATIC_INIT("convert"),
+    [RIR_EXPRESSION_WRITE] = RF_STRING_STATIC_INIT("write"),
+    [RIR_EXPRESSION_READ] = RF_STRING_STATIC_INIT("read"),
+    [RIR_EXPRESSION_OBJMEMBERAT] = RF_STRING_STATIC_INIT("objmemberat"),
+    [RIR_EXPRESSION_SETUNIONIDX] = RF_STRING_STATIC_INIT("setunionidx"),
+    [RIR_EXPRESSION_GETUNIONIDX] = RF_STRING_STATIC_INIT("getunionidx"),
+    [RIR_EXPRESSION_UNIONMEMBERAT] = RF_STRING_STATIC_INIT("unionmemberat"),
+    [RIR_EXPRESSION_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
+    [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
+    [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),
+    [RIR_EXPRESSION_MUL] = RF_STRING_STATIC_INIT("mul"),
+    [RIR_EXPRESSION_DIV] = RF_STRING_STATIC_INIT("div"),
+    [RIR_EXPRESSION_CMP_EQ] = RF_STRING_STATIC_INIT("cmpeq"),
+    [RIR_EXPRESSION_CMP_NE] = RF_STRING_STATIC_INIT("cmpne"),
+    [RIR_EXPRESSION_CMP_GE] = RF_STRING_STATIC_INIT("cmpge"),
+    [RIR_EXPRESSION_CMP_GT] = RF_STRING_STATIC_INIT("cmpgt"),
+    [RIR_EXPRESSION_CMP_LE] = RF_STRING_STATIC_INIT("cmple"),
+    [RIR_EXPRESSION_CMP_LT] = RF_STRING_STATIC_INIT("cmplt"),
+    [RIR_EXPRESSION_LOGIC_AND] = RF_STRING_STATIC_INIT("logicand"),
+    [RIR_EXPRESSION_LOGIC_OR] = RF_STRING_STATIC_INIT("logicor"),
+};
+
+const struct RFstring *rir_expression_type_string(const struct rir_expression *expr)
+{
+    return &rir_expression_type_strings[expr->type];
+}
+
+struct rir_object *rir_expression_to_obj(struct rir_expression *expr)
+{
+    return container_of(expr, struct rir_object, expr);
 }

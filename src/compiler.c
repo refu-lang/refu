@@ -10,6 +10,7 @@
 #include <compiler_args.h>
 #include <ast/ast.h>
 #include <front_ctx.h>
+#include <ownership/ownership.h>
 #include <serializer/serializer.h>
 #include <backend/llvm.h>
 #include <ir/rir.h>
@@ -401,6 +402,12 @@ bool compiler_process()
     // create the Refu Intermediate Format
     if (!compiler_create_rir(c)) {
         RF_ERROR("Failed to process the Refu IR");
+        return false;
+    }
+
+    // perform ownership analysis on the created IR
+    if (!ownership_pass(c)) {
+        RF_ERROR("Failed at ownership pass");
         return false;
     }
 

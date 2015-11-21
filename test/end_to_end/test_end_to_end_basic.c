@@ -199,6 +199,43 @@ START_TEST (test_function_creation_and_call_2arg) {
     ck_end_to_end_run(inputs, 20, NULL);
 } END_TEST
 
+START_TEST (test_function_creation_and_call_assigned_return) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+        "fn foo(a:u32, b:u32) -> u32 { return a + b + 10 }\n"
+        "fn main()->u32{\n"
+        "r:u32 = foo(3, 7)\n"
+        "print(r)\n"
+        "return 1\n"
+        "}")
+    };
+    static const struct RFstring output = RF_STRING_STATIC_INIT("20");
+    ck_end_to_end_run(inputs, 1, &output);
+} END_TEST
+
+START_TEST (test_function_creation_and_call_assigned_return_obj) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+        "type person {name:string, age:u32}\n"
+        "fn pcreate(s:string) -> person\n"
+        "{\n"
+         "    p:person = person(s, 13)\n"
+         "    return p\n"
+        "}\n"
+        "fn main()->u32{\n"
+        "    p:person = pcreate(\"Celinka\")\n"
+        "    print(p.name)\n"
+        "    return 22\n"
+        "}")
+    };
+    static const struct RFstring output = RF_STRING_STATIC_INIT("Celinka");
+    ck_end_to_end_run(inputs, 22, &output);
+} END_TEST
+
 START_TEST (test_simple_if) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -710,6 +747,8 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_functions, test_function_creation_and_call_noarg);
     tcase_add_test(st_functions, test_function_creation_and_call_1arg);
     tcase_add_test(st_functions, test_function_creation_and_call_2arg);
+    tcase_add_test(st_functions, test_function_creation_and_call_assigned_return);
+    tcase_add_test(st_functions, test_function_creation_and_call_assigned_return_obj);
 
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,

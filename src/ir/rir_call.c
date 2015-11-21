@@ -48,7 +48,7 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
             return false;
         }
         rirctx_block_add(ctx->rirctx, e);
-        if (!(targetval = rir_getread_val(e, ctx->rirctx))) {
+        if (!(targetval = rir_getread_exprval(e, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to read an object's value");
             return false;
         }
@@ -97,7 +97,7 @@ static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct 
             return false;
         }
         rirctx_block_add(ctx, ummbr_ptr);
-        if (!(objmemory = rir_getread_val(ummbr_ptr, ctx))) {
+        if (!(objmemory = rir_getread_exprval(ummbr_ptr, ctx))) {
             return false;
         }
     }
@@ -146,7 +146,7 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
     const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
         ? type_get_subtype(ctx->fndecl_type, darray_size(*ctx->arr))
         : ctx->fndecl_type;
-    if (!(argexprval = rir_maybe_convert(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
+    if (!(argexprval = rir_maybe_convert_acquire_type(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
         RF_ERROR("Could not create conversion for rir call argument");
         return false;
     }
@@ -173,7 +173,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
             RF_ERROR("Could not get the rir type of a sum function call");
         }
         // create an alloca for that type
-        struct rir_expression *e = rir_alloca_create(sumtype, 0, ctx);
+        struct rir_expression *e = rir_alloca_create(sumtype, NULL, ctx);
         if (!e) {
             RF_ERROR("Failed to create a rir alloca instruction");
             goto fail;
@@ -194,6 +194,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
             goto fail;
         }
     }
+    ret->expr.call.foreign = ast_fncall_is_foreign(n);
 
     // now initialize the rir expression part of the struct
     if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
@@ -219,7 +220,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
 
     if (fn_type->category == TYPE_CATEGORY_DEFINED) { // a constructor
         return rir_process_ctorcall(n, ctx);
-    } else if (n->fncall.is_explicit_conversion) {
+    } else if (ast_fncall_is_conversion(n)) {
         return rir_process_convertcall(n, ctx);
     }
     // else normal function call
@@ -281,4 +282,9 @@ void rir_call_deinit(struct rir_call *c)
     rf_string_deinit(&c->name);
     darray_free(c->args);
     // the args are rir objects themselves so will be freed from global list
+}
+
+struct rir_expression *rir_call_to_expr(const struct rir_call *c)
+{
+    return container_of(c, struct rir_expression, call);
 }

@@ -65,7 +65,7 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
             return false;
         }
         struct rir_type *t;
-        if (!(t = rir_type_comp_create(def, true))) {
+        if (!(t = rir_type_comp_create(def, ctx->rir, true))) {
             return false;
         }
         darray_init(*arr);
@@ -112,6 +112,10 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
         if (!ret->return_type) {
             RF_ERROR("Could not find function's rir return type");
             return false;
+        }
+        // if user defined type, return as a pointer
+        if (ret->return_type->category == RIR_TYPE_COMPOSITE) {
+            ret->return_type->is_pointer = true;
         }
     } else {
         ret->return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
@@ -238,7 +242,7 @@ static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
     // if we got a return value allocate space for it. Assume single return values fow now
     // TODO: Take into account multiple return values
     if (return_type) {
-        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, 1, ctx);
+        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, ctx);
         if (!alloca) {
             return false;
         }
@@ -283,6 +287,7 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     rir_ctx_push_st(ctx, ast_fnimpl_symbol_table_get(n));
     const struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *ast_returns = ast_fndecl_return_get(decl);
+    ret->st = ast_fnimpl_symbol_table_get(n);
     if (!rir_fndecl_init_from_ast(&ret->decl, decl, ctx)) {
         goto end;
     }

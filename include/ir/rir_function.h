@@ -7,10 +7,11 @@
 #include <ir/rir_strmap.h>
 #include <ir/rir_argument.h>
 
-struct ast_node *n;
+struct ast_node;
 struct rir_block;
 struct rir_ctx;
 struct rir;
+struct symbol_table;
 
 struct rir_fndecl {
     const struct RFstring *name;
@@ -43,6 +44,8 @@ struct rir_fndef {
     struct rir_value *end_label;
     //! Stringmap from rir identifiers to rir objects
     struct rirobj_strmap map;
+    //! Pointer to the symbol table of the function's arguments
+    struct symbol_table *st;
 };
 
 

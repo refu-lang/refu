@@ -148,7 +148,7 @@ i_INLINE_DECL bool ast_fncall_is_sum(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
-    return n->fncall.sumcall;
+    return n->fncall.type == AST_FNCALL_SUM;
 }
 
 /**
@@ -189,7 +189,18 @@ i_INLINE_DECL bool ast_fncall_is_conversion(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
     AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
-    return n->fncall.is_explicit_conversion;
+    return n->fncall.type == AST_FNCALL_EXPLICIT_CONVERSION;
+}
+
+/**
+ * @return true if this is a call to a foreign function
+ * @warning: Valid only after typechecking.
+ */
+i_INLINE_DECL bool ast_fncall_is_foreign(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    AST_NODE_ASSERT_STATE(n, AST_NODE_STATE_RIR_END);
+    return n->fncall.type == AST_FNCALL_FOREIGN;
 }
 
 /**
@@ -199,6 +210,16 @@ i_INLINE_DECL bool ast_fncall_is_conversion(const struct ast_node *n)
 i_INLINE_DECL bool ast_node_is_conversion(const struct ast_node *n)
 {
     return n->type == AST_FUNCTION_CALL ? ast_fncall_is_conversion(n) : false;
+}
+
+/**
+ * @return true if this ast_node is a function call type that already had its
+ * return value processed/assigned during its creation.
+ */
+i_INLINE_DECL bool ast_node_is_fncall_preprocessed(const struct ast_node *n)
+{
+    /* return n->type == AST_FUNCTION_CALL && (ast_fncall_is_ctor(n) || !ast_fncall_is_conversion(n)); */
+    return n->type == AST_FUNCTION_CALL && (ast_fncall_is_ctor(n));
 }
 
 typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);

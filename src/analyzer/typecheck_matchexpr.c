@@ -294,7 +294,7 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
                      "type of \""RF_STR_PF_FMT"\" which is of type \""RF_STR_PF_FMT"\".",
                      RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
                      RF_STR_PF_ARG(match_type_str),
-                     RF_STR_PF_ARG(type_str_or_die(match_type, TSTR_DEFINED_CONTENTS)));
+                     RF_STR_PF_ARG(type_str_or_die(match_type, TSTR_DEFINED_ONLY_CONTENTS)));
         ctx->matching_ctx.match_is_over = true;
         goto end;
     }

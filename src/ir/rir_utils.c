@@ -32,7 +32,23 @@ void rir_utils_destroy()
     utils_created = false;
 }
 
-struct rir_value *rir_getread_val(struct rir_expression *e, struct rir_ctx *ctx)
+struct rir_value *rir_getread_val(struct rir_value *v, struct rir_ctx *ctx)
+{
+    // if a pointer and not a string, also perform a read
+    if (!v->type->is_pointer || rir_type_is_specific_elementary(v->type, ELEMENTARY_TYPE_STRING)) {
+        return v;
+    }
+    struct rir_expression *read;
+    read = rir_read_create(v, ctx);
+    if (!read) {
+        RF_ERROR("Failed to create a read RIR instruction");
+        return NULL;
+    }
+    rirctx_block_add(ctx, read);
+    return &read->val;
+}
+
+struct rir_value *rir_getread_exprval(struct rir_expression *e, struct rir_ctx *ctx)
 {
     struct rir_expression *ret = rir_getread_expr(e, ctx);
     return ret ? &ret->val : NULL;

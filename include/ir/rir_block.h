@@ -42,6 +42,8 @@ struct rir_block {
     struct rir_value label;
     //! List of rir expressions
     struct RFilist_head expressions;
+    //! A pointer to the symbol table of the block
+    struct symbol_table *st;
 };
 
 /**

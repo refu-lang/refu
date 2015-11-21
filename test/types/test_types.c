@@ -9,6 +9,8 @@
 #include <types/type.h>
 #include <types/type_elementary.h>
 #include <ast/type.h>
+#include <ast/function.h>
+#include <ast/operators.h>
 
 #include "../testsupport_front.h"
 #include "../parser/testsupport_parser.h"
@@ -564,6 +566,36 @@ START_TEST (test_type_op_create_str) {
     RFS_POP();
 } END_TEST
 
+START_TEST (test_type_get_uid) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:i8, b:string}\n"
+        "fn do_something()\n"
+        "{\n"
+        "a:foo = foo(15, \"name\")\n"
+        "b:u32 = 15\n"
+        "}"
+    );
+    front_testdriver_new_main_source(&s);
+    ck_assert_typecheck_ok();
+    struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
+    ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);
+    struct ast_node *block = ast_fnimpl_body_get(fn_impl);
+    struct ast_node *bop1 = ast_node_get_child(block, 0);
+    ck_assert(ast_node_is_specific_binaryop(bop1, BINARYOP_ASSIGN));
+    struct ast_node *a_foo = ast_binaryop_left(bop1);
+    ck_assert(a_foo);
+    const struct type *t1 = ast_node_get_type_or_die(a_foo);
+    size_t s1 = type_get_uid(t1);
+    ck_assert_uint_eq(s1, 590239457);
+
+    struct ast_node *bop2 = ast_node_get_child(block, 1);
+    ck_assert(ast_node_is_specific_binaryop(bop2, BINARYOP_ASSIGN));
+    struct ast_node *b_u32 = ast_binaryop_left(bop2);
+    ck_assert(b_u32);
+    const struct type *t2 = ast_node_get_type_or_die(b_u32);
+    size_t s2 = type_get_uid(t2);
+    ck_assert_uint_eq(s2, 3813314396);
+} END_TEST
 
 Suite *types_suite_create(void)
 {
@@ -601,10 +633,15 @@ Suite *types_suite_create(void)
     tcase_add_test(st5, test_type_to_str);
     tcase_add_test(st5, test_type_op_create_str);
 
+    TCase *st6 = tcase_create("type_get_uid");
+    tcase_add_checked_fixture(st6, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
+    tcase_add_test(st6, test_type_get_uid);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
     suite_add_tcase(s, st4);
     suite_add_tcase(s, st5);
+    suite_add_tcase(s, st6);
     return s;
 }

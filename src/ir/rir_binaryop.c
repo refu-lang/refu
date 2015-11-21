@@ -238,14 +238,12 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
 
     if (op->type == BINARYOP_ASSIGN) { // assignment is a special case
         if (op->right->type == AST_MATCH_EXPRESSION ||
-            (op->right->type == AST_FUNCTION_CALL &&
-             (ast_fncall_is_ctor(op->right) ||
-              !ast_fncall_is_conversion(op->right)
-             ))) {
-            // assignment from match expression, constructor calll need no more processing
+            ast_node_is_fncall_preprocessed(op->right)) {
+            // in these cases rir call needs no more processing
             RIRCTX_RETURN_EXPR(ctx, true, NULL);
         }
         // else, create a rir_write
+        rval = rir_getread_val(rval, ctx);
         if (!(obj = rir_write_create_obj(lval, rval, ctx))) {
             goto fail;
         }

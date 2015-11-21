@@ -160,6 +160,14 @@ static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
                                      exit_args,
                                      1,
                                      false));
+    /* -- add malloc -- */
+    LLVMTypeRef malloc_args[] = { LLVMInt64Type() };
+    LLVMAddFunction(ctx->llvm_mod, "malloc",
+                   LLVMFunctionType(LLVMPointerType(LLVMInt8Type(), 0),
+                                    malloc_args,
+                                    1,
+                                    false)
+    );
     /* -- add donothing() -- */
     bllcm_create_global_donothing_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */

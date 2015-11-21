@@ -13,6 +13,8 @@ struct rirtostr_ctx;
 struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
 bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *call);
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx);
+
+struct rir_expression *rir_call_to_expr(const struct rir_call *c);
 /**
  * Get return type from a rir call
  *

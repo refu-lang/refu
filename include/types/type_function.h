@@ -34,7 +34,7 @@ struct type *type_function_get_argtype(const struct type *t);
 struct type *type_function_get_rettype(const struct type *t);
 
 //! Gets the type description of the arguments of a callable type
-i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
+i_INLINE_DECL const struct type *type_callable_get_argtype(const struct type *t)
 {
     RF_ASSERT(type_is_callable(t) && !type_is_explicitly_convertable_elementary(t),
               "Function should be called for callable types and not conversions");
@@ -42,7 +42,7 @@ i_INLINE_DECL struct type *type_callable_get_argtype(const struct type *t)
         return type_function_get_argtype(t);
     }
     // else it's a constructor of a defined type
-    return t->defined.type;
+    return t;
 }
 
 i_INLINE_DECL struct type *type_callable_get_rettype(const struct type *t)

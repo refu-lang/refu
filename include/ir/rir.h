@@ -15,6 +15,9 @@ struct ast_node;
 struct type;
 struct rir_type;
 
+//! The size in bytes of the rir types memory pool
+#define RIR_TYPES_POOL_CHUNK_SIZE 2048
+
 struct rir_arr {darray(struct rir*);};
 struct rir {
     //! Set of all types of the file, moved here from struct module.
@@ -37,6 +40,8 @@ struct rir {
     struct RFstring name;
     //! Buffer string to hold the string representation when asked. Can be NULL.
     struct RFstringx *buff;
+    //! Memory pool for the rir types
+    struct rf_fixed_memorypool *rir_types_pool;
     //! Map from strings to rir objects.
     struct rirobj_strmap map;
 };
@@ -57,7 +62,7 @@ bool rir_print(struct compiler *c);
 struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_frommap(const struct rir *r, const struct RFstring *name);
 struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstring *name);
-struct rir_type *rir_type_byname(const struct rir *r, const struct RFstring *name);
+struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name);
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *lit);
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v);

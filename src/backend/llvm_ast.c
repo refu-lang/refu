@@ -201,6 +201,23 @@ static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(const struct rir_expr
     return llvm_member_gep;
 }
 
+static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression *expr,
+                                                    struct llvm_traversal_ctx *ctx)
+{
+    LLVMTypeRef type = bllvm_type_from_rir_type(expr->alloca.type, ctx);
+    if (expr->alloca.alloc_location == RIR_ALLOC_STACK) {
+        return LLVMBuildAlloca(ctx->builder, type, "");
+    }
+    LLVMValueRef malloc_fn = LLVMGetNamedFunction(ctx->llvm_mod, "malloc");
+    LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt64Type(), rir_type_bytesize(expr->alloca.type), 0) };
+    LLVMValueRef retval = LLVMBuildCall(ctx->builder, malloc_fn, call_args, 1, "");
+    // TODO: CHECK AND HANDLE malloc failure
+    // TODO: free? (ideally follow the global ownership graph and free at the end)
+
+    // also cast the malloc value before returning
+    return LLVMBuildBitCast(ctx->builder, retval, LLVMPointerType(type, 0), "");
+}
+
 struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
                                               struct llvm_traversal_ctx *ctx)
 {
@@ -214,7 +231,7 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         llvmval = bllvm_compile_functioncall(&expr->call, ctx);
         break;
     case RIR_EXPRESSION_ALLOCA:
-        llvmval = LLVMBuildAlloca(ctx->builder, bllvm_type_from_rir_type(expr->alloca.type, ctx), "");
+        llvmval = bllvm_compile_alloca(expr, ctx);
         break;
     case RIR_EXPRESSION_RETURN:
         // RIR expression return code should only be generated at the end of a basic block

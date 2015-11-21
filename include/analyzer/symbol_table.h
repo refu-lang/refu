@@ -160,6 +160,17 @@ struct type *symbol_table_lookup_defined_type(const struct symbol_table *t,
                                               const struct RFstring *id,
                                               bool *at_first_symbol_table);
 
+/**
+ * Lookup if a rir object has an entry in a symbol table or its parents
+ *
+ *
+ * @param t                         The symbol table in which to look
+ * @param obj                       The rir object to search for in the symbol
+ *                                  table.
+ */
+struct symbol_table_record *symbol_table_lookup_rirobj(const struct symbol_table *t,
+                                                       struct rir_object *obj);
+
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user);
 
 i_INLINE_DECL void symbol_table_set_parent(struct symbol_table *t,
@@ -182,6 +193,11 @@ i_INLINE_DECL struct ast_node *symbol_table_get_fndecl(struct symbol_table *t)
 i_INLINE_DECL bool symbol_table_is_root(const struct symbol_table *t)
 {
     return t->mod == NULL;
+}
+
+i_INLINE_DECL bool symbol_table_is_empty(const struct symbol_table *t)
+{
+    return htable_is_empty(&t->table);
 }
 
 /**

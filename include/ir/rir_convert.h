@@ -16,17 +16,26 @@ struct rir_object *rir_convert_create_obj(const struct rir_value *convval,
 bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx);
 
 /**
- * Check if a vale is of a specific type and if not do a conversion
+ * Check if a value is of a specific type and if not do a conversion
  *
  * @param val            The value to check
  * @param checktype      The type to check for equality with val's type
  * @return               If the passed value's type is equal to @a checktype
  *                       then @a val itself is returned. If not a conversion
  *                       instruction is added and the conversion's value is returned
+ *                       The new instruction gets a copy of @a checktype for its type.
  */
 const struct rir_value *rir_maybe_convert(const struct rir_value *val,
                                           const struct rir_type *checktype,
                                           struct rir_ctx *ctx);
+
+/**
+ * Acts just like @ref rir_maybe_convert() except that @a checktype
+ * is acquired by the function and should not be accessed after it.
+ */
+const struct rir_value *rir_maybe_convert_acquire_type(const struct rir_value *val,
+                                                       struct rir_type *checktype,
+                                                       struct rir_ctx *ctx);
 
 /**
  * Creates a convert object and adds it to the current block if the returned

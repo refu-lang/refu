@@ -23,7 +23,7 @@ const struct rir_value *rir_sum_subtype(const struct type *rtype,
             RF_CRITICAL_FAIL("Could not create member access rir instruction");
         }
         rirctx_block_add(ctx, e);
-        val = rir_getread_val(e, ctx);
+        val = rir_getread_exprval(e, ctx);
     } else if (rtype == matchtype || rir_type_is_elementary(typeobject->type)) { // type is actually matched type
         val = typeobject;
     } else {
@@ -76,7 +76,7 @@ bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_obje
         return false;
     }
     rirctx_block_add(ctx, e);
-    const struct rir_value *v = rir_getread_val(e, ctx);
+    const struct rir_value *v = rir_getread_exprval(e, ctx);
 
     // iterate the allocas and assign the proper values from the subobject
     struct alloca_pop_ctx alloca_ctx;

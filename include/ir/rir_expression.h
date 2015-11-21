@@ -51,11 +51,23 @@ struct rir_call {
     struct RFstring name;
     //! An array of values that comprise this call's arguments
     struct value_arr args;
+    //! True if this is a call to a foreign function
+    bool foreign;
+};
+
+enum alloc_location {
+    RIR_ALLOC_STACK,
+    RIR_ALLOC_HEAP
 };
 
 struct rir_alloca {
+    //! Type to allocate
     struct rir_type *type;
-    uint64_t num;
+    //! Where to allocate the rir object
+    enum alloc_location alloc_location;
+    //! Id of the corresponding allocation in the actual code. If this alloca
+    //! has no corresponding ast id then this is NULL
+    const struct RFstring *ast_id;
 };
 
 struct rir_return {
@@ -127,10 +139,10 @@ struct rir_getunionidx {
 
 
 struct rir_object *rir_alloca_create_obj(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx);
 struct rir_expression *rir_alloca_create(struct rir_type *type,
-                                         uint64_t num,
+                                         const struct RFstring *id,
                                          struct rir_ctx *ctx);
 
 struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
@@ -191,4 +203,6 @@ bool rir_object_expression_init(struct rir_object *expr,
                                 struct rir_ctx *ctx);
 void rir_expression_deinit(struct rir_expression *expr);
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
+const struct RFstring *rir_expression_type_string(const struct rir_expression *expr);
+struct rir_object *rir_expression_to_obj(struct rir_expression *expr);
 #endif
