@@ -31,6 +31,7 @@ struct compiler_args {
     struct arg_lit *backend_debug;
     struct arg_lit *output_ast;
     struct arg_str *output_name;
+    struct arg_lit *input_rir;
     struct arg_lit *rir_print;
     struct arg_file *positional_file;
     struct arg_end *end;
@@ -65,6 +66,7 @@ bool compiler_args_help_is_requested(const struct compiler_args *args);
 bool compiler_args_print_backend_debug(const struct compiler_args *args);
 
 bool compiler_args_print_rir(const struct compiler_args *args);
+bool compiler_arg_input_is_rir(const struct compiler_args *args);
 
 /**
  * Should we output the ast?
