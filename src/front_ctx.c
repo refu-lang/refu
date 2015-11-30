@@ -26,7 +26,7 @@ static bool front_ctx_init(struct front_ctx *ctx,
         goto free_file;
     }
 
-    ctx->lexer = lexer_create(ctx->file, ctx->info);
+    ctx->lexer = lexer_create(ctx->file, ctx->info, false /* non-RIR lexer */);
     if (!ctx->lexer) {
         goto free_info;
     }

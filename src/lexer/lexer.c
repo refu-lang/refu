@@ -8,14 +8,64 @@
 #include "tokens_htable.h" /* include the gperf generated hash table */
 #include "common.h"
 
+#define COND_IDENTIFIER_BEGIN(p_)               \
+    (((p_) >= 'A' && (p_) <= 'Z') ||            \
+     ((p_) >= 'a' && (p_) <= 'z') ||            \
+     (p_) == '_')
+
+#define COND_IDENTIFIER(p_)                     \
+    (COND_IDENTIFIER_BEGIN(p_) ||               \
+     ((p_) >= '0' && (p_) <= '9'))
+
+
+struct common_token {
+    const char *name;
+    int type;
+};
+
+static inline bool token_is_ambiguous(char c) {
+    return ((c) == '+' || (c) == '-' || (c) == '>' ||
+            (c) == '<' || (c) == '|' || (c) == '=' ||
+            (c) == '&');
+}
+
+static inline bool rir_token_is_ambiguous(char c) {
+    return false;
+}
+
+static inline bool token_is_minus(int type) {
+    return type == TOKEN_OP_MINUS;
+}
+
+static inline bool rir_token_is_minus(int type) {
+    return type == RIR_TOK_OP_MINUS;
+}
+
+struct lexer_vtable {
+    bool (*token_is_ambiguous) (char c);
+    bool (*token_is_minus) (int);
+    struct common_token *(*lexeme_is_token) (char*, unsigned int);
+};
+
+static struct lexer_vtable rir_lex_vt = {
+    .token_is_ambiguous = rir_token_is_ambiguous,
+    .token_is_minus = rir_token_is_minus,
+    .lexeme_is_token = (struct common_token*(*)(char*,unsigned int))rir_lexer_lexeme_is_token,
+};
+static struct lexer_vtable lex_vt = {
+    .token_is_ambiguous = token_is_ambiguous,
+    .token_is_minus = token_is_minus,
+    .lexeme_is_token = (struct common_token*(*)(char*,unsigned int)) lexer_lexeme_is_token
+};
+
 static struct inplocation_mark i_file_start_loc_ = LOCMARK_INIT_ZERO();
 
 static inline bool token_init(struct token *t,
-                              enum token_type type,
+                              int token_type,
                               struct inpfile *f,
                               char *sp, char *ep)
 {
-    t->type = type;
+    t->type = token_type;
     if (!inplocation_init(&t->location, f, sp, ep)) {
         return false;
     }
@@ -84,7 +134,7 @@ static inline bool token_init_string_literal(struct token *t,
     return true;
 }
 
-bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, bool is_rir)
 {
     darray_init(l->tokens);
     darray_init(l->indices);
@@ -92,14 +142,20 @@ bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info)
     l->file = f;
     l->info = info;
     l->at_eof = false;
+
+    if (is_rir) {
+        l->vt = &rir_lex_vt;
+    } else {
+        l->vt = &lex_vt;
+    }
     return true;
 }
 
-struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info)
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, bool is_rir)
 {
     struct lexer *ret;
     RF_MALLOC(ret, sizeof(*ret), NULL);
-    if (!lexer_init(ret, f, info)) {
+    if (!lexer_init(ret, f, info, is_rir)) {
         free(ret);
         return NULL;
     }
@@ -134,7 +190,7 @@ static const struct inplocation_mark *lexer_get_last_token_loc_start(struct lexe
     return token_get_start(&darray_top(l->tokens));
 }
 
-static bool lexer_add_token(struct lexer *l, enum token_type type,
+static bool lexer_add_token(struct lexer *l, int type,
                             char *sp, char* ep)
 {
     darray_resize(l->tokens, l->tokens.size + 1);
@@ -203,19 +259,10 @@ static void lexer_get_dblslash_comment(struct lexer *l, char *p, char *lim, char
     *ret_p = p;
 }
 
-#define COND_IDENTIFIER_BEGIN(p_)               \
-    (((p_) >= 'A' && (p_) <= 'Z') ||            \
-     ((p_) >= 'a' && (p_) <= 'z') ||            \
-     (p_) == '_')
-
-#define COND_IDENTIFIER(p_)                     \
-    (COND_IDENTIFIER_BEGIN(p_) ||               \
-     ((p_) >= '0' && (p_) <= '9'))
-
 static bool lexer_get_identifier(struct lexer *l, char *p,
                                  char *lim, char **ret_p)
 {
-    const struct internal_token *itoken;
+    const struct common_token *itoken;
     char *sp = p;
     while (p < lim) {
         if (COND_IDENTIFIER(*(p+1))) {
@@ -225,8 +272,8 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
         }
     }
 
-    // check if it's a keyword
-    itoken = lexer_lexeme_is_token(sp, p - sp + 1);
+    // check if it's a keyword (abstract)
+    itoken = l->vt->lexeme_is_token(sp, p - sp + 1);
     if (itoken) {
         if (!lexer_add_token(l, itoken->type, sp, p)) {
             return false;
@@ -409,10 +456,6 @@ static bool lexer_get_string_literal(struct lexer *l, char *p,
     return true;
 }
 
-#define COND_TOKEN_AMBIG1(p_)                     \
-    ((p_) == '+' || (p_) == '-' || (p_) == '>' || \
-     (p_) == '<' || (p_) == '|' || (p_) == '=' || \
-     (p_) == '&')
 
 bool lexer_scan(struct lexer *l)
 {
@@ -421,7 +464,7 @@ bool lexer_scan(struct lexer *l)
     char *p;
 
     sp = p = inpfile_sp(l->file);
-    lim = sp + rf_string_length_bytes(inpfile_str(l->file)) - 1;
+    lim = inpfile_lim(l->file);
 
    /* TODO: combine inpfile_at_eof with lexer eof check */
     while (!l->at_eof && p <= lim) {
@@ -450,17 +493,19 @@ bool lexer_scan(struct lexer *l)
             }
          // if it's the start of a comment
         } else if (p + 1 <= lim && *p == '/' && *(p + 1) == '/') {
-            lexer_get_dblslash_comment(l, p, lim, &p);                        
+            lexer_get_dblslash_comment(l, p, lim, &p);
         } else { // see if it's a token
             unsigned int len = 1;
-            const struct internal_token *itoken;
-            const struct internal_token *itoken2;
+            const struct common_token *itoken;
+            const struct common_token *itoken2;
             bool got_token = false;
             char *toksp = p;
+            // some assertions about token types between lexers
+            BUILD_ASSERT((int)TOKEN_SM_DBLQUOTE == (int)RIR_TOK_SM_DBLQUOTE);
 
             while (len <= MAX_WORD_LENGTH) {
-                itoken = lexer_lexeme_is_token(p, len);
-                if (itoken) {                    
+                itoken = l->vt->lexeme_is_token(p, len);
+                if (itoken) {
                     if (itoken->type == TOKEN_SM_DBLQUOTE) {
                         // if it's the start of a string literal
                         if (!lexer_get_string_literal(l, p, lim, &p)) {
@@ -472,7 +517,7 @@ bool lexer_scan(struct lexer *l)
                         }
                         got_token = true;
                         break;
-                    } else if (itoken->type == TOKEN_OP_MINUS &&
+                    } else if (l->vt->token_is_minus(itoken->type) &&
                                p + 1 <= lim &&
                                COND_NUMERIC(*(p + 1))) {
                         // if it's a negative numeric literal
@@ -485,10 +530,10 @@ bool lexer_scan(struct lexer *l)
                         }
                         got_token = true;
                         break;
-                    } else if (p + 1 <= lim && COND_TOKEN_AMBIG1(*toksp)) {
+                    } else if (p + 1 <= lim && l->vt->token_is_ambiguous(*toksp)) {
                         // if more than 1 tokens may start with that character
                         len = 2;
-                        itoken2 = lexer_lexeme_is_token(p, len);
+                        itoken2 = l->vt->lexeme_is_token(p, len);
                         if (itoken2) {
                             itoken = itoken2;
                         } else {

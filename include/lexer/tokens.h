@@ -28,25 +28,7 @@ enum token_type {
     TOKEN_CONSTANT_FLOAT,
     TOKEN_STRING_LITERAL,
 
-    /* keywords */
-    TOKEN_KW_CONST,
-    TOKEN_KW_TYPE,
-    TOKEN_KW_FUNCTION,
-    TOKEN_KW_TYPECLASS,
-    TOKEN_KW_TYPEINSTANCE,
-    TOKEN_KW_IF,
-    TOKEN_KW_ELIF,
-    TOKEN_KW_ELSE,
-    TOKEN_KW_RETURN,
-    TOKEN_KW_TRUE,
-    TOKEN_KW_FALSE,
-    TOKEN_KW_MATCH,
-    TOKEN_KW_MODULE,
-    TOKEN_KW_IMPORT,
-    TOKEN_KW_FOREIGN_IMPORT,
-
-    /* symbols */
-    TOKEN_SM_COLON,
+    /* symbols common between all lexers */
     TOKEN_SM_OCBRACE,
     TOKEN_SM_CCBRACE,
     TOKEN_SM_OSBRACE,
@@ -54,6 +36,7 @@ enum token_type {
     TOKEN_SM_OPAREN,
     TOKEN_SM_CPAREN,
     TOKEN_SM_DBLQUOTE,
+    TOKEN_SM_COLON,
     TOKEN_SM_THICKARROW,
 
     /* binary operators (keep grouped with all binary operators) */
@@ -92,6 +75,23 @@ enum token_type {
     TOKEN_OP_TYPESUM,
     TOKEN_OP_COMMA,
     TOKEN_OP_IMPL,
+
+    /* keywords */
+    TOKEN_KW_CONST,
+    TOKEN_KW_TYPE,
+    TOKEN_KW_FUNCTION,
+    TOKEN_KW_TYPECLASS,
+    TOKEN_KW_TYPEINSTANCE,
+    TOKEN_KW_IF,
+    TOKEN_KW_ELIF,
+    TOKEN_KW_ELSE,
+    TOKEN_KW_RETURN,
+    TOKEN_KW_TRUE,
+    TOKEN_KW_FALSE,
+    TOKEN_KW_MATCH,
+    TOKEN_KW_MODULE,
+    TOKEN_KW_IMPORT,
+    TOKEN_KW_FOREIGN_IMPORT,
 
     TOKENS_MAX
 };

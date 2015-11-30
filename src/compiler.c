@@ -375,34 +375,38 @@ bool compiler_analyze()
 bool compiler_process()
 {
     struct compiler *c = g_compiler_instance;
-    
-    // add the standard library to the front contexts
-    struct front_ctx *stdlib_front;
-    static const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-    if (!(stdlib_front = compiler_new_front(c, &stdlib))) {
-        RF_ERROR("Failed to add standard library to the front_ctxs");
-        return false;
-    }
 
-    if (!compiler_preprocess_fronts()) {
-        return false;
-    }
+    if (compiler_arg_input_is_rir(c->args)) {
+
+    } else {
+        // add the standard library to the front contexts
+        struct front_ctx *stdlib_front;
+        static const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
+        if (!(stdlib_front = compiler_new_front(c, &stdlib))) {
+            RF_ERROR("Failed to add standard library to the front_ctxs");
+            return false;
+        }
+
+        if (!compiler_preprocess_fronts()) {
+            return false;
+        }
     
-    if (!compiler_analyze()) {
-        return false;
-    }
+        if (!compiler_analyze()) {
+            return false;
+        }
 
 #if 0 // don't call serializer at all for now
-    enum serializer_rc rc = serializer_process(c->serializer, front);
-    if (rc == SERC_SUCCESS_EXIT || rc == SERC_SUCCESS_EXIT) {
-        return rc;
-    }
+        enum serializer_rc rc = serializer_process(c->serializer, front);
+        if (rc == SERC_SUCCESS_EXIT || rc == SERC_SUCCESS_EXIT) {
+            return rc;
+        }
 #endif
 
-    // create the Refu Intermediate Format
-    if (!compiler_create_rir(c)) {
-        RF_ERROR("Failed to process the Refu IR");
-        return false;
+        // create the Refu Intermediate Format
+        if (!compiler_create_rir(c)) {
+            RF_ERROR("Failed to process the Refu IR");
+            return false;
+        }
     }
 
     // perform ownership analysis on the created IR

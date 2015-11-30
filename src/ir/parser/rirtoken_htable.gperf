@@ -1,0 +1,19 @@
+%compare-strncmp
+%readonly-tables
+%define lookup-function-name rir_lexer_lexeme_is_token
+%define hash-function-name rir_lexer_hash
+%delimiters=''
+struct rinternal_token { const char *name; enum rir_token_type type; };
+%%
+# -- Keywords section --
+# attempted to have TAB as delimiter but could not make it work
+#
+# keywords
+globalRIR_TOK_GLOBAL
+uniondefRIR_TOK_UNIONDEF
+typedefRIR_TOK_TYPEDEF
+fndefRIR_TOK_FNDEF
+#symbols
+,RIR_TOK_SM_COMMA
+(RIR_TOK_SM_OPAREN
+)RIR_TOK_SM_CPAREN

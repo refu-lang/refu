@@ -65,6 +65,17 @@ bool inpfile_line(struct inpfile *f,
  */
 char *inpfile_line_p(struct inpfile *f, unsigned int line);
 
+/**
+ * Gets the RFstring of the input file at its current state
+ *
+ * @param f         The input file to work with
+ *
+ * @return          The stringx of this parser file
+ */
+i_INLINE_DECL struct RFstringx *inpfile_str(struct inpfile *f)
+{
+    return &f->str.str;
+}
 
 /**
  * Gets the current string pointer in the file
@@ -79,7 +90,7 @@ i_INLINE_DECL char *inpfile_p(struct inpfile *f)
 }
 
 /**
- * Gets the a string pointer to the beginning of the file
+ * Gets a c string pointer to the beginning of the file
  *
  * @param f         The input file to work with
  *
@@ -88,6 +99,18 @@ i_INLINE_DECL char *inpfile_p(struct inpfile *f)
 i_INLINE_DECL char *inpfile_sp(const struct inpfile *f)
 {
     return inpstr_beg(&f->str);
+}
+
+/**
+ * Gets a c string pointer to the end of the file, acting as a limit for search
+ *
+ * @param f         The input file to work with
+ *
+ * @return          A char* pointing to the end position of the file's str
+ */
+i_INLINE_DECL char *inpfile_lim(struct inpfile *f)
+{
+    return inpfile_sp(f) + rf_string_length_bytes(inpfile_str(f)) - 1;
 }
 
 /**
@@ -100,18 +123,6 @@ i_INLINE_DECL char *inpfile_sp(const struct inpfile *f)
 i_INLINE_DECL uint64_t inpfile_ptr_to_offset(const struct inpfile *f, const char *p)
 {
     return p - inpfile_sp(f);
-}
-
-/**
- * Gets the RFstring of the input file at its current state
- *
- * @param f         The input file to work with
- *
- * @return          The stringx of this parser file
- */
-i_INLINE_DECL struct RFstringx *inpfile_str(struct inpfile *f)
-{
-    return &f->str.str;
 }
 
 /**

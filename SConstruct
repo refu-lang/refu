@@ -6,8 +6,11 @@ Import('env clib_static')
 
 local_env = env.Clone()
 
-gperf_src = ['lexer/tokens_htable.gperf',
-             'types/elementary_types_htable.gperf']
+gperf_src = [
+    'lexer/tokens_htable.gperf',
+    'types/elementary_types_htable.gperf',
+    'ir/parser/rirtoken_htable.gperf'
+]
 refu_src = [
     'compiler.c',
     'compiler_args.c',
@@ -86,6 +89,9 @@ refu_src = [
     'ir/rir_process.c',
     'ir/rir_process_cond.c',
     'ir/rir_process_match.c',
+
+    'ir/parser/rirparser.c',
+    'ir/parser/rirtoken.c',
 
     'ownership/ownership.c',
     'ownership/ow_graph.c',

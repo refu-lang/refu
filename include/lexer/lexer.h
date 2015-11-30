@@ -3,15 +3,18 @@
 
 #include <stdbool.h>
 
-/* #include <Data_Structures/darray.h> */
 #include <ast/identifier.h>
 
 #include <lexer/tokens.h>
+#include <ir/parser/rirtoken.h>
 
 
 struct inpfile;
 
+struct lexer_vtable;
+
 struct lexer {
+    struct lexer_vtable *vt;
     struct {darray(struct token);} tokens;
     struct {darray(int);} indices;
     unsigned int tok_index;
@@ -22,8 +25,8 @@ struct lexer {
 };
 
 
-bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info);
-struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info);
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, bool is_rir);
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, bool is_rir);
 void lexer_deinit(struct lexer *l);
 void lexer_destroy(struct lexer *l);
 
@@ -65,5 +68,7 @@ i_INLINE_DECL void lexer_inject_input_file(struct lexer *l, struct inpfile *f)
 void lexer_push(struct lexer *l);
 void lexer_pop(struct lexer *l);
 void lexer_rollback(struct lexer *l);
+
+bool lexer_scan(struct lexer *l);
 
 #endif
