@@ -119,6 +119,9 @@ void inplocation_set_start(struct inplocation *loc,
 void inplocation_set_end(struct inplocation *loc,
                          const struct inplocation_mark *end);
 
+bool inplocation_from_file_at_point(struct inplocation *loc,
+                                    struct inpfile *f,
+                                    char *p);
 bool inplocation_from_file(struct inplocation *loc,
                            struct inpfile *f);
 

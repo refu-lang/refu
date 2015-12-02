@@ -9,6 +9,7 @@
 struct compiler_args;
 struct serializer;
 struct rir;
+struct info_ctx;
 
 struct compiler {
     //! An error buffer for the compiler
@@ -62,10 +63,13 @@ bool compiler_process();
 //! return true. If true, program should exit succesfully
 bool compiler_help_requested(struct compiler *c);
 
+
+struct RFstringx *compiler_get_errors_from_front(struct compiler *c, struct info_ctx *info);
 /**
  * Return a string with all the compiler errors/warning from all modules 
  */
 struct RFstringx *compiler_get_errors(struct compiler *c);
+void compiler_print_errors_from_front(struct compiler *c, struct info_ctx *info);
 /**
  * Prints all the compiler errors/warning from all modules 
  */

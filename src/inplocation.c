@@ -37,12 +37,11 @@ void inplocation_set_end(struct inplocation *loc, const struct inplocation_mark 
     loc->end = *end;
 }
 
-bool inplocation_from_file(struct inplocation *loc,
-                           struct inpfile *f)
+bool inplocation_from_file_at_point(struct inplocation *loc,
+                                    struct inpfile *f,
+                                    char *p)
 {
-    struct inpstr *str = &f->str;
-
-    if (!inpstr_ptr_to_linecol(str, inpstr_data(str),
+    if (!inpstr_ptr_to_linecol(&f->str, p,
                                &loc->start.line, &loc->start.col)) {
         ERROR("Could not create a location from a file");
         return false;
@@ -51,6 +50,12 @@ bool inplocation_from_file(struct inplocation *loc,
     loc->end.col = loc->start.col;
 
     return true;
+}
+
+bool inplocation_from_file(struct inplocation *loc,
+                           struct inpfile *f)
+{
+    return inplocation_from_file_at_point(loc, f, inpstr_data(&f->str));
 }
 
 

@@ -15,6 +15,7 @@
 #include <backend/llvm.h>
 #include <ir/rir.h>
 #include <ir/rir_utils.h>
+#include <ir/parser/rirparser.h>
 
 struct rir_module;
 static struct compiler *g_compiler_instance = NULL;
@@ -377,7 +378,19 @@ bool compiler_process()
     struct compiler *c = g_compiler_instance;
 
     if (compiler_arg_input_is_rir(c->args)) {
-
+        // for now only the first will be parsed as rir
+        struct rir_parser *rp = rir_parser_create(&c->args->input_files[0], NULL);
+        if (!rp) {
+            RF_ERROR("Failed to create a RIR parser");
+            return false;
+        }
+        if (!rir_parse(rp)) {
+            compiler_print_errors_from_front(c, rp->info);
+            RF_ERROR("Failed at external RIR parsing");
+            return false;
+        }
+        printf("RIR parsing succesfull. Utilizing the result is a TODO.\n");
+        return true;
     } else {
         // add the standard library to the front contexts
         struct front_ctx *stdlib_front;
@@ -438,6 +451,16 @@ bool compiler_help_requested(struct compiler *c)
     return compiler_args_check_and_display_help(c->args);
 }
 
+struct RFstringx *compiler_get_errors_from_front(struct compiler *c, struct info_ctx *info)
+{
+    RF_ASSERT(rf_string_is_empty(&c->err_buff),
+              "compiler error buffer string should be empty before");
+    (info_ctx_get_messages_fmt(info, MESSAGE_ANY, &c->err_buff));
+    // if anything got added move internal string pointer to beginning
+    rf_stringx_reset(&c->err_buff);
+    return rf_string_is_empty(&c->err_buff) ? NULL : &c->err_buff;
+}
+
 struct RFstringx *compiler_get_errors(struct compiler *c)
 {
     struct front_ctx *front;
@@ -452,12 +475,26 @@ struct RFstringx *compiler_get_errors(struct compiler *c)
     return rf_string_is_empty(&c->err_buff) ? NULL : &c->err_buff;
 }
 
-void compiler_print_errors(struct compiler *c)
+static inline void compiler_print_errors_common(struct RFstringx *str, struct compiler *c)
 {
-    struct RFstringx *str = compiler_get_errors(c);
     if (str) {
+        RFS_PUSH();
         printf(RF_STR_PF_FMT, RF_STR_PF_ARG(str));
+        RFS_POP();
     } else {
         printf("Unknown compiler error detected.\n");
     }
+    rf_stringx_clear(&c->err_buff);
+}
+
+void compiler_print_errors(struct compiler *c)
+{
+    struct RFstringx *str = compiler_get_errors(c);
+    compiler_print_errors_common(str, c);
+}
+
+void compiler_print_errors_from_front(struct compiler *c, struct info_ctx *info)
+{
+    struct RFstringx *str = compiler_get_errors_from_front(c, info);
+    compiler_print_errors_common(str, c);
 }

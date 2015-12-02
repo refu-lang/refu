@@ -9,7 +9,7 @@
     {                                                                   \
         .type=TOKEN_IDENTIFIER,                                         \
         .location=LOC_INIT(front_testdriver_file(), sl_, sc_, el_, ec_), \
-        .value.v=                                                       \
+        .value.value.ast=                                               \
         front_testdriver_generate_identifier(sl_, sc_, el_, ec_, val_)  \
     }
 
@@ -17,7 +17,7 @@
     {                                                                   \
         .type=TOKEN_CONSTANT_INTEGER,                                   \
         .location=LOC_INIT(front_testdriver_file(), sl_, sc_, el_, ec_), \
-        .value.v=                                                       \
+        .value.value.ast=                                               \
         front_testdriver_generate_constant_integer(sl_, sc_, el_, ec_, val_) \
     }
 
@@ -25,7 +25,7 @@
     {                                                                   \
         .type=TOKEN_CONSTANT_FLOAT,                                     \
         .location=LOC_INIT(front_testdriver_file(), sl_, sc_, el_, ec_), \
-        .value.v=                                                       \
+        .value.value.ast=                                               \
         front_testdriver_generate_constant_float(sl_, sc_, el_, ec_, val_) \
     }
 
@@ -48,7 +48,7 @@
             sl_, sc_, el_, ec_,                                         \
             inpfile_line_p(front_testdriver_file(), sl_) + sp_,         \
             inpfile_line_p(front_testdriver_file(), el_) + ep_),        \
-        .value.v=                                                       \
+        .value.value.ast=                                               \
         front_testdriver_generate_string_literal(sl_, sc_, el_, ec_, sp_, ep_, val_) \
     }
 

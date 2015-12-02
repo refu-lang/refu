@@ -6,27 +6,53 @@
 
 #include <ir/rir.h>
 
-static bool rir_parser_parse(struct rir_parser *p);
-
-struct rir_parser *rir_parser_create()
+struct rir_parser *rir_parser_create(const struct RFstring *name,
+                                     const struct RFstring *contents)
 {
     struct rir_parser *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_parser_init(ret)) {
+    if (!rir_parser_init(ret, name, contents)) {
         free(ret);
         return NULL;
     }
     return ret;
 }
 
-bool rir_parser_init(struct rir_parser *p)
+bool rir_parser_init(struct rir_parser *p,
+                     const struct RFstring *name,
+                     const struct RFstring *contents)
 {
+    RF_STRUCT_ZERO(p);
     // initialize the parsing buffer
     if (!rf_stringx_init_buff(&p->buff, 1024, "")) {
         return false;
     }
 
+    p->file = contents
+        ? inpfile_create_from_string(name, contents)
+        : inpfile_create(name);
+    if (!p->file) {
+        goto free_buffer;
+    }
+
+    p->info = info_ctx_create(p->file);
+    if (!p->info) {
+        goto free_file;
+    }
+
+    if (!lexer_init(&p->lexer, p->file, p->info, true)) {
+        goto free_info;
+    }
+
     return true;
+
+free_info:
+    info_ctx_destroy(p->info);
+free_file:
+    inpfile_destroy(p->file);
+free_buffer:
+    rf_stringx_deinit(&p->buff);
+    return false;
 }
 
 void rir_parser_destroy(struct rir_parser *p)
@@ -40,34 +66,16 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-bool rir_parser_parse_file(struct rir_parser *p, const struct RFstring *name)
+bool rir_parse(struct rir_parser *p)
 {
-    if (!(p->file = inpfile_create(name))) {
-        RF_ERROR("Failed to parse input rir file");
-        return false;
-    }
-    return rir_parser_parse(p);
-}
-
-bool rir_parser_parse_string(struct rir_parser *p, const struct RFstring *name, struct RFstring *str)
-{
-    if (!(p->file = inpfile_create_from_string(name, str))) {
-        RF_ERROR("Failed to parse input rir file");
-        return false;
-    }
-    return rir_parser_parse(p);
-}
-
-static bool rir_parser_parse(struct rir_parser *p)
-{
-    if (!lexer_init(&p->lexer, p->file, NULL /* TODO: Fill this in correctly */, true)) {
-        return false;
-    }
     if (!lexer_scan(&p->lexer)) {
         return false;
     }
-
     struct rir *r = rir_create();
+
+    int a = 5;
+    (void)a;
+    (void)r;
 
     do {
         // TODO
@@ -75,8 +83,4 @@ static bool rir_parser_parse(struct rir_parser *p)
 
     // success
     return true;
-    
-/* fail_free_rir: */
-    rir_destroy(r);
-    return false;
 }

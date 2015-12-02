@@ -13,6 +13,11 @@
      ((p_) >= 'a' && (p_) <= 'z') ||            \
      (p_) == '_')
 
+#define RIR_COND_IDENTIFIER_BEGIN(p_)           \
+    (((p_) >= 'A' && (p_) <= 'Z') ||            \
+     ((p_) >= 'a' && (p_) <= 'z') ||            \
+     (p_) == '_' || (p_) == '$' || (p_) == '%')
+
 #define COND_IDENTIFIER(p_)                     \
     (COND_IDENTIFIER_BEGIN(p_) ||               \
      ((p_) >= '0' && (p_) <= '9'))
@@ -21,6 +26,11 @@
 struct common_token {
     const char *name;
     int type;
+};
+
+struct result_pair {
+    bool success;
+    char *new_p;
 };
 
 static inline bool token_is_ambiguous(char c) {
@@ -41,21 +51,28 @@ static inline bool rir_token_is_minus(int type) {
     return type == RIR_TOK_OP_MINUS;
 }
 
+static bool process_identifier(struct lexer* l, char *p, char *lim, char **ret_p);
+static bool rir_process_identifier(struct lexer* l, char *p, char *lim, char **ret_p);
+
+
 struct lexer_vtable {
     bool (*token_is_ambiguous) (char c);
     bool (*token_is_minus) (int);
     struct common_token *(*lexeme_is_token) (char*, unsigned int);
+    bool (*process_identifier)(struct lexer*, char*, char*, char**);
 };
 
 static struct lexer_vtable rir_lex_vt = {
     .token_is_ambiguous = rir_token_is_ambiguous,
     .token_is_minus = rir_token_is_minus,
     .lexeme_is_token = (struct common_token*(*)(char*,unsigned int))rir_lexer_lexeme_is_token,
+    .process_identifier = rir_process_identifier
 };
 static struct lexer_vtable lex_vt = {
     .token_is_ambiguous = token_is_ambiguous,
     .token_is_minus = token_is_minus,
-    .lexeme_is_token = (struct common_token*(*)(char*,unsigned int)) lexer_lexeme_is_token
+    .lexeme_is_token = (struct common_token*(*)(char*,unsigned int)) lexer_lexeme_is_token,
+    .process_identifier = process_identifier
 };
 
 static struct inplocation_mark i_file_start_loc_ = LOCMARK_INIT_ZERO();
@@ -74,14 +91,15 @@ static inline bool token_init(struct token *t,
 
 static inline bool token_init_identifier(struct token *t,
                                          struct inpfile *f,
+                                         int identifier_token_type,
                                          char *sp, char *ep)
 {
     if (!token_init(t, TOKEN_IDENTIFIER, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_identifier_create(&t->location);
+    t->value.value.ast = ast_identifier_create(&t->location);
     t->value.owned_by_lexer = true;
-    if (!t->value.v) {
+    if (!t->value.value.ast) {
         return false;
     }
     return true;
@@ -95,9 +113,9 @@ static inline bool token_init_constant_int(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_INTEGER, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_constant_create_integer(&t->location, value);
+    t->value.value.ast = ast_constant_create_integer(&t->location, value);
     t->value.owned_by_lexer = true;
-    if (!t->value.v) {
+    if (!t->value.value.ast) {
         return false;
     }
     return true;
@@ -111,9 +129,9 @@ static inline bool token_init_constant_float(struct token *t,
     if (!token_init(t, TOKEN_CONSTANT_FLOAT, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_constant_create_float(&t->location, value);
+    t->value.value.ast = ast_constant_create_float(&t->location, value);
     t->value.owned_by_lexer = true;
-    if (!t->value.v) {
+    if (!t->value.value.ast) {
         return false;
     }
     return true;
@@ -126,9 +144,9 @@ static inline bool token_init_string_literal(struct token *t,
     if (!token_init(t, TOKEN_STRING_LITERAL, f, sp, ep)) {
         return false;
     }
-    t->value.v = ast_string_literal_create(&t->location);
+    t->value.value.ast = ast_string_literal_create(&t->location);
     t->value.owned_by_lexer = true;
-    if (!t->value.v) {
+    if (!t->value.value.ast) {
         return false;
     }
     return true;
@@ -168,7 +186,7 @@ void lexer_deinit(struct lexer *l)
 
     darray_foreach(tok, l->tokens) {
         if (token_has_value(tok) && tok->value.owned_by_lexer) {
-            ast_node_destroy_from_lexer(tok->value.v);
+            ast_node_destroy_from_lexer(tok->value.value.ast);
         }
     }
 
@@ -202,10 +220,11 @@ static bool lexer_add_token(struct lexer *l, int type,
 }
 
 static bool lexer_add_token_identifier(struct lexer *l,
+                                       int identifier_token_type,
                                        char *sp, char* ep)
 {
     darray_resize(l->tokens, l->tokens.size + 1);
-    if (!token_init_identifier(&darray_top(l->tokens), l->file, sp, ep)) {
+    if (!token_init_identifier(&darray_top(l->tokens), l->file, identifier_token_type, sp, ep)) {
         return false;
     }
 
@@ -259,9 +278,12 @@ static void lexer_get_dblslash_comment(struct lexer *l, char *p, char *lim, char
     *ret_p = p;
 }
 
-static bool lexer_get_identifier(struct lexer *l, char *p,
-                                 char *lim, char **ret_p)
+static bool process_identifier(struct lexer* l, char *p, char *lim, char **ret_p)
 {
+    if (!COND_IDENTIFIER_BEGIN(*p)) {
+        return false;
+    }
+
     const struct common_token *itoken;
     char *sp = p;
     while (p < lim) {
@@ -280,7 +302,48 @@ static bool lexer_get_identifier(struct lexer *l, char *p,
         }
     } else {
         // it's a normal identifier
-        if (!lexer_add_token_identifier(l, sp, p)) {
+        if (!lexer_add_token_identifier(l, TOKEN_IDENTIFIER, sp, p)) {
+            return false;
+        }
+    }
+
+    if (p != lim) {
+        *ret_p = p + 1;
+    } else {
+        *ret_p = p;
+        l->at_eof = true;
+    }
+
+    return true;
+}
+
+static bool rir_process_identifier(struct lexer* l, char *p, char *lim, char **ret_p)
+{
+    if (!RIR_COND_IDENTIFIER_BEGIN(*p)) {
+        return false;
+    }
+
+    const struct common_token *itoken;
+    char *sp = p;
+    while (p < lim) {
+        if (COND_IDENTIFIER(*(p+1))) {
+            p ++;
+        } else {
+            break;
+        }
+    }
+
+    // check if it's a keyword (abstract)
+    itoken = l->vt->lexeme_is_token(sp, p - sp + 1);
+    if (itoken) {
+        if (!lexer_add_token(l, itoken->type, sp, p)) {
+            return false;
+        }
+    } else {
+        int type = *p == '$' ? RIR_TOK_IDENTIFIER_VARIABLE :
+            *p == '%' ? RIR_TOK_IDENTIFIER_LABEL : RIR_TOK_IDENTIFIER;
+        // it's a non-keyword identifier
+        if (!lexer_add_token_identifier(l, type, sp, p)) {
             return false;
         }
     }
@@ -475,12 +538,8 @@ bool lexer_scan(struct lexer *l)
         p = inpfile_p(l->file);
         sp = p;
 
-        if (COND_IDENTIFIER_BEGIN(*p)) {
-            if (!lexer_get_identifier(l, p, lim, &p)) {
-                lexer_synerr(
-                    l, lexer_get_last_token_loc_start(l),
-                    NULL,
-                    "Failed to scan identifier");
+        if (l->vt->process_identifier(l, p, lim, &p)) {
+            if (!p) {
                 return false;
             }
         } else if (COND_NUMERIC(*p)) {
@@ -494,7 +553,7 @@ bool lexer_scan(struct lexer *l)
          // if it's the start of a comment
         } else if (p + 1 <= lim && *p == '/' && *(p + 1) == '/') {
             lexer_get_dblslash_comment(l, p, lim, &p);
-        } else { // see if it's a token
+        } else { // see if it's a simple token from the htable
             unsigned int len = 1;
             const struct common_token *itoken;
             const struct common_token *itoken2;
@@ -551,8 +610,12 @@ bool lexer_scan(struct lexer *l)
                 len ++;
             }
             if (!got_token) {
+                struct inplocation loc;
+                if (!inplocation_from_file_at_point(&loc, l->file, p)) {
+                    RF_ERROR("Failed to create location from point in file");
+                }
                 // error unknown token
-                lexer_synerr(l, lexer_get_last_token_loc_start(l), NULL,
+                lexer_synerr(l, &loc.start, NULL,
                              "Unknown token encountered");
                 return false;
             }
@@ -627,7 +690,7 @@ void lexer_rollback(struct lexer *l)
     darray_foreach_reverse(tok, l->tokens) {
         if (i <= l->tok_index && i >= idx && token_has_value(tok)) {
             tok->value.owned_by_lexer = true;
-            tok->value.v->state = AST_NODE_STATE_CREATED;
+            tok->value.value.ast->state = AST_NODE_STATE_CREATED;
         }
         --i;
     }

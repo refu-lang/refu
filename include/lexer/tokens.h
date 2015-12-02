@@ -102,7 +102,10 @@ enum token_type {
  * Also contains memory ownership semantics
  */
 struct tok_value {
-    struct ast_node *v;
+    union {
+        struct ast_node *ast;
+        // TODO: Add more types of valus here
+    } value;
     bool owned_by_lexer;
 };
 
@@ -175,7 +178,7 @@ i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
 {
     RF_ASSERT(token_has_value(tok), "Requesting value of illegal token type");
     tok->value.owned_by_lexer = false;
-    return tok->value.v;
+    return tok->value.value.ast;
 }
 
 

@@ -19,6 +19,7 @@ refu
 
 # generated files
 src/lexer/tokens_htable.h
+src/ir/parser/rirtoken_htable.h
 src/types/builtin_types_htable.h
 src/types/elementary_types_htable.h
 
