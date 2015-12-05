@@ -32,4 +32,13 @@ void rir_parser_deinit(struct rir_parser *p);
 
 bool rir_parse(struct rir_parser *p);
 
+#define rirparser_synerr(parser_, start_, end_, ...) \
+    do {                                          \
+        i_info_ctx_add_msg((parser_)->info,       \
+                           MESSAGE_SYNTAX_ERROR,  \
+                           (start_),              \
+                           (end_),                \
+                           __VA_ARGS__);          \
+    } while(0)
+
 #endif

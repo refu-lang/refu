@@ -1,16 +1,23 @@
 #include <ir/rir_global.h>
 #include <ir/rir.h>
 #include <ir/rir_object.h>
+#include <ir/parser/rirparser.h>
 
 #include <Utils/hash.h>
 #include <String/rf_str_core.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_manipulationx.h>
 
-static bool rir_global_init(struct rir_object *obj,
-                            struct rir_type *type,
-                            const struct RFstring *name,
-                            const void *value)
+#include <utils/common_strings.h>
+
+#include <ast/ast.h>
+#include <ast/identifier.h>
+#include <ast/string_literal.h>
+
+static bool rir_global_init_string(struct rir_object *obj,
+                                   struct rir_type *type,
+                                   const struct RFstring *name,
+                                   const void *value)
 {
     // only elementary types for now
     if (!rir_type_is_elementary(type)) {
@@ -26,22 +33,61 @@ static bool rir_global_init(struct rir_object *obj,
     return rir_value_literal_init(&global->val, obj, name, value);
 }
 
-struct rir_object *rir_global_create(struct rir_type *type,
-                                     const struct RFstring *name,
-                                     const void *value,
-                                     struct rir_ctx *ctx)
+struct rir_object *rir_global_create_string(struct rir_type *type,
+                                            const struct RFstring *name,
+                                            const void *value,
+                                            struct rir *rir)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_GLOBAL, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_GLOBAL, rir);
     if (!ret) {
         return NULL;
     }
-    if (!rir_global_init(ret, type, name, value)) {
+    if (!rir_global_init_string(ret, type, name, value)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
+struct rir_object *rir_global_create_parsed(struct rir_parser *p,
+                                            struct rir *r,
+                                            const struct ast_node *id,
+                                            const struct ast_node *type,
+                                            const struct ast_node *value)
+{
+    if (!rf_string_equal(ast_identifier_str(type), &g_str_string)) {
+        rirparser_synerr(p, ast_node_startmark(type), NULL,
+                         "For now only global strings can be declared.");
+        return NULL;
+    }
+    const struct RFstring *valstr = ast_string_literal_get_str(value);
+    const struct RFstring *idstr = ast_identifier_str(id);
+    RFS_PUSH();
+    struct rir_object *ret = NULL;
+    const struct RFstring *expstr = RFS("gstr_%u", rf_hash_str_stable(valstr, 0));
+    if (!rf_string_equal(idstr, expstr)) {
+        rirparser_synerr(p, ast_node_startmark(id), NULL,
+                         "Mismatch in the name of a global identifier string "
+                         "with its value. Expectd" RF_STR_PF_FMT "but got "
+                         RF_STR_PF_FMT".",
+                         RF_STR_PF_ARG(expstr),
+                         RF_STR_PF_ARG(idstr)
+        );
+        goto end;
+    }
+
+    ret = rir_global_create_string(
+        rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
+        idstr,
+        valstr,
+        r
+    );
+
+
+end:
+    RFS_POP();
+    return ret;
+}
 
 void rir_global_deinit(struct rir_global *global)
 {
@@ -73,11 +119,11 @@ struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct 
     struct rir_object *gstring = strmap_get(&ctx->rir->global_literals, s);
     if (!gstring) {
         RFS_PUSH();
-        gstring = rir_global_create(
+        gstring = rir_global_create_string(
             rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
             RFS("gstr_%u", rf_hash_str_stable(s, 0)),
             s,
-            ctx
+            ctx->rir
         );
         if (gstring) {
             // here we must make sure to not use @a s since it can be a temporary string

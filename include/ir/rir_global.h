@@ -8,6 +8,7 @@
 // TODO: Rir global could be renamed to something else ...?
 
 struct rirtostr_ctx;
+struct rir_parser;
 
 //! A global variable declaration for a module
 struct rir_global {
@@ -15,10 +16,17 @@ struct rir_global {
     struct rir_value val;
 };
 
-struct rir_object *rir_global_create(struct rir_type *type,
-                                     const struct RFstring *name,
-                                     const void *value,
-                                     struct rir_ctx *ctx);
+struct rir_object *rir_global_create_string(struct rir_type *type,
+                                            const struct RFstring *name,
+                                            const void *value,
+                                            struct rir *rir);
+
+struct rir_object *rir_global_create_parsed(struct rir_parser *p,
+                                            struct rir *rir,
+                                            const struct ast_node *id,
+                                            const struct ast_node *type,
+                                            const struct ast_node *value);
+
 void rir_global_deinit(struct rir_global *global);
 bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g);
 

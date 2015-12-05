@@ -39,7 +39,7 @@ struct token *lexer_last_token_valid(struct lexer *l);
 /**
  * Consumes and returns the next token iff it's a token of @c type
 */
-i_INLINE_DECL struct token *lexer_expect_token(struct lexer *l, enum token_type type)
+i_INLINE_DECL struct token *lexer_expect_token(struct lexer *l, unsigned int type)
 {
     struct token *tok = lexer_lookahead(l, 1);
     return (tok && tok->type == type && lexer_next_token(l)) ? tok : NULL;

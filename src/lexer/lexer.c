@@ -659,7 +659,7 @@ struct token *lexer_last_token_valid(struct lexer *l)
     return &darray_item(l->tokens, l->tok_index);
 }
 
-i_INLINE_INS struct token *lexer_expect_token(struct lexer *l, enum token_type type);
+i_INLINE_INS struct token *lexer_expect_token(struct lexer *l, unsigned int type);
 i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);
 i_INLINE_INS struct inplocation_mark *lexer_last_token_start(struct lexer *l);
 i_INLINE_INS struct inplocation_mark *lexer_last_token_end(struct lexer *l);

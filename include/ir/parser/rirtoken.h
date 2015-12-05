@@ -53,16 +53,6 @@ enum rir_token_type {
     RIR_TOKENS_MAX
 };
 
-struct rir_tok_value {
-    bool owned_by_lexer;
-};
-
-struct rir_token {
-    enum rir_token_type type;
-    struct inplocation location;
-    struct rir_tok_value value;
-};
-
 
 const struct rinternal_token *rir_lexer_lexeme_is_token (register const char *str,
                                                          register unsigned int len);
