@@ -10,11 +10,9 @@ static bool inpfile_init(struct inpfile* f,
                          const struct RFstring *name,
                          const struct RFstring *contents)
 {
-    struct RFtextfile file;
     struct RFstringx file_str;
     struct RFarray lines_arr;
-    int lines;
-    static const struct RFstring s_stdin = RF_STRING_STATIC_INIT("stdin");
+    unsigned int lines;
     RF_STRUCT_ZERO(f);
     RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
 
@@ -24,25 +22,10 @@ static bool inpfile_init(struct inpfile* f,
     }
 
     if (!contents) { // if we read from a file
-        if (!rf_stringx_init_buff(&file_str, INPUT_FILE_BUFF_INITIAL_SIZE, "")) {
-            RF_ERRNOMEM();
+        if (!rf_textfile_tostr_in(name, &lines, &lines_arr, &file_str)) {
             goto fail_free_name;
         }
 
-        if (!rf_textfile_init(&file,
-                              name,
-                              rf_string_equal(name, &s_stdin) ? RF_FILE_STDIN : RF_FILE_READ,
-                              RF_ENDIANESS_UNKNOWN,
-                              RF_UTF8,
-                              RF_EOL_AUTO)) {
-            goto fail_free_filecase_stringbuff;
-        }
-
-        lines = rf_textfile_read_lines(&file, 0, &file_str, &lines_arr);
-        rf_textfile_deinit(&file);
-        if (lines == -1) {
-            goto fail_free_filecase_stringbuff;
-        }
         if (!inpstr_init(&f->str, &file_str, &lines_arr, lines)) {
             goto fail_free_filecase_stringbuff;
         }
