@@ -47,6 +47,7 @@ refu_src = [
     'utils/traversal.c',
     'utils/string_set.c',
     'utils/common_strings.c',
+    'utils/data.c',
 
     'analyzer/analyzer.c',
     'analyzer/symbol_table.c',
