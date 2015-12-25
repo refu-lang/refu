@@ -1,4 +1,5 @@
 from build_extra.config import set_debug_mode, remove_envvar_values
+from build_extra.utils import build_msg
 import os
 
 Import('env clib_static')
