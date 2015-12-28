@@ -81,8 +81,14 @@ struct type *module_get_or_create_type(struct module *m,
                                        struct ast_node *genrdecl);
 /**
  * Add a new type to the types set of this module
+ *
+ * @param m            The module to add the type to
+ * @param new_type     The type to add
+ * @param n            Not used for now, but it's a good idea to also provide
+ *                     an optional ast node which to associate with the type.
+ *                     Could remove in the future.
  */
-bool module_types_set_add(struct module *m, struct type *new_type);
+bool module_types_set_add(struct module *m, struct type *new_type, const struct ast_node *n);
 
 /**
  * Manually add the standard library as a dependency to a module

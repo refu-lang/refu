@@ -526,6 +526,7 @@ static enum traversal_cb_res typecheck_comma(struct ast_node *n,
     traversal_node_set_type(
         n,
         type_create_from_operation(TYPEOP_PRODUCT,
+                                   n,
                                    (struct type*)tleft,
                                    (struct type*)tright,
                                    ctx->m),

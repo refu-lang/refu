@@ -7,6 +7,7 @@
 #include <Utils/hash.h>
 
 #include <types/type.h>
+#include <types/type_operators.h>
 #include <types/type_elementary.h>
 #include <ast/type.h>
 
@@ -73,6 +74,33 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
     ck_assert_type_set_equal_impl(i_expected_types_,                  \
                                   sizeof(i_expected_types_) / sizeof(struct type*), \
                                   i_module_, __FILE__, __LINE__)
+
+#define ck_assert_type_set_can_be_ordered_properly(i_typeset_)          \
+    do {                                                                \
+        struct type_arr arr;                                            \
+        ck_assert(typeset_to_ordered_array(i_typeset_, &arr));          \
+        struct type **t;                                                \
+        struct type **t2;                                               \
+        darray_foreach(t, arr) {                                        \
+            bool after_t = false;                                       \
+            darray_foreach(t2, arr) {                                   \
+                if (*t2 == *t) {                                        \
+                    after_t = true;                                     \
+                    continue;                                           \
+                }                                                       \
+                if (after_t && type_is_childof(*t2, *t) != -1) {        \
+                    ck_abort_msg(                                       \
+                        "Typeset was not ordered properly. Type "       \
+                        RF_STR_PF_FMT "depends on type "                \
+                        RF_STR_PF_FMT".",                               \
+                        RF_STR_PF_ARG(type_str_or_die(*t, TSTR_DEFAULT)), \
+                        RF_STR_PF_ARG(type_str_or_die(*t2, TSTR_DEFAULT)) \
+                    );                                                  \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+        darray_free(arr);                                               \
+    } while(0)
 
 START_TEST(test_type_set_population) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
@@ -257,6 +285,24 @@ START_TEST(test_types_set_has_string) {
     ck_assert(!type_objset_has_string(front_testdriver_module()->types_set, &s2));
 } END_TEST
 
+START_TEST(test_typeset_to_ordered_array1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo { a:i8, b:string | c:f32, d:u64, e:u8 }\n"
+    );
+    front_testdriver_new_main_source(&s);
+    ck_assert_typecheck_ok();
+    ck_assert_type_set_can_be_ordered_properly(front_testdriver_module()->types_set);
+} END_TEST
+
+START_TEST(test_typeset_to_ordered_array2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo { a:u64, b:f32 | c:i64, d:u64 | e:i8, f:u64 }\n"
+    );
+    front_testdriver_new_main_source(&s);
+    ck_assert_typecheck_ok();
+    ck_assert_type_set_can_be_ordered_properly(front_testdriver_module()->types_set);
+} END_TEST
+
 Suite *type_set_suite_create(void)
 {
     Suite *s = suite_create("type_set");
@@ -277,8 +323,14 @@ Suite *type_set_suite_create(void)
     tcase_add_checked_fixture(st3, setup_analyzer_tests, teardown_analyzer_tests);
     tcase_add_test(st3, test_types_set_has_string);
 
+    TCase *st4 = tcase_create("types_set_to_ordered_array");
+    tcase_add_checked_fixture(st4, setup_analyzer_tests, teardown_analyzer_tests);
+    tcase_add_test(st4, test_typeset_to_ordered_array1);
+    tcase_add_test(st4, test_typeset_to_ordered_array2);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
+    suite_add_tcase(s, st4);
     return s;
 }

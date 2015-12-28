@@ -276,6 +276,7 @@ struct type *type_lookup_or_create(const struct ast_node *n,
 }
 
 struct type *type_create_from_operation(enum typeop_type typeop,
+                                        const struct ast_node *n,
                                         struct type *left,
                                         struct type *right,
                                         struct module *m)
@@ -300,7 +301,7 @@ struct type *type_create_from_operation(enum typeop_type typeop,
         darray_append(t->operator.operands, left);
         darray_append(t->operator.operands, right);
         // since now we create a totally new type we should add it to the set
-        if (!module_types_set_add(m, t)) {
+        if (!module_types_set_add(m, t, n)) {
             RF_ERROR("Failed to add a newly created type to the module's set of types");
             return NULL;
         }
@@ -357,7 +358,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n,
         return NULL;
     }
 
-    module_types_set_add(m, t);
+    module_types_set_add(m, t, n);
     return t;
 }
 
@@ -425,7 +426,7 @@ struct type *type_create_from_fndecl(const struct ast_node *n,
         return NULL;
     }
 
-    module_types_set_add(m, t);
+    module_types_set_add(m, t, n);
     return t;
 }
 
@@ -502,7 +503,7 @@ struct type *type_operator_create_from_node(struct ast_node *n,
         return NULL;
     }
 
-    module_types_set_add(m, t);
+    module_types_set_add(m, t, n);
     return t;
 }
 

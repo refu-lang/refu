@@ -159,6 +159,20 @@ START_TEST (test_sum_type_creation) {
     ck_end_to_end_run(inputs, 13);
 } END_TEST
 
+START_TEST (test_big_sum_type) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+        "type foo {a:u64, b:f32 | c:i64, d:u64 | e:i8, f:u64}\n"
+        "fn main()->u32{\n"
+        "t1:foo = foo(5644246, 3.21)\n"
+        "return 13\n"
+        "}")
+    };
+    ck_end_to_end_run(inputs, 13);
+} END_TEST
+
 START_TEST (test_function_creation_and_call_noarg) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -739,6 +753,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_basic_types, test_type_decl);
     tcase_add_test(st_basic_types, test_type_member_access);
     tcase_add_test(st_basic_types, test_sum_type_creation);
+    tcase_add_test(st_basic_types, test_big_sum_type);
 
     TCase *st_functions = tcase_create("end_to_end_functions");
     tcase_add_checked_fixture(st_functions,

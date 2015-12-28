@@ -3,6 +3,7 @@
 
 #include <Data_Structures/objset.h>
 #include <Definitions/inline.h>
+#include <types/type_decls.h>
 
 struct type;
 struct rir_type;
@@ -56,5 +57,11 @@ struct type *type_objset_has_string(const struct rf_objset_type *set, const stru
 
 void type_objset_destroy(struct rf_objset_type *set,
                          struct rf_fixed_memorypool *types_pool);
+
+bool typeset_to_ordered_array(struct rf_objset_type *set, struct type_arr *arr);
+
+#ifdef RF_OPTION_DEBUG
+void type_objset_print(struct rf_objset_type *set);
+#endif
 
 #endif

@@ -5,6 +5,7 @@
 #include <types/type.h>
 #include <ast/function.h>
 #include <Utils/fixed_memory_pool.h>
+#include <analyzer/type_set.h>
 
 static struct rir_type elementary_types[] = {
 #define RIR_TYPE_ELEMINIT(i_type_)                                     \
@@ -126,6 +127,8 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
     } else if (t->category == TYPE_CATEGORY_OPERATOR) {
         struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
+            symbol_table_print(rir_ctx_curr_st(ctx));
+            type_objset_print(ctx->rir->types_set);
             RF_ERROR("Could not find operator type, equivalent typedef RIR object in symbol table");
             return NULL;
         }

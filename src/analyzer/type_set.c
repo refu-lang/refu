@@ -1,6 +1,7 @@
 #include <analyzer/type_set.h>
 #include <types/type.h>
 #include <types/type_comparisons.h>
+#include <types/type_operators.h>
 
 
 i_INLINE_INS const void *type_objset_key(const struct type *t);
@@ -58,3 +59,61 @@ void type_objset_destroy(struct rf_objset_type *set,
     rf_objset_clear(set);
     free(set);
 }
+
+static void type_array_append(struct type_arr *arr, struct type *t)
+{
+    struct type **it_t;
+    darray_foreach(it_t, *arr) {
+        if (t == *it_t) {
+            return;
+        }
+    }
+    darray_append(*arr, t);
+}
+
+bool typeset_to_ordered_array(struct rf_objset_type *set, struct type_arr *arr)
+{
+    struct rf_objset_iter it;
+    struct type *t;
+    struct rf_objset_iter it2;
+    struct type *t2;
+    struct type_arr depending_types;
+    darray_init(*arr);
+    rf_objset_foreach(set, &it, t) {
+        darray_init(depending_types);
+        rf_objset_foreach(set, &it2, t2) {
+            if (t2 != t) {
+                if (type_is_childof(t2, t) != -1) {
+                    darray_append(depending_types, t2);
+                }
+            }
+        }
+        if (darray_size(depending_types) == 0) {
+            type_array_append(arr, t);
+        } else {
+            struct type **it_t;
+            darray_foreach(it_t, depending_types) {
+                type_array_append(arr, *it_t);
+            }
+            type_array_append(arr, t);
+        }
+        darray_free(depending_types);
+    }
+    return true;
+}
+
+#ifdef RF_OPTION_DEBUG
+void type_objset_print(struct rf_objset_type *set)
+{
+    struct rf_objset_iter it;
+    struct type *t;
+    printf("Printing members of a typeset\n\n");
+    RFS_PUSH();
+    rf_objset_foreach(set, &it, t) {
+        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
+    }
+    RFS_POP();
+    printf("\n\n");
+    fflush(stdout);
+}
+#endif

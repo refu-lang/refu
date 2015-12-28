@@ -23,10 +23,9 @@ int main(int argc, char **argv)
     if (!compiler_process(compiler)) {
         rc = 1;
         compiler_print_errors(compiler);
-        goto end;
+        return 1; // don't bother freeing stuff, just exit with error
     }
 
-end:
     compiler_destroy(compiler);
     return rc;
 }

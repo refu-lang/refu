@@ -84,4 +84,6 @@ struct type {
         struct type_module module;
     };
 };
+
+struct type_arr {darray(struct type*);};
 #endif

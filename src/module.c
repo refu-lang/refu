@@ -169,8 +169,9 @@ bool module_add_stdlib(struct module *m)
 }
 
 
-bool module_types_set_add(struct module *m, struct type *new_type)
+bool module_types_set_add(struct module *m, struct type *new_type, const struct ast_node *n)
 {
+    (void)n;
     return rf_objset_add(m->types_set, type, new_type);
 }
 
@@ -201,7 +202,7 @@ struct type *module_get_or_create_type(struct module *mod,
 
     // TODO: Should it not have been added already by the proper creation function?
     // add it to the list
-    module_types_set_add(mod, t);
+    module_types_set_add(mod, t, desc);
     return t;
 }
 

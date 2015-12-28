@@ -415,6 +415,7 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
     htable_iterate_records(&t->table, cb, user);
 }
 
+#ifdef RF_OPTION_DEBUG
 void symbol_table_print(struct symbol_table *t)
 {
     if (symbol_table_is_empty(t)) {
@@ -422,7 +423,10 @@ void symbol_table_print(struct symbol_table *t)
     }
     printf("\nPrinting records of a symbol table\n\n");
     htable_iterate_records(&t->table, (htable_iter_cb)symbol_table_record_print, NULL);
+    printf("\n");
+    fflush(stdout);
 }
+#endif
 
 i_INLINE_INS void symbol_table_set_parent(struct symbol_table *t,
                                           struct symbol_table *parent);

@@ -351,6 +351,7 @@ enum traversal_cb_res typecheck_matchexpr(struct ast_node *n,
         if (matchexpr_type) {
             matchexpr_type = type_create_from_operation(
                 TYPEOP_SUM,
+                mcase,
                 matchexpr_type,
                 case_type,
                 ctx->m);

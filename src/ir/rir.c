@@ -238,19 +238,28 @@ static inline bool rir_create_typedefs(struct rf_objset_type *typeset,
                                        struct RFilist_head *typedefs_list,
                                        struct rir_ctx *ctx)
 {
-    struct rf_objset_iter it;
-    struct type *t;
-    rf_objset_foreach(typeset, &it, t) {
-        if (!type_is_elementary(t) && !type_is_implop(t)) {
-            struct rir_typedef *def = rir_typedef_create(t, ctx);
+    struct type **t;
+    struct type_arr tarr;
+    bool ret = false;
+    // ORDER MATTERS here, since types that depend on others should be done first
+    if (!typeset_to_ordered_array(typeset, &tarr)) {
+        RF_ERROR("Failed to create an ordered array out of a typeset");
+        return false;
+    }
+    darray_foreach(t, tarr) {
+        if (!type_is_elementary(*t) && !type_is_implop(*t)) {
+            struct rir_typedef *def = rir_typedef_create(*t, ctx);
             if (!def) {
                 RF_ERROR("Failed to create a RIR typedef");
-                return false;
+                goto end;
             }
             rf_ilist_add_tail(typedefs_list,  &def->ln);
         }
     }
-    return true;
+    ret = true;
+end:
+    darray_free(tarr);
+    return ret;
 }
 
 static bool rir_process_do(struct rir *r, struct module *m)

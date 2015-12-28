@@ -84,12 +84,14 @@ struct type *type_lookup_or_create(const struct ast_node *n,
  * a new type is created an does not exist in the module's types already.
  *
  * @param type          The type operator to apply to @c left and @c right
+ * @param n             An ast node to add to the created symbol table entry
  * @param left          The type to become left part of the operand
  * @param right         The type to become right part of the operand
  * @param a             The module instance for which we are typechecking
  * @return              The new type or NULL if there was an error
  */
 struct type *type_create_from_operation(enum typeop_type type,
+                                        const struct ast_node *n,
                                         struct type *left,
                                         struct type *right,
                                         struct module *m);

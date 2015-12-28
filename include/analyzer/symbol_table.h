@@ -225,9 +225,11 @@ i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
     return rec->data;
 }
 
+#ifdef RF_OPTION_DEBUG
 /**
- * Print all records inside a symbol table. Used mostly for debugging
+ * Print all records inside a symbol table. Used only for debugging
  */
 void symbol_table_print(struct symbol_table *t);
+#endif
 
 #endif
