@@ -67,16 +67,25 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-static bool rir_parse_single(struct rir_parser *p, struct rir *r)
+static bool rir_parse_single(struct rir_parser *p, struct rir *r, bool *error)
 {
     struct token *tok;
-    tok = lexer_lookahead(&p->lexer, 1);
+    if (!(tok = lexer_lookahead(&p->lexer, 1))) {
+        return false;
+    }
 
-    switch((enum rir_token_type)tok->type) {
+    switch(rir_toktype(tok)) {
     case RIR_TOK_GLOBAL:
         return rir_parse_global(p, tok, r);
     default:
-        RF_CRITICAL_FAIL("Unexpected rir token type during parsing");
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            NULL,
+            "Unexpected rir token \""RF_STR_PF_FMT"\" during parsing",
+            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+        );
+        *error = true;
         break;
     }
     return false;
@@ -84,21 +93,20 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r)
 
 bool rir_parse(struct rir_parser *p)
 {
+    bool error = false;
     if (!lexer_scan(&p->lexer)) {
         return false;
     }
     struct rir *r = rir_create();
 
-    do {
-        if (!rir_parse_single(p, r)) {
-            goto fail;
-        }
-    } while (!inpfile_at_eof(p->file));
+    while (rir_parse_single(p, r, &error)) {
+        ;
+    }
 
-    // success
+    if (error) {
+        rir_destroy(r);
+        return false;
+    }
+
     return true;
-
-fail:
-    rir_destroy(r);
-    return false;
 }

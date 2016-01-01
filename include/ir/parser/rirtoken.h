@@ -53,8 +53,16 @@ enum rir_token_type {
     RIR_TOKENS_MAX
 };
 
+/**
+ * Convenience macro to convert from a normal to rir token type and
+ * help us avoid writting out the cast each time when using a token
+ */
+#define rir_toktype(i_tok_) ((enum rir_token_type)(i_tok_)->type)
+
 
 const struct rinternal_token *rir_lexer_lexeme_is_token (register const char *str,
                                                          register unsigned int len);
+
+const struct RFstring *rir_tokentype_to_str(enum rir_token_type type);
 
 #endif

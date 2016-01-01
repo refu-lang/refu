@@ -60,5 +60,12 @@ bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r)
         return false;
     }
 
+    // consume the last parentheses
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a closing ')' at the end of 'global'.");
+        return false;
+    }
+
     return true;
 }
