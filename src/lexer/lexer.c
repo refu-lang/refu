@@ -94,7 +94,7 @@ static inline bool token_init_identifier(struct token *t,
                                          int identifier_token_type,
                                          char *sp, char *ep)
 {
-    if (!token_init(t, TOKEN_IDENTIFIER, f, sp, ep)) {
+    if (!token_init(t, identifier_token_type, f, sp, ep)) {
         return false;
     }
     t->value.value.ast = ast_identifier_create(&t->location);
@@ -340,8 +340,8 @@ static bool rir_process_identifier(struct lexer* l, char *p, char *lim, char **r
             return false;
         }
     } else {
-        int type = *p == '$' ? RIR_TOK_IDENTIFIER_VARIABLE :
-            *p == '%' ? RIR_TOK_IDENTIFIER_LABEL : RIR_TOK_IDENTIFIER;
+        int type = *sp == '$' ? RIR_TOK_IDENTIFIER_VARIABLE :
+            *sp == '%' ? RIR_TOK_IDENTIFIER_LABEL : RIR_TOK_IDENTIFIER;
         // it's a non-keyword identifier
         if (!lexer_add_token_identifier(l, type, sp, p)) {
             return false;
@@ -638,6 +638,15 @@ struct token *lexer_next_token(struct lexer *l)
     tok = &darray_item(l->tokens, l->tok_index);
     l->tok_index ++;
     return tok;
+}
+
+struct token *lexer_gnext_token(struct lexer *l)
+{
+    if (LEXER_IND_OOB(l, l->tok_index)) {
+        return NULL;
+    }
+    l->tok_index ++;
+    return &darray_item(l->tokens, l->tok_index);
 }
 
 struct token *lexer_lookahead(struct lexer *l, unsigned int num)

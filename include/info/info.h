@@ -61,7 +61,9 @@ void info_ctx_pop(struct info_ctx *ctx);
  */
 void info_ctx_rollback(struct info_ctx *ctx);
 
-
+/**
+ * Return if the info context has errors of @a type message type
+ */
 bool info_ctx_has(struct info_ctx *ctx, enum info_msg_type type);
 void info_ctx_flush(struct info_ctx *ctx, FILE *f, int type);
 void info_ctx_print(struct info_ctx *ctx, unsigned int index);

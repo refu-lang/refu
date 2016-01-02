@@ -5,7 +5,7 @@
 #include <inpfile.h>
 #include <ir/rir.h>
 
-#include "rparse_global.h"
+#include "rparse_functions.h"
 
 struct rir_parser *rir_parser_create(const struct RFstring *name,
                                      const struct RFstring *contents)
@@ -67,7 +67,41 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-static bool rir_parse_single(struct rir_parser *p, struct rir *r, bool *error)
+static bool rir_accept_identifier(struct rir_parser *p, struct token *tok, struct rir *r)
+{
+    struct token *tok2;
+    struct token *tok3;
+    tok2 = lexer_lookahead(&p->lexer, 2);
+    tok3 = lexer_lookahead(&p->lexer, 3);
+    if ((!tok2 || !tok3) || rir_toktype(tok2) != RIR_TOK_OP_ASSIGN) {
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            NULL,
+            "Expected an assignment after \""RF_STR_PF_FMT"\".",
+            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+        );
+        return false;
+    }
+
+    switch (rir_toktype(tok3)) {
+    case RIR_TOK_UNIONDEF:
+        return rir_parse_typedef(p, tok, true, r);
+    default:
+        rirparser_synerr(
+            p,
+            token_get_start(tok3),
+            NULL,
+            "Unexpected rir token \""RF_STR_PF_FMT"\" after assignment to identifier.",
+            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok3)))
+        );
+        break;
+    }
+
+    return false;
+}
+
+static bool rir_parse_single(struct rir_parser *p, struct rir *r)
 {
     struct token *tok;
     if (!(tok = lexer_lookahead(&p->lexer, 1))) {
@@ -76,7 +110,9 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r, bool *error)
 
     switch(rir_toktype(tok)) {
     case RIR_TOK_GLOBAL:
-        return rir_parse_global(p, tok, r);
+        return  rir_parse_global(p, tok, r);
+    case RIR_TOK_IDENTIFIER_VARIABLE:
+        return rir_accept_identifier(p, tok, r);
     default:
         rirparser_synerr(
             p,
@@ -85,7 +121,6 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r, bool *error)
             "Unexpected rir token \""RF_STR_PF_FMT"\" during parsing",
             RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
         );
-        *error = true;
         break;
     }
     return false;
@@ -93,17 +128,16 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r, bool *error)
 
 bool rir_parse(struct rir_parser *p)
 {
-    bool error = false;
     if (!lexer_scan(&p->lexer)) {
         return false;
     }
     struct rir *r = rir_create();
 
-    while (rir_parse_single(p, r, &error)) {
+    while (rir_parse_single(p, r)) {
         ;
     }
 
-    if (error) {
+    if (info_ctx_has(p->info, MESSAGE_ANY)) {
         rir_destroy(r);
         return false;
     }

@@ -32,7 +32,14 @@ void lexer_destroy(struct lexer *l);
 
 bool lexer_scan(struct lexer *l);
 
+/**
+ * Return current token and then move to the next token
+ */
 struct token *lexer_next_token(struct lexer *l);
+/**
+ * Move to the next token and return it
+ */
+struct token *lexer_gnext_token(struct lexer *l);
 struct token *lexer_lookahead(struct lexer *l, unsigned int num);
 struct token *lexer_last_token_valid(struct lexer *l);
 
