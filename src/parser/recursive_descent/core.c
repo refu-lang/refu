@@ -56,7 +56,7 @@ bool parser_parse_file(struct parser *p)
         ast_node_add_child(p->root, stmt);
     }
 
-    if (NULL != lexer_next_token(p->lexer)) {
+    if (NULL != lexer_curr_token_advance(p->lexer)) {
         parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
                       "Expected an outermost statement");
         return false;

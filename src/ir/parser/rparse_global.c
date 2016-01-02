@@ -9,7 +9,7 @@
 bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r)
 {
     // consume global
-    lexer_next_token(&p->lexer);
+    lexer_curr_token_advance(&p->lexer);
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
         rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,

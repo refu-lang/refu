@@ -38,7 +38,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
     // check for a parenthesized expression
     if (tok->type == TOKEN_SM_OPAREN) {
         //consume parentheses opening
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         n = parser_acc_expression(p);
         if (!n) {
@@ -47,7 +47,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
             return NULL;
         }
 
-        tok = lexer_next_token(p->lexer);
+        tok = lexer_curr_token_advance(p->lexer);
         if (!tok || tok->type != TOKEN_SM_CPAREN) {
             parser_synerr(p, ast_node_endmark(n), NULL,
                           "expected ')' after expression");
@@ -108,7 +108,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
     }
 
     //consume the token and return
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     return n;
 }
 
@@ -124,7 +124,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     if (tok && token_is_prefix_unaryop(tok)) {
         prefix = tok;
         //consume the prefix unary operator
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
     }
 
     element = parser_acc_expr_element(p);
@@ -152,7 +152,7 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     tok = lexer_lookahead(p->lexer, 1);
     if (tok && token_is_postfix_unaryop(tok)) {
         //consume the prefix unary operator
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         op = ast_unaryop_create(ast_node_startmark(element),
                                 token_get_end(tok),
@@ -257,7 +257,7 @@ static struct ast_node *parser_acc_expression_prime(
         return NULL;
     }
     //consume operator
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     op = ast_binaryop_create(ast_node_startmark(left_hand_side), NULL,
                              binaryop_type_from_token(tok),
@@ -287,7 +287,7 @@ static struct ast_node *parser_acc_expression_prime(
             return NULL;
         }
         // consume ']'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
         ast_node_set_end(op, token_get_end(tok));
     }
 

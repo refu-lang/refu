@@ -77,7 +77,7 @@ struct ast_node *parser_acc_matchexpr(struct parser *p,
 
         tok = lexer_lookahead(p->lexer, 1);
         if (tok && tok->type == TOKEN_SM_OPAREN) {
-            lexer_next_token(p->lexer);
+            lexer_curr_token_advance(p->lexer);
             got_paren = true;
         }
         id = parser_acc_identifier(p);

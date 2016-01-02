@@ -31,7 +31,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
             goto err;
         }
         //consume function keyword
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
     }
     // start should be either start of fn, or start of next token (an identifier)
     start = token_get_start(tok);
@@ -51,7 +51,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
         }
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_OPAREN) {
         parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
                       "Expected '(' at function declaration");
@@ -67,7 +67,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
         goto err_free_genr;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_CPAREN) {
         if (args) {
             parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
@@ -84,7 +84,7 @@ struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position)
     tok = lexer_lookahead(p->lexer, 1);
     if (tok && tok->type == TOKEN_OP_IMPL) {
         //consume '->'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
         ret_type = parser_acc_typedesc(p);
         if (!ret_type) {
             parser_synerr(p, token_get_end(tok), NULL,
@@ -252,7 +252,7 @@ struct ast_node *parser_acc_fncall(struct parser *p, bool expect_it)
         goto err_free_genr;
     }
     //consume '('
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     args = parser_acc_expression(p);
     if (!args) {
@@ -273,7 +273,7 @@ struct ast_node *parser_acc_fncall(struct parser *p, bool expect_it)
         goto err_free_args;
     }
     //consume ')'
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     n = ast_fncall_create(ast_node_startmark(name), token_get_end(tok),
                           name, args, genr);

@@ -18,7 +18,7 @@ static struct ast_node *parser_acc_parenthesized_typedesc(struct parser *p)
     struct ast_node *n;
     lexer_push(p->lexer);
     //consume parentheses
-    struct token *tok = lexer_next_token(p->lexer);
+    struct token *tok = lexer_curr_token_advance(p->lexer);
     n = parser_acc_typedesc_top(p);
     if (!n) {
         parser_synerr(p, token_get_end(tok), NULL,
@@ -61,8 +61,8 @@ struct ast_node *parser_acc_typeleaf(struct parser *p)
         tok2 && tok2->type == TOKEN_SM_COLON) {
         left = token_get_value(tok);
         //consume identifier and ':'
-        lexer_next_token(p->lexer);
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         tok = lexer_lookahead(p->lexer, 1);
         if (tok->type == TOKEN_SM_OPAREN) {
@@ -144,7 +144,7 @@ static struct ast_node *parser_acc_typefactor_prime(
     }
     lexer_push(p->lexer);
     //consume comma
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_PRODUCT, left_hand_side, NULL);
@@ -208,7 +208,7 @@ static struct ast_node *parser_acc_typeterm_prime(
     }
     lexer_push(p->lexer);
     //consume TYPESUM
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_SUM, left_hand_side, NULL);
@@ -273,7 +273,7 @@ static struct ast_node *parser_acc_typedesc_prime(
     }
     lexer_push(p->lexer);
     //consume IMPL
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     op = ast_typeop_create(ast_node_startmark(left_hand_side), NULL,
                            TYPEOP_IMPLICATION, left_hand_side, NULL);
@@ -350,7 +350,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
 
     lexer_push(p->lexer);
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_KW_TYPE) {
         goto not_found;
     }
@@ -361,7 +361,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
         goto not_found;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
         goto not_found;
     }
@@ -382,7 +382,7 @@ struct ast_node *parser_acc_typedecl(struct parser *p)
         goto not_found;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected a closing brace '}' in data "

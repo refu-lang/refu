@@ -21,7 +21,7 @@ struct ast_node *parser_acc_import(struct parser *p)
         return NULL;
     }
     // consume import
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     import = ast_import_create(token_get_start(tok), NULL, tok->type == TOKEN_KW_FOREIGN_IMPORT);
     if (!import) {
@@ -112,7 +112,7 @@ struct ast_node *parser_acc_module(struct parser *p)
 
     if (tok->type == TOKEN_SM_OPAREN) {
         // consume '(' and parse the type description
-        tok = lexer_next_token(p->lexer);
+        tok = lexer_curr_token_advance(p->lexer);
         args = parser_acc_typedesc(p);
 
         if (!args && parser_has_syntax_error_reset(p)) {

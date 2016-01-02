@@ -24,7 +24,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
         }
 
         // consume type identifier
-        tok = lexer_gnext_token(&p->lexer);
+        tok = lexer_next_token(&p->lexer);
         if (!tok || (rir_toktype(tok) != RIR_TOK_OP_MULTI &&
                      rir_toktype(tok) != RIR_TOK_SM_COMMA &&
                      rir_toktype(tok) != RIR_TOK_SM_CPAREN)) {
@@ -36,7 +36,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
         if (rir_toktype(tok) == RIR_TOK_OP_MULTI) {
             t->is_pointer = true;
             // consume '*'
-            tok = lexer_gnext_token(&p->lexer);
+            tok = lexer_next_token(&p->lexer);
         }
 
         if (!tok || (rir_toktype(tok) != RIR_TOK_SM_CPAREN &&
@@ -51,7 +51,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
         // check if we reached end of array
         end_reached = rir_toktype(tok) == RIR_TOK_SM_CPAREN;
         // consume the token and go to the next one
-        tok = lexer_gnext_token(&p->lexer);
+        tok = lexer_next_token(&p->lexer);
     }
     return true;
 
@@ -65,9 +65,9 @@ bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, st
 #define i_DEFSTR "'%s'.", uniondef ? "uniondef" : "typedef"
 
     // consume identifier_variable, =, uniondef
-    lexer_next_token(&p->lexer);
-    lexer_next_token(&p->lexer);
-    lexer_next_token(&p->lexer);
+    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(&p->lexer);
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
         rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,

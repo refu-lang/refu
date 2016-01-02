@@ -64,7 +64,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
     }
     start = token_get_start(tok);
     // consume 'if' or 'elif'
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     lexer_push(p->lexer);
 
     // parse the taken branch
@@ -92,7 +92,7 @@ struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type)
                 goto err_free;
             }
         } else { //can only be an else
-            lexer_next_token(p->lexer); // consume it
+            lexer_curr_token_advance(p->lexer); // consume it
             branch = parser_acc_block(p, true);
             if (!branch) {
                 parser_synerr(p, token_get_end(tok), NULL,

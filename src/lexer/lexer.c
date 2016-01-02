@@ -629,7 +629,7 @@ bool lexer_scan(struct lexer *l)
 #define LEXER_IND_OOB(lex_, ind_)               \
     (ind_ >= darray_size((lex_)->tokens))
 
-struct token *lexer_next_token(struct lexer *l)
+struct token *lexer_curr_token_advance(struct lexer *l)
 {
     struct token *tok;
     if (LEXER_IND_OOB(l, l->tok_index)) {
@@ -640,7 +640,7 @@ struct token *lexer_next_token(struct lexer *l)
     return tok;
 }
 
-struct token *lexer_gnext_token(struct lexer *l)
+struct token *lexer_next_token(struct lexer *l)
 {
     if (LEXER_IND_OOB(l, l->tok_index)) {
         return NULL;

@@ -27,7 +27,7 @@ static struct ast_node *parser_acc_return_statement(struct parser *p)
     }
     start = token_get_start(tok);
     //consume the return keyword
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
 
     expr = parser_acc_expression(p);
@@ -97,7 +97,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
             return NULL;
         }
         // consume '{'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
         start = token_get_start(tok);
     }
 
@@ -122,7 +122,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
             goto err_free_block;
         }
         //consume the '}'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         ast_node_set_start(n, start);
         ast_node_set_end(n, token_get_end(tok));
@@ -149,7 +149,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
             goto err_free_block;
         }
         //consume the '}'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         end = token_get_end(tok);
     }

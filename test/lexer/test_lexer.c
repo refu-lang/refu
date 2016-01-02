@@ -560,21 +560,21 @@ START_TEST(test_lexer_push_pop) {
 
     // check that simple push/pop does not affect anything
     struct lexer *lex = front_testdriver_lexer();
-    struct token *tok = lexer_next_token(lex);
+    struct token *tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);
     lexer_push(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[1], tok, 1);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[2], tok, 2);
     lexer_pop(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[3], tok, 3);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[4], tok, 4);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[5], tok, 5);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_msg(!tok, "Last token should be NULL");
 } END_TEST
 
@@ -606,25 +606,25 @@ START_TEST(test_lexer_push_rollback) {
     ck_assert_lexer_scan("Scanning failed");
 
     struct lexer *lex = front_testdriver_lexer();
-    struct token *tok = lexer_next_token(lex);
+    struct token *tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);
     lexer_push(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[1], tok, 1);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[2], tok, 2);
     lexer_rollback(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[1], tok, 1);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[2], tok, 2);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[3], tok, 3);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[4], tok, 4);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[5], tok, 5);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_msg(!tok, "Last token should be NULL");
 } END_TEST
 
@@ -656,30 +656,30 @@ START_TEST(test_lexer_many_push_rollback) {
     ck_assert_lexer_scan("Scanning failed");
 
     struct lexer *lex = front_testdriver_lexer();
-    struct token *tok = lexer_next_token(lex);
+    struct token *tok = lexer_curr_token_advance(lex);
     lexer_push(lex);
     ck_assert_tokens_eq(lex, &expected[0], tok, 0);
     lexer_push(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[1], tok, 1);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[2], tok, 2);
     lexer_rollback(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[1], tok, 1);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[2], tok, 2);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[3], tok, 3);
     lexer_push(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[4], tok, 4);
     lexer_rollback(lex);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[4], tok, 4);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_tokens_eq(lex, &expected[5], tok, 5);
-    tok = lexer_next_token(lex);
+    tok = lexer_curr_token_advance(lex);
     ck_assert_msg(!tok, "Last token should be NULL");
 } END_TEST
 

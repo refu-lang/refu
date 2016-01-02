@@ -35,11 +35,11 @@ bool lexer_scan(struct lexer *l);
 /**
  * Return current token and then move to the next token
  */
-struct token *lexer_next_token(struct lexer *l);
+struct token *lexer_curr_token_advance(struct lexer *l);
 /**
  * Move to the next token and return it
  */
-struct token *lexer_gnext_token(struct lexer *l);
+struct token *lexer_next_token(struct lexer *l);
 struct token *lexer_lookahead(struct lexer *l, unsigned int num);
 struct token *lexer_last_token_valid(struct lexer *l);
 
@@ -49,7 +49,7 @@ struct token *lexer_last_token_valid(struct lexer *l);
 i_INLINE_DECL struct token *lexer_expect_token(struct lexer *l, unsigned int type)
 {
     struct token *tok = lexer_lookahead(l, 1);
-    return (tok && tok->type == type && lexer_next_token(l)) ? tok : NULL;
+    return (tok && tok->type == type && lexer_curr_token_advance(l)) ? tok : NULL;
 }
 
 i_INLINE_DECL struct inplocation *lexer_last_token_location(struct lexer *l)

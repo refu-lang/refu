@@ -25,7 +25,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
     lexer_push(p->lexer);
 
     //consume typeclass keyword
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     name = parser_acc_identifier(p);
     if (!name) {
@@ -44,7 +44,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
         goto err_free_genr;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
         parser_synerr(p, ast_node_endmark(name), NULL,
                       "Expected '{' at \""RF_STR_PF_FMT"\" typeclass "
@@ -78,7 +78,7 @@ struct ast_node *parser_acc_typeclass(struct parser *p)
         break;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected '}' at the end of \""RF_STR_PF_FMT"\" "
@@ -122,7 +122,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
     start = token_get_start(tok);
 
     //consumer typeclass isntance keyword
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     class_name = parser_acc_identifier(p);
     if (!class_name) {
@@ -151,7 +151,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
         goto err;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
         parser_synerr(p, ast_node_endmark(type_name), NULL,
                       "Expected '{' at type instance \""RF_STR_PF_FMT"\" "
@@ -190,7 +190,7 @@ struct ast_node *parser_acc_typeinstance(struct parser *p)
         break;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected '}' at the end of \""RF_STR_PF_FMT"\" "

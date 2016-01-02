@@ -26,7 +26,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
     // parsing logic for the annotations to the identifier here
     if (tok->type == TOKEN_KW_CONST) {
         //consume 'const'
-        lexer_next_token(p->lexer);
+        lexer_curr_token_advance(p->lexer);
 
         is_const = true;
         start = token_get_start(tok);
@@ -48,7 +48,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
         return NULL;
     }
     //consume identifier
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     id = token_get_value(tok);
     end = ast_node_endmark(id);
 

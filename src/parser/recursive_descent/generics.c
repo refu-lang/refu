@@ -19,7 +19,7 @@ static struct ast_node * parser_acc_genrtype(struct parser *p)
     struct ast_node *n;
 
     lexer_push(p->lexer);
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected an identifier for the generic type kind");
@@ -27,7 +27,7 @@ static struct ast_node * parser_acc_genrtype(struct parser *p)
     }
     type_id = token_get_value(tok);
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
         parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
                       "Expected an identifier for the generic type name");
@@ -62,7 +62,7 @@ static bool parser_acc_generic_decls_prime(struct parser *p,
     }
 
     // consume ','
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     single = parser_acc_genrtype(p);
     if (!single) {
         parser_synerr(p, token_get_end(tok), NULL,
@@ -97,7 +97,7 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
     }
     lexer_push(p->lexer);
     // consume '<'
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
 
     n = ast_genrdecl_create(token_get_start(tok), NULL);
     if (!parser_acc_generic_decls(p, n)) {
@@ -106,7 +106,7 @@ struct ast_node *parser_acc_genrdecl(struct parser *p)
         goto fail;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_OP_GT) {
         parser_synerr(
             p, token_get_start(tok), NULL,
@@ -135,7 +135,7 @@ static struct ast_node *parser_acc_genrattr_single(struct parser *p, bool expect
 
     if (tok) {
         if (tok->type == TOKEN_SM_OPAREN) {
-            lexer_next_token(p->lexer); // consume the OPAREN token
+            lexer_curr_token_advance(p->lexer); // consume the OPAREN token
 
             child = parser_acc_typedesc(p);
             if (!child) {
@@ -146,7 +146,7 @@ static struct ast_node *parser_acc_genrattr_single(struct parser *p, bool expect
                 }
                 goto not_found;
             }
-            tok = lexer_next_token(p->lexer);
+            tok = lexer_curr_token_advance(p->lexer);
             if (!tok || tok->type != TOKEN_SM_CPAREN) {
                 if (expect_it) {
                     parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
@@ -197,7 +197,7 @@ static bool parser_acc_generic_attribute_prime(struct parser *p,
     }
 
     //consume ','
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     single = parser_acc_genrattr_single(p, expect_it);
     if (!single) {
         parser_synerr(p, token_get_end(tok), NULL,
@@ -233,7 +233,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it)
         goto bailout;
     }
     //consume '<'
-    lexer_next_token(p->lexer);
+    lexer_curr_token_advance(p->lexer);
     n = ast_genrattr_create(token_get_start(tok), NULL);
     if (!n) {
         RF_ERRNOMEM();
@@ -249,7 +249,7 @@ struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it)
         goto bailout;
     }
 
-    tok = lexer_next_token(p->lexer);
+    tok = lexer_curr_token_advance(p->lexer);
     if (!tok || tok->type != TOKEN_OP_GT) {
         if (expect_it) {
             parser_synerr(p, token_get_end(tok), NULL,
