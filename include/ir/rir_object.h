@@ -9,6 +9,8 @@
 #include <ir/rir_variable.h>
 #include <RFintrusive_list.h>
 
+struct rir_fndef;
+
 enum rir_obj_category {
     RIR_OBJ_EXPRESSION,
     RIR_OBJ_BLOCK,
@@ -38,18 +40,20 @@ struct rir_value *rir_object_value(struct rir_object *obj);
 /**
  * Will remove a rir object from the global rir object list
  *
- * @param obj        The object to remove from the list
- * @param ctx        The rir context
+ * @param obj            The object to remove from the list
+ * @param r              The rir module to remove from
+ * @param current_fn     The current function during parsing/initialization
  */
-void rir_object_listrem(struct rir_object *obj, struct rir_ctx *ctx);
+void rir_object_listrem(struct rir_object *obj, struct rir *r, struct rir_fndef *current_fn);
 
 /**
  * Will remove a rir object from the global rir object list and destroy the memory
  *
- * @param obj        The object to remove from the list
- * @param ctx        The rir context
+ * @param obj            The object to remove from the list
+ * @param r              The rir module to remove from
+ * @param current_fn     The current function during parsing/initialization
  */
-void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx);
+void rir_object_listrem_destroy(struct rir_object *obj, struct rir *r, struct rir_fndef *current_fn);
 
 /**
  * Will get the rir typedef from an object.

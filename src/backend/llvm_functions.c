@@ -170,7 +170,7 @@ static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct
     RFS_PUSH();
     LLVMValueRef llvmfn = LLVMAddFunction(
         ctx->llvm_mod,
-        rf_string_cstr_from_buff_or_die(fn->name),
+        rf_string_cstr_from_buff_or_die(&fn->name),
         LLVMFunctionType(
             bllvm_type_from_rir_type(fn->return_type, ctx),
             arg_types,

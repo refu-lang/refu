@@ -6,17 +6,26 @@
 #include <Data_Structures/darray.h>
 
 struct rir_ctx;
+struct rir_fndef;
 struct type;
 
 struct rir_typedef {
-    struct RFstring *name;
+    struct RFstring name;
     bool is_union;
     struct rir_type_arr argument_types;
     //! Control to be entered into the rir typedefs list
     struct RFilist_node ln;
 };
 
-struct rir_typedef *rir_typedef_create(struct type *t, struct rir_ctx *ctx);
+struct rir_typedef *rir_typedef_create_from_type(struct type *t, struct rir_ctx *ctx);
+struct rir_typedef *rir_typedef_create(
+    struct rir *r,
+    struct rir_fndef *curr_fn,
+    const struct RFstring *name,
+    bool is_union,
+    const struct rir_type_arr *args
+);
+
 void rir_typedef_deinit(struct rir_typedef *t);
 
 bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t);

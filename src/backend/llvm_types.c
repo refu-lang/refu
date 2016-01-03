@@ -67,7 +67,7 @@ LLVMTypeRef bllvm_compile_typedef(const struct rir_typedef *def,
 {
     llvm_traversal_ctx_reset_params(ctx);
     // else it's the same thing but just need to add an extra index for the union
-    LLVMTypeRef llvm_type = bllvm_create_struct(def->name);
+    LLVMTypeRef llvm_type = bllvm_create_struct(&def->name);
     bllvm_rir_to_llvm_types(&def->argument_types, ctx);
     if (def->is_union) { // add the member selector in the beginning
         llvm_traversal_ctx_prepend_param(ctx, LLVMInt32Type());
@@ -128,7 +128,7 @@ LLVMTypeRef bllvm_type_from_rir_type(const struct rir_type *type,
         ret = bllvm_elementary_to_type(type->etype, ctx);
     } else if (type->category == RIR_TYPE_COMPOSITE) {
         RFS_PUSH();
-        ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(type->tdef->name));
+        ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(&type->tdef->name));
         RF_ASSERT(ret, "Type should have already been declared in LLVM");
         RFS_POP();
     } else {

@@ -19,6 +19,8 @@ struct rir_parser {
     struct info_ctx *info;
     //! The parsed rir, which is the output of parsing
     struct rir *rir;
+    //! The current function during parsing
+    struct rir_fndef *curr_fn;
 };
 
 struct rir_parser *rir_parser_create(const struct RFstring *name,

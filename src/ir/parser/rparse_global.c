@@ -1,4 +1,4 @@
-#include "rparse_functions.h"
+#include <ir/parser/rirparser_functions.h>
 
 #include <ir/parser/rirparser.h>
 #include <lexer/lexer.h>

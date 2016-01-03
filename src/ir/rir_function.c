@@ -3,12 +3,15 @@
 #include <ast/ast.h>
 #include <ast/function.h>
 #include <ast/type.h>
+#include <lexer/lexer.h>
+#include <ir/parser/rirparser.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_argument.h>
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 #include <ir/rir_strmap.h>
+#include <ir/parser/rirparser_functions.h>
 #include <ast/matchexpr.h>
 #include <types/type.h>
 #include <types/type_operators.h>
@@ -103,7 +106,9 @@ static bool rir_fndecl_init(struct rir_fndecl *ret,
 {
     RF_STRUCT_ZERO(ret);
     ret->plain_decl = foreign;
-    ret->name = name;
+    if (!rf_string_copy_in(&ret->name, name)) {
+        return false;
+    }
     if (!rir_fndecl_init_args(&ret->argument_types, arguments, ast_args_desc, foreign, ctx)) {
         return false;
     }
@@ -176,6 +181,7 @@ struct rir_fndecl *rir_fndecl_create_from_ast(const struct ast_node *n, struct r
 
 static void rir_fndecl_deinit(struct rir_fndecl *f)
 {
+    rf_string_deinit(&f->name);
     darray_free(f->argument_types);
 }
 
@@ -195,7 +201,7 @@ bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const 
             ctx->rir->buff,
             RFS("%s("RF_STR_PF_FMT RF_STR_PF_FMT,
                 is_plain ? "fndecl" : "fndef",
-                RF_STR_PF_ARG(f->name), RF_STR_PF_ARG(&sep)))) {
+                RF_STR_PF_ARG(&f->name), RF_STR_PF_ARG(&sep)))) {
         goto end;
     }
 
@@ -345,6 +351,53 @@ struct rir_fndef *rir_fndef_create_from_ast(const struct ast_node *n, struct rir
         ret = NULL;
     }
     return ret;
+}
+
+static bool rir_fndef_init_from_parsing(
+    struct rir_fndef *def,
+    const struct RFstring *name,
+    struct rir_type *return_type,
+    struct rir *r,
+    struct rir_parser *p
+)
+{
+    if (!rf_string_copy_in(&def->decl.name, name)) {
+        return false;
+    }
+    def->decl.return_type = return_type;
+    if (!rir_parse_typearr(p, &def->decl.argument_types, r)) {
+        goto fail_free_name;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                      "Expected a ')' at the end of the function declaration.");
+        goto fail_free_args;
+    }
+
+    return true;
+
+fail_free_args:
+    rir_typearr_deinit(&def->decl.argument_types, r);
+fail_free_name:
+    rf_string_deinit(&def->decl.name);
+    return false;
+}
+
+struct rir_fndef *rir_fndef_create_from_parsing(
+    const struct RFstring *name,
+    struct rir_type *return_type,
+    struct rir *r,
+    struct rir_parser *p
+)
+{
+    struct rir_fndef *def;
+    RF_MALLOC(def, sizeof(*def), return NULL);
+    if (!rir_fndef_init_from_parsing(def, name, return_type, r, p)) {
+        free(def);
+        def = NULL;
+    }
+    return def;
 }
 
 static void rir_fndef_deinit(struct rir_fndef *f)

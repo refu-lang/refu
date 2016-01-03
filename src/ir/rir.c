@@ -248,7 +248,7 @@ static inline bool rir_create_typedefs(struct rf_objset_type *typeset,
     }
     darray_foreach(t, tarr) {
         if (!type_is_elementary(*t) && !type_is_implop(*t)) {
-            struct rir_typedef *def = rir_typedef_create(*t, ctx);
+            struct rir_typedef *def = rir_typedef_create_from_type(*t, ctx);
             if (!def) {
                 RF_ERROR("Failed to create a RIR typedef");
                 goto end;
@@ -438,7 +438,7 @@ struct RFstring *rir_tostring(struct rir *r)
     rf_ilist_for_each(&r->functions, decl, ln) {
         if (!rir_function_tostring(&ctx, decl)) {
             RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
-                     RF_STR_PF_ARG(decl->name));
+                     RF_STR_PF_ARG(&decl->name));
             goto end;
         }
     }
@@ -468,7 +468,7 @@ struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring 
 {
     struct rir_fndecl *fn;
     rf_ilist_for_each(&r->functions, fn, ln) {
-        if (rf_string_equal(name, fn->name)) {
+        if (rf_string_equal(name, &fn->name)) {
             return fn;
         }
     }
@@ -479,7 +479,7 @@ struct rir_fndecl *rir_fndecl_byname(const struct rir *r, const struct RFstring 
         RF_ASSERT(rf_string_equal(&dep->name, &g_str_stdlib),
         "The first dependency should be the standard library");
         rf_ilist_for_each(&dep->functions, fn, ln) {
-            if (rf_string_equal(name, fn->name)) {
+            if (rf_string_equal(name, &fn->name)) {
                 return fn;
             }
         }
@@ -500,7 +500,7 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
 {
     struct rir_typedef *def;
     rf_ilist_for_each(&r->typedefs, def, ln) {
-        if (rf_string_equal(name, def->name)) {
+        if (rf_string_equal(name, &def->name)) {
             return def;
         }
     }

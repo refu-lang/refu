@@ -5,7 +5,7 @@
 #include <inpfile.h>
 #include <ir/rir.h>
 
-#include "rparse_functions.h"
+#include <ir/parser/rirparser_functions.h>
 
 struct rir_parser *rir_parser_create(const struct RFstring *name,
                                      const struct RFstring *contents)
@@ -67,7 +67,7 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-static bool rir_accept_identifier(struct rir_parser *p, struct token *tok, struct rir *r)
+static bool rir_accept_identifier_var(struct rir_parser *p, struct token *tok, struct rir *r)
 {
     struct token *tok2;
     struct token *tok3;
@@ -86,6 +86,8 @@ static bool rir_accept_identifier(struct rir_parser *p, struct token *tok, struc
 
     switch (rir_toktype(tok3)) {
     case RIR_TOK_UNIONDEF:
+        return rir_parse_typedef(p, tok, true, r);
+    case RIR_TOK_TYPEDEF:
         return rir_parse_typedef(p, tok, true, r);
     default:
         rirparser_synerr(
@@ -112,7 +114,9 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r)
     case RIR_TOK_GLOBAL:
         return  rir_parse_global(p, tok, r);
     case RIR_TOK_IDENTIFIER_VARIABLE:
-        return rir_accept_identifier(p, tok, r);
+        return rir_accept_identifier_var(p, tok, r);
+    case RIR_TOK_FNDEF:
+        return rir_parse_fndef(p, r);
     default:
         rirparser_synerr(
             p,

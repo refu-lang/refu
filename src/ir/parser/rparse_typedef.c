@@ -1,10 +1,31 @@
-#include "rparse_functions.h"
+#include <ir/parser/rirparser_functions.h>
 
 #include <ir/parser/rirparser.h>
 #include <lexer/lexer.h>
 #include <ir/rir_global.h>
 #include <ir/rir_object.h>
 #include <ir/rir.h>
+
+struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r)
+{
+    struct token *tok = lexer_lookahead(&p->lexer, 1);
+    RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER, "Expected identifier");
+    struct rir_type *ret = rir_type_byname(r, ast_identifier_str(tok->value.value.ast));
+    if (!ret) {
+        rirparser_synerr(p, token_get_start(tok), NULL,
+                         "Provided string is not a recognized type");
+        return false;
+    }
+    // consume type identifier
+    tok = lexer_next_token(&p->lexer);
+    if (tok && rir_toktype(tok) == RIR_TOK_OP_MULTI) {
+        ret->is_pointer = true;
+        // consume '*'
+        lexer_next_token(&p->lexer);
+    }
+
+    return ret;
+}
 
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r)
 {
@@ -15,30 +36,13 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
     }
     darray_init(*arr);
 
-    struct rir_type *t;
-    while (rir_toktype(tok) == RIR_TOK_IDENTIFIER && !end_reached) {        
-        if (!(t = rir_type_byname(r, ast_identifier_str(tok->value.value.ast)))) {
-            rirparser_synerr(p, token_get_start(tok), NULL,
-                             "Provided string is not a recognized type");
+    while (rir_toktype(tok) == RIR_TOK_IDENTIFIER && !end_reached) {
+        struct rir_type *t = rir_parse_type(p, r);
+        if (!t) {
             goto fail_free_arr;
         }
 
-        // consume type identifier
-        tok = lexer_next_token(&p->lexer);
-        if (!tok || (rir_toktype(tok) != RIR_TOK_OP_MULTI &&
-                     rir_toktype(tok) != RIR_TOK_SM_COMMA &&
-                     rir_toktype(tok) != RIR_TOK_SM_CPAREN)) {
-            rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                             "Expected either '*', ',' or ')' in the type array");
-            goto fail_free_arr;
-        }
-
-        if (rir_toktype(tok) == RIR_TOK_OP_MULTI) {
-            t->is_pointer = true;
-            // consume '*'
-            tok = lexer_next_token(&p->lexer);
-        }
-
+        tok = lexer_lookahead(&p->lexer, 1);
         if (!tok || (rir_toktype(tok) != RIR_TOK_SM_CPAREN &&
                      rir_toktype(tok) != RIR_TOK_SM_COMMA)) {
             rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
@@ -75,28 +79,21 @@ bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, st
         return false;
     }
 
-    // initialize a typedef here
-    struct rir_typedef *def;
-    RF_MALLOC(def, sizeof(*def), return false);
-    def->is_union = uniondef;
-    if (!(def->name = rf_string_copy_out(ast_identifier_str(id->value.value.ast)))) {
-        goto fail_free_def;
-    }
-
     // parse the type array into the typedef
-    if (!rir_parse_typearr(p, &def->argument_types, r)) {
-        goto fail_free_name;
+    struct rir_type_arr arr;
+    if (!rir_parse_typearr(p, &arr, r)) {
+        return false;
     }
 
-    // by now typedef is ready so add it to the rir typedefs list
-    rf_ilist_add_tail(&r->typedefs, &def->ln);
+    // finally create the typedef here
+    struct rir_typedef *def = rir_typedef_create(
+        r,
+        p->curr_fn,
+        ast_identifier_str(id->value.value.ast),
+        uniondef,
+        &arr
+    );
 
 #undef i_typestr
-    return true;
-
-fail_free_name:
-    rf_string_destroy(def->name);
-fail_free_def:
-    free(def);
-    return false;
+    return def;
 }

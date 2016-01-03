@@ -94,6 +94,7 @@ refu_src = [
     'ir/parser/rirtoken.c',
     'ir/parser/rparse_global.c',
     'ir/parser/rparse_typedef.c',
+    'ir/parser/rparse_fndef.c',
 
     'ownership/ownership.c',
     'ownership/ow_graph.c',

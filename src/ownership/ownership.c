@@ -256,9 +256,9 @@ bool ow_function_pass(struct rir_fndef *f)
 {
     struct rir_object **var;
     ow_reset_expr_idx();
-    g_ow_ctx->curr_fn_name = f->decl.name;
+    g_ow_ctx->curr_fn_name = &f->decl.name;
     darray_foreach(var, f->variables) {
-        if (!ow_ctx_add_new(*var, f->decl.name, f->st)) {
+        if (!ow_ctx_add_new(*var, &f->decl.name, f->st)) {
             RF_ERROR("Error at adding a new ownership graph");
             return false;
         }
@@ -270,7 +270,7 @@ bool ow_function_pass(struct rir_fndef *f)
         rf_ilist_for_each(&(*b)->expressions, expr, ln) {
             // if it's an alloca add a new graph
             if (expr->type == RIR_EXPRESSION_ALLOCA) {
-                if (!ow_ctx_add_new(rir_expression_to_obj(expr), f->decl.name, (*b)->st)) {
+                if (!ow_ctx_add_new(rir_expression_to_obj(expr), &f->decl.name, (*b)->st)) {
                     RF_ERROR("Error at adding a new ownership graph");
                     return false;
                 }

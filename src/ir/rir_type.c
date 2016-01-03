@@ -203,7 +203,7 @@ const struct RFstring *rir_type_string(const struct rir_type *t)
                    t->is_pointer ? "*" : "");
     } else {
         return RFS(RF_STR_PF_FMT"%s",
-                   RF_STR_PF_ARG((t->tdef->name)),
+                   RF_STR_PF_ARG((&t->tdef->name)),
                    t->is_pointer ? "*" : "");
     }
 }

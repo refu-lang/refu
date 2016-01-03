@@ -52,22 +52,22 @@ struct rir_value *rir_object_value(struct rir_object *obj)
     return NULL;
 }
 
-void rir_object_listrem(struct rir_object *obj, struct rir_ctx *ctx)
+void rir_object_listrem(struct rir_object *obj, struct rir *r, struct rir_fndef *current_fn)
 {
-    rf_ilist_delete_from(&ctx->rir->objects, &obj->ln);
+    rf_ilist_delete_from(&r->objects, &obj->ln);
     // also remove it from any string maps it can be found in
     struct rir_value *val = rir_object_value(obj);
-    struct rirobj_strmap *map = ctx->current_fn ? &ctx->current_fn->map : &ctx->rir->map;
+    struct rirobj_strmap *map = current_fn ? &current_fn->map : &r->map;
     struct RFstring *str = strmap_del(map, &val->id, NULL);
     if (!str) {
-        str = strmap_del(&ctx->rir->map, &val->id, NULL);
+        str = strmap_del(&r->map, &val->id, NULL);
     }
     RF_ASSERT(str, "Could not find object for removal in the current function or in the global rir string map");
 }
 
-void rir_object_listrem_destroy(struct rir_object *obj, struct rir_ctx *ctx)
+void rir_object_listrem_destroy(struct rir_object *obj, struct rir *r, struct rir_fndef *current_fn)
 {
-    rir_object_listrem(obj, ctx);
+    rir_object_listrem(obj, r, current_fn);
     rir_object_destroy(obj);
 }
 

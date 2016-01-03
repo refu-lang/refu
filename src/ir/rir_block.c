@@ -265,7 +265,7 @@ struct rir_object *rir_block_create_obj(const struct ast_node *n,
     }
     if (!rir_block_init(ret, n, function_beginning, ctx)) {
         RF_ERROR("Failed to initialize a rir block");
-        rir_object_listrem_destroy(ret, ctx);
+        rir_object_listrem_destroy(ret, ctx->rir, ctx->current_fn);
         ret = NULL;
     }
     return ret;

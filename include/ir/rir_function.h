@@ -9,12 +9,14 @@
 
 struct ast_node;
 struct rir_block;
+struct rir_parser;
 struct rir_ctx;
 struct rir;
 struct symbol_table;
 
 struct rir_fndecl {
-    const struct RFstring *name;
+    //! Name of the function decl (owned)
+    struct RFstring name;
     //! Array of the function's argument types
     struct rir_type_arr argument_types;
     //! Return type of the function
@@ -50,6 +52,26 @@ struct rir_fndef {
 
 
 struct rir_fndef *rir_fndef_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
+
+/**
+ * Create a rir_fndef during parsing of a rir file
+ *
+ * Takes the parser at the position of the beginning of the arguments array
+ * and leaves it at the position where the parentheses of the function declaration
+ * closes.
+ *
+ * @param name            The name of the function. Already read from parsing.
+ * @param return_type     The return type of the function or NULL. Already read
+ *                        from parsing.
+ * @param r               The rir module to populate.
+ * @param p               The parser itself
+ */
+struct rir_fndef *rir_fndef_create_from_parsing(
+    const struct RFstring *name,
+    struct rir_type *return_type,
+    struct rir *r,
+    struct rir_parser *p
+);
 void rir_fndef_destroy(struct rir_fndef *f);
 
 /**
