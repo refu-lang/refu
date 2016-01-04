@@ -33,18 +33,19 @@ static bool rir_process_return(const struct ast_node *n,
     }
     struct rir_value *ret_val = rir_ctx_lastval_get(ctx);
     // write the return value to the return slot
-    if (!ctx->current_fn->retslot_expr) {
+    if (!rir_ctx_curr_fn(ctx)->retslot_expr) {
         RF_ERROR("Could not find the return alloca of a function");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     struct rir_expression *e = rir_write_create(
-        &ctx->current_fn->retslot_expr->val,
+        &rir_ctx_curr_fn(ctx)->retslot_expr->val,
         ret_val,
+        RIRPOS_AST,
         ctx
     );
-    rirctx_block_add(ctx, e);
+    rir_common_block_add(&ctx->common, e);
     // jump to the return
-    if (!rir_block_exit_init_branch(&ctx->current_block->exit, ctx->current_fn->end_label)) {
+    if (!rir_block_exit_init_branch(&rir_ctx_curr_block(ctx)->exit, rir_ctx_curr_fn(ctx)->end_label)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
 
@@ -72,7 +73,7 @@ bool rir_process_identifier(const struct ast_node *n,
 static bool rir_process_strlit(const struct ast_node *n,
                                struct rir_ctx *ctx)
 {
-    struct rir_object *litobj = rir_strlit_obj(ctx->rir, n);
+    struct rir_object *litobj = rir_strlit_obj(rir_ctx_rir(ctx), n);
     if (!litobj) {
         RF_ERROR("A string literal was not found in the global string literals");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);

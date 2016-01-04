@@ -114,21 +114,21 @@ i_INLINE_INS const struct RFstring *rir_global_name(const struct rir_global *g);
 i_INLINE_INS struct rir_type *rir_global_type(const struct rir_global *g);
 
 
-struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct RFstring *s)
+struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFstring *s)
 {
-    struct rir_object *gstring = strmap_get(&ctx->rir->global_literals, s);
+    struct rir_object *gstring = strmap_get(&rir->global_literals, s);
     if (!gstring) {
         RFS_PUSH();
         gstring = rir_global_create_string(
             rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
             RFS("gstr_%u", rf_hash_str_stable(s, 0)),
             s,
-            ctx->rir
+            rir
         );
         if (gstring) {
             // here we must make sure to not use @a s since it can be a temporary string
             // and strmap_add does not copy the key string, but just points to it
-            if (!strmap_add(&ctx->rir->global_literals, &rir_object_value(gstring)->literal, gstring)) {
+            if (!strmap_add(&rir->global_literals, &rir_object_value(gstring)->literal, gstring)) {
                 RF_ERROR("Failed to add a string literal to the global string map");
                 gstring = NULL;
             }

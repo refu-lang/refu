@@ -28,6 +28,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("uniondef"),
     RF_STRING_STATIC_INIT("typedef"),
     RF_STRING_STATIC_INIT("fndef"),
+    RF_STRING_STATIC_INIT("fndecl"),
     RF_STRING_STATIC_INIT("identifier variable"),
     RF_STRING_STATIC_INIT("identifier label"),
 };

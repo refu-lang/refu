@@ -43,7 +43,7 @@ i_INLINE_DECL struct rir_type *rir_global_type(const struct rir_global *g)
 /**
  * Add or retrieve a global string literal object
  *
- * @param ctx            The rir context with which to work
+ * @param rir            The rir object to work with
  * @param s              The string for which to check if there is a global string
  *                       object in the map and if not to create a map entry. A copy
  *                       of the string is kept inside the global string literal
@@ -51,6 +51,6 @@ i_INLINE_DECL struct rir_type *rir_global_type(const struct rir_global *g)
  * @return               Either the newly created object or the retrieved object.
  *                       NULL in failure
  */
-struct rir_object *rir_global_addorget_string(struct rir_ctx *ctx, const struct RFstring *s);
+struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFstring *s);
 
 #endif

@@ -22,7 +22,7 @@
 static inline void rir_ctx_init(struct rir_ctx *ctx, struct rir *r, struct module *m)
 {
     RF_STRUCT_ZERO(ctx);
-    ctx->rir = r;
+    ctx->common.rir = r;
     darray_init(ctx->st_stack);
     rir_ctx_push_st(ctx, module_symbol_table(m));
 }
@@ -53,6 +53,10 @@ struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx)
 {
     return darray_top(ctx->st_stack);
 }
+
+i_INLINE_INS struct rir_block *rir_ctx_curr_block(struct rir_ctx *ctx);
+i_INLINE_INS struct rir_fndef *rir_ctx_curr_fn(struct rir_ctx *ctx);
+i_INLINE_INS struct rir *rir_ctx_rir(struct rir_ctx *ctx);
 
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)
 {
@@ -89,7 +93,7 @@ void rir_strec_create_allocas(struct symbol_table_record *rec,
 {
     struct rir_type *type = rir_type_create_from_type(symbol_table_record_type(rec), ctx);
     RF_ASSERT_OR_EXIT(type, "Could not create a rir_type during symbol table iteration");
-    struct rir_object *alloca = rir_alloca_create_obj(type, rec->id, ctx);
+    struct rir_object *alloca = rir_alloca_create_obj(type, rec->id, RIRPOS_AST, ctx);
     RF_ASSERT_OR_EXIT(alloca, "Could not create an alloca object during symbol table iteration");
     rec->rirobj = alloca;
 }
@@ -99,7 +103,7 @@ void rir_strec_add_allocas(struct symbol_table_record *rec,
 {
     RF_ASSERT(rec->rirobj && rec->rirobj->category == RIR_OBJ_EXPRESSION,
               "Expected an expression rir object");
-    rirctx_block_add(ctx, &rec->rirobj->expr);
+    rir_common_block_add(&ctx->common, &rec->rirobj->expr);
 }
 
 static void rir_strec_create_and_add_allocas(struct symbol_table_record *rec,
@@ -284,7 +288,8 @@ static bool rir_process_do(struct rir *r, struct module *m)
     }
 
     // add "true", "false" as global literals in the module
-    if (!rir_global_addorget_string(&ctx, &g_str_true) || !rir_global_addorget_string(&ctx, &g_str_false)) {
+    if (!rir_global_addorget_string(rir_ctx_rir(&ctx), &g_str_true) ||
+        !rir_global_addorget_string(rir_ctx_rir(&ctx), &g_str_false)) {
         RF_ERROR("Failed to add \"true\", \"false\" global literals in the rir strmap");
         goto end;
     }
@@ -293,7 +298,7 @@ static bool rir_process_do(struct rir *r, struct module *m)
     struct rf_objset_iter it;
     struct RFstring *s;
     rf_objset_foreach(&m->string_literals_set, &it, s) {
-        if (!rir_global_addorget_string(&ctx, s)) {
+        if (!rir_global_addorget_string(rir_ctx_rir(&ctx), s)) {
             RF_ERROR("Failed to add a global string literal to the RIR");
             goto end;
         }
@@ -545,9 +550,3 @@ void rir_freevalues_add(struct rir *r, struct rir_value *v)
 {
     darray_append(r->free_values, v);
 }
-
-void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr)
-{
-    rf_ilist_add_tail(&ctx->current_block->expressions, &expr->ln);
-}
-

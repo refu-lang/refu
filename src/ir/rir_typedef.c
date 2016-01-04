@@ -50,7 +50,7 @@ static bool rir_typedef_init_from_type(struct rir_object *obj, struct type *t, s
     }
 
     // finally add the typedef to the rir's strmap
-    if (!strmap_add(&ctx->rir->map, &def->name, obj)) {
+    if (!strmap_add(&ctx->common.rir->map, &def->name, obj)) {
         RF_ERROR("Failed to add a typedef to the rir strmap");
         return false;
     }
@@ -60,7 +60,7 @@ static bool rir_typedef_init_from_type(struct rir_object *obj, struct type *t, s
 
 static struct rir_object *rir_typedef_create_obj_from_type(struct type *t, struct rir_ctx *ctx)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_TYPEDEF, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_TYPEDEF, ctx->common.rir);
     if (!ret) {
         return NULL;
     }

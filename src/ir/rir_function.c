@@ -11,7 +11,6 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 #include <ir/rir_strmap.h>
-#include <ir/parser/rirparser_functions.h>
 #include <ast/matchexpr.h>
 #include <types/type.h>
 #include <types/type_operators.h>
@@ -28,11 +27,11 @@ static inline void rir_type_fn_ctx_init(struct rir_type_fn_ctx *ctx,
 
 static bool rir_function_add_variable(struct rir_type *rtype, const struct RFstring *name, struct rir_ctx *ctx)
 {
-    struct rir_object *objvar = rir_variable_create(rtype, ctx);
+    struct rir_object *objvar = rir_variable_create(rtype, RIRPOS_AST, ctx);
     if (!objvar) {
         return false;
     }
-    darray_append(ctx->current_fn->variables, objvar);
+    darray_append(ctx->common.current_fn->variables, objvar);
     return rir_ctx_st_setobj(ctx, name, objvar);
 }
 
@@ -48,11 +47,13 @@ static bool rir_type_fn_cb(const struct RFstring *name,
     return rir_function_add_variable(rtype, name, ctx->rirctx);
 }
 
-static bool rir_fndecl_init_args(struct rir_type_arr *arr,
-                                 struct type *args_type,
-                                 const struct ast_node *ast_desc,
-                                 bool foreign,
-                                 struct rir_ctx *ctx)
+static bool rir_fndecl_init_args_from_ast(
+    struct rir_type_arr *arr,
+    struct type *args_type,
+    const struct ast_node *ast_desc,
+    bool foreign,
+    struct rir_ctx *ctx
+)
 {
     if (!args_type) {
         darray_init(*arr);
@@ -61,14 +62,14 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
 
     if (type_is_sumtype(args_type)) {
         RFS_PUSH();
-        struct rir_typedef *def = rir_typedef_byname(ctx->rir, type_get_unique_type_str(args_type));
+        struct rir_typedef *def = rir_typedef_byname(ctx->common.rir, type_get_unique_type_str(args_type));
         RFS_POP();
         if (!def) {
             RF_ERROR("Could not find sum type definition in the RIR");
             return false;
         }
         struct rir_type *t;
-        if (!(t = rir_type_comp_create(def, ctx->rir, true))) {
+        if (!(t = rir_type_comp_create(def, ctx->common.rir, true))) {
             return false;
         }
         darray_init(*arr);
@@ -96,51 +97,34 @@ static bool rir_fndecl_init_args(struct rir_type_arr *arr,
     return true;
 }
 
-static bool rir_fndecl_init(struct rir_fndecl *ret,
-                            const struct RFstring *name,
-                            struct type *arguments,
-                            const struct ast_node *ast_args_desc,
-                            const struct type *return_type,
-                            bool foreign,
-                            struct rir_ctx *ctx)
+bool rir_fndecl_init(
+    struct rir_fndecl *ret,
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    bool foreign
+)
 {
     RF_STRUCT_ZERO(ret);
-    ret->plain_decl = foreign;
     if (!rf_string_copy_in(&ret->name, name)) {
         return false;
     }
-    if (!rir_fndecl_init_args(&ret->argument_types, arguments, ast_args_desc, foreign, ctx)) {
-        return false;
-    }
-    if (return_type) {
-        ret->return_type = rir_type_create_from_type(return_type, ctx);
-        if (!ret->return_type) {
-            RF_ERROR("Could not find function's rir return type");
-            return false;
-        }
-        // if user defined type, return as a pointer
-        if (ret->return_type->category == RIR_TYPE_COMPOSITE) {
-            ret->return_type->is_pointer = true;
-        }
-    } else {
-        ret->return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
-        if (!ret->return_type) {
-            RF_ERROR("Could not create nil type for a function's return");
-            return false;
-        }
-    }
+    ret->plain_decl = foreign;
+    darray_shallow_copy(ret->argument_types, *args);
+    ret->return_type = return_type;
     return true;
 }
 
-struct rir_fndecl *rir_fndecl_create(const struct RFstring *name,
-                                     struct type *arguments,
-                                     const struct type *return_type,
-                                     bool foreign,
-                                     struct rir_ctx *ctx)
+struct rir_fndecl *rir_fndecl_create(
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    bool foreign
+)
 {
     struct rir_fndecl *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_fndecl_init(ret, name, arguments, NULL, return_type, foreign, ctx)) {
+    if (!rir_fndecl_init(ret, name, args, return_type, foreign)) {
         free(ret);
         ret = NULL;
     }
@@ -154,15 +138,47 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
     struct ast_node *ast_returns = ast_fndecl_return_get(n);
     const struct ast_node *ast_args = ast_fndecl_args_get(n);
     bool is_foreign = ast_fndecl_position_get(n) == FNDECL_PARTOF_FOREIGN_IMPORT;
+
+    // take arguments from the AST node
+    struct rir_type_arr args;
+    if (!rir_fndecl_init_args_from_ast(
+            &args,
+            ast_args ? (struct type*)ast_node_get_type(ast_args) : NULL,
+            ast_args,
+            is_foreign,
+            ctx)) {
+        return false;
+    }
+
+    // take return type from the AST node
+    struct rir_type *return_type;
+    if (ast_returns) {
+        return_type = rir_type_create_from_type(
+            (struct type*)ast_node_get_type(ast_returns),
+            ctx
+        );
+        if (!ret->return_type) {
+            RF_ERROR("Could not find function's rir return type");
+            return false;
+        }
+        // if user defined type, return as a pointer
+        if (return_type->category == RIR_TYPE_COMPOSITE) {
+            return_type->is_pointer = true;
+        }
+    } else {
+        return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
+        if (!return_type) {
+            RF_ERROR("Could not create nil type for a function's return");
+            return false;
+        }
+    }
+
     if (!rir_fndecl_init(
             ret,
             ast_fndecl_name_str(n),
-            ast_args ? (struct type*)ast_node_get_type(ast_args) : NULL,
-            ast_args,
-            ast_returns ? (struct type*)ast_node_get_type(ast_returns) : NULL,
-            is_foreign,
-            ctx
-        )) {
+            &args,
+            return_type,
+            is_foreign)) {
         return false;
     }
     return true;
@@ -230,25 +246,34 @@ i_INLINE_INS bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir
 
 
 
-static inline void rir_fndef_init_common_intro(struct rir_fndef *ret,
-                                               struct rir_ctx *ctx)
+static inline void rir_fndef_init_common_intro(
+    struct rir_fndef *ret,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     RF_STRUCT_ZERO(ret);
-    rir_ctx_reset(ctx);
+    if (pos == RIRPOS_AST) {
+        rir_ctx_reset(data);
+    }
     darray_init(ret->variables);
     strmap_init(&ret->map);
-    ctx->current_fn = ret;
+    rir_data_curr_fn(data) = ret;
 }
 
-static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
-                                               const struct type *return_type,
-                                               struct rir_ctx *ctx)
+static inline bool rir_fndef_init_common_outro(
+    struct rir_fndef *ret,
+    const struct rir_type *return_type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     darray_init(ret->blocks);
-    // if we got a return value allocate space for it. Assume single return values fow now
+    // if we got a return value and are coming directly from AST allocate space
+    // for it. Assume single return values fow now
     // TODO: Take into account multiple return values
-    if (return_type) {
-        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, ctx);
+    if (return_type && pos == RIRPOS_AST) {
+        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, pos, data);
         if (!alloca) {
             return false;
         }
@@ -257,30 +282,45 @@ static inline bool rir_fndef_init_common_outro(struct rir_fndef *ret,
     return true;
 }
 
-static bool rir_fndef_init(struct rir_fndef *ret,
-                           const struct RFstring *name,
-                           struct type *arguments,
-                           const struct type *return_type,
-                           struct rir_ctx *ctx)
+static bool rir_fndef_init(
+    struct rir_fndef *ret,
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    rir_fndef_init_common_intro(ret, ctx);
-    if (!rir_fndecl_init(&ret->decl, name, arguments, NULL, return_type, false, ctx)) {
+    rir_fndef_init_common_intro(ret, pos, data);
+    if (!rir_fndecl_init(&ret->decl, name, args, return_type, false)) {
         return false;
     }
-    return rir_fndef_init_common_outro(ret, return_type, ctx);
+    return rir_fndef_init_common_outro(ret, return_type, pos, data);
 }
 
-struct rir_fndef *rir_fndef_create(const struct RFstring *name,
-                                   struct type *arguments,
-                                   const struct type *return_type,
-                                   struct rir_ctx *ctx)
+struct rir_fndef *rir_fndef_create(
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     struct rir_fndef *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_fndef_init(ret, name, arguments, return_type, ctx)) {
+    if (!rir_fndef_init(ret, name, args, return_type, pos, data)) {
         free(ret);
         ret = NULL;
     }
+    return ret;
+}
+
+struct rir_fndef *rir_fndef_create_nodecl(enum rir_pos pos, rir_data data)
+{
+    struct rir_fndef *ret;
+    RF_MALLOC(ret, sizeof(*ret), return NULL);
+    rir_fndef_init_common_intro(ret, pos, data);
+    rir_fndef_init_common_outro(ret, NULL, pos, data);
     return ret;
 }
 
@@ -288,17 +328,21 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
                                     const struct ast_node *n,
                                     struct rir_ctx *ctx)
 {
-    rir_fndef_init_common_intro(ret, ctx);
     bool success = false;
-    rir_ctx_push_st(ctx, ast_fnimpl_symbol_table_get(n));
     const struct ast_node *decl = ast_fnimpl_fndecl_get(n);
     struct ast_node *ast_returns = ast_fndecl_return_get(decl);
+    rir_fndef_init_common_intro(ret, RIRPOS_AST, ctx);
+    rir_ctx_push_st(ctx, ast_fnimpl_symbol_table_get(n));
     ret->st = ast_fnimpl_symbol_table_get(n);
     if (!rir_fndecl_init_from_ast(&ret->decl, decl, ctx)) {
         goto end;
     }
     if (!rir_fndef_init_common_outro(
-            ret, ast_returns ? ast_node_get_type(ast_returns) : NULL,
+            ret,
+            ast_returns
+                ? rir_type_create_from_type(ast_node_get_type(ast_returns), ctx)
+                : NULL,
+            RIRPOS_AST,
             ctx
         )) {
         goto end;
@@ -313,7 +357,7 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     ret->end_label = &end_block->label;
 
     // finally create the first block of the body
-    struct rir_block *first_block  = rir_block_create(ast_fnimpl_body_get(n), true, ctx);
+    struct rir_block *first_block  = rir_block_create_from_ast(ast_fnimpl_body_get(n), true, ctx);
     if (!first_block) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
         goto end;
@@ -351,53 +395,6 @@ struct rir_fndef *rir_fndef_create_from_ast(const struct ast_node *n, struct rir
         ret = NULL;
     }
     return ret;
-}
-
-static bool rir_fndef_init_from_parsing(
-    struct rir_fndef *def,
-    const struct RFstring *name,
-    struct rir_type *return_type,
-    struct rir *r,
-    struct rir_parser *p
-)
-{
-    if (!rf_string_copy_in(&def->decl.name, name)) {
-        return false;
-    }
-    def->decl.return_type = return_type;
-    if (!rir_parse_typearr(p, &def->decl.argument_types, r)) {
-        goto fail_free_name;
-    }
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                      "Expected a ')' at the end of the function declaration.");
-        goto fail_free_args;
-    }
-
-    return true;
-
-fail_free_args:
-    rir_typearr_deinit(&def->decl.argument_types, r);
-fail_free_name:
-    rf_string_deinit(&def->decl.name);
-    return false;
-}
-
-struct rir_fndef *rir_fndef_create_from_parsing(
-    const struct RFstring *name,
-    struct rir_type *return_type,
-    struct rir *r,
-    struct rir_parser *p
-)
-{
-    struct rir_fndef *def;
-    RF_MALLOC(def, sizeof(*def), return NULL);
-    if (!rir_fndef_init_from_parsing(def, name, return_type, r, p)) {
-        free(def);
-        def = NULL;
-    }
-    return def;
 }
 
 static void rir_fndef_deinit(struct rir_fndef *f)

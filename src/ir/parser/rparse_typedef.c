@@ -1,6 +1,5 @@
-#include <ir/parser/rirparser_functions.h>
-
 #include <ir/parser/rirparser.h>
+
 #include <lexer/lexer.h>
 #include <ir/rir_global.h>
 #include <ir/rir_object.h>
@@ -88,7 +87,7 @@ bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, st
     // finally create the typedef here
     struct rir_typedef *def = rir_typedef_create(
         r,
-        p->curr_fn,
+        p->ctx.common.current_fn,
         ast_identifier_str(id->value.value.ast),
         uniondef,
         &arr

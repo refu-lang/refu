@@ -1,6 +1,5 @@
-#include <ir/parser/rirparser_functions.h>
-
 #include <ir/parser/rirparser.h>
+
 #include <lexer/lexer.h>
 #include <ir/rir_global.h>
 #include <ir/rir_object.h>

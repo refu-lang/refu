@@ -37,41 +37,46 @@ static enum rir_expression_type rir_binaryop_type_from_ast(const struct ast_bina
     return binaryop_operation_to_rir[op->type];
 }
 
-static inline bool rir_binaryop_init(struct rir_binaryop *op,
-                                     const struct rir_value *a,
-                                     const struct rir_value *b,
-                                     struct rir_ctx *ctx)
+static inline bool rir_binaryop_init(
+    struct rir_binaryop *op,
+    const struct rir_value *a,
+    const struct rir_value *b,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     struct rir_expression *e;
-    // for operations on pointers, first create a read from memory
-    if (a->type->is_pointer) {
-        if (!(e = rir_read_create(a, ctx))) {
-            return false;
-        }
-        rirctx_block_add(ctx, e);
-        a = &e->val;
-    }
-    if (b->type->is_pointer) {
-        if (!(e = rir_read_create(b, ctx))) {
-            return false;
-        }
-        rirctx_block_add(ctx, e);
-        b = &e->val;
-    }
-    // in addition if any of the two operands are not the same make a conversion
-    // of the largest type, to the smallest type.
-    if (!rir_type_equal(a->type, b->type)) {
-        struct rir_object *obj;
-        if (rir_type_bytesize(a->type) >= rir_type_bytesize(b->type)) {
-            if (!(obj = rir_convert_create_obj_maybeadd(a, b->type, ctx))) {
+    // for operations on pointers, first create a read from memory if we are coming from AST
+    if (pos == RIRPOS_AST) {
+        if (a->type->is_pointer) {
+            if (!(e = rir_read_create(a, pos, data))) {
                 return false;
             }
-            a = rir_object_value(obj);
-        } else {
-            if (!(obj = rir_convert_create_obj_maybeadd(b, a->type, ctx))) {
+            rir_data_block_add(data, e);
+            a = &e->val;
+        }
+        if (b->type->is_pointer) {
+            if (!(e = rir_read_create(b, pos, data))) {
                 return false;
             }
-            b = rir_object_value(obj);
+            rir_data_block_add(data, e);
+            b = &e->val;
+        }
+        // in addition if any of the two operands are not the same make a conversion
+        // of the largest type, to the smallest type.
+        if (!rir_type_equal(a->type, b->type)) {
+            struct rir_object *obj;
+            if (rir_type_bytesize(a->type) >= rir_type_bytesize(b->type)) {
+                if (!(obj = rir_convert_create_obj_maybeadd(a, b->type, pos, data))) {
+                    return false;
+                }
+                a = rir_object_value(obj);
+            } else {
+                if (!(obj = rir_convert_create_obj_maybeadd(b, a->type, pos, data))) {
+                    return false;
+                }
+                b = rir_object_value(obj);
+            }
         }
     }
     op->a = a;
@@ -79,19 +84,22 @@ static inline bool rir_binaryop_init(struct rir_binaryop *op,
     return true;
 }
 
-struct rir_object *rir_binaryop_create_nonast_obj(enum rir_expression_type type,
-                                                  const struct rir_value *a,
-                                                  const struct rir_value *b,
-                                                  struct rir_ctx *ctx)
+struct rir_object *rir_binaryop_create_nonast_obj(
+    enum rir_expression_type type,
+    const struct rir_value *a,
+    const struct rir_value *b,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         goto fail;
     }
-    if (!rir_binaryop_init(&ret->expr.binaryop, a, b, ctx)) {
+    if (!rir_binaryop_init(&ret->expr.binaryop, a, b, pos, data)) {
         goto fail;
     }
-    if (!rir_object_expression_init(ret, type, ctx)) {
+    if (!rir_object_expression_init(ret, type, pos, data)) {
         goto fail;
     }
     return ret;
@@ -101,29 +109,38 @@ fail:
     return NULL;
 }
 
-struct rir_expression *rir_binaryop_create_nonast(enum rir_expression_type type,
-                                                  const struct rir_value *a,
-                                                  const struct rir_value *b,
-                                                  struct rir_ctx *ctx)
+struct rir_expression *rir_binaryop_create_nonast(
+    enum rir_expression_type type,
+    const struct rir_value *a,
+    const struct rir_value *b,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_binaryop_create_nonast_obj(type, a, b, ctx);
+    struct rir_object *obj = rir_binaryop_create_nonast_obj(type, a, b, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_expression *rir_binaryop_create(const struct ast_binaryop *op,
-                                           const struct rir_value *a,
-                                           const struct rir_value *b,
-                                           struct rir_ctx *ctx)
+struct rir_expression *rir_binaryop_create(
+    const struct ast_binaryop *op,
+    const struct rir_value *a,
+    const struct rir_value *b,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    return rir_binaryop_create_nonast(rir_binaryop_type_from_ast(op), a, b, ctx);
+    return rir_binaryop_create_nonast(rir_binaryop_type_from_ast(op), a, b, pos, data);
 }
 
-struct rir_object *rir_binaryop_create_obj(const struct ast_binaryop *op,
-                                           const struct rir_value *a,
-                                           const struct rir_value *b,
-                                           struct rir_ctx *ctx)
+struct rir_object *rir_binaryop_create_obj(
+    const struct ast_binaryop *op,
+    const struct rir_value *a,
+    const struct rir_value *b,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    return rir_binaryop_create_nonast_obj(rir_binaryop_type_from_ast(op), a, b, ctx);
+    return rir_binaryop_create_nonast_obj(rir_binaryop_type_from_ast(op), a, b, pos, data);
 }
 
 struct rir_member_access_ctx {
@@ -166,7 +183,7 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     const struct rir_value *lhs_val = rir_ctx_lastval_get(ctx);
     const struct RFstring *rightstr = ast_identifier_str(op->right);
     const struct type *owner_type = ast_node_get_type_or_die(op->left);
-    struct rir_typedef *def = rir_typedef_frommap(ctx->rir, type_defined_get_name(owner_type));
+    struct rir_typedef *def = rir_typedef_frommap(rir_ctx_rir(ctx), type_defined_get_name(owner_type));
     if (!def) {
         RF_ERROR("Could not find rir typedef for a member access type");
         goto fail;
@@ -197,12 +214,12 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
 
     // create a rir expression to read the object value at the assignee's index position
-    struct rir_object *member_ptr_obj = rir_objmemberat_create_obj(lhs_val, cbctx.found_idx, ctx);
+    struct rir_object *member_ptr_obj = rir_objmemberat_create_obj(lhs_val, cbctx.found_idx, RIRPOS_AST, ctx);
     if (!member_ptr_obj) {
         goto fail;
     }
-    rirctx_block_add(ctx, &member_ptr_obj->expr);
-    member_ptr_obj = rir_getread_obj(member_ptr_obj, ctx);
+    rir_common_block_add(&ctx->common, &member_ptr_obj->expr);
+    member_ptr_obj = rirctx_getread_obj(member_ptr_obj, ctx);
     if (!member_ptr_obj) {
         goto fail;
     }
@@ -243,18 +260,18 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
             RIRCTX_RETURN_EXPR(ctx, true, NULL);
         }
         // else, create a rir_write
-        rval = rir_getread_val(rval, ctx);
-        if (!(obj = rir_write_create_obj(lval, rval, ctx))) {
+        rval = rirctx_getread_val(rval, ctx);
+        if (!(obj = rir_write_create_obj(lval, rval, RIRPOS_AST, ctx))) {
             goto fail;
         }
     } else { // normal binary operator processing
-        if (!(obj = rir_binaryop_create_obj(op, lval, rval, ctx))) {
+        if (!(obj = rir_binaryop_create_obj(op, lval, rval, RIRPOS_AST, ctx))) {
             RF_ERROR("Failed to create a rir binary operation");
             goto fail;
         }
     }
 
-    rirctx_block_add(ctx, &obj->expr);
+    rir_common_block_add(&ctx->common, &obj->expr);
     ctx->last_assign_obj = NULL;
     RIRCTX_RETURN_EXPR(ctx, true, obj);
 

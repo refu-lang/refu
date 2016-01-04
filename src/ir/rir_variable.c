@@ -2,21 +2,27 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-static bool rir_variable_init(struct rir_object *obj,
-                              struct rir_type *type,
-                              struct rir_ctx  *ctx)
+static bool rir_variable_init(
+    struct rir_object *obj,
+    struct rir_type *type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    return rir_value_variable_init(&obj->variable.val, obj, type, ctx);
+    return rir_value_variable_init(&obj->variable.val, obj, type, pos, data);
 }
 
-struct rir_object *rir_variable_create(struct rir_type *type,
-                                       struct rir_ctx *ctx)
+struct rir_object *rir_variable_create(
+    struct rir_type *type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_VARIABLE, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_VARIABLE, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
-    if (!rir_variable_init(ret, type, ctx)) {
+    if (!rir_variable_init(ret, type, pos, data)) {
         free(ret);
         ret = NULL;
     }

@@ -6,6 +6,7 @@
 #include <String/rf_str_decl.h>
 #include <ast/constants_decls.h>
 #include <types/type_decls.h>
+#include <ir/rir_common.h>
 
 struct rir;
 struct rir_ctx;
@@ -44,13 +45,28 @@ struct value_arr {darray(struct rir_value*);};
  * @param type         An optional type to give to the value. If this is not
  *                     given then the value has to be determined by the rir
  *                     object itself.
- * @param ctx          The rir context
+ * @param pos          Denotes which code module the function is called form.
+ * @param data         The rir data. If @a pos:
+ *                         + RIRPOS_AST   -> then this is rir_ctx
+ *                         + RIRPOS_PARSE -> then this is rir_pctx
  * @return             True for succes, false otherwise
  */
-bool rir_value_variable_init(struct rir_value *v, struct rir_object *obj, struct rir_type *type, struct rir_ctx *ctx);
+bool rir_value_variable_init(
+    struct rir_value *v,
+    struct rir_object *obj,
+    struct rir_type *type,
+    enum rir_pos pos,
+    rir_data data
+);
+
 bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value);
-bool rir_value_label_init_string(struct rir_value *v, struct rir_object *obj, const struct RFstring *s, struct rir_ctx *ctx);
-bool rir_value_label_init(struct rir_value *v, struct rir_object *obj, bool function_beginning, struct rir_ctx *ctx);
+bool rir_value_label_init_string(
+    struct rir_value *v,
+    struct rir_object *obj,
+    const struct RFstring *s,
+    struct rir_common *common
+);
+
 /**
  * Initialize a constant value
  * @param v        The value to initialize

@@ -47,7 +47,7 @@ struct rir_block {
 };
 
 /**
- * Create a new rir basic block
+ * Create a new rir basic block directly from AST
  *
  * @param n               If given the basic block will start being populated
  *                        with expressions taken out of this ast block. If not,
@@ -58,12 +58,31 @@ struct rir_block {
  * @param function_start  If true, then this is the first block of a function
  * @param ctx             The rir ctx for traversal
  */
-struct rir_object *rir_block_create_obj(const struct ast_node *n,
-                                    bool function_beginning,
-                                    struct rir_ctx *ctx);
-struct rir_block *rir_block_create(const struct ast_node *n,
-                                   bool function_beginning,
-                                   struct rir_ctx *ctx);
+struct rir_object *rir_block_create_obj_from_ast(
+    const struct ast_node *n,
+    bool function_beginning,
+    struct rir_ctx *ctx
+);
+struct rir_block *rir_block_create_from_ast(
+    const struct ast_node *n,
+    bool function_beginning,
+    struct rir_ctx *ctx
+);
+
+/**
+ * Create a new rir basic block
+ */
+struct rir_object *rir_block_create_obj(
+    const struct RFstring *name,
+    enum rir_pos pos,
+    rir_data data
+);
+struct rir_block *rir_block_create(
+    const struct RFstring *name,
+    enum rir_pos pos,
+    rir_data data
+);
+
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx);
 struct rir_block *rir_block_matchcase_create(const struct ast_node *mcase,
                                              struct rir_object *matched_rir_obj,

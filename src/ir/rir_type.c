@@ -123,12 +123,12 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, ctx->rir, false);
+        return rir_type_comp_create(tdef, ctx->common.rir, false);
     } else if (t->category == TYPE_CATEGORY_OPERATOR) {
         struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
             symbol_table_print(rir_ctx_curr_st(ctx));
-            type_objset_print(ctx->rir->types_set);
+            type_objset_print(ctx->common.rir->types_set);
             RF_ERROR("Could not find operator type, equivalent typedef RIR object in symbol table");
             return NULL;
         }
@@ -137,7 +137,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, ctx->rir, false);
+        return rir_type_comp_create(tdef, ctx->common.rir, false);
     } else {
         RF_CRITICAL_FAIL("Unexpected type category");
         return NULL;
@@ -242,6 +242,6 @@ int rir_type_union_matched_type_from_fncall(const struct rir_type *t, const stru
     index = -1;
 
 end:
-    rir_typearr_deinit(&tarr, ctx->rir);
+    rir_typearr_deinit(&tarr, ctx->common.rir);
     return index;
 }

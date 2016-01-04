@@ -5,7 +5,7 @@
 #include <inpfile.h>
 #include <ir/rir.h>
 
-#include <ir/parser/rirparser_functions.h>
+i_INLINE_INS void rir_pctx_init(struct rir_pctx *ctx, struct rir *r);
 
 struct rir_parser *rir_parser_create(const struct RFstring *name,
                                      const struct RFstring *contents)
@@ -115,6 +115,8 @@ static bool rir_parse_single(struct rir_parser *p, struct rir *r)
         return  rir_parse_global(p, tok, r);
     case RIR_TOK_IDENTIFIER_VARIABLE:
         return rir_accept_identifier_var(p, tok, r);
+    case RIR_TOK_FNDECL:
+        return rir_parse_fndecl(p, r);
     case RIR_TOK_FNDEF:
         return rir_parse_fndef(p, r);
     default:
@@ -136,7 +138,7 @@ bool rir_parse(struct rir_parser *p)
         return false;
     }
     struct rir *r = rir_create();
-
+    rir_pctx_init(&p->ctx, r);
     while (rir_parse_single(p, r)) {
         ;
     }

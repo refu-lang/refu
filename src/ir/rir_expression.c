@@ -24,9 +24,12 @@ void rir_expression_init_with_nilval(struct rir_expression *e,
     rir_value_nil_init(&e->val);
 }
 
-bool rir_object_expression_init(struct rir_object *obj,
-                                enum rir_expression_type type,
-                                struct rir_ctx *ctx)
+bool rir_object_expression_init(
+    struct rir_object *obj,
+    enum rir_expression_type type,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     struct rir_expression *expr = &obj->expr;
     expr->type = type;
@@ -40,13 +43,12 @@ bool rir_object_expression_init(struct rir_object *obj,
         rir_value_nil_init(&expr->val);
         break;
     default:
-        if (!rir_value_variable_init(&expr->val, obj, NULL, ctx)) {
+        if (!rir_value_variable_init(&expr->val, obj, NULL, pos, data)) {
             return false;
         }
     }
     return true;
 }
-
 
 void rir_expression_deinit(struct rir_expression *expr)
 {
@@ -71,46 +73,55 @@ static inline void rir_alloca_init(struct rir_alloca *obj,
     obj->ast_id = id;
 }
 
-struct rir_object *rir_read_create_obj(const struct rir_value *memory_to_read,
-                                       struct rir_ctx *ctx)
+struct rir_object *rir_read_create_obj(
+    const struct rir_value *memory_to_read,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         free(ret);
         return NULL;
     }
     ret->expr.read.memory = memory_to_read;
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_READ, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_READ, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_read_create(const struct rir_value *memory_to_read,
-                                       struct rir_ctx *ctx)
+struct rir_expression *rir_read_create(
+    const struct rir_value *memory_to_read,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_read_create_obj(memory_to_read, ctx);
+    struct rir_object *obj = rir_read_create_obj(memory_to_read, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-static inline bool rir_write_init(struct rir_write *w,
-                                  const struct rir_value *memory_to_write,
-                                  const struct rir_value *writeval,
-                                  struct rir_ctx *ctx)
+static inline bool rir_write_init(
+    struct rir_write *w,
+    const struct rir_value *memory_to_write,
+    const struct rir_value *writeval,
+    enum rir_pos pos,
+    rir_data data
+)
 {
     struct rir_expression *e;
     // for write operations on a memory location first create a read from memory.
     // string are as usually an exception, at least for now
     if (!rir_type_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
-        if (!(e = rir_read_create(writeval, ctx))) {
+        if (!(e = rir_read_create(writeval, pos, data))) {
             return false;
         }
-        rirctx_block_add(ctx, e);
+        rir_data_block_add(data, e);
         writeval = &e->val;
     }
     // if the types are not the same, make a conversion
-    if (!(writeval = rir_maybe_convert(writeval, memory_to_write->type, ctx))) {
+    if (!(writeval = rir_maybe_convert(writeval, memory_to_write->type, pos, data))) {
         RF_ERROR("Failed to convert a value in a rir_write instruction initialization");
         return false;
     }
@@ -119,18 +130,21 @@ static inline bool rir_write_init(struct rir_write *w,
     return true;
 }
 
-struct rir_object *rir_write_create_obj(const struct rir_value *memory_to_write,
-                                        const struct rir_value *writeval,
-                                        struct rir_ctx *ctx)
+struct rir_object *rir_write_create_obj(
+    const struct rir_value *memory_to_write,
+    const struct rir_value *writeval,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
-    if (!rir_write_init(&ret->expr.write, memory_to_write, writeval, ctx)) {
+    if (!rir_write_init(&ret->expr.write, memory_to_write, writeval, pos, data)) {
         goto fail;
     }
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_WRITE, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_WRITE, pos, data)) {
         goto fail;
     }
     return ret;
@@ -140,132 +154,164 @@ fail:
     return NULL;
 }
 
-struct rir_expression *rir_write_create(const struct rir_value *memory_to_write,
-                                        const struct rir_value *writeval,
-                                        struct rir_ctx *ctx)
+struct rir_expression *rir_write_create(
+    const struct rir_value *memory_to_write,
+    const struct rir_value *writeval,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_write_create_obj(memory_to_write, writeval, ctx);
+    struct rir_object *obj = rir_write_create_obj(memory_to_write, writeval, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_object *rir_alloca_create_obj(struct rir_type *type,
-                                         const struct RFstring *id,
-                                         struct rir_ctx *ctx)
+struct rir_object *rir_alloca_create_obj(
+    struct rir_type *type,
+    const struct RFstring *id,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
     rir_alloca_init(&ret->expr.alloca, type, id);
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_ALLOCA, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_ALLOCA, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_alloca_create(struct rir_type *type,
-                                         const struct RFstring *id,
-                                         struct rir_ctx *ctx)
+struct rir_expression *rir_alloca_create(
+    struct rir_type *type,
+    const struct RFstring *id,
+    enum rir_pos pos,
+    rir_data data)
 {
-    struct rir_object *obj = rir_alloca_create_obj(type, id, ctx);
+    struct rir_object *obj = rir_alloca_create_obj(type, id, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-static struct rir_object *rir_setunionidx_create_obj(const struct rir_value *unimemory,
-                                                     const struct rir_value *idx,
-                                                     struct rir_ctx *ctx)
+static struct rir_object *rir_setunionidx_create_obj(
+    const struct rir_value *unimemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
     ret->expr.setunionidx.unimemory = unimemory;
     ret->expr.setunionidx.idx = idx;
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_SETUNIONIDX, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_SETUNIONIDX, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_setunionidx_create(const struct rir_value *unimemory,
-                                              const struct rir_value *idx,
-                                              struct rir_ctx *ctx)
+struct rir_expression *rir_setunionidx_create(
+    const struct rir_value *unimemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_setunionidx_create_obj(unimemory, idx, ctx);
+    struct rir_object *obj = rir_setunionidx_create_obj(unimemory, idx, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-static struct rir_object *rir_getunionidx_create_obj(const struct rir_value *unimemory,
-                                                     struct rir_ctx *ctx)
+static struct rir_object *rir_getunionidx_create_obj(
+    const struct rir_value *unimemory,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
     ret->expr.getunionidx.unimemory = unimemory;
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_GETUNIONIDX, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_GETUNIONIDX, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_getunionidx_create(const struct rir_value *unimemory,
-                                              struct rir_ctx *ctx)
+struct rir_expression *rir_getunionidx_create(
+    const struct rir_value *unimemory,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_getunionidx_create_obj(unimemory, ctx);
+    struct rir_object *obj = rir_getunionidx_create_obj(unimemory, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-struct rir_object *rir_objmemberat_create_obj(const struct rir_value *objmemory,
-                                              uint32_t idx,
-                                              struct rir_ctx *ctx)
+struct rir_object *rir_objmemberat_create_obj(
+    const struct rir_value *objmemory,
+    uint32_t idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
     ret->expr.objmemberat.objmemory = objmemory;
     ret->expr.objmemberat.idx = idx;
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_OBJMEMBERAT, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_OBJMEMBERAT, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_objmemberat_create(const struct rir_value *objmemory,
-                                              uint32_t idx,
-                                              struct rir_ctx *ctx)
+struct rir_expression *rir_objmemberat_create(
+    const struct rir_value *objmemory,
+    uint32_t idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_objmemberat_create_obj(objmemory, idx, ctx);
+    struct rir_object *obj = rir_objmemberat_create_obj(objmemory, idx, pos, data);
     return obj ? &obj->expr : NULL;
 }
 
-static struct rir_object *rir_unionmemberat_create_obj(const struct rir_value *unimemory,
-                                                       uint32_t idx,
-                                                       struct rir_ctx *ctx)
+static struct rir_object *rir_unionmemberat_create_obj(
+    const struct rir_value *unimemory,
+    uint32_t idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
     ret->expr.unionmemberat.unimemory = unimemory;
     ret->expr.unionmemberat.idx = idx;
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_UNIONMEMBERAT, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_UNIONMEMBERAT, pos, data)) {
         free(ret);
         ret = NULL;
     }
     return ret;
 }
 
-struct rir_expression *rir_unionmemberat_create(const struct rir_value *unimemory,
-                                                uint32_t idx,
-                                                struct rir_ctx *ctx)
+struct rir_expression *rir_unionmemberat_create(
+    const struct rir_value *unimemory,
+    uint32_t idx,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *obj = rir_unionmemberat_create_obj(unimemory, idx, ctx);
+    struct rir_object *obj = rir_unionmemberat_create_obj(unimemory, idx, pos, data);
     return obj ? &obj->expr : NULL;
 }
 

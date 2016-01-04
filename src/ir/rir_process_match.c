@@ -9,21 +9,23 @@
 #include <ast/matchexpr.h>
 #include <Utils/sanity.h>
 
-const struct rir_value *rir_sum_subtype(const struct type *rtype,
-                                        const struct type *matchtype,
-                                        const struct rir_value *typeobject,
-                                        struct rir_ctx *ctx)
+const struct rir_value *rir_sum_subtype(
+    const struct type *rtype,
+    const struct type *matchtype,
+    const struct rir_value *typeobject,
+    struct rir_ctx *ctx
+)
 {
     const struct rir_value *val = NULL;
     int idx = type_is_childof(rtype, matchtype);
     if (!rir_type_is_elementary(typeobject->type) && idx != -1) { // type child of matched type
         // create a rir expression to read the object value at the index position
-        struct rir_expression *e = rir_objmemberat_create(typeobject, idx, ctx);
+        struct rir_expression *e = rir_objmemberat_create(typeobject, idx, RIRPOS_AST, ctx);
         if (!e) {
             RF_CRITICAL_FAIL("Could not create member access rir instruction");
         }
-        rirctx_block_add(ctx, e);
-        val = rir_getread_exprval(e, ctx);
+        rir_common_block_add(&ctx->common, e);
+        val = rirctx_getread_exprval(e, ctx);
     } else if (rtype == matchtype || rir_type_is_elementary(typeobject->type)) { // type is actually matched type
         val = typeobject;
     } else {
@@ -48,8 +50,10 @@ static inline void alloca_pop_ctx_init(struct alloca_pop_ctx *ctx,
     ctx->matched_case_rirobj = matched_case_rirobj;
 }
 
-static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec,
-                                                 struct alloca_pop_ctx *ctx)
+static void rir_symbol_table_populate_allocas_do(
+    struct symbol_table_record *rec,
+    struct alloca_pop_ctx *ctx
+)
 {
     // create and add the alloca
     rir_strec_create_allocas(rec, ctx->rirctx);
@@ -62,8 +66,8 @@ static void rir_symbol_table_populate_allocas_do(struct symbol_table_record *rec
         rtype, ctx->matched_case_type, ctx->matched_case_rirobj, ctx->rirctx
     );
     // and now write that to the alloca
-    struct rir_expression *expr = rir_write_create(rir_object_value(rec->rirobj), val, ctx->rirctx);
-    rirctx_block_add(ctx->rirctx, expr);
+    struct rir_expression *expr = rir_write_create(rir_object_value(rec->rirobj), val, RIRPOS_AST, ctx->rirctx);
+    rir_common_block_add(&ctx->rirctx->common, expr);
 }
 
 bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_object *matched_rir_obj, struct rir_ctx *ctx)
@@ -72,11 +76,11 @@ bool rir_match_st_populate_allocas(const struct ast_node *mcase, struct rir_obje
     // Get the union member for the match
     uint32_t case_idx = ast_matchcase_index_get(mcase);
     const struct type *mcmatch_type = ast_matchcase_matched_type(mcase);
-    if (!(e = rir_unionmemberat_create(rir_object_value(matched_rir_obj), case_idx, ctx))) {
+    if (!(e = rir_unionmemberat_create(rir_object_value(matched_rir_obj), case_idx, RIRPOS_AST, ctx))) {
         return false;
     }
-    rirctx_block_add(ctx, e);
-    const struct rir_value *v = rir_getread_exprval(e, ctx);
+    rir_common_block_add(&ctx->common, e);
+    const struct rir_value *v = rirctx_getread_exprval(e, ctx);
 
     // iterate the allocas and assign the proper values from the subobject
     struct alloca_pop_ctx alloca_ctx;
@@ -97,23 +101,24 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
                                                struct rir_ctx *ctx)
 {
     struct rir_expression *cmp = NULL;
-    struct rir_block *this_block = ctx->current_block;
-    struct rir_value *case_rir_idx = rir_constantval_create_fromint32(ast_matchcase_index_get(mcase), ctx->rir);
+    struct rir_block *this_block = rir_ctx_curr_block(ctx);
+    struct rir_value *case_rir_idx = rir_constantval_create_fromint32(ast_matchcase_index_get(mcase), rir_ctx_rir(ctx));
     bool need_case_cmp = !ast_match_expr_next_case_is_last(mexpr, it) || this_block == before_block;
     if (need_case_cmp) {
         if (this_block != before_block) {
             //create new empty block for the comparisons
             this_block = rir_block_create(NULL, false, ctx);
-            rir_fndef_add_block(ctx->current_fn, this_block);
+            rir_fndef_add_block(rir_ctx_curr_fn(ctx), this_block);
         }
         // Create index comparison for match case
         cmp = rir_binaryop_create_nonast(
             RIR_EXPRESSION_CMP_EQ,
             uni_idx,
             case_rir_idx,
+            RIRPOS_AST,
             ctx
         );
-        rirctx_block_add(ctx, cmp);
+        rir_common_block_add(&ctx->common, cmp);
     }
 
     // use this match case symbol table now
@@ -130,12 +135,13 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
         struct rir_expression *e = rir_write_create(
             rir_object_value(ctx->last_assign_obj),
             rir_ctx_lastval_get(ctx),
+            RIRPOS_AST,
             ctx
         );
         if (!e) {
             return NULL;
         }
-        rirctx_block_add(ctx, e);
+        rir_common_block_add(&ctx->common, e);
     }
 
     // stop using this match case symbol table
@@ -183,29 +189,29 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
             goto fail;
         }
         // create the after block
-        struct rir_block *prev_block = ctx->current_block;
+        struct rir_block *prev_block = rir_ctx_curr_block(ctx);
         after_block = rir_block_create(NULL, false, ctx);
         if (!after_block) {
             goto fail;
         }
-        ctx->current_block = prev_block;
+        ctx->common.current_block = prev_block;
     } else {
         struct symbol_table_record *rec = ast_matchexpr_headless_strec(
             n, rir_ctx_curr_st(ctx));
         RF_ASSERT(rec->rirobj, "A rir object should have been set for the record");
         matched_obj = rec->rirobj;
-        after_block = rir_value_label_dst(ctx->current_fn->end_label);
+        after_block = rir_value_label_dst(rir_ctx_curr_fn(ctx)->end_label);
     }
 
-    struct rir_expression *uni_idx = rir_getunionidx_create(rir_object_value(matched_obj), ctx);
-    rirctx_block_add(ctx, uni_idx);
+    struct rir_expression *uni_idx = rir_getunionidx_create(rir_object_value(matched_obj), RIRPOS_AST, ctx);
+    rir_common_block_add(&ctx->common, uni_idx);
     struct ast_matchexpr_it it;
     struct ast_node *mcase = ast_matchexpr_first_case(n, &it);
     struct rir_block *first_case_block = rir_process_matchcase(n,
                                                                matched_obj,
                                                                &uni_idx->val,
                                                                &it,
-                                                               ctx->current_block,
+                                                               rir_ctx_curr_block(ctx),
                                                                after_block,
                                                                mcase,
                                                                ctx);
@@ -215,8 +221,8 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
 
     // for normal matchexpr, after_block was an empty block so let's add it to the function now
     if (ast_matchexpr_has_header(n)) {
-        ctx->current_block = after_block;
-        rir_fndef_add_block(ctx->current_fn, after_block);
+        ctx->common.current_block = after_block;
+        rir_fndef_add_block(rir_ctx_curr_fn(ctx), after_block);
     }
     RIRCTX_RETURN_EXPR(ctx, true, matched_obj);
 fail:

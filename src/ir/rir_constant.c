@@ -8,7 +8,7 @@
 
 struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_ctx *ctx)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_ctx_rir(ctx));
     if (!ret) {
         return NULL;
     }

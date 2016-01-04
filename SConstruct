@@ -68,6 +68,7 @@ refu_src = [
     'types/type_utils.c',
 
     'ir/rir.c',
+    'ir/rir_common.c',
     'ir/rir_utils.c',
     'ir/rir_object.c',
     'ir/rir_argument.c',
@@ -94,7 +95,8 @@ refu_src = [
     'ir/parser/rirtoken.c',
     'ir/parser/rparse_global.c',
     'ir/parser/rparse_typedef.c',
-    'ir/parser/rparse_fndef.c',
+    'ir/parser/rparse_functions.c',
+    'ir/parser/rparse_blocks.c',
 
     'ownership/ownership.c',
     'ownership/ow_graph.c',

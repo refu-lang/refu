@@ -27,6 +27,25 @@ struct rir_fndecl {
     struct RFilist_node ln;
 };
 struct rir_fndecl *rir_fndecl_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
+bool rir_fndecl_init(
+    struct rir_fndecl *ret,
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    bool foreign
+);
+struct rir_fndecl *rir_fndecl_create(
+    const struct RFstring *name,
+    struct rir_type_arr *args,
+    struct rir_type *return_type,
+    bool foreign
+);
+/**
+ * Create a simply initialized rir function definition without touching
+ * the declaration part
+ */
+struct rir_fndef *rir_fndef_create_nodecl(enum rir_pos pos, rir_data data);
+
 void rir_fndecl_destroy(struct rir_fndecl *f);
 bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const struct rir_fndecl *f);
 i_INLINE_DECL bool rir_fndecl_tostring(struct rirtostr_ctx *ctx, const struct rir_fndecl *f)
@@ -50,28 +69,7 @@ struct rir_fndef {
     struct symbol_table *st;
 };
 
-
 struct rir_fndef *rir_fndef_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
-
-/**
- * Create a rir_fndef during parsing of a rir file
- *
- * Takes the parser at the position of the beginning of the arguments array
- * and leaves it at the position where the parentheses of the function declaration
- * closes.
- *
- * @param name            The name of the function. Already read from parsing.
- * @param return_type     The return type of the function or NULL. Already read
- *                        from parsing.
- * @param r               The rir module to populate.
- * @param p               The parser itself
- */
-struct rir_fndef *rir_fndef_create_from_parsing(
-    const struct RFstring *name,
-    struct rir_type *return_type,
-    struct rir *r,
-    struct rir_parser *p
-);
 void rir_fndef_destroy(struct rir_fndef *f);
 
 /**

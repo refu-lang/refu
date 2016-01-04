@@ -29,6 +29,7 @@ static void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_value *
     ctx->lhs = lhs;
     ctx->index = 0;
 }
+
 static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_ctx *ctx)
 {
     // for each argument, process the ast node and create the rir arg expression
@@ -43,12 +44,12 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
     struct rir_value *targetval;
     if (ctx->lhs->type->category == RIR_TYPE_COMPOSITE) {
         // if lhs type is composite create expression to read its index from the lhs composite type
-        if (!(e = rir_objmemberat_create(ctx->lhs, ctx->index, ctx->rirctx))) {
+        if (!(e = rir_objmemberat_create(ctx->lhs, ctx->index, RIRPOS_AST, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to get rir object's member memory");
             return false;
         }
-        rirctx_block_add(ctx->rirctx, e);
-        if (!(targetval = rir_getread_exprval(e, ctx->rirctx))) {
+        rir_common_block_add(&ctx->rirctx->common, e);
+        if (!(targetval = rirctx_getread_exprval(e, ctx->rirctx))) {
             RF_ERROR("Failed to create rir expression to read an object's value");
             return false;
         }
@@ -57,11 +58,11 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
         targetval = ctx->lhs;
     }
     // write the arg expression to the position
-    if (!(e = rir_write_create(targetval, argexprval, ctx->rirctx))) {
+    if (!(e = rir_write_create(targetval, argexprval, RIRPOS_AST, ctx->rirctx))) {
         RF_ERROR("Failed to create expression to write to an object's member");
         return false;
     }
-    rirctx_block_add(ctx->rirctx, e);
+    rir_common_block_add(&ctx->rirctx->common, e);
 
     ++ctx->index;
     return true;
@@ -74,7 +75,11 @@ static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_c
  * @param ctx              The rir ctx
  * @return                 True for success
  */
-static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct ast_node *ast_call, struct rir_ctx *ctx)
+static bool rir_populate_from_astcall(
+    struct rir_value *objmemory,
+    const struct ast_node *ast_call,
+    struct rir_ctx *ctx
+)
 {
     struct args_to_val_ctx argsctx;
     if (type_is_sumtype(ast_fncall_type(ast_call))) {
@@ -85,19 +90,19 @@ static bool rir_populate_from_astcall(struct rir_value *objmemory, const struct 
             return false;
         }
         // create code to set the  union's index with the matching type
-        struct rir_value *rir_idx_const = rir_constantval_create_fromint32(union_idx, ctx->rir);
-        struct rir_expression *e = rir_setunionidx_create(objmemory, rir_idx_const, ctx);
+        struct rir_value *rir_idx_const = rir_constantval_create_fromint32(union_idx, ctx->common.rir);
+        struct rir_expression *e = rir_setunionidx_create(objmemory, rir_idx_const, RIRPOS_AST, ctx);
         if (!e) {
             return false;
         }
-        rirctx_block_add(ctx, e);
+        rir_common_block_add(&ctx->common, e);
         // create code to load the appropriate union subtype for reading
-        struct rir_expression *ummbr_ptr = rir_unionmemberat_create(objmemory, union_idx, ctx);
+        struct rir_expression *ummbr_ptr = rir_unionmemberat_create(objmemory, union_idx, RIRPOS_AST, ctx);
         if (!ummbr_ptr) {
             return false;
         }
-        rirctx_block_add(ctx, ummbr_ptr);
-        if (!(objmemory = rir_getread_exprval(ummbr_ptr, ctx))) {
+        rir_common_block_add(&ctx->common, ummbr_ptr);
+        if (!(objmemory = rirctx_getread_exprval(ummbr_ptr, ctx))) {
             return false;
         }
     }
@@ -146,7 +151,7 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
     const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
         ? type_get_subtype(ctx->fndecl_type, darray_size(*ctx->arr))
         : ctx->fndecl_type;
-    if (!(argexprval = rir_maybe_convert_acquire_type(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), ctx->rirctx))) {
+    if (!(argexprval = rir_maybe_convert_acquire_type(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), RIRPOS_AST, ctx->rirctx))) {
         RF_ERROR("Could not create conversion for rir call argument");
         return false;
     }
@@ -156,7 +161,7 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
 
 struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, ctx->rir);
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_ctx_rir(ctx));
     if (!ret) {
         return NULL;
     }
@@ -173,12 +178,12 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
             RF_ERROR("Could not get the rir type of a sum function call");
         }
         // create an alloca for that type
-        struct rir_expression *e = rir_alloca_create(sumtype, NULL, ctx);
+        struct rir_expression *e = rir_alloca_create(sumtype, NULL, RIRPOS_AST, ctx);
         if (!e) {
             RF_ERROR("Failed to create a rir alloca instruction");
             goto fail;
         }
-        rirctx_block_add(ctx, e);
+        rir_common_block_add(&ctx->common, e);
         // populate the memory of the sumtype
         if (!rir_populate_from_astcall(&e->val, n, ctx)) {
             RF_ERROR("Failed to rir union type's memory");
@@ -197,7 +202,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
     ret->expr.call.foreign = ast_fncall_is_foreign(n);
 
     // now initialize the rir expression part of the struct
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, ctx)) {
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, RIRPOS_AST, ctx)) {
         goto fail;
     }
 
@@ -229,7 +234,7 @@ bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)
         RF_ERROR("Could not create a rir function call instruction");
         return false;
     }
-    rirctx_block_add(ctx, &cobj->expr);
+    rir_common_block_add(&ctx->common, &cobj->expr);
     RIRCTX_RETURN_EXPR(ctx, true, cobj);
 }
 
@@ -270,9 +275,9 @@ end:
     return ret;
 }
 
-struct rir_type *rir_call_return_type(struct rir_call *c, struct rir_ctx *ctx)
+struct rir_type *rir_call_return_type(struct rir_call *c, struct rir_common *cm)
 {
-    struct rir_fndecl *decl = rir_fndecl_byname(ctx->rir, &c->name);
+    struct rir_fndecl *decl = rir_fndecl_byname(cm->rir, &c->name);
     RF_ASSERT(decl, "At this point in the RIR the function declaration should have been found");
     return decl->return_type;
 }

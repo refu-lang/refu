@@ -3,6 +3,7 @@
 
 #include <RFintrusive_list.h>
 #include <Data_Structures/darray.h>
+#include <ir/rir_common.h>
 #include <ir/rir_strmap.h>
 #include <String/rf_str_decl.h>
 
@@ -67,10 +68,16 @@ struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *li
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v);
 
+/**
+ * A context carrying various rir related data to be passed around the
+ * rir functions when accessing them for converting AST directly to RIR.
+ *
+ * For converting from text during parsing @see rir_pctx
+ */
 struct rir_ctx {
-    struct rir *rir;
-    struct rir_fndef *current_fn;
-    struct rir_block *current_block;
+    //! Common rir data between this and the parsing context.
+    //! @warning Always keep first
+    struct rir_common common;
     struct rir_block *next_block;
     //! Stack of symbol table pointers, to remember current symbol table during rir formation
     struct {darray(struct symbol_table*);} st_stack;
@@ -94,6 +101,22 @@ struct rir_value *rir_ctx_lastassignval_get(const struct rir_ctx *c);
 void rir_ctx_push_st(struct rir_ctx *ctx, struct symbol_table *st);
 struct symbol_table *rir_ctx_pop_st(struct rir_ctx *ctx);
 struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx);
+
+i_INLINE_DECL struct rir_block *rir_ctx_curr_block(struct rir_ctx *ctx)
+{
+    return ctx->common.current_block;
+}
+
+i_INLINE_DECL struct rir_fndef *rir_ctx_curr_fn(struct rir_ctx *ctx)
+{
+    return ctx->common.current_fn;
+}
+
+i_INLINE_DECL struct rir *rir_ctx_rir(struct rir_ctx *ctx)
+{
+    return ctx->common.rir;
+}
+
 bool rir_ctx_st_newobj(struct rir_ctx *ctx, const struct RFstring *id, struct type *t, struct rir_object *obj);
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj);
 struct rir_object *rir_ctx_st_getobj(struct rir_ctx *ctx, const struct RFstring *id);
@@ -110,9 +133,6 @@ void rir_strec_create_allocas(struct symbol_table_record *rec,
         (i_ctx_)->returned_obj = i_obj_;                \
         return i_result_;                               \
     } while (0)
-
-
-void rirctx_block_add(struct rir_ctx *ctx, struct rir_expression *expr);
 
 
 struct rirtostr_ctx {
