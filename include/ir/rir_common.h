@@ -37,7 +37,6 @@ typedef void* rir_data;
 void rir_common_block_add(struct rir_common *c, struct rir_expression *expr);
 
 
-
 /**
  * Convenience macros to get rir common members out of rir_data
  *

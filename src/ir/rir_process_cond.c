@@ -96,7 +96,7 @@ static struct rir_block *rir_process_elif(
 )
 {
     struct rir_block *old_block;
-    if (!(old_block = rir_block_create(NULL, false, ctx))) {
+    if (!(old_block = rir_block_create_from_ast(NULL, false, ctx))) {
         return NULL;
     }
     rir_fndef_add_block(rir_ctx_curr_fn(ctx), old_block);
@@ -106,7 +106,7 @@ static struct rir_block *rir_process_elif(
 bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_block *old_block = rir_ctx_curr_block(ctx);
-    if (!(ctx->next_block = rir_block_create(NULL, false, ctx))) {
+    if (!(ctx->next_block = rir_block_create_from_ast(NULL, false, ctx))) {
         goto fail;
     }
     ctx->common.current_block = old_block;

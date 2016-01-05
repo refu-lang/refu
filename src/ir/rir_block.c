@@ -339,6 +339,7 @@ struct rir_object *rir_block_create_obj(
     rir_data data
 )
 {
+    RF_ASSERT(pos == RIRPOS_PARSE, "At least for now only through parsing we get here");
     struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, rir_data_rir(data));
     if (!ret) {
         return NULL;

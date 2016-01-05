@@ -107,7 +107,7 @@ static struct rir_block *rir_process_matchcase(const struct ast_node *mexpr,
     if (need_case_cmp) {
         if (this_block != before_block) {
             //create new empty block for the comparisons
-            this_block = rir_block_create(NULL, false, ctx);
+            this_block = rir_block_create_from_ast(NULL, false, ctx);
             rir_fndef_add_block(rir_ctx_curr_fn(ctx), this_block);
         }
         // Create index comparison for match case
@@ -190,7 +190,7 @@ bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx)
         }
         // create the after block
         struct rir_block *prev_block = rir_ctx_curr_block(ctx);
-        after_block = rir_block_create(NULL, false, ctx);
+        after_block = rir_block_create_from_ast(NULL, false, ctx);
         if (!after_block) {
             goto fail;
         }

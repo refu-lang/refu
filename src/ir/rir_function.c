@@ -157,7 +157,7 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
             (struct type*)ast_node_get_type(ast_returns),
             ctx
         );
-        if (!ret->return_type) {
+        if (!return_type) {
             RF_ERROR("Could not find function's rir return type");
             return false;
         }
