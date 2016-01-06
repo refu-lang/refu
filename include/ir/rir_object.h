@@ -8,6 +8,7 @@
 #include <ir/rir_global.h>
 #include <ir/rir_variable.h>
 #include <RFintrusive_list.h>
+#include <Utils/sanity.h>
 
 struct rir_fndef;
 
@@ -75,4 +76,10 @@ const struct RFstring *rir_object_category_str(const struct rir_object *obj);
  * @return a string describing the rir object
  */
 const struct RFstring *rir_object_string(const struct rir_object *obj);
+
+i_INLINE_DECL struct rir_expression *rir_object_to_expr(struct rir_object *obj)
+{
+    RF_ASSERT(obj->category == RIR_OBJ_EXPRESSION, "Expected expression object");
+    return &obj->expr;
+}
 #endif

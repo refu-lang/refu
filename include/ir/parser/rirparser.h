@@ -63,10 +63,22 @@ bool rir_parse(struct rir_parser *p);
     } while(0)
 
 
-struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r);
+struct rir_value *rir_parse_value(struct rir_parser *p, struct rir *r, const char *msg);
+struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char *msg);
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r);
 bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r);
-bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, struct rir *r);
+struct rir_object *rir_accept_identifier_var(
+    struct rir_parser *p,
+    struct token *tok,
+    struct rir_object *(*assignment_parser)(struct rir_parser*, struct token*, const struct RFstring *name, struct rir*),
+    struct rir *r
+);
+struct rir_object *rir_parse_typedef(
+    struct rir_parser *p,
+    const struct RFstring *name,
+    bool uniondef,
+    struct rir *r
+);
 bool rir_parse_fndef(struct rir_parser *p, struct rir *r);
 bool rir_parse_fndecl(struct rir_parser *p, struct rir *r);
 #endif

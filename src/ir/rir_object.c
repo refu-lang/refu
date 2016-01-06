@@ -105,3 +105,5 @@ const struct RFstring *rir_object_string(const struct rir_object *obj)
     }
     return rir_object_category_str(obj);
 }
+
+i_INLINE_INS struct rir_expression *rir_object_to_expr(struct rir_object *obj);

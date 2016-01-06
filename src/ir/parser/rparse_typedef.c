@@ -5,14 +5,19 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r)
+struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char *msg)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER, "Expected identifier");
     struct rir_type *ret = rir_type_byname(r, ast_identifier_str(tok->value.value.ast));
     if (!ret) {
-        rirparser_synerr(p, token_get_start(tok), NULL,
-                         "Provided string is not a recognized type");
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            NULL,
+            "Expected a type %s but provided string is not a recognized type",
+            msg
+        );
         return false;
     }
     // consume type identifier
@@ -29,14 +34,13 @@ struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r)
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
-    bool end_reached = false;
     if (!tok) {
         return false;
     }
     darray_init(*arr);
 
-    while (rir_toktype(tok) == RIR_TOK_IDENTIFIER && !end_reached) {
-        struct rir_type *t = rir_parse_type(p, r);
+    while (rir_toktype(tok) == RIR_TOK_IDENTIFIER) {
+        struct rir_type *t = rir_parse_type(p, r, "at type array");
         if (!t) {
             goto fail_free_arr;
         }
@@ -52,8 +56,11 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
         darray_append(*arr, t);
 
         // check if we reached end of array
-        end_reached = rir_toktype(tok) == RIR_TOK_SM_CPAREN;
-        // consume the token and go to the next one
+        if (rir_toktype(tok) == RIR_TOK_SM_CPAREN) {
+            // succesfully exit the loop
+            break;
+        }
+        // else consume the token and go to the next one
         tok = lexer_next_token(&p->lexer);
     }
     return true;
@@ -63,7 +70,12 @@ fail_free_arr:
     return false;
 }
 
-bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, struct rir *r)
+struct rir_object *rir_parse_typedef(
+    struct rir_parser *p,
+    const struct RFstring *name,
+    bool uniondef,
+    struct rir *r
+)
 {
 #define i_DEFSTR "'%s'.", uniondef ? "uniondef" : "typedef"
 
@@ -75,23 +87,37 @@ bool rir_parse_typedef(struct rir_parser *p, struct token *id, bool uniondef, st
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
         rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
                       "Expected '(' after "i_DEFSTR);
-        return false;
+        return NULL;
     }
 
     // parse the type array into the typedef
     struct rir_type_arr arr;
     if (!rir_parse_typearr(p, &arr, r)) {
-        return false;
+        return NULL;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected a ')' at the end of the type definition"
+        );
+        darray_free(arr);
+        return NULL;
     }
 
     // finally create the typedef here
-    struct rir_typedef *def = rir_typedef_create(
+    struct rir_object *def = rir_typedef_create_obj(
         r,
         p->ctx.common.current_fn,
-        ast_identifier_str(id->value.value.ast),
+        name,
         uniondef,
         &arr
     );
+    if (!def) {
+        rir_typearr_deinit(&arr, r);
+    }
 
 #undef i_typestr
     return def;

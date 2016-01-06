@@ -83,7 +83,7 @@ static bool rir_parse_fn_common(
         return NULL;
     }
 
-    struct rir_type *ret_type = rir_parse_type(p, r); // can be NULL
+    struct rir_type *ret_type = rir_parse_type(p, r, "function return type"); // can be NULL
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
@@ -146,6 +146,10 @@ bool rir_parse_fndecl(struct rir_parser *p, struct rir *r)
 bool rir_parse_fndef(struct rir_parser *p, struct rir *r)
 {
     struct rir_fndef *def = rir_fndef_create_nodecl(RIRPOS_PARSE, &p->ctx);
+    if (!rir_parse_fndecl(p, r)) {
+        rir_fndef_destroy(def);
+        return false;
+    }
 
     // finally set this as the current function and add it to the list
     rir_data_curr_fn(&p->ctx) = def;

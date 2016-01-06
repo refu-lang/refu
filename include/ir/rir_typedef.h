@@ -18,6 +18,14 @@ struct rir_typedef {
 };
 
 struct rir_typedef *rir_typedef_create_from_type(struct type *t, struct rir_ctx *ctx);
+
+struct rir_object *rir_typedef_create_obj(
+    struct rir *r,
+    struct rir_fndef *curr_fn,
+    const struct RFstring *name,
+    bool is_union,
+    const struct rir_type_arr *args
+);
 struct rir_typedef *rir_typedef_create(
     struct rir *r,
     struct rir_fndef *curr_fn,

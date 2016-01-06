@@ -77,7 +77,7 @@ struct rir_typedef *rir_typedef_create_from_type(struct type *t, struct rir_ctx 
     return obj ? &obj->tdef : NULL;
 }
 
-struct rir_typedef *rir_typedef_create(
+struct rir_object *rir_typedef_create_obj(
     struct rir *r,
     struct rir_fndef *curr_fn,
     const struct RFstring *name,
@@ -98,11 +98,23 @@ struct rir_typedef *rir_typedef_create(
     darray_shallow_copy(def->argument_types, *args);
 
     rf_ilist_add_tail(&r->typedefs, &def->ln);
-    return def;
+    return obj;
 
 fail:
     rir_object_listrem_destroy(obj, r, curr_fn);
     return NULL;
+}
+
+struct rir_typedef *rir_typedef_create(
+    struct rir *r,
+    struct rir_fndef *curr_fn,
+    const struct RFstring *name,
+    bool is_union,
+    const struct rir_type_arr *args
+)
+{
+    struct rir_object *obj = rir_typedef_create_obj(r, curr_fn, name, is_union, args);
+    return obj ? &obj->tdef : NULL;
 }
 
 void rir_typedef_deinit(struct rir_typedef *t)

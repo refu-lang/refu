@@ -104,7 +104,7 @@ enum token_type {
 struct tok_value {
     union {
         struct ast_node *ast;
-        // TODO: Add more types of valus here
+        // TODO: Add more types of values here
     } value;
     bool owned_by_lexer;
 };
