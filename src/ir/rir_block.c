@@ -44,7 +44,7 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
 }
 
 void rir_block_exit_return_init(struct rir_block_exit *exit,
-                                const struct rir_expression *val)
+                                const struct rir_value *val)
 {
     exit->type = RIR_BLOCK_EXIT_RETURN;
     rir_return_init(&exit->retstmt, val);
@@ -70,11 +70,11 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         }
         break;
     case RIR_BLOCK_EXIT_RETURN:
-        if (exitb->retstmt.ret.val) {
+        if (exitb->retstmt.val) {
             if (!rf_stringx_append(
                     ctx->rir->buff,
                     RFS(RIRTOSTR_INDENT"return("RF_STR_PF_FMT")\n",
-                        RF_STR_PF_ARG(rir_value_string(&exitb->retstmt.ret.val->val)))
+                        RF_STR_PF_ARG(rir_value_string(exitb->retstmt.val)))
                 )) {
                 goto end;
             }
@@ -116,24 +116,25 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     }
 
     // current block's exit should be the return
-    struct rir_expression *read_return = NULL;
+    struct rir_value *return_val = NULL;
     if (has_return) {
-        if (rir_type_is_composite(rir_ctx_curr_fn(ctx)->retslot_expr->val.type)) {
+        if (rir_type_is_composite(rir_ctx_curr_fn(ctx)->retslot_val->type)) {
             // if returning a user type, return directly
-            read_return = rir_ctx_curr_fn(ctx)->retslot_expr;
+            return_val = rir_ctx_curr_fn(ctx)->retslot_val;
         } else { // else read the value from the pointer
-            read_return = rir_read_create(
-                &rir_ctx_curr_fn(ctx)->retslot_expr->val,
+            struct rir_expression *e = rir_read_create(
+                rir_ctx_curr_fn(ctx)->retslot_val,
                 RIRPOS_AST,
                 ctx
             );
-            if (!read_return) {
+            if (!e) {
                 RF_ERROR("Could not create a read from a function's return slot");
             }
-            rir_common_block_add(&ctx->common, read_return);
+            rir_common_block_add(&ctx->common, e);
+            return_val = &e->val;
         }
     }
-    rir_block_exit_return_init(&ret->block.exit, read_return);
+    rir_block_exit_return_init(&ret->block.exit, return_val);
     b->st = rir_ctx_curr_st(ctx);
     RF_ASSERT(b->st, "Symbol table should not be NULL");
 end:

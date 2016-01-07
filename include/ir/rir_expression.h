@@ -71,8 +71,8 @@ struct rir_alloca {
 };
 
 struct rir_return {
-    //! The expression to return or NULL if it's a return without expression
-    const struct rir_expression *val;
+    //! The value to return or NULL if it's a return without expression
+    const struct rir_value *val;
 };
 
 struct rir_binaryop {
@@ -208,8 +208,7 @@ struct rir_object *rir_write_create_obj(
 );
 
 struct rir_object *rir_return_create(const struct rir_expression *val, struct rir_ctx *ctx);
-void rir_return_init(struct rir_expression *ret,
-                     const struct rir_expression *val);
+void rir_return_init(struct rir_return *ret, const struct rir_value *val);
 
 struct rir_expression {
     enum rir_expression_type type;
@@ -224,7 +223,6 @@ struct rir_expression {
         struct rir_binaryop binaryop;
         struct rir_read read;
         struct rir_write write;
-        struct rir_return ret;
     };
     struct rir_value val;
     // Control to be added to expression list of a rir block

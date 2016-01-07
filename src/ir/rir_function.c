@@ -277,7 +277,7 @@ static inline bool rir_fndef_init_common_outro(
         if (!alloca) {
             return false;
         }
-        ret->retslot_expr = alloca;
+        ret->retslot_val = &alloca->val;
     }
     return true;
 }

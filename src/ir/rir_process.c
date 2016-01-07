@@ -33,12 +33,12 @@ static bool rir_process_return(const struct ast_node *n,
     }
     struct rir_value *ret_val = rir_ctx_lastval_get(ctx);
     // write the return value to the return slot
-    if (!rir_ctx_curr_fn(ctx)->retslot_expr) {
+    if (!rir_ctx_curr_fn(ctx)->retslot_val) {
         RF_ERROR("Could not find the return alloca of a function");
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
     }
     struct rir_expression *e = rir_write_create(
-        &rir_ctx_curr_fn(ctx)->retslot_expr->val,
+        rir_ctx_curr_fn(ctx)->retslot_val,
         ret_val,
         RIRPOS_AST,
         ctx

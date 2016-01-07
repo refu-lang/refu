@@ -76,8 +76,8 @@ static bool llvm_create_blockexit(const struct rir_block_exit *e, struct llvm_tr
         LLVMBuildCondBr(ctx->builder, cond, b, other_b);
         break;
     case RIR_BLOCK_EXIT_RETURN:
-        if (e->retstmt.ret.val) {
-            LLVMBuildRet(ctx->builder, bllvm_value_from_rir_value_or_die(&e->retstmt.ret.val->val, ctx));
+        if (e->retstmt.val) {
+            LLVMBuildRet(ctx->builder, bllvm_value_from_rir_value_or_die(e->retstmt.val, ctx));
         } else {
             LLVMBuildRetVoid(ctx->builder);
         }
@@ -107,12 +107,10 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
     // if it's the first block of a function, alloca the return value.
     // In the RIR code it "just exists", just like the arguments allocas, so
     // we have to do it manually here
-    if (rir_block_is_first(b) && ctx->current_rfn->retslot_expr) {
-        struct rir_type rettype = *ctx->current_rfn->retslot_expr->alloca.type;
-        if (rettype.category == RIR_TYPE_COMPOSITE) {
-            // then this should be also a pointer type. For this alloca we need to drop the pointer
-            rettype.is_pointer = false;
-        }
+    if (rir_block_is_first(b) && ctx->current_rfn->retslot_val) {
+        struct rir_type rettype = *ctx->current_rfn->retslot_val->type;
+        // Val->type is the type of the alloca, so drop the pointer from it
+        rettype.is_pointer = false;
 
         llvmval = LLVMBuildAlloca(
             ctx->builder,
@@ -122,7 +120,7 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
         if (!llvmval) {
             return false;
         }
-        if (!llvm_traversal_ctx_map_llvmval(ctx, &ctx->current_rfn->retslot_expr->val, llvmval)) {
+        if (!llvm_traversal_ctx_map_llvmval(ctx, ctx->current_rfn->retslot_val, llvmval)) {
             RF_ERROR("Could not map return rir alloca to llvm alloca");
             return false;
         }

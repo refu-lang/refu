@@ -279,9 +279,9 @@ bool ow_function_pass(struct rir_fndef *f)
             }
         }
         // also check if this is the return block
-        struct rir_expression *rexp = &(*b)->exit.retstmt;
-        if ((*b)->exit.type == RIR_BLOCK_EXIT_RETURN && rexp->ret.val) {
-            ow_ctx_check_value_as_end(&rexp->ret.val->val, OW_END_RETURN, rexp->ret.val, 0);
+        struct rir_return *rexp = &(*b)->exit.retstmt;
+        if ((*b)->exit.type == RIR_BLOCK_EXIT_RETURN && rexp->val) {
+            ow_ctx_check_value_as_end(rexp->val, OW_END_RETURN, NULL, 0);
         }
     }
     return true;

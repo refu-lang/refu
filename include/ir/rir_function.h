@@ -59,8 +59,8 @@ struct rir_fndef {
     struct {darray(struct rir_object*);} variables;
     //! Array of all basic blocks under the function
     struct {darray(struct rir_block*);} blocks;
-    //! Rir expression of the return slot alloca. NULL if there is no return value.
-    struct rir_expression *retslot_expr;
+    //! Rir value of the return slot alloca. NULL if there is no return value.
+    struct rir_value *retslot_val;
     //! Label pointing to the function's end
     struct rir_value *end_label;
     //! Stringmap from rir identifiers to rir objects

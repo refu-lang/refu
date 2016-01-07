@@ -315,11 +315,9 @@ struct rir_expression *rir_unionmemberat_create(
     return obj ? &obj->expr : NULL;
 }
 
-void rir_return_init(struct rir_expression *ret,
-                     const struct rir_expression *val)
+void rir_return_init(struct rir_return *ret, const struct rir_value *val)
 {
-    ret->ret.val = val;
-    rir_expression_init_with_nilval(ret, RIR_EXPRESSION_RETURN);
+    ret->val = val;
 }
 
 bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)

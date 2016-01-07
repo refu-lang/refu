@@ -11,6 +11,7 @@ enum ow_edge_type {
 struct rir_expression;
 struct ow_edge {
     enum ow_edge_type type;
+    //! Can be NULL. Example: for returns
     const struct rir_expression *edgeexpr;
     struct ow_node *to;
     unsigned int counter;

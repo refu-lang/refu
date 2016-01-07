@@ -21,7 +21,7 @@ enum rir_block_exit_type {
 struct rir_block_exit {
     enum rir_block_exit_type type;
     union {
-        struct rir_expression retstmt;
+        struct rir_return retstmt;
         struct rir_branch branch;
         struct rir_condbranch condbranch;
     };
@@ -34,7 +34,7 @@ bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
                                     struct rir_value *taken,
                                     struct rir_value *fallthrough);
 void rir_block_exit_return_init(struct rir_block_exit *exit,
-                                const struct rir_expression *val);
+                                const struct rir_value *val);
 
 struct rir_block {
     struct rir_block_exit exit;

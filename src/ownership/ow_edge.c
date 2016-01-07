@@ -38,11 +38,16 @@ struct ow_edge *ow_endedge_create(const struct rir_expression *expr, const struc
 {
     struct ow_edge *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    struct ow_node *n;
-    if (!(n = ow_node_end_create(fnname, end_type, expr->type == RIR_EXPRESSION_CALL ? &expr->call.name : NULL))) {
+    struct ow_node *n = ow_node_end_create(
+        fnname,
+        end_type,
+        (expr && expr->type == RIR_EXPRESSION_CALL) ? &expr->call.name : NULL
+    );
+    if (!n) {
         free(ret);
         return NULL;
     }
+    RF_ASSERT(expr || end_type == OW_END_RETURN,"expression should be NULL only for returns");
     ow_edge_init(ret, OW_EDGE_NORMAL, expr, n, counter);
     return ret;
 }
