@@ -10,7 +10,7 @@
 
 struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
 {
-    // consume convert
+    // consume 'convert'
     lexer_curr_token_advance(&p->lexer);
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
@@ -19,7 +19,7 @@ struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
         return NULL;
     }
 
-    struct rir_value *val = rir_parse_value(p, r, "as first argument of convert");
+    struct rir_value *val = rir_parse_value(p, "as first argument of convert");
     if (!val) {
         return NULL;
     }
@@ -51,9 +51,13 @@ struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
 
 static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name, struct rir *r)
 {
+    struct rir_object *retobj = NULL;
     switch (rir_toktype(tok)) {
     case RIR_TOK_CONVERT:
-        return rir_parse_convert(p, r);;
+        rir_pctx_set_id(&p->ctx, name);
+        retobj = rir_parse_convert(p, r);
+        rir_pctx_reset_id(&p->ctx);
+        break;
     default:
         rirparser_synerr(
             p,
@@ -64,19 +68,160 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
         );
         break;
     }
-    return NULL;
+    return retobj;
 }
 
-static struct rir_expression *rir_parse_expression(struct rir_parser *p, struct rir *r)
+static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map, const char *msg)
+{
+    struct token *tok;
+    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER_LABEL))) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected a branch label identifier %s.", msg
+        );
+        return NULL;
+    }
+    const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
+    struct rir_object *obj = strmap_get(map, id);
+    if (!obj) {
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            NULL,
+            "Parsed non-existing branch label "RF_STR_PF_FMT" %s.",
+            RF_STR_PF_ARG(id),
+            msg
+        );
+        return NULL;
+    }
+    return obj;
+}
+
+static bool rir_parse_branch(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map)
+{
+    // consume 'branch'
+    lexer_curr_token_advance(&p->lexer);
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a '(' after 'branch'.");
+        return false;
+    }
+
+    struct rir_object *bobj = rir_parse_label(p, b, map, "at branch()");
+    if (!bobj) {
+        return false;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ')' after 'branch'.");
+        return false;
+    }
+    rir_block_exit_init_branch(&b->exit, rir_object_block_label(bobj));
+    return true;
+}
+
+static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map)
+{
+    // consume 'condbranch'
+    lexer_curr_token_advance(&p->lexer);
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a '(' after 'condbranch()'.");
+        return false;
+    }
+
+    struct rir_value *cond = rir_parse_value(p, "at condbranch()");
+    if (!cond) {
+        return false;
+    }
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ',' after first argument of 'condbranch()'.");
+    }
+
+    struct rir_object *objtrue = rir_parse_label(p, b, map, "at second argument of condbranch()");
+    if (!objtrue) {
+        return false;
+    }
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ',' after second argument of 'condbranch()'.");
+    }
+
+    struct rir_object *objfalse = rir_parse_label(p, b, map, "at third argument of condbranch()");
+    if (!objfalse) {
+        return false;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ')' after 'condbranch()'.");
+        return false;
+    }
+    rir_block_exit_init_condbranch(&b->exit, cond, rir_object_block_label(objtrue), rir_object_block_label(objfalse));
+    return true;
+}
+
+static bool rir_parse_return(struct rir_parser *p, struct rir *r, struct rir_block *b)
+{
+    // consume 'return'
+    lexer_curr_token_advance(&p->lexer);
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a '(' after 'return'.");
+        return false;
+    }
+
+    struct rir_value *v = rir_parse_value(p, "at return()");
+    if (!v) {
+        return false;
+    }
+    rir_block_exit_return_init(&b->exit, v);
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ')' at the end of 'return'.");
+        return false;
+    }
+    return true;
+}
+
+static bool rir_parse_block_expr(
+    struct rir_parser *p,
+    struct rir *r,
+    struct rir_block *b,
+    struct rir_expression **retexpr,
+    struct rirobj_strmap *map
+)
 {
     struct token *tok;
     if (!(tok = lexer_lookahead(&p->lexer, 1))) {
-        return NULL;
+        return false;
     }
 
     switch(rir_toktype(tok)) {
     case RIR_TOK_IDENTIFIER_VARIABLE:
-        return rir_object_to_expr(rir_accept_identifier_var(p, tok, parse_assignment, r));
+    {
+        struct rir_object *obj = rir_accept_identifier_var(p, tok, parse_assignment, r);
+        if (!obj) {
+            RF_ERROR("Failed to parse an identifier assignment in a rir block");
+            return false;
+        }
+        *retexpr = rir_object_to_expr(obj);
+        return true;
+    }
+    case RIR_TOK_RETURN:
+        return rir_parse_return(p, r, b);
+    case RIR_TOK_BRANCH:
+        return rir_parse_branch(p, b, map);
+    case RIR_TOK_CONDBRANCH:
+        return rir_parse_condbranch(p, b, map);
     default:
         rirparser_synerr(
             p,
@@ -90,32 +235,58 @@ static struct rir_expression *rir_parse_expression(struct rir_parser *p, struct 
     return false;
 }
 
-static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct rir *r)
+static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct rir *r, struct rirobj_strmap *map)
 {
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL,
               "Expected a label identifier at the beginning.");
-    struct rir_block *b = rir_block_create(
-        ast_identifier_str(tok->value.value.ast),
-        RIRPOS_PARSE,
-        &p->ctx
-    );
-    if (!b) {
-        RF_ERROR("Could not create rir block while parsing");
-        return false;
-    }
+    const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
+    struct rir_object *obj = strmap_get(map, id);
+    RF_ASSERT(obj, "Block name not found in map. Should not happen.");
+    RF_ASSERT(obj->category == RIR_OBJ_BLOCK, "Should have a block here");
+    struct rir_block *b = &obj->block;
+
     // consume the label identifier
     lexer_curr_token_advance(&p->lexer);
 
     struct rir_expression *expr;
-    while ((expr = rir_parse_expression(p, r))) {
-        // since b should be the current block add it there
-        rir_common_block_add(&p->ctx.common, expr);
+    bool end_found = false;
+    while (rir_parse_block_expr(p, r, b, &expr, map) &&
+           !(end_found = b->exit.type != RIR_BLOCK_EXIT_INVALID)) {
+        rir_block_add_expr(b, expr);
     }
+    return end_found;
+}
 
-
-
-    // TODO
+static bool rir_parse_create_basic_blocks(struct rir_parser *p, struct rirobj_strmap *map)
+{
+    struct token *tok;
+    enum rir_token_type type;
+    lexer_push(&p->lexer);
+    strmap_init(map);
+    while ((tok = lexer_lookahead(&p->lexer, 1)) &&
+           (type = rir_toktype(tok)) != RIR_TOK_SM_CCBRACE) {
+        if (type == RIR_TOK_IDENTIFIER_LABEL) {
+            const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
+            struct rir_object *obj = strmap_get(map, id);
+            if (!obj) {
+                // if in this block we have not seen the destination label before, make a block
+                obj = rir_block_create_obj(id, RIRPOS_PARSE, &p->ctx);
+                if (!obj) {
+                    RF_ERROR("Failed to create a rir block during parsing");
+                    goto fail;
+                }
+                strmap_add(map, id, obj);
+            }
+        }
+        // go to the next token
+        lexer_curr_token_advance(&p->lexer);
+    }
+    lexer_rollback(&p->lexer);
     return true;
+
+fail:
+    rirobjmap_free(map, &p->ctx.common);
+    return false;
 }
 
 bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *position)
@@ -126,18 +297,30 @@ bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *positio
         return false;
     }
 
+    struct rirobj_strmap map;
+    if (!rir_parse_create_basic_blocks(p, &map)) {
+        return false;
+    }
+
     struct token *tok;
     while ((tok = lexer_lookahead(&p->lexer, 1)) &&
            rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL) {
-        if (!rir_parse_block(p, tok, r)) {
-            return false;
+        if (!rir_parse_block(p, tok, r, &map)) {
+            goto fail_free_map;
         }
     }
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CCBRACE)) {
         rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
                          "Expected a '}' at the end of the block.");
-        return false;
+        goto fail_free_map;
     }
+
+    // success
+    strmap_clear(&map); // just clear the map but keep the objects
     return true;
+
+fail_free_map:
+    rirobjmap_free(&map, &p->ctx.common);
+    return false;
 }

@@ -38,4 +38,9 @@ struct rir_object *rir_map_getobj(struct rir_common *c,
                                   const struct RFstring *id);
 
 struct rirobj_strmap *rir_common_curr_map(struct rir_common *c);
+
+/**
+ * Frees all rir_objects of a rirobj string map and then frees the map itself
+ */
+void rirobjmap_free(struct rirobj_strmap *map, struct rir_common *c);
 #endif

@@ -79,9 +79,7 @@ struct rir_object *rir_parse_typedef(
 {
 #define i_DEFSTR "'%s'.", uniondef ? "uniondef" : "typedef"
 
-    // consume identifier_variable, =, uniondef
-    lexer_curr_token_advance(&p->lexer);
-    lexer_curr_token_advance(&p->lexer);
+    // consume 'typedef' / 'uniondef'
     lexer_curr_token_advance(&p->lexer);
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {

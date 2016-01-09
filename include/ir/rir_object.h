@@ -82,4 +82,10 @@ i_INLINE_DECL struct rir_expression *rir_object_to_expr(struct rir_object *obj)
     RF_ASSERT(obj->category == RIR_OBJ_EXPRESSION, "Expected expression object");
     return &obj->expr;
 }
+
+i_INLINE_DECL struct rir_value *rir_object_block_label(struct rir_object *obj)
+{
+    RF_ASSERT(obj->category == RIR_OBJ_BLOCK, "Expected block object");
+    return &obj->block.label;
+}
 #endif

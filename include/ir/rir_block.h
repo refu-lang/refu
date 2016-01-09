@@ -113,4 +113,9 @@ const struct RFstring *rir_block_label_str(const struct rir_block *b);
  * @return True if the block is the first block of a function
  */
 bool rir_block_is_first(const struct rir_block *b);
+
+i_INLINE_DECL void rir_block_add_expr(struct rir_block *b, struct rir_expression *e)
+{
+    rf_ilist_add_tail(&b->expressions, &e->ln);
+}
 #endif

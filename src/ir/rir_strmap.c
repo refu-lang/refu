@@ -31,3 +31,16 @@ struct rirobj_strmap *rir_common_curr_map(struct rir_common *c)
 {
     return c->current_fn ? &c->current_fn->map : &c->rir->map;
 }
+
+
+static bool itfree_rirobjects(const struct RFstring *s, struct rir_object *obj, struct rir_common *common)
+{
+    rir_object_listrem_destroy(obj, common->rir, common->current_fn);
+    return true;
+}
+
+void rirobjmap_free(struct rirobj_strmap *map, struct rir_common *c)
+{
+    strmap_iterate(map, (strmap_it_cb)itfree_rirobjects, c);
+    strmap_clear(map);
+}

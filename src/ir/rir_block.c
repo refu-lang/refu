@@ -36,7 +36,7 @@ static inline void rir_block_exit_deinit(struct rir_block_exit *exit)
         rir_condbranch_deinit(&exit->condbranch);
         break;
     case RIR_BLOCK_EXIT_INVALID:
-        RF_ASSERT(false, "Should never happen");
+        // if we come here during EXIT_INVALID, it means parsing failed
     case RIR_BLOCK_EXIT_RETURN:
         // the return stmt should be a global rir object so is freed from global rir objects list
         break;
@@ -415,3 +415,5 @@ bool rir_block_is_first(const struct rir_block *b)
 {
     return rf_string_equal(&b->label.id, &g_str_fnstart);
 }
+
+i_INLINE_INS void rir_block_add_expr(struct rir_block *b, struct rir_expression *e);

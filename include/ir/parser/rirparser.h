@@ -29,6 +29,18 @@ i_INLINE_DECL void rir_pctx_init(struct rir_pctx *ctx, struct rir *r)
     ctx->common.rir = r;
 }
 
+i_INLINE_DECL void rir_pctx_set_id(struct rir_pctx *ctx, const struct RFstring *id)
+{
+    RF_ASSERT(ctx->id == NULL, "Context string ID should be empty");
+    ctx->id = id;
+}
+
+i_INLINE_DECL void rir_pctx_reset_id(struct rir_pctx *ctx)
+{
+    RF_ASSERT(ctx->id != NULL, "Context string ID should not be empty");
+    ctx->id = NULL;
+}
+
 struct rir_parser {
     //! The buffer for the parsed string
     struct RFstringx buff;
@@ -63,7 +75,13 @@ bool rir_parse(struct rir_parser *p);
     } while(0)
 
 
-struct rir_value *rir_parse_value(struct rir_parser *p, struct rir *r, const char *msg);
+i_INLINE_DECL struct rir *rir_parser_rir(const struct rir_parser *p)
+{
+    return p->ctx.common.rir;
+}
+
+bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *position);
+struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg);
 struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char *msg);
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r);
 bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r);

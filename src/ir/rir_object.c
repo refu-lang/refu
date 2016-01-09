@@ -45,6 +45,8 @@ struct rir_value *rir_object_value(struct rir_object *obj)
         return &obj->global.val;
     case RIR_OBJ_VARIABLE:
         return &obj->variable.val;
+    case RIR_OBJ_BLOCK:
+        return &obj->block.label;
     default:
         RF_CRITICAL_FAIL("Unexpected rir object value");
         break;
@@ -107,3 +109,4 @@ const struct RFstring *rir_object_string(const struct rir_object *obj)
 }
 
 i_INLINE_INS struct rir_expression *rir_object_to_expr(struct rir_object *obj);
+i_INLINE_INS struct rir_value *rir_object_block_label(struct rir_object *obj);

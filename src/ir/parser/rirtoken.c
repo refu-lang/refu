@@ -31,6 +31,9 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("fndecl"),
     RF_STRING_STATIC_INIT("identifier variable"),
     RF_STRING_STATIC_INIT("identifier label"),
+    RF_STRING_STATIC_INIT("return"),
+    RF_STRING_STATIC_INIT("branch"),
+    RF_STRING_STATIC_INIT("condbranch"),
     RF_STRING_STATIC_INIT("convert"),
 };
 

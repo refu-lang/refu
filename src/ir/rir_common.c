@@ -5,5 +5,5 @@
 
 void rir_common_block_add(struct rir_common *c, struct rir_expression *expr)
 {
-    rf_ilist_add_tail(&c->current_block->expressions, &expr->ln);
+    rir_block_add_expr(c->current_block, expr);
 }

@@ -40,6 +40,13 @@ struct value_arr {darray(struct rir_value*);};
 /**
  * Initialize the value of a variable
  *
+ * The identifier's value depends on the position in the code from which
+ * the function is called. If it's called from the AST then it's an ever
+ * increasing number like, $2, $3 e.t.c.
+ *
+ * If called from Parsing the rir_pctx (which should be the rir_data) should
+ * contain the string value.
+ *
  * @param v            The value to initialize
  * @param obj          The rir object containing the value
  * @param type         An optional type to give to the value. If this is not

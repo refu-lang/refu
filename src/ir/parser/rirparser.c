@@ -6,6 +6,8 @@
 #include <ir/rir.h>
 
 i_INLINE_INS void rir_pctx_init(struct rir_pctx *ctx, struct rir *r);
+i_INLINE_INS void rir_pctx_set_id(struct rir_pctx *ctx, const struct RFstring *id);
+i_INLINE_INS void rir_pctx_reset_id(struct rir_pctx *ctx);
 
 struct rir_parser *rir_parser_create(const struct RFstring *name,
                                      const struct RFstring *contents)
@@ -109,6 +111,10 @@ struct rir_object *rir_accept_identifier_var(
         return NULL;
     }
 
+    // consume identifier variable ($N)
+    lexer_curr_token_advance(&p->lexer);
+    // consume '='
+    lexer_curr_token_advance(&p->lexer);
     return assignment_parser(p, tok3, ast_identifier_str(tok->value.value.ast), r);
 }
 
@@ -152,6 +158,7 @@ bool rir_parse(struct rir_parser *p)
         ;
     }
 
+    // if we got any error messages we failed
     if (info_ctx_has(p->info, MESSAGE_ANY)) {
         rir_destroy(r);
         return false;
@@ -159,3 +166,5 @@ bool rir_parse(struct rir_parser *p)
 
     return true;
 }
+
+i_INLINE_INS struct rir *rir_parser_rir(const struct rir_parser *p);
