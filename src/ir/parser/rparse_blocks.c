@@ -8,47 +8,6 @@
 
 #include <Utils/sanity.h>
 
-struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
-{
-    // consume 'convert'
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'convert'.");
-        return NULL;
-    }
-
-    struct rir_value *val = rir_parse_value(p, "as first argument of convert");
-    if (!val) {
-        return NULL;
-    }
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a ',' after first argument of 'convert'.");
-        return NULL;
-    }
-
-    struct rir_type *type = rir_parse_type(p, r, "second argument of 'convert'");
-    if (!type) {
-        return NULL;
-    }
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a ')' at the end of 'convert'.");
-        return NULL;
-    }
-
-    struct rir_object *cnv = rir_convert_create_obj(val, type, RIRPOS_PARSE, &p->ctx);
-    if (!cnv) {
-        rir_value_destroy(val);
-        rir_type_destroy(type, r);
-    }
-    return cnv;
-}
-
 static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name, struct rir *r)
 {
     struct rir_object *retobj = NULL;
@@ -205,17 +164,23 @@ static bool rir_parse_block_expr(
         return false;
     }
 
+    struct rir_object *obj;
     switch(rir_toktype(tok)) {
     case RIR_TOK_IDENTIFIER_VARIABLE:
     {
-        struct rir_object *obj = rir_accept_identifier_var(p, tok, parse_assignment, r);
-        if (!obj) {
+        if (!(obj = rir_accept_identifier_var(p, tok, parse_assignment, r))) {
             RF_ERROR("Failed to parse an identifier assignment in a rir block");
             return false;
         }
         *retexpr = rir_object_to_expr(obj);
         return true;
     }
+    case RIR_TOK_WRITE:
+        if (!(obj = rir_parse_write(p, r))) {
+            return false;
+        }
+        *retexpr = rir_object_to_expr(obj);
+        return true;
     case RIR_TOK_RETURN:
         return rir_parse_return(p, r, b);
     case RIR_TOK_BRANCH:

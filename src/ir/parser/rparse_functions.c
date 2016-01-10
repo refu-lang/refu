@@ -84,7 +84,9 @@ static bool rir_parse_fn_common(
             ast_identifier_str(tok->value.value.ast),
             &args,
             ret_type,
-            foreign
+            foreign,
+            RIRPOS_PARSE,
+            &p->ctx
         )) {
         goto fail_free_args;
     }
@@ -114,12 +116,12 @@ bool rir_parse_fndecl(struct rir_parser *p, struct rir *r)
 bool rir_parse_fndef(struct rir_parser *p, struct rir *r)
 {
     struct rir_fndef *def = rir_fndef_create_nodecl(RIRPOS_PARSE, &p->ctx);
-    if (!rir_parse_fndecl(p, r)) {
+    if (!rir_parse_fn_common(p, r, false, &def->decl)) {
         rir_fndef_destroy(def);
         return false;
     }
 
-    // finally set this as the current function and add it to the list
+    // set this as the current function and add it to the list
     rir_data_curr_fn(&p->ctx) = def;
     rf_ilist_add_tail(&r->functions, &def->decl.ln);
 

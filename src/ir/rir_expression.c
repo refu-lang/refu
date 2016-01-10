@@ -113,7 +113,7 @@ static inline bool rir_write_init(
     struct rir_expression *e;
     // for write operations on a memory location first create a read from memory.
     // string are as usually an exception, at least for now
-    if (!rir_type_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
+    if (pos == RIRPOS_AST && !rir_type_is_specific_elementary(writeval->type, ELEMENTARY_TYPE_STRING) && writeval->type->is_pointer) {
         if (!(e = rir_read_create(writeval, pos, data))) {
             return false;
         }

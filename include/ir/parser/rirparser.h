@@ -99,4 +99,6 @@ struct rir_object *rir_parse_typedef(
 );
 bool rir_parse_fndef(struct rir_parser *p, struct rir *r);
 bool rir_parse_fndecl(struct rir_parser *p, struct rir *r);
+struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r);
+struct rir_object *rir_parse_write(struct rir_parser *p, struct rir *r);
 #endif

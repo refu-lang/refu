@@ -98,6 +98,7 @@ refu_src = [
     'ir/parser/rparse_functions.c',
     'ir/parser/rparse_blocks.c',
     'ir/parser/rparse_value.c',
+    'ir/parser/rparse_expressions.c',
 
     'ownership/ownership.c',
     'ownership/ow_graph.c',

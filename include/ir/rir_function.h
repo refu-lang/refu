@@ -32,13 +32,17 @@ bool rir_fndecl_init(
     const struct RFstring *name,
     struct rir_type_arr *args,
     struct rir_type *return_type,
-    bool foreign
+    bool foreign,
+    enum rir_pos pos,
+    rir_data data
 );
 struct rir_fndecl *rir_fndecl_create(
     const struct RFstring *name,
     struct rir_type_arr *args,
     struct rir_type *return_type,
-    bool foreign
+    bool foreign,
+    enum rir_pos pos,
+    rir_data data
 );
 /**
  * Create a simply initialized rir function definition without touching

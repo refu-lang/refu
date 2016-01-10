@@ -35,6 +35,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("branch"),
     RF_STRING_STATIC_INIT("condbranch"),
     RF_STRING_STATIC_INIT("convert"),
+    RF_STRING_STATIC_INIT("write"),
 };
 
 const struct RFstring *rir_tokentype_to_str(enum rir_token_type type)

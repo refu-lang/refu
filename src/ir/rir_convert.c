@@ -167,7 +167,7 @@ const struct rir_value *rir_maybe_convert(
     rir_data data
 )
 {
-    if (!rir_type_equal(val->type, checktype)) {
+    if (pos == RIRPOS_AST && !rir_type_equal(val->type, checktype)) {
         struct rir_object *obj = rir_convert_create_obj_maybeadd(
             val,
             rir_type_create_from_other(checktype, rir_data_rir(data), false),
