@@ -8,26 +8,17 @@
 struct rir_object *rir_parse_convert(struct rir_parser *p)
 {
     // consume 'convert'
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'convert'.");
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_CONVERT))) {
         return NULL;
     }
-
-    struct rir_value *val = rir_parse_value(p, "as first argument of convert");
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("first argument of convert()");
+    struct rir_value *val = rir_parse_val_and_comma(p, &lmsg);
     if (!val) {
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a ',' after first argument of 'convert'.");
-        goto fail_destroy_val;
-    }
-
-    struct rir_type *type = rir_parse_type(p, "second argument of 'convert'");
+    static const struct RFstring lmsg2 = RF_STRING_STATIC_INIT("second argument of convert()");
+    struct rir_type *type = rir_parse_type(p, &lmsg2);
     if (!type) {
         goto fail_destroy_val;
     }
@@ -53,16 +44,13 @@ fail_destroy_val:
 
 struct rir_object *rir_parse_write(struct rir_parser *p)
 {
+    struct token *start = lexer_curr_token(&p->lexer);
     // consume 'write'
-    struct token *start = lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'write'.");
-        return NULL;
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_WRITE))) {
+        return false;
     }
-
-    struct rir_type *type = rir_parse_type(p, "first argument of 'write'");
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("first argument of write()");
+    struct rir_type *type = rir_parse_type(p, &lmsg);
     if (!type) {
         return NULL;
     }
@@ -73,18 +61,14 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
         goto fail_destroy_type;
     }
 
-    struct rir_value *dstval = rir_parse_value(p, "as second argument of 'write'");
+    static const struct RFstring lmsg2 = RF_STRING_STATIC_INIT("second argument of write()");
+    struct rir_value *dstval = rir_parse_val_and_comma(p, &lmsg2);
     if (!dstval) {
         goto fail_destroy_type;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a ',' after second argument of 'write'.");
-        goto fail_destroy_dst;
-    }
-
-    struct rir_value *srcval = rir_parse_value(p, "as second argument of 'write'");
+    static const struct RFstring lmsg3 = RF_STRING_STATIC_INIT("third argument of write()");
+    struct rir_value *srcval = rir_parse_value(p, &lmsg3);
     if (!srcval) {
         goto fail_destroy_dst;
     }

@@ -61,14 +61,10 @@ static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block
 static bool rir_parse_branch(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map)
 {
     // consume 'branch'
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'branch'.");
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_BRANCH))) {
         return false;
     }
-
+    // get label argument
     struct rir_object *bobj = rir_parse_label(p, b, map, "at branch()");
     if (!bobj) {
         return false;
@@ -86,21 +82,14 @@ static bool rir_parse_branch(struct rir_parser *p, struct rir_block *b, struct r
 static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map)
 {
     // consume 'condbranch'
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'condbranch()'.");
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_CONDBRANCH))) {
         return false;
     }
-
-    struct rir_value *cond = rir_parse_value(p, "at condbranch()");
+    // get first value argument
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("condbranch() first argument");
+    struct rir_value *cond = rir_parse_val_and_comma(p, &lmsg);
     if (!cond) {
         return false;
-    }
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a ',' after first argument of 'condbranch()'.");
     }
 
     struct rir_object *objtrue = rir_parse_label(p, b, map, "at second argument of condbranch()");
@@ -129,15 +118,12 @@ static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, stru
 static bool rir_parse_return(struct rir_parser *p, struct rir_block *b)
 {
     // consume 'return'
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                         "Expected a '(' after 'return'.");
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_RETURN))) {
         return false;
     }
-
-    struct rir_value *v = rir_parse_value(p, "at return()");
+    // get return value
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("at return()");
+    struct rir_value *v = rir_parse_value(p, &lmsg);
     if (!v) {
         return false;
     }

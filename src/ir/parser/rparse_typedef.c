@@ -5,7 +5,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-struct rir_type *rir_parse_type(struct rir_parser *p, const char *msg)
+struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER, "Expected identifier");
@@ -15,8 +15,8 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const char *msg)
             p,
             token_get_start(tok),
             NULL,
-            "Expected a type %s but provided string is not a recognized type",
-            msg
+            "Expected a type "RF_STR_PF_FMT" but provided string is not a recognized type",
+            RF_STR_PF_ARG(msg)
         );
         return false;
     }
@@ -39,8 +39,9 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr)
     }
     darray_init(*arr);
 
+    static const struct RFstring locmsg = RF_STRING_STATIC_INIT("at type array");
     while (rir_toktype(tok) == RIR_TOK_IDENTIFIER) {
-        struct rir_type *t = rir_parse_type(p, "at type array");
+        struct rir_type *t = rir_parse_type(p, &locmsg);
         if (!t) {
             goto fail_free_arr;
         }

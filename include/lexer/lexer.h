@@ -32,6 +32,7 @@ void lexer_destroy(struct lexer *l);
 
 bool lexer_scan(struct lexer *l);
 
+struct token *lexer_curr_token(const struct lexer *l);
 /**
  * Return current token and then move to the next token
  */

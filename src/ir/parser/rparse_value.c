@@ -8,7 +8,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg)
+struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *msg)
 {
     struct rir_value *retv;
     struct token *tok;
@@ -46,9 +46,9 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg)
                 p,
                 token_get_start(tok),
                 NULL,
-                "Previously Undeclared identifier \""RF_STR_PF_FMT"\" %s.",
+                "Previously Undeclared identifier \""RF_STR_PF_FMT"\" "RF_STR_PF_FMT".",
                 RF_STR_PF_ARG(id),
-                msg
+                RF_STR_PF_ARG(msg)
         );
             return NULL;
         }
@@ -59,9 +59,9 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg)
             p,
             token_get_start(tok),
             NULL,
-            "Expected a rir value but got token \""RF_STR_PF_FMT"\" %s.",
+            "Expected a rir value but got token \""RF_STR_PF_FMT"\" "RF_STR_PF_FMT".",
             RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok))),
-            msg
+            RF_STR_PF_ARG(msg)
         );
         return NULL;
     }

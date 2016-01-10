@@ -94,6 +94,7 @@ refu_src = [
     'ir/parser/rirparser.c',
     'ir/parser/rirtoken.c',
     'ir/parser/rparse_global.c',
+    'ir/parser/rparse_utils.c',
     'ir/parser/rparse_typedef.c',
     'ir/parser/rparse_functions.c',
     'ir/parser/rparse_blocks.c',

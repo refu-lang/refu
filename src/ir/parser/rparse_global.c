@@ -7,12 +7,8 @@
 
 bool rir_parse_global(struct rir_parser *p, struct token *tok)
 {
-    // consume global
-    lexer_curr_token_advance(&p->lexer);
-
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
-                      "Expected '(' after 'global'.");
+    // consume 'convert'
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_GLOBAL))) {
         return false;
     }
 

@@ -50,7 +50,8 @@ static bool rir_parse_fn_common(
         return NULL;
     }
 
-    struct rir_type *ret_type = rir_parse_type(p, "function return type"); // can be NULL
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("function return type");
+    struct rir_type *ret_type = rir_parse_type(p, &lmsg); // can be NULL
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(

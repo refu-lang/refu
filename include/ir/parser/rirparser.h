@@ -81,8 +81,8 @@ i_INLINE_DECL struct rir *rir_parser_rir(const struct rir_parser *p)
 }
 
 bool rir_parse_bigblock(struct rir_parser *p, const char *position);
-struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg);
-struct rir_type *rir_parse_type(struct rir_parser *p, const char *msg);
+struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *msg);
+struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg);
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr);
 bool rir_parse_global(struct rir_parser *p, struct token *tok);
 struct rir_object *rir_accept_identifier_var(
@@ -99,4 +99,8 @@ bool rir_parse_fndef(struct rir_parser *p);
 bool rir_parse_fndecl(struct rir_parser *p);
 struct rir_object *rir_parse_convert(struct rir_parser *p);
 struct rir_object *rir_parse_write(struct rir_parser *p);
+
+/* -- util rir parsing functions -- */
+bool rir_parse_instr_start(struct rir_parser *p, const struct RFstring *msg);
+struct rir_value *rir_parse_val_and_comma(struct rir_parser *p, const struct RFstring *msg);
 #endif
