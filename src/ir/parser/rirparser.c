@@ -69,13 +69,13 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name, struct rir *r)
+static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name)
 {
     switch (rir_toktype(tok)) {
     case RIR_TOK_UNIONDEF:
-        return rir_parse_typedef(p, name, true, r);
+        return rir_parse_typedef(p, name, true);
     case RIR_TOK_TYPEDEF:
-        return rir_parse_typedef(p, name, false, r);
+        return rir_parse_typedef(p, name, false);
     default:
         rirparser_synerr(
             p,
@@ -92,8 +92,7 @@ static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct to
 struct rir_object *rir_accept_identifier_var(
     struct rir_parser *p,
     struct token *tok,
-    struct rir_object *(*assignment_parser)(struct rir_parser*, struct token*, const struct RFstring *name, struct rir*),
-    struct rir *r
+    struct rir_object *(*assignment_parser)(struct rir_parser*, struct token*, const struct RFstring *name)
 )
 {
     struct token *tok2;
@@ -115,10 +114,10 @@ struct rir_object *rir_accept_identifier_var(
     lexer_curr_token_advance(&p->lexer);
     // consume '='
     lexer_curr_token_advance(&p->lexer);
-    return assignment_parser(p, tok3, ast_identifier_str(tok->value.value.ast), r);
+    return assignment_parser(p, tok3, ast_identifier_str(tok->value.value.ast));
 }
 
-static bool rir_parse_outer_statement(struct rir_parser *p, struct rir *r)
+static bool rir_parse_outer_statement(struct rir_parser *p)
 {
     struct token *tok;
     if (!(tok = lexer_lookahead(&p->lexer, 1))) {
@@ -127,13 +126,13 @@ static bool rir_parse_outer_statement(struct rir_parser *p, struct rir *r)
 
     switch(rir_toktype(tok)) {
     case RIR_TOK_GLOBAL:
-        return  rir_parse_global(p, tok, r);
+        return  rir_parse_global(p, tok);
     case RIR_TOK_IDENTIFIER_VARIABLE:
-        return rir_accept_identifier_var(p, tok, parse_outer_assignment, r);
+        return rir_accept_identifier_var(p, tok, parse_outer_assignment);
     case RIR_TOK_FNDECL:
-        return rir_parse_fndecl(p, r);
+        return rir_parse_fndecl(p);
     case RIR_TOK_FNDEF:
-        return rir_parse_fndef(p, r);
+        return rir_parse_fndef(p);
     default:
         rirparser_synerr(
             p,
@@ -154,7 +153,7 @@ bool rir_parse(struct rir_parser *p)
     }
     struct rir *r = rir_create();
     rir_pctx_init(&p->ctx, r);
-    while (rir_parse_outer_statement(p, r)) {
+    while (rir_parse_outer_statement(p)) {
         ;
     }
 

@@ -80,25 +80,23 @@ i_INLINE_DECL struct rir *rir_parser_rir(const struct rir_parser *p)
     return p->ctx.common.rir;
 }
 
-bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *position);
+bool rir_parse_bigblock(struct rir_parser *p, const char *position);
 struct rir_value *rir_parse_value(struct rir_parser *p, const char *msg);
-struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char *msg);
-bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r);
-bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r);
+struct rir_type *rir_parse_type(struct rir_parser *p, const char *msg);
+bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr);
+bool rir_parse_global(struct rir_parser *p, struct token *tok);
 struct rir_object *rir_accept_identifier_var(
     struct rir_parser *p,
     struct token *tok,
-    struct rir_object *(*assignment_parser)(struct rir_parser*, struct token*, const struct RFstring *name, struct rir*),
-    struct rir *r
+    struct rir_object *(*assignment_parser)(struct rir_parser*, struct token*, const struct RFstring *name)
 );
 struct rir_object *rir_parse_typedef(
     struct rir_parser *p,
     const struct RFstring *name,
-    bool uniondef,
-    struct rir *r
+    bool uniondef
 );
-bool rir_parse_fndef(struct rir_parser *p, struct rir *r);
-bool rir_parse_fndecl(struct rir_parser *p, struct rir *r);
-struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r);
-struct rir_object *rir_parse_write(struct rir_parser *p, struct rir *r);
+bool rir_parse_fndef(struct rir_parser *p);
+bool rir_parse_fndecl(struct rir_parser *p);
+struct rir_object *rir_parse_convert(struct rir_parser *p);
+struct rir_object *rir_parse_write(struct rir_parser *p);
 #endif

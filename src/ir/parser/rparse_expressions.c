@@ -5,7 +5,7 @@
 #include <ir/rir_type.h>
 #include <ir/rir_expression.h>
 
-struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
+struct rir_object *rir_parse_convert(struct rir_parser *p)
 {
     // consume 'convert'
     lexer_curr_token_advance(&p->lexer);
@@ -27,7 +27,7 @@ struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
         goto fail_destroy_val;
     }
 
-    struct rir_type *type = rir_parse_type(p, r, "second argument of 'convert'");
+    struct rir_type *type = rir_parse_type(p, "second argument of 'convert'");
     if (!type) {
         goto fail_destroy_val;
     }
@@ -45,13 +45,13 @@ struct rir_object *rir_parse_convert(struct rir_parser *p, struct rir *r)
     return cnv;
 
 fail_destroy_type:
-    rir_type_destroy(type, r);
+    rir_type_destroy(type, rir_parser_rir(p));
 fail_destroy_val:
     rir_value_destroy(val);
     return NULL;
 }
 
-struct rir_object *rir_parse_write(struct rir_parser *p, struct rir *r)
+struct rir_object *rir_parse_write(struct rir_parser *p)
 {
     // consume 'write'
     struct token *start = lexer_curr_token_advance(&p->lexer);
@@ -62,7 +62,7 @@ struct rir_object *rir_parse_write(struct rir_parser *p, struct rir *r)
         return NULL;
     }
 
-    struct rir_type *type = rir_parse_type(p, r, "first argument of 'write'");
+    struct rir_type *type = rir_parse_type(p, "first argument of 'write'");
     if (!type) {
         return NULL;
     }
@@ -117,6 +117,6 @@ fail_destroy_src:
 fail_destroy_dst:
     rir_value_destroy(dstval);
 fail_destroy_type:
-    rir_type_destroy(type, r);
+    rir_type_destroy(type, rir_parser_rir(p));
     return NULL;
 }

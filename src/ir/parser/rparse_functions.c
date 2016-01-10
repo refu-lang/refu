@@ -9,7 +9,6 @@
 
 static bool rir_parse_fn_common(
     struct rir_parser *p,
-    struct rir *r,
     bool foreign,
     struct rir_fndecl *decl
 )
@@ -51,7 +50,7 @@ static bool rir_parse_fn_common(
         return NULL;
     }
 
-    struct rir_type *ret_type = rir_parse_type(p, r, "function return type"); // can be NULL
+    struct rir_type *ret_type = rir_parse_type(p, "function return type"); // can be NULL
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
@@ -64,7 +63,7 @@ static bool rir_parse_fn_common(
     }
 
     struct rir_type_arr args;
-    if (!rir_parse_typearr(p, &args, r)) {
+    if (!rir_parse_typearr(p, &args)) {
         goto fail_free_args;
     }
 
@@ -96,27 +95,28 @@ fail_free_args:
     darray_free(args);
 fail_free_ret_type:
     if (ret_type) {
-        rir_type_destroy(ret_type, r);
+        rir_type_destroy(ret_type, rir_parser_rir(p));
     }
     return false;
 }
 
-bool rir_parse_fndecl(struct rir_parser *p, struct rir *r)
+bool rir_parse_fndecl(struct rir_parser *p)
 {
     struct rir_fndecl *decl;
     RF_MALLOC(decl, sizeof(*decl), return NULL);
-    if (!rir_parse_fn_common(p, r, true, decl)) {
+    if (!rir_parse_fn_common(p, true, decl)) {
         free(decl);
         return false;
     }
-    rf_ilist_add_tail(&r->functions, &decl->ln);
+    rf_ilist_add_tail(&rir_parser_rir(p)->functions, &decl->ln);
     return true;
 }
 
-bool rir_parse_fndef(struct rir_parser *p, struct rir *r)
+bool rir_parse_fndef(struct rir_parser *p)
 {
     struct rir_fndef *def = rir_fndef_create_nodecl(RIRPOS_PARSE, &p->ctx);
-    if (!rir_parse_fn_common(p, r, false, &def->decl)) {
+    struct rir *r = rir_parser_rir(p);
+    if (!rir_parse_fn_common(p, false, &def->decl)) {
         rir_fndef_destroy(def);
         return false;
     }
@@ -125,7 +125,7 @@ bool rir_parse_fndef(struct rir_parser *p, struct rir *r)
     rir_data_curr_fn(&p->ctx) = def;
     rf_ilist_add_tail(&r->functions, &def->decl.ln);
 
-    if (!rir_parse_bigblock(p, r, "function definition header")) {
+    if (!rir_parse_bigblock(p, "function definition header")) {
         rf_ilist_delete_from(&r->functions, &def->decl.ln);
         rir_fndef_destroy(def);
         return false;

@@ -5,7 +5,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r)
+bool rir_parse_global(struct rir_parser *p, struct token *tok)
 {
     // consume global
     lexer_curr_token_advance(&p->lexer);
@@ -50,11 +50,11 @@ bool rir_parse_global(struct rir_parser *p, struct token *tok, struct rir *r)
     struct ast_node *string_lit = tok->value.value.ast;
 
     // create and add it to the global literals
-    struct rir_object *ret = rir_global_create_parsed(p, r, name_id, type_id, string_lit);
+    struct rir_object *ret = rir_global_create_parsed(p, name_id, type_id, string_lit);
     if (!ret) {
         return false;
     }
-    if (!strmap_add(&r->global_literals, &rir_object_value(ret)->literal, ret)) {
+    if (!strmap_add(&rir_parser_rir(p)->global_literals, &rir_object_value(ret)->literal, ret)) {
         RF_ERROR("Failed to add a string literal to the gloal string maps during parsing");
         return false;
     }

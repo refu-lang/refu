@@ -50,7 +50,6 @@ struct rir_object *rir_global_create_string(struct rir_type *type,
 }
 
 struct rir_object *rir_global_create_parsed(struct rir_parser *p,
-                                            struct rir *r,
                                             const struct ast_node *id,
                                             const struct ast_node *type,
                                             const struct ast_node *value)
@@ -80,7 +79,7 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
         rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
         idstr,
         valstr,
-        r
+        rir_parser_rir(p)
     );
 
 

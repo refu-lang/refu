@@ -5,11 +5,11 @@
 #include <ir/rir_object.h>
 #include <ir/rir.h>
 
-struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char *msg)
+struct rir_type *rir_parse_type(struct rir_parser *p, const char *msg)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER, "Expected identifier");
-    struct rir_type *ret = rir_type_byname(r, ast_identifier_str(tok->value.value.ast));
+    struct rir_type *ret = rir_type_byname(rir_parser_rir(p), ast_identifier_str(tok->value.value.ast));
     if (!ret) {
         rirparser_synerr(
             p,
@@ -31,7 +31,7 @@ struct rir_type *rir_parse_type(struct rir_parser *p, struct rir *r, const char 
     return ret;
 }
 
-bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct rir *r)
+bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
     if (!tok) {
@@ -40,7 +40,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, struct ri
     darray_init(*arr);
 
     while (rir_toktype(tok) == RIR_TOK_IDENTIFIER) {
-        struct rir_type *t = rir_parse_type(p, r, "at type array");
+        struct rir_type *t = rir_parse_type(p, "at type array");
         if (!t) {
             goto fail_free_arr;
         }
@@ -73,8 +73,7 @@ fail_free_arr:
 struct rir_object *rir_parse_typedef(
     struct rir_parser *p,
     const struct RFstring *name,
-    bool uniondef,
-    struct rir *r
+    bool uniondef
 )
 {
 #define i_DEFSTR "'%s'.", uniondef ? "uniondef" : "typedef"
@@ -90,7 +89,7 @@ struct rir_object *rir_parse_typedef(
 
     // parse the type array into the typedef
     struct rir_type_arr arr;
-    if (!rir_parse_typearr(p, &arr, r)) {
+    if (!rir_parse_typearr(p, &arr)) {
         return NULL;
     }
 
@@ -107,14 +106,14 @@ struct rir_object *rir_parse_typedef(
 
     // finally create the typedef here
     struct rir_object *def = rir_typedef_create_obj(
-        r,
+        rir_parser_rir(p),
         p->ctx.common.current_fn,
         name,
         uniondef,
         &arr
     );
     if (!def) {
-        rir_typearr_deinit(&arr, r);
+        rir_typearr_deinit(&arr, rir_parser_rir(p));
     }
 
 #undef i_typestr

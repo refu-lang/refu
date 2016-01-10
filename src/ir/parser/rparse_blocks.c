@@ -8,13 +8,13 @@
 
 #include <Utils/sanity.h>
 
-static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name, struct rir *r)
+static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name)
 {
     struct rir_object *retobj = NULL;
     switch (rir_toktype(tok)) {
     case RIR_TOK_CONVERT:
         rir_pctx_set_id(&p->ctx, name);
-        retobj = rir_parse_convert(p, r);
+        retobj = rir_parse_convert(p);
         rir_pctx_reset_id(&p->ctx);
         break;
     default:
@@ -126,7 +126,7 @@ static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, stru
     return true;
 }
 
-static bool rir_parse_return(struct rir_parser *p, struct rir *r, struct rir_block *b)
+static bool rir_parse_return(struct rir_parser *p, struct rir_block *b)
 {
     // consume 'return'
     lexer_curr_token_advance(&p->lexer);
@@ -153,7 +153,6 @@ static bool rir_parse_return(struct rir_parser *p, struct rir *r, struct rir_blo
 
 static bool rir_parse_block_expr(
     struct rir_parser *p,
-    struct rir *r,
     struct rir_block *b,
     struct rir_expression **retexpr,
     struct rirobj_strmap *map
@@ -168,7 +167,7 @@ static bool rir_parse_block_expr(
     switch(rir_toktype(tok)) {
     case RIR_TOK_IDENTIFIER_VARIABLE:
     {
-        if (!(obj = rir_accept_identifier_var(p, tok, parse_assignment, r))) {
+        if (!(obj = rir_accept_identifier_var(p, tok, parse_assignment))) {
             RF_ERROR("Failed to parse an identifier assignment in a rir block");
             return false;
         }
@@ -176,13 +175,13 @@ static bool rir_parse_block_expr(
         return true;
     }
     case RIR_TOK_WRITE:
-        if (!(obj = rir_parse_write(p, r))) {
+        if (!(obj = rir_parse_write(p))) {
             return false;
         }
         *retexpr = rir_object_to_expr(obj);
         return true;
     case RIR_TOK_RETURN:
-        return rir_parse_return(p, r, b);
+        return rir_parse_return(p, b);
     case RIR_TOK_BRANCH:
         return rir_parse_branch(p, b, map);
     case RIR_TOK_CONDBRANCH:
@@ -200,7 +199,7 @@ static bool rir_parse_block_expr(
     return false;
 }
 
-static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct rir *r, struct rirobj_strmap *map)
+static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct rirobj_strmap *map)
 {
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL,
               "Expected a label identifier at the beginning.");
@@ -215,7 +214,7 @@ static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct rir 
 
     struct rir_expression *expr;
     bool end_found = false;
-    while (rir_parse_block_expr(p, r, b, &expr, map) &&
+    while (rir_parse_block_expr(p, b, &expr, map) &&
            !(end_found = b->exit.type != RIR_BLOCK_EXIT_INVALID)) {
         rir_block_add_expr(b, expr);
     }
@@ -254,7 +253,7 @@ fail:
     return false;
 }
 
-bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *position)
+bool rir_parse_bigblock(struct rir_parser *p, const char *position)
 {
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OCBRACE)) {
         rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
@@ -270,7 +269,7 @@ bool rir_parse_bigblock(struct rir_parser *p, struct rir *r, const char *positio
     struct token *tok;
     while ((tok = lexer_lookahead(&p->lexer, 1)) &&
            rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL) {
-        if (!rir_parse_block(p, tok, r, &map)) {
+        if (!rir_parse_block(p, tok, &map)) {
             goto fail_free_map;
         }
     }
