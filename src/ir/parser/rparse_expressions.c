@@ -104,3 +104,32 @@ fail_destroy_type:
     rir_type_destroy(type, rir_parser_rir(p));
     return NULL;
 }
+
+struct rir_object *rir_parse_read(struct rir_parser *p)
+{
+    // consume 'read'
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_READ))) {
+        return NULL;
+    }
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("argument of read()");
+    struct rir_value *val = rir_parse_value(p, &lmsg);
+    if (!val) {
+        return NULL;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ')' at the end of 'convert'.");
+        goto fail_destroy_val;
+    }
+
+    struct rir_object *rd = rir_read_create_obj(val, RIRPOS_PARSE, &p->ctx);
+    if (!rd) {
+        goto fail_destroy_val;
+    }
+    return rd;
+
+fail_destroy_val:
+    rir_value_destroy(val);
+    return NULL;
+}

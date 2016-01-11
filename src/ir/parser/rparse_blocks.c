@@ -17,6 +17,11 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
         retobj = rir_parse_convert(p);
         rir_pctx_reset_id(&p->ctx);
         break;
+    case RIR_TOK_READ:
+        rir_pctx_set_id(&p->ctx, name);
+        retobj = rir_parse_read(p);
+        rir_pctx_reset_id(&p->ctx);
+        break;
     default:
         rirparser_synerr(
             p,

@@ -39,6 +39,7 @@ static bool rir_parse_fn_common(
         );
         return false;
     }
+    const struct RFstring *fnname = ast_identifier_str(tok->value.value.ast);
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
@@ -47,18 +48,30 @@ static bool rir_parse_fn_common(
             NULL,
             "Expected a ';' after the function name."
         );
-        return NULL;
+        return false;
     }
 
     static const struct RFstring lmsg = RF_STRING_STATIC_INIT("function return type");
-    struct rir_type *ret_type = rir_parse_type(p, &lmsg); // can be NULL
+    tok = lexer_lookahead(&p->lexer, 1);
+    struct rir_type *ret_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
+    if (rir_toktype(tok) != RIR_TOK_SEMICOLON) { // expect a type
+        if (!(ret_type = rir_parse_type(p, &lmsg))) {
+            rirparser_synerr(
+                p,
+                lexer_last_token_start(&p->lexer),
+                NULL,
+                "Expected the function's type as second argument."
+            );
+            return false;
+        }
+    }
 
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
             p,
             lexer_last_token_start(&p->lexer),
             NULL,
-            "Expected a ';' after the type."
+            "Expected a ';' after the type argument of function."
         );
         goto fail_free_ret_type;
     }
@@ -81,7 +94,7 @@ static bool rir_parse_fn_common(
 
     if (!rir_fndecl_init(
             decl,
-            ast_identifier_str(tok->value.value.ast),
+            fnname,
             &args,
             ret_type,
             foreign,
