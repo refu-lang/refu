@@ -22,7 +22,7 @@ struct rir_object *rir_global_create_string(struct rir_type *type,
                                             struct rir *rir);
 
 struct rir_object *rir_global_create_parsed(struct rir_parser *p,
-                                            const struct ast_node *id,
+                                            const struct RFstring *name,
                                             const struct ast_node *type,
                                             const struct ast_node *value);
 

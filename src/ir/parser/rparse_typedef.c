@@ -88,7 +88,7 @@ struct rir_object *rir_parse_typedef(
         return NULL;
     }
 
-    // parse the type array into the typedef
+    // parse the type array
     struct rir_type_arr arr;
     if (!rir_parse_typearr(p, &arr)) {
         return NULL;
@@ -101,8 +101,7 @@ struct rir_object *rir_parse_typedef(
             NULL,
             "Expected a ')' at the end of the type definition"
         );
-        darray_free(arr);
-        return NULL;
+        goto fail_destroy_arr;
     }
 
     // finally create the typedef here
@@ -114,9 +113,15 @@ struct rir_object *rir_parse_typedef(
         &arr
     );
     if (!def) {
-        rir_typearr_deinit(&arr, rir_parser_rir(p));
+        goto fail_destroy_arr;
     }
 
+    // success, free the extra array
+    darray_free(arr);
 #undef i_typestr
     return def;
+
+fail_destroy_arr:
+    rir_typearr_deinit(&arr, rir_parser_rir(p));
+    return NULL;
 }

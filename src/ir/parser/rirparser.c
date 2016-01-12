@@ -76,6 +76,8 @@ static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct to
         return rir_parse_typedef(p, name, true);
     case RIR_TOK_TYPEDEF:
         return rir_parse_typedef(p, name, false);
+    case RIR_TOK_GLOBAL:
+        return rir_parse_global(p, name);
     default:
         rirparser_synerr(
             p,
@@ -125,8 +127,6 @@ static bool rir_parse_outer_statement(struct rir_parser *p)
     }
 
     switch(rir_toktype(tok)) {
-    case RIR_TOK_GLOBAL:
-        return  rir_parse_global(p, tok);
     case RIR_TOK_IDENTIFIER_VARIABLE:
         return rir_accept_identifier_var(p, tok, parse_outer_assignment);
     case RIR_TOK_FNDECL:

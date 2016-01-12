@@ -202,7 +202,14 @@ static bool iterate_literals_cb(const struct RFstring *member, struct rir_object
     struct rir_global *g = &obj->global;
     RF_ASSERT(rir_type_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
               "Found non string global in string literals map");
-    bllvm_create_global_const_string(&g->val.id, &g->val.literal, ctx);
+    RFS_PUSH();
+    bllvm_create_global_const_string(
+        // skip the initial '$'
+        RFS("%.*s", rf_string_length_bytes(&g->val.id) - 1, rf_string_data(&g->val.id) + 1),
+        &g->val.literal,
+        ctx
+    );
+    RFS_POP();
     return true;
 }
 

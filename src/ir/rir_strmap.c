@@ -7,13 +7,24 @@
 
 #include <String/rf_str_core.h>
 
-bool rir_map_addobj(struct rir_common *c,
-                    const struct RFstring *id,
-                    struct rir_object *obj)
+bool rirobj_strmap_add(
+    struct rirobj_strmap *map,
+    const struct RFstring *id,
+    struct rir_object *obj
+)
 {
-    bool ret = strmap_add(rir_common_curr_map(c), id, obj);
+    bool ret = strmap_add(map, id, obj);
     RF_ASSERT(ret || errno != EEXIST, "Tried to add an already existing RIR object to the map");
     return ret;
+}
+
+bool rir_map_addobj(
+    struct rir_common *c,
+    const struct RFstring *id,
+    struct rir_object *obj
+)
+{
+    return rirobj_strmap_add(rir_common_curr_map(c), id, obj);
 }
 
 

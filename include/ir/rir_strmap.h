@@ -19,6 +19,13 @@ struct rirtdef_strmap {
 };
 
 /**
+ * Add a rir object to a string to rir_object map
+ */
+bool rirobj_strmap_add(struct rirobj_strmap *map,
+                       const struct RFstring *id,
+                       struct rir_object *obj);
+
+/**
  * Add a rir object to the current rir function strmap or if we are not in a function
  * to the global rir map
  *

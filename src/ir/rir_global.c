@@ -17,7 +17,8 @@
 static bool rir_global_init_string(struct rir_object *obj,
                                    struct rir_type *type,
                                    const struct RFstring *name,
-                                   const void *value)
+                                   const void *value,
+                                   struct rirobj_strmap *global_rir_map)
 {
     // only elementary types for now
     if (!rir_type_is_elementary(type)) {
@@ -30,7 +31,16 @@ static bool rir_global_init_string(struct rir_object *obj,
         RF_ERROR("We only support string literal globals for now");
         return false;
     }
-    return rir_value_literal_init(&global->val, obj, name, value);
+    RFS_PUSH();
+    bool ret = rir_value_literal_init(
+        &global->val,
+        obj,
+        RFS("$"RF_STR_PF_FMT, RF_STR_PF_ARG(name)),
+        value,
+        global_rir_map
+    );
+    RFS_POP();
+    return ret;
 }
 
 struct rir_object *rir_global_create_string(struct rir_type *type,
@@ -42,15 +52,23 @@ struct rir_object *rir_global_create_string(struct rir_type *type,
     if (!ret) {
         return NULL;
     }
-    if (!rir_global_init_string(ret, type, name, value)) {
-        free(ret);
-        ret = NULL;
+    if (!rir_global_init_string(ret, type, name, value, &rir->map)) {
+        goto fail_free_ret;
+    }
+    // now also add the key to the global literals map
+    if (!strmap_add(&rir->global_literals, &rir_object_value(ret)->literal, ret)) {
+        RF_ERROR("Failed to add a string literal to the global string map");
+        goto fail_free_ret;
     }
     return ret;
+
+fail_free_ret:
+    free(ret);
+    return NULL;
 }
 
 struct rir_object *rir_global_create_parsed(struct rir_parser *p,
-                                            const struct ast_node *id,
+                                            const struct RFstring *name,
                                             const struct ast_node *type,
                                             const struct ast_node *value)
 {
@@ -60,24 +78,28 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
         return NULL;
     }
     const struct RFstring *valstr = ast_string_literal_get_str(value);
-    const struct RFstring *idstr = ast_identifier_str(id);
+    // take the gstr_token which should be 7 tokens behind since we are at ')'.
+    struct token *gstr_tok = lexer_lookback(&p->lexer, 7);
     RFS_PUSH();
     struct rir_object *ret = NULL;
-    const struct RFstring *expstr = RFS("gstr_%u", rf_hash_str_stable(valstr, 0));
-    if (!rf_string_equal(idstr, expstr)) {
-        rirparser_synerr(p, ast_node_startmark(id), NULL,
-                         "Mismatch in the name of a global identifier string "
-                         "with its value. Expectd" RF_STR_PF_FMT "but got "
-                         RF_STR_PF_FMT".",
-                         RF_STR_PF_ARG(expstr),
-                         RF_STR_PF_ARG(idstr)
+    const struct RFstring *expstr = RFS("$gstr_%u", rf_hash_str_stable(valstr, 0));
+    if (!rf_string_equal(name, expstr)) {
+        rirparser_synerr(
+            p,
+            token_get_start(gstr_tok),
+            token_get_end(gstr_tok),
+            "Mismatch in the name of a global identifier string "
+            "with its value. Expectd " RF_STR_PF_FMT " but got "
+            RF_STR_PF_FMT".",
+            RF_STR_PF_ARG(expstr),
+            RF_STR_PF_ARG(name)
         );
         goto end;
     }
 
     ret = rir_global_create_string(
         rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
-        idstr,
+        name,
         valstr,
         rir_parser_rir(p)
     );
@@ -99,7 +121,7 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
     RFS_PUSH();
     ret = rf_stringx_append(
         ctx->rir->buff,
-        RFS("global("RF_STR_PF_FMT", "RF_STR_PF_FMT", \""RF_STR_PF_FMT"\")\n",
+        RFS(RF_STR_PF_FMT" = global("RF_STR_PF_FMT", \""RF_STR_PF_FMT"\")\n",
             RF_STR_PF_ARG(rir_global_name(g)),
             RF_STR_PF_ARG(rir_type_string(rir_global_type(g))),
             RF_STR_PF_ARG(rir_value_actual_string(&g->val)))
@@ -112,7 +134,6 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
 i_INLINE_INS const struct RFstring *rir_global_name(const struct rir_global *g);
 i_INLINE_INS struct rir_type *rir_global_type(const struct rir_global *g);
 
-
 struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFstring *s)
 {
     struct rir_object *gstring = strmap_get(&rir->global_literals, s);
@@ -124,14 +145,6 @@ struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFst
             s,
             rir
         );
-        if (gstring) {
-            // here we must make sure to not use @a s since it can be a temporary string
-            // and strmap_add does not copy the key string, but just points to it
-            if (!strmap_add(&rir->global_literals, &rir_object_value(gstring)->literal, gstring)) {
-                RF_ERROR("Failed to add a string literal to the global string map");
-                gstring = NULL;
-            }
-        }
         RFS_POP();
     }
     return gstring;

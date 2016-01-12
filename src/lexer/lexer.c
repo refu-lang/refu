@@ -665,6 +665,17 @@ struct token *lexer_lookahead(struct lexer *l, unsigned int num)
     return tok;
 }
 
+struct token *lexer_lookback(struct lexer *l, unsigned int num)
+{
+    struct token *tok;
+    int index = l->tok_index - num;
+    if (index < 0) {
+        return NULL;
+    }
+    tok = &darray_item(l->tokens, index);
+    return tok;
+}
+
 struct token *lexer_last_token_valid(struct lexer *l)
 {
     if (LEXER_IND_OOB(l, l->tok_index)) {

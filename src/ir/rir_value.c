@@ -12,6 +12,15 @@
 #include <Utils/memory.h>
 #include <utils/common_strings.h>
 
+void rir_valuearr_deinit(struct value_arr *arr)
+{
+    struct rir_value **v;
+    darray_foreach(v, *arr) {
+        rir_value_destroy(*v);
+    }
+    darray_free(*arr);
+}
+
 bool rir_value_label_init_string(
     struct rir_value *v,
     struct rir_object *obj,
@@ -52,7 +61,13 @@ bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, 
     return ret;
 }
 
-bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value)
+bool rir_value_literal_init(
+    struct rir_value *v,
+    struct rir_object *obj,
+    const struct RFstring *name,
+    const struct RFstring *value,
+    struct rirobj_strmap *global_rir_map
+)
 {
     v->category = RIR_VALUE_LITERAL;
     v->obj = obj;
@@ -60,7 +75,10 @@ bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const s
     if (!rf_string_copy_in(&v->id, name)) {
         return false;
     }
-    return rf_string_copy_in(&v->literal, value);
+    if (!rf_string_copy_in(&v->literal, value)) {
+        return false;
+    }
+    return rirobj_strmap_add(global_rir_map, &v->id, obj);
 }
 
 bool rir_value_variable_init(

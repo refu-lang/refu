@@ -11,16 +11,16 @@
 static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name)
 {
     struct rir_object *retobj = NULL;
+    rir_pctx_set_id(&p->ctx, name);
     switch (rir_toktype(tok)) {
     case RIR_TOK_CONVERT:
-        rir_pctx_set_id(&p->ctx, name);
         retobj = rir_parse_convert(p);
-        rir_pctx_reset_id(&p->ctx);
         break;
     case RIR_TOK_READ:
-        rir_pctx_set_id(&p->ctx, name);
         retobj = rir_parse_read(p);
-        rir_pctx_reset_id(&p->ctx);
+        break;
+    case RIR_TOK_CALL:
+        retobj = rir_parse_call(p);
         break;
     default:
         rirparser_synerr(
@@ -32,6 +32,7 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
         );
         break;
     }
+    rir_pctx_reset_id(&p->ctx);
     return retobj;
 }
 

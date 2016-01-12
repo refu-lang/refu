@@ -42,6 +42,7 @@ struct token *lexer_curr_token_advance(struct lexer *l);
  */
 struct token *lexer_next_token(struct lexer *l);
 struct token *lexer_lookahead(struct lexer *l, unsigned int num);
+struct token *lexer_lookback(struct lexer *l, unsigned int num);
 struct token *lexer_last_token_valid(struct lexer *l);
 
 /**

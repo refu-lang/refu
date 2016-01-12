@@ -11,6 +11,7 @@
 struct rir;
 struct rir_ctx;
 struct rir_expression;
+struct rirobj_strmap;
 
 enum rir_valtype {
     RIR_VALUE_CONSTANT,
@@ -34,8 +35,10 @@ struct rir_value {
         struct RFstring literal;
     };
 };
+
 //! An array of values
 struct value_arr {darray(struct rir_value*);};
+void rir_valuearr_deinit(struct value_arr *arr);
 
 /**
  * Initialize the value of a variable
@@ -66,7 +69,14 @@ bool rir_value_variable_init(
     rir_data data
 );
 
-bool rir_value_literal_init(struct rir_value *v, struct rir_object *obj, const struct RFstring *name, const struct RFstring *value);
+bool rir_value_literal_init(
+    struct rir_value *v,
+    struct rir_object *obj,
+    const struct RFstring *name,
+    const struct RFstring *value,
+    struct rirobj_strmap *global_rir_map
+);
+
 bool rir_value_label_init_string(
     struct rir_value *v,
     struct rir_object *obj,

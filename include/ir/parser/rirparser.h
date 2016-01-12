@@ -8,6 +8,7 @@
 struct inpfile;
 struct info_ctx;
 struct rir_type_arr;
+struct value_arr;
 
 /**
  * Context passed around to rir functions when parsing rir files from text
@@ -65,13 +66,13 @@ void rir_parser_deinit(struct rir_parser *p);
 
 bool rir_parse(struct rir_parser *p);
 
-#define rirparser_synerr(parser_, start_, end_, ...) \
-    do {                                          \
-        i_info_ctx_add_msg((parser_)->info,       \
-                           MESSAGE_SYNTAX_ERROR,  \
-                           (start_),              \
-                           (end_),                \
-                           __VA_ARGS__);          \
+#define rirparser_synerr(parser_, start_, end_, ...)    \
+    do {                                                \
+        i_info_ctx_add_msg((parser_)->info,             \
+                           MESSAGE_SYNTAX_ERROR,        \
+                           (start_),                    \
+                           (end_),                      \
+                           __VA_ARGS__);                \
     } while(0)
 
 
@@ -82,9 +83,10 @@ i_INLINE_DECL struct rir *rir_parser_rir(const struct rir_parser *p)
 
 bool rir_parse_bigblock(struct rir_parser *p, const char *position);
 struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *msg);
+bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struct RFstring *msg);
 struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg);
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr);
-bool rir_parse_global(struct rir_parser *p, struct token *tok);
+struct rir_object *rir_parse_global(struct rir_parser *p, const struct RFstring *name);
 struct rir_object *rir_accept_identifier_var(
     struct rir_parser *p,
     struct token *tok,
@@ -100,6 +102,7 @@ bool rir_parse_fndecl(struct rir_parser *p);
 struct rir_object *rir_parse_convert(struct rir_parser *p);
 struct rir_object *rir_parse_write(struct rir_parser *p);
 struct rir_object *rir_parse_read(struct rir_parser *p);
+struct rir_object *rir_parse_call(struct rir_parser *p);
 
 /* -- util rir parsing functions -- */
 bool rir_parse_instr_start(struct rir_parser *p, const struct RFstring *msg);

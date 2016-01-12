@@ -159,57 +159,80 @@ static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_arg
     return true;
 }
 
-struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx)
+struct rir_object *rir_call_create_obj(
+    const struct RFstring *name,
+    struct value_arr *args,
+    bool is_foreign,
+    enum rir_pos pos,
+    rir_data data
+)
 {
-    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_ctx_rir(ctx));
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
     if (!ret) {
         return NULL;
     }
 
-    // copy the name in
-    if (!rf_string_copy_in(&ret->expr.call.name, ast_fncall_name(n))) {
+    if (!rf_string_copy_in(&ret->expr.call.name, name)) {
+        goto fail;
+    }
+    darray_shallow_copy(ret->expr.call.args, *args);
+    ret->expr.call.foreign = is_foreign;
+
+    // now initialize the rir expression part of the struct
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, pos, data)) {
         goto fail;
     }
 
+    return ret;
+
+fail:
+    free(ret);
+    return NULL;
+}
+
+struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx)
+{
+    struct value_arr arr;
+    struct rir_object *ret;
     if (ast_fncall_is_sum(n)) {
         // if it's a call to a function with a sum type, get the type the call matched
         struct rir_type *sumtype = rir_type_create_from_type(ast_fncall_type(n), ctx);
         if (!sumtype) {
             RF_ERROR("Could not get the rir type of a sum function call");
+            return NULL;
         }
         // create an alloca for that type
         struct rir_expression *e = rir_alloca_create(sumtype, NULL, RIRPOS_AST, ctx);
         if (!e) {
             RF_ERROR("Failed to create a rir alloca instruction");
-            goto fail;
+            return NULL;
         }
         rir_common_block_add(&ctx->common, e);
         // populate the memory of the sumtype
         if (!rir_populate_from_astcall(&e->val, n, ctx)) {
             RF_ERROR("Failed to rir union type's memory");
+            return NULL;
         }
         // then pass that as the only argument to the call
-        darray_init(ret->expr.call.args);
-        darray_append(ret->expr.call.args, &e->val);
+        darray_init(arr);
+        darray_append(arr, &e->val);
     } else {
         // turn the function call args into a rir value array
         struct fncall_args_toarr_ctx fncarg_ctx;
-        fncall_args_toarr_ctx_init(&fncarg_ctx, n, ctx, &ret->expr.call.args);
+        fncall_args_toarr_ctx_init(&fncarg_ctx, n, ctx, &arr);
         if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
-            goto fail;
+            return NULL;
         }
     }
-    ret->expr.call.foreign = ast_fncall_is_foreign(n);
 
-    // now initialize the rir expression part of the struct
-    if (!rir_object_expression_init(ret, RIR_EXPRESSION_CALL, RIRPOS_AST, ctx)) {
-        goto fail;
-    }
-
+    ret = rir_call_create_obj(
+        ast_fncall_name(n),
+        &arr,
+        ast_fncall_is_foreign(n),
+        RIRPOS_AST,
+        ctx
+    );
     return ret;
-fail:
-    free(ret);
-    return NULL;
 }
 
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx)

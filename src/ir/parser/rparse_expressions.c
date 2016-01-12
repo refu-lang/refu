@@ -1,6 +1,7 @@
 #include <ir/parser/rirparser.h>
 
 #include <ir/rir_convert.h>
+#include <ir/rir_call.h>
 #include <ir/rir_value.h>
 #include <ir/rir_type.h>
 #include <ir/rir_expression.h>
@@ -131,5 +132,62 @@ struct rir_object *rir_parse_read(struct rir_parser *p)
 
 fail_destroy_val:
     rir_value_destroy(val);
+    return NULL;
+}
+
+struct rir_object *rir_parse_call(struct rir_parser *p)
+{
+    // consume 'call'
+    if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_CALL))) {
+        return NULL;
+    }
+
+    struct token *tok;
+    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected an identifier as first argument of call()"
+        );
+        return NULL;
+    }
+    const struct RFstring *fnname = ast_identifier_str(tok->value.value.ast);
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected a ',' after the function name in call()."
+        );
+        return NULL;
+    }
+
+    struct value_arr arr;
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("call()");
+    if (!rir_parse_valuearr(p, &arr, &lmsg)) {
+        return NULL;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+                         "Expected a ')' at the end of call().");
+        goto fail_destroy_arr;
+    }
+
+    // TODO: Gotta figure out this ISFOREIGN in parsing too
+    bool is_foreign = false;
+    struct rir_object *call = rir_call_create_obj(fnname, &arr, is_foreign, RIRPOS_PARSE, &p->ctx);
+    if (!call) {
+        goto fail_destroy_arr;
+    }
+
+    // success, free the extra array
+    darray_free(arr);
+    return call;
+
+fail_destroy_arr:
+    rir_valuearr_deinit(&arr);
     return NULL;
 }

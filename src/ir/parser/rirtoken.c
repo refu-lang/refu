@@ -37,6 +37,7 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("convert"),
     RF_STRING_STATIC_INIT("write"),
     RF_STRING_STATIC_INIT("read"),
+    RF_STRING_STATIC_INIT("call"),
 };
 
 const struct RFstring *rir_tokentype_to_str(enum rir_token_type type)

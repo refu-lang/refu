@@ -56,6 +56,7 @@ enum rir_token_type {
     RIR_TOK_CONVERT,
     RIR_TOK_WRITE,
     RIR_TOK_READ,
+    RIR_TOK_CALL,
 
     RIR_TOKENS_MAX
 };

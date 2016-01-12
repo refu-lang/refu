@@ -3,15 +3,25 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <ir/rir_common.h>
 struct ast_node;
 struct rir_value;
+struct value_arr;
 struct rir_call;
 struct rir_expression;
 struct rir_ctx;
 struct rir_common;
 struct rirtostr_ctx;
+struct RFstring;
 
 struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
+struct rir_object *rir_call_create_obj(
+    const struct RFstring *name,
+    struct value_arr *args,
+    bool is_foreign,
+    enum rir_pos pos,
+    rir_data data
+);
 bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *call);
 bool rir_process_fncall(const struct ast_node *n, struct rir_ctx *ctx);
 
