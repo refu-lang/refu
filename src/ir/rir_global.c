@@ -35,7 +35,7 @@ static bool rir_global_init_string(struct rir_object *obj,
     bool ret = rir_value_literal_init(
         &global->val,
         obj,
-        RFS("$"RF_STR_PF_FMT, RF_STR_PF_ARG(name)),
+        RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(name)),
         value,
         global_rir_map
     );
@@ -141,7 +141,7 @@ struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFst
         RFS_PUSH();
         gstring = rir_global_create_string(
             rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
-            RFS("gstr_%u", rf_hash_str_stable(s, 0)),
+            RFS("$gstr_%u", rf_hash_str_stable(s, 0)),
             s,
             rir
         );
