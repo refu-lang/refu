@@ -196,7 +196,7 @@ static void rir_deinit(struct rir *r)
     // free all free standing rir values
     struct rir_value **val;
     darray_foreach(val, r->free_values) {
-        rir_value_destroy(*val);
+        rir_value_destroy(*val, RIR_VALUE_NORMAL);
     }
     darray_free(r->free_values);
 

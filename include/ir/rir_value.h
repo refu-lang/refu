@@ -13,6 +13,15 @@ struct rir_ctx;
 struct rir_expression;
 struct rirobj_strmap;
 
+/**
+ * Used to denote processing position of the value. Used mainly for proper
+ * deletion
+ */
+enum rvalue_pos {
+    RIR_VALUE_PARSING,
+    RIR_VALUE_NORMAL
+};
+
 enum rir_valtype {
     RIR_VALUE_CONSTANT,
     RIR_VALUE_VARIABLE,
@@ -38,7 +47,7 @@ struct rir_value {
 
 //! An array of values
 struct value_arr {darray(struct rir_value*);};
-void rir_valuearr_deinit(struct value_arr *arr);
+void rir_valuearr_deinit(struct value_arr *arr, enum rvalue_pos pos);
 
 /**
  * Initialize the value of a variable
@@ -97,8 +106,17 @@ bool rir_value_label_init_string(
 bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, enum elementary_type type);
 void rir_value_nil_init(struct rir_value *v);
 
+
 void rir_value_deinit(struct rir_value *v);
-void rir_value_destroy(struct rir_value *v);
+/**
+ * Destroy a value and free its pointer too
+ *
+ * @param v        The value to destroy
+ * @param pos      The position in the compiler's processing pipeline
+ *                 of value @a v. Depending on it and on the value type
+ *                 the function may not do anything, to avoid double free.
+ */
+void rir_value_destroy(struct rir_value *v, enum rvalue_pos pos);
 
 struct rir_block *rir_value_label_dst(const struct rir_value *v);
 /**

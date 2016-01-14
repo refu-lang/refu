@@ -39,7 +39,7 @@ struct rir_object *rir_parse_convert(struct rir_parser *p)
 fail_destroy_type:
     rir_type_destroy(type, rir_parser_rir(p));
 fail_destroy_val:
-    rir_value_destroy(val);
+    rir_value_destroy(val, RIR_VALUE_PARSING);
     return NULL;
 }
 
@@ -98,9 +98,9 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
     return wrt;
 
 fail_destroy_src:
-    rir_value_destroy(srcval);
+    rir_value_destroy(srcval, RIR_VALUE_PARSING);
 fail_destroy_dst:
-    rir_value_destroy(dstval);
+    rir_value_destroy(dstval, RIR_VALUE_PARSING);
 fail_destroy_type:
     rir_type_destroy(type, rir_parser_rir(p));
     return NULL;
@@ -131,7 +131,7 @@ struct rir_object *rir_parse_read(struct rir_parser *p)
     return rd;
 
 fail_destroy_val:
-    rir_value_destroy(val);
+    rir_value_destroy(val, RIR_VALUE_PARSING);
     return NULL;
 }
 
@@ -183,11 +183,10 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
         goto fail_destroy_arr;
     }
 
-    // success, free the extra array
-    darray_free(arr);
+    // success
     return call;
 
 fail_destroy_arr:
-    rir_valuearr_deinit(&arr);
+    rir_valuearr_deinit(&arr, RIR_VALUE_PARSING);
     return NULL;
 }

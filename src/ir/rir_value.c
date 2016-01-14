@@ -12,11 +12,11 @@
 #include <Utils/memory.h>
 #include <utils/common_strings.h>
 
-void rir_valuearr_deinit(struct value_arr *arr)
+void rir_valuearr_deinit(struct value_arr *arr, enum rvalue_pos pos)
 {
     struct rir_value **v;
     darray_foreach(v, *arr) {
-        rir_value_destroy(*v);
+        rir_value_destroy(*v, pos);
     }
     darray_free(*arr);
 }
@@ -210,8 +210,11 @@ void rir_value_deinit(struct rir_value *v)
     }
 }
 
-void rir_value_destroy(struct rir_value *v)
+void rir_value_destroy(struct rir_value *v, enum rvalue_pos pos)
 {
+    if (pos == RIR_VALUE_PARSING && v->category == RIR_VALUE_VARIABLE) {
+        return; // rir_parse_value() does not create new values there so don't destroy now
+    }
     rir_value_deinit(v);
     free(v);
 }

@@ -33,7 +33,7 @@ struct rir_value *rir_parse_val_and_comma(struct rir_parser *p, const struct RFs
             NULL,
             "Expected a ',' after "RF_STR_PF_FMT".", RF_STR_PF_ARG(msg)
         );
-        rir_value_destroy(val);
+        rir_value_destroy(val, RIR_VALUE_PARSING);
         val = NULL;
         goto end;
     }

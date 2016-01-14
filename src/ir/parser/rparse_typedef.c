@@ -116,8 +116,7 @@ struct rir_object *rir_parse_typedef(
         goto fail_destroy_arr;
     }
 
-    // success, free the extra array
-    darray_free(arr);
+    // success
 #undef i_typestr
     return def;
 
