@@ -9,5 +9,7 @@ extern const struct RFstring g_str_main;
 extern const struct RFstring g_str_stdlib;
 extern const struct RFstring g_str_fnstart;
 extern const struct RFstring g_str_string;
+extern const struct RFstring g_str_defined;
+extern const struct RFstring g_str_foreign;
 
 #endif

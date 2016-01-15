@@ -5,6 +5,7 @@
 #include <ir/rir_value.h>
 #include <ir/rir_type.h>
 #include <ir/rir_expression.h>
+#include <utils/common_strings.h>
 
 struct rir_object *rir_parse_convert(struct rir_parser *p)
 {
@@ -164,6 +165,43 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
         return NULL;
     }
 
+    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected an identifier as second argument of call()"
+        );
+        return NULL;
+    }
+    const struct RFstring *second_str = ast_identifier_str(tok->value.value.ast);
+    bool is_foreign;
+    if (rf_string_equal(second_str, &g_str_defined)) {
+        is_foreign = false;
+    } else if (rf_string_equal(second_str, &g_str_foreign)) {
+        is_foreign = true;
+    } else {
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            NULL,
+            "Invalid identifier \""RF_STR_PF_FMT"\" as second argument of call()."
+            " Expected either \"foreign\" or \"defined\".",
+            RF_STR_PF_ARG(second_str)
+        );
+        return NULL;
+    }
+
+    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected a ',' after the second argument of call()."
+        );
+        return NULL;
+    }
+
     struct value_arr arr;
     static const struct RFstring lmsg = RF_STRING_STATIC_INIT("call()");
     if (!rir_parse_valuearr(p, &arr, &lmsg)) {
@@ -176,8 +214,6 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
         goto fail_destroy_arr;
     }
 
-    // TODO: Gotta figure out this ISFOREIGN in parsing too
-    bool is_foreign = false;
     struct rir_object *call = rir_call_create_obj(fnname, &arr, is_foreign, RIRPOS_PARSE, &p->ctx);
     if (!call) {
         goto fail_destroy_arr;
