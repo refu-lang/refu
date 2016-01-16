@@ -113,7 +113,7 @@ static bool rir_fndecl_init_args_from_ast(
 }
 
 bool rir_fndecl_init(
-    struct rir_fndecl *ret,
+    struct rir_fndecl *fndecl,
     const struct RFstring *name,
     struct rir_type_arr *args,
     struct rir_type *return_type,
@@ -122,32 +122,46 @@ bool rir_fndecl_init(
     rir_data data
 )
 {
-    RF_STRUCT_ZERO(ret);
-    if (!rf_string_copy_in(&ret->name, name)) {
+    RF_STRUCT_ZERO(fndecl);
+    if (!rf_string_copy_in(&fndecl->name, name)) {
         return false;
     }
-    ret->plain_decl = foreign;
-    darray_shallow_copy(ret->argument_types, *args);
-    ret->return_type = return_type;
+    fndecl->plain_decl = foreign;
+    darray_shallow_copy(fndecl->argument_types, *args);
+    fndecl->return_type = return_type;
 
+    bool ret = true;
     if (pos == RIRPOS_PARSE && !foreign) {
         // we are parsing an fndef so populate the variables array
-        struct rir_fndef *def = rir_fndecl_to_fndef(ret);
+        struct rir_fndef *def = rir_fndecl_to_fndef(fndecl);
         struct rir_type **type;
-        unsigned idx = rir_type_is_specific_elementary(return_type, ELEMENTARY_TYPE_NIL) ? 0 : 1;
+
+        // the first N arguments get names $0, $1, ... $N-1
         RFS_PUSH();
+        unsigned idx = 0;
         darray_foreach(type, *args) {
             rir_pctx_set_id(data, RFS("$%d", idx++));
             if (!rir_function_add_variable(def, *type, NULL, RIRPOS_PARSE, data)) {
-                RFS_POP();
-                return false;
+                ret = false;
+                goto end;
             }
             rir_pctx_reset_id(data);
         }
+
+        // finally if there is a return value it takes the next index
+        if (!rir_type_is_specific_elementary(return_type, ELEMENTARY_TYPE_NIL)) {
+            rir_pctx_set_id(data, RFS("$%d", idx++));
+            if (!rir_function_add_variable(def, return_type, NULL, RIRPOS_PARSE, data)) {
+                ret = false;
+                goto end;
+            }
+            rir_pctx_reset_id(data);
+        }
+    end:
         RFS_POP();
     }
 
-    return true;
+    return ret;
 }
 
 struct rir_fndecl *rir_fndecl_create(
@@ -261,8 +275,14 @@ bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const 
         goto end;
     }
 
-    if (!rir_typearr_tostring(ctx, &f->argument_types)) {
-        return false;
+    if (darray_size(f->argument_types) == 0) {
+        if (!rf_stringx_append(ctx->rir->buff, type_elementary_get_str(ELEMENTARY_TYPE_NIL))) {
+            return false;
+        }
+    } else {
+        if (!rir_typearr_tostring(ctx, &f->argument_types)) {
+            return false;
+        }
     }
 
     if (!rf_stringx_append(ctx->rir->buff, &sep)) {

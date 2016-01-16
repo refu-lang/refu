@@ -31,7 +31,7 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg
     return ret;
 }
 
-bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr)
+bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, enum rir_token_type ending_token)
 {
     struct token *tok = lexer_lookahead(&p->lexer, 1);
     if (!tok) {
@@ -47,7 +47,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr)
         }
 
         tok = lexer_lookahead(&p->lexer, 1);
-        if (!tok || (rir_toktype(tok) != RIR_TOK_SM_CPAREN &&
+        if (!tok || (rir_toktype(tok) != ending_token &&
                      rir_toktype(tok) != RIR_TOK_SM_COMMA)) {
             rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
                              "Expected either ',' or ')' after type identifier");
@@ -57,7 +57,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr)
         darray_append(*arr, t);
 
         // check if we reached end of array
-        if (rir_toktype(tok) == RIR_TOK_SM_CPAREN) {
+        if (rir_toktype(tok) == ending_token) {
             // succesfully exit the loop
             break;
         }
@@ -90,7 +90,7 @@ struct rir_object *rir_parse_typedef(
 
     // parse the type array
     struct rir_type_arr arr;
-    if (!rir_parse_typearr(p, &arr)) {
+    if (!rir_parse_typearr(p, &arr, RIR_TOK_SM_CPAREN)) {
         return NULL;
     }
 

@@ -27,8 +27,24 @@ struct rir_fndecl {
     struct RFilist_node ln;
 };
 struct rir_fndecl *rir_fndecl_create_from_ast(const struct ast_node *n, struct rir_ctx *ctx);
+
+/**
+ * Initialize a rir function declaration
+ *
+ * @param decl            The declaration to initialize
+ * @param name            The name of the function
+ * @param args            An array of types, denoting the arguments of the function,
+ *                        function, or an empty type array with
+ *                        darray_size() == 0 for no arguments.
+ * @param return_type     The return type of the function. For no return type,
+ *                        this has to be an ELEMENTARY_TYPE_NIL type.
+ * @param foreign         True if this is just an fndecl and not a definition.
+ * @param pos             The position in the compiler's RIR processing pipeline
+ *                        for this function.
+ * @param data            Extra rir data to be passed to this function
+ */
 bool rir_fndecl_init(
-    struct rir_fndecl *ret,
+    struct rir_fndecl *decl,
     const struct RFstring *name,
     struct rir_type_arr *args,
     struct rir_type *return_type,
@@ -36,6 +52,9 @@ bool rir_fndecl_init(
     enum rir_pos pos,
     rir_data data
 );
+/**
+ * Create() version of rir_fndecl_init()
+ */
 struct rir_fndecl *rir_fndecl_create(
     const struct RFstring *name,
     struct rir_type_arr *args,

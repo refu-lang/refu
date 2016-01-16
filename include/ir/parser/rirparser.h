@@ -85,7 +85,11 @@ bool rir_parse_bigblock(struct rir_parser *p, const char *position);
 struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *msg);
 bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struct RFstring *msg);
 struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg);
-bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr);
+bool rir_parse_typearr(
+    struct rir_parser *p,
+    struct rir_type_arr *arr,
+    enum rir_token_type ending_token
+);
 struct rir_object *rir_parse_global(struct rir_parser *p, const struct RFstring *name);
 struct rir_object *rir_accept_identifier_var(
     struct rir_parser *p,

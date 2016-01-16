@@ -29,6 +29,7 @@ static bool rir_parse_fn_common(
         return false;
     }
 
+    // get function name
     if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
         rirparser_synerr(
             p,
@@ -51,33 +52,35 @@ static bool rir_parse_fn_common(
         return false;
     }
 
-    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("function return type");
-    tok = lexer_lookahead(&p->lexer, 1);
-    struct rir_type *ret_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
-    if (rir_toktype(tok) != RIR_TOK_SEMICOLON) { // expect a type
-        if (!(ret_type = rir_parse_type(p, &lmsg))) {
-            rirparser_synerr(
-                p,
-                lexer_last_token_start(&p->lexer),
-                NULL,
-                "Expected the function's type as second argument."
-            );
-            return false;
-        }
+    // get function's arguments
+    struct rir_type_arr args;
+    if (!rir_parse_typearr(p, &args, RIR_TOK_SEMICOLON)) {
+        return false;
     }
-
     if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
             p,
             lexer_last_token_start(&p->lexer),
             NULL,
-            "Expected a ';' after the type argument of function."
+            "Expected a ';' after the arguments of a function."
         );
-        goto fail_free_ret_type;
+        goto fail_free_args;
+    }
+    // if there is only a nil, then this means we got no args so provide empty args to further init functions
+    if (darray_size(args) == 1 && rir_type_is_specific_elementary(darray_item(args, 0), ELEMENTARY_TYPE_NIL)) {
+        darray_clear(args);
     }
 
-    struct rir_type_arr args;
-    if (!rir_parse_typearr(p, &args)) {
+    // get function's return type
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("function return type");
+    struct rir_type *ret_type;
+    if (!(ret_type = rir_parse_type(p, &lmsg))) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(&p->lexer),
+            NULL,
+            "Expected the function's return type as third argument."
+        );
         goto fail_free_args;
     }
 
@@ -89,7 +92,7 @@ static bool rir_parse_fn_common(
             "Expected a ')' at the end of the '%s'.",
             foreign ? "fndecl" : "fndef"
         );
-        goto fail_free_args;
+        goto fail_free_ret_type;
     }
 
     if (!rir_fndecl_init(
@@ -101,16 +104,14 @@ static bool rir_parse_fn_common(
             RIRPOS_PARSE,
             &p->ctx
         )) {
-        goto fail_free_args;
+        goto fail_free_ret_type;
     }
     return true;
 
+fail_free_ret_type:
+    rir_type_destroy(ret_type, rir_parser_rir(p));
 fail_free_args:
     darray_free(args);
-fail_free_ret_type:
-    if (ret_type) {
-        rir_type_destroy(ret_type, rir_parser_rir(p));
-    }
     return false;
 }
 

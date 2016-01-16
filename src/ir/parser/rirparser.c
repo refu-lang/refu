@@ -116,6 +116,7 @@ struct rir_object *rir_accept_identifier_var(
     lexer_curr_token_advance(&p->lexer);
     // consume '='
     lexer_curr_token_advance(&p->lexer);
+
     return assignment_parser(p, tok3, ast_identifier_str(tok->value.value.ast));
 }
 
