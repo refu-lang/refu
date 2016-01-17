@@ -38,7 +38,7 @@ START_TEST(test_typecheck_assignment_simple) {
         "c = a > 100\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -52,7 +52,7 @@ START_TEST(test_typecheck_assignment_invalid_string_to_int) {
         "a = name\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -74,7 +74,7 @@ START_TEST(test_typecheck_valid_addition_simple) {
         "name = \"foo\" + \"bar\""
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -89,7 +89,7 @@ START_TEST(test_typecheck_valid_subtraction_simple) {
         "a = b - c - 321 - 234\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -104,7 +104,7 @@ START_TEST(test_typecheck_valid_multiplication_simple) {
         "d = 3.14 * 0.14\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -120,7 +120,7 @@ START_TEST(test_typecheck_valid_division_simple) {
         "d = 3.14 / 0.14\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -131,7 +131,7 @@ START_TEST (test_typecheck_valid_uop_minus) {
         "b:i64 = -a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -141,7 +141,7 @@ START_TEST (test_typecheck_valid_uop_plus) {
         "b:i64 = +a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -151,7 +151,7 @@ START_TEST (test_typecheck_valid_uop_inc_pre) {
         "b:i64 = ++a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -161,7 +161,7 @@ START_TEST (test_typecheck_valid_uop_inc_post) {
         "b:i64 = a++\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -171,7 +171,7 @@ START_TEST (test_typecheck_valid_uop_dec_pre) {
         "b:i64 = --a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -181,7 +181,7 @@ START_TEST (test_typecheck_valid_uop_dec_post) {
         "b:i64 = a--\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 
@@ -191,7 +191,7 @@ START_TEST (test_typecheck_invalid_uop_minus) {
         "b:string = -\"foo\"\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -211,7 +211,7 @@ START_TEST (test_typecheck_invalid_uop_plus) {
         "b:i64 = +a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -231,7 +231,7 @@ START_TEST (test_typecheck_invalid_uop_inc_pre) {
         "b:i64 = ++\"foo\"\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -251,7 +251,7 @@ START_TEST (test_typecheck_invalid_uop_dec_post) {
         "b:i64 = \"foo\"--\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -275,7 +275,7 @@ START_TEST(test_typecheck_valid_member_access) {
         "b:u32 = a + p.age\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -290,7 +290,7 @@ START_TEST(test_typecheck_valid_member_access2) {
         "p.age = a + 1337\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -305,7 +305,7 @@ START_TEST(test_typecheck_invalid_member_access) {
         "b:u32 = a + p.craze\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -335,7 +335,7 @@ START_TEST(test_typecheck_invalid_member_access2) {
         "b:u32 = a + s.name\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(

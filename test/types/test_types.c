@@ -238,7 +238,7 @@ START_TEST(test_determine_block_type1) {
         "d:f64 = 3.14 * 0.14\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
@@ -258,7 +258,7 @@ START_TEST(test_determine_block_type2) {
         "a:foo\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -324,7 +324,7 @@ START_TEST(test_type_ast_traversal1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -348,7 +348,7 @@ START_TEST(test_type_ast_traversal2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string, c:f32}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -375,7 +375,7 @@ START_TEST(test_type_ast_traversal3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string, c:f32, d:u64}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -405,7 +405,7 @@ START_TEST(test_type_ast_traversal4) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string | c:f32, d:u64}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -439,7 +439,7 @@ START_TEST(test_type_ast_traversal5) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string, c:i64 | d:f32, e:u64, f:string, g:u8}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -482,7 +482,7 @@ START_TEST(test_type_ast_traversal6) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i8, b:string, c:i64 | d:f32, e:u64, f:string, g:u8 | h:i8 | z:string }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -575,7 +575,7 @@ START_TEST (test_type_get_uid) {
         "b:u32 = 15\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
     struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
     ck_assert(fn_impl->type == AST_FUNCTION_IMPLEMENTATION);

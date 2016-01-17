@@ -22,8 +22,8 @@ START_TEST (test_single_dependency) {
     static const struct RFstring b = RF_STRING_STATIC_INIT(
         "module b {}\n"
     );
-    front_testdriver_new_source(&a);
-    front_testdriver_new_source(&b);
+    front_testdriver_new_ast_source(&a, false);
+    front_testdriver_new_ast_source(&b, false);
 
     static const struct RFstring expected_modules[] = {
         RF_STRING_STATIC_INIT("b"),
@@ -49,10 +49,10 @@ START_TEST (test_multiple_dependencies) {
         "    import package2\n"
         "}\n"
     );
-    front_testdriver_new_source(&child);
-    front_testdriver_new_source(&pack1);
-    front_testdriver_new_source(&base);
-    front_testdriver_new_source(&pack2);
+    front_testdriver_new_ast_source(&child, false);
+    front_testdriver_new_ast_source(&pack1, false);
+    front_testdriver_new_ast_source(&base, false);
+    front_testdriver_new_ast_source(&pack2, false);
 
     static const struct RFstring expected_modules[] = {
         RF_STRING_STATIC_INIT("base"),
@@ -104,13 +104,13 @@ START_TEST (test_complicated_dependencies) {
         "}"
     );
 
-    front_testdriver_new_source(&a);
-    front_testdriver_new_source(&b);
-    front_testdriver_new_source(&c);
-    front_testdriver_new_source(&d);
-    front_testdriver_new_source(&e);
-    front_testdriver_new_source(&f);
-    front_testdriver_new_source(&g);
+    front_testdriver_new_ast_source(&a, false);
+    front_testdriver_new_ast_source(&b, false);
+    front_testdriver_new_ast_source(&c, false);
+    front_testdriver_new_ast_source(&d, false);
+    front_testdriver_new_ast_source(&e, false);
+    front_testdriver_new_ast_source(&f, false);
+    front_testdriver_new_ast_source(&g, false);
 
     static const struct RFstring expected_modules[] = {
         RF_STRING_STATIC_INIT("g"),
@@ -136,8 +136,8 @@ START_TEST (test_simple_cycle) {
         "    import a\n"
         "}\n"
     );
-    front_testdriver_new_source(&a);
-    front_testdriver_new_source(&b);
+    front_testdriver_new_ast_source(&a, false);
+    front_testdriver_new_ast_source(&b, false);
 
     ck_assert_modules_cyclic_dependency_detected(
         0, // front_ctx/file index
@@ -187,13 +187,13 @@ START_TEST (test_cycle_in_big_graph) {
         "}"
     );
 
-    front_testdriver_new_source(&a);
-    front_testdriver_new_source(&b);
-    front_testdriver_new_source(&c);
-    front_testdriver_new_source(&d);
-    front_testdriver_new_source(&e);
-    front_testdriver_new_source(&f);
-    front_testdriver_new_source(&g);
+    front_testdriver_new_ast_source(&a, false);
+    front_testdriver_new_ast_source(&b, false);
+    front_testdriver_new_ast_source(&c, false);
+    front_testdriver_new_ast_source(&d, false);
+    front_testdriver_new_ast_source(&e, false);
+    front_testdriver_new_ast_source(&f, false);
+    front_testdriver_new_ast_source(&g, false);
 
     ck_assert_modules_cyclic_dependency_detected(
         1, // front_ctx/file index
@@ -212,8 +212,8 @@ START_TEST (test_modules_same_name) {
         "}"
     );
 
-    front_testdriver_new_source(&foo);
-    front_testdriver_new_source(&foo2);
+    front_testdriver_new_ast_source(&foo, false);
+    front_testdriver_new_ast_source(&foo2, false);
 
     ck_assert_modules_cyclic_dependency_detected(
         1, // front_ctx/file index
@@ -234,8 +234,8 @@ START_TEST (test_modules_nonexistent_import) {
         "}"
     );
 
-    front_testdriver_new_source(&foo);
-    front_testdriver_new_source(&boo);
+    front_testdriver_new_ast_source(&foo, false);
+    front_testdriver_new_ast_source(&boo, false);
 
     ck_assert_modules_cyclic_dependency_detected(
         0, // front_ctx/file index
@@ -254,8 +254,8 @@ START_TEST (test_modules_main_detection) {
         "}"
     );
 
-    struct front_ctx *mfront = front_testdriver_new_source(&mainm);
-    front_testdriver_new_source(&boo);
+    struct front_ctx *mfront = front_testdriver_new_ast_source(&mainm, false);
+    front_testdriver_new_ast_source(&boo, false);
     ck_assert_typecheck_ok();
 
     ck_assert_msg(mfront->is_main, "Main module not detected succesfully");
@@ -273,8 +273,8 @@ START_TEST (test_modules_multiple_main_error) {
         "}"
     );
 
-    front_testdriver_new_source(&mainm);
-    front_testdriver_new_source(&boo);
+    front_testdriver_new_ast_source(&mainm, false);
+    front_testdriver_new_ast_source(&boo, false);
 
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH_SPECIFIC_FRONT(

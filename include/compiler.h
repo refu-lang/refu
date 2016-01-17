@@ -2,6 +2,7 @@
 #define LFR_REFU_COMPILER_H
 
 #include <stdbool.h>
+#include <utils/common.h>
 #include <RFintrusive_list.h>
 #include <String/rf_str_core.h>
 #include <module.h>
@@ -41,11 +42,17 @@ void compiler_destroy();
 
 struct module *compiler_module_get(const struct RFstring *name);
 
-struct front_ctx *compiler_new_front(struct compiler *c,
-                                     const struct RFstring *input_name);
-struct front_ctx *compiler_new_front_from_source(struct compiler *c,
-                                                 const struct RFstring *name,
-                                                 const struct RFstring *source);
+/**
+ * Create a new front context and add it to the compiler's front contexts
+ *
+ * @see front_ctx_create() for details
+ */
+struct front_ctx *compiler_new_front(
+    struct compiler *c,
+    enum rir_pos codepath,
+    const struct RFstring *file_name,
+    const struct RFstring *source
+);
 
 /**
  * Set a compiler's front as the main front_ctx

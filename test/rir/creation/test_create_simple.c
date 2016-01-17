@@ -9,7 +9,7 @@ START_TEST (test_create_simple_fn) {
         "return 45 + a\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_createrir_ok();
 
 } END_TEST

@@ -26,7 +26,7 @@ START_TEST (test_usage_1) {
         "    return 22\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_createrir_ok();
 } END_TEST
 

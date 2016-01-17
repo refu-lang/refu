@@ -99,26 +99,15 @@ struct compiler *compiler_instance_get()
     return g_compiler_instance;
 }
 
-
-struct front_ctx *compiler_new_front(struct compiler *c,
-                                     const struct RFstring *input_name)
+struct front_ctx *compiler_new_front(
+    struct compiler *c,
+    enum rir_pos codepath,
+    const struct RFstring *file_name,
+    const struct RFstring *source
+)
 {
     struct front_ctx *front;
-    if (!(front = front_ctx_create(c->args, input_name))) {
-        RF_ERROR("Failure at frontend context initialization");
-        return NULL;
-    }
-
-    rf_ilist_add(&c->front_ctxs, &front->ln);
-    return front;
-}
-
-struct front_ctx *compiler_new_front_from_source(struct compiler *c,
-                                                 const struct RFstring *name,
-                                                 const struct RFstring *source)
-{
-    struct front_ctx *front;
-    if (!(front = front_ctx_create_from_source(c->args, name, source))) {
+    if (!(front = front_ctx_create(c->args, codepath, file_name, source))) {
         RF_ERROR("Failure at frontend context initialization");
         return NULL;
     }
@@ -196,7 +185,7 @@ bool compiler_pass_args(int argc, char **argv)
     // add all input files as new fronts
     unsigned i;
     for (i = 0; i < compiler_args_get_input_num(c->args); ++i) {
-        if (!compiler_new_front(c, &c->args->input_files[i])) {
+        if (!compiler_new_front(c, RIRPOS_NONE, &c->args->input_files[i], NULL)) {
             return false;
         }
     }
@@ -380,7 +369,7 @@ bool compiler_process()
     // add the standard library to the front contexts
     struct front_ctx *stdlib_front;
     static const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-    if (!(stdlib_front = compiler_new_front(c, &stdlib))) {
+    if (!(stdlib_front = compiler_new_front(c, RIRPOS_AST, &stdlib, NULL))) {
         RF_ERROR("Failed to add standard library to the front_ctxs");
         return false;
     }

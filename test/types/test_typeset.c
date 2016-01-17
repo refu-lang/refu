@@ -110,7 +110,7 @@ START_TEST(test_type_set_population) {
         "return 15"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
@@ -138,7 +138,7 @@ START_TEST(test_type_set_population2) {
         "}\n"
         "type boo {a:i64, b:f64}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
@@ -163,7 +163,7 @@ START_TEST(test_type_set_population3) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo {a:i64, b:f64, c:i8, d:f32, e:string}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64, false);
@@ -194,7 +194,7 @@ START_TEST(test_type_set_population4) {
         "type bar {a:i8, b:string}\n"
         "type foobar {a:i64, b:f64 | c:i8, d:string}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     static const struct RFstring id_foo = RF_STRING_STATIC_INIT("foo");
@@ -232,7 +232,7 @@ START_TEST(test_types_set_has_uid1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i8| d:f32 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -249,7 +249,7 @@ START_TEST(test_types_set_has_uid2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i8, b:string | c:f32, d:u64, e:u8 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8, false);
@@ -276,7 +276,7 @@ START_TEST(test_types_set_has_string) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i8, b:string | c:f32, d:u64, e:u8 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     const struct RFstring s1 = RF_STRING_STATIC_INIT("i8,string|f32,u64,u8");
@@ -289,7 +289,7 @@ START_TEST(test_typeset_to_ordered_array1) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:i8, b:string | c:f32, d:u64, e:u8 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
     ck_assert_type_set_can_be_ordered_properly(front_testdriver_module()->types_set);
 } END_TEST
@@ -298,7 +298,7 @@ START_TEST(test_typeset_to_ordered_array2) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type foo { a:u64, b:f32 | c:i64, d:u64 | e:i8, f:u64 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
     ck_assert_type_set_can_be_ordered_properly(front_testdriver_module()->types_set);
 } END_TEST

@@ -138,7 +138,7 @@ bool front_testdriver_init(struct front_testdriver *d, bool with_stdlib, int rf_
     struct front_ctx *stdlib_front = NULL;
     if (with_stdlib) {
         const struct RFstring stdlib = RF_STRING_STATIC_INIT(RF_LANG_CORE_ROOT"/stdlib/io.rf");
-        if (!(stdlib_front = compiler_new_front(d->compiler, &stdlib))) {
+        if (!(stdlib_front = compiler_new_front(d->compiler, RIRPOS_AST, &stdlib, NULL))) {
             RF_ERROR("Failed to add standard library to the front_ctxs");
             return false;
         }
@@ -161,29 +161,39 @@ void front_testdriver_deinit(struct front_testdriver *d)
     darray_free(d->nodes);
 }
 
-struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s)
+struct front_ctx *front_testdriver_new_source(
+    const struct RFstring *s,
+    bool is_main,
+    enum rir_pos codepath
+)
 {
     struct front_testdriver *d = get_front_testdriver();
     const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
-    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s);
-
+    struct front_ctx *front = compiler_new_front(
+        d->compiler,
+        codepath,
+        &name,
+        s
+    );
     ck_assert_msg(front, "Could not add a new file to the driver");
-    front->is_main = true; // this will trigger special behaviour in front parser finalization
+    // this will trigger special behaviour in front parser finalization if true
+    front->is_main = is_main;
     // set new front as current
     d->current_front = front;
     return front;
 }
 
-struct front_ctx *front_testdriver_new_source(const struct RFstring *s)
-{
-    struct front_testdriver *d = get_front_testdriver();
-    const struct RFstring name = RF_STRING_STATIC_INIT("test_filename");
-    struct front_ctx *front = compiler_new_front_from_source(d->compiler, &name, s);
-    ck_assert_msg(front, "Could not add a new file to the driver");
-    // set new front as current
-    d->current_front = front;
-    return front;
-}
+i_INLINE_INS struct front_ctx *front_testdriver_new_ast_source(
+    const struct RFstring *source,
+    bool is_main
+);
+
+i_INLINE_INS struct front_ctx *front_testdriver_new_ast_main_source(const struct RFstring *source);
+
+i_INLINE_INS struct front_ctx *front_testdriver_new_rir_source(
+    const struct RFstring *source,
+    bool is_main
+);
 
 static inline struct ast_node *front_testdriver_node_from_loc(
     enum ast_type type, unsigned int sl, unsigned int sc, unsigned int el, unsigned int ec)

@@ -72,7 +72,7 @@ void setup_analyzer_tests_no_source()
     ck_assert_msg(analyzer_testdriver_init(&i_analyzer_test_driver_),
                   "Failed to initialize the analyzer test driver");
     // empty source file
-    front_testdriver_new_main_source(rf_string_empty_get());
+    front_testdriver_new_ast_main_source(rf_string_empty_get());
     // and since it's empty get to the analysis stage (some tests need this)
     testsupport_analyzer_prepare();
 }

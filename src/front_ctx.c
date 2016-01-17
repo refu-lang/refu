@@ -10,12 +10,23 @@
 #include <analyzer/analyzer.h>
 #include <serializer/serializer.h>
 
-static bool front_ctx_init(struct front_ctx *ctx,
-                           const struct compiler_args *args,
-                           const struct RFstring *input_file_name,
-                           const struct RFstring *file_contents)
+static bool front_ctx_init(
+    struct front_ctx *ctx,
+    const struct compiler_args *args,
+    enum rir_pos pos,
+    const struct RFstring *input_file_name,
+    const struct RFstring *file_contents
+)
 {
     RF_STRUCT_ZERO(ctx);
+    // sanity check on the argument constraints
+    RF_ASSERT(
+        args || (pos == RIRPOS_PARSE || pos == RIRPOS_AST),
+        "Either arguments or a valid codepath pos should have been provided"
+    );
+
+
+    // determine the file contents
     ctx->file = file_contents
         ? inpfile_create_from_string(input_file_name, file_contents)
         : inpfile_create(input_file_name);
@@ -23,22 +34,26 @@ static bool front_ctx_init(struct front_ctx *ctx,
         goto err;
     }
 
+    // determine the code path
+    enum rir_pos codepath = pos == RIRPOS_NONE
+        ? compiler_arg_input_is_rir(args) ? RIRPOS_PARSE : RIRPOS_AST
+        : pos;
+
     ctx->info = info_ctx_create(ctx->file);
     if (!ctx->info) {
         goto free_file;
     }
 
-    ctx->lexer = lexer_create(ctx->file, ctx->info, false /* non-RIR lexer */);
+    ctx->lexer = lexer_create(ctx->file, ctx->info, codepath);
     if (!ctx->lexer) {
         goto free_info;
     }
 
-    // if the '--rir' flag was given then parse this as rir, else as normal
     void *parser;
-    if (compiler_arg_input_is_rir(args)) {
+    if (codepath == RIRPOS_PARSE) {
         parser = rir_parser_create(ctx->file, ctx->lexer, ctx->info);
     } else {
-        parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
+         parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
     }
     if (!parser) {
         goto free_lexer;
@@ -58,30 +73,22 @@ err:
     return false;
 }
 
-struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *input_file)
+struct front_ctx *front_ctx_create(
+    const struct compiler_args *args,
+    enum rir_pos pos,
+    const struct RFstring *input_file_name,
+    const struct RFstring *file_contents
+)
 {
     struct front_ctx *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, input_file, NULL)) {
+    if (!front_ctx_init(ret, args, pos, input_file_name, file_contents)) {
         free(ret);
         return NULL;
     }
     return ret;
 }
 
-struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
-                                               const struct RFstring *file_name,
-                                               const struct RFstring *source)
-{
-    struct front_ctx *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!front_ctx_init(ret, args, file_name, source)) {
-        free(ret);
-        return NULL;
-    }
-    return ret;
-}
 
 void front_ctx_deinit(struct front_ctx *ctx)
 {

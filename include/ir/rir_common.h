@@ -1,6 +1,7 @@
 #ifndef LFR_IR_RIR_COMMON_H
 #define LFR_IR_RIR_COMMON_H
 
+#include <utils/common.h>
 
 struct rir;
 struct rir_fndef;
@@ -14,16 +15,6 @@ struct rir_common {
     struct rir *rir;
     struct rir_fndef *current_fn;
     struct rir_block *current_block;
-};
-
-/**
- * Denotes which module the rir code is called from
- */
-enum rir_pos {
-    //! Function called directly from AST to RIR conversion 
-    RIRPOS_AST = 0,
-    //! Function called during RIR file parsing
-    RIRPOS_PARSE = 1,
 };
 
 /**

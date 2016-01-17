@@ -5,6 +5,7 @@
 #include <analyzer/analyzer.h>
 #include <RFintrusive_list.h>
 #include <module.h>
+#include <utils/common.h>
 
 struct info_ctx;
 struct lexer;
@@ -32,11 +33,29 @@ struct front_ctx {
     struct RFilist_node ln;
 };
 
-struct front_ctx *front_ctx_create(const struct compiler_args *args,
-                                   const struct RFstring *file_name);
-struct front_ctx *front_ctx_create_from_source(const struct compiler_args *args,
-                                               const struct RFstring *file_name,
-                                               const struct RFstring *src);
+/**
+ * Create a new front context
+ *
+ * @param args               The compiler's arguments objects. Used to determine
+ *                           if the --rir flag was given to see which code path should
+ *                           should be chosen. Can be NULL, but then the
+ *                           @a codepath argument must be valid.
+ * @param codepath           Denote which code path should be taken as far as
+ *                           RIR creation is concerned. If given supersedes
+ *                           @a args. If not specified(= RIRPOS_NONE) then
+ *                           @a args must be given.
+ * @param input_file_name    The name of the file to parse and associate with
+ *                           this front context
+ * @param file_contents      Can be NULL. If not NULL then a new file is created
+ *                           and @a file_contents is this file's contents.
+ * @return                   The newly created front context or NULL in error.
+ */
+struct front_ctx *front_ctx_create(
+    const struct compiler_args *args,
+    enum rir_pos codepath,
+    const struct RFstring *input_file_name,
+    const struct RFstring *file_contents
+);
 
 void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);

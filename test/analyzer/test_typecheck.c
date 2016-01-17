@@ -23,7 +23,7 @@ START_TEST(test_typecheck_variable_declarations) {
         "d:f32 = 98 / 3.21\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -35,7 +35,7 @@ START_TEST(test_typecheck_negative_int_variable_declarations) {
         "a:i32 = -23432\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -47,7 +47,7 @@ START_TEST(test_typecheck_complex_type_in_variable_declaration) {
         "a:(b:int | c:string)\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -61,7 +61,7 @@ START_TEST(test_typecheck_foreign_import) {
         "rf_stdlib_print_string(\"hello\")\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -74,7 +74,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall1) {
         "return \"something\""
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -87,7 +87,7 @@ START_TEST(test_typecheck_valid_custom_type_and_fncall2) {
         "return \"something\" + a.name"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -101,7 +101,7 @@ START_TEST(test_typecheck_valid_custom_type_constructor) {
         "return a.name"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -115,7 +115,7 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
         "b:person = person(13)\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
@@ -144,7 +144,7 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor2) {
         "b:person = person(13, 54.231)\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
     struct ast_node *fn_impl = ast_node_get_child(front_testdriver_root(), 1);
@@ -184,7 +184,7 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
         "return a.name"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -205,7 +205,7 @@ START_TEST(test_typecheck_invalid_type_in_typedecl) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type person { name:string, age:if32 }\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -227,7 +227,7 @@ START_TEST (test_typecheck_valid_assignment_from_block1) {
         "    }\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -243,7 +243,7 @@ START_TEST (test_typecheck_valid_assignment_from_block2) {
         "    }\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     ck_assert_typecheck_ok();
 } END_TEST
@@ -258,7 +258,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block1) {
         "    }\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -281,7 +281,7 @@ START_TEST (test_typecheck_invalid_assignment_from_block2) {
         "    }\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
 
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
@@ -301,7 +301,7 @@ START_TEST (test_typecheck_valid_if_stmt) {
         "    if a == 1453 { b = 1 } else { b = 0 }\n"
         "}\n"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 } END_TEST
 

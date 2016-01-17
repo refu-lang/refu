@@ -23,7 +23,7 @@
 
 // just some macros to save some space in a few of the tests
 #define TEST_TYPECHECK_GET_MEXPR()                                      \
-    front_testdriver_new_main_source(&s);                               \
+    front_testdriver_new_ast_main_source(&s);                               \
     ck_assert_typecheck_ok();                                           \
     struct ast_node *block = ast_node_get_child(front_testdriver_root(), 1); \
     ck_assert(block->type == AST_BLOCK);                                \
@@ -31,7 +31,7 @@
     ck_assert(mexpr->type == AST_MATCH_EXPRESSION)
 
 #define TEST_TYPECHECK_GET_ASSIGNMEXPR()                                \
-    front_testdriver_new_main_source(&s);                               \
+    front_testdriver_new_ast_main_source(&s);                               \
     ck_assert_typecheck_ok();                                           \
     struct ast_node *block = ast_node_get_child(front_testdriver_root(), 1); \
     ck_assert(block->type == AST_BLOCK);                                \
@@ -275,7 +275,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_single_case) {
         "    }\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -298,7 +298,7 @@ START_TEST(test_typecheck_matchexpr_inv_nonexisting_case_product_of_2) {
         "    }\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -322,7 +322,7 @@ START_TEST(test_typecheck_matchexpr_inv_too_many_wildcards) {
         "    }\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -347,7 +347,7 @@ START_TEST(test_typecheck_matchexpr_inv_not_all_cases_covered) {
         "    }\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
@@ -370,7 +370,7 @@ START_TEST(test_typecheck_matchexpr_inv_catchall_before_other_cases) {
         "    }\n"
         "}"
     );
-    front_testdriver_new_main_source(&s);
+    front_testdriver_new_ast_main_source(&s);
     struct info_msg messages[] = {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,

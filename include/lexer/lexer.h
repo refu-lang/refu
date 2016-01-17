@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
+#include <utils/common.h>
 #include <ast/identifier.h>
-
 #include <lexer/tokens.h>
 #include <ir/parser/rirtoken.h>
 
@@ -25,8 +25,8 @@ struct lexer {
 };
 
 
-bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, bool is_rir);
-struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, bool is_rir);
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, enum rir_pos pos);
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, enum rir_pos pos);
 void lexer_deinit(struct lexer *l);
 void lexer_destroy(struct lexer *l);
 

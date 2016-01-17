@@ -152,7 +152,7 @@ static inline bool token_init_string_literal(struct token *t,
     return true;
 }
 
-bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, bool is_rir)
+bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, enum rir_pos pos)
 {
     darray_init(l->tokens);
     darray_init(l->indices);
@@ -161,19 +161,25 @@ bool lexer_init(struct lexer *l, struct inpfile *f, struct info_ctx *info, bool 
     l->info = info;
     l->at_eof = false;
 
-    if (is_rir) {
+    switch (pos) {
+    case RIRPOS_PARSE:
         l->vt = &rir_lex_vt;
-    } else {
+        break;
+    case RIRPOS_AST:
         l->vt = &lex_vt;
+        break;
+    default:
+        RF_CRITICAL_FAIL("Illegal code path for rirpos");
+        return false;
     }
     return true;
 }
 
-struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, bool is_rir)
+struct lexer *lexer_create(struct inpfile *f, struct info_ctx *info, enum rir_pos pos)
 {
     struct lexer *ret;
     RF_MALLOC(ret, sizeof(*ret), NULL);
-    if (!lexer_init(ret, f, info, is_rir)) {
+    if (!lexer_init(ret, f, info, pos)) {
         free(ret);
         return NULL;
     }

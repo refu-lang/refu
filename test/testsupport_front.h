@@ -75,15 +75,36 @@ struct inpfile *front_testdriver_specific_file(unsigned i);
 
 void front_testdriver_create_analyze_stdlib(struct front_testdriver *d);
 
-/**
- * Create a new front_ctx with the given source string containing the main entry to a program
- */
-struct front_ctx *front_testdriver_new_main_source(const struct RFstring *s);
 
 /**
- * Create a new front_ctx with the given source
+ * Create a new front_ctx with the given @a source and from the given codepath
  */
-struct front_ctx *front_testdriver_new_source(const struct RFstring *s);
+struct front_ctx *front_testdriver_new_source(
+    const struct RFstring *source,
+    bool is_main,
+    enum rir_pos codepath
+);
+
+i_INLINE_DECL struct front_ctx *front_testdriver_new_ast_source(
+    const struct RFstring *source,
+    bool is_main
+)
+{
+    return front_testdriver_new_source(source, is_main, RIRPOS_AST);
+}
+
+i_INLINE_DECL struct front_ctx *front_testdriver_new_ast_main_source(const struct RFstring *source)
+{
+    return front_testdriver_new_source(source, true, RIRPOS_AST);
+}
+
+i_INLINE_DECL struct front_ctx *front_testdriver_new_rir_source(
+    const struct RFstring *source,
+    bool is_main
+)
+{
+    return front_testdriver_new_source(source, is_main, RIRPOS_PARSE);
+}
 
 /**
  * Returns a pointer to the buffer string after having populated it with
