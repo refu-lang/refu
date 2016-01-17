@@ -17,7 +17,7 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *m
 {
     struct rir_value *retv;
     struct token *tok;
-    if (!(tok = lexer_lookahead(&p->lexer, 1))) {
+    if (!(tok = lexer_lookahead(parser_lexer(p), 1))) {
         return NULL;
     }
 
@@ -72,14 +72,14 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *m
     }
 
     // consume value token
-    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
     return retv;
 }
 
 bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struct RFstring *msg)
 {
     struct token *tok;
-    if (!(tok = lexer_lookahead(&p->lexer, 1))) {
+    if (!(tok = lexer_lookahead(parser_lexer(p), 1))) {
         return false;
     }
     darray_init(*arr);
@@ -100,12 +100,12 @@ bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struc
             goto fail_free_arr;
         }
 
-        tok = lexer_lookahead(&p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || (rir_toktype(tok) != RIR_TOK_SM_CPAREN &&
                      rir_toktype(tok) != RIR_TOK_SM_COMMA)) {
             rirparser_synerr(
                 p,
-                lexer_last_token_start(&p->lexer),
+                lexer_last_token_start(parser_lexer(p)),
                 NULL,
                 "Expected either ',' or ')' after "RF_STR_PF_FMT" argument of " RF_STR_PF_FMT,
                 RF_STR_PF_ARG(sord),
@@ -121,7 +121,7 @@ bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struc
             break;
         }
         // else consume the token and go to the next one
-        tok = lexer_next_token(&p->lexer);
+        tok = lexer_next_token(parser_lexer(p));
         idx++;
     }
     return true;

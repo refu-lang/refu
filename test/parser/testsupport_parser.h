@@ -159,7 +159,7 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define i_ck_test_parse_as1(node_, type_, node_name, target_, ...)      \
     do {                                                                \
         testsupport_parser_prepare();                                   \
-        node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__); \
+        node_ = ast_parser_acc_##type_(front_testdriver_ast_parser(), __VA_ARGS__); \
         ck_assert_parsed_node(node_, "Could not parse "node_name);      \
         check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
         i_test_finalize_parsing(node_);                                 \
@@ -168,7 +168,7 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define i_ck_test_parse_as0(node_, type_,  node_name, target_)          \
     do {                                                                \
         testsupport_parser_prepare();                                   \
-        node_ = parser_acc_##type_(get_front_testdriver()->current_front->parser); \
+        node_ = ast_parser_acc_##type_(front_testdriver_ast_parser());      \
         ck_assert_parsed_node(node_, "Could not parse "node_name);      \
         check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
         i_test_finalize_parsing(node_);                                 \
@@ -177,8 +177,8 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define ck_test_parse_root(node_, target_)                              \
     do {                                                                \
         testsupport_parser_prepare();                                   \
-        parser_process_file(get_front_testdriver()->current_front->parser); \
-        node_ = get_front_testdriver()->current_front->parser->root;    \
+        ast_parser_process_file(front_testdriver_ast_parser());         \
+        node_ = front_testdriver_ast_parser()->root;                    \
         ck_assert_parsed_node(node_, "Could not parse root node");      \
         check_ast_match(n, target_, get_front_testdriver()->current_front->file); \
         i_test_finalize_parsing(node_);                                 \
@@ -194,18 +194,18 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define i_ck_test_fail_parse_as1(type_, ...)                            \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__), \
+        ck_assert_msg(NULL == ast_parser_acc_##type_(front_testdriver_ast_parser(), __VA_ARGS__), \
                       "parsing "#type_"should have failed");            \
-        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(ast_parser_has_syntax_error(front_testdriver_ast_parser()), \
                       "a syntax error should have been reported");      \
     } while (0)
 
 #define i_ck_test_fail_parse_as0(type_, ...)                            \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(NULL == ast_parser_acc_##type_(front_testdriver_ast_parser()), \
                       "parsing "#type_"should have failed");            \
-        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(ast_parser_has_syntax_error(front_testdriver_ast_parser()), \
                       "a syntax error should have been reported");      \
     } while (0)
 
@@ -219,18 +219,18 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define i_ck_test_fail_parse_noerr_as1(type_, ...)                            \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser, __VA_ARGS__), \
+        ck_assert_msg(NULL == ast_parser_acc_##type_(front_testdriver_ast_parser(), __VA_ARGS__), \
                       "parsing "#type_"should have failed");            \
-        ck_assert_msg(!parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(!ast_parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
                       "no syntax error should have been reported");      \
     } while (0)
 
 #define i_ck_test_fail_parse_noerr_as0(type_, ...)                            \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(NULL == parser_acc_##type_(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(NULL == ast_parser_acc_##type_(front_testdriver_ast_parser()), \
                       "parsing "#type_"should have failed");            \
-        ck_assert_msg(!parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(!ast_parser_has_syntax_error(front_testdriver_ast_parser()), \
                       "no syntax error should have been reported");      \
     } while (0)
 
@@ -240,9 +240,9 @@ void i_test_finalize_parsing(struct ast_node *n);
 #define ck_test_fail_parse_file()                                       \
     do {                                                                \
         ck_assert(lexer_scan(get_front_testdriver()->current_front->lexer)); \
-        ck_assert_msg(!parser_process_file(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(!ast_parser_process_file(front_testdriver_ast_parser()), \
                       "parsing should have failed");                    \
-        ck_assert_msg(parser_has_syntax_error(get_front_testdriver()->current_front->parser), \
+        ck_assert_msg(ast_parser_has_syntax_error(front_testdriver_ast_parser()), \
                       "a syntax error should have been reported");      \
     } while (0)
 

@@ -22,7 +22,7 @@ struct front_ctx {
     /* Owned objects */
     struct inpfile *file;
     struct lexer *lexer;
-    struct parser *parser;
+    struct parser_common *parser;
     struct info_ctx *info;
     //! Denotes whether this file is the starting point of our project, hence the main module
     bool is_main;
@@ -42,6 +42,18 @@ void front_ctx_deinit(struct front_ctx *ctx);
 void front_ctx_destroy(struct front_ctx *ctx);
 
 struct RFstring *front_ctx_filename(const struct front_ctx *f);
+
+/**
+ * Set this front_ctx as the main one, create a main module and add it to compiler's modules
+ *
+ * @param f            The front context which to set as the main one
+ * @param n            If coming from AST parsing this is the root ast node. If
+ *                     not then this should be NULL
+ * @param rir          If coming from RIR parsing then this should be the rir
+ *                     module, if not the it should be NULL
+ * @return             True for success, false in failure
+ */
+bool front_ctx_make_main(struct front_ctx *f, struct ast_node *n, struct rir *rir);
 
 /**
  * Scan and parse the file of a front_ctx

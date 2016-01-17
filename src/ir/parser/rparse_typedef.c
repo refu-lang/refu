@@ -7,7 +7,7 @@
 
 struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg)
 {
-    struct token *tok = lexer_lookahead(&p->lexer, 1);
+    struct token *tok = lexer_lookahead(parser_lexer(p), 1);
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_IDENTIFIER, "Expected identifier");
     struct rir_type *ret = rir_type_byname(rir_parser_rir(p), ast_identifier_str(tok->value.value.ast));
     if (!ret) {
@@ -21,11 +21,11 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg
         return false;
     }
     // consume type identifier
-    tok = lexer_next_token(&p->lexer);
+    tok = lexer_next_token(parser_lexer(p));
     if (tok && rir_toktype(tok) == RIR_TOK_OP_MULTI) {
         ret->is_pointer = true;
         // consume '*'
-        lexer_next_token(&p->lexer);
+        lexer_next_token(parser_lexer(p));
     }
 
     return ret;
@@ -33,7 +33,7 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg
 
 bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, enum rir_token_type ending_token)
 {
-    struct token *tok = lexer_lookahead(&p->lexer, 1);
+    struct token *tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
         return false;
     }
@@ -46,10 +46,10 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, enum rir_
             goto fail_free_arr;
         }
 
-        tok = lexer_lookahead(&p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || (rir_toktype(tok) != ending_token &&
                      rir_toktype(tok) != RIR_TOK_SM_COMMA)) {
-            rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+            rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                              "Expected either ',' or ')' after type identifier");
             goto fail_free_arr;
         }
@@ -62,7 +62,7 @@ bool rir_parse_typearr(struct rir_parser *p, struct rir_type_arr *arr, enum rir_
             break;
         }
         // else consume the token and go to the next one
-        tok = lexer_next_token(&p->lexer);
+        tok = lexer_next_token(parser_lexer(p));
     }
     return true;
 
@@ -80,10 +80,10 @@ struct rir_object *rir_parse_typedef(
 #define i_DEFSTR "'%s'.", uniondef ? "uniondef" : "typedef"
 
     // consume 'typedef' / 'uniondef'
-    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_OPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                       "Expected '(' after "i_DEFSTR);
         return NULL;
     }
@@ -94,10 +94,10 @@ struct rir_object *rir_parse_typedef(
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ')' at the end of the type definition"
         );

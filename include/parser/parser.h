@@ -3,65 +3,75 @@
 
 #include <RFintrusive_list.h>
 #include <RFstring.h>
+#include <parser/parser_common.h>
 
 struct info_ctx;
 struct lexer;
 struct inpfile;
 struct front_ctx;
 
-struct parser {
+struct ast_parser {
+    //! The parser common data. Should always be first. Some behaviour relies on that.
+    struct parser_common cmn;
     //! A pointer to the front_ctx that owns the parser. Needed only by the
     //! parsing of a module function. Maybe pass only as argument?
     struct front_ctx *front;
-    struct info_ctx *info;
-    struct lexer *lexer;
-    struct inpfile *file;
     struct ast_node *root;
     bool have_syntax_err;
 };
 
+i_INLINE_DECL struct ast_parser *parser_common_to_astparser(const struct parser_common* c)
+{
+    RF_ASSERT(c->type == PARSER_AST, "Expected AST parser");
+    return container_of(c, struct ast_parser, cmn);
+}
 
-bool parser_init(struct parser *p,
-                 struct inpfile *f,
-                 struct lexer *lex,
-                 struct info_ctx *info,
-                 struct front_ctx *front);
-struct parser *parser_create(struct inpfile *f,
-                             struct lexer *lex,
-                             struct info_ctx *info,
-                             struct front_ctx *front);
-void parser_deinit(struct parser *p);
-void parser_destroy(struct parser *p);
+
+bool ast_parser_init(
+    struct ast_parser *p,
+    struct inpfile *f,
+    struct lexer *lex,
+    struct info_ctx *info,
+    struct front_ctx *front
+);
+struct ast_parser *ast_parser_create(
+    struct inpfile *f,
+    struct lexer *lex,
+    struct info_ctx *info,
+    struct front_ctx *front
+);
+void ast_parser_deinit(struct ast_parser *p);
+void ast_parser_destroy(struct ast_parser *p);
 
 
 /**
  * Performs the scanning and parsing stage on a file
  */
-bool parser_parse_file(struct parser *p);
+bool ast_parser_parse_file(struct ast_parser *p);
 /**
  * Mark all children of node @a n as finalized after parsing and 
  * checks for a main function to see if this should be the main module
  */
-bool parser_finalize_parsing(struct parser *p);
+bool ast_parser_finalize_parsing(struct ast_parser *p);
 /**
  * Pre-analysis stage for a file. Scanning, parsing and finalization
  * This is the main function for parsing.
  */
-bool parser_process_file(struct parser *p);
+bool ast_parser_process_file(struct ast_parser *p);
 
-void parser_flush_messages(struct parser *parser);
 
-i_INLINE_DECL void parser_set_syntax_error(struct parser *parser)
+
+i_INLINE_DECL void ast_parser_set_syntax_error(struct ast_parser *parser)
 {
     parser->have_syntax_err = true;
 }
 
-i_INLINE_DECL bool parser_has_syntax_error(struct parser *parser)
+i_INLINE_DECL bool ast_parser_has_syntax_error(struct ast_parser *parser)
 {
     return parser->have_syntax_err;
 }
 
-i_INLINE_DECL bool parser_has_syntax_error_reset(struct parser *parser)
+i_INLINE_DECL bool ast_parser_has_syntax_error_reset(struct ast_parser *parser)
 {
     bool ret = parser->have_syntax_err;
     parser->have_syntax_err = false;
@@ -75,11 +85,7 @@ i_INLINE_DECL bool parser_has_syntax_error_reset(struct parser *parser)
  * TODO: Make this smarter, get rid of the has_syntax_error logic and just use the
  * rollback mechanism if possible
  */
-void parser_info_rollback(struct parser *parser);
+void ast_parser_info_rollback(struct ast_parser *parser);
 
-i_INLINE_DECL void parser_inject_input_file(struct parser *p, struct inpfile *f)
-{
-    p->file = f;
-}
 
 #endif

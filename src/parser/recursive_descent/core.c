@@ -18,9 +18,9 @@
 #include "vardecl.h"
 #include "module.h"
 
-static struct ast_node *parser_acc_stmt(struct parser *p);
+static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p);
 
-static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
+static bool do_finalize_parsing(struct ast_node *n, void *user_arg)
 {
     bool *main_found = user_arg;
     n->state = AST_NODE_STATE_AFTER_PARSING;
@@ -32,74 +32,69 @@ static bool do_finalize_parsing(struct ast_node *n, void* user_arg)
     return true;
 }
 
-bool parser_finalize_parsing(struct parser *p)
+bool ast_parser_finalize_parsing(struct ast_parser *p)
 {
     bool main_found = false;
     ast_pre_traverse_tree(p->root, do_finalize_parsing, &main_found);
     // if this is the main module or something else set the front's main flag
     if (main_found || p->front->is_main) {
-        if (!compiler_set_main(p->front)) {
-            return false;
-        }
-        if (!module_create(p->root, p->front)) {
-            return false;
-        }
+        return front_ctx_make_main(p->front, p->root, NULL);
     }
     return true;
 }
 
-bool parser_parse_file(struct parser *p)
+bool ast_parser_parse_file(struct ast_parser *p)
 {
     struct ast_node *stmt;
-    p->root = ast_root_create(p->file);
-    while ((stmt = parser_acc_stmt(p))) {
+    p->root = ast_root_create(p->cmn.file);
+    while ((stmt = ast_parser_acc_stmt(p))) {
         ast_node_add_child(p->root, stmt);
     }
 
-    if (NULL != lexer_curr_token_advance(p->lexer)) {
-        parser_synerr(p, lexer_last_token_start(p->lexer), NULL,
+    if (NULL != lexer_curr_token_advance(p->cmn.lexer)) {
+        parser_synerr(p, lexer_last_token_start(p->cmn.lexer), NULL,
                       "Expected an outermost statement");
         return false;
     }
     return true;
 }
 
-bool parser_process_file(struct parser *p)
+bool ast_parser_process_file(struct ast_parser *p)
 {
-    if (!parser_parse_file(p)) {
+    if (!ast_parser_parse_file(p)) {
         return false;
     }
-    if (!parser_finalize_parsing(p)) {
+    if (!ast_parser_finalize_parsing(p)) {
         return false;
     }
     return true;
 }
 
-static struct ast_node *parser_acc_stmt(struct parser *p)
+static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p)
 {
     struct token *tok2;
     struct token *tok;
     struct ast_node *stmt = NULL;
 
-    tok = lexer_lookahead(p->lexer, 1);
-    tok2 = lexer_lookahead(p->lexer, 2);
+    tok = lexer_lookahead(parser_lexer(p), 1);
+    tok2 = lexer_lookahead(parser_lexer(p), 2);
 
     // TODO: Maybe change these, since each one of these macros actually checks for token existence too
     if (TOKEN_IS_MODULE_START(tok)) {
-        stmt = parser_acc_module(p);
-        if (!stmt || !module_create(stmt, p->front)) {
+        stmt = ast_parser_acc_module(p);
+        if (!stmt || !module_create(stmt, NULL, p->front)) {
             return NULL;
         }
     } else if (TOKEN_IS_BLOCK_START(tok)) {
-        stmt = parser_acc_block(p, true);
+        stmt = ast_parser_acc_block(p, true);
     } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {
-        stmt = parser_acc_vardecl(p);
+        stmt = ast_parser_acc_vardecl(p);
     } else if (TOKEN_IS_TYPEDECL_START(tok)) {
-        stmt = parser_acc_typedecl(p);
+        stmt = ast_parser_acc_typedecl(p);
     } else if (TOKENS_ARE_FNDECL_OR_IMPL(tok, tok2)) {
-        stmt = parser_acc_fnimpl(p);
+        stmt = ast_parser_acc_fnimpl(p);
     } else if (TOKEN_IS_IMPORT(tok)) {
-        stmt = parser_acc_import(p);
+        stmt = ast_parser_acc_import(p);
     }
 
     return stmt;

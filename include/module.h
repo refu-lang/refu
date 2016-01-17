@@ -43,11 +43,14 @@ struct module {
 /**
  * Create a new module and add it to the compiler's modules
  *
- * @param n            The root ast node of the module
+ * @param n            The root ast node of the module, only given at creation
+ *                     from AST parsing. Is NULL if coming from RIR parsing.
+ * @param rir          The rir of the module, only given at creation
+ *                     from RIR parsing. Is NULL if coming from AST parsing.
  * @param front        The front_ctx containing the module
  * @return             The module in sucess or NULL in failure
  */
-struct module *module_create(struct ast_node *n, struct front_ctx *front);
+struct module *module_create(struct ast_node *n, struct rir *rir, struct front_ctx *front);
 void module_destroy(struct module* m);
 
 /**

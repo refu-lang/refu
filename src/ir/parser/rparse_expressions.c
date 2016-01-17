@@ -25,8 +25,8 @@ struct rir_object *rir_parse_convert(struct rir_parser *p)
         goto fail_destroy_val;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of 'convert'.");
         goto fail_destroy_type;
     }
@@ -46,7 +46,7 @@ fail_destroy_val:
 
 struct rir_object *rir_parse_write(struct rir_parser *p)
 {
-    struct token *start = lexer_curr_token(&p->lexer);
+    struct token *start = lexer_curr_token(parser_lexer(p));
     // consume 'write'
     if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_WRITE))) {
         return false;
@@ -57,8 +57,8 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ',' after first argument of 'write'.");
         goto fail_destroy_type;
     }
@@ -76,8 +76,8 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
     }
 
     struct token *end;
-    if (!(end = lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN))) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!(end = lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN))) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of 'write'.");
         goto fail_destroy_src;
     }
@@ -139,8 +139,8 @@ struct rir_object *rir_parse_read(struct rir_parser *p)
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of 'convert'.");
         goto fail_destroy_val;
     }
@@ -164,10 +164,10 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
     }
 
     struct token *tok;
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER))) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected an identifier as first argument of call()"
         );
@@ -175,20 +175,20 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
     }
     const struct RFstring *fnname = ast_identifier_str(tok->value.value.ast);
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ',' after the function name in call()."
         );
         return NULL;
     }
 
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER))) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected an identifier as second argument of call()"
         );
@@ -212,10 +212,10 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ',' after the second argument of call()."
         );
@@ -228,8 +228,8 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
         return NULL;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of call().");
         goto fail_destroy_arr;
     }

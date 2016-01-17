@@ -13,21 +13,21 @@ struct rir_object *rir_parse_global(struct rir_parser *p, const struct RFstring 
         return NULL;
     }
 
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER))) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a type identifier as first argument of 'global'.");
         return NULL;
     }
     struct ast_node *type_id = tok->value.value.ast;
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ',' after the first argument of 'global'.");
         return NULL;
     }
 
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_STRING_LITERAL))) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_STRING_LITERAL))) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a string literal as second argument of 'global'.");
         return NULL;
     }
@@ -40,8 +40,8 @@ struct rir_object *rir_parse_global(struct rir_parser *p, const struct RFstring 
     }
 
     // consume the last parentheses
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a closing ')' at the end of 'global'.");
         return NULL;
     }

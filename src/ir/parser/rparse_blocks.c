@@ -39,10 +39,10 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
 static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map, const char *msg)
 {
     struct token *tok;
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER_LABEL))) {
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER_LABEL))) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a branch label identifier %s.", msg
         );
@@ -76,8 +76,8 @@ static bool rir_parse_branch(struct rir_parser *p, struct rir_block *b, struct r
         return false;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' after 'branch'.");
         return false;
     }
@@ -102,8 +102,8 @@ static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, stru
     if (!objtrue) {
         return false;
     }
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_COMMA)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ',' after second argument of 'condbranch()'.");
     }
 
@@ -112,8 +112,8 @@ static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, stru
         return false;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' after 'condbranch()'.");
         return false;
     }
@@ -135,8 +135,8 @@ static bool rir_parse_return(struct rir_parser *p, struct rir_block *b)
     }
     rir_block_exit_return_init(&b->exit, v);
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of 'return'.");
         return false;
     }
@@ -151,7 +151,7 @@ static bool rir_parse_block_expr(
 )
 {
     struct token *tok;
-    if (!(tok = lexer_lookahead(&p->lexer, 1))) {
+    if (!(tok = lexer_lookahead(parser_lexer(p), 1))) {
         return false;
     }
 
@@ -202,7 +202,7 @@ static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct riro
     struct rir_block *b = &obj->block;
 
     // consume the label identifier
-    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
 
     struct rir_expression *expr;
     bool end_found = false;
@@ -217,9 +217,9 @@ static bool rir_parse_create_basic_blocks(struct rir_parser *p, struct rirobj_st
 {
     struct token *tok;
     enum rir_token_type type;
-    lexer_push(&p->lexer);
+    lexer_push(parser_lexer(p));
     strmap_init(map);
-    while ((tok = lexer_lookahead(&p->lexer, 1)) &&
+    while ((tok = lexer_lookahead(parser_lexer(p), 1)) &&
            (type = rir_toktype(tok)) != RIR_TOK_SM_CCBRACE) {
         if (type == RIR_TOK_IDENTIFIER_LABEL) {
             const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
@@ -235,9 +235,9 @@ static bool rir_parse_create_basic_blocks(struct rir_parser *p, struct rirobj_st
             }
         }
         // go to the next token
-        lexer_curr_token_advance(&p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
     }
-    lexer_rollback(&p->lexer);
+    lexer_rollback(parser_lexer(p));
     return true;
 
 fail:
@@ -247,8 +247,8 @@ fail:
 
 bool rir_parse_bigblock(struct rir_parser *p, const char *position)
 {
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OCBRACE)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_OCBRACE)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a '{' after the %s.", position);
         return false;
     }
@@ -259,15 +259,15 @@ bool rir_parse_bigblock(struct rir_parser *p, const char *position)
     }
 
     struct token *tok;
-    while ((tok = lexer_lookahead(&p->lexer, 1)) &&
+    while ((tok = lexer_lookahead(parser_lexer(p), 1)) &&
            rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL) {
         if (!rir_parse_block(p, tok, &map)) {
             goto fail_free_map;
         }
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CCBRACE)) {
-        rirparser_synerr(p, lexer_last_token_start(&p->lexer), NULL,
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CCBRACE)) {
+        rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a '}' at the end of the block.");
         goto fail_free_map;
     }

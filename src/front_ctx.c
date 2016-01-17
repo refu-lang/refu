@@ -2,9 +2,11 @@
 
 #include <module.h>
 #include <compiler_args.h>
+#include <compiler.h>
 #include <info/info.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
+#include <ir/parser/rirparser.h>
 #include <analyzer/analyzer.h>
 #include <serializer/serializer.h>
 
@@ -31,13 +33,19 @@ static bool front_ctx_init(struct front_ctx *ctx,
         goto free_info;
     }
 
-    ctx->parser = parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
-    if (!ctx->parser) {
+    // if the '--rir' flag was given then parse this as rir, else as normal
+    void *parser;
+    if (compiler_arg_input_is_rir(args)) {
+        parser = rir_parser_create(ctx->file, ctx->lexer, ctx->info);
+    } else {
+        parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
+    }
+    if (!parser) {
         goto free_lexer;
     }
+    ctx->parser = parser_to_common(parser);
 
     ctx->is_main = false;
-
     return true;
 
 free_lexer:
@@ -97,20 +105,45 @@ struct RFstring *front_ctx_filename(const struct front_ctx *f)
     return inpfile_name(f->file);
 }
 
+bool front_ctx_make_main(struct front_ctx *f, struct ast_node *n, struct rir *rir)
+{
+    if (!compiler_set_main(f)) {
+        return false;
+    }
+    return module_create(n, rir, f);
+}
+
 bool front_ctx_parse(struct front_ctx *ctx)
 {
     if (!lexer_scan(ctx->lexer)) {
         return false;
     }
 
-    if (!parser_process_file(ctx->parser)) {
+    if (!parser_parse(ctx->parser)) {
         return false;
     }
-    // the root should no longer be owned by the parser at this point
-    ctx->root = ctx->parser->root;
-    ctx->parser->root = 0;
-    // root will never go into analyzer pass1 so set the state properly here
-    ctx->root->state = AST_NODE_STATE_ANALYZER_PASS1;
-    // finally make sure that the root's symbol table is initialized
-    return root_symbol_table_init(&ctx->root->root.st);
+
+    switch (ctx->parser->type) {
+    case PARSER_AST:
+        // the root should no longer be owned by the parser at this point
+        ctx->root = parser_ast_move_root(ctx->parser);
+        // root will never go into analyzer pass1 so set the state properly here
+        ctx->root->state = AST_NODE_STATE_ANALYZER_PASS1;
+        // finally make sure that the root's symbol table is initialized
+        return root_symbol_table_init(&ctx->root->root.st);
+        break;
+    case PARSER_RIR:
+        // TODO: Take the rir from the parser and insert it into a new module
+        //       each time and only make main if a main RIR module was found
+
+        // for now (testing period) let's only have 1 rir and that's main
+        if (!front_ctx_make_main(ctx, NULL, parser_rir(ctx->parser))) {
+            return false;
+        }
+        break;
+    default:
+        RF_CRITICAL_FAIL("Illegal parser type");
+        break;
+    }
+    return false;
 }

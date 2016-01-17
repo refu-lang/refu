@@ -13,15 +13,15 @@ static bool rir_parse_fn_common(
     struct rir_fndecl *decl
 )
 {
-    struct token *tok = lexer_lookahead(&p->lexer, 1);
+    struct token *tok = lexer_lookahead(parser_lexer(p), 1);
     // consume fndef/fndecl
     RF_ASSERT(rir_toktype(tok) == RIR_TOK_FNDEF || rir_toktype(tok) == RIR_TOK_FNDECL,
               "Expected either fndef or fndecl rir token");
-    lexer_curr_token_advance(&p->lexer);
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_OPAREN)) {
+    lexer_curr_token_advance(parser_lexer(p));
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_OPAREN)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected '(' after '%s'.",
             foreign ? "fndecl" : "fndef"
@@ -30,10 +30,10 @@ static bool rir_parse_fn_common(
     }
 
     // get function name
-    if (!(tok = lexer_expect_token(&p->lexer, RIR_TOK_IDENTIFIER))) {
+    if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER))) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected an identifier as first argument of '%s'.",
             foreign ? "fndecl" : "fndef"
@@ -42,10 +42,10 @@ static bool rir_parse_fn_common(
     }
     const struct RFstring *fnname = ast_identifier_str(tok->value.value.ast);
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ';' after the function name."
         );
@@ -57,10 +57,10 @@ static bool rir_parse_fn_common(
     if (!rir_parse_typearr(p, &args, RIR_TOK_SEMICOLON)) {
         return false;
     }
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SEMICOLON)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SEMICOLON)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ';' after the arguments of a function."
         );
@@ -77,17 +77,17 @@ static bool rir_parse_fn_common(
     if (!(ret_type = rir_parse_type(p, &lmsg))) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected the function's return type as third argument."
         );
         goto fail_free_args;
     }
 
-    if (!lexer_expect_token(&p->lexer, RIR_TOK_SM_CPAREN)) {
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
         rirparser_synerr(
             p,
-            lexer_last_token_start(&p->lexer),
+            lexer_last_token_start(parser_lexer(p)),
             NULL,
             "Expected a ')' at the end of the '%s'.",
             foreign ? "fndecl" : "fndef"

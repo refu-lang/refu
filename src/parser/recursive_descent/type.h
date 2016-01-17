@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 struct ast_node;
-struct parser;
+struct ast_parser;
 
 #define TYPETERM_START_STR     "'(' or identifier"
 #define TYPEFACTOR_START_STR   "'(' or identifier"
@@ -20,7 +20,7 @@ struct parser;
  *              / identifier TOKEN_SM_COLON TOKEN_SM_OPAREN type_description TOKEN_SM_CPAREN
  *              / annotated_identifier
  */
-struct ast_node *parser_acc_typeleaf(struct parser *p);
+struct ast_node *ast_parser_acc_typeleaf(struct ast_parser *p);
 
 /**
  * For the parser accepting a type description is a generic function to insert
@@ -47,18 +47,18 @@ struct ast_node *parser_acc_typeleaf(struct parser *p);
  * Set of possible first tokens for a type description
  * FIRST(type_description) = { identifier, TOKEN_SM_OPAREN }
  */
-struct ast_node *parser_acc_typedesc(struct parser *p);
+struct ast_node *ast_parser_acc_typedesc(struct ast_parser *p);
 /**
  * Simple wrapper over @ref parser_acc_typedesc() that will create
  * a root type description node which corresponds to ast_typedesc. The main
  * difference is that such a node has a symbol table
  */
-struct ast_node *parser_acc_typedesc_top(struct parser *p);
+struct ast_node *ast_parser_acc_typedesc_top(struct ast_parser *p);
 
 #define TOKEN_IS_TYPEDECL_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_TYPE)
 
 /**
  * type_declaration = TOKEN_KW_TYPE TOKEN_SM_OCBRACE type_description TOKEN_SM_CCBRACE
  */
-struct ast_node *parser_acc_typedecl(struct parser *p);
+struct ast_node *ast_parser_acc_typedecl(struct ast_parser *p);
 #endif

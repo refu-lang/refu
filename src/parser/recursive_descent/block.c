@@ -10,14 +10,14 @@
 #include "type.h"
 
 #define TOKEN_IS_RETURNSTMT_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_RETURN)
-static struct ast_node *parser_acc_return_statement(struct parser *p)
+static struct ast_node *ast_parser_acc_return_statement(struct ast_parser *p)
 {
     struct token *tok;
     struct ast_node *expr;
     struct ast_node *n = NULL;
     const struct inplocation_mark *start;
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
         return NULL;
     }
@@ -27,12 +27,12 @@ static struct ast_node *parser_acc_return_statement(struct parser *p)
     }
     start = token_get_start(tok);
     //consume the return keyword
-    lexer_curr_token_advance(p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
 
 
-    expr = parser_acc_expression(p);
+    expr = ast_parser_acc_expression(p);
     if (!expr) {
-        parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
                       "Expected an expression for the return statement");
         goto end;
     }
@@ -46,19 +46,19 @@ end:
     return n;
 }
 
-static struct ast_node *parser_acc_expr_statement(struct parser *p)
+static struct ast_node *ast_parser_acc_expr_statement(struct ast_parser *p)
 {
     struct token *tok;
     struct ast_node *n = NULL;
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
 
     if (TOKEN_IS_BLOCK_START(tok)) {
-        n = parser_acc_block(p, true);
+        n = ast_parser_acc_block(p, true);
     } else if (TOKEN_IS_TYPEDECL_START(tok)) {
-        n = parser_acc_typedecl(p);
+        n = ast_parser_acc_typedecl(p);
     } else if (TOKEN_IS_RETURNSTMT_START(tok)) {
-        n = parser_acc_return_statement(p);
+        n = ast_parser_acc_return_statement(p);
     }
 
     return n;
@@ -68,18 +68,18 @@ static struct ast_node *parser_acc_expr_statement(struct parser *p)
  * Accepts a block element, which is either an expression or
  * an expression statement
  */
-static struct ast_node *parser_acc_block_element(struct parser *p)
+static struct ast_node *ast_parser_acc_block_element(struct ast_parser *p)
 {
     struct ast_node *n;
-    n = parser_acc_expression(p);
+    n = ast_parser_acc_expression(p);
     if (n) {
         return n;
     }
 
-    return parser_acc_expr_statement(p);
+    return ast_parser_acc_expr_statement(p);
 }
 
-struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
+struct ast_node *ast_parser_acc_block(struct ast_parser *p, bool expect_braces)
 {
     struct ast_node *n;
     struct token *tok;
@@ -87,7 +87,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     const struct inplocation_mark *start = NULL;
     const struct inplocation_mark *end = NULL;
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
         return NULL;
     }
@@ -97,7 +97,7 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
             return NULL;
         }
         // consume '{'
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
         start = token_get_start(tok);
     }
 
@@ -108,21 +108,21 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     }
 
     //try to parse the first element
-    element = parser_acc_block_element(p);
+    element = ast_parser_acc_block_element(p);
     if (!element) {
         if (!expect_braces) {
             goto err_free_block;
         }
 
         //else just find the terminating '}' and return
-        tok = lexer_lookahead(p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
                           "Expected an expression or a '}' at block end");
             goto err_free_block;
         }
         //consume the '}'
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
 
         ast_node_set_start(n, start);
         ast_node_set_end(n, token_get_end(tok));
@@ -136,20 +136,20 @@ struct ast_node *parser_acc_block(struct parser *p, bool expect_braces)
     ast_block_add_element(n, element);
 
     // now add elements to the block
-    while ((element = parser_acc_block_element(p))) {
+    while ((element = ast_parser_acc_block_element(p))) {
         ast_block_add_element(n, element);
         end = ast_node_endmark(element);
     }
 
     if (expect_braces) {
-        tok = lexer_lookahead(p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
                           "Expected an expression or a '}' at block end");
             goto err_free_block;
         }
         //consume the '}'
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
 
         end = token_get_end(tok);
     }

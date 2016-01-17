@@ -12,12 +12,12 @@
 #include "type.h"
 
 // parsing a variable declaration is basically like a type leaf
-struct ast_node *parser_acc_vardecl(struct parser *p)
+struct ast_node *ast_parser_acc_vardecl(struct ast_parser *p)
 {
     struct ast_node *n;
     struct ast_node *desc;
 
-    desc = parser_acc_typeleaf(p);
+    desc = ast_parser_acc_typeleaf(p);
     if (!desc) {
         return NULL;
     }

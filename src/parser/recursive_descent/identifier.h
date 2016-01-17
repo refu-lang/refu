@@ -1,7 +1,7 @@
 #ifndef LFR_PARSER_IDENTIFIER_H
 #define LFR_PARSER_IDENTIFIER_H
 #include <Definitions/inline.h>
-struct parser;
+struct ast_parser;
 
 #include <parser/parser.h>
 #include <lexer/lexer.h>
@@ -16,20 +16,20 @@ struct parser;
 #define XIDENTIFIER_START_SPECIAL_COND(tok_) \
     (tok_ && (tok_)->type == TOKEN_KW_CONST)
 
-i_INLINE_DECL struct ast_node *parser_acc_identifier(struct parser *p)
+i_INLINE_DECL struct ast_node *ast_parser_acc_identifier(struct ast_parser *p)
 {
     struct token *tok;
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
         return NULL;
     }
     // consume the identifier token and return it
-    lexer_curr_token_advance(p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
     return token_get_value(tok);
 }
 
 /**
  * annotated_identifier = ["const"] identifier [generic_attributes]
  */
-struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it);
+struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it);
 #endif

@@ -79,7 +79,7 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
     }
     const struct RFstring *valstr = ast_string_literal_get_str(value);
     // take the gstr_token which should be 7 tokens behind since we are at ')'.
-    struct token *gstr_tok = lexer_lookback(&p->lexer, 7);
+    struct token *gstr_tok = lexer_lookback(parser_lexer(p), 7);
     RFS_PUSH();
     struct rir_object *ret = NULL;
     const struct RFstring *expstr = RFS("$gstr_%u", rf_hash_str_stable(valstr, 0));

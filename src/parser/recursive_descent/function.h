@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-struct parser;
+struct ast_parser;
 struct ast_node;
 
 #define TOKENS_ARE_FNDECL_OR_IMPL(tok1_, tok2_) \
@@ -21,7 +21,7 @@ struct ast_node;
  *                             found in the code. @see enum fndecl_position for details.
  *
  */
-struct ast_node *parser_acc_fndecl(struct parser *p, int fndecl_position);
+struct ast_node *ast_parser_acc_fndecl(struct ast_parser *p, int fndecl_position);
 
 enum parser_fndecl_list_err {
     PARSER_FNDECL_LIST_SUCCESS = 0,
@@ -44,16 +44,18 @@ enum parser_fndecl_list_err {
  *                       parsed succesfully, if there was an error or if it was
  *                       empty. @look parser_fndecl_list_err
  */
-enum parser_fndecl_list_err parser_acc_fndecl_list(struct parser *p,
-                                                   struct ast_node *parent,
-                                                   int fndecl_position);
+enum parser_fndecl_list_err ast_parser_acc_fndecl_list(
+    struct ast_parser *p,
+    struct ast_node *parent,
+    int fndecl_position
+);
 
 
 /**
  * function_implementation = function_declaration block
  *                         / function_declaration match_expression
  */
-struct ast_node *parser_acc_fnimpl(struct parser *p);
+struct ast_node *ast_parser_acc_fnimpl(struct ast_parser *p);
 
 enum parser_fnimpl_list_err {
     PARSER_FNIMPL_LIST_SUCCESS = 0,
@@ -75,8 +77,8 @@ enum parser_fnimpl_list_err {
  *                       parsed succesfully, if there was an error or if it was
  *                       empty. @look parser_fnimpl_list_err
  */
-enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
-                                                   struct ast_node *parent);
+enum parser_fnimpl_list_err ast_parser_acc_fnimpl_list(struct ast_parser *p,
+                                                       struct ast_node *parent);
 
 /**
  * Check if @a tok1_ and @a tok2_ could be a generic function call
@@ -97,6 +99,6 @@ enum parser_fnimpl_list_err parser_acc_fnimpl_list(struct parser *p,
 /**
  * identifier [genrattr] TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */
-struct ast_node *parser_acc_fncall(struct parser *p, bool expect_it);
+struct ast_node *ast_parser_acc_fncall(struct ast_parser *p, bool expect_it);
 
 #endif

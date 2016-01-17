@@ -2,7 +2,7 @@
 #define LFR_PARSER_VARIABLE_DECLARATION_H
 
 struct ast_node;
-struct parser;
+struct ast_parser;
 
 #define TOKENS_ARE_POSSIBLE_VARDECL(tok1_, tok2_)           \
     (tok1_ && tok2_ && (tok1_)->type == TOKEN_IDENTIFIER && \
@@ -11,6 +11,6 @@ struct parser;
 /**
  * variable_declaration = type_leaf
  */
-struct ast_node *parser_acc_vardecl(struct parser *p);
+struct ast_node *ast_parser_acc_vardecl(struct ast_parser *p);
 
 #endif

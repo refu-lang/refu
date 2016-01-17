@@ -7,8 +7,8 @@
 
 #include "common.h"
 
-i_INLINE_INS struct ast_node *parser_acc_identifier(struct parser *p);
-struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
+i_INLINE_INS struct ast_node *ast_parser_acc_identifier(struct ast_parser *p);
+struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it)
 {
     struct token *tok;
     struct ast_node *id;
@@ -18,7 +18,7 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
     const struct inplocation_mark *start;
     const struct inplocation_mark *end;
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
         return NULL;
     }
@@ -26,13 +26,13 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
     // parsing logic for the annotations to the identifier here
     if (tok->type == TOKEN_KW_CONST) {
         //consume 'const'
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
 
         is_const = true;
         start = token_get_start(tok);
-        tok = lexer_lookahead(p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok) {
-            parser_synerr(p, lexer_last_token_end(p->lexer), NULL,
+            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
                           "Expected an identifier after const");
             return NULL;
         }
@@ -48,13 +48,13 @@ struct ast_node *parser_acc_xidentifier(struct parser *p, bool expect_it)
         return NULL;
     }
     //consume identifier
-    lexer_curr_token_advance(p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
     id = token_get_value(tok);
     end = ast_node_endmark(id);
 
-    tok = lexer_lookahead(p->lexer, 1);
-    genr = parser_acc_genrattr(p, false); // can be NULL for example in: if a < 15 { .. }
-    if (!genr && parser_has_syntax_error(p)) {
+    tok = lexer_lookahead(parser_lexer(p), 1);
+    genr = ast_parser_acc_genrattr(p, false); // can be NULL for example in: if a < 15 { .. }
+    if (!genr && ast_parser_has_syntax_error(p)) {
         return NULL;
     }
     if (genr) {

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 struct ast_node;
-struct parser;
+struct ast_parser;
 
 #define GENRATTR_START_COND(tok_)               \
     ((tok_) && (tok_)->type == TOKEN_OP_LT)
@@ -24,7 +24,7 @@ struct parser;
  *        In the tests, "type" was making the test fail since it's a keyword
  * generic_decl_single = identifier identifier
  */
-struct ast_node *parser_acc_genrdecl(struct parser *p);
+struct ast_node *ast_parser_acc_genrdecl(struct ast_parser *p);
 
 /**
  * generic_attributes = "<" generic_attribute ">"
@@ -38,5 +38,5 @@ struct ast_node *parser_acc_genrdecl(struct parser *p);
  *                          / annotated_identifier
  *
  */
-struct ast_node *parser_acc_genrattr(struct parser *p, bool expect_it);
+struct ast_node *ast_parser_acc_genrattr(struct ast_parser *p, bool expect_it);
 #endif

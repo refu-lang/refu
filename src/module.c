@@ -18,11 +18,12 @@
 #include <ir/rir.h>
 
 
-static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *front)
+static bool module_init(struct module *m, struct ast_node *n, struct rir *rir, struct front_ctx *front)
 {
     // initialize
     RF_STRUCT_ZERO(m);
     m->node = n;
+    m->rir = rir;
     m->front = front;
     darray_init(m->dependencies);
     darray_init(m->foreignfn_arr);
@@ -52,13 +53,13 @@ static bool module_init(struct module *m, struct ast_node *n, struct front_ctx *
     return true;
 }
 
-struct module *module_create(struct ast_node *n, struct front_ctx *front)
+struct module *module_create(struct ast_node *n, struct rir *rir, struct front_ctx *front)
 {
     struct module *ret;
     RF_ASSERT(n->type == AST_MODULE || n->type == AST_ROOT,
               "Unexpected ast node type");
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!module_init(ret, n, front)) {
+    if (!module_init(ret, n, rir, front)) {
         free(ret);
         ret = NULL;
     }

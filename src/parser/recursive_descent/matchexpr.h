@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <lexer/tokens.h>
 
-struct parser;
+struct ast_parser;
 
 #define TOKEN_IS_POSSIBLE_MATCH_EXPRESSION(tok_) (tok_ && (tok_)->type == TOKEN_KW_MATCH)
 
@@ -25,8 +25,8 @@ struct parser;
  * @param expect_it       If true, failure to parse is an error.
  * @return                The parsed match expression node.
  */
-struct ast_node *parser_acc_matchexpr(struct parser *p,
-                                      bool have_header,
-                                      bool expect_it);
+struct ast_node *ast_parser_acc_matchexpr(struct ast_parser *p,
+                                          bool have_header,
+                                          bool expect_it);
 
 #endif

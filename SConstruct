@@ -23,6 +23,7 @@ refu_src = [
     'front_ctx.c',
 
     'parser/parser.c',
+    'parser/parser_common.c',
 
     'info/info.c',
     'info/msg.c',

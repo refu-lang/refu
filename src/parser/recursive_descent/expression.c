@@ -18,36 +18,37 @@
 
 #define MAX_LEVEL_OP_PRECEDENCE 13
 
-static struct ast_node *parser_acc_expression_prime(
-    struct parser *p,
+static struct ast_node *ast_parser_acc_expression_prime(
+    struct ast_parser *p,
     struct ast_node *left_hand_side,
-    int level);
+    int level
+);
 
-static struct ast_node *parser_acc_expr_element(struct parser *p)
+static struct ast_node *ast_parser_acc_expr_element(struct ast_parser *p)
 {
     struct ast_node *n;
     struct token *tok;
     struct token *tok2;
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
         return NULL;
     }
-    tok2 = lexer_lookahead(p->lexer, 2);
+    tok2 = lexer_lookahead(parser_lexer(p), 2);
 
     // check for a parenthesized expression
     if (tok->type == TOKEN_SM_OPAREN) {
         //consume parentheses opening
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
 
-        n = parser_acc_expression(p);
+        n = ast_parser_acc_expression(p);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected "EXPR_ELEMENT_START" after '('");
             return NULL;
         }
 
-        tok = lexer_curr_token_advance(p->lexer);
+        tok = lexer_curr_token_advance(parser_lexer(p));
         if (!tok || tok->type != TOKEN_SM_CPAREN) {
             parser_synerr(p, ast_node_endmark(n), NULL,
                           "expected ')' after expression");
@@ -56,7 +57,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
 
         return n;
     } else if (TOKENS_ARE_POSSIBLE_VARDECL(tok, tok2)) {
-        n = parser_acc_vardecl(p);
+        n = ast_parser_acc_vardecl(p);
         if (!n) {
             parser_synerr(p, token_get_end(tok), NULL,
                           "expected a variable declaration");
@@ -64,12 +65,12 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKENS_ARE_POSSIBLE_FNCALL(tok, tok2) && // check if is generic function call
-               (n = parser_acc_fncall(p, false))) {
+               (n = ast_parser_acc_fncall(p, false))) {
         return n;
     } else if (TOKENS_ARE_FNCALL(tok, tok2)) { //normal function call
-        return parser_acc_fncall(p, true);
+        return ast_parser_acc_fncall(p, true);
     } else if (tok->type == TOKEN_SM_OCBRACE) {
-        n = parser_acc_block(p, true);
+        n = ast_parser_acc_block(p, true);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected a block");
@@ -77,7 +78,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKEN_IS_POSSIBLE_IFEXPR(tok)) {
-        n = parser_acc_ifexpr(p, TOKEN_KW_IF);
+        n = ast_parser_acc_ifexpr(p, TOKEN_KW_IF);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected an if expression");
@@ -85,7 +86,7 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
         }
         return n;
     } else if (TOKEN_IS_POSSIBLE_MATCH_EXPRESSION(tok)) {
-        n = parser_acc_matchexpr(p, true, true);
+        n = ast_parser_acc_matchexpr(p, true, true);
         if (!n) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "expected a match expression");
@@ -108,11 +109,11 @@ static struct ast_node *parser_acc_expr_element(struct parser *p)
     }
 
     //consume the token and return
-    lexer_curr_token_advance(p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
     return n;
 }
 
-static struct ast_node *parser_acc_exprfactor(struct parser *p)
+static struct ast_node *ast_parser_acc_exprfactor(struct ast_parser *p)
 {
     struct ast_node *element;
     struct ast_node *op;
@@ -120,14 +121,14 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     struct token *prefix = NULL;
 
     //check for prefix unary operators
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (tok && token_is_prefix_unaryop(tok)) {
         prefix = tok;
         //consume the prefix unary operator
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
     }
 
-    element = parser_acc_expr_element(p);
+    element = ast_parser_acc_expr_element(p);
     if (!element) {
         if (prefix) {
             parser_synerr(p, token_get_end(prefix), NULL,
@@ -149,10 +150,10 @@ static struct ast_node *parser_acc_exprfactor(struct parser *p)
     }
 
     //check for a postfix unary operator
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (tok && token_is_postfix_unaryop(tok)) {
         //consume the prefix unary operator
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
 
         op = ast_unaryop_create(ast_node_startmark(element),
                                 token_get_end(tok),
@@ -219,32 +220,33 @@ static inline bool check_operator_type(struct token *tok, int level)
                           "Illegal level %d for expression parsing", level);
 }
 
-static struct ast_node *parser_acc_exprlevel(struct parser *p, int level)
+static struct ast_node *ast_parser_acc_exprlevel(struct ast_parser *p, int level)
 {
     struct ast_node *prime;
     struct ast_node *term;
 
     if (level == MAX_LEVEL_OP_PRECEDENCE) { // end, we got to the factor level
-        term = parser_acc_exprfactor(p);
+        term = ast_parser_acc_exprfactor(p);
     } else {
-        term = parser_acc_exprlevel(p, level + 1);
+        term = ast_parser_acc_exprlevel(p, level + 1);
     }
     if (!term) {
         return NULL;
     }
 
-    prime = parser_acc_expression_prime(p, term, level);
-    if (parser_has_syntax_error(p)) {
+    prime = ast_parser_acc_expression_prime(p, term, level);
+    if (ast_parser_has_syntax_error(p)) {
         return NULL;
     }
 
     return prime ? prime : term;
 }
 
-static struct ast_node *parser_acc_expression_prime(
-    struct parser *p,
+static struct ast_node *ast_parser_acc_expression_prime(
+    struct ast_parser *p,
     struct ast_node *left_hand_side,
-    int level)
+    int level
+)
 {
     struct token *tok;
     struct ast_node *op;
@@ -252,12 +254,12 @@ static struct ast_node *parser_acc_expression_prime(
     struct ast_node *ret;
 
 
-    tok = lexer_lookahead(p->lexer, 1);
+    tok = lexer_lookahead(parser_lexer(p), 1);
     if (!check_operator_type(tok, level)) {
         return NULL;
     }
     //consume operator
-    lexer_curr_token_advance(p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
 
     op = ast_binaryop_create(ast_node_startmark(left_hand_side), NULL,
                              binaryop_type_from_token(tok),
@@ -266,7 +268,7 @@ static struct ast_node *parser_acc_expression_prime(
         RF_ERRNOMEM();
         return NULL;
     }
-    right_hand_side = parser_acc_exprlevel(p, level + 1);
+    right_hand_side = ast_parser_acc_exprlevel(p, level + 1);
     if (!right_hand_side) {
         parser_synerr(p, token_get_end(tok), NULL,
                       "Expected "EXPR_ELEMENT_START" after "
@@ -278,7 +280,7 @@ static struct ast_node *parser_acc_expression_prime(
     ast_binaryop_set_right(op, right_hand_side);
     // special case here for array reference operator we need to consume the closing bracket
     if (ast_binaryop_op(op) == BINARYOP_ARRAY_REFERENCE) {
-        tok = lexer_lookahead(p->lexer, 1);
+        tok = lexer_lookahead(parser_lexer(p), 1);
         if (tok->type != TOKEN_SM_CSBRACE) {
             parser_synerr(p, token_get_start(tok), NULL,
                           "Expected ']' after "RF_STR_PF_FMT,
@@ -287,12 +289,12 @@ static struct ast_node *parser_acc_expression_prime(
             return NULL;
         }
         // consume ']'
-        lexer_curr_token_advance(p->lexer);
+        lexer_curr_token_advance(parser_lexer(p));
         ast_node_set_end(op, token_get_end(tok));
     }
 
-    ret = parser_acc_expression_prime(p, op, level);
-    if (parser_has_syntax_error(p)) {
+    ret = ast_parser_acc_expression_prime(p, op, level);
+    if (ast_parser_has_syntax_error(p)) {
         // no need to free op here, since it's freed inside expression' accepting
         return NULL;
     }
@@ -300,7 +302,7 @@ static struct ast_node *parser_acc_expression_prime(
     return ret ? ret : op;
 }
 
-struct ast_node *parser_acc_expression(struct parser *p)
+struct ast_node *ast_parser_acc_expression(struct ast_parser *p)
 {
-    return parser_acc_exprlevel(p, 1);
+    return ast_parser_acc_exprlevel(p, 1);
 }

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <lexer/tokens.h>
 
-struct parser;
+struct ast_parser;
 
 #define TOKEN_IS_IMPORT(i_tok_) (                                       \
         (i_tok_) &&                                                     \
@@ -15,7 +15,7 @@ struct parser;
 /**
  * import_statement = (import | foreign_import) identifier_list
  */
-struct ast_node *parser_acc_import(struct parser *p);
+struct ast_node *ast_parser_acc_import(struct ast_parser *p);
 
 /**
  * module_statements = import_statement
@@ -31,6 +31,6 @@ struct ast_node *parser_acc_import(struct parser *p);
  *
  * module = TOKEN_KW_MODULE identifier module_args module_block
  */
-struct ast_node *parser_acc_module(struct parser *p);
+struct ast_node *ast_parser_acc_module(struct ast_parser *p);
 
 #endif

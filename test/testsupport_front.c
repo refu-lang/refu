@@ -84,9 +84,9 @@ struct ast_node *front_testdriver_module_root()
     return front_testdriver_module()->node;
 }
 
-struct parser *front_testdriver_parser()
+struct ast_parser *front_testdriver_ast_parser()
 {
-    return get_front_testdriver()->current_front->parser;
+    return parser_common_to_astparser(get_front_testdriver()->current_front->parser);
 }
 
 struct lexer *front_testdriver_lexer()

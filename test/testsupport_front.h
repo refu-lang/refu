@@ -49,9 +49,9 @@ void front_testdriver_set_curr_module(unsigned i);
 struct module *front_testdriver_module();
 struct ast_node *front_testdriver_module_root();
 /**
- * Get the parser of the current front_ctx being tested
+ * Get the AST parser of the current front_ctx being tested
  */
-struct parser *front_testdriver_parser();
+struct ast_parser *front_testdriver_ast_parser();
 /**
  * Get the lexer of the current front_ctx being tested
  */

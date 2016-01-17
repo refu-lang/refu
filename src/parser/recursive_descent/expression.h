@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 struct ast_node;
-struct parser;
+struct ast_parser;
 
 #define EXPR_ELEMENT_START "a string literal, a numeric constant or an identifier"
 
@@ -46,6 +46,6 @@ struct parser;
  *              / array_reference
  *              / TOKEN_SM_OPAREN expression TOKEN_SM_CPAREN
  */
-struct ast_node *parser_acc_expression(struct parser *p);
+struct ast_node *ast_parser_acc_expression(struct ast_parser *p);
 
 #endif

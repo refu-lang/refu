@@ -1,4 +1,5 @@
 #include <ir/parser/rirparser.h>
+#include <parser/parser_common.h>
 #include <Utils/memory.h>
 #include <String/rf_str_corex.h>
 
@@ -9,53 +10,33 @@ i_INLINE_INS void rir_pctx_init(struct rir_pctx *ctx, struct rir *r);
 i_INLINE_INS void rir_pctx_set_id(struct rir_pctx *ctx, const struct RFstring *id);
 i_INLINE_INS void rir_pctx_reset_id(struct rir_pctx *ctx);
 
-struct rir_parser *rir_parser_create(const struct RFstring *name,
-                                     const struct RFstring *contents)
+i_INLINE_INS struct rir_parser *parser_common_to_rirparser(const struct parser_common* c);
+struct rir_parser *rir_parser_create(struct inpfile *f, struct lexer *lex, struct info_ctx *info)
 {
     struct rir_parser *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_parser_init(ret, name, contents)) {
+    if (!rir_parser_init(ret, f, lex, info)) {
         free(ret);
         return NULL;
     }
     return ret;
 }
 
-bool rir_parser_init(struct rir_parser *p,
-                     const struct RFstring *name,
-                     const struct RFstring *contents)
+bool rir_parser_init(
+    struct rir_parser *p,
+    struct inpfile *f,
+    struct lexer *lex,
+    struct info_ctx *info
+)
 {
     RF_STRUCT_ZERO(p);
+    parser_common_init(&p->cmn, PARSER_RIR, f, lex, info);
     // initialize the parsing buffer
     if (!rf_stringx_init_buff(&p->buff, 1024, "")) {
         return false;
     }
 
-    p->file = contents
-        ? inpfile_create_from_string(name, contents)
-        : inpfile_create(name);
-    if (!p->file) {
-        goto free_buffer;
-    }
-
-    p->info = info_ctx_create(p->file);
-    if (!p->info) {
-        goto free_file;
-    }
-
-    if (!lexer_init(&p->lexer, p->file, p->info, true)) {
-        goto free_info;
-    }
-
     return true;
-
-free_info:
-    info_ctx_destroy(p->info);
-free_file:
-    inpfile_destroy(p->file);
-free_buffer:
-    rf_stringx_deinit(&p->buff);
-    return false;
 }
 
 void rir_parser_destroy(struct rir_parser *p)
@@ -99,8 +80,8 @@ struct rir_object *rir_accept_identifier_var(
 {
     struct token *tok2;
     struct token *tok3;
-    tok2 = lexer_lookahead(&p->lexer, 2);
-    tok3 = lexer_lookahead(&p->lexer, 3);
+    tok2 = lexer_lookahead(parser_lexer(p), 2);
+    tok3 = lexer_lookahead(parser_lexer(p), 3);
     if ((!tok2 || !tok3) || rir_toktype(tok2) != RIR_TOK_OP_ASSIGN) {
         rirparser_synerr(
             p,
@@ -113,9 +94,9 @@ struct rir_object *rir_accept_identifier_var(
     }
 
     // consume identifier variable ($N)
-    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
     // consume '='
-    lexer_curr_token_advance(&p->lexer);
+    lexer_curr_token_advance(parser_lexer(p));
 
     return assignment_parser(p, tok3, ast_identifier_str(tok->value.value.ast));
 }
@@ -123,7 +104,7 @@ struct rir_object *rir_accept_identifier_var(
 static bool rir_parse_outer_statement(struct rir_parser *p)
 {
     struct token *tok;
-    if (!(tok = lexer_lookahead(&p->lexer, 1))) {
+    if (!(tok = lexer_lookahead(parser_lexer(p), 1))) {
         return false;
     }
 
@@ -149,9 +130,6 @@ static bool rir_parse_outer_statement(struct rir_parser *p)
 
 bool rir_parse(struct rir_parser *p)
 {
-    if (!lexer_scan(&p->lexer)) {
-        return false;
-    }
     struct rir *r = rir_create();
     rir_pctx_init(&p->ctx, r);
     while (rir_parse_outer_statement(p)) {
@@ -159,7 +137,7 @@ bool rir_parse(struct rir_parser *p)
     }
 
     // if we got any error messages we failed
-    if (info_ctx_has(p->info, MESSAGE_ANY)) {
+    if (info_ctx_has(p->cmn.info, MESSAGE_ANY)) {
         rir_destroy(r);
         return false;
     }

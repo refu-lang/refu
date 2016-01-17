@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <lexer/tokens.h>
 
-struct parser;
+struct ast_parser;
 
 #define TOKEN_IS_POSSIBLE_IFEXPR(tok_) (tok_ && (tok_)->type == TOKEN_KW_IF)
 
@@ -20,6 +20,6 @@ struct parser;
  * if_expression' = TOKEN_KW_ELIF conditional_branch if_expression'
  *                / EMPTY
  */
-struct ast_node *parser_acc_ifexpr(struct parser *p, enum token_type if_type);
+struct ast_node *ast_parser_acc_ifexpr(struct ast_parser *p, enum token_type if_type);
 
 #endif
