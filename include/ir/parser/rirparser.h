@@ -23,6 +23,9 @@ struct rir_pctx {
     struct rir_common common;
     //! Some functions from the parsing require an id string as input.
     const struct RFstring *id;
+    //! Denotes if during parsing a module name was found and a module was created.
+    //! If not then this rir module is by default made the main module
+    bool module_created;
 };
 
 i_INLINE_DECL void rir_pctx_init(struct rir_pctx *ctx, struct rir *r)
@@ -58,9 +61,15 @@ i_INLINE_DECL struct rir_parser *parser_common_to_rirparser(const struct parser_
     return container_of(c, struct rir_parser, cmn);
 }
 
-struct rir_parser *rir_parser_create(struct inpfile *f, struct lexer *lex, struct info_ctx *ctx);
+struct rir_parser *rir_parser_create(
+    struct front_ctx *front,
+    struct inpfile *f,
+    struct lexer *lex,
+    struct info_ctx *ctx
+);
 bool rir_parser_init(
     struct rir_parser *p,
+    struct front_ctx *front,
     struct inpfile *f,
     struct lexer *lex,
     struct info_ctx *ctx

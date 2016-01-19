@@ -1,4 +1,6 @@
 #include <ir/parser/rirparser.h>
+#include <front_ctx.h>
+#include <utils/common_strings.h>
 #include <parser/parser_common.h>
 #include <Utils/memory.h>
 #include <String/rf_str_corex.h>
@@ -11,11 +13,11 @@ i_INLINE_INS void rir_pctx_set_id(struct rir_pctx *ctx, const struct RFstring *i
 i_INLINE_INS void rir_pctx_reset_id(struct rir_pctx *ctx);
 
 i_INLINE_INS struct rir_parser *parser_common_to_rirparser(const struct parser_common* c);
-struct rir_parser *rir_parser_create(struct inpfile *f, struct lexer *lex, struct info_ctx *info)
+struct rir_parser *rir_parser_create(struct front_ctx *front, struct inpfile *f, struct lexer *lex, struct info_ctx *info)
 {
     struct rir_parser *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_parser_init(ret, f, lex, info)) {
+    if (!rir_parser_init(ret, front, f, lex, info)) {
         free(ret);
         return NULL;
     }
@@ -24,13 +26,14 @@ struct rir_parser *rir_parser_create(struct inpfile *f, struct lexer *lex, struc
 
 bool rir_parser_init(
     struct rir_parser *p,
+    struct front_ctx *front,
     struct inpfile *f,
     struct lexer *lex,
     struct info_ctx *info
 )
 {
     RF_STRUCT_ZERO(p);
-    parser_common_init(&p->cmn, PARSER_RIR, f, lex, info);
+    parser_common_init(&p->cmn, PARSER_RIR, front, f, lex, info);
     // initialize the parsing buffer
     if (!rf_stringx_init_buff(&p->buff, 1024, "")) {
         return false;
@@ -140,6 +143,14 @@ bool rir_parse(struct rir_parser *p)
     if (info_ctx_has(p->cmn.info, MESSAGE_ANY)) {
         rir_destroy(r);
         return false;
+    }
+
+    if (!p->ctx.module_created) {
+        // no module name found, no module created, so this as the main module
+        if (!rf_string_copy_in(&r->name, &g_str_main)) {
+            return false;
+        }
+        return front_ctx_make_main(parser_front(p), NULL, r);
     }
 
     return true;

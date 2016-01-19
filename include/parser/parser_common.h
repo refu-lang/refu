@@ -23,17 +23,21 @@ struct parser_common {
     struct lexer *lexer;
     //! Pointer to the common info context
     struct info_ctx *info;
+    //! A pointer to the front_ctx that owns the parser.
+    struct front_ctx *front;
 };
 
 i_INLINE_DECL void parser_common_init(
     struct parser_common *c,
     enum parser_type type,
+    struct front_ctx *front,
     struct inpfile *f,
     struct lexer *lexer,
     struct info_ctx *info
 )
 {
     c->type = type;
+    c->front = front;
     c->file = f;
     c->lexer = lexer;
     c->info = info;
@@ -44,6 +48,7 @@ i_INLINE_DECL void parser_common_deinit(struct parser_common *c)
     c->lexer = NULL;
     c->file = NULL;
     c->info = NULL;
+    c->front = NULL;
 }
 
 /**
@@ -61,6 +66,11 @@ bool parser_parse(struct parser_common *c);
  * Get the lexer associated with this parser
  */
 #define parser_lexer(i_pptr_) ((i_pptr_)->cmn.lexer)
+
+/**
+ * Get the front context associated with this parser
+ */
+#define parser_front(i_pptr_) ((i_pptr_)->cmn.front)
 
 
 struct ast_node *parser_ast_get_root(struct parser_common *c);

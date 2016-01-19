@@ -13,9 +13,6 @@ struct front_ctx;
 struct ast_parser {
     //! The parser common data. Should always be first. Some behaviour relies on that.
     struct parser_common cmn;
-    //! A pointer to the front_ctx that owns the parser. Needed only by the
-    //! parsing of a module function. Maybe pass only as argument?
-    struct front_ctx *front;
     struct ast_node *root;
     bool have_syntax_err;
 };

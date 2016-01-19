@@ -1,5 +1,6 @@
 #include <front_ctx.h>
 
+#include <utils/common_strings.h>
 #include <module.h>
 #include <compiler_args.h>
 #include <compiler.h>
@@ -51,7 +52,7 @@ static bool front_ctx_init(
 
     void *parser;
     if (codepath == RIRPOS_PARSE) {
-        parser = rir_parser_create(ctx->file, ctx->lexer, ctx->info);
+        parser = rir_parser_create(ctx, ctx->file, ctx->lexer, ctx->info);
     } else {
          parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
     }
@@ -138,16 +139,8 @@ bool front_ctx_parse(struct front_ctx *ctx)
         ctx->root->state = AST_NODE_STATE_ANALYZER_PASS1;
         // finally make sure that the root's symbol table is initialized
         return root_symbol_table_init(&ctx->root->root.st);
-        break;
     case PARSER_RIR:
-        // TODO: Take the rir from the parser and insert it into a new module
-        //       each time and only make main if a main RIR module was found
-
-        // for now (testing period) let's only have 1 rir and that's main
-        if (!front_ctx_make_main(ctx, NULL, parser_rir(ctx->parser))) {
-            return false;
-        }
-        break;
+        return true;
     default:
         RF_CRITICAL_FAIL("Illegal parser type");
         break;

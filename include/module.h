@@ -63,9 +63,20 @@ void module_add_foreign_import(struct module *m, struct ast_node *import);
 bool module_add_import(struct module *m, struct ast_node *import);
 const struct RFstring *module_name(const struct module *m);
 struct symbol_table *module_symbol_table(const struct module *m);
+/**
+ * Initializes the module symbol table iff there is a root node and that is
+ * an ast module.
+ */
 bool module_symbol_table_init(struct module *m);
 struct inpfile *module_get_file(const struct module *m);
 bool module_is_main(const struct module *m);
+
+/**
+ * Returns the codepath that this module has taken to be created
+ * as far as RIR is concerned. Either created it from AST or parsed it
+ * directly from source.
+ */
+enum rir_pos module_rir_codepath(const struct module *m);
 
 /**
  * If existing, retrieve the type and if not existing create the type

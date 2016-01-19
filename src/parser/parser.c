@@ -17,8 +17,7 @@ bool ast_parser_init(
 )
 {
     RF_STRUCT_ZERO(p);
-    parser_common_init(&p->cmn, PARSER_AST, file, lex, info);
-    p->front = front;
+    parser_common_init(&p->cmn, PARSER_AST, front, file, lex, info);
     p->have_syntax_err = false;
     return true;
 }

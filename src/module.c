@@ -5,6 +5,7 @@
 #include <utils/common_strings.h>
 #include <compiler.h>
 #include <utils/common_strings.h>
+#include <parser/parser_common.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/module.h>
@@ -20,6 +21,8 @@
 
 static bool module_init(struct module *m, struct ast_node *n, struct rir *rir, struct front_ctx *front)
 {
+    RF_ASSERT(!n || (n->type == AST_MODULE || n->type == AST_ROOT),
+              "Either no ast node, or module/ast_root expected");
     // initialize
     RF_STRUCT_ZERO(m);
     m->node = n;
@@ -56,8 +59,6 @@ static bool module_init(struct module *m, struct ast_node *n, struct rir *rir, s
 struct module *module_create(struct ast_node *n, struct rir *rir, struct front_ctx *front)
 {
     struct module *ret;
-    RF_ASSERT(n->type == AST_MODULE || n->type == AST_ROOT,
-              "Unexpected ast node type");
     RF_MALLOC(ret, sizeof(*ret), return NULL);
     if (!module_init(ret, n, rir, front)) {
         free(ret);
@@ -116,7 +117,7 @@ bool module_add_import(struct module *m, struct ast_node *import)
         other_mod = compiler_module_get(ast_identifier_str(c));
         if (!other_mod) {
             // requested import module not found
-            i_info_ctx_add_msg(m->front->info,   
+            i_info_ctx_add_msg(m->front->info,
                                MESSAGE_SEMANTIC_ERROR,
                                ast_node_startmark(import),
                                ast_node_endmark(import),
@@ -131,7 +132,10 @@ bool module_add_import(struct module *m, struct ast_node *import)
 
 const struct RFstring *module_name(const struct module *m)
 {
-    return m->node->type == AST_ROOT ? &g_str_main : ast_module_name(m->node);
+    RF_ASSERT(m->rir || m->node, "Expected either a rir or a roor node to exist");
+    return module_rir_codepath(m) == RIRPOS_PARSE
+        ? &m->rir->name
+        : m->node->type == AST_ROOT ? &g_str_main : ast_module_name(m->node);
 }
 
 struct symbol_table *module_symbol_table(const struct module *m)
@@ -141,7 +145,7 @@ struct symbol_table *module_symbol_table(const struct module *m)
 
 bool module_symbol_table_init(struct module *m)
 {
-    RF_ASSERT(m->node->type == AST_ROOT || m->node->type == AST_MODULE,
+    RF_ASSERT(m->node && (m->node->type == AST_ROOT || m->node->type == AST_MODULE),
               "Illegal ast node detected");
         return m->node->type == AST_ROOT
             ? true  // the root symbol table should have already been initialized
@@ -156,6 +160,11 @@ struct inpfile *module_get_file(const struct module *m)
 bool module_is_main(const struct module *m)
 {
     return rf_string_equal(module_name(m), &g_str_main);
+}
+
+enum rir_pos module_rir_codepath(const struct module *m)
+{
+    return m->front->parser->type == PARSER_AST ? RIRPOS_AST : RIRPOS_PARSE;
 }
 
 bool module_add_stdlib(struct module *m)
@@ -224,16 +233,20 @@ static bool module_determine_dependencies_do(struct ast_node *n, void *user_arg)
 
 bool module_determine_dependencies(struct module *m, bool use_stdlib)
 {
-    // initialize module symbol table here instead of analyzer_first_pass
-    // since we need it beforehand to get symbols from import
-    if (!module_symbol_table_init(m)) {
-        RF_ERROR("Could not initialize symbol table for root node");
-        return false;
-    }
+    if (module_rir_codepath(m) == RIRPOS_AST) {
+        // determine dependencies if we are coming from AST parsing
 
-    // read the imports and add dependencies
-    if (!ast_pre_traverse_tree(m->node, module_determine_dependencies_do, m)) {
-        return false;
+        // initialize module symbol table here instead of analyzer_first_pass
+        // since we need it beforehand to get symbols from import
+        if (!module_symbol_table_init(m)) {
+            RF_ERROR("Could not initialize symbol table for root node");
+            return false;
+        }
+
+        // read the imports and add dependencies
+        if (!ast_pre_traverse_tree(m->node, module_determine_dependencies_do, m)) {
+            return false;
+        }
     }
 
     // TODO: This can't be the best way to achieve this. Rethink when possible
@@ -247,6 +260,7 @@ bool module_determine_dependencies(struct module *m, bool use_stdlib)
 
 bool module_analyze(struct module *m)
 {
+    RF_ASSERT(!m->rir, "Should not come here from a RIR parsing codepath");
     bool ret = false;
     // since analyze pass is always going to be one per thread initializing
     // thread local type creation context here should be okay

@@ -37,8 +37,8 @@ bool ast_parser_finalize_parsing(struct ast_parser *p)
     bool main_found = false;
     ast_pre_traverse_tree(p->root, do_finalize_parsing, &main_found);
     // if this is the main module or something else set the front's main flag
-    if (main_found || p->front->is_main) {
-        return front_ctx_make_main(p->front, p->root, NULL);
+    if (main_found || parser_front(p)->is_main) {
+        return front_ctx_make_main(parser_front(p), p->root, NULL);
     }
     return true;
 }
@@ -82,7 +82,7 @@ static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p)
     // TODO: Maybe change these, since each one of these macros actually checks for token existence too
     if (TOKEN_IS_MODULE_START(tok)) {
         stmt = ast_parser_acc_module(p);
-        if (!stmt || !module_create(stmt, NULL, p->front)) {
+        if (!stmt || !module_create(stmt, NULL, parser_front(p))) {
             return NULL;
         }
     } else if (TOKEN_IS_BLOCK_START(tok)) {

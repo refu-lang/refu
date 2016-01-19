@@ -352,11 +352,13 @@ end_free_names:
 bool compiler_analyze()
 {
     struct compiler *c = g_compiler_instance;
-    // now analyze the modules in the topologically sorted order
+    // analyze the modules that came from AST source parsing in the topologically sorted order
     struct module *mod;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
-        if (!module_analyze(mod)) {
-            return false;
+        if (module_rir_codepath(mod) == RIRPOS_AST) {
+            if (!module_analyze(mod)) {
+                return false;
+            }
         }
     }
     return true;

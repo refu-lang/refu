@@ -268,6 +268,8 @@ end:
 
 static bool rir_process_do(struct rir *r, struct module *m)
 {
+    RF_ASSERT(module_rir_codepath(m) == RIRPOS_AST,
+              "Should not come here from a RIR parsing codepath");
     bool ret = false;
     struct ast_node *child;
     struct rir_ctx ctx;
@@ -356,13 +358,15 @@ bool compiler_create_rir()
     if (!rir_utils_create()) {
         return false;
     }
-    // for each module of the compiler process the rir
+    // for each module of the compiler that needs it, process and create the rir
     struct module *mod;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
-        if (!rir_process_do(mod->rir, mod)) {
-            RF_ERROR("Failed to create the RIR for module \""RF_STR_PF_FMT"\"",
-                     module_name(mod));
-            return false;
+        if (module_rir_codepath(mod) == RIRPOS_AST) {
+            if (!rir_process_do(mod->rir, mod)) {
+                RF_ERROR("Failed to create the RIR for module \""RF_STR_PF_FMT"\"",
+                         module_name(mod));
+                return false;
+            }
         }
     }
     return true;

@@ -3,7 +3,7 @@
 #include <parser/parser.h>
 #include <ir/parser/rirparser.h>
 
-i_INLINE_INS void parser_common_init(struct parser_common *c, enum parser_type, struct inpfile *f, struct lexer *lexer, struct info_ctx *info);
+i_INLINE_INS void parser_common_init(struct parser_common *c, enum parser_type type, struct front_ctx *front, struct inpfile *f, struct lexer *lexer, struct info_ctx *info);
 i_INLINE_INS void parser_common_deinit(struct parser_common *c);
 
 void parser_destroy(struct parser_common *c)
