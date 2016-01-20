@@ -52,7 +52,6 @@ struct llvm_traversal_ctx {
     //! Current rir function
     struct rir_fndef *current_rfn;
     struct compiler_args *args;
-    struct symbol_table *current_st;
     //! Map from a rir value's id to llvm values
     struct rirval_strmap valmap;
 };
@@ -61,7 +60,6 @@ bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
                                 struct ast_node *root);
 struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
                                             struct llvm_traversal_ctx *ctx,
-                                            const struct RFstring *name,
                                             struct LLVMOpaqueModule *link_source);
 
 struct LLVMOpaqueType *bllvm_type_from_type(const struct type *type,

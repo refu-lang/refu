@@ -25,7 +25,6 @@ static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
                                            struct compiler_args *args)
 {
     ctx->mod = NULL;
-    ctx->current_st = NULL;
     ctx->current_function = NULL;
     ctx->args = args;
     ctx->builder = LLVMCreateBuilder();
@@ -46,7 +45,6 @@ static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *
 {
     ctx->mod = m;
     ctx->llvm_mod = NULL;
-    ctx->current_st = NULL;
     ctx->current_function = NULL;;
     darray_init(ctx->params);
     darray_init(ctx->values);
@@ -68,8 +66,7 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
 {
     struct llvm_traversal_ctx ctx;
     struct LLVMOpaqueModule *llvm_module;
-    struct LLVMOpaqueModule *stdlib_module;
-    const struct RFstring s_main = RF_STRING_STATIC_INIT("mainmodule");
+    struct LLVMOpaqueModule *stdlib_module = NULL;
     bool ret = false;
     char *error = NULL; // Used to retrieve messages from functions
 
@@ -77,17 +74,20 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
     LLVMInitializeNativeTarget();
 
     struct module **mod;
-    bool index = 0;
     llvm_traversal_ctx_init(&ctx, args);
     darray_foreach(mod, *modules) {
         llvm_traversal_ctx_set_singlepass(&ctx, *mod);
-        llvm_module = blvm_create_module((*mod)->rir, &ctx,
-                                         index == 0 ? &g_str_stdlib : &s_main,
-                                         index == 0 ? NULL : stdlib_module);
+        llvm_module = blvm_create_module((*mod)->rir, &ctx, stdlib_module);
         if (!llvm_module) {
             ERROR("Failed to form the LLVM IR ast");
             llvm_traversal_ctx_reset_singlepass(&ctx);
             goto end;
+        }
+
+        // if this was stdlib mark it
+        if (rf_string_equal(module_name(*mod), &g_str_stdlib)) {
+            RF_ASSERT(!stdlib_module, "Two modules with the stdlib name");
+            stdlib_module = llvm_module;
         }
 
         // verify each module
@@ -98,12 +98,7 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
         }
         bllvm_error_dispose(&error);
 
-        // first module should be stdlib module
-        if (index == 0) {
-            stdlib_module = llvm_module;
-        }
         llvm_traversal_ctx_reset_singlepass(&ctx);
-        ++index;
     }
 
     RFS_PUSH();

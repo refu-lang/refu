@@ -298,7 +298,6 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
 
 struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
                                             struct llvm_traversal_ctx *ctx,
-                                            const struct RFstring *name,
                                             struct LLVMOpaqueModule *link_source)
 {
     // temporary. Name checking should be abstracted elsewhere
@@ -313,7 +312,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
     RFS_POP();
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
-    if (rf_string_equal(name, &g_str_stdlib)) {
+    if (rf_string_equal(&rir->name, &g_str_stdlib)) {
         // create some global definitions that the stdlib should offer
         if (!bllvm_create_globals(ctx)) {
             RF_ERROR("Failed to create general globals for LLVM");
