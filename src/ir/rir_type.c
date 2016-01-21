@@ -7,7 +7,7 @@
 #include <Utils/fixed_memory_pool.h>
 #include <analyzer/type_set.h>
 
-static struct rir_type elementary_types[] = {
+static const struct rir_type elementary_types[] = {
 #define RIR_TYPE_ELEMINIT(i_type_)                                     \
     [i_type_] = {.category = RIR_TYPE_ELEMENTARY, .etype = i_type_, .is_pointer = false}
     RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT_8),
@@ -28,7 +28,7 @@ static struct rir_type elementary_types[] = {
 #undef RIR_TYPE_ELEMINIT
 };
 
-static struct rir_type elementary_ptr_types[] = {
+static const struct rir_type elementary_ptr_types[] = {
 #define RIR_TYPE_PTRELEMINIT(i_type_)                                     \
     [i_type_] = {.category = RIR_TYPE_ELEMENTARY, .etype = i_type_, .is_pointer = true}
     RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT_8),
@@ -79,13 +79,13 @@ void rir_type_destroy(struct rir_type *t, struct rir *r)
     }
 }
 
-struct rir_type *rir_type_elem_create_from_string(const struct RFstring *name, bool is_pointer)
+const struct rir_type *rir_type_elem_get_from_string(const struct RFstring *name, bool is_pointer)
 {
     enum elementary_type etype = type_elementary_from_str(name);
-    return etype == ELEMENTARY_TYPE_TYPES_COUNT ? NULL : rir_type_elem_create(etype, is_pointer);
+    return etype == ELEMENTARY_TYPE_TYPES_COUNT ? NULL : rir_type_elem_get(etype, is_pointer);
 }
 
-struct rir_type *rir_type_elem_create(enum elementary_type etype, bool is_pointer)
+const struct rir_type *rir_type_elem_get(enum elementary_type etype, bool is_pointer)
 {
     return is_pointer ? &elementary_ptr_types[etype] : &elementary_types[etype];
 }
@@ -111,7 +111,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
 {
     struct rir_typedef *tdef;
     if (t->category == TYPE_CATEGORY_ELEMENTARY) {
-        return rir_type_elem_create(t->elementary.etype, false);
+        return (struct rir_type*)rir_type_elem_get(t->elementary.etype, false);
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {
@@ -147,7 +147,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
 struct rir_type *rir_type_create_from_other(const struct rir_type *other, struct rir *r, bool is_pointer)
 {
     if (other->category == RIR_TYPE_ELEMENTARY) {
-        return rir_type_elem_create(other->etype, is_pointer);
+        return (struct rir_type*)rir_type_elem_get(other->etype, is_pointer);
     } else { // composite
         return rir_type_comp_create(other->tdef, r, is_pointer);
     }
@@ -156,7 +156,7 @@ struct rir_type *rir_type_create_from_other(const struct rir_type *other, struct
 struct rir_type *rir_type_copy_from_other(const struct rir_type *other, struct rir *r)
 {
     if (other->category == RIR_TYPE_ELEMENTARY) {
-        return rir_type_elem_create(other->etype, other->is_pointer);
+        return (struct rir_type*)rir_type_elem_get(other->etype, other->is_pointer);
     } else { // composite
         return rir_type_comp_create(other->tdef, r, other->is_pointer);
     }
@@ -193,6 +193,16 @@ size_t rir_type_bytesize(const struct rir_type *t)
         return elementary_type_to_bytesize(t->etype);
     }
     return rir_typedef_bytesize(t->tdef);
+}
+
+struct rir_type *rir_type_set_pointer(struct rir_type **t, bool has_pointer)
+{
+    if (rir_type_is_elementary(*t)) {
+        *t = (struct rir_type*)rir_type_elem_get((*t)->etype, has_pointer);
+    } else {
+        (*t)->is_pointer = has_pointer;
+    }
+    return *t;
 }
 
 const struct RFstring *rir_type_string(const struct rir_type *t)

@@ -335,9 +335,12 @@ bool ownership_pass(struct compiler *c)
     bool ret = false;
     ow_ctx_init();
     darray_foreach(mod, c->modules) {
-        ow_ctx_reset(); // for now the graph is per module
-        if (!ow_module_pass((*mod)->rir)) {
-            goto end;
+        // only for modules that got parsed from normal source, at least for now
+        if (module_rir_codepath(*mod) == RIRPOS_AST) {
+            ow_ctx_reset(); // for now the graph is per module
+            if (!ow_module_pass((*mod)->rir)) {
+                goto end;
+            }
         }
     }
     // success

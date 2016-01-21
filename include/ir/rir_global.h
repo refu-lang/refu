@@ -16,7 +16,7 @@ struct rir_global {
     struct rir_value val;
 };
 
-struct rir_object *rir_global_create_string(struct rir_type *type,
+struct rir_object *rir_global_create_string(const struct rir_type *type,
                                             const struct RFstring *name,
                                             const void *value,
                                             struct rir *rir);

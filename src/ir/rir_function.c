@@ -215,10 +215,10 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
         }
         // if user defined type, return as a pointer
         if (return_type->category == RIR_TYPE_COMPOSITE) {
-            return_type->is_pointer = true;
+            return_type = rir_type_set_pointer(&return_type, true);
         }
     } else {
-        return_type = rir_type_elem_create(ELEMENTARY_TYPE_NIL, false);
+        return_type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_NIL, false);
         if (!return_type) {
             RF_ERROR("Could not create nil type for a function's return");
             return false;

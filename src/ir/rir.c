@@ -518,9 +518,9 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
 
 struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name)
 {
-    struct rir_type *type = rir_type_elem_create_from_string(name, false);
+    const struct rir_type *type = rir_type_elem_get_from_string(name, false);
     if (type) {
-        return type;
+        return (struct rir_type*)type;
     }
     // not elementary, search for typedef
     struct rir_typedef *def = rir_typedef_byname(r, name);
@@ -528,21 +528,6 @@ struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name)
         return NULL;
     }
     return rir_type_comp_create(def, r, false);
-}
-
-struct rir_type *rir_type_from_type(struct rir *r, const struct type *t)
-{
-    switch (t->category) {
-    case TYPE_CATEGORY_ELEMENTARY:
-        return rir_type_elem_create(type_elementary(t), false);
-    case TYPE_CATEGORY_OPERATOR:
-        return rir_type_byname(r, type_get_unique_type_str(t));
-    case TYPE_CATEGORY_DEFINED:
-        return rir_type_byname(r, type_defined_get_name(t));
-    default:
-        RF_CRITICAL_FAIL("Requested rir_type from illegal type");
-        return NULL;
-    }
 }
 
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)

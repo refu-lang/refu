@@ -15,7 +15,7 @@
 #include <ast/string_literal.h>
 
 static bool rir_global_init_string(struct rir_object *obj,
-                                   struct rir_type *type,
+                                   const struct rir_type *type,
                                    const struct RFstring *name,
                                    const void *value,
                                    struct rirobj_strmap *global_rir_map)
@@ -43,7 +43,7 @@ static bool rir_global_init_string(struct rir_object *obj,
     return ret;
 }
 
-struct rir_object *rir_global_create_string(struct rir_type *type,
+struct rir_object *rir_global_create_string(const struct rir_type *type,
                                             const struct RFstring *name,
                                             const void *value,
                                             struct rir *rir)
@@ -98,7 +98,7 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
     }
 
     ret = rir_global_create_string(
-        rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
+        rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),
         name,
         valstr,
         rir_parser_rir(p)
@@ -140,7 +140,7 @@ struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFst
     if (!gstring) {
         RFS_PUSH();
         gstring = rir_global_create_string(
-            rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
+            rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),
             RFS("$gstr_%u", rf_hash_str_stable(s, 0)),
             s,
             rir

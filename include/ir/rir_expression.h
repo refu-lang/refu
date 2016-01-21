@@ -62,7 +62,7 @@ enum alloc_location {
 
 struct rir_alloca {
     //! Type to allocate
-    struct rir_type *type;
+    const struct rir_type *type;
     //! Where to allocate the rir object
     enum alloc_location alloc_location;
     //! Id of the corresponding allocation in the actual code. If this alloca
@@ -139,13 +139,13 @@ struct rir_getunionidx {
 
 
 struct rir_object *rir_alloca_create_obj(
-    struct rir_type *type,
+    const struct rir_type *type,
     const struct RFstring *id,
     enum rir_pos pos,
     rir_data data
 );
 struct rir_expression *rir_alloca_create(
-    struct rir_type *type,
+    const struct rir_type *type,
     const struct RFstring *id,
     enum rir_pos pos,
     rir_data data

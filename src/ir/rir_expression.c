@@ -63,7 +63,7 @@ void rir_expression_deinit(struct rir_expression *expr)
 }
 
 static inline void rir_alloca_init(struct rir_alloca *obj,
-                                   struct rir_type *type,
+                                   const struct rir_type *type,
                                    const struct RFstring *id)
 {
     // everything by default is allocated in the stack. The ownership analysis
@@ -166,7 +166,7 @@ struct rir_expression *rir_write_create(
 }
 
 struct rir_object *rir_alloca_create_obj(
-    struct rir_type *type,
+    const struct rir_type *type,
     const struct RFstring *id,
     enum rir_pos pos,
     rir_data data
@@ -185,7 +185,7 @@ struct rir_object *rir_alloca_create_obj(
 }
 
 struct rir_expression *rir_alloca_create(
-    struct rir_type *type,
+    const struct rir_type *type,
     const struct RFstring *id,
     enum rir_pos pos,
     rir_data data)

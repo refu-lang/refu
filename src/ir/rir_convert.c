@@ -46,7 +46,7 @@ static struct rir_object *rir_convert_init(
         struct rir_object *obj;
         // boolean to string conversion requires some branching logic
         retobj = rir_alloca_create_obj(
-            rir_type_elem_create(ELEMENTARY_TYPE_STRING, false),
+            rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),
             NULL,
             pos,
             data
@@ -191,7 +191,7 @@ const struct rir_value *rir_maybe_convert_acquire_type(
 {
     if (!rir_type_equal(val->type, checktype)) {
         struct rir_object *obj;
-        checktype->is_pointer = false;
+        checktype = rir_type_set_pointer(&checktype, false);
         if (!(obj = rir_convert_create_obj_maybeadd(val, checktype, pos, data))) {
             return NULL;
         }

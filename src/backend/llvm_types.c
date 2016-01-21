@@ -121,7 +121,7 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
 }
 
 LLVMTypeRef bllvm_type_from_rir_type(const struct rir_type *type,
-                                      struct llvm_traversal_ctx *ctx)
+                                     struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ret;
     if (type->category == RIR_TYPE_ELEMENTARY) {

@@ -14,7 +14,7 @@ static bool rir_typearr_add_single(struct rir_type_arr *arr,
 {
     struct rir_type *t;
     if (type_is_elementary(type)) {
-        t = rir_type_elem_create(
+        t = (struct rir_type*)rir_type_elem_get(
             type_elementary(type),
             // If it's a string make sure it's passed by pointer to function calls
             // TODO: at some point do away with this distinction (?)
