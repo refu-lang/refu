@@ -70,7 +70,6 @@ bool rir_value_literal_init(
 )
 {
     v->category = RIR_VALUE_LITERAL;
-    v->obj = obj;
     v->type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_STRING, false);
     if (!rf_string_copy_in(&v->id, name)) {
         return false;
@@ -92,7 +91,6 @@ bool rir_value_variable_init(
     bool ret = false;
     struct rir_common *c;
     v->category = RIR_VALUE_VARIABLE;
-    v->obj = obj;
 
     // interpret data
     if (pos == RIRPOS_AST) {
@@ -111,8 +109,8 @@ bool rir_value_variable_init(
     }
 
     if (obj->category == RIR_OBJ_EXPRESSION) {
-        struct rir_expression *expr = &v->obj->expr;
-        switch (v->obj->expr.type) {
+        struct rir_expression *expr = &obj->expr;
+        switch (obj->expr.type) {
         case RIR_EXPRESSION_CONVERT:
             v->type = rir_type_create_from_other(expr->convert.type, c->rir, false);
             break;

@@ -120,6 +120,10 @@ static inline bool rir_write_init(
         rir_data_block_add(data, e);
         writeval = &e->val;
     }
+    if (!memory_to_write->type->is_pointer) {
+        RF_ERROR("write() should only be called on memory locations");
+        return false;
+    }
     // if the types are not the same, make a conversion
     if (!(writeval = rir_maybe_convert(writeval, memory_to_write->type, pos, data))) {
         RF_ERROR("Failed to convert a value in a rir_write instruction initialization");

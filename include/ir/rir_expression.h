@@ -92,7 +92,7 @@ struct rir_read {
  * Write to a memory area
  */
 struct rir_write {
-    //! Memory value to write to
+    //! Memory value to write to. Must be a pointer type.
     const struct rir_value *memory;
     //! Value to write into that area
     const struct rir_value *writeval;

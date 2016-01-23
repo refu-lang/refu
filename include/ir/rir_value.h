@@ -12,6 +12,7 @@ struct rir;
 struct rir_ctx;
 struct rir_expression;
 struct rirobj_strmap;
+struct rir_object;
 
 /**
  * Used to denote processing position of the value. Used mainly for proper
@@ -39,7 +40,6 @@ struct rir_value {
     struct rir_type *type;
     union {
         struct ast_constant constant;
-        struct rir_object *obj;
         struct rir_block *label_dst;
         struct RFstring literal;
     };

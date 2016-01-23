@@ -43,6 +43,10 @@ static bool rir_process_return(const struct ast_node *n,
         RIRPOS_AST,
         ctx
     );
+    if (!e) {
+        RF_ERROR("Failed to create a write() during rir return processing");
+        RIRCTX_RETURN_EXPR(ctx, false, NULL);
+    }
     rir_common_block_add(&ctx->common, e);
     // jump to the return
     if (!rir_block_exit_init_branch(&rir_ctx_curr_block(ctx)->exit, rir_ctx_curr_fn(ctx)->end_label)) {

@@ -101,18 +101,14 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     const struct RFstring fend_label = RF_STRING_STATIC_INIT("function_end");
     struct rir_object *ret = rir_object_create(RIR_OBJ_BLOCK, ctx->common.rir);
     if (!ret) {
-        free(ret);
-        ret = NULL;
-        goto end;
+        goto fail_free_ret;
     }
     struct rir_block *b = &ret->block;
     RF_STRUCT_ZERO(b);
     ctx->common.current_block = b;
     rf_ilist_head_init(&b->expressions);
     if (!rir_value_label_init_string(&ret->block.label, ret, &fend_label, &ctx->common)) {
-        free (ret);
-        ret = NULL;
-        goto end;
+        goto fail_free_ret;
     }
 
     // current block's exit should be the return
@@ -129,6 +125,7 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
             );
             if (!e) {
                 RF_ERROR("Could not create a read from a function's return slot");
+                goto fail_free_ret;
             }
             rir_common_block_add(&ctx->common, e);
             return_val = &e->val;
@@ -137,8 +134,12 @@ static struct rir_object *rir_block_functionend_create_obj(bool has_return, stru
     rir_block_exit_return_init(&ret->block.exit, return_val);
     b->st = rir_ctx_curr_st(ctx);
     RF_ASSERT(b->st, "Symbol table should not be NULL");
-end:
+
     return ret;
+
+fail_free_ret:
+    free (ret);
+    return NULL;
 }
 
 struct rir_block *rir_block_functionend_create(bool has_return, struct rir_ctx *ctx)
