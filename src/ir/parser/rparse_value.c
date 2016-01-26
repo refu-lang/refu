@@ -45,8 +45,7 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *m
     case RIR_TOK_IDENTIFIER_VARIABLE:
     {
         const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
-        retv = rir_object_value(rir_map_getobj(&p->ctx.common, id));
-        if (!retv) {
+        if (!(retv = rir_map_getobj_value(&p->ctx.common, id))) {
             rirparser_synerr(
                 p,
                 token_get_start(tok),

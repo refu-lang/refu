@@ -129,9 +129,15 @@ bool rir_parse_fndecl(struct rir_parser *p)
 
 bool rir_parse_fndef(struct rir_parser *p)
 {
-    struct rir_fndef *def = rir_fndef_create_nodecl(RIRPOS_PARSE, &p->ctx);
+    struct rir_fndef *def;
+    RF_MALLOC(def, sizeof(*def), return false);
+    RF_STRUCT_ZERO(def);
     struct rir *r = rir_parser_rir(p);
     if (!rir_parse_fn_common(p, false, &def->decl)) {
+        free(def);
+        return false;
+    }
+    if (!rir_fndef_init_no_decl(def, RIRPOS_PARSE, &p->ctx)) {
         rir_fndef_destroy(def);
         return false;
     }

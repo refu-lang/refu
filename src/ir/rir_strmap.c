@@ -38,6 +38,13 @@ struct rir_object *rir_map_getobj(struct rir_common *c,
     return ret;
 }
 
+struct rir_value *rir_map_getobj_value(struct rir_common *c,
+                                       const struct RFstring *id)
+{
+    struct rir_object *obj = rir_map_getobj(c, id);
+    return obj ? rir_object_value(obj) : NULL;
+}
+
 struct rirobj_strmap *rir_common_curr_map(struct rir_common *c)
 {
     return c->current_fn ? &c->current_fn->map : &c->rir->map;

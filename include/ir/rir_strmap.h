@@ -4,7 +4,6 @@
 #include <Data_Structures/strmap.h>
 #include <Definitions/inline.h>
 
-struct rir_object;
 struct symbol_table_record;
 struct rir_common;
 struct rir_block;
@@ -43,6 +42,9 @@ bool rir_map_addobj(struct rir_common *c,
 
 struct rir_object *rir_map_getobj(struct rir_common *c,
                                   const struct RFstring *id);
+
+struct rir_value *rir_map_getobj_value(struct rir_common *c,
+                                       const struct RFstring *id);
 
 struct rirobj_strmap *rir_common_curr_map(struct rir_common *c);
 

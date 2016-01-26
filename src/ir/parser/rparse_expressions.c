@@ -97,7 +97,8 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
         goto fail_destroy_src;
     }
 
-    if (!rir_type_identical(type, srcval->type)) {
+    struct rir_type *valtype = rir_type_create_from_other(type, rir_parser_rir(p), false);
+    if (!rir_type_identical(valtype, srcval->type)) {
         RFS_PUSH();
         rirparser_synerr(
             p,
@@ -106,7 +107,7 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
             "Type mismatch at arguments of 'write'. Second argument's type is \""
             RF_STR_PF_FMT "\" but expected \""RF_STR_PF_FMT"\".",
             RF_STR_PF_ARG(rir_type_string(srcval->type)),
-            RF_STR_PF_ARG(rir_type_string(type))
+            RF_STR_PF_ARG(rir_type_string(valtype))
         );
         RFS_POP();
         goto fail_destroy_src;

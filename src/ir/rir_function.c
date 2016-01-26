@@ -148,15 +148,6 @@ bool rir_fndecl_init(
             rir_pctx_reset_id(data);
         }
 
-        // finally if there is a return value it takes the next index
-        if (!rir_type_is_specific_elementary(return_type, ELEMENTARY_TYPE_NIL)) {
-            rir_pctx_set_id(data, RFS("$%d", idx++));
-            if (!rir_function_add_variable(def, return_type, NULL, RIRPOS_PARSE, data)) {
-                ret = false;
-                goto end;
-            }
-            rir_pctx_reset_id(data);
-        }
     end:
         RFS_POP();
     }
@@ -312,8 +303,10 @@ static inline void rir_fndef_init_common_intro(
     rir_data data
 )
 {
-    RF_STRUCT_ZERO(ret);
+    // only if coming from AST->RIR reset to zero. When coming from rir parsing
+    // the initialization to zero happens in rir_parse_fndef()
     if (pos == RIRPOS_AST) {
+        RF_STRUCT_ZERO(ret);
         rir_ctx_reset(data);
     }
     darray_init(ret->variables);
@@ -328,18 +321,29 @@ static inline bool rir_fndef_init_common_outro(
     rir_data data
 )
 {
+    bool rc = true;
     darray_init(ret->blocks);
     // if we got a return value allocate space for it. This alloca
     // is not visible in the actual rir code. Assume single return values fow now
     // TODO: Take into account multiple return values
     if (return_type) {
-        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, pos, data);
-        if (!alloca) {
-            return false;
+        rc = false;
+        if (pos == RIRPOS_PARSE) {
+            RFS_PUSH();
+            rir_pctx_set_id(data, RFS("$%d", darray_size(ret->decl.argument_types)));
         }
-        ret->retslot_val = &alloca->val;
+        struct rir_expression *alloca = rir_alloca_create(ret->decl.return_type, NULL, pos, data);
+        if (alloca) {
+            ret->retslot_val = &alloca->val;
+            rc = true;
+        }
+        if (pos == RIRPOS_PARSE) {
+            rir_pctx_reset_id(data);
+            RFS_POP();
+        }
     }
-    return true;
+
+    return rc;
 }
 
 static bool rir_fndef_init(
@@ -375,12 +379,25 @@ struct rir_fndef *rir_fndef_create(
     return ret;
 }
 
-struct rir_fndef *rir_fndef_create_nodecl(enum rir_pos pos, rir_data data)
+
+bool rir_fndef_init_no_decl(
+    struct rir_fndef *def,
+    enum rir_pos pos,
+    rir_data data
+)
+{
+    rir_fndef_init_common_intro(def, pos, data);
+    return rir_fndef_init_common_outro(def, def->decl.return_type, pos, data);
+}
+
+struct rir_fndef *rir_fndef_create_no_decl(enum rir_pos pos, rir_data data)
 {
     struct rir_fndef *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    rir_fndef_init_common_intro(ret, pos, data);
-    rir_fndef_init_common_outro(ret, NULL, pos, data);
+    if (!rir_fndef_init_no_decl(ret, pos, data)) {
+        free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
