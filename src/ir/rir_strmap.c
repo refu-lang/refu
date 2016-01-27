@@ -62,3 +62,19 @@ void rirobjmap_free(struct rirobj_strmap *map, struct rir_common *c)
     strmap_iterate(map, (strmap_it_cb)itfree_rirobjects, c);
     strmap_clear(map);
 }
+
+#ifdef RF_OPTION_DEBUG
+static bool rirobjmap_print_cb(const struct RFstring *s, struct rir_object *obj)
+{
+    printf(
+        RF_STR_PF_FMT " -- " RF_STR_PF_FMT "\n",
+        RF_STR_PF_ARG(rir_object_string(obj)),
+        RF_STR_PF_ARG(s)
+    );
+    return true;
+}
+void rirobjmap_print(const struct rirobj_strmap *m)
+{
+    strmap_iterate(m, (strmap_it_cb)rirobjmap_print_cb, NULL);
+}
+#endif

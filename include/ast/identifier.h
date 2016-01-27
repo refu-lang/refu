@@ -18,7 +18,16 @@ struct ast_identifier {
 };
 
 
-struct ast_node *ast_identifier_create(struct inplocation *loc);
+/**
+ * Create a new AST identifier
+ *
+ * @param loc            The location from which to create the identifier
+ * @param skip_start     The number of chars to skip from the location start
+ *                       after which the actual identifier content starts.
+ *                       Can be 0.
+ * @return               The allocated identifier.
+ */
+struct ast_node *ast_identifier_create(struct inplocation *loc, unsigned skip_start);
 void ast_identifier_print(struct ast_node *n, int depth);
 
 /**

@@ -97,7 +97,12 @@ static inline bool token_init_identifier(struct token *t,
     if (!token_init(t, identifier_token_type, f, sp, ep)) {
         return false;
     }
-    t->value.value.ast = ast_identifier_create(&t->location);
+    unsigned skip_start = 0;
+    if (identifier_token_type == RIR_TOK_IDENTIFIER_LABEL) {
+        // skip the '%' for rir labels
+        skip_start = 1;
+    }
+    t->value.value.ast = ast_identifier_create(&t->location, skip_start);
     t->value.owned_by_lexer = true;
     if (!t->value.value.ast) {
         return false;

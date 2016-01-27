@@ -7,15 +7,18 @@
 #include <Utils/sanity.h>
 
 
-struct ast_node *ast_identifier_create(struct inplocation *loc)
+struct ast_node *ast_identifier_create(struct inplocation *loc, unsigned skip_start)
 {
     struct ast_node *ret;
     ret = ast_node_create_loc(AST_IDENTIFIER, loc);
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->identifier.string, loc->start.p,
-                           loc->end.p - loc->start.p + 1);
+    RF_STRING_SHALLOW_INIT(
+        &ret->identifier.string,
+        loc->start.p + skip_start,
+        loc->end.p - loc->start.p + 1 + skip_start
+    );
 
     return ret;
 }

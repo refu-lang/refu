@@ -59,7 +59,7 @@ static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block
             RF_STR_PF_ARG(id),
             msg
         );
-        return NULL;
+        // going out with obj == NULL so clean error path
     }
     return obj;
 }
@@ -210,6 +210,8 @@ static bool rir_parse_block(struct rir_parser *p, struct token *tok, struct riro
            !(end_found = b->exit.type != RIR_BLOCK_EXIT_INVALID)) {
         rir_block_add_expr(b, expr);
     }
+    // at the end make sure the block is part of the current function
+    rir_fndef_add_block(rir_data_curr_fn(&p->ctx), b);
     return end_found;
 }
 

@@ -92,7 +92,7 @@ struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
                                                  scol,
                                                  eline,
                                                  ecol);
-    struct ast_node *n = ast_identifier_create(&temp_location_);
+    struct ast_node *n = ast_identifier_create(&temp_location_, 0);
     // since this is testing make sure it's owned by the parser for proper freeing
     n->state = AST_NODE_STATE_AFTER_PARSING;
     return n;

@@ -52,4 +52,11 @@ struct rirobj_strmap *rir_common_curr_map(struct rir_common *c);
  * Frees all rir_objects of a rirobj string map and then frees the map itself
  */
 void rirobjmap_free(struct rirobj_strmap *map, struct rir_common *c);
+
+#ifdef RF_OPTION_DEBUG
+/**
+ * Print a rir object map for debugging purposes
+ */
+void rirobjmap_print(const struct rirobj_strmap *m);
+#endif
 #endif
