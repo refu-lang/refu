@@ -17,7 +17,7 @@ struct ast_node *ast_identifier_create(struct inplocation *loc, unsigned skip_st
     RF_STRING_SHALLOW_INIT(
         &ret->identifier.string,
         loc->start.p + skip_start,
-        loc->end.p - loc->start.p + 1 + skip_start
+        loc->end.p - loc->start.p + 1 - skip_start
     );
 
     return ret;

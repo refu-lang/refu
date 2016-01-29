@@ -3,6 +3,7 @@
 #include <Utils/hash.h>
 #include <String/rf_str_common.h>
 #include <String/rf_str_conversion.h>
+#include <String/rf_str_manipulation.h>
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
@@ -205,7 +206,7 @@ static bool iterate_literals_cb(const struct RFstring *member, struct rir_object
     RFS_PUSH();
     bllvm_create_global_const_string(
         // skip the initial '$'
-        RFS("%.*s", rf_string_length_bytes(&g->val.id) - 1, rf_string_data(&g->val.id) + 1),
+        rf_string_prune_start(&g->val.id, 1, RF_SOPT_ASCII | RF_SOPT_TMP, NULL),
         &g->val.literal,
         ctx
     );
