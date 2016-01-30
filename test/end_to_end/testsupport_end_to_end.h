@@ -70,7 +70,7 @@ i_INLINE_DECL bool end_to_end_run(int *ret_value,
     i_ck_end_to_end_run_impl(i_inputs_, i_expected_ret_, i_stdout_, NULL)
 
 #define i_ck_end_to_end_run_with_arguments1(i_inputs_, i_expected_ret_, i_stdout_, i_arguments_) \
-    i_ck_end_to_end_run_impl(i_inputs_, i_expected_ret_, i_stdout_, i_arguments)
+    i_ck_end_to_end_run_impl(i_inputs_, i_expected_ret_, i_stdout_, i_arguments_)
 
 #define i_ck_end_to_end_run_with_stdout1(...)                           \
     RF_SELECT_FUNC_IF_NARGGT2(i_ck_end_to_end_run_with_arguments, 3, __VA_ARGS__)
