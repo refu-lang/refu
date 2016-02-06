@@ -146,7 +146,7 @@ bool rir_parse(struct rir_parser *p)
     }
 
     if (!p->ctx.module_created) {
-        // no module name found, no module created, so this as the main module
+        // no module name found, no module created, so this is the main module
         if (!rf_string_copy_in(&r->name, &g_str_main)) {
             return false;
         }

@@ -99,17 +99,20 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d,
         }
     }
 
-
-    uint32_t args_num = other_args_number + 1 + inputsn;
-    RF_MALLOC(args_cstrings, args_num * sizeof(*args_cstrings),
-              goto free_strings_arr);
+    uint32_t args_num = other_args
+        ? other_args_number + 1
+        : other_args_number + inputsn + 1;
+    RF_MALLOC(
+        args_cstrings, args_num * sizeof(*args_cstrings),
+        goto free_strings_arr
+    );
     // executable name is always the first argument
     args_cstrings[0] = (char*)exec_name;
 
 
     if (other_args) {
         if (other_args_number == 1) {
-            args_cstrings[1] = other_args;
+            args_cstrings[1] = strdup(other_args);
         } else {
             // unfortunately compiler_pass_args needs normal c strings so we need to null terminate
             for (i = 1; i <= other_args_number; ++i) {
@@ -119,15 +122,15 @@ bool end_to_end_driver_compile(struct end_to_end_driver *d,
                 args_cstrings[i][length] = '\0';
             }
         }
-    }
-
-    // finally add the inputs to the argument strings
-    unsigned j;
-    for (i = other_args_number + 1, j = 0; j < inputsn; ++i, ++j) {
-        size_t length = rf_string_length_bytes(&inputs[j].filename);
-        RF_MALLOC(args_cstrings[i], length + 1, goto free_strings_arr);
-        strncpy(args_cstrings[i], rf_string_data(&inputs[j].filename), length);
-        args_cstrings[i][length] = '\0';
+    } else {
+        // if no arguments were given, add the input file names
+        unsigned j;
+        for (i = other_args_number + 1, j = 0; j < inputsn; ++i, ++j) {
+            size_t length = rf_string_length_bytes(&inputs[j].filename);
+            RF_MALLOC(args_cstrings[i], length + 1, goto free_strings_arr);
+            strncpy(args_cstrings[i], rf_string_data(&inputs[j].filename), length);
+            args_cstrings[i][length] = '\0';
+        }
     }
 
     // + 1 is for the initial argument of the executable name
@@ -149,7 +152,7 @@ free_cstrings_arr:
     free(args_cstrings);
 free_strings_arr:
     if (args_strings) {
-        for (i = 0; i < args_num; i++) {
+        for (i = 0; i < args_num - 1; i++) {
             rf_string_deinit(&args_strings[i]);
         }
         free(args_strings);

@@ -38,7 +38,7 @@ START_TEST (test_rir_end_to_end_simple_module1) {
             "}\n"
         )
     };
-    ck_end_to_end_run(inputs, 14, NULL, "test_input_file.rir --rir");    
+    ck_end_to_end_run(inputs, 14, NULL, "--rir test_input_file.rir");
 
 } END_TEST
 

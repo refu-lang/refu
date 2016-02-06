@@ -701,7 +701,7 @@ START_TEST (test_matchexpr_2) {
         "}")
     };
     static const struct RFstring output = RF_STRING_STATIC_INIT("hello");
-    ck_end_to_end_run(inputs, 29, &output);
+    ck_end_to_end_run(inputs, 29, &output, "test_input_file.rf");
 } END_TEST
 
 START_TEST (test_matchexpr_in_functions) {
