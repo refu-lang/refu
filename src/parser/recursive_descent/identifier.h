@@ -25,7 +25,7 @@ i_INLINE_DECL struct ast_node *ast_parser_acc_identifier(struct ast_parser *p)
     }
     // consume the identifier token and return it
     lexer_curr_token_advance(parser_lexer(p));
-    return token_get_value(tok);
+    return lexer_token_get_value(parser_lexer(p), tok);
 }
 
 /**

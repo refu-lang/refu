@@ -102,7 +102,7 @@ static struct ast_node *ast_parser_acc_expr_element(struct ast_parser *p)
     } else if (token_is_numeric_constant(tok) ||
         tok->type == TOKEN_IDENTIFIER ||
         tok->type == TOKEN_STRING_LITERAL) {
-        n = token_get_value(tok);
+        n = lexer_token_get_value(parser_lexer(p), tok);
     } else {
         // no expression found. This is not an error
         return NULL;

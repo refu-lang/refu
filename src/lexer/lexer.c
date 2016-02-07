@@ -196,7 +196,7 @@ void lexer_deinit(struct lexer *l)
     struct token *tok;
 
     darray_foreach(tok, l->tokens) {
-        if (token_has_value(tok) && tok->value.owned_by_lexer) {
+        if (lexer_token_has_value(l, tok) && tok->value.owned_by_lexer) {
             ast_node_destroy_from_lexer(tok->value.value.ast);
         }
     }
@@ -695,6 +695,20 @@ struct token *lexer_last_token_valid(struct lexer *l)
     return &darray_item(l->tokens, l->tok_index);
 }
 
+bool lexer_token_has_value(const struct lexer *l, struct token *tok)
+{
+    if (l->vt == &rir_lex_vt &&
+        (rir_toktype(tok) == RIR_TOK_IDENTIFIER_VARIABLE ||
+         rir_toktype(tok) == RIR_TOK_IDENTIFIER_LABEL)) {
+        return true;
+    }
+    return tok->type == TOKEN_IDENTIFIER ||
+        tok->type == TOKEN_STRING_LITERAL ||
+        tok->type == TOKEN_CONSTANT_INTEGER ||
+        tok->type == TOKEN_CONSTANT_FLOAT;
+}
+i_INLINE_INS struct ast_node *lexer_token_get_value(const struct lexer *l, struct token *tok);
+
 i_INLINE_INS struct token *lexer_expect_token(struct lexer *l, unsigned int type);
 i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);
 i_INLINE_INS struct inplocation_mark *lexer_last_token_start(struct lexer *l);
@@ -724,7 +738,7 @@ void lexer_rollback(struct lexer *l)
     // make sure that all value tokens in between now and rollback belong to the lexer
     i = darray_size(l->tokens) - 1;
     darray_foreach_reverse(tok, l->tokens) {
-        if (i <= l->tok_index && i >= idx && token_has_value(tok)) {
+        if (i <= l->tok_index && i >= idx && lexer_token_has_value(l, tok)) {
             tok->value.owned_by_lexer = true;
             tok->value.value.ast->state = AST_NODE_STATE_CREATED;
         }

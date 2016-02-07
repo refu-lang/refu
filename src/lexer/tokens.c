@@ -92,7 +92,3 @@ i_INLINE_INS bool token_is_unaryop(const struct token *tok);
 i_INLINE_INS bool token_is_prefix_unaryop(const struct token *tok);
 i_INLINE_INS bool token_is_postfix_unaryop(const struct token *tok);
 i_INLINE_INS bool token_is_numeric_constant(const struct token *tok);
-
-i_INLINE_INS bool token_has_value(const struct token *tok);
-i_INLINE_INS struct ast_node *token_get_value(struct token *tok);
-

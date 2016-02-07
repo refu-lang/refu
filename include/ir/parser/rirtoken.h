@@ -68,8 +68,10 @@ enum rir_token_type {
 #define rir_toktype(i_tok_) ((enum rir_token_type)(i_tok_)->type)
 
 
-const struct rinternal_token *rir_lexer_lexeme_is_token (register const char *str,
-                                                         register unsigned int len);
+const struct rinternal_token *rir_lexer_lexeme_is_token(
+    register const char *str,
+    register unsigned int len
+);
 
 const struct RFstring *rir_tokentype_to_str(enum rir_token_type type);
 

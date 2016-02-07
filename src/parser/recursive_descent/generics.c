@@ -25,7 +25,7 @@ static struct ast_node *ast_parser_acc_genrtype(struct ast_parser *p)
                       "Expected an identifier for the generic type kind");
         goto err;
     }
-    type_id = token_get_value(tok);
+    type_id = lexer_token_get_value(parser_lexer(p), tok);
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_IDENTIFIER) {
@@ -36,7 +36,7 @@ static struct ast_node *ast_parser_acc_genrtype(struct ast_parser *p)
 
 
 
-    n = ast_genrtype_create(type_id, token_get_value(tok));
+    n = ast_genrtype_create(type_id, lexer_token_get_value(parser_lexer(p), tok));
     if (!n) {
         RF_ERRNOMEM();
         goto err;

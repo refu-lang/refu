@@ -49,7 +49,7 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
     }
     //consume identifier
     lexer_curr_token_advance(parser_lexer(p));
-    id = token_get_value(tok);
+    id = lexer_token_get_value(parser_lexer(p), tok);
     end = ast_node_endmark(id);
 
     tok = lexer_lookahead(parser_lexer(p), 1);

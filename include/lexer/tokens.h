@@ -165,21 +165,4 @@ i_INLINE_DECL bool token_is_numeric_constant(const struct token *tok)
     return tok->type == TOKEN_CONSTANT_INTEGER || tok->type == TOKEN_CONSTANT_FLOAT;
 }
 
-i_INLINE_DECL bool token_has_value(const struct token *tok)
-{
-    return tok->type == TOKEN_IDENTIFIER ||
-        tok->type == TOKEN_STRING_LITERAL ||
-        tok->type == TOKEN_CONSTANT_INTEGER ||
-        tok->type == TOKEN_CONSTANT_FLOAT;
-}
-
-// gets the value from a token. Use only after a tok->type check
-i_INLINE_DECL struct ast_node *token_get_value(struct token *tok)
-{
-    RF_ASSERT(token_has_value(tok), "Requesting value of illegal token type");
-    tok->value.owned_by_lexer = false;
-    return tok->value.value.ast;
-}
-
-
 #endif

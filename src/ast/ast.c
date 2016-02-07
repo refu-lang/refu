@@ -176,10 +176,8 @@ const struct RFstring *ast_node_get_name_str(const struct ast_node *n)
     switch(n->type) {
     case AST_IDENTIFIER:
         return ast_identifier_str(n);
-        break;
     case AST_XIDENTIFIER:
         return ast_xidentifier_str(n);
-        break;
     default:
         RF_ASSERT_OR_CRITICAL(false, return NULL,
                               "Requesting identifier string from illegal"

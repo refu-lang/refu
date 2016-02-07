@@ -59,7 +59,7 @@ struct ast_node *ast_parser_acc_typeleaf(struct ast_parser *p)
     tok2 = lexer_lookahead(parser_lexer(p), 2);
     if (tok->type == TOKEN_IDENTIFIER &&
         tok2 && tok2->type == TOKEN_SM_COLON) {
-        left = token_get_value(tok);
+        left = lexer_token_get_value(parser_lexer(p), tok);
         //consume identifier and ':'
         lexer_curr_token_advance(parser_lexer(p));
         lexer_curr_token_advance(parser_lexer(p));
