@@ -303,13 +303,13 @@ static inline void rir_fndef_init_common_intro(
     rir_data data
 )
 {
-    // only if coming from AST->RIR reset to zero. When coming from rir parsing
-    // the initialization to zero happens in rir_parse_fndef()
+    // only if coming from AST->RIR reset some attributes to zero. When coming 
+    // from rir parsing the initialization to zero happens in rir_parse_fndef()
     if (pos == RIRPOS_AST) {
         RF_STRUCT_ZERO(ret);
         rir_ctx_reset(data);
+        darray_init(ret->variables);
     }
-    darray_init(ret->variables);
     strmap_init(&ret->map);
     rir_data_curr_fn(data) = ret;
 }
