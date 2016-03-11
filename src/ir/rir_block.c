@@ -10,6 +10,19 @@
 #include <utils/common_strings.h>
 
 /* -- functions for rir_block_exit -- */
+
+static const struct RFstring rir_blockexit_type_strings[] = {
+    [RIR_BLOCK_EXIT_INVALID] = RF_STRING_STATIC_INIT("invalid"),
+    [RIR_BLOCK_EXIT_BRANCH] = RF_STRING_STATIC_INIT("branch"),
+    [RIR_BLOCK_EXIT_CONDBRANCH] = RF_STRING_STATIC_INIT("condbranch"),
+    [RIR_BLOCK_EXIT_RETURN] = RF_STRING_STATIC_INIT("return"),
+};
+const struct RFstring *rir_blockexit_type_str(enum rir_block_exit_type type)
+{
+    return &rir_blockexit_type_strings[type];
+}
+i_INLINE_INS const struct RFstring *rir_block_exit_type_str(const struct rir_block_exit *b);
+
 bool rir_block_exit_init_branch(struct rir_block_exit *exit,
                                 struct rir_value *branch_dst)
 {

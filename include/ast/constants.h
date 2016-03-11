@@ -29,6 +29,12 @@ i_INLINE_DECL struct ast_node *ast_constant_create_boolean_from_tok(struct token
  */
 const struct RFstring *ast_constant_string(const struct ast_constant *c);
 
+const struct RFstring *ast_constanttype_string(enum constant_type type);
+i_INLINE_DECL const struct RFstring *ast_constant_type_string(const struct ast_constant *c)
+{
+    return ast_constanttype_string(c->type);
+}
+
 //! Depending on the size of the constant literal, get the smallest type that would fit it
 const struct type *ast_constant_get_storagetype(struct ast_node *n);
 

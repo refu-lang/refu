@@ -271,6 +271,21 @@ const struct RFstring *rir_value_actual_string(const struct rir_value *v)
     return NULL;
 }
 
+
+static const struct RFstring value_type_strings[] = {
+    [RIR_VALUE_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
+    [RIR_VALUE_VARIABLE] = RF_STRING_STATIC_INIT("variable"),
+    [RIR_VALUE_LABEL] = RF_STRING_STATIC_INIT("label"),
+    [RIR_VALUE_LITERAL] = RF_STRING_STATIC_INIT("literal"),
+    [RIR_VALUE_NIL] = RF_STRING_STATIC_INIT("nil")
+};
+
+i_INLINE_INS const struct RFstring *rir_value_type_string(const struct rir_value *v);
+const struct RFstring *rir_valtype_string(enum rir_valtype t)
+{
+    return &value_type_strings[t];
+}
+
 struct rir_block *rir_value_label_dst(const struct rir_value *v)
 {
     RF_ASSERT(v->category == RIR_VALUE_LABEL, "Expected a label value");

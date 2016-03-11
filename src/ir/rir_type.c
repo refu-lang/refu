@@ -6,6 +6,7 @@
 #include <ast/function.h>
 #include <Utils/fixed_memory_pool.h>
 #include <analyzer/type_set.h>
+#include <utils/common_strings.h>
 
 static const struct rir_type elementary_types[] = {
 #define RIR_TYPE_ELEMINIT(i_type_)                                     \
@@ -216,6 +217,13 @@ const struct RFstring *rir_type_string(const struct rir_type *t)
                    RF_STR_PF_ARG((&t->tdef->name)),
                    t->is_pointer ? "*" : "");
     }
+}
+
+const struct RFstring *rir_type_category_str(const struct rir_type *t)
+{
+    return t->category == RIR_TYPE_ELEMENTARY
+        ? &g_str_elementary
+        : &g_str_composite;
 }
 
 const struct rir_type *rir_type_comp_member_type(const struct rir_type *t, uint32_t idx)

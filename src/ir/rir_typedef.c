@@ -95,7 +95,14 @@ struct rir_object *rir_typedef_create_obj(
         goto fail;
     }
     def->is_union = is_union;
+
+#ifdef RF_UNIT_TESTS // during testing, args may be omitted
+    if (args) {
+        darray_shallow_copy(def->argument_types, *args);
+    }
+#else
     darray_shallow_copy(def->argument_types, *args);
+#endif
 
     rf_ilist_add_tail(&r->typedefs, &def->ln);
     return obj;

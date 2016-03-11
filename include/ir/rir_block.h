@@ -27,6 +27,12 @@ struct rir_block_exit {
     };
 };
 
+const struct RFstring *rir_blockexit_type_str(enum rir_block_exit_type type);
+i_INLINE_DECL const struct RFstring *rir_block_exit_type_str(const struct rir_block_exit *b)
+{
+    return rir_blockexit_type_str(b->type);
+}
+
 bool rir_block_exit_init_branch(struct rir_block_exit *exit,
                                 struct rir_value *branch_dst);
 bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,

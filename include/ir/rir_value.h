@@ -124,6 +124,11 @@ struct rir_block *rir_value_label_dst(const struct rir_value *v);
  */
 bool rir_value_tostring(struct rir *r, const struct rir_value *v);
 const struct RFstring *rir_value_string(const struct rir_value *v);
+const struct RFstring *rir_valtype_string(enum rir_valtype t);
+i_INLINE_DECL const struct RFstring *rir_value_type_string(const struct rir_value *v)
+{
+    return rir_valtype_string(v->category);
+}
 /**
  * Get a string representation of the actual value of the rir value
  * This may be possible only for a few value types. For the rest return NULL.

@@ -62,6 +62,17 @@ const struct RFstring *ast_constant_string(const struct ast_constant *c)
     return ret;
 }
 
+static const struct RFstring value_type_strings[] = {
+    [CONSTANT_NUMBER_FLOAT] = RF_STRING_STATIC_INIT("float"),
+    [CONSTANT_NUMBER_INTEGER] = RF_STRING_STATIC_INIT("integer"),
+    [CONSTANT_BOOLEAN] = RF_STRING_STATIC_INIT("boolean")
+};
+const struct RFstring *ast_constanttype_string(enum constant_type type)
+{
+    return &value_type_strings[type];
+}
+i_INLINE_INS const struct RFstring *ast_constant_type_string(const struct ast_constant *c);
+
 const struct type * ast_constant_get_storagetype(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_CONSTANT);

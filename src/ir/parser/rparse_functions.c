@@ -129,6 +129,8 @@ bool rir_parse_fndecl(struct rir_parser *p)
 
 bool rir_parse_fndef(struct rir_parser *p)
 {
+    // TODO: abstract the behaviour here so that it can be nicely streamlined
+    //       between here and the testing code. Let's avoid code duplication
     struct rir_fndef *def;
     RF_MALLOC(def, sizeof(*def), return false);
     RF_STRUCT_ZERO(def);

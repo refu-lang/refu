@@ -346,40 +346,6 @@ static inline bool rir_fndef_init_common_outro(
     return rc;
 }
 
-static bool rir_fndef_init(
-    struct rir_fndef *ret,
-    const struct RFstring *name,
-    struct rir_type_arr *args,
-    struct rir_type *return_type,
-    enum rir_pos pos,
-    rir_data data
-)
-{
-    rir_fndef_init_common_intro(ret, pos, data);
-    if (!rir_fndecl_init(&ret->decl, name, args, return_type, false, pos, data)) {
-        return false;
-    }
-    return rir_fndef_init_common_outro(ret, return_type, pos, data);
-}
-
-struct rir_fndef *rir_fndef_create(
-    const struct RFstring *name,
-    struct rir_type_arr *args,
-    struct rir_type *return_type,
-    enum rir_pos pos,
-    rir_data data
-)
-{
-    struct rir_fndef *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_fndef_init(ret, name, args, return_type, pos, data)) {
-        free(ret);
-        ret = NULL;
-    }
-    return ret;
-}
-
-
 bool rir_fndef_init_no_decl(
     struct rir_fndef *def,
     enum rir_pos pos,

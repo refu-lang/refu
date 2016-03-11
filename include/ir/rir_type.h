@@ -90,6 +90,10 @@ struct rir_type *rir_type_set_pointer(struct rir_type **t, bool has_pointer);
  * @return          A string representing @a t
  */
 const struct RFstring *rir_type_string(const struct rir_type *t);
+/**
+ * Returns a string representation of the category of the type
+ */
+const struct RFstring *rir_type_category_str(const struct rir_type *t);
 
 const struct rir_type *rir_type_comp_member_type(const struct rir_type *t, uint32_t idx);
 int rir_type_union_matched_type_from_fncall(const struct rir_type *t, const struct ast_node *n, struct rir_ctx *ctx);

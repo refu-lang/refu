@@ -9,3 +9,5 @@ const struct RFstring g_str_fnstart = RF_STRING_STATIC_INIT("function_start");
 const struct RFstring g_str_string = RF_STRING_STATIC_INIT("string");
 const struct RFstring g_str_defined = RF_STRING_STATIC_INIT("defined");
 const struct RFstring g_str_foreign = RF_STRING_STATIC_INIT("foreign");
+const struct RFstring g_str_elementary = RF_STRING_STATIC_INIT("elementary");
+const struct RFstring g_str_composite = RF_STRING_STATIC_INIT("composite");
