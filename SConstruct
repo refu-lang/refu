@@ -249,6 +249,7 @@ unit_tests_files = [
     'types/test_typeset.c',
 
     'rir/testsupport_rir.c',
+    'rir/testsupport_rir_compare.c',
     'rir/test_finalized_ast.c',
     'rir/test_parsing_rir.c',
     'rir/test_rir_end_to_end.c',
