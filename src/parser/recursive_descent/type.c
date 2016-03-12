@@ -369,10 +369,11 @@ struct ast_node *ast_parser_acc_typedecl(struct ast_parser *p)
 
     desc = ast_parser_acc_typedesc_top(p);
     if (!desc) {
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected data description for data declaration "
-                      "of \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, token_get_end(tok), NULL,
+            "Expected data description for data declaration of \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto not_found;
     }
 
@@ -385,10 +386,11 @@ struct ast_node *ast_parser_acc_typedecl(struct ast_parser *p)
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                      "Expected a closing brace '}' in data "
-                      "declaration for '"RF_STR_PF_FMT"'",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, lexer_last_token_end(parser_lexer(p)), NULL,
+            "Expected a closing brace '}' in data declaration for '"RFS_PF"'",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free;
     }
     ast_node_set_end(data_decl, token_get_end(tok));

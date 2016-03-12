@@ -189,7 +189,7 @@ bool rir_value_variable_init(
     ret = rir_map_addobj(c, &v->id, obj);
     if (!ret) {
         // already exists? (should not happen)
-        RF_ERROR("Could not add rir value \""RF_STR_PF_FMT"\" to map.", RF_STR_PF_ARG(&v->id));
+        RF_ERROR("Could not add rir value \""RFS_PF"\" to map.", RFS_PA(&v->id));
     }
 
 end:
@@ -225,7 +225,7 @@ bool rir_value_tostring(struct rir *r, const struct rir_value *v)
 {
     switch (v->category) {
     case RIR_VALUE_LABEL:
-        if (!rf_stringx_append(r->buff, RFS("%%"RF_STR_PF_FMT, RF_STR_PF_ARG(&v->id)))) {
+        if (!rf_stringx_append(r->buff, RFS("%%"RFS_PF, RFS_PA(&v->id)))) {
             return false;
         }
         break;

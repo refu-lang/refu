@@ -14,20 +14,25 @@ bool test_tokens_cmp(struct token *expected,
 {
 
     if (expected->type != got->type) {
-        ck_lexer_abort(filename, line, "Expected the %d token to be of type "
-                       "\""RF_STR_PF_FMT"\" but it was \""RF_STR_PF_FMT"\"",
-                       index, RF_STR_PF_ARG(tokentype_to_str(expected->type)),
-                       RF_STR_PF_ARG(tokentype_to_str(got->type)));
+        ck_lexer_abort(
+            filename, line,
+            "Expected the %d token to be of type "
+            "\""RFS_PF"\" but it was \""RFS_PF"\"",
+            index, RFS_PA(tokentype_to_str(expected->type)),
+            RFS_PA(tokentype_to_str(got->type))
+        );
         return false;
     }
 
     if (!inplocation_equal(token_get_loc(expected), token_get_loc(got))) {
-        ck_lexer_abort(filename, line,
-                       "Expected token %d to have location:\n"
-                       INPLOCATION_FMT2"\nbut it has location:\n"
-                       INPLOCATION_FMT2, index,
-                       INPLOCATION_ARG2(f, token_get_loc(expected)),
-                       INPLOCATION_ARG2(f, token_get_loc(got)));
+        ck_lexer_abort(
+            filename, line,
+            "Expected token %d to have location:\n"
+            INPLOCATION_FMT2"\nbut it has location:\n"
+            INPLOCATION_FMT2, index,
+            INPLOCATION_ARG2(f, token_get_loc(expected)),
+            INPLOCATION_ARG2(f, token_get_loc(got))
+        );
         return false;
     }
 
@@ -39,10 +44,10 @@ bool test_tokens_cmp(struct token *expected,
         ck_lexer_abort(
             filename, line,
             "Expected the %d token to have value:\n"
-            RF_STR_PF_FMT"\nbut it has value:\n"
-            RF_STR_PF_FMT, index,
-            RF_STR_PF_ARG(ast_identifier_str(expected->value.value.ast)),
-            RF_STR_PF_ARG(ast_identifier_str(got->value.value.ast)));
+            RFS_PF"\nbut it has value:\n"
+            RFS_PF, index,
+            RFS_PA(ast_identifier_str(expected->value.value.ast)),
+            RFS_PA(ast_identifier_str(got->value.value.ast)));
         return false;
     } else if (expected->type == TOKEN_CONSTANT_INTEGER) {
         int64_t expect_v;
@@ -78,10 +83,11 @@ bool test_tokens_cmp(struct token *expected,
         ck_lexer_abort(
             filename, line,
             "Expected the %d string literal token to have value:\n"
-            "\""RF_STR_PF_FMT"\"\nbut it has value:\n"
-            "\""RF_STR_PF_FMT"\"", index,
-            RF_STR_PF_ARG(ast_string_literal_get_str(expected->value.value.ast)),
-            RF_STR_PF_ARG(ast_string_literal_get_str(got->value.value.ast)));
+            "\""RFS_PF"\"\nbut it has value:\n\""RFS_PF"\"",
+            index,
+            RFS_PA(ast_string_literal_get_str(expected->value.value.ast)),
+            RFS_PA(ast_string_literal_get_str(got->value.value.ast))
+        );
     }
 
     return true;

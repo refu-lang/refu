@@ -46,9 +46,9 @@ static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ct
     if (search_node && symbol_found_at_first_st) {
         analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
-                     "Type \""RF_STR_PF_FMT"\" was already declared in scope "
+                     "Type \""RFS_PF"\" was already declared in scope "
                      "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(type_name),
+                     RFS_PA(type_name),
                      INPLOCATION_ARG(module_get_file(ctx->m),
                                      ast_node_location(search_node)));
         return false;
@@ -79,9 +79,9 @@ static bool analyzer_populate_symbol_module(struct analyzer_traversal_ctx *ctx,
     if (search_node && symbol_found_at_first_st) {
         analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
-                     "Identifier \""RF_STR_PF_FMT"\" was already used in scope "
+                     "Identifier \""RFS_PF"\" was already used in scope "
                      "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(name),
+                     RFS_PA(name),
                      INPLOCATION_ARG(module_get_file(ctx->m),
                                      ast_node_location(search_node)));
         return false;
@@ -113,9 +113,9 @@ static bool analyzer_populate_symbol_table_typeleaf(struct analyzer_traversal_ct
     if (search_node && symbol_found_at_first_st) {
         analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
-                     "Identifier \""RF_STR_PF_FMT"\" was already used in scope "
+                     "Identifier \""RFS_PF"\" was already used in scope "
                      "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(id_name),
+                     RFS_PA(id_name),
                      INPLOCATION_ARG(module_get_file(ctx->m),
                                      ast_node_location(search_node)));
         return false;
@@ -142,9 +142,8 @@ static bool analyzer_populate_symbol_table_vardecl(struct analyzer_traversal_ctx
         analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
                      "Expected an identifier in the left side of a variable's  "
-                     "type description node but "
-                     "found a \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_node_str(left)));
+                     "type description node but found a \""RFS_PF"\"",
+                     RFS_PA(ast_node_str(left)));
             return false;
     }
     return analyzer_populate_symbol_table_typeleaf(ctx, desc);
@@ -189,9 +188,9 @@ static bool analyzer_symbol_table_add_fndecl(struct analyzer_traversal_ctx *ctx,
     if (rec && type_is_function(rec->data)) {
         analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
-                     "Function \""RF_STR_PF_FMT"\" was already declared "
+                     "Function \""RFS_PF"\" was already declared "
                      "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(fn_name),
+                     RFS_PA(fn_name),
                      INPLOCATION_ARG(
                          module_get_file(ctx->m),
                          ast_node_location(symbol_table_record_node(rec))));

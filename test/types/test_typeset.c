@@ -39,32 +39,37 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
                 found = true;
 
                 RFS_PUSH();
-                ck_assert_msg(!found_indexes[i],
-                              "Found a duplicate type entry in the list. Type: "
-                              RF_STR_PF_FMT,
-                              RF_STR_PF_ARG(type_str_or_die(expected_types[i], TSTR_DEFAULT)));
+                ck_assert_msg(
+                    !found_indexes[i],
+                    "Found a duplicate type entry in the list. Type: "RFS_PF,
+                    RFS_PA(type_str_or_die(expected_types[i], TSTR_DEFAULT))
+                );
                 found_indexes[i] = true;
                 RFS_POP();
                 break;
             }
         }
         if (!found) {
-            ck_abort_msg("Did not manage to find type "RF_STR_PF_FMT" "
-                         "in the expected types list from %s:%u",
-                         RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)),
-                         filename,
-                         line);
+            ck_abort_msg(
+                "Did not manage to find type "RFS_PF" "
+                "in the expected types list from %s:%u",
+                RFS_PA(type_str_or_die(t, TSTR_DEFAULT)),
+                filename,
+                line
+            );
         }
         found_types_size ++;
     }
 
     for (i = 0; i < expected_types_size; ++i) {
         RFS_PUSH();
-        ck_assert_msg(found_indexes[i],
-                      "Expected type "RF_STR_PF_FMT" was not found in the "
-                      "composite types list from %s:%u",
-                      RF_STR_PF_ARG(type_str_or_die(expected_types[i], TSTR_DEFAULT)),
-                      filename, line);
+        ck_assert_msg(
+            found_indexes[i],
+            "Expected type "RFS_PF" was not found in the "
+            "composite types list from %s:%u",
+            RFS_PA(type_str_or_die(expected_types[i], TSTR_DEFAULT)),
+            filename, line
+        );
         RFS_POP();
     }
     free(found_indexes);
@@ -91,10 +96,9 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
                 if (after_t && type_is_childof(*t2, *t) != -1) {        \
                     ck_abort_msg(                                       \
                         "Typeset was not ordered properly. Type "       \
-                        RF_STR_PF_FMT "depends on type "                \
-                        RF_STR_PF_FMT".",                               \
-                        RF_STR_PF_ARG(type_str_or_die(*t, TSTR_DEFAULT)), \
-                        RF_STR_PF_ARG(type_str_or_die(*t2, TSTR_DEFAULT)) \
+                        RFS_PF "depends on type "RFS_PF".",             \
+                        RFS_PA(type_str_or_die(*t, TSTR_DEFAULT)),      \
+                        RFS_PA(type_str_or_die(*t2, TSTR_DEFAULT))      \
                     );                                                  \
                 }                                                       \
             }                                                           \

@@ -399,12 +399,12 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     if (got->type != expect->type) {
         ck_astcheck_abort(
             filename, line,
-            "2 ast nodes have different type: Got \""RF_STR_PF_FMT"\" "
-            " at location "INPLOCATION_FMT2" != expected \""RF_STR_PF_FMT"\" at "
+            "2 ast nodes have different type: Got \""RFS_PF"\" "
+            " at location "INPLOCATION_FMT2" != expected \""RFS_PF"\" at "
             "location "INPLOCATION_FMT2,
-            RF_STR_PF_ARG(ast_node_str(got)),
+            RFS_PA(ast_node_str(got)),
             INPLOCATION_ARG2(ifile, &got->location),
-            RF_STR_PF_ARG(ast_node_str(expect)),
+            RFS_PA(ast_node_str(expect)),
             INPLOCATION_ARG2(ifile, &expect->location)
         );
         return false;
@@ -414,12 +414,12 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         ast_binaryop_op(got) != ast_binaryop_op(expect)) {
         ck_astcheck_abort(
             filename, line,
-            "2 ast binary operator nodes have different type: Got \""RF_STR_PF_FMT"\" "
-            " at location "INPLOCATION_FMT2" != expected \""RF_STR_PF_FMT"\" at "
+            "2 ast binary operator nodes have different type: Got \""RFS_PF"\" "
+            " at location "INPLOCATION_FMT2" != expected \""RFS_PF"\" at "
             "location "INPLOCATION_FMT2,
-            RF_STR_PF_ARG(ast_binaryop_opstr(got)),
+            RFS_PA(ast_binaryop_opstr(got)),
             INPLOCATION_ARG2(ifile, &got->location),
-            RF_STR_PF_ARG(ast_binaryop_opstr(expect)),
+            RFS_PA(ast_binaryop_opstr(expect)),
             INPLOCATION_ARG2(ifile, &expect->location)
         );
         return false;
@@ -433,20 +433,22 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     }
 
     if (got_children != expect_children) {
-        ck_astcheck_abort(filename, line,
-                          "2 \""RF_STR_PF_FMT"\" ast nodes have different "
-                          "number of children.\n Got %d != Expected %d",
-                          RF_STR_PF_ARG(ast_node_str(got)),
-                          got_children, expect_children);
+        ck_astcheck_abort(
+            filename, line,
+            "2 \""RFS_PF"\" ast nodes have different "
+            "number of children.\n Got %d != Expected %d",
+            RFS_PA(ast_node_str(got)),
+            got_children, expect_children
+        );
         return false;
     }
 
     if(!inplocation_equal(&got->location, &expect->location)) {
         ck_astcheck_abort(
             filename, line,
-            "2 \""RF_STR_PF_FMT"\" ast nodes have different location: "
+            "2 \""RFS_PF"\" ast nodes have different location: "
             "Got "INPLOCATION_FMT2 " but"
-            " expected "INPLOCATION_FMT2, RF_STR_PF_ARG(ast_node_str(got)),
+            " expected "INPLOCATION_FMT2, RFS_PA(ast_node_str(got)),
             INPLOCATION_ARG2(ifile, &got->location),
             INPLOCATION_ARG2(ifile, &expect->location)
         );
@@ -457,7 +459,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     case AST_FUNCTION_DECLARATION:
         if (ast_fndecl_position_get(got) != ast_fndecl_position_get(expect)) {
             ck_astcheck_abort(
-                filename, line, "Function declaration expected code position mismatch."
+                filename, line,
+                "Function declaration expected code position mismatch."
             );
             return false;
         }
@@ -467,10 +470,10 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                              ast_identifier_str(expect))) {
             ck_astcheck_abort(
                 filename, line,
-                "identifiers mismatch: Got \""RF_STR_PF_FMT"\" != expected "
-                "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(ast_identifier_str(got)),
-                RF_STR_PF_ARG(ast_identifier_str(expect))
+                "identifiers mismatch: Got \""RFS_PF"\" != expected "
+                "\""RFS_PF"\"",
+                RFS_PA(ast_identifier_str(got)),
+                RFS_PA(ast_identifier_str(expect))
             );
             return false;
         }
@@ -492,10 +495,10 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
 
             ck_astcheck_abort(
                 filename, line,
-                "type operator mismatch: Got \""RF_STR_PF_FMT"\" != expected "
-                "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(ast_typeop_opstr(got)),
-                RF_STR_PF_ARG(ast_typeop_opstr(expect)));
+                "type operator mismatch: Got \""RFS_PF"\" != expected "
+                "\""RFS_PF"\"",
+                RFS_PA(ast_typeop_opstr(got)),
+                RFS_PA(ast_typeop_opstr(expect)));
         }
         break;
     case AST_BINARY_OPERATOR:
@@ -503,10 +506,10 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
 
             ck_astcheck_abort(
                 filename, line,
-                "binary operator mismatch: Got \""RF_STR_PF_FMT"\" != expected "
-                "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(ast_binaryop_opstr(got)),
-                RF_STR_PF_ARG(ast_binaryop_opstr(expect)));
+                "binary operator mismatch: Got \""RFS_PF"\" != expected "
+                "\""RFS_PF"\"",
+                RFS_PA(ast_binaryop_opstr(got)),
+                RFS_PA(ast_binaryop_opstr(expect)));
         }
         break;
     case AST_STRING_LITERAL:
@@ -515,10 +518,10 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
 
             ck_astcheck_abort(
                 filename, line,
-                "string literal mismatch: Got \""RF_STR_PF_FMT"\" != expected "
-                "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(ast_string_literal_get_str(got)),
-                RF_STR_PF_ARG(ast_string_literal_get_str(expect)));
+                "string literal mismatch: Got \""RFS_PF"\" != expected "
+                "\""RFS_PF"\"",
+                RFS_PA(ast_string_literal_get_str(got)),
+                RFS_PA(ast_string_literal_get_str(expect)));
         }
         break;
     case AST_CONSTANT:
@@ -574,9 +577,11 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         }
         break;
         default:
-            ck_astcheck_abort(filename, line, "unexpected constant number "
-                              "type for token at "INPLOCATION_FMT2,
-                              INPLOCATION_ARG2(ifile, &got->location));
+            ck_astcheck_abort(
+                filename, line,
+                "unexpected constant number type for token at "INPLOCATION_FMT2,
+                INPLOCATION_ARG2(ifile, &got->location)
+            );
         }
         break;
     default:

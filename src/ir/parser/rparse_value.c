@@ -50,9 +50,9 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *m
                 p,
                 token_get_start(tok),
                 NULL,
-                "Previously Undeclared identifier \""RF_STR_PF_FMT"\" "RF_STR_PF_FMT".",
-                RF_STR_PF_ARG(id),
-                RF_STR_PF_ARG(msg)
+                "Previously Undeclared identifier \""RFS_PF"\" "RFS_PF".",
+                RFS_PA(id),
+                RFS_PA(msg)
         );
             return NULL;
         }
@@ -63,9 +63,9 @@ struct rir_value *rir_parse_value(struct rir_parser *p, const struct RFstring *m
             p,
             token_get_start(tok),
             NULL,
-            "Expected a rir value but got token \""RF_STR_PF_FMT"\" "RF_STR_PF_FMT".",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok))),
-            RF_STR_PF_ARG(msg)
+            "Expected a rir value but got token \""RFS_PF"\" "RFS_PF".",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok))),
+            RFS_PA(msg)
         );
         return NULL;
     }
@@ -90,9 +90,9 @@ bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struc
         struct rir_value *v = rir_parse_value(
             p,
             RFS(
-                "as "RF_STR_PF_FMT " argument at " RF_STR_PF_FMT,
-                RF_STR_PF_ARG(sord),
-                RF_STR_PF_ARG(msg)
+                "as "RFS_PF " argument at " RFS_PF,
+                RFS_PA(sord),
+                RFS_PA(msg)
             )
         );
         if (!v) {
@@ -106,9 +106,9 @@ bool rir_parse_valuearr(struct rir_parser *p, struct value_arr *arr, const struc
                 p,
                 lexer_last_token_start(parser_lexer(p)),
                 NULL,
-                "Expected either ',' or ')' after "RF_STR_PF_FMT" argument of " RF_STR_PF_FMT,
-                RF_STR_PF_ARG(sord),
-                RF_STR_PF_ARG(msg)
+                "Expected either ',' or ')' after "RFS_PF" argument of " RFS_PF,
+                RFS_PA(sord),
+                RFS_PA(msg)
             );
             goto fail_free_arr;
         }

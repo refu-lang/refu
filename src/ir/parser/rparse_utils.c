@@ -12,7 +12,7 @@ bool rir_parse_instr_start(struct rir_parser *p, const struct RFstring *msg)
             p,
             lexer_last_token_start(parser_lexer(p)),
             NULL,
-            "Expected a '(' after "RF_STR_PF_FMT".", RF_STR_PF_ARG(msg)
+            "Expected a '(' after "RFS_PF".", RFS_PA(msg)
         );
         return false;
     }
@@ -23,7 +23,7 @@ struct rir_value *rir_parse_val_and_comma(struct rir_parser *p, const struct RFs
 {
     struct rir_value *val = NULL;
     RFS_PUSH();
-    if (!(val = rir_parse_value(p, RFS("at "RF_STR_PF_FMT, RF_STR_PF_ARG(msg))))) {
+    if (!(val = rir_parse_value(p, RFS("at "RFS_PF, RFS_PA(msg))))) {
         goto end;
     }
     if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
@@ -31,7 +31,7 @@ struct rir_value *rir_parse_val_and_comma(struct rir_parser *p, const struct RFs
             p,
             lexer_last_token_start(parser_lexer(p)),
             NULL,
-            "Expected a ',' after "RF_STR_PF_FMT".", RF_STR_PF_ARG(msg)
+            "Expected a ',' after "RFS_PF".", RFS_PA(msg)
         );
         rir_value_destroy(val, RIR_VALUE_PARSING);
         val = NULL;

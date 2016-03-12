@@ -72,8 +72,7 @@ void check_lexer_tokens_impl(struct lexer *l,
         if (!lexer_scan(front_testdriver_lexer())) {                    \
             struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
             if (tmp_) {                                                 \
-                ck_abort_msg(msg_" -- with scanning errors\n"RF_STR_PF_FMT, \
-                             RF_STR_PF_ARG(tmp_));                      \
+                ck_abort_msg(msg_" -- with scanning errors\n"RFS_PF, RFS_PA(tmp_)); \
             } else {                                                    \
                 ck_abort_msg(msg_" -- with no scanning errors");        \
             }                                                           \

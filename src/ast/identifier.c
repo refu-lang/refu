@@ -27,8 +27,7 @@ void ast_identifier_print(struct ast_node *n, int depth)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-    printf("Value: \""RF_STR_PF_FMT"\"\n",
-               RF_STR_PF_ARG(&n->identifier.string));
+    printf("Value: \""RFS_PF"\"\n", RFS_PA(&n->identifier.string));
 }
 
 const struct RFstring *ast_identifier_str(const struct ast_node *n)

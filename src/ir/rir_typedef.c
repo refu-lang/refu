@@ -134,7 +134,7 @@ bool rir_typedef_tostring(struct rirtostr_ctx *ctx, struct rir_typedef *t)
 {
     if (!rf_stringx_append(
             ctx->rir->buff,
-            RFS("$"RF_STR_PF_FMT" = %s(",  RF_STR_PF_ARG(&t->name), t->is_union ? "uniondef" : "typedef"))) {
+            RFS("$"RFS_PF" = %s(",  RFS_PA(&t->name), t->is_union ? "uniondef" : "typedef"))) {
         return false;
     }
     if (!rir_typearr_tostring(ctx, &t->argument_types)) {

@@ -172,7 +172,7 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
     const struct RFstring* output = compiler_args_get_executable_name(d->compiler->args);
 
     RFS_PUSH();
-    proc = rf_popen(RFS_OR_DIE("./"RF_STR_PF_FMT".exe", RF_STR_PF_ARG(output)), "r");
+    proc = rf_popen(RFS_OR_DIE("./"RFS_PF".exe", RFS_PA(output)), "r");
     RFS_POP();
 
     if (!proc) {
@@ -183,8 +183,12 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
         size_t output_length = rf_string_length_bytes(expected_output);
         size_t actual_length = fread(stdout_buff, 1, output_length, proc);
         if (output_length != actual_length) {
-            ck_abort_msg("Expected \""RF_STR_PF_FMT"\" in stdout but got:\n\"%.*s\"",
-                         RF_STR_PF_ARG(expected_output), actual_length, stdout_buff);
+            ck_abort_msg(
+                "Expected \""RFS_PF"\" in stdout but got:\n\"%.*s\"",
+                RFS_PA(expected_output),
+                actual_length,
+                stdout_buff
+            );
         }
         ck_assert_rf_str_eq_nntstr(expected_output, stdout_buff, output_length);
     }

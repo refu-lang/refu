@@ -86,8 +86,8 @@ static bool rir_blockexit_tostring(struct rirtostr_ctx *ctx, const struct rir_bl
         if (exitb->retstmt.val) {
             if (!rf_stringx_append(
                     ctx->rir->buff,
-                    RFS(RIRTOSTR_INDENT"return("RF_STR_PF_FMT")\n",
-                        RF_STR_PF_ARG(rir_value_string(exitb->retstmt.val)))
+                    RFS(RIRTOSTR_INDENT"return("RFS_PF")\n",
+                        RFS_PA(rir_value_string(exitb->retstmt.val)))
                 )) {
                 goto end;
             }

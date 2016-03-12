@@ -20,18 +20,21 @@ static struct ast_node *ast_parser_acc_condbranch(struct ast_parser *p,
 
     expr = ast_parser_acc_expression(p);
     if (!expr) {
-        parser_synerr(p, token_get_end(after_tok), NULL,
-                      "Expected an expression after '"RF_STR_PF_FMT"'",
-                      RF_STR_PF_ARG(tokentype_to_str(after_tok->type)));
+        parser_synerr(
+            p, token_get_end(after_tok), NULL,
+            "Expected an expression after '"RFS_PF"'",
+            RFS_PA(tokentype_to_str(after_tok->type))
+        );
         return NULL;
     }
 
     block = ast_parser_acc_block(p, true);
     if (!block) {
-        parser_synerr(p, ast_node_endmark(expr), NULL,
-                      "Expected a block after \""RF_STR_PF_FMT"\"'s "
-                      "conditional expression",
-                      RF_STR_PF_ARG(tokentype_to_str(after_tok->type)));
+        parser_synerr(
+            p, ast_node_endmark(expr), NULL,
+            "Expected a block after \""RFS_PF"\"'s conditional expression",
+            RFS_PA(tokentype_to_str(after_tok->type))
+        );
         ast_node_destroy(expr);
         return NULL;
     }

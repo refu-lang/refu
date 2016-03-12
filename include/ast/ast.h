@@ -27,20 +27,26 @@
 /**
  * Performs an assert on the type of the AST node in debug mode
  */
-#define AST_NODE_ASSERT_TYPE(node_, type_)                              \
-    RF_ASSERT((node_)->type == type_, "Illegal ast node type. Expected \"" \
-              RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"",    \
-              RF_STR_PF_ARG(ast_nodetype_str(type_)),                   \
-              RF_STR_PF_ARG(ast_node_str(node_)))
+#define AST_NODE_ASSERT_TYPE(node_, type_)              \
+    RF_ASSERT(                                          \
+        (node_)->type == type_,                         \
+        "Illegal ast node type. Expected \""RFS_PF"\""  \
+        " but encountered \""RFS_PF"\"",                \
+        RFS_PA(ast_nodetype_str(type_)),                \
+        RFS_PA(ast_node_str(node_))                     \
+    )
 
 /**
  * Performs an assert on the state of the AST node in debug mode
  */
-#define AST_NODE_ASSERT_STATE(node_, state_)                            \
-    RF_ASSERT((node_)->state >= state_, "Illegal ast node state. Expected \"" \
-              "state >= "RF_STR_PF_FMT"\" but encountered \""RF_STR_PF_FMT"\"", \
-              RF_STR_PF_ARG(ast_nodestate_str(state_)),                 \
-              RF_STR_PF_ARG(ast_nodestate_str((node_)->state)))
+#define AST_NODE_ASSERT_STATE(node_, state_)                \
+    RF_ASSERT(                                              \
+        (node_)->state >= state_,                           \
+        "Illegal ast node state. Expected \""               \
+        "state >= "RFS_PF"\" but encountered \""RFS_PF"\"", \
+        RFS_PA(ast_nodestate_str(state_)),                  \
+        RFS_PA(ast_nodestate_str((node_)->state))           \
+    )
 
 #define AST_PRINT_DEPTHMUL 4
 

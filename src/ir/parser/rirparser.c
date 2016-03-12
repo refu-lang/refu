@@ -67,8 +67,8 @@ static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct to
             p,
             token_get_start(tok),
             NULL,
-            "Unexpected rir token \""RF_STR_PF_FMT"\" after outer assignment to identifier.",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+            "Unexpected rir token \""RFS_PF"\" after outer assignment to identifier.",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok)))
         );
         break;
     }
@@ -90,8 +90,8 @@ struct rir_object *rir_accept_identifier_var(
             p,
             token_get_start(tok),
             NULL,
-            "Expected an assignment after \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+            "Expected an assignment after \""RFS_PF"\".",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok)))
         );
         return NULL;
     }
@@ -123,8 +123,8 @@ static bool rir_parse_outer_statement(struct rir_parser *p)
             p,
             token_get_start(tok),
             NULL,
-            "Unexpected rir token \""RF_STR_PF_FMT"\" during parsing",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+            "Unexpected rir token \""RFS_PF"\" during parsing",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok)))
         );
         break;
     }

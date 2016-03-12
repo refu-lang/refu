@@ -39,7 +39,7 @@ struct ow_graph *ow_graph_create(struct rir_object *obj,
     }
     darray_init(ret->passed_locations);
     rf_objset_init(&ret->set, ownode);
-    OWDD("\n>>>Creating graph for value "RF_STR_PF_FMT"\n\n", RF_STR_PF_ARG(ow_node_id(ret->root)));
+    OWDD("\n>>>Creating graph for value "RFS_PF"\n\n", RFS_PA(ow_node_id(ret->root)));
     rf_objset_add(&ret->set, ownode, ret->root);
     return ret;
 }
@@ -62,10 +62,11 @@ bool ow_graph_check_or_add_val(struct ow_graph *g,
                                const struct rir_expression *edgexpr)
 {
     struct ow_node *n;
-    OWDD("Normal Checking in \""RF_STR_PF_FMT"()\" if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
-         RF_STR_PF_ARG(ow_curr_fnname()),
-         RF_STR_PF_ARG(rir_value_string(v)),
-         RF_STR_PF_ARG(ow_node_id(g->root))
+    OWDD(
+        "Normal Checking in \""RFS_PF"()\" if value "RFS_PF" can go to graph for value "RFS_PF"\n",
+        RFS_PA(ow_curr_fnname()),
+        RFS_PA(rir_value_string(v)),
+        RFS_PA(ow_node_id(g->root))
     );
     if (!(n = ownode_objset_has_value(&g->set, ow_curr_fnname(), v))) {
         OWDD("No it can't!\n");
@@ -76,9 +77,9 @@ bool ow_graph_check_or_add_val(struct ow_graph *g,
         OWDD("Failed to add a new node as an edge");
         return false;
     }
-    OWDD("Adding node with id \""RF_STR_PF_FMT"\" to the graph for value "RF_STR_PF_FMT"\n",
-       RF_STR_PF_ARG(ow_node_id(n)),
-       RF_STR_PF_ARG(ow_node_id(g->root))
+    OWDD("Adding node with id \""RFS_PF"\" to the graph for value "RFS_PF"\n",
+       RFS_PA(ow_node_id(n)),
+       RFS_PA(ow_node_id(g->root))
     );
     rf_objset_add(&g->set, ownode, n);
     return true;
@@ -91,10 +92,11 @@ bool ow_graph_check_or_add_end(struct ow_graph *g,
                                unsigned int idx)
 {
     struct ow_node *n;
-    OWDD("End Checking in \""RF_STR_PF_FMT"()\" if value "RF_STR_PF_FMT" can go to graph for value "RF_STR_PF_FMT"\n",
-         RF_STR_PF_ARG(ow_curr_fnname()),
-         RF_STR_PF_ARG(rir_value_string(v)),
-         RF_STR_PF_ARG(ow_node_id(g->root))
+    OWDD(
+        "End Checking in \""RFS_PF"()\" if value "RFS_PF" can go to graph for value "RFS_PF"\n",
+        RFS_PA(ow_curr_fnname()),
+        RFS_PA(rir_value_string(v)),
+        RFS_PA(ow_node_id(g->root))
     );
     if (!(n = ownode_objset_has_value(&g->set, ow_curr_fnname(), v))) {
         OWDD("No it can't!\n");

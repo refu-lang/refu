@@ -269,8 +269,8 @@ bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *ce
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(
-                    RIRTOSTR_INDENT"call("RF_STR_PF_FMT", %s",
-                    RF_STR_PF_ARG(&cexpr->call.name),
+                    RIRTOSTR_INDENT"call("RFS_PF", %s",
+                    RFS_PA(&cexpr->call.name),
                     cexpr->call.foreign ? "foreign" : "defined"
                 )
             )) {
@@ -280,9 +280,9 @@ bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *ce
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(
-                    RIRTOSTR_INDENT RF_STR_PF_FMT" = call("RF_STR_PF_FMT", %s",
-                    RF_STR_PF_ARG(rir_value_string(&cexpr->val)),
-                    RF_STR_PF_ARG(&cexpr->call.name),
+                    RIRTOSTR_INDENT RFS_PF" = call("RFS_PF", %s",
+                    RFS_PA(rir_value_string(&cexpr->val)),
+                    RFS_PA(&cexpr->call.name),
                     cexpr->call.foreign ? "foreign" : "defined"
                 )
             )) {
@@ -292,7 +292,10 @@ bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *ce
 
     struct rir_value **arg_val;
     darray_foreach(arg_val, cexpr->call.args) {
-        if (!rf_stringx_append(ctx->rir->buff, RFS(", "RF_STR_PF_FMT, RF_STR_PF_ARG(rir_value_string(*arg_val))))) {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(", "RFS_PF, RFS_PA(rir_value_string(*arg_val)))
+        )) {
             goto end;
         }
     }

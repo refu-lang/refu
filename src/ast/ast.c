@@ -179,10 +179,12 @@ const struct RFstring *ast_node_get_name_str(const struct ast_node *n)
     case AST_XIDENTIFIER:
         return ast_xidentifier_str(n);
     default:
-        RF_ASSERT_OR_CRITICAL(false, return NULL,
-                              "Requesting identifier string from illegal"
-                              "ast node type \""RF_STR_PF_FMT"\"",
-                              RF_STR_PF_ARG(ast_node_str(n)));
+        RF_ASSERT_OR_CRITICAL(
+            false, return NULL,
+            "Requesting identifier string from illegal"
+            "ast node type \""RFS_PF"\"",
+            RFS_PA(ast_node_str(n))
+        );
     }
 }
 
@@ -228,19 +230,19 @@ static void ast_print_prelude(struct ast_node *n, struct inpfile *f,
             printf("%*s",
                    (int)((depth * AST_PRINT_DEPTHMUL) - strlen(desc)),
                    " ");
-            printf("|----> "RF_STR_PF_FMT" "INPLOCATION_FMT2"\n",
-                   RF_STR_PF_ARG(ast_node_str(n)),
+            printf("|----> "RFS_PF" "INPLOCATION_FMT2"\n",
+                   RFS_PA(ast_node_str(n)),
                    INPLOCATION_ARG2(f, &n->location));
         } else {
             printf("%*s", depth * AST_PRINT_DEPTHMUL, " ");
-            printf("|----> "RF_STR_PF_FMT" "INPLOCATION_FMT2"\n",
-                   RF_STR_PF_ARG(ast_node_str(n)),
+            printf("|----> "RFS_PF" "INPLOCATION_FMT2"\n",
+                   RFS_PA(ast_node_str(n)),
                    INPLOCATION_ARG2(f, &n->location));
         }
     } else {
         printf("%*.*s "INPLOCATION_FMT2"\n",
                depth * AST_PRINT_DEPTHMUL,
-               RF_STR_PF_ARG(ast_node_str(n)),
+               RFS_PA(ast_node_str(n)),
                INPLOCATION_ARG2(f, &n->location));
     }
 }
@@ -261,10 +263,12 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
     case AST_MODULE:
         return ast_module_symbol_table_get(n);
     default:
-        RF_ASSERT_OR_CRITICAL(false, return NULL,
-                              "get_symbol_table() was called on \""RF_STR_PF_FMT"\" which"
-                              " is an illegal node for this action",
-                              RF_STR_PF_ARG(ast_node_str(n)));
+        RF_ASSERT_OR_CRITICAL(
+            false, return NULL,
+            "get_symbol_table() was called on \""RFS_PF"\" which"
+            " is an illegal node for this action",
+            RFS_PA(ast_node_str(n))
+        );
     }
 }
 
@@ -299,7 +303,7 @@ void ast_print(struct ast_node *n, struct inpfile *f, int depth)
         ast_identifier_print(n, depth + 1);
         break;
     default:
-        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ast_node_str(n)));
+        printf(RFS_PF"\n", RFS_PA(ast_node_str(n)));
         rf_ilist_for_each(&n->children, c, lh) {
             ast_print(c, f, depth + 1);
         }

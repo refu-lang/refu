@@ -260,9 +260,9 @@ bool rir_fndecl_nocheck_tostring(struct rirtostr_ctx *ctx, bool is_plain, const 
     RFS_PUSH();
     if (!rf_stringx_append(
             ctx->rir->buff,
-            RFS("%s("RF_STR_PF_FMT RF_STR_PF_FMT,
+            RFS("%s("RFS_PF RFS_PF,
                 is_plain ? "fndecl" : "fndef",
-                RF_STR_PF_ARG(&f->name), RF_STR_PF_ARG(&sep)))) {
+                RFS_PA(&f->name), RFS_PA(&sep)))) {
         goto end;
     }
 

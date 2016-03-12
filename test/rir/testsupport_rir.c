@@ -205,9 +205,8 @@ struct rir_value *testsupport_rir_value(char *name)
     const struct RFstring vname = RF_STRING_SHALLOW_INIT_CSTR(name);
     struct rir_object *obj = rir_map_getobj(testsupport_rir_pctx().common, &vname);
     ck_assert_msg(
-        obj, "Could not find value of variable \""RF_STR_PF_FMT"\" in"
-        " the current map.",
-        RF_STR_PF_ARG(&vname)
+        obj, "Could not find value of variable \""RFS_PF"\" in the current map.",
+        RFS_PA(&vname)
     );
     return rir_object_value(obj);
 }
@@ -245,9 +244,9 @@ static bool testrir_compare_global(
             line,
             "Failure at the RIR global comparison",
             "Expected a global with name "
-            "\""RF_STR_PF_FMT"\" but got one named \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(expect_name),
-            RF_STR_PF_ARG(got_name)
+            "\""RFS_PF"\" but got one named \""RFS_PF"\".",
+            RFS_PA(expect_name),
+            RFS_PA(got_name)
         );
         return false;
     }
@@ -260,9 +259,9 @@ static bool testrir_compare_global(
             line,
             "Failure at the RIR global comparison",
             "Expected a global with type "
-            "\""RF_STR_PF_FMT"\" but got one with type \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rir_type_string(expect_type)),
-            RF_STR_PF_ARG(rir_type_string(got_type))
+            "\""RFS_PF"\" but got one with type \""RFS_PF"\".",
+            RFS_PA(rir_type_string(expect_type)),
+            RFS_PA(rir_type_string(got_type))
         );
         return false;
     }
@@ -281,10 +280,10 @@ static bool ckr_compare_constant(
             file,
             line,
             "Failure at RIR constant comparison",
-            "Expected 'type' to be \""RF_STR_PF_FMT"\" but "
-            "it is \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(ast_constant_type_string(expect)),
-            RF_STR_PF_ARG(ast_constant_type_string(got))
+            "Expected 'type' to be \""RFS_PF"\" but "
+            "it is \""RFS_PF"\".",
+            RFS_PA(ast_constant_type_string(expect)),
+            RFS_PA(ast_constant_type_string(got))
         );
         return false;
     }
@@ -346,11 +345,11 @@ static bool ckr_compare_value(
             file,
             line,
             "Failure at RIR value comparison",
-            RF_STR_PF_FMT". Expected 'category' to be \""RF_STR_PF_FMT"\" but "
-            "it is \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(intro),
-            RF_STR_PF_ARG(rir_value_type_string(expect)),
-            RF_STR_PF_ARG(rir_value_type_string(got))
+            RFS_PF". Expected 'category' to be \""RFS_PF"\" but "
+            "it is \""RFS_PF"\".",
+            RFS_PA(intro),
+            RFS_PA(rir_value_type_string(expect)),
+            RFS_PA(rir_value_type_string(got))
         );
         return false;
     }
@@ -360,11 +359,11 @@ static bool ckr_compare_value(
             file,
             line,
             "Failure at RIR value comparison",
-            RF_STR_PF_FMT". Expected 'id' to be \""RF_STR_PF_FMT"\" but "
-            "it is \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(intro),
-            RF_STR_PF_ARG(rir_value_string(expect)),
-            RF_STR_PF_ARG(rir_value_string(got))
+            RFS_PF". Expected 'id' to be \""RFS_PF"\" but "
+            "it is \""RFS_PF"\".",
+            RFS_PA(intro),
+            RFS_PA(rir_value_string(expect)),
+            RFS_PA(rir_value_string(got))
         );
         return false;
     }
@@ -374,8 +373,8 @@ static bool ckr_compare_value(
             file,
             line,
             "Failure at RIR value comparison",
-            RF_STR_PF_FMT". Value type existence mismatch",
-            RF_STR_PF_ARG(intro)
+            RFS_PF". Value type existence mismatch",
+            RFS_PA(intro)
         );
         return false;
     }
@@ -387,9 +386,9 @@ static bool ckr_compare_value(
             expect->type,
             file,
             line,
-            RFS(RF_STR_PF_FMT". Value \""RF_STR_PF_FMT"\" type comparison failed.",
-                RF_STR_PF_ARG(intro),
-                RF_STR_PF_ARG(rir_value_string(got)))
+            RFS(RFS_PF". Value \""RFS_PF"\" type comparison failed.",
+                RFS_PA(intro),
+                RFS_PA(rir_value_string(got)))
         );
         RFS_POP();
     }
@@ -407,8 +406,8 @@ static bool ckr_compare_value(
                 file,
                 line,
                 "Failure at RIR value comparison",
-                RF_STR_PF_FMT". Expected 'label_dst' to be %p but it is %p.",
-                RF_STR_PF_ARG(intro),
+                RFS_PF". Expected 'label_dst' to be %p but it is %p.",
+                RFS_PA(intro),
                 got->label_dst,
                 expect->label_dst
             );
@@ -440,10 +439,10 @@ static bool ckr_compare_valarr(
                 file,
                 line,
                 "Failure at RIR value array comparison",
-                RF_STR_PF_FMT". For the "RF_STR_PF_FMT" value in the array "
+                RFS_PF". For the "RFS_PF" value in the array "
                 "got a value but expected none",
-                RF_STR_PF_ARG(intro),
-                RF_STR_PF_ARG(rf_string_ordinal(i + 1))
+                RFS_PA(intro),
+                RFS_PA(rf_string_ordinal(i + 1))
             );
             return false;
         }
@@ -452,8 +451,8 @@ static bool ckr_compare_valarr(
             eval,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At the "RF_STR_PF_FMT "value in the array",
-                RF_STR_PF_ARG(rf_string_ordinal(i + 1)))
+            RFS(RFS_PF". At the "RFS_PF "value in the array",
+                RFS_PA(rf_string_ordinal(i + 1)))
         );
         i++;
     }
@@ -472,10 +471,10 @@ static bool ckr_compare_object(
             file,
             line,
             "Failure at RIR object comparison",
-            "Expected 'category' to be \""RF_STR_PF_FMT"\" but "
-            "it is \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rir_object_category_str(expect)),
-            RF_STR_PF_ARG(rir_object_category_str(got))
+            "Expected 'category' to be \""RFS_PF"\" but "
+            "it is \""RFS_PF"\".",
+            RFS_PA(rir_object_category_str(expect)),
+            RFS_PA(rir_object_category_str(got))
         );
         return false;
     }
@@ -515,11 +514,11 @@ static bool ckr_compare_type(
             file,
             line,
             "Failure at RIR type comparison",
-            RF_STR_PF_FMT"Expected 'category' to be \""RF_STR_PF_FMT"\" but "
-            "it is \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(intro),
-            RF_STR_PF_ARG(rir_type_category_str(expect)),
-            RF_STR_PF_ARG(rir_type_category_str(got))
+            RFS_PF"Expected 'category' to be \""RFS_PF"\" but "
+            "it is \""RFS_PF"\".",
+            RFS_PA(intro),
+            RFS_PA(rir_type_category_str(expect)),
+            RFS_PA(rir_type_category_str(got))
         );
         return false;
     }
@@ -529,8 +528,8 @@ static bool ckr_compare_type(
             file,
             line,
             "Failure at RIR type comparison",
-            RF_STR_PF_FMT" Pointer mismatch.",
-            RF_STR_PF_ARG(intro)
+            RFS_PF" Pointer mismatch.",
+            RFS_PA(intro)
         );
         return false;
     }
@@ -541,11 +540,11 @@ static bool ckr_compare_type(
                 file,
                 line,
                 "Failure at RIR type comparison",
-                RF_STR_PF_FMT" Elementary type mismatch. Expected \""
-                RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(intro),
-                RF_STR_PF_ARG(type_elementary_get_str(expect->etype)),
-                RF_STR_PF_ARG(type_elementary_get_str(got->etype))
+                RFS_PF" Elementary type mismatch. Expected \""
+                RFS_PF"\" but got \""RFS_PF"\".",
+                RFS_PA(intro),
+                RFS_PA(type_elementary_get_str(expect->etype)),
+                RFS_PA(type_elementary_get_str(got->etype))
             );
             return false;
         }
@@ -555,11 +554,11 @@ static bool ckr_compare_type(
                 file,
                 line,
                 "Failure at RIR type comparison",
-                RF_STR_PF_FMT" Composite type mismatch. Expected \""
-                RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(intro),
-                RF_STR_PF_ARG(&expect->tdef->name),
-                RF_STR_PF_ARG(&got->tdef->name)
+                RFS_PF" Composite type mismatch. Expected \""
+                RFS_PF"\" but got \""RFS_PF"\".",
+                RFS_PA(intro),
+                RFS_PA(&expect->tdef->name),
+                RFS_PA(&got->tdef->name)
             );
             return false;
         }
@@ -585,11 +584,11 @@ static bool ckr_compare_arglist(
                 file,
                 line,
                 "Failure at RIR argument array comparison",
-                "For the "RF_STR_PF_FMT" got a "RF_STR_PF_FMT
+                "For the "RFS_PF" got a "RFS_PF
                 " argument but could not find such an argument in the expected"
                 " results",
-                RF_STR_PF_ARG(location_desc),
-                RF_STR_PF_ARG(rf_string_ordinal(i + 1))
+                RFS_PA(location_desc),
+                RFS_PA(rf_string_ordinal(i + 1))
             );
             return false;
         }
@@ -599,10 +598,10 @@ static bool ckr_compare_arglist(
             expect_t,
             file,
             line,
-            RFS("Failed to match the " RF_STR_PF_FMT " argument of "
-                "\""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(rf_string_ordinal(i + 1)),
-                RF_STR_PF_ARG(location_desc))
+            RFS("Failed to match the " RFS_PF " argument of "
+                "\""RFS_PF"\".",
+                RFS_PA(rf_string_ordinal(i + 1)),
+                RFS_PA(location_desc))
         );
         RFS_POP();
         i++;
@@ -623,11 +622,11 @@ static bool ckr_compare_typedef(
             file,
             line,
             "Failure at the RIR typedef comparison",
-            "For the "RF_STR_PF_FMT" typedef expected 'name' to be "
-            "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rf_string_ordinal(idx + 1)),
-            RF_STR_PF_ARG(&expect->name),
-            RF_STR_PF_ARG(&got->name)
+            "For the "RFS_PF" typedef expected 'name' to be "
+            "\""RFS_PF"\" but got \""RFS_PF"\".",
+            RFS_PA(rf_string_ordinal(idx + 1)),
+            RFS_PA(&expect->name),
+            RFS_PA(&got->name)
         );
         return false;
     }
@@ -637,9 +636,9 @@ static bool ckr_compare_typedef(
             file,
             line,
             "Failure at the RIR typedef comparison",
-            "For the "RF_STR_PF_FMT" typedef expected 'is_union' to be "
+            "For the "RFS_PF" typedef expected 'is_union' to be "
             "\"%s\" but got \"%s\".",
-            RF_STR_PF_ARG(rf_string_ordinal(idx + 1)),
+            RFS_PA(rf_string_ordinal(idx + 1)),
             FMT_BOOL(got->is_union),
             FMT_BOOL(expect->is_union)
         );
@@ -650,7 +649,7 @@ static bool ckr_compare_typedef(
     ckr_compare_arglist(
         &got->argument_types,
         &expect->argument_types,
-        RFS("\""RF_STR_PF_FMT"\" typedef", RF_STR_PF_ARG(&got->name)),
+        RFS("\""RFS_PF"\" typedef", RFS_PA(&got->name)),
         file,
         line,
         idx
@@ -672,8 +671,8 @@ static bool ckr_compare_returnstmt(
             file,
             line,
             "Failure at RIR return statement comparison",
-            RF_STR_PF_FMT". Return statement value existence mismatch.",
-            RF_STR_PF_ARG(intro)
+            RFS_PF". Return statement value existence mismatch.",
+            RFS_PA(intro)
         );
         return false;
     }
@@ -682,8 +681,8 @@ static bool ckr_compare_returnstmt(
         expect->val,
         file,
         line,
-        RFS(RF_STR_PF_FMT" At the value of a return statement. ",
-            RF_STR_PF_ARG(intro))
+        RFS(RFS_PF" At the value of a return statement. ",
+            RFS_PA(intro))
     );
     return true;
 }
@@ -702,9 +701,9 @@ static bool ckr_compare_block(
         &expect->label,
         file,
         line,
-        RFS("At the "RF_STR_PF_FMT" block of function \""RF_STR_PF_FMT"\"",
-            RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-            RF_STR_PF_ARG(fn_name))
+        RFS("At the "RFS_PF" block of function \""RFS_PF"\"",
+            RFS_PA(rf_string_ordinal(bl_idx)),
+            RFS_PA(fn_name))
     );
 
     if (got->exit.type != expect->exit.type) {
@@ -712,13 +711,13 @@ static bool ckr_compare_block(
             file,
             line,
             "Failure at rir block comparison",
-            "At the "RF_STR_PF_FMT" block of function \""RF_STR_PF_FMT"\" "
-            "expected blockexit of type \""RF_STR_PF_FMT"\" but got \""
-            RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-            RF_STR_PF_ARG(fn_name),
-            RF_STR_PF_ARG(rir_block_exit_type_str(&expect->exit)),
-            RF_STR_PF_ARG(rir_block_exit_type_str(&got->exit))
+            "At the "RFS_PF" block of function \""RFS_PF"\" "
+            "expected blockexit of type \""RFS_PF"\" but got \""
+            RFS_PF"\".",
+            RFS_PA(rf_string_ordinal(bl_idx)),
+            RFS_PA(fn_name),
+            RFS_PA(rir_block_exit_type_str(&expect->exit)),
+            RFS_PA(rir_block_exit_type_str(&got->exit))
         );
         return false;
     }
@@ -733,10 +732,10 @@ static bool ckr_compare_block(
             expect->exit.branch.dst,
             file,
             line,
-            RFS("At the branch of the "RF_STR_PF_FMT" block of function "
-                "\""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the branch of the "RFS_PF" block of function "
+                "\""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         break;
     case RIR_BLOCK_EXIT_CONDBRANCH:
@@ -745,30 +744,30 @@ static bool ckr_compare_block(
             expect->exit.condbranch.cond,
             file,
             line,
-            RFS("At the condition of condbranch of the "RF_STR_PF_FMT" block "
-                "of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the condition of condbranch of the "RFS_PF" block "
+                "of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         ckr_compare_value(
             got->exit.condbranch.taken,
             expect->exit.condbranch.taken,
             file,
             line,
-            RFS("At the taken of condbranch of the "RF_STR_PF_FMT" block "
-                "of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the taken of condbranch of the "RFS_PF" block "
+                "of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         ckr_compare_value(
             got->exit.condbranch.fallthrough,
             expect->exit.condbranch.fallthrough,
             file,
             line,
-            RFS("At the fallthrough of condbranch of the "RF_STR_PF_FMT" block "
-                "of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the fallthrough of condbranch of the "RFS_PF" block "
+                "of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         break;
     case RIR_BLOCK_EXIT_RETURN:
@@ -777,9 +776,9 @@ static bool ckr_compare_block(
             &expect->exit.retstmt,
             file,
             line,
-            RFS("At the "RF_STR_PF_FMT" block of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the "RFS_PF" block of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         break;
     }
@@ -795,11 +794,11 @@ static bool ckr_compare_block(
                 file,
                 line,
                 "Failure at RIR block comparison",
-                "Failed to retrieve the "RF_STR_PF_FMT" expression of the "
-                RF_STR_PF_FMT" block of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(expr_idx + 1)),
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name)
+                "Failed to retrieve the "RFS_PF" expression of the "
+                RFS_PF" block of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(expr_idx + 1)),
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name)
             );
         }
         ckr_compare_expression(
@@ -807,11 +806,11 @@ static bool ckr_compare_block(
             eexpr,
             file,
             line,
-            RFS("At the "RF_STR_PF_FMT" expression of the "
-                RF_STR_PF_FMT" block of function \""RF_STR_PF_FMT"\"",
-                RF_STR_PF_ARG(rf_string_ordinal(expr_idx + 1)),
-                RF_STR_PF_ARG(rf_string_ordinal(bl_idx)),
-                RF_STR_PF_ARG(fn_name))
+            RFS("At the "RFS_PF" expression of the "
+                RFS_PF" block of function \""RFS_PF"\"",
+                RFS_PA(rf_string_ordinal(expr_idx + 1)),
+                RFS_PA(rf_string_ordinal(bl_idx)),
+                RFS_PA(fn_name))
         );
         expr_idx++;
     }
@@ -832,11 +831,11 @@ static bool ckr_compare_expression(
             file,
             line,
             "Failure at RIR expression comparison",
-            RF_STR_PF_FMT". Expected 'expression_type' to be \""RF_STR_PF_FMT
-            "\" but got \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(intro),
-            RF_STR_PF_ARG(rir_expression_type_string(expect)),
-            RF_STR_PF_ARG(rir_expression_type_string(got))
+            RFS_PF". Expected 'expression_type' to be \""RFS_PF
+            "\" but got \""RFS_PF"\".",
+            RFS_PA(intro),
+            RFS_PA(rir_expression_type_string(expect)),
+            RFS_PA(rir_expression_type_string(got))
         );
         return false;
     }
@@ -848,11 +847,11 @@ static bool ckr_compare_expression(
                 file,
                 line,
                 "Failure at RIR expression comparison",
-                RF_STR_PF_FMT". Expected 'call.name' to be \""RF_STR_PF_FMT
-                "\" but got \""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(intro),
-                RF_STR_PF_ARG(&expect->call.name),
-                RF_STR_PF_ARG(&got->call.name)
+                RFS_PF". Expected 'call.name' to be \""RFS_PF
+                "\" but got \""RFS_PF"\".",
+                RFS_PA(intro),
+                RFS_PA(&expect->call.name),
+                RFS_PA(&got->call.name)
             );
             return false;
         }
@@ -861,8 +860,8 @@ static bool ckr_compare_expression(
                 file,
                 line,
                 "Failure at RIR expression comparison",
-                RF_STR_PF_FMT". Expected 'call.foreign' to be %s but got %s.",
-                RF_STR_PF_ARG(intro),
+                RFS_PF". Expected 'call.foreign' to be %s but got %s.",
+                RFS_PA(intro),
                 FMT_BOOL(expect->call.foreign),
                 FMT_BOOL(got->call.foreign)
             );
@@ -873,7 +872,7 @@ static bool ckr_compare_expression(
             &expect->call.args,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At arguments array of a call", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At arguments array of a call", RFS_PA(intro))
         );
         break;
 
@@ -883,8 +882,8 @@ static bool ckr_compare_expression(
                 file,
                 line,
                 "Failure at RIR expression comparison",
-                RF_STR_PF_FMT". 'alloca.alloc_location' mismatch",
-                RF_STR_PF_ARG(intro)
+                RFS_PF". 'alloca.alloc_location' mismatch",
+                RFS_PA(intro)
             );
             return false;
         }
@@ -893,7 +892,7 @@ static bool ckr_compare_expression(
             expect->alloca.type,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At the type of an alloca", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At the type of an alloca", RFS_PA(intro))
         );
         break;
 
@@ -903,14 +902,14 @@ static bool ckr_compare_expression(
             expect->convert.val,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At a convert expression", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At a convert expression", RFS_PA(intro))
         );
         ckr_compare_type(
             got->convert.type,
             expect->convert.type,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At a convert expression", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At a convert expression", RFS_PA(intro))
         );
         break;
 
@@ -920,14 +919,14 @@ static bool ckr_compare_expression(
             expect->write.memory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At a write() memory value", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At a write() memory value", RFS_PA(intro))
         );
         ckr_compare_value(
             got->write.writeval,
             expect->write.writeval,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At a write() towrite value", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At a write() towrite value", RFS_PA(intro))
         );
         break;
 
@@ -937,7 +936,7 @@ static bool ckr_compare_expression(
             expect->read.memory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At a read() memory value", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At a read() memory value", RFS_PA(intro))
         );
         break;
 
@@ -947,15 +946,15 @@ static bool ckr_compare_expression(
             expect->objmemberat.objmemory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At an objmemberat() memory value", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At an objmemberat() memory value", RFS_PA(intro))
         );
         if (got->objmemberat.idx != expect->objmemberat.idx) {
             ck_abort_at(
                 file,
                 line,
                 "Failure at a RIR objmemberat() comparison",
-                RF_STR_PF_FMT" expected objmemberat.id  to be %u but it is %u.",
-                RF_STR_PF_ARG(intro),
+                RFS_PF" expected objmemberat.id  to be %u but it is %u.",
+                RFS_PA(intro),
                 expect->objmemberat.idx,
                 got->objmemberat.idx
             );
@@ -969,14 +968,14 @@ static bool ckr_compare_expression(
             expect->setunionidx.unimemory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At an setunionidx() memory value", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At an setunionidx() memory value", RFS_PA(intro))
         );
         ckr_compare_value(
             got->setunionidx.idx,
             expect->setunionidx.idx,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At an setunionidx() idx", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At an setunionidx() idx", RFS_PA(intro))
         );
         break;
 
@@ -986,7 +985,7 @@ static bool ckr_compare_expression(
             expect->getunionidx.unimemory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At an getunionidx() memory", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At an getunionidx() memory", RFS_PA(intro))
         );
         break;
 
@@ -996,15 +995,15 @@ static bool ckr_compare_expression(
             expect->unionmemberat.unimemory,
             file,
             line,
-            RFS(RF_STR_PF_FMT". At an unionmemberat() memory", RF_STR_PF_ARG(intro))
+            RFS(RFS_PF". At an unionmemberat() memory", RFS_PA(intro))
         );
         if (got->unionmemberat.idx != expect->unionmemberat.idx) {
             ck_abort_at(
                 file,
                 line,
                 "Failure at a RIR unionmemberat() comparison",
-                RF_STR_PF_FMT" expected unionmemberat.id  to be %u but it is %u.",
-                RF_STR_PF_ARG(intro),
+                RFS_PF" expected unionmemberat.id  to be %u but it is %u.",
+                RFS_PA(intro),
                 expect->unionmemberat.idx,
                 got->unionmemberat.idx
             );
@@ -1051,11 +1050,11 @@ static bool ckr_compare_function(
             file,
             line,
             "Failure at the RIR function comparison",
-            "For the "RF_STR_PF_FMT" function expected 'name' to be "
-            "\""RF_STR_PF_FMT"\" but got \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rf_string_ordinal(fn_idx + 1)),
-            RF_STR_PF_ARG(&expect->decl.name),
-            RF_STR_PF_ARG(&got->decl.name)
+            "For the "RFS_PF" function expected 'name' to be "
+            "\""RFS_PF"\" but got \""RFS_PF"\".",
+            RFS_PA(rf_string_ordinal(fn_idx + 1)),
+            RFS_PA(&expect->decl.name),
+            RFS_PA(&got->decl.name)
         );
         return false;
     }
@@ -1064,7 +1063,7 @@ static bool ckr_compare_function(
     ckr_compare_arglist(
         &got->decl.argument_types,
         &expect->decl.argument_types,
-        RFS("\""RF_STR_PF_FMT"\" function", RF_STR_PF_ARG(&got->decl.name)),
+        RFS("\""RFS_PF"\" function", RFS_PA(&got->decl.name)),
         file,
         line,
         fn_idx
@@ -1077,8 +1076,8 @@ static bool ckr_compare_function(
         expect->decl.return_type,
         file,
         line,
-        RFS("Failed to match the return type of function \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(&got->decl.name))
+        RFS("Failed to match the return type of function \""RFS_PF"\".",
+            RFS_PA(&got->decl.name))
     );
     RFS_POP();
 
@@ -1091,10 +1090,10 @@ static bool ckr_compare_function(
                 file,
                 line,
                 "Failure at RIR function comparison",
-                "Could not find the "RF_STR_PF_FMT" variable at the expected "
-                "map of function \""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(rf_string_ordinal(idx)),
-                RF_STR_PF_ARG(&got->decl.name)
+                "Could not find the "RFS_PF" variable at the expected "
+                "map of function \""RFS_PF"\".",
+                RFS_PA(rf_string_ordinal(idx)),
+                RFS_PA(&got->decl.name)
             );
         }
         ckr_compare_object(*gvar, evar, file, line);
@@ -1107,8 +1106,8 @@ static bool ckr_compare_function(
             file,
             line,
             "Failure at RIR function comparison",
-            "The "RF_STR_PF_FMT" has a 'retslot_val' mismatch with expected",
-            RF_STR_PF_ARG(rf_string_ordinal(fn_idx))
+            "The "RFS_PF" has a 'retslot_val' mismatch with expected",
+            RFS_PA(rf_string_ordinal(fn_idx))
         );
         return false;
     }
@@ -1120,8 +1119,8 @@ static bool ckr_compare_function(
             expect->retslot_val,
             file,
             line,
-            RFS("At function \""RF_STR_PF_FMT"\" retslot_val",
-                RF_STR_PF_ARG(&got->decl.name))
+            RFS("At function \""RFS_PF"\" retslot_val",
+                RFS_PA(&got->decl.name))
         );
         RFS_POP();
     }
@@ -1135,10 +1134,10 @@ static bool ckr_compare_function(
                 file,
                 line,
                 "Failure at RIR function comparison",
-                "Could not find the "RF_STR_PF_FMT" block at the expected "
-                "block array of function \""RF_STR_PF_FMT"\".",
-                RF_STR_PF_ARG(rf_string_ordinal(idx)),
-                RF_STR_PF_ARG(&got->decl.name)
+                "Could not find the "RFS_PF" block at the expected "
+                "block array of function \""RFS_PF"\".",
+                RFS_PA(rf_string_ordinal(idx)),
+                RFS_PA(&got->decl.name)
             );
         }
         ckr_compare_block(*gblock, eblock, file, line, idx, &got->decl.name);
@@ -1168,8 +1167,8 @@ static bool ckr_compare_literals(
             ctx->file,
             ctx->line,
             "Failure at RIR global literals comparison",
-            "Could not find literal \""RF_STR_PF_FMT"\" at the expected map.",
-            RF_STR_PF_ARG(got_str)
+            "Could not find literal \""RFS_PF"\" at the expected map.",
+            RFS_PA(got_str)
         );
     }
     return testrir_compare_global(&got_obj->global, &expect_obj->global, ctx->file, ctx->line);
@@ -1206,8 +1205,8 @@ bool ck_assert_parserir_impl(
         if (!edef) {
             ck_abort_at(
                 file, line, "Failure at RIR module compare",
-                "Failed to retrieve the "RF_STR_PF_FMT" expected typedef",
-                RF_STR_PF_ARG(rf_string_ordinal(idx + 1))
+                "Failed to retrieve the "RFS_PF" expected typedef",
+                RFS_PA(rf_string_ordinal(idx + 1))
             );
         }
         ckr_compare_typedef(gdef, edef, file, line, idx);
@@ -1223,8 +1222,8 @@ bool ck_assert_parserir_impl(
         if (!edef) {
             ck_abort_at(
                 file, line, "Failure at RIR module compare",
-                "Failed to retrieve the "RF_STR_PF_FMT" expected function",
-                RF_STR_PF_ARG(rf_string_ordinal(idx + 1))
+                "Failed to retrieve the "RFS_PF" expected function",
+                RFS_PA(rf_string_ordinal(idx + 1))
             );
         }
         ckr_compare_function(

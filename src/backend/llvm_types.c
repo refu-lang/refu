@@ -112,9 +112,9 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
 
     default:
         RF_CRITICAL_FAIL(
-            "Unsupported elementary type \""RF_STR_PF_FMT"\" "
-            "during LLVM conversion",
-            RF_STR_PF_ARG(type_elementary_get_str(etype)));
+            "Unsupported elementary type \""RFS_PF"\" during LLVM conversion",
+            RFS_PA(type_elementary_get_str(etype))
+        );
         break;
     }
     return NULL;

@@ -87,9 +87,9 @@ static inline void ast_type_traversal_ctx_go_up(struct ast_type_traversal_ctx *c
     // this should only be called at the end of a typeop traversal
     RF_ASSERT(n->type == AST_TYPE_OPERATOR, "Expected ast type operator");
     enum typeop_type op = ast_typeop_op(n);
-    DD("Going up the type. Op: "RF_STR_PF_FMT" current_op: "RF_STR_PF_FMT"\n",
-       RF_STR_PF_ARG(type_op_str(op)),
-       RF_STR_PF_ARG(type_op_str(ctx->current_op)));
+    DD("Going up the type. Op: "RFS_PF" current_op: "RFS_PF"\n",
+       RFS_PA(type_op_str(op)),
+       RFS_PA(type_op_str(ctx->current_op)));
     if (op != ctx->current_op) {
         DD("Going up the type - Changing type op\n");
         (void)darray_pop(ctx->indices);
@@ -99,7 +99,7 @@ static inline void ast_type_traversal_ctx_go_up(struct ast_type_traversal_ctx *c
         // also go to next index of the previous type
         ctx->current_op = op;
         ast_type_traversal_ctx_idx_plus1(ctx);
-        DD("Current type after going up is "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(currtype_str(ctx)));
+        DD("Current type after going up is "RFS_PF"\n", RFS_PA(currtype_str(ctx)));
     }
 }
 
@@ -134,8 +134,8 @@ static bool ast_type_operator_traversal_pre(const struct ast_node *n, struct ast
     if (ctx->current_op == TYPEOP_INVALID) {
         // if it's the first typeop encountered in this traversal
         ctx->current_op = n_type_op;
-        DD("PRE: First typeop encountered. It is "RF_STR_PF_FMT"\n",
-           RF_STR_PF_ARG(type_op_str(n_type_op)));
+        DD("PRE: First typeop encountered. It is "RFS_PF"\n",
+           RFS_PA(type_op_str(n_type_op)));
         if (type_typeop_get(current_t) == TYPEOP_INVALID) {
             DD("PRE: FAIL. Current type is not a type operator\n");
             // current type is not a type operator
@@ -150,8 +150,8 @@ static bool ast_type_operator_traversal_pre(const struct ast_node *n, struct ast
             // also go to the first index of the new type
             ctx->current_op = n_type_op;
             ast_type_traversal_ctx_idx_plus1(ctx);
-            DD("PRE: Gone deeper in the type with current type being "RF_STR_PF_FMT"\n",
-               RF_STR_PF_ARG(currtype_str(ctx)));
+            DD("PRE: Gone deeper in the type with current type being "RFS_PF"\n",
+               RFS_PA(currtype_str(ctx)));
         }
     }
     return true;
@@ -161,9 +161,9 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
 {
     switch(n->type) {
     case AST_TYPE_LEAF:
-        DD("%.*sIn AST typeleaf with current type being "RF_STR_PF_FMT"\n",
+        DD("%.*sIn AST typeleaf with current type being "RFS_PF"\n",
            DEPTH_PF(ctx),
-           RF_STR_PF_ARG(currtype_str(ctx))
+           RFS_PA(currtype_str(ctx))
         );
         AST_NODE_ASSERT_TYPE(ast_typeleaf_left(n), AST_IDENTIFIER);
         ctx->last_name = ast_identifier_str(ast_typeleaf_left(n));
@@ -172,9 +172,9 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
         }
         break;
     case AST_TYPE_OPERATOR:
-        DD("%.*sIn AST typeoperator with current type being "RF_STR_PF_FMT"\n",
+        DD("%.*sIn AST typeoperator with current type being "RFS_PF"\n",
            DEPTH_PF(ctx),
-           RF_STR_PF_ARG(currtype_str(ctx))
+           RFS_PA(currtype_str(ctx))
         );
         if (!ast_type_operator_traversal_pre(n, ctx)) {
             return false;
@@ -192,14 +192,14 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
         ast_type_traversal_ctx_go_up(ctx, n);
         break;
     case AST_TYPE_DESCRIPTION:
-        DD("%.*sIn AST typedescription with current type being "RF_STR_PF_FMT"\n",
+        DD("%.*sIn AST typedescription with current type being "RFS_PF"\n",
            DEPTH_PF(ctx),
-           RF_STR_PF_ARG(currtype_str(ctx)));
+           RFS_PA(currtype_str(ctx)));
         return ast_type_foreach_arg_do(ast_typedesc_desc_get(n) , ctx);
     case AST_TYPE_DECLARATION:
-        DD("%.*sIn AST typedeclaration with current type being "RF_STR_PF_FMT"\n",
+        DD("%.*sIn AST typedeclaration with current type being "RFS_PF"\n",
            DEPTH_PF(ctx),
-           RF_STR_PF_ARG(currtype_str(ctx)));
+           RFS_PA(currtype_str(ctx)));
         return ast_type_foreach_arg_do(ast_typedecl_typedesc_get(n) , ctx);
     case AST_XIDENTIFIER:
     {
@@ -209,10 +209,10 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
         }
         if (ctx->callback) {
             DD("%.*sIn AST Xidentifier. Calling callback with name: \""
-               RF_STR_PF_FMT "\" and type being " RF_STR_PF_FMT".\n",
+               RFS_PF "\" and type being " RFS_PF".\n",
                DEPTH_PF(ctx),
-               RF_STR_PF_ARG(rf_string_or_empty(ctx->last_name)),
-               RF_STR_PF_ARG(currtype_str(ctx)));
+               RFS_PA(rf_string_or_empty(ctx->last_name)),
+               RFS_PA(currtype_str(ctx)));
             if (!ctx->callback(ctx->last_name, n, currtype, ctx->user_arg)) {
                 return false;
             }

@@ -13,7 +13,7 @@ const struct RFstring *rf_data_dir()
         RFS_PUSH();
         const struct RFstring *home = rf_homedir();
         RF_ASSERT_OR_EXIT(home, "Failed to get user's home directory");
-        s_data_dir = rf_string_createv(RF_STR_PF_FMT"/.refu", RF_STR_PF_ARG(home));
+        s_data_dir = rf_string_createv(RFS_PF"/.refu", RFS_PA(home));
         RF_ASSERT_OR_EXIT(s_data_dir, "Failed to allocate data dir string");
         RFS_POP();
     }

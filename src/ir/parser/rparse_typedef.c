@@ -15,8 +15,8 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg
             p,
             token_get_start(tok),
             NULL,
-            "Expected a type "RF_STR_PF_FMT" but provided string is not a recognized type",
-            RF_STR_PF_ARG(msg)
+            "Expected a type "RFS_PF" but provided string is not a recognized type",
+            RFS_PA(msg)
         );
         return false;
     }

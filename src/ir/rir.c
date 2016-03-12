@@ -363,8 +363,10 @@ bool compiler_create_rir()
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
         if (module_rir_codepath(mod) == RIRPOS_AST) {
             if (!rir_process_do(mod->rir, mod)) {
-                RF_ERROR("Failed to create the RIR for module \""RF_STR_PF_FMT"\"",
-                         module_name(mod));
+                RF_ERROR(
+                    "Failed to create the RIR for module \""RFS_PF"\"",
+                    module_name(mod)
+                );
                 return false;
             }
         }
@@ -446,8 +448,10 @@ struct RFstring *rir_tostring(struct rir *r)
     struct rir_fndecl *decl;
     rf_ilist_for_each(&r->functions, decl, ln) {
         if (!rir_function_tostring(&ctx, decl)) {
-            RF_ERROR("Failed to turn a rir function "RF_STR_PF_FMT" to a string",
-                     RF_STR_PF_ARG(&decl->name));
+            RF_ERROR(
+                "Failed to turn a rir function "RFS_PF" to a string",
+                RFS_PA(&decl->name)
+            );
             goto end;
         }
     }
@@ -468,7 +472,7 @@ bool rir_print(struct compiler *c)
         if (!(s = rir_tostring(mod->rir))) {
             return false;
         }
-        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(s));
+        printf(RFS_PF"\n", RFS_PA(s));
     }
     return true;
 }

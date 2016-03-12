@@ -111,8 +111,10 @@ static bool compiler_args_read_input(struct compiler_args *args)
 
          if (strcmp(args->positional_file->filename[i], "stdin") != 0 &&
              !rf_system_file_exists(&args->input_files[i])) {
-             ERROR("File \""RF_STR_PF_FMT"\" does not exist",
-                   RF_STR_PF_ARG(&args->input_files[i]));
+             ERROR(
+                 "File \""RFS_PF"\" does not exist",
+                 RFS_PA(&args->input_files[i])
+             );
              goto fail;
          }
     }

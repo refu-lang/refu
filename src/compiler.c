@@ -155,14 +155,16 @@ bool compiler_set_main(struct front_ctx *front)
         // set the error location as the beginning of the file
         struct inplocation_mark start = LOCMARK_INIT(front->file, 0, 0);
         struct inplocation_mark end = LOCMARK_INIT(front->file, 0, 0);
-        i_info_ctx_add_msg(front->info,
-                           MESSAGE_SEMANTIC_ERROR,
-                           &start,
-                           &end,
-                           "Multiple definition of main() detected in \""RF_STR_PF_FMT"\". "
-                           "Previous definition was in \""RF_STR_PF_FMT"\".",
-                           RF_STR_PF_ARG(front_ctx_filename(front)),
-                           RF_STR_PF_ARG(front_ctx_filename(c->main_front)));
+        i_info_ctx_add_msg(
+            front->info,
+            MESSAGE_SEMANTIC_ERROR,
+            &start,
+            &end,
+            "Multiple definition of main() detected in \""RFS_PF"\". "
+            "Previous definition was in \""RFS_PF"\".",
+            RFS_PA(front_ctx_filename(front)),
+            RFS_PA(front_ctx_filename(c->main_front))
+        );
         return false;
     }
     front->is_main = true;
@@ -242,12 +244,14 @@ static bool compiler_visit_unmarked_module(struct module *m, unsigned i, enum ma
     if (marks[i] == STATE_TEMP_MARK) {
         // TODO: reporting the offending mdoule can be improved? As it currently
         // stands this reports any module in the cycle path
-        i_info_ctx_add_msg(m->front->info,
-                           MESSAGE_SEMANTIC_ERROR,
-                           ast_node_startmark(m->node),
-                           ast_node_endmark(m->node),
-                           "Cyclic dependency around module \""RF_STR_PF_FMT"\" "
-                           "detected.", RF_STR_PF_ARG(module_name(m)));
+        i_info_ctx_add_msg(
+            m->front->info,
+            MESSAGE_SEMANTIC_ERROR,
+            ast_node_startmark(m->node),
+            ast_node_endmark(m->node),
+            "Cyclic dependency around module \""RFS_PF"\" detected.",
+            RFS_PA(module_name(m))
+        );
         return false;
     }
 
@@ -319,12 +323,14 @@ bool compiler_preprocess_fronts()
         const struct RFstring *mname = module_name(*mod);
         // First check if a module with same name is in the string set
         if (rf_objset_get(&mod_names_set, string, mname)) {
-            i_info_ctx_add_msg((*mod)->front->info,   
-                               MESSAGE_SEMANTIC_ERROR,
-                               ast_node_startmark((*mod)->node),
-                               ast_node_endmark((*mod)->node),
-                               "Module \""RF_STR_PF_FMT"\" already declared",
-                               RF_STR_PF_ARG(mname));
+            i_info_ctx_add_msg(
+                (*mod)->front->info,   
+                MESSAGE_SEMANTIC_ERROR,
+                ast_node_startmark((*mod)->node),
+                ast_node_endmark((*mod)->node),
+                "Module \""RFS_PF"\" already declared",
+                RFS_PA(mname)
+            );
             goto end_free_names;
         }
         // add this module's name to the set
@@ -454,7 +460,7 @@ static inline void compiler_print_errors_common(struct RFstringx *str, struct co
 {
     if (str) {
         RFS_PUSH();
-        printf(RF_STR_PF_FMT, RF_STR_PF_ARG(str));
+        printf(RFS_PF, RFS_PA(str));
         RFS_POP();
     } else {
         printf("Unknown compiler error detected.\n");

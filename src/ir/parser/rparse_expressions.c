@@ -89,9 +89,9 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
             token_get_start(start),
             token_get_end(end),
             "Type mismatch at arguments of 'write'. First argument's type is \""
-            RF_STR_PF_FMT "\" but expected \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rir_type_string(dstval->type)),
-            RF_STR_PF_ARG(rir_type_string(type))
+            RFS_PF "\" but expected \""RFS_PF"\".",
+            RFS_PA(rir_type_string(dstval->type)),
+            RFS_PA(rir_type_string(type))
         );
         RFS_POP();
         goto fail_destroy_src;
@@ -104,10 +104,10 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
             p,
             token_get_start(start),
             token_get_end(end),
-            "Type mismatch at arguments of 'write'. Second argument's type is \""
-            RF_STR_PF_FMT "\" but expected \""RF_STR_PF_FMT"\".",
-            RF_STR_PF_ARG(rir_type_string(srcval->type)),
-            RF_STR_PF_ARG(rir_type_string(valtype))
+            "Type mismatch at arguments of 'write'. Second argument's type is"
+            " \""RFS_PF "\" but expected \""RFS_PF"\".",
+            RFS_PA(rir_type_string(srcval->type)),
+            RFS_PA(rir_type_string(valtype))
         );
         RFS_POP();
         goto fail_destroy_src;
@@ -206,9 +206,9 @@ struct rir_object *rir_parse_call(struct rir_parser *p)
             p,
             token_get_start(tok),
             NULL,
-            "Invalid identifier \""RF_STR_PF_FMT"\" as second argument of call()."
+            "Invalid identifier \""RFS_PF"\" as second argument of call()."
             " Expected either \"foreign\" or \"defined\".",
-            RF_STR_PF_ARG(second_str)
+            RFS_PA(second_str)
         );
         return NULL;
     }

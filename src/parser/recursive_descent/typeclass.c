@@ -29,27 +29,32 @@ struct ast_node *ast_parser_acc_typeclass(struct ast_parser *p)
 
     name = ast_parser_acc_identifier(p);
     if (!name) {
-        parser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
-                      "Expected an identifier for the typeclass "
-                      "name after 'class'");
+        parser_synerr(
+            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            "Expected an identifier for the typeclass name after 'class'"
+        );
         goto err;
     }
 
     genr = ast_parser_acc_genrdecl(p);
     if (!genr && ast_parser_has_syntax_error_reset(p)) {
-        parser_synerr(p, ast_node_endmark(name), NULL,
-                      "Expected a generic declaration for typeclass \""
-                      RF_STR_PF_FMT"\" after identifier",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, ast_node_endmark(name), NULL,
+            "Expected a generic declaration for typeclass \""
+            RFS_PF"\" after identifier",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free_genr;
     }
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
-        parser_synerr(p, ast_node_endmark(name), NULL,
-                      "Expected '{' at \""RF_STR_PF_FMT"\" typeclass "
-                      "declaration after identifier",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, ast_node_endmark(name), NULL,
+            "Expected '{' at \""RFS_PF"\" typeclass "
+            "declaration after identifier",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free_genr;
     }
     n = ast_typeclass_create(start, NULL, name, genr);
@@ -61,17 +66,21 @@ struct ast_node *ast_parser_acc_typeclass(struct ast_parser *p)
     err = ast_parser_acc_fndecl_list(p, n, FNDECL_PARTOF_TYPECLASS);
     switch (err) {
     case PARSER_FNDECL_LIST_EMPTY:
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected at least one function declaration inside "
-                      "the body of typeclass \""RF_STR_PF_FMT"\" after '{'",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, token_get_end(tok), NULL,
+            "Expected at least one function declaration inside "
+            "the body of typeclass \""RFS_PF"\" after '{'",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free_typeclass;
         break;
     case PARSER_FNDECL_LIST_FAILURE:
-        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                      "Expected a proper function declaration inside "
-                      "typeclass \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, lexer_last_token_end(parser_lexer(p)), NULL,
+            "Expected a proper function declaration inside "
+            "typeclass \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free_typeclass;
         break;
     default: // SUCCESS
@@ -80,10 +89,11 @@ struct ast_node *ast_parser_acc_typeclass(struct ast_parser *p)
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                      "Expected '}' at the end of \""RF_STR_PF_FMT"\" "
-                      "typeclass declaration",
-                      RF_STR_PF_ARG(ast_identifier_str(name)));
+        parser_synerr(
+            p, lexer_last_token_end(parser_lexer(p)), NULL,
+            "Expected '}' at the end of \""RFS_PF"\" typeclass declaration",
+            RFS_PA(ast_identifier_str(name))
+        );
         goto err_free_typeclass;
     }
 
@@ -126,38 +136,45 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
 
     class_name = ast_parser_acc_identifier(p);
     if (!class_name) {
-        parser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
-                      "Expected an identifier for the typeclass instance "
-                      "name after 'instance'");
+        parser_synerr(
+            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            "Expected an identifier for the typeclass instance "
+            "name after 'instance'"
+        );
         goto err;
     }
 
     type_name = ast_parser_acc_identifier(p);
     if (!type_name) {
-        parser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
-                      "Expected an identifier for the name of \""RF_STR_PF_FMT"\" "
-                      "typeclass instance",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)));
+        parser_synerr(
+            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            "Expected an identifier for the name of \""RFS_PF"\" "
+            "typeclass instance",
+            RFS_PA(ast_identifier_str(class_name))
+        );
         goto err;
     }
 
     genr = ast_parser_acc_genrdecl(p);
     if (!genr && ast_parser_has_syntax_error_reset(p)) {
-        parser_synerr(p, ast_node_endmark(type_name), NULL,
-                      "Expected a generic declaration for type instance \""
-                      RF_STR_PF_FMT"\" after type name \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)),
-                      RF_STR_PF_ARG(ast_identifier_str(type_name)));
+        parser_synerr(
+            p, ast_node_endmark(type_name), NULL,
+            "Expected a generic declaration for type instance \""
+            RFS_PF"\" after type name \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(class_name)),
+            RFS_PA(ast_identifier_str(type_name))
+        );
         goto err;
     }
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
-        parser_synerr(p, ast_node_endmark(type_name), NULL,
-                      "Expected '{' at type instance \""RF_STR_PF_FMT"\" "
-                      "after \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)),
-                      RF_STR_PF_ARG(ast_identifier_str(type_name)));
+        parser_synerr(
+            p, ast_node_endmark(type_name), NULL,
+            "Expected '{' at type instance \""RFS_PF"\" after \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(class_name)),
+            RFS_PA(ast_identifier_str(type_name))
+        );
         goto err_free_genr;
     }
     n = ast_typeinstance_create(start, NULL, class_name, type_name, genr);
@@ -169,21 +186,23 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
     err = ast_parser_acc_fnimpl_list(p, n);
     switch (err) {
     case PARSER_FNIMPL_LIST_EMPTY:
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected at least one function implementation inside "
-                      "the body of typeinstace \""RF_STR_PF_FMT"\" for "
-                      "\""RF_STR_PF_FMT"\" after'{'",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)),
-                      RF_STR_PF_ARG(ast_identifier_str(type_name)));
+        parser_synerr(
+            p, token_get_end(tok), NULL,
+            "Expected at least one function implementation inside "
+            "the body of typeinstace \""RFS_PF"\" for \""RFS_PF"\" after'{'",
+            RFS_PA(ast_identifier_str(class_name)),
+            RFS_PA(ast_identifier_str(type_name))
+        );
         goto err_free_typeinstance;
         break;
     case PARSER_FNIMPL_LIST_FAILURE:
-        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                      "Expected a proper function implementation inside "
-                      "the body of typeinstace \""RF_STR_PF_FMT"\" for "
-                      "\""RF_STR_PF_FMT"\" after'{'",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)),
-                      RF_STR_PF_ARG(ast_identifier_str(type_name)));
+        parser_synerr(
+            p, lexer_last_token_end(parser_lexer(p)), NULL,
+            "Expected a proper function implementation inside "
+            "the body of typeinstace \""RFS_PF"\" for \""RFS_PF"\" after'{'",
+            RFS_PA(ast_identifier_str(class_name)),
+            RFS_PA(ast_identifier_str(type_name))
+        );
         goto err_free_typeinstance;
         break;
     default: // SUCCESS
@@ -192,11 +211,13 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-        parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                      "Expected '}' at the end of \""RF_STR_PF_FMT"\" "
-                      "typeinstance for \""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(ast_identifier_str(class_name)),
-                      RF_STR_PF_ARG(ast_identifier_str(type_name)));
+        parser_synerr(
+            p, lexer_last_token_end(parser_lexer(p)), NULL,
+            "Expected '}' at the end of \""RFS_PF"\" "
+            "typeinstance for \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(class_name)),
+            RFS_PA(ast_identifier_str(type_name))
+        );
         goto err_free_typeinstance;
     }
     ast_node_set_end(n, token_get_end(tok));

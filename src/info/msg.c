@@ -64,38 +64,38 @@ void info_msg_print(struct info_msg *m, FILE *f, struct inpfile *input_file)
     case MESSAGE_SEMANTIC_WARNING:
         fprintf(
             f,
-            INPLOCATION_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCATION_FMT" "INFO_WARNING_STR": "RFS_PF"\n",
             INPLOCATION_ARG(input_file, &m->loc),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
 
         break;
     case MESSAGE_SYNTAX_WARNING:
         fprintf(
             f,
-            INPLOCATION_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCATION_FMT" "INFO_WARNING_STR": "RFS_PF"\n",
             INPLOCATION_ARG(input_file, &m->loc),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
 
         break;
     case MESSAGE_SEMANTIC_ERROR:
         fprintf(
             f,
-            INPLOCATION_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCATION_FMT" "INFO_ERROR_STR": "RFS_PF"\n",
             INPLOCATION_ARG(input_file, &m->loc),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
         break;
     case MESSAGE_SYNTAX_ERROR:
         fprintf(
             f,
-            INPLOCATION_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCATION_FMT" "INFO_ERROR_STR": "RFS_PF"\n",
             INPLOCATION_ARG(input_file, &m->loc),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
         if (!inpfile_line(input_file, m->loc.start.line, &line_str)) {
-            ERROR("Could not locate line %u at file "RF_STR_PF_FMT,
+            ERROR("Could not locate line %u at file "RFS_PF,
                   m->loc.start.line,
-                  RF_STR_PF_ARG(inpfile_name(input_file)));
+                  RFS_PA(inpfile_name(input_file)));
         } else {
-            fprintf(f, RF_STR_PF_FMT, RF_STR_PF_ARG(&line_str));
+            fprintf(f, RFS_PF, RFS_PA(&line_str));
             print_location_marker(f, m->loc.start.col);
         }
         break;
@@ -114,40 +114,42 @@ bool info_msg_get_formatted(struct info_msg *m, struct RFstringx *s,
     case MESSAGE_SEMANTIC_WARNING:
         rf_stringx_assignv(
             s,
-            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RFS_PF"\n",
             INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
 
         break;
     case MESSAGE_SYNTAX_WARNING:
         rf_stringx_assignv(
             s,
-            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_FMT" "INFO_WARNING_STR": "RFS_PF"\n",
             INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
 
         break;
     case MESSAGE_SEMANTIC_ERROR:
         rf_stringx_assignv(
             s,
-            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RFS_PF"\n",
             INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
         break;
     case MESSAGE_SYNTAX_ERROR:
         rf_stringx_assignv(
             s,
-            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RF_STR_PF_FMT"\n",
+            INPLOCMARKS_FMT" "INFO_ERROR_STR": "RFS_PF"\n",
             INPLOCMARKS_ARG(input_file, &m->start_mark, &m->end_mark),
-            RF_STR_PF_ARG(&m->s));
+            RFS_PA(&m->s));
         if (!inpfile_line(input_file, m->start_mark.line, &line_str)) {
-            ERROR("Could not locate line %u at file "RF_STR_PF_FMT,
-                  m->start_mark.line,
-                  RF_STR_PF_ARG(inpfile_name(input_file)));
+            ERROR(
+                "Could not locate line %u at file "RFS_PF,
+                m->start_mark.line,
+                RFS_PA(inpfile_name(input_file))
+            );
             return false;
         } else {
             rf_stringx_move_end(s);
-            rf_stringx_assignv(s, RF_STR_PF_FMT"\n", RF_STR_PF_ARG(&line_str));
+            rf_stringx_assignv(s, RFS_PF"\n", RFS_PA(&line_str));
             rf_stringx_move_end(s);
 
             // set the markers

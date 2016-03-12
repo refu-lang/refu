@@ -55,22 +55,38 @@ START_TEST (test_type_comparison_for_sum_fncall) {
     typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
     ck_assert(type_compare(t_u64, t_sum, TYPECMP_PATTERN_MATCHING));
     const struct type *matched_type = typemp_ctx_get_matched_type();
-    ck_assert_msg(matched_type == t_u64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    ck_assert_msg(
+        matched_type == t_u64,
+        "Unexpected match type "RFS_PF" found",
+        RFS_PA(type_str_or_die(matched_type, TSTR_DEFAULT))
+    );
 
     typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
     ck_assert(type_compare(t_i64, t_sum, TYPECMP_PATTERN_MATCHING));
     matched_type = typemp_ctx_get_matched_type();
-    ck_assert_msg(matched_type == t_i64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    ck_assert_msg(
+        matched_type == t_i64,
+        "Unexpected match type "RFS_PF" found",
+        RFS_PA(type_str_or_die(matched_type, TSTR_DEFAULT))
+    );
 
     typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
     ck_assert(type_compare(t_f64, t_sum, TYPECMP_PATTERN_MATCHING));
     matched_type = typemp_ctx_get_matched_type();
-    ck_assert_msg(matched_type == t_f64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    ck_assert_msg(
+        matched_type == t_f64,
+        "Unexpected match type "RFS_PF" found",
+        RFS_PA(type_str_or_die(matched_type, TSTR_DEFAULT))
+    );
 
     typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
     ck_assert(type_compare(t_string, t_sum, TYPECMP_PATTERN_MATCHING));
     matched_type = typemp_ctx_get_matched_type();
-    ck_assert_msg(matched_type == t_string, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    ck_assert_msg(
+        matched_type == t_string,
+        "Unexpected match type "RFS_PF" found",
+        RFS_PA(type_str_or_die(matched_type, TSTR_DEFAULT))
+    );
 
 } END_TEST
 
@@ -88,7 +104,11 @@ START_TEST (test_type_comparison_for_sum_fncall_with_conversion) {
     typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
     ck_assert(type_compare(t_i8, t_sum, TYPECMP_PATTERN_MATCHING));
     const struct type *matched_type = typemp_ctx_get_matched_type();
-    ck_assert_msg(matched_type == t_i64, "Unexpected match type "RF_STR_PF_FMT" found", RF_STR_PF_ARG(type_str_or_die(matched_type, TSTR_DEFAULT)));
+    ck_assert_msg(
+        matched_type == t_i64,
+        "Unexpected match type "RFS_PF" found",
+        RFS_PA(type_str_or_die(matched_type, TSTR_DEFAULT))
+    );
 } END_TEST
 
 START_TEST (test_elementary_get_category) {
@@ -302,19 +322,17 @@ static bool test_traversal_cb(
 {
     ck_assert_msg(
         rf_string_equal(&ctx->names[ctx->idx], name),
-        "Ast type traversal index %u expected name "RF_STR_PF_FMT" but got "
-        RF_STR_PF_FMT".",
+        "Ast type traversal index %u expected name "RFS_PF" but got "RFS_PF".",
         ctx->idx,
-        RF_STR_PF_ARG(&ctx->names[ctx->idx]),
-        RF_STR_PF_ARG(name)
+        RFS_PA(&ctx->names[ctx->idx]),
+        RFS_PA(name)
     );
     ck_assert_msg(
         type_compare(ctx->types[ctx->idx], t, TYPECMP_IDENTICAL),
-        "Ast type traversal index %u expected type "RF_STR_PF_FMT" but got "
-        RF_STR_PF_FMT".",
+        "Ast type traversal index %u expected type "RFS_PF" but got "RFS_PF".",
         ctx->idx,
-        RF_STR_PF_ARG(type_str(ctx->types[ctx->idx], TSTR_DEFAULT)),
-        RF_STR_PF_ARG(type_str(t, TSTR_DEFAULT))
+        RFS_PA(type_str(ctx->types[ctx->idx], TSTR_DEFAULT)),
+        RFS_PA(type_str(t, TSTR_DEFAULT))
     );
     ++ctx->idx;
     return true;

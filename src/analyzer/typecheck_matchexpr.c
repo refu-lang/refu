@@ -118,10 +118,10 @@ static bool pattern_matching_ctx_compare(struct pattern_matching_ctx *ctx,
                 analyzer_err(m, ast_node_startmark(matchexpr),
                              ast_node_endmark(matchexpr),
                              "Match expression does not match all cases for "
-                             "\""RF_STR_PF_FMT"\". Sum type operand of "
-                             "\""RF_STR_PF_FMT"\" is not covered.",
-                             RF_STR_PF_ARG(ast_matchexpr_matched_type_str(matchexpr)),
-                             RF_STR_PF_ARG(type_str_or_die(t1, TSTR_DEFAULT)));
+                             "\""RFS_PF"\". Sum type operand of "
+                             "\""RFS_PF"\" is not covered.",
+                             RFS_PA(ast_matchexpr_matched_type_str(matchexpr)),
+                             RFS_PA(type_str_or_die(t1, TSTR_DEFAULT)));
                 RFS_POP();
                 ret = false;
             }
@@ -289,22 +289,26 @@ enum traversal_cb_res typecheck_matchcase(struct ast_node *n, struct analyzer_tr
     const struct type *res_type = ast_node_get_type_or_die(ast_matchcase_expression(n));
     RF_ASSERT(case_pattern_type, "a type for the match case pattern should have been determined");
     if (!pattern_match_types(case_pattern_type, match_type, &ctx->matching_ctx)) {
-        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "Match case \""RF_STR_PF_FMT"\" can not be matched to the "
-                     "type of \""RF_STR_PF_FMT"\" which is of type \""RF_STR_PF_FMT"\".",
-                     RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
-                     RF_STR_PF_ARG(match_type_str),
-                     RF_STR_PF_ARG(type_str_or_die(match_type, TSTR_DEFINED_ONLY_CONTENTS)));
+        analyzer_err(
+            ctx->m, ast_node_startmark(n), ast_node_endmark(n),
+            "Match case \""RFS_PF"\" can not be matched to the "
+            "type of \""RFS_PF"\" which is of type \""RFS_PF"\".",
+            RFS_PA(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
+            RFS_PA(match_type_str),
+            RFS_PA(type_str_or_die(match_type, TSTR_DEFINED_ONLY_CONTENTS))
+        );
         ctx->matching_ctx.match_is_over = true;
         goto end;
     }
 
     if (useless_case) {
-        analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "Match case \""RF_STR_PF_FMT"\" is useless since all parts of "
-                     "\""RF_STR_PF_FMT"\" have already been matched.",
-                     RF_STR_PF_ARG(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
-                     RF_STR_PF_ARG(match_type_str));
+        analyzer_err(
+            ctx->m, ast_node_startmark(n), ast_node_endmark(n),
+            "Match case \""RFS_PF"\" is useless since all parts of "
+            "\""RFS_PF"\" have already been matched.",
+            RFS_PA(type_str_or_die(case_pattern_type, TSTR_DEFAULT)),
+            RFS_PA(match_type_str)
+        );
         ctx->matching_ctx.match_is_over = true;
         goto end;
     }

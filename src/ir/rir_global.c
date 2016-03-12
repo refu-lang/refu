@@ -35,7 +35,7 @@ static bool rir_global_init_string(struct rir_object *obj,
     bool ret = rir_value_literal_init(
         &global->val,
         obj,
-        RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(name)),
+        RFS(RFS_PF, RFS_PA(name)),
         value,
         global_rir_map
     );
@@ -89,10 +89,9 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
             token_get_start(gstr_tok),
             token_get_end(gstr_tok),
             "Mismatch in the name of a global identifier string "
-            "with its value. Expectd " RF_STR_PF_FMT " but got "
-            RF_STR_PF_FMT".",
-            RF_STR_PF_ARG(expstr),
-            RF_STR_PF_ARG(name)
+            "with its value. Expectd " RFS_PF " but got "RFS_PF".",
+            RFS_PA(expstr),
+            RFS_PA(name)
         );
         goto end;
     }
@@ -121,10 +120,10 @@ bool rir_global_tostring(struct rirtostr_ctx *ctx, const struct rir_global *g)
     RFS_PUSH();
     ret = rf_stringx_append(
         ctx->rir->buff,
-        RFS(RF_STR_PF_FMT" = global("RF_STR_PF_FMT", \""RF_STR_PF_FMT"\")\n",
-            RF_STR_PF_ARG(rir_global_name(g)),
-            RF_STR_PF_ARG(rir_type_string(rir_global_type(g))),
-            RF_STR_PF_ARG(rir_value_actual_string(&g->val)))
+        RFS(RFS_PF" = global("RFS_PF", \""RFS_PF"\")\n",
+            RFS_PA(rir_global_name(g)),
+            RFS_PA(rir_type_string(rir_global_type(g))),
+            RFS_PA(rir_value_actual_string(&g->val)))
     );
     RFS_POP();
     return ret;

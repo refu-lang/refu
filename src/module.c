@@ -117,12 +117,14 @@ bool module_add_import(struct module *m, struct ast_node *import)
         other_mod = compiler_module_get(ast_identifier_str(c));
         if (!other_mod) {
             // requested import module not found
-            i_info_ctx_add_msg(m->front->info,
-                               MESSAGE_SEMANTIC_ERROR,
-                               ast_node_startmark(import),
-                               ast_node_endmark(import),
-                               "Requested module \""RF_STR_PF_FMT"\" not found for importing.",
-                               RF_STR_PF_ARG(ast_identifier_str(c)));
+            i_info_ctx_add_msg(
+                m->front->info,
+                MESSAGE_SEMANTIC_ERROR,
+                ast_node_startmark(import),
+                ast_node_endmark(import),
+                "Requested module \""RFS_PF"\" not found for importing.",
+                RFS_PA(ast_identifier_str(c))
+            );
             return false;
         }
         darray_append(m->dependencies, other_mod);

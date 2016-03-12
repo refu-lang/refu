@@ -41,9 +41,11 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
         if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
             ck_parser_check_abort(
                 filename, line,
-                "For parser error number %u: Got:\n\""RF_STR_PF_FMT"\"\n"
-                "but expected:\n\""RF_STR_PF_FMT"\"", i,
-                RF_STR_PF_ARG(&msg->s), RF_STR_PF_ARG(&exp_errors[i].s));
+                "For parser error number %u: Got:\n\""RFS_PF"\"\n"
+                "but expected:\n\""RFS_PF"\"", i,
+                RFS_PA(&msg->s),
+                RFS_PA(&exp_errors[i].s)
+            );
             return false;
         }
 

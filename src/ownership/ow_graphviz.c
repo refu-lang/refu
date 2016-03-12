@@ -67,7 +67,7 @@ static Agnode_t *rf_gv_add(struct ow_node *n, Agraph_t *g)
             return NULL;
         }
         RFS_PUSH();
-        rf_agedge(g, agnode, agchild, RFS("%u - "RF_STR_PF_FMT, (*edge)->counter, RF_STR_PF_ARG(rir_expression_type_string((*edge)->edgeexpr))));
+        rf_agedge(g, agnode, agchild, RFS("%u - "RFS_PF, (*edge)->counter, RFS_PA(rir_expression_type_string((*edge)->edgeexpr))));
         RFS_POP();
     }
     return agnode;

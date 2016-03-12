@@ -9,9 +9,11 @@ struct ast_node *ast_vardecl_create(const struct inplocation_mark *start,
                                     struct ast_node *leaf)
 {
     struct ast_node *ret;
-    RF_ASSERT(leaf->type == AST_TYPE_LEAF,
-              "Illegal ast node type \""RF_STR_PF_FMT"\"in vardecl creation",
-              RF_STR_PF_ARG(leaf));
+    RF_ASSERT(
+        leaf->type == AST_TYPE_LEAF,
+        "Illegal ast node type \""RFS_PF"\"in vardecl creation",
+        RFS_PA(leaf)
+    );
 
     ret = ast_node_create_marks(AST_VARIABLE_DECLARATION, start, end);
     if (!ret) {

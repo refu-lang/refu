@@ -44,15 +44,15 @@ static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node 
     *tleft = ast_node_get_type(left);
     if (!*tleft) {
         analyzer_err(ctx->m, ast_node_startmark(left), ast_node_endmark(left),
-                     "Type of left side of \""RF_STR_PF_FMT"\" can not be determined",
-                     RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+                     "Type of left side of \""RFS_PF"\" can not be determined",
+                     RFS_PA(ast_binaryop_opstr(n)));
         return false;
     }
     *tright = ast_node_get_type(right);
     if (!*tright) {
         analyzer_err(ctx->m, ast_node_startmark(right), ast_node_endmark(right),
-                     "Type of right side of \""RF_STR_PF_FMT"\" can not be determined",
-                     RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+                     "Type of right side of \""RFS_PF"\" can not be determined",
+                     RFS_PA(ast_binaryop_opstr(n)));
         return false;
     }
     return true;
@@ -120,9 +120,9 @@ fail:
     n->expression_type = NULL;
     RFS_PUSH();
     analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                 "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                 error_intro, RF_STR_PF_ARG(ast_unaryop_opstr(n)),
-                 error_conj, RF_STR_PF_ARG(type_str_or_die(operand_type, TSTR_DEFAULT)));
+                 "%s \""RFS_PF"\" %s \""RFS_PF"\"",
+                 error_intro, RFS_PA(ast_unaryop_opstr(n)),
+                 error_conj, RFS_PA(type_str_or_die(operand_type, TSTR_DEFAULT)));
     RFS_POP();
     return TRAVERSAL_CB_ERROR;
 }
@@ -151,9 +151,9 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
     RFS_PUSH();
     if (!final_type && !operator_applicable_cb(left, right, ctx)) {
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
-                     error_intro, RF_STR_PF_ARG(type_str_or_die(tright, TSTR_DEFAULT)),
-                     error_conj, RF_STR_PF_ARG(type_str_or_die(tleft, TSTR_DEFAULT)));
+                     "%s \""RFS_PF"\" %s \""RFS_PF"\"",
+                     error_intro, RFS_PA(type_str_or_die(tright, TSTR_DEFAULT)),
+                     error_conj, RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT)));
         goto end;
     }
 
@@ -188,11 +188,11 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
     if (!final_type && !operator_applicable_cb(left, right, ctx)) {
         RFS_PUSH();
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "%s \""RF_STR_PF_FMT"\" %s \""RF_STR_PF_FMT"\"",
+                     "%s \""RFS_PF"\" %s \""RFS_PF"\"",
                      error_intro,
-                     RF_STR_PF_ARG(type_str_or_die(tright, TSTR_DEFAULT)),
+                     RFS_PA(type_str_or_die(tright, TSTR_DEFAULT)),
                      error_conj,
-                     RF_STR_PF_ARG(type_str_or_die(tleft, TSTR_DEFAULT)));
+                     RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT)));
         RFS_POP();
         return TRAVERSAL_CB_ERROR;
     }
@@ -254,9 +254,9 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     if (!tleft) {
         analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
-                     "Undeclared identifier \""RF_STR_PF_FMT"\" as left part of "
+                     "Undeclared identifier \""RFS_PF"\" as left part of "
                      "member access operator",
-                     RF_STR_PF_ARG(ast_identifier_str(left)));
+                     RFS_PA(ast_identifier_str(left)));
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -264,9 +264,9 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     if (!type_category_equals(tleft, TYPE_CATEGORY_DEFINED)) {
         analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
-                     "Left part of member access operator \""RF_STR_PF_FMT"\"is "
+                     "Left part of member access operator \""RFS_PF"\"is "
                      "not a user defined type",
-                     RF_STR_PF_ARG(ast_node_str(left)));
+                     RFS_PA(ast_node_str(left)));
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -275,8 +275,8 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
         analyzer_err(ctx->m, ast_node_startmark(right),
                      ast_node_endmark(right),
                      "Right part of member access operator is not an identifier"
-                     " but is \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_node_str(right)));
+                     " but is \""RFS_PF"\"",
+                     RFS_PA(ast_node_str(right)));
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -304,12 +304,13 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     );
     if (!member_access_iter_ctx.member_type) {
         RFS_PUSH();
-        analyzer_err(ctx->m, ast_node_startmark(n),
-                     ast_node_endmark(n),
-                     "Could not find member \""RF_STR_PF_FMT"\" in type \""
-                     RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_identifier_str(right)),
-                     RF_STR_PF_ARG(type_str_or_die(tleft, TSTR_DEFAULT)));
+        analyzer_err(
+            ctx->m, ast_node_startmark(n),
+            ast_node_endmark(n),
+            "Could not find member \""RFS_PF"\" in type \""RFS_PF"\"",
+            RFS_PA(ast_identifier_str(right)),
+            RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT))
+        );
         RFS_POP();
         return TRAVERSAL_CB_ERROR;
     }
@@ -367,8 +368,8 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
     }
     analyzer_err(ctx->m, ast_node_startmark(n),
                  ast_node_endmark(n),
-                 "Undeclared identifier \""RF_STR_PF_FMT"\"",
-                 RF_STR_PF_ARG(ast_identifier_str(n)));
+                 "Undeclared identifier \""RFS_PF"\"",
+                 RFS_PA(ast_identifier_str(n)));
     return TRAVERSAL_CB_ERROR;
 }
 
@@ -459,12 +460,13 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     if (left->type != AST_IDENTIFIER &&
         left->type != AST_VARIABLE_DECLARATION &&
         !ast_node_is_specific_binaryop(left, BINARYOP_MEMBER_ACCESS)) {
-        analyzer_err(ctx->m, ast_node_startmark(left),
-                     ast_node_endmark(left),
-                     "Expected an identifier a variable declaration, or a member access "
-                     "as left part of the assignment "
-                     "but found a \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(ast_node_str(left)));
+        analyzer_err(
+            ctx->m, ast_node_startmark(left),
+            ast_node_endmark(left),
+            "Expected an identifier a variable declaration, or a member access "
+            "as left part of the assignment but found a \""RFS_PF"\"",
+            RFS_PA(ast_node_str(left))
+        );
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -480,21 +482,22 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
             const struct RFstring *warning;
             while ((warning = typecmp_ctx_get_next_warning())) {
                 analyzer_warn(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                              RF_STR_PF_FMT" during assignment.",
-                              RF_STR_PF_ARG(warning));
+                              RFS_PF" during assignment.",
+                              RFS_PA(warning));
             }
         }
     } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
             RFS_PUSH();
-            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                         "Assignment between incompatible types. Can't assign "
-                         "\""RF_STR_PF_FMT"\" to \""RF_STR_PF_FMT"\""
-                         "%s"RF_STR_PF_FMT".",
-                         RF_STR_PF_ARG(type_str_or_die(tright, TSTR_DEFAULT)),
-                         RF_STR_PF_ARG(type_str_or_die(tleft, TSTR_DEFAULT)),
-                         typecmp_ctx_have_error() ? ". " : "",
-                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
+            analyzer_err(
+                ctx->m, ast_node_startmark(n), ast_node_endmark(n),
+                "Assignment between incompatible types. Can't assign "
+                "\""RFS_PF"\" to \""RFS_PF"\"%s"RFS_PF".",
+                RFS_PA(type_str_or_die(tright, TSTR_DEFAULT)),
+                RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT)),
+                typecmp_ctx_have_error() ? ". " : "",
+                RFS_PA(typecmp_ctx_get_error())
+            );
             RFS_POP();
             return TRAVERSAL_CB_ERROR;
         }
@@ -556,8 +559,8 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     if (!fn_type || !type_is_callable(fn_type)) {
         analyzer_err(ctx->m, ast_node_startmark(n),
                      ast_node_endmark(n),
-                     "Undefined function call \""RF_STR_PF_FMT"\" detected",
-                     RF_STR_PF_ARG(fn_name));
+                     "Undefined function call \""RFS_PF"\" detected",
+                     RFS_PA(fn_name));
         goto fail;
     }
     // also check the ast node of the function declaration to get more information if it's not a conversion
@@ -582,16 +585,16 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
             analyzer_err(ctx->m, ast_node_startmark(n),
                          ast_node_endmark(n),
                          "Invalid arguments for explicit conversion to \""
-                         RF_STR_PF_FMT"\".",
-                         RF_STR_PF_ARG(fn_name));
+                         RFS_PF"\".",
+                         RFS_PA(fn_name));
             goto fail;
         }
 
         // check if the explicit conversion is valid
         if (!type_compare(fn_found_args_type, fn_type, TYPECMP_EXPLICIT_CONVERSION)) {
             analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                         "Invalid explicit conversion. "RF_STR_PF_FMT".",
-                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
+                         "Invalid explicit conversion. "RFS_PF".",
+                         RFS_PA(typecmp_ctx_get_error()));
             goto fail;
         }
         n->fncall.type = AST_FNCALL_EXPLICIT_CONVERSION;
@@ -607,16 +610,18 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
                           fn_declared_args_type,
                           n->fncall.type == AST_FNCALL_SUM ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
-            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                         RF_STR_PF_FMT" "RF_STR_PF_FMT"() is called with argument type of "
-                         "\""RF_STR_PF_FMT"\" which does not match the expected "
-                         "type of \""RF_STR_PF_FMT"\"%s"RF_STR_PF_FMT".",
-                         RF_STR_PF_ARG(type_callable_category_str(fn_type)),
-                         RF_STR_PF_ARG(fn_name),
-                         RF_STR_PF_ARG(type_str_or_die(fn_found_args_type, TSTR_DEFAULT)),
-                         RF_STR_PF_ARG(type_str_or_die(fn_declared_args_type, TSTR_DEFINED_ONLY_CONTENTS)),
-                         typecmp_ctx_have_error() ? ". " : "",
-                         RF_STR_PF_ARG(typecmp_ctx_get_error()));
+            analyzer_err(
+                ctx->m, ast_node_startmark(n), ast_node_endmark(n),
+                RFS_PF" "RFS_PF"() is called with argument type of \""RFS_PF
+                "\" which does not match the expected "
+                "type of \""RFS_PF"\"%s"RFS_PF".",
+                RFS_PA(type_callable_category_str(fn_type)),
+                RFS_PA(fn_name),
+                RFS_PA(type_str_or_die(fn_found_args_type, TSTR_DEFAULT)),
+                RFS_PA(type_str_or_die(fn_declared_args_type, TSTR_DEFINED_ONLY_CONTENTS)),
+                typecmp_ctx_have_error() ? ". " : "",
+                RFS_PA(typecmp_ctx_get_error())
+            );
             RFS_POP();
             goto fail;
         }
@@ -661,10 +666,10 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     if (!type_compare(fn_ret_type, found_ret_type, TYPECMP_IMPLICIT_CONVERSION)) {
         RFS_PUSH();
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "Return statement type \""RF_STR_PF_FMT"\" does not match "
-                     "the expected return type of \""RF_STR_PF_FMT"\"",
-                     RF_STR_PF_ARG(type_str_or_die(found_ret_type, TSTR_DEFAULT)),
-                     RF_STR_PF_ARG(type_str_or_die(fn_ret_type, TSTR_DEFAULT)));
+                     "Return statement type \""RFS_PF"\" does not match "
+                     "the expected return type of \""RFS_PF"\"",
+                     RFS_PA(type_str_or_die(found_ret_type, TSTR_DEFAULT)),
+                     RFS_PA(type_str_or_die(fn_ret_type, TSTR_DEFAULT)));
         RFS_POP();
         return TRAVERSAL_CB_ERROR;
     }
@@ -775,9 +780,10 @@ static enum traversal_cb_res typecheck_binaryop(struct ast_node *n,
         return typecheck_member_access(n, left, right, ctx);
 
     default:
-        RF_CRITICAL_FAIL("Typechecking for unimplemented binary "
-                         "operator "RF_STR_PF_FMT,
-                         RF_STR_PF_ARG(ast_binaryop_opstr(n)));
+        RF_CRITICAL_FAIL(
+            "Typechecking for unimplemented binary operator "RFS_PF,
+            RFS_PA(ast_binaryop_opstr(n))
+        );
         return TRAVERSAL_CB_FATAL_ERROR;
     }
 
@@ -793,8 +799,8 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
     operand_type = ast_node_get_type(ast_unaryop_operand(n));
     if (!operand_type) {
         analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                     "Type for operand of \""RF_STR_PF_FMT"\" can not be determined",
-                     RF_STR_PF_ARG(ast_unaryop_opstr(n)));
+                     "Type for operand of \""RFS_PF"\" can not be determined",
+                     RFS_PA(ast_unaryop_opstr(n)));
         return TRAVERSAL_CB_ERROR;
     }
 
@@ -808,9 +814,10 @@ static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
     case UNARYOP_DEC:
         return typecheck_unaryop_generic(n, operand_type, "Can't apply", "to", ctx);
     default:
-        RF_CRITICAL_FAIL("Typechecking for unimplemented unary "
-                         "operator "RF_STR_PF_FMT,
-                         RF_STR_PF_ARG(ast_unaryop_opstr(n)));
+        RF_CRITICAL_FAIL(
+            "Typechecking for unimplemented unary operator "RFS_PF,
+            RFS_PA(ast_unaryop_opstr(n))
+        );
         return TRAVERSAL_CB_FATAL_ERROR;
     }
 

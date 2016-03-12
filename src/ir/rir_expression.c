@@ -337,8 +337,8 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_SETUNIONIDX:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT"setunionidx(" RF_STR_PF_FMT ", %" PRId64 ")\n",
-                    RF_STR_PF_ARG(rir_value_string(e->setunionidx.unimemory)),
+                RFS(RIRTOSTR_INDENT"setunionidx(" RFS_PF ", %" PRId64 ")\n",
+                    RFS_PA(rir_value_string(e->setunionidx.unimemory)),
                     e->setunionidx.idx->constant.value.integer)
             )) {
             goto end;
@@ -347,10 +347,10 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_GETUNIONIDX:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT " = getunionidx(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_type_string(e->getunionidx.unimemory->type)),
-                    RF_STR_PF_ARG(rir_value_string(e->getunionidx.unimemory)))
+                RFS(RIRTOSTR_INDENT RFS_PF " = getunionidx(" RFS_PF ", " RFS_PF ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_type_string(e->getunionidx.unimemory->type)),
+                    RFS_PA(rir_value_string(e->getunionidx.unimemory)))
             )) {
             goto end;
         }
@@ -358,9 +358,9 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_OBJMEMBERAT:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = objmemberat(" RF_STR_PF_FMT ", %" PRId32 ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_value_string(e->objmemberat.objmemory)),
+                RFS(RIRTOSTR_INDENT RFS_PF" = objmemberat(" RFS_PF ", %" PRId32 ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_value_string(e->objmemberat.objmemory)),
                     e->setunionidx.idx)
             )) {
             goto end;
@@ -369,10 +369,10 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_UNIONMEMBERAT:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = unionmemberat(" RF_STR_PF_FMT ", " RF_STR_PF_FMT ", %" PRId32 ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_type_string(e->unionmemberat.unimemory->type)),
-                    RF_STR_PF_ARG(rir_value_string(e->unionmemberat.unimemory)),
+                RFS(RIRTOSTR_INDENT RFS_PF" = unionmemberat(" RFS_PF ", " RFS_PF ", %" PRId32 ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_type_string(e->unionmemberat.unimemory->type)),
+                    RFS_PA(rir_value_string(e->unionmemberat.unimemory)),
                     e->setunionidx.idx)
             )) {
             goto end;
@@ -381,9 +381,9 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_ALLOCA:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = alloca(" RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_type_string(e->alloca.type)))
+                RFS(RIRTOSTR_INDENT RFS_PF" = alloca(" RFS_PF ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_type_string(e->alloca.type)))
             )) {
             goto end;
         }
@@ -391,9 +391,9 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_READ:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = read(" RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_value_string(e->read.memory)))
+                RFS(RIRTOSTR_INDENT RFS_PF" = read(" RFS_PF ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_value_string(e->read.memory)))
             )) {
             goto end;
         }
@@ -401,10 +401,10 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_WRITE:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT "write(" RF_STR_PF_FMT ", "RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_type_string(e->write.memory->type)),
-                    RF_STR_PF_ARG(rir_value_string(e->write.memory)),
-                    RF_STR_PF_ARG(rir_value_string(e->write.writeval)))
+                RFS(RIRTOSTR_INDENT "write(" RFS_PF ", "RFS_PF ", " RFS_PF ")\n",
+                    RFS_PA(rir_type_string(e->write.memory->type)),
+                    RFS_PA(rir_value_string(e->write.memory)),
+                    RFS_PA(rir_value_string(e->write.writeval)))
             )) {
             goto end;
         }
@@ -412,10 +412,10 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
     case RIR_EXPRESSION_CONVERT:
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = convert("RF_STR_PF_FMT", "RF_STR_PF_FMT")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(rir_value_string(e->convert.val)),
-                    RF_STR_PF_ARG(rir_type_string(e->convert.type))
+                RFS(RIRTOSTR_INDENT RFS_PF" = convert("RFS_PF", "RFS_PF")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_value_string(e->convert.val)),
+                    RFS_PA(rir_type_string(e->convert.type))
                 ))) {
             goto end;
         }

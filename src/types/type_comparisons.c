@@ -217,10 +217,10 @@ static bool type_elementary_compare(const struct type *fromtype,
                     RFS_PUSH();
 					typecmp_ctx_add_warning(
                         RFS_OR_DIE(
-                            "Implicit conversion from \""RF_STR_PF_FMT"\" to \""
-                            RF_STR_PF_FMT"\"",
-                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-                            RF_STR_PF_ARG(type_elementary_get_str(to->etype)))
+                            "Implicit conversion from \""RFS_PF"\" to \""
+                            RFS_PF"\"",
+                            RFS_PA(type_elementary_get_str(from->etype)),
+                            RFS_PA(type_elementary_get_str(to->etype)))
                     );
                     RFS_POP();
                 }
@@ -238,10 +238,10 @@ static bool type_elementary_compare(const struct type *fromtype,
                     RFS_PUSH();
 					typecmp_ctx_add_warning(
                         RFS_OR_DIE(
-                            "Implicit signed to unsigned conversion from \""RF_STR_PF_FMT"\" "
-                            "to \""RF_STR_PF_FMT"\"",
-                            RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-                            RF_STR_PF_ARG(type_elementary_get_str(to->etype)))
+                            "Implicit signed to unsigned conversion from \""
+                            RFS_PF"\" ""to \""RFS_PF"\"",
+                            RFS_PA(type_elementary_get_str(from->etype)),
+                            RFS_PA(type_elementary_get_str(to->etype)))
                     );
                     RFS_POP();
                 }
@@ -320,12 +320,12 @@ static bool type_elementary_compare(const struct type *fromtype,
 
 
 end_error_msg:
-    rf_stringx_assignv(&g_typecmp_ctx.err_buff,
-                       "Unable to convert from \""RF_STR_PF_FMT"\" to \""
-                       RF_STR_PF_FMT"\"%s",
-                       RF_STR_PF_ARG(type_elementary_get_str(from->etype)),
-                       RF_STR_PF_ARG(type_elementary_get_str(to->etype)),
-                       error_explanations[current_error_type]
+    rf_stringx_assignv(
+        &g_typecmp_ctx.err_buff,
+        "Unable to convert from \""RFS_PF"\" to \""RFS_PF"\"%s",
+        RFS_PA(type_elementary_get_str(from->etype)),
+        RFS_PA(type_elementary_get_str(to->etype)),
+        error_explanations[current_error_type]
     );
 end:
     TYPECMP_RETURN(false);

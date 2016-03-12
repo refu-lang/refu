@@ -110,7 +110,7 @@ void type_objset_print(struct rf_objset_type *set)
     printf("Printing members of a typeset\n\n");
     RFS_PUSH();
     rf_objset_foreach(set, &it, t) {
-        printf(RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str_or_die(t, TSTR_DEFAULT)));
+        printf(RFS_PF"\n", RFS_PA(type_str_or_die(t, TSTR_DEFAULT)));
     }
     RFS_POP();
     printf("\n\n");

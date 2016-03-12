@@ -209,13 +209,11 @@ struct rir_type *rir_type_set_pointer(struct rir_type **t, bool has_pointer)
 const struct RFstring *rir_type_string(const struct rir_type *t)
 {
     if (t->category == RIR_TYPE_ELEMENTARY) {
-        return RFS(RF_STR_PF_FMT"%s",
-                   RF_STR_PF_ARG(type_elementary_get_str(t->etype)),
+        return RFS(RFS_PF"%s",
+                   RFS_PA(type_elementary_get_str(t->etype)),
                    t->is_pointer ? "*" : "");
     } else {
-        return RFS(RF_STR_PF_FMT"%s",
-                   RF_STR_PF_ARG((&t->tdef->name)),
-                   t->is_pointer ? "*" : "");
+        return RFS(RFS_PF"%s", RFS_PA((&t->tdef->name)), t->is_pointer ? "*" : "");
     }
 }
 

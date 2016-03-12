@@ -39,8 +39,7 @@ void teardown_analyzer_tests_before_firstpass();
     do {                                                                \
         struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
         if (tmp_) {                                                     \
-            ck_abort_msg(msg_ " with errors:\n"RF_STR_PF_FMT,           \
-                         RF_STR_PF_ARG(tmp_));                          \
+            ck_abort_msg(msg_ " with errors:\n"RFS_PF, RFS_PA(tmp_));   \
         } else {                                                        \
             ck_abort_msg(msg_" with no specific errors");               \
         }                                                               \
@@ -82,24 +81,28 @@ void teardown_analyzer_tests_before_firstpass();
                       "symbol found but not, in the expected table");   \
     } while(0)
 
-#define testsupport_types_equal(got_, expect_)                               \
+#define testsupport_types_equal(got_, expect_)                          \
     do {                                                                \
-        ck_assert_msg(type_compare(got_, expect_, TYPECMP_GENERIC),          \
-                      "expected type mismatch during generic comparison. Expected \"" \
-                      RF_STR_PF_FMT"\" but got \"" RF_STR_PF_FMT"\" which caused a mismatch."RF_STR_PF_FMT, \
-                      RF_STR_PF_ARG(type_str_or_die(expect_, TSTR_DEFAULT)), \
-                      RF_STR_PF_ARG(type_str_or_die(got_, TSTR_DEFAULT)), \
-                      RF_STR_PF_ARG(typecmp_ctx_get_error()));          \
+        ck_assert_msg(                                                  \
+            type_compare(got_, expect_, TYPECMP_GENERIC),               \
+            "expected type mismatch during generic comparison. Expected \"" \
+            RFS_PF"\" but got \"" RFS_PF"\" which caused a mismatch."RFS_PF, \
+            RFS_PA(type_str_or_die(expect_, TSTR_DEFAULT)),             \
+            RFS_PA(type_str_or_die(got_, TSTR_DEFAULT)),                \
+            RFS_PA(typecmp_ctx_get_error())                             \
+        );                                                              \
     } while(0)
 
 #define testsupport_types_same(got_, expect_)                           \
     do {                                                                \
-        ck_assert_msg(type_compare(got_, expect_, TYPECMP_IDENTICAL),   \
-                      "expected type mismatch during identical comparison. Expected \"" \
-                      RF_STR_PF_FMT"\" but got \"" RF_STR_PF_FMT"\" which caused a mismatch."RF_STR_PF_FMT, \
-                      RF_STR_PF_ARG(type_str_or_die(expect_, TSTR_DEFAULT)), \
-                      RF_STR_PF_ARG(type_str_or_die(got_, TSTR_DEFAULT)), \
-                      RF_STR_PF_ARG(typecmp_ctx_get_error()));          \
+        ck_assert_msg(                                                  \
+            type_compare(got_, expect_, TYPECMP_IDENTICAL),             \
+            "expected type mismatch during identical comparison. Expected \"" \
+            RFS_PF"\" but got \"" RFS_PF"\" which caused a mismatch."RFS_PF, \
+            RFS_PA(type_str_or_die(expect_, TSTR_DEFAULT)),             \
+            RFS_PA(type_str_or_die(got_, TSTR_DEFAULT)),                \
+            RFS_PA(typecmp_ctx_get_error())                             \
+        );                                                              \
     } while(0)
 
 

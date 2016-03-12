@@ -55,9 +55,12 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         rec->data = type_lookup_or_create(node, mod, st, NULL);
         break;
     default:
-        RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create symbol table record "
-                              "for illegal ast node type \""RF_STR_PF_FMT"\"",
-                              RF_STR_PF_ARG(ast_node_str(node)));
+        RF_ASSERT_OR_CRITICAL(
+            false, return false,
+            "Attempted to create symbol table record "
+            "for illegal ast node type \""RFS_PF"\"",
+            RFS_PA(ast_node_str(node))
+        );
     }
 
     if (!rec->data) {
@@ -241,9 +244,9 @@ bool symbol_table_add_type(struct symbol_table *st,
     if (rec && symbol_found_at_first_st) {
         analyzer_err(mod, ast_node_startmark(rec->node),
                      ast_node_endmark(rec->node),
-                     "Identifier \""RF_STR_PF_FMT"\" was already declared in scope "
+                     "Identifier \""RFS_PF"\" was already declared in scope "
                      "at "INPLOCATION_FMT,
-                     RF_STR_PF_ARG(id),
+                     RFS_PA(id),
                      INPLOCATION_ARG(module_get_file(mod),
                                      ast_node_location(rec->node)));
         return false;
@@ -268,17 +271,25 @@ void symbol_table_record_print(const struct symbol_table_record *rec)
 {
     printf("Symbol table record\n");
     if (rec->id) {
-        printf("id: " RF_STR_PF_FMT"\n", RF_STR_PF_ARG(rec->id));
+        printf("id: " RFS_PF"\n", RFS_PA(rec->id));
     }
     if (rec->node) {
-        printf("node: %p \""RF_STR_PF_FMT"\"\n", rec->node, RF_STR_PF_ARG(ast_node_str(rec->node)));
+        printf(
+            "node: %p \""RFS_PF"\"\n",
+            rec->node,
+            RFS_PA(ast_node_str(rec->node))
+        );
     }
     RFS_PUSH();
     if (rec->data) {
-        printf("type: "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(type_str(rec->data, TSTR_DEFAULT)));
+        printf("type: "RFS_PF"\n", RFS_PA(type_str(rec->data, TSTR_DEFAULT)));
     }
     if (rec->rirobj) {
-        printf("rir_object: %p \""RF_STR_PF_FMT"\"\n", rec->rirobj, RF_STR_PF_ARG(rir_object_string(rec->rirobj)));
+        printf(
+            "rir_object: %p \""RFS_PF"\"\n",
+            rec->rirobj,
+            RFS_PA(rir_object_string(rec->rirobj))
+        );
     }
     RFS_POP();
 }

@@ -146,21 +146,21 @@ i_INLINE_DECL bool inplocation_equal(const struct inplocation *l1,
 
 
 #define INPLOCATION_FMT                         \
-    RF_STR_PF_FMT":%u:%u"
+    RFS_PF":%u:%u"
 #define INPLOCATION_ARG(file_, loc_)                                    \
-    RF_STR_PF_ARG(&(file_)->file_name), (loc_)->start.line, (loc_)->start.col
+    RFS_PA(&(file_)->file_name), (loc_)->start.line, (loc_)->start.col
 
 #define INPLOCATION_FMT2                        \
-    RF_STR_PF_FMT":(%u:%u|%u:%u)"
+    RFS_PF":(%u:%u|%u:%u)"
 #define INPLOCATION_ARG2(file_, loc_)           \
-    RF_STR_PF_ARG(&(file_)->file_name),         \
+    RFS_PA(&(file_)->file_name),                \
         (loc_)->start.line, (loc_)->start.col,  \
         (loc_)->end.line, (loc_)->end.col
 
 #define INPLOCMARKS_FMT                         \
-    RF_STR_PF_FMT":(%u:%u|%u:%u)"
+    RFS_PF":(%u:%u|%u:%u)"
 #define INPLOCMARKS_ARG(file_, start_, end_)    \
-    RF_STR_PF_ARG(&(file_)->file_name),         \
+    RFS_PA(&(file_)->file_name),                \
         (start_)->line, (start_)->col,          \
         (end_)->line, (end_)->col
 

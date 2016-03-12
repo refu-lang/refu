@@ -248,17 +248,19 @@ void i_test_finalize_parsing(struct ast_node *n);
 
 
 #define ck_assert_parsed_node(n_,  msg_)                                \
-        do {                                                            \
-            if (!(n_)) {                                                \
-                struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
-                if (tmp_) {                                             \
-                    ck_abort_msg(msg_" -- with parser errors\n"RF_STR_PF_FMT, \
-                                 RF_STR_PF_ARG(tmp_));                  \
-                } else {                                                \
-                    ck_abort_msg(msg_" -- with no parser errors");      \
-                }                                                       \
+    do {                                                                \
+        if (!(n_)) {                                                    \
+            struct RFstringx *tmp_ = front_testdriver_geterrors(get_front_testdriver()); \
+            if (tmp_) {                                                 \
+                ck_abort_msg(                                           \
+                    msg_" -- with parser errors\n"RFS_PF,               \
+                    RFS_PA(tmp_)                                        \
+                );                                                      \
+            } else {                                                    \
+                ck_abort_msg(msg_" -- with no parser errors");          \
             }                                                           \
-        } while(0)
+        }                                                               \
+    } while(0)
 
 #define ck_assert_parser_errors(expected_arr_)                          \
         ck_assert_parser_errors_impl(                                   \

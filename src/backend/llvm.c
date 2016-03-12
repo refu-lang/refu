@@ -103,8 +103,8 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
 
     RFS_PUSH();
     struct RFstring *temp_s = RFS_NT_OR_DIE(
-        RF_STR_PF_FMT".ll",
-        RF_STR_PF_ARG(compiler_args_get_executable_name(args)));
+        RFS_PF".ll",
+        RFS_PA(compiler_args_get_executable_name(args)));
     if (0 != LLVMPrintModuleToFile(llvm_module, rf_string_data(temp_s), &error)) {
         bllvm_error("Could not output LLVM module to file", &error);
         goto end_pop_rfs;
@@ -134,13 +134,13 @@ static bool transformation_step_do(struct compiler_args *args,
     bool ret = true;
     RFS_PUSH();
 
-    inname = RFS(RF_STR_PF_FMT".%s", RF_STR_PF_ARG(output), insuff);
+    inname = RFS(RFS_PF".%s", RFS_PA(output), insuff);
     cmd = RFS(
-        "%s "RF_STR_PF_FMT" %s -o "RF_STR_PF_FMT".%s",
+        "%s "RFS_PF" %s -o "RFS_PF".%s",
         executable,
-        RF_STR_PF_ARG(inname),
+        RFS_PA(inname),
         extra ? extra : "",
-        RF_STR_PF_ARG(output),
+        RFS_PA(output),
         outsuff);
     proc = rf_popen(cmd, "r");
 

@@ -98,9 +98,9 @@ static struct ow_graph *ow_ctx_graph_from_ploc(struct ow_passed_loc *ploc, struc
     RF_ASSERT(!ploc->call->foreign, "Foreign function calls should not come here");
     RF_ASSERT(g_ow_ctx, "No global ownership context exists");
     struct ow_graph **g;
-    OWDD("Trying to find ploc \""RF_STR_PF_FMT"\" in the following graphs:\n", RF_STR_PF_ARG(&ploc->call->name)); 
+    OWDD("Trying to find ploc \""RFS_PF"\" in the following graphs:\n", RFS_PA(&ploc->call->name)); 
     darray_foreach(g, g_ow_ctx->graphs) {
-        OWDD("Graph "RF_STR_PF_FMT"\n", RF_STR_PF_ARG(ow_node_id((*g)->root)));
+        OWDD("Graph "RFS_PF"\n", RFS_PA(ow_node_id((*g)->root)));
     }
     darray_foreach(g, g_ow_ctx->graphs) {
         RFS_PUSH();

@@ -302,23 +302,23 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
     if (e->val.category == RIR_VALUE_NIL) {
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT"(" RF_STR_PF_FMT ", "RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
-                    RF_STR_PF_ARG(memtype_s),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
+                RFS(RIRTOSTR_INDENT RFS_PF"(" RFS_PF ", "RFS_PF ", " RFS_PF ")\n",
+                    RFS_PA(&rir_bop_type_strings[e->type]),
+                    RFS_PA(memtype_s),
+                    RFS_PA(rir_value_string(e->binaryop.a)),
+                    RFS_PA(rir_value_string(e->binaryop.b)))
             )) {
             goto end;
         }
     } else {
         if (!rf_stringx_append(
                 ctx->rir->buff,
-                RFS(RIRTOSTR_INDENT RF_STR_PF_FMT" = "RF_STR_PF_FMT"(" RF_STR_PF_FMT ", "RF_STR_PF_FMT ", " RF_STR_PF_FMT ")\n",
-                    RF_STR_PF_ARG(rir_value_string(&e->val)),
-                    RF_STR_PF_ARG(&rir_bop_type_strings[e->type]),
-                    RF_STR_PF_ARG(memtype_s),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.a)),
-                    RF_STR_PF_ARG(rir_value_string(e->binaryop.b)))
+                RFS(RIRTOSTR_INDENT RFS_PF" = "RFS_PF"(" RFS_PF ", "RFS_PF ", " RFS_PF ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(&rir_bop_type_strings[e->type]),
+                    RFS_PA(memtype_s),
+                    RFS_PA(rir_value_string(e->binaryop.a)),
+                    RFS_PA(rir_value_string(e->binaryop.b)))
             )) {
             goto end;
         }

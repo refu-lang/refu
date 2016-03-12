@@ -187,9 +187,11 @@ bool ck_assert_analyzer_errors_impl(struct info_msg *exp_errors,
             if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
                 ck_analyzer_check_abort(
                     filename, line,
-                    "For analyzer error number %u: Got:\n\""RF_STR_PF_FMT"\"\n"
-                    "but expected:\n\""RF_STR_PF_FMT"\"", i,
-                    RF_STR_PF_ARG(&msg->s), RF_STR_PF_ARG(&exp_errors[i].s));
+                    "For analyzer error number %u: Got:\n\""RFS_PF"\"\n"
+                    "but expected:\n\""RFS_PF"\"", i,
+                    RFS_PA(&msg->s),
+                    RFS_PA(&exp_errors[i].s)
+                );
                 return false;
             }
 
@@ -225,11 +227,12 @@ bool ck_assert_analyzer_errors_impl(struct info_msg *exp_errors,
             if (msg->type != exp_errors[i].type) {
                 ck_analyzer_check_abort(
                     filename, line,
-                    "For analyzer error number %u got different message types. Got:\n"
-                    "\""RF_STR_PF_FMT"\" but expected: \"" RF_STR_PF_FMT"\"",
+                    "For analyzer error number %u got different message types."
+                    " Got:\n\""RFS_PF"\" but expected: \"" RFS_PF"\"",
                     i,
-                    RF_STR_PF_ARG(info_msg_type_to_str(msg->type)),
-                    RF_STR_PF_ARG(info_msg_type_to_str(exp_errors[i].type)));
+                    RFS_PA(info_msg_type_to_str(msg->type)),
+                    RFS_PA(info_msg_type_to_str(exp_errors[i].type))
+                );
                 return false;
             }
 
@@ -259,11 +262,11 @@ void i_ck_assert_modules_order(const struct RFstring *expected_module_names,
     struct module *mod;
     rf_ilist_for_each(&c->sorted_modules, mod, ln) {
         ck_assert_msg(rf_string_equal(&expected_module_names[i], module_name(mod)),
-                      "Dependency error. Expected module \""RF_STR_PF_FMT"\" at "
-                      "position %u but found module \""RF_STR_PF_FMT"\". At %s:%uu",
-                      RF_STR_PF_ARG(&expected_module_names[i]),
+                      "Dependency error. Expected module \""RFS_PF"\" at "
+                      "position %u but found module \""RFS_PF"\". At %s:%uu",
+                      RFS_PA(&expected_module_names[i]),
                       i,
-                      RF_STR_PF_ARG(module_name(mod)),
+                      RFS_PA(module_name(mod)),
                       filename, line);
         ++i;
     }

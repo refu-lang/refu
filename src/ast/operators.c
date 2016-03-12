@@ -90,9 +90,11 @@ static const enum binaryop_type  bop_type_lookup[] = {
 
 enum binaryop_type binaryop_type_from_token(struct token *tok)
 {
-    RF_ASSERT(token_is_binaryop(tok), "Requested binary op type from non "
-              "binaryop token type \""RF_STR_PF_FMT"\"",
-              RF_STR_PF_ARG(tokentype_to_str(tok->type)));
+    RF_ASSERT(
+        token_is_binaryop(tok),
+        "Requested binary op type from non binaryop token type \""RFS_PF"\"",
+        RFS_PA(tokentype_to_str(tok->type))
+    );
     return bop_type_lookup[tok->type];
 }
 
@@ -193,8 +195,10 @@ const struct RFstring *ast_unaryop_opstr(struct ast_node *op)
 
 enum unaryop_type unaryop_type_from_token(struct token *tok)
 {
-    RF_ASSERT(token_is_unaryop(tok), "Requested unary op type from non "
-              "unary token type \""RF_STR_PF_FMT"\"",
-              RF_STR_PF_ARG(tokentype_to_str(tok->type)));
+    RF_ASSERT(
+        token_is_unaryop(tok),
+        "Requested unary op type from non-unary token type \""RFS_PF"\"",
+        RFS_PA(tokentype_to_str(tok->type))
+    );
     return uop_type_lookup[tok->type];
 }

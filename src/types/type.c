@@ -262,9 +262,11 @@ struct type *type_lookup_or_create(const struct ast_node *n,
     case AST_VARIABLE_DECLARATION:
         return type_lookup_or_create(ast_vardecl_desc_get(n), m, st, genrdecl);
     default:
-        RF_ASSERT_OR_CRITICAL(false, return false, "Unexpected ast node type "
-                              "\""RF_STR_PF_FMT"\" detected",
-                              RF_STR_PF_ARG(ast_node_str(n)));
+        RF_ASSERT_OR_CRITICAL(
+            false, return false,
+            "Unexpected ast node type \""RFS_PF"\" detected",
+            RFS_PA(ast_node_str(n))
+        );
         break;
     }
 
@@ -328,9 +330,11 @@ struct type *type_create_from_node(const struct ast_node *node,
     case AST_FUNCTION_DECLARATION:
         return type_create_from_fndecl(node, m, st);
     default:
-        RF_ASSERT_OR_CRITICAL(false, return false, "Attempted to create a type "
-                              "for illegal ast node type \""RF_STR_PF_FMT"\"",
-                              RF_STR_PF_ARG(ast_node_str(node)));
+        RF_ASSERT_OR_CRITICAL(
+            false, return false,
+            "Attempted to create a type for illegal ast node type \""RFS_PF"\"",
+            RFS_PA(ast_node_str(node))
+        );
     }
 
     return NULL;
@@ -536,10 +540,12 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
     }
 
     // if we get here the type can't be recognized
-    analyzer_err(mod, ast_node_startmark(n),
-                 ast_node_endmark(n),
-                 "Type \""RF_STR_PF_FMT"\" is not defined",
-                 RF_STR_PF_ARG(id));
+    analyzer_err(
+        mod, ast_node_startmark(n),
+        ast_node_endmark(n),
+        "Type \""RFS_PF"\" is not defined",
+        RFS_PA(id)
+    );
     return NULL;
 
 }
@@ -581,18 +587,18 @@ static struct RFstring *type_str_do(const struct type *t, int options)
         size_t sz = 0;
         struct type **subt;
         darray_foreach(subt, t->operator.operands) {
-            ret = RFS(RF_STR_PF_FMT RF_STR_PF_FMT, RF_STR_PF_ARG(ret), RF_STR_PF_ARG(type_str_do(*subt, options)));
+            ret = RFS(RFS_PF RFS_PF, RFS_PA(ret), RFS_PA(type_str_do(*subt, options)));
             if (darray_size(t->operator.operands) - 1 != sz) {
-                ret = RFS(RF_STR_PF_FMT RF_STR_PF_FMT, RF_STR_PF_ARG(ret), RF_STR_PF_ARG(type_op_str(t->operator.type)));
+                ret = RFS(RFS_PF RFS_PF, RFS_PA(ret), RFS_PA(type_op_str(t->operator.type)));
             }
             ++sz;
         }
         return ret;
     }
     case TYPE_CATEGORY_DEFINED:
-        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(t->defined.name));
+        return RFS(RFS_PF, RFS_PA(t->defined.name));
     case TYPE_CATEGORY_WILDCARD:
-        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(&g_wildcard_s));
+        return RFS(RFS_PF, RFS_PA(&g_wildcard_s));
     default:
         RF_CRITICAL_FAIL("TODO: Not yet implemented");
         break;
@@ -608,15 +614,15 @@ struct RFstring *type_str(const struct type *t, int options)
         if (!sdefined) {
             return NULL;
         }
-        return RFS(RF_STR_PF_FMT" {" RF_STR_PF_FMT "}",
-                   RF_STR_PF_ARG(t->defined.name),
-                   RF_STR_PF_ARG(sdefined));
+        return RFS(RFS_PF" {" RFS_PF "}",
+                   RFS_PA(t->defined.name),
+                   RFS_PA(sdefined));
     } else if (t->category == TYPE_CATEGORY_DEFINED && options == TSTR_DEFINED_ONLY_CONTENTS) {
         struct RFstring *sdefined = type_str_do(t->defined.type, TSTR_DEFAULT);
         if (!sdefined) {
             return NULL;
         }
-        return RFS(RF_STR_PF_FMT, RF_STR_PF_ARG(sdefined));
+        return RFS(RFS_PF, RFS_PA(sdefined));
     } else {
         return type_str_do(t, options);
     }
@@ -628,10 +634,10 @@ struct RFstring *type_op_create_str(const struct type *t1,
                                     enum typeop_type optype)
 {
     return RFS(
-        RF_STR_PF_FMT RF_STR_PF_FMT RF_STR_PF_FMT,
-        RF_STR_PF_ARG(type_str_or_die(t1, TSTR_DEFAULT)),
-        RF_STR_PF_ARG(type_op_str(optype)),
-        RF_STR_PF_ARG(type_str_or_die(t2, TSTR_DEFAULT))
+        RFS_PF RFS_PF RFS_PF,
+        RFS_PA(type_str_or_die(t1, TSTR_DEFAULT)),
+        RFS_PA(type_op_str(optype)),
+        RFS_PA(type_str_or_die(t2, TSTR_DEFAULT))
     );
 }
 

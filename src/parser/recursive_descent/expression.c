@@ -131,10 +131,11 @@ static struct ast_node *ast_parser_acc_exprfactor(struct ast_parser *p)
     element = ast_parser_acc_expr_element(p);
     if (!element) {
         if (prefix) {
-            parser_synerr(p, token_get_end(prefix), NULL,
-                          "Expected "EXPR_ELEMENT_START" after \""
-                          ""RF_STR_PF_FMT"\"",
-                          RF_STR_PF_ARG(tokentype_to_str(prefix->type)));
+            parser_synerr(
+                p, token_get_end(prefix), NULL,
+                "Expected "EXPR_ELEMENT_START" after \""RFS_PF"\"",
+                RFS_PA(tokentype_to_str(prefix->type))
+            );
         }
         return NULL;
     }
@@ -270,10 +271,11 @@ static struct ast_node *ast_parser_acc_expression_prime(
     }
     right_hand_side = ast_parser_acc_exprlevel(p, level + 1);
     if (!right_hand_side) {
-        parser_synerr(p, token_get_end(tok), NULL,
-                      "Expected "EXPR_ELEMENT_START" after "
-                      "\""RF_STR_PF_FMT"\"",
-                      RF_STR_PF_ARG(tokentype_to_str(tok->type)));
+        parser_synerr
+            (p, token_get_end(tok), NULL,
+             "Expected "EXPR_ELEMENT_START" after \""RFS_PF"\"",
+             RFS_PA(tokentype_to_str(tok->type))
+            );
         ast_node_destroy(op);
         return NULL;
     }
@@ -282,9 +284,11 @@ static struct ast_node *ast_parser_acc_expression_prime(
     if (ast_binaryop_op(op) == BINARYOP_ARRAY_REFERENCE) {
         tok = lexer_lookahead(parser_lexer(p), 1);
         if (tok->type != TOKEN_SM_CSBRACE) {
-            parser_synerr(p, token_get_start(tok), NULL,
-                          "Expected ']' after "RF_STR_PF_FMT,
-                          RF_STR_PF_ARG(ast_node_get_name_str(right_hand_side)));
+            parser_synerr(
+                p, token_get_start(tok), NULL,
+                "Expected ']' after "RFS_PF,
+                RFS_PA(ast_node_get_name_str(right_hand_side))
+            );
             ast_node_destroy(op);
             return NULL;
         }

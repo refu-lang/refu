@@ -67,9 +67,9 @@ void rirobjmap_free(struct rirobj_strmap *map, struct rir_common *c)
 static bool rirobjmap_print_cb(const struct RFstring *s, struct rir_object *obj)
 {
     printf(
-        RF_STR_PF_FMT " -- " RF_STR_PF_FMT "\n",
-        RF_STR_PF_ARG(rir_object_string(obj)),
-        RF_STR_PF_ARG(s)
+        RFS_PF " -- " RFS_PF "\n",
+        RFS_PA(rir_object_string(obj)),
+        RFS_PA(s)
     );
     return true;
 }

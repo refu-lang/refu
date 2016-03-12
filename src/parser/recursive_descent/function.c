@@ -167,18 +167,24 @@ struct ast_node *ast_parser_acc_fnimpl(struct ast_parser *p)
         // normal function body
         body = ast_parser_acc_block(p, true);
         if (!body) {
-            parser_synerr(p, ast_node_endmark(decl), NULL,
-                          "Expected a body for \""RF_STR_PF_FMT"\" function "
-                          "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
+            parser_synerr(
+                p, ast_node_endmark(decl), NULL,
+                "Expected a body for \""RFS_PF"\" function "
+                "implementation",
+                RFS_PA(ast_fndecl_name_str(decl))
+            );
             goto fail_free_decl;
         }
     } else {
         // attempt to find a headless match expression as the function body
         body = ast_parser_acc_matchexpr(p, false, true);
         if (!body) {
-            parser_synerr(p, ast_node_endmark(decl), NULL,
-                          "Expected a body for \""RF_STR_PF_FMT"\" function "
-                          "implementation", RF_STR_PF_ARG(ast_fndecl_name_str(decl)));
+            parser_synerr(
+                p, ast_node_endmark(decl), NULL,
+                "Expected a body for \""RFS_PF"\" function "
+                "implementation",
+                RFS_PA(ast_fndecl_name_str(decl))
+            );
             goto fail_free_decl;
         }
         // now set the matchexpr's fn_args since this is a headless matchexpr
@@ -259,8 +265,10 @@ struct ast_node *ast_parser_acc_fncall(struct ast_parser *p, bool expect_it)
     args = ast_parser_acc_expression(p);
     if (!args) {
         if (ast_parser_has_syntax_error(p)) {
-                parser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
-                              "Expected argument expression for function call");
+                parser_synerr(
+                    p, lexer_last_token_start(parser_lexer(p)), NULL,
+                    "Expected argument expression for function call"
+                );
             goto err_free_genr;
         }
     }
@@ -268,9 +276,11 @@ struct ast_node *ast_parser_acc_fncall(struct ast_parser *p, bool expect_it)
     tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok || tok->type != TOKEN_SM_CPAREN) {
         if (expect_it) {
-            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                          "Expected ')' at end of "RF_STR_PF_FMT" function call",
-                          RF_STR_PF_ARG(ast_identifier_str(name)));
+            parser_synerr(
+                p, lexer_last_token_end(parser_lexer(p)), NULL,
+                "Expected ')' at end of "RFS_PF" function call",
+                RFS_PA(ast_identifier_str(name))
+            );
         }
         goto err_free_args;
     }

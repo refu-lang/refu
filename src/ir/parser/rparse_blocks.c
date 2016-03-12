@@ -27,8 +27,8 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
             p,
             token_get_start(tok),
             NULL,
-            "Unexpected rir token \""RF_STR_PF_FMT"\" after outer assignment to identifier.",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+            "Unexpected rir token \""RFS_PF"\" after outer assignment to identifier.",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok)))
         );
         break;
     }
@@ -55,8 +55,8 @@ static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block
             p,
             token_get_start(tok),
             NULL,
-            "Parsed non-existing branch label "RF_STR_PF_FMT" %s.",
-            RF_STR_PF_ARG(id),
+            "Parsed non-existing branch label "RFS_PF" %s.",
+            RFS_PA(id),
             msg
         );
         // going out with obj == NULL so clean error path
@@ -183,8 +183,8 @@ static bool rir_parse_block_expr(
             p,
             token_get_start(tok),
             NULL,
-            "Unexpected rir token \""RF_STR_PF_FMT"\" during parsing",
-            RF_STR_PF_ARG(rir_tokentype_to_str(rir_toktype(tok)))
+            "Unexpected rir token \""RFS_PF"\" during parsing",
+            RFS_PA(rir_tokentype_to_str(rir_toktype(tok)))
         );
         break;
     }
