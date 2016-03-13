@@ -120,6 +120,10 @@ static bool ckr_compare_value(
     const struct RFstring *intro
 )
 {
+    if (got == NULL && expect == NULL) { // both values non-existing
+        return true;
+    }
+
     if (got->category != expect->category) {
         ck_abort_at(
             file,
@@ -289,6 +293,20 @@ bool ckr_compare_type(
     const struct RFstring *intro
 )
 {
+    if (!got ^ !expect) {
+        ck_abort_at(
+            file,
+            line,
+            "Failure at RIR type comparison",
+            RFS_PF". Type existence mismatch.",
+            RFS_PA(intro)
+        );
+        return false;
+    }
+    if (!got) { // comparing 2 null types
+        return true;
+    }
+
     if (expect->category != got->category) {
         ck_abort_at(
             file,
@@ -999,7 +1017,7 @@ bool ck_assert_parserir_impl(
     idx = 0;
     rf_ilist_for_each(&got->functions, gfn, ln) {
         efn = rf_ilist_at(&expect->functions, struct rir_fndecl, ln, idx);
-        if (!edef) {
+        if (!efn) {
             ck_abort_at(
                 file, line, "Failure at RIR module compare",
                 "Failed to retrieve the "RFS_PF" expected function",

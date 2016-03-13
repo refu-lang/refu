@@ -22,6 +22,19 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
     case RIR_TOK_CALL:
         retobj = rir_parse_call(p);
         break;
+    case RIR_TOK_ADD:
+    case RIR_TOK_SUB:
+    case RIR_TOK_MUL:
+    case RIR_TOK_DIV:
+    case RIR_TOK_CMPEQ:
+    case RIR_TOK_CMPNE:
+    case RIR_TOK_CMPGT:
+    case RIR_TOK_CMPGE:
+    case RIR_TOK_CMPLT:
+    case RIR_TOK_CMPLE:
+        retobj = rir_parse_binaryop(p, rir_toktype(tok));
+        break;
+
     default:
         rirparser_synerr(
             p,
@@ -123,23 +136,42 @@ static bool rir_parse_condbranch(struct rir_parser *p, struct rir_block *b, stru
 
 static bool rir_parse_return(struct rir_parser *p, struct rir_block *b)
 {
+    struct rir_value *v = NULL;
     // consume 'return'
     if (!rir_parse_instr_start(p, rir_tokentype_to_str(RIR_TOK_RETURN))) {
         return false;
     }
-    // get return value
-    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("at return()");
-    struct rir_value *v = rir_parse_value(p, &lmsg);
-    if (!v) {
+
+    struct token *tok;
+    if (!(tok = lexer_lookahead(parser_lexer(p), 1))) {
+        rirparser_synerr(
+            p,
+            token_get_start(tok),
+            token_get_end(tok),
+            "Expected either a value or a ')' at 'return'."
+        );
         return false;
     }
-    rir_block_exit_return_init(&b->exit, v);
+
+    if (rir_toktype(tok) == RIR_TOK_SM_CPAREN) { // if a ')' return has no val
+        lexer_curr_token_advance(parser_lexer(p));
+        goto success;
+    }
+
+    // get return value
+    static const struct RFstring lmsg = RF_STRING_STATIC_INIT("at return()");
+    if (!(v = rir_parse_value(p, &lmsg))) {
+        return false;
+    }
 
     if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_CPAREN)) {
         rirparser_synerr(p, lexer_last_token_start(parser_lexer(p)), NULL,
                          "Expected a ')' at the end of 'return'.");
         return false;
     }
+
+success:
+    rir_block_exit_return_init(&b->exit, v);
     return true;
 }
 

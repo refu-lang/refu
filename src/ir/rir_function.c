@@ -123,6 +123,8 @@ bool rir_fndecl_init(
 )
 {
     RF_STRUCT_ZERO(fndecl);
+    RF_ASSERT(args, "args should never be NULL. Instead pass an empty array");
+    RF_ASSERT(return_type, "return should never be NULL. Instead pass nil type");
     if (!rf_string_copy_in(&fndecl->name, name)) {
         return false;
     }
@@ -316,7 +318,7 @@ static inline void rir_fndef_init_common_intro(
 
 static inline bool rir_fndef_init_common_outro(
     struct rir_fndef *ret,
-    const struct rir_type *return_type,
+    const struct rir_type *ret_type,
     enum rir_pos pos,
     rir_data data
 )
@@ -326,7 +328,7 @@ static inline bool rir_fndef_init_common_outro(
     // if we got a return value allocate space for it. This alloca
     // is not visible in the actual rir code. Assume single return values fow now
     // TODO: Take into account multiple return values
-    if (return_type) {
+    if (ret_type && !rir_type_is_specific_elementary(ret_type, ELEMENTARY_TYPE_NIL)) {
         rc = false;
         if (pos == RIRPOS_PARSE) {
             RFS_PUSH();

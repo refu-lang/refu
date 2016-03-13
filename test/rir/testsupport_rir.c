@@ -5,6 +5,8 @@
 #include <ir/rir_object.h>
 #include <ir/rir_function.h>
 #include <ir/rir_convert.h>
+#include <ir/rir_call.h>
+#include <ir/rir_binaryop.h>
 #include <ir/parser/rirparser.h>
 
 
@@ -119,10 +121,20 @@ struct rir_fndef *testsupport_rir_add_fndef_impl(
     RF_STRUCT_ZERO(def);
     // prepare arguments for the actual fndecl_init() function
     const struct RFstring sname = RF_STRING_SHALLOW_INIT_CSTR(name);
-    struct rir_type **newarr = malloc(given_args_size);
-    memcpy(newarr, given_args, given_args_size);
+
     struct rir_type_arr args;
-    darray_raw_copy(args, newarr, given_args_size / sizeof(struct rir_type*));
+    if (given_args) {
+        struct rir_type **newarr = malloc(given_args_size);
+        memcpy(newarr, given_args, given_args_size);
+        darray_raw_copy(args, newarr, given_args_size / sizeof(struct rir_type*));
+    } else {
+        darray_init(args); // no args - empty array
+    }
+
+    if (!return_type) {
+        return_type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_NIL, false);
+    }
+
     // let's use same initialization rir parsing uses
     if (!rir_fndecl_init(
             &def->decl,
@@ -145,6 +157,33 @@ struct rir_fndef *testsupport_rir_add_fndef_impl(
     rir_data_curr_fn(&get_rir_testdriver()->pctx) = def;
     return def;
 }
+
+struct rir_expression *testsupport_rir_add_call_impl(
+    char *retid,
+    char *name,
+    bool is_foreign,
+    struct rir_value **given_args,
+    size_t given_args_size
+)
+{
+    const struct RFstring sretid = RF_STRING_SHALLOW_INIT_CSTR(retid);
+    rir_pctx_set_id(testsupport_rir_pctx(), &sretid);
+    const struct RFstring sname = RF_STRING_SHALLOW_INIT_CSTR(name);
+    struct rir_value **newarr = malloc(given_args_size);
+    memcpy(newarr, given_args, given_args_size);
+    struct value_arr args;
+    darray_raw_copy(args, newarr, given_args_size / sizeof(struct rir_value*));
+    struct rir_object *obj = rir_call_create_obj(
+        &sname,
+        &args,
+        is_foreign,
+        RIRPOS_PARSE,
+                    &get_rir_testdriver()->pctx
+    );
+    rir_pctx_reset_id(testsupport_rir_pctx());
+    return obj ? &obj->expr : NULL;
+}
+
 
 struct rir_block *testsupport_rir_add_block(char *name)
 {
@@ -194,6 +233,22 @@ struct rir_expression *testsupport_rir_add_read(
         memory,
         RIRPOS_PARSE,
         testsupport_rir_pctx()
+    );
+    rir_pctx_reset_id(testsupport_rir_pctx());
+    return ret;
+}
+
+struct rir_expression *testsupport_rir_add_binaryop(
+    enum rir_expression_type type,
+    char *id,
+    const struct rir_value *a,
+    const struct rir_value *b
+)
+{
+    const struct RFstring sid = RF_STRING_SHALLOW_INIT_CSTR(id);
+    rir_pctx_set_id(testsupport_rir_pctx(), &sid);
+    struct rir_expression *ret = rir_binaryop_create_nonast(
+        type, a, b, RIRPOS_PARSE, testsupport_rir_pctx()
     );
     rir_pctx_reset_id(testsupport_rir_pctx());
     return ret;

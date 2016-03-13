@@ -42,3 +42,27 @@ end:
     RFS_POP();
     return val;
 }
+
+struct rir_type *rir_parse_type_and_comma(struct rir_parser *p, const struct RFstring *msg)
+{
+    struct rir_type *type = NULL;
+    RFS_PUSH();
+    if (!(type = rir_parse_type(p, msg))) {
+        goto end;
+    }
+    if (!lexer_expect_token(parser_lexer(p), RIR_TOK_SM_COMMA)) {
+        rirparser_synerr(
+            p,
+            lexer_last_token_start(parser_lexer(p)),
+            NULL,
+            "Expected a ',' after "RFS_PF".", RFS_PA(msg)
+        );
+        rir_type_destroy(type, rir_parser_rir(p));
+        type = NULL;
+        goto end;
+    }
+    // success
+end:
+    RFS_POP();
+    return type;
+}

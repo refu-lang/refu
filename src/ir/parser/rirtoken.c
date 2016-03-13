@@ -38,6 +38,17 @@ static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("write"),
     RF_STRING_STATIC_INIT("read"),
     RF_STRING_STATIC_INIT("call"),
+
+    RF_STRING_STATIC_INIT("add"),
+    RF_STRING_STATIC_INIT("sub"),
+    RF_STRING_STATIC_INIT("mul"),
+    RF_STRING_STATIC_INIT("div"),
+    RF_STRING_STATIC_INIT("cmpeq"),
+    RF_STRING_STATIC_INIT("cmpne"),
+    RF_STRING_STATIC_INIT("cmpgt"),
+    RF_STRING_STATIC_INIT("cmpge"),
+    RF_STRING_STATIC_INIT("cmplt"),
+    RF_STRING_STATIC_INIT("cmple")
 };
 
 const struct RFstring *rir_tokentype_to_str(enum rir_token_type type)

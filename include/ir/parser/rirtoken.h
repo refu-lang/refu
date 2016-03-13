@@ -58,6 +58,17 @@ enum rir_token_type {
     RIR_TOK_READ,
     RIR_TOK_CALL,
 
+    RIR_TOK_ADD,
+    RIR_TOK_SUB,
+    RIR_TOK_MUL,
+    RIR_TOK_DIV,
+    RIR_TOK_CMPEQ,
+    RIR_TOK_CMPNE,
+    RIR_TOK_CMPGT,
+    RIR_TOK_CMPGE,
+    RIR_TOK_CMPLT,
+    RIR_TOK_CMPLE,
+
     RIR_TOKENS_MAX
 };
 

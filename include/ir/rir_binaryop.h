@@ -32,4 +32,5 @@ struct rir_expression *rir_binaryop_create_nonast(
 
 bool rir_process_binaryop(const struct ast_binaryop *n, struct rir_ctx *ctx);
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);
+const struct RFstring *rir_binaryoptype_string(enum rir_expression_type type);
 #endif

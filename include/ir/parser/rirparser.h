@@ -4,6 +4,7 @@
 #include <String/rf_str_core.h>
 #include <lexer/lexer.h>
 #include <ir/rir.h>
+#include <ir/rir_expression.h>
 #include <parser/parser_common.h>
 
 struct inpfile;
@@ -121,8 +122,19 @@ struct rir_object *rir_parse_convert(struct rir_parser *p);
 struct rir_object *rir_parse_write(struct rir_parser *p);
 struct rir_object *rir_parse_read(struct rir_parser *p);
 struct rir_object *rir_parse_call(struct rir_parser *p);
+struct rir_object *rir_parse_binaryop(
+    struct rir_parser *p,
+    enum rir_token_type type
+);
 
 /* -- util rir parsing functions -- */
+/**
+ * Consume a command token and the following parentheses.
+ *
+ * @param p        The parser instance
+ * @param msg      Description of the token to display in case of failure.
+ */
 bool rir_parse_instr_start(struct rir_parser *p, const struct RFstring *msg);
 struct rir_value *rir_parse_val_and_comma(struct rir_parser *p, const struct RFstring *msg);
+struct rir_type *rir_parse_type_and_comma(struct rir_parser *p, const struct RFstring *msg);
 #endif

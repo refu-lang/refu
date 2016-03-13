@@ -293,6 +293,11 @@ static const struct RFstring rir_bop_type_strings[] = {
     [RIR_EXPRESSION_CMP_LE] = RF_STRING_STATIC_INIT("cmple"),
 };
 
+const struct RFstring *rir_binaryoptype_string(enum rir_expression_type type)
+{
+    return &rir_bop_type_strings[type];
+}
+
 bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
 {
     bool ret = false;
@@ -303,7 +308,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
         if (!rf_stringx_append(
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RFS_PF"(" RFS_PF ", "RFS_PF ", " RFS_PF ")\n",
-                    RFS_PA(&rir_bop_type_strings[e->type]),
+                    RFS_PA(rir_binaryoptype_string(e->type)),
                     RFS_PA(memtype_s),
                     RFS_PA(rir_value_string(e->binaryop.a)),
                     RFS_PA(rir_value_string(e->binaryop.b)))
@@ -315,7 +320,7 @@ bool rir_binaryop_tostring(struct rirtostr_ctx *ctx, const struct rir_expression
                 ctx->rir->buff,
                 RFS(RIRTOSTR_INDENT RFS_PF" = "RFS_PF"(" RFS_PF ", "RFS_PF ", " RFS_PF ")\n",
                     RFS_PA(rir_value_string(&e->val)),
-                    RFS_PA(&rir_bop_type_strings[e->type]),
+                    RFS_PA(rir_binaryoptype_string(e->type)),
                     RFS_PA(memtype_s),
                     RFS_PA(rir_value_string(e->binaryop.a)),
                     RFS_PA(rir_value_string(e->binaryop.b)))

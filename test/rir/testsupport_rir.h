@@ -91,6 +91,16 @@ struct rir_fndef *testsupport_rir_add_fndef_impl(
     struct rir_type *return_type
 );
 
+#define testsupport_rir_add_call(retid_, name_, foreign_, args_)        \
+    testsupport_rir_add_call_impl(retid_, name_, foreign_, args_, sizeof(args_))
+struct rir_expression *testsupport_rir_add_call_impl(
+    char *retid,
+    char *name,
+    bool is_foreign,
+    struct rir_value **given_args,
+    size_t given_args_size
+);
+
 struct rir_block *testsupport_rir_add_block(char *name);
 
 #define testsupport_rir_block_add_cmd(block_, type_, ...)               \
@@ -105,13 +115,34 @@ struct rir_expression *testsupport_rir_add_convert(
     struct rir_value *v,
     struct rir_type *type
 );
+
 struct rir_expression *testsupport_rir_add_write(
     struct rir_value *memory,
     struct rir_value *val
 );
+
 struct rir_expression *testsupport_rir_add_read(
     char *name,
     struct rir_value *memory
+);
+
+#define testsupport_rir_block_add_bop(block_, type_, id_, vala_, valb_) \
+    do {                                                                \
+        struct rir_expression *expr = testsupport_rir_add_binaryop(     \
+            type_,                                                      \
+            id_,                                                        \
+            vala_,                                                      \
+            valb_                                                       \
+        );                                                              \
+        ck_assert_msg(expr, "Failed to create a rir bop");              \
+        rir_block_add_expr(block_, expr);                               \
+    } while (0)
+
+struct rir_expression *testsupport_rir_add_binaryop(
+    enum rir_expression_type type,
+    char *id,
+    const struct rir_value *a,
+    const struct rir_value *b
 );
 
 

@@ -99,6 +99,7 @@ refu_src = [
     'ir/parser/rparse_typedef.c',
     'ir/parser/rparse_functions.c',
     'ir/parser/rparse_blocks.c',
+    'ir/parser/rparse_binaryop.c',
     'ir/parser/rparse_value.c',
     'ir/parser/rparse_expressions.c',
 

@@ -230,7 +230,7 @@ struct rir_expression {
 };
 
 /**
- * Initialize a rir  expression object
+ * Initialize a rir expression object
  *
  * @see rir_value_variable_init()
  */
