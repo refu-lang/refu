@@ -1,7 +1,8 @@
 #include <ir/rir_branch.h>
 
-#include <Utils/memory.h>
-#include <String/rf_str_manipulationx.h>
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_manipulationx.h>
+
 #include <ir/rir.h>
 #include <ir/rir_block.h>
 #include <ir/rir_expression.h>

@@ -1,4 +1,8 @@
 #include <ir/rir_binaryop.h>
+
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_manipulationx.h>
+
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <ir/rir_expression.h>

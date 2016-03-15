@@ -1,8 +1,9 @@
 #include <info/msg.h>
 
-#include <Utils/memory.h>
-#include <Utils/sanity.h>
-#include <Utils/build_assert.h>
+#include <rflib/utils/memory.h>
+#include <rflib/utils/sanity.h>
+#include <rflib/utils/build_assert.h>
+
 #include <inpfile.h>
 
 #define INFO_WARNING_STR "warning"

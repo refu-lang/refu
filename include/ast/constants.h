@@ -3,7 +3,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <Definitions/inline.h>
+
+#include <rflib/defs/inline.h>
 
 #include <lexer/tokens.h>
 

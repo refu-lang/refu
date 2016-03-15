@@ -1,8 +1,9 @@
 #ifndef LFR_OWNERSHIP_GRAPH_H
 #define LFR_OWNERSHIP_GRAPH_H
 
-#include <Utils/bits.h>
-#include <Definitions/inline.h>
+#include <rflib/utils/bits.h>
+#include <rflib/defs/inline.h>
+
 #include "ow_node.h"
 
 struct rir_expression;

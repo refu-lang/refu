@@ -1,10 +1,11 @@
 #ifndef LFR_PARSER_IDENTIFIER_H
 #define LFR_PARSER_IDENTIFIER_H
-#include <Definitions/inline.h>
-struct ast_parser;
+#include <rflib/defs/inline.h>
 
 #include <parser/parser.h>
 #include <lexer/lexer.h>
+
+struct ast_parser;
 
 #define XIDENTIFIER_START_STR "'const' or identifier"
 #define XIDENTIFIER_START_COND(tok_)            \

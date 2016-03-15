@@ -1,9 +1,8 @@
 #ifndef LFR_AST_H
 #define LFR_AST_H
 
-#include <RFintrusive_list.h>
-#include <RFstring.h>
-#include <Utils/bits.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/utils/bits.h>
 
 #include <inplocation.h>
 #include <ast/type_decls.h>

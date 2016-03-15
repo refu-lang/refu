@@ -1,10 +1,10 @@
 #ifndef LFR_ANALYZER_TYPECHECK_H
 #define LFR_ANALYZER_TYPECHECK_H
 
-#include <Utils/sanity.h>
-#include <Definitions/inline.h>
-
 #include <stdbool.h>
+
+#include <rflib/utils/sanity.h>
+#include <rflib/defs/inline.h>
 
 struct module;
 struct ast_node;

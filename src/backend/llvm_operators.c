@@ -3,7 +3,7 @@
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
 
-#include <Utils/bits.h>
+#include <rflib/utils/bits.h>
 
 #include <ast/ast.h>
 #include <ast/operators.h>

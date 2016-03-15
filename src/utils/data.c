@@ -1,9 +1,9 @@
 #include <utils/data.h>
 
-#include <Definitions/threadspecific.h>
-#include <System/rf_system.h>
-#include <String/rf_str_common.h>
-#include <String/rf_str_core.h>
+#include <rflib/defs/threadspecific.h>
+#include <rflib/system/rf_system.h>
+#include <rflib/string/rf_str_common.h>
+#include <rflib/string/rf_str_core.h>
 
 static i_THREAD__ struct RFstring *s_data_dir = NULL;
 

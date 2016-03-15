@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <String/rf_str_core.h>
-#include <Utils/hash.h>
+#include <rflib/string/rf_str_core.h>
 
 #include <types/type.h>
 #include <types/type_elementary.h>

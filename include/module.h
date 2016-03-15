@@ -1,9 +1,10 @@
 #ifndef LFR_MODULE_H
 #define LFR_MODULE_H
 
-#include <Data_Structures/darray.h>
+#include <rflib/datastructs/darray.h>
+#include <rflib/datastructs/intrusive_list.h>
+
 #include <utils/string_set.h>
-#include <RFintrusive_list.h>
 
 struct module;
 struct ast_node;

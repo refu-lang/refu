@@ -2,7 +2,7 @@
 #define LFR_IR_TYPE_H
 
 #include <stdbool.h>
-#include <Definitions/inline.h>
+#include <rflib/defs/inline.h>
 #include <types/type_decls.h>
 
 struct rir_ctx;

@@ -1,9 +1,10 @@
 #include "ow_graph.h"
+
+#include <rflib/string/rf_str_core.h>
+
 #include "ow_debug.h"
 #include <ownership/ownership.h>
 #include <ir/rir_object.h>
-#include <String/rf_str_core.h>
-
 
 struct ow_passed_loc *ow_passed_loc_create(const struct rir_call *c, struct ow_node *n, unsigned int idx)
 {

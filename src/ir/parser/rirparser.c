@@ -1,10 +1,11 @@
 #include <ir/parser/rirparser.h>
+
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_corex.h>
+
 #include <front_ctx.h>
 #include <utils/common_strings.h>
 #include <parser/parser_common.h>
-#include <Utils/memory.h>
-#include <String/rf_str_corex.h>
-
 #include <inpfile.h>
 #include <ir/rir.h>
 
@@ -13,7 +14,12 @@ i_INLINE_INS void rir_pctx_set_id(struct rir_pctx *ctx, const struct RFstring *i
 i_INLINE_INS void rir_pctx_reset_id(struct rir_pctx *ctx);
 
 i_INLINE_INS struct rir_parser *parser_common_to_rirparser(const struct parser_common* c);
-struct rir_parser *rir_parser_create(struct front_ctx *front, struct inpfile *f, struct lexer *lex, struct info_ctx *info)
+struct rir_parser *rir_parser_create(
+    struct front_ctx *front,
+    struct inpfile *f,
+    struct lexer *lex,
+    struct info_ctx *info
+)
 {
     struct rir_parser *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
@@ -53,7 +59,11 @@ void rir_parser_deinit(struct rir_parser *p)
     rf_stringx_deinit(&p->buff);
 }
 
-static struct rir_object *parse_outer_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name)
+static struct rir_object *parse_outer_assignment(
+    struct rir_parser *p,
+    struct token *tok,
+    const struct RFstring *name
+)
 {
     switch (rir_toktype(tok)) {
     case RIR_TOK_UNIONDEF:

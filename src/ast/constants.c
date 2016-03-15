@@ -1,9 +1,11 @@
 #include <ast/constants.h>
-#include <ast/ast.h>
-
-#include <types/type_elementary.h>
 
 #include <stdint.h>
+
+#include <rflib/string/rf_str_core.h>
+
+#include <ast/ast.h>
+#include <types/type_elementary.h>
 
 struct ast_node *ast_constant_create_integer(struct inplocation *loc,
                                              int64_t value)

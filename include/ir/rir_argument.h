@@ -2,8 +2,10 @@
 #define LFR_IR_ARGUMENT_H
 
 #include <stdbool.h>
+
+#include <rflib/datastructs/darray.h>
+
 #include <types/type_decls.h>
-#include <Data_Structures/darray.h>
 #include <ir/rir_value.h>
 #include <ir/rir_type.h>
 

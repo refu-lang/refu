@@ -1,6 +1,6 @@
 #include <module.h>
 
-#include <Utils/fixed_memory_pool.h>
+#include <rflib/utils/fixed_memory_pool.h>
 
 #include <utils/common_strings.h>
 #include <compiler.h>
@@ -18,8 +18,12 @@
 #include <analyzer/typecheck.h>
 #include <ir/rir.h>
 
-
-static bool module_init(struct module *m, struct ast_node *n, struct rir *rir, struct front_ctx *front)
+static bool module_init(
+    struct module *m,
+    struct ast_node *n,
+    struct rir *rir,
+    struct front_ctx *front
+)
 {
     RF_ASSERT(!n || (n->type == AST_MODULE || n->type == AST_ROOT),
               "Either no ast node, or module/ast_root expected");

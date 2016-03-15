@@ -1,9 +1,9 @@
 #include <analyzer/typecheck.h>
 
-#include <Utils/build_assert.h>
-#include <Utils/bits.h>
-#include <Persistent/buffers.h>
-#include <String/rf_str_core.h>
+#include <rflib/utils/build_assert.h>
+#include <rflib/utils/bits.h>
+#include <rflib/persistent/buffers.h>
+#include <rflib/string/rf_str_core.h>
 
 #include <module.h>
 #include <ast/ast.h>
@@ -36,10 +36,14 @@ void traversal_node_set_type(struct ast_node *n,
     ctx->last_node_type = t;
 }
 
-static bool typecheck_binaryop_get_operands(struct ast_node *n, struct ast_node *left,
-                                            const struct type **tleft,
-                                            struct ast_node *right, const struct type **tright,
-                                            struct analyzer_traversal_ctx *ctx)
+static bool typecheck_binaryop_get_operands(
+    struct ast_node *n,
+    struct ast_node *left,
+    const struct type **tleft,
+    struct ast_node *right,
+    const struct type **tright,
+    struct analyzer_traversal_ctx *ctx
+)
 {
     *tleft = ast_node_get_type(left);
     if (!*tleft) {

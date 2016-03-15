@@ -1,8 +1,9 @@
 #include <types/type_function.h>
 
+#include <rflib/string/rf_str_core.h>
+
 #include <module.h>
 #include <types/type.h>
-#include <String/rf_str_core.h>
 
 i_INLINE_INS bool type_is_function(const struct type *t);
 i_INLINE_INS bool type_is_callable(const struct type *t);
@@ -35,7 +36,11 @@ const struct RFstring *type_callable_category_str(const struct type *t)
     return &s_ctor_;
 }
 
-void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type)
+void type_function_init(
+    struct type *t,
+    struct type *arg_type,
+    struct type *ret_type
+)
 {
     t->category = TYPE_CATEGORY_OPERATOR;
     t->operator.type = TYPEOP_IMPLICATION;

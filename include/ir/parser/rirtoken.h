@@ -1,8 +1,8 @@
 #ifndef LFR_RIR_TOKEN_H
 #define LFR_RIR_TOKEN_H
 
-#include <Definitions/inline.h>
-#include <Utils/sanity.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/sanity.h>
 
 #include <inplocation.h>
 #include <ast/ast.h>

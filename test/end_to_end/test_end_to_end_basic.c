@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <String/rf_str_core.h>
+#include <rflib/string/rf_str_core.h>
 #include <ast/ast.h>
 
 #include "testsupport_end_to_end.h"

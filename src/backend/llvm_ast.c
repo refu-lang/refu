@@ -7,11 +7,12 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Linker.h>
 
-#include <Data_Structures/intrusive_list.h>
-#include <String/rf_str_common.h>
-#include <String/rf_str_conversion.h>
-#include <Utils/sanity.h>
-#include <Utils/bits.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/string/rf_str_common.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_conversion.h>
+#include <rflib/utils/sanity.h>
+#include <rflib/utils/bits.h>
 
 #include <compiler_args.h>
 

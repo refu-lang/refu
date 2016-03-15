@@ -1,9 +1,10 @@
 #ifndef LFR_IR_RIR_VALUE_H
 #define LFR_IR_RIR_VALUE_H
 
-#include <Definitions/inline.h>
-#include <Data_Structures/darray.h>
-#include <String/rf_str_decl.h>
+#include <rflib/defs/inline.h>
+#include <rflib/datastructs/darray.h>
+#include <rflib/string/rf_str_decl.h>
+
 #include <ast/constants_decls.h>
 #include <types/type_decls.h>
 #include <ir/rir_common.h>

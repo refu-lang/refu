@@ -1,7 +1,8 @@
 #ifndef LFR_IR_RIR_PARSER_H
 #define LFR_IR_RIR_PARSER_H
 
-#include <String/rf_str_core.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <lexer/lexer.h>
 #include <ir/rir.h>
 #include <ir/rir_expression.h>

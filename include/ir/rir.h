@@ -1,11 +1,12 @@
 #ifndef LFR_IR_RIR
 #define LFR_IR_RIR
 
-#include <RFintrusive_list.h>
-#include <Data_Structures/darray.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/datastructs/darray.h>
+#include <rflib/string/rf_str_decl.h>
+
 #include <ir/rir_common.h>
 #include <ir/rir_strmap.h>
-#include <String/rf_str_decl.h>
 
 struct module;
 struct compiler;

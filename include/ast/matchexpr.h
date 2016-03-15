@@ -1,8 +1,9 @@
 #ifndef LFR_AST_MATCHEXPR_H
 #define LFR_AST_MATCHEXPR_H
 
-#include <Definitions/inline.h>
 #include <stdbool.h>
+
+#include <rflib/defs/inline.h>
 #include <ast/ast.h>
 
 struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,

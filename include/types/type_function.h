@@ -1,8 +1,8 @@
 #ifndef LFR_TYPES_FUNCTION_H
 #define LFR_TYPES_FUNCTION_H
 
-#include <Definitions/inline.h>
-#include <Utils/sanity.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/sanity.h>
 
 #include <types/type_decls.h>
 #include <types/type_elementary.h>
@@ -65,6 +65,10 @@ const struct RFstring *type_callable_category_str(const struct type *t);
 /**
  * Initialize a type structure as a function type
  */
-void type_function_init(struct type *t, struct type *arg_type, struct type *ret_type);
+void type_function_init(
+    struct type *t,
+    struct type *arg_type,
+    struct type *ret_type
+);
 
 #endif

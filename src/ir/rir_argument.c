@@ -1,11 +1,13 @@
 #include <ir/rir_argument.h>
+
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_manipulationx.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <types/type.h>
 #include <types/type_operators.h>
-#include <Utils/memory.h>
-#include <String/rf_str_manipulationx.h>
-#include <String/rf_str_core.h>
 
 static bool rir_typearr_add_single(struct rir_type_arr *arr,
                                    const struct type *type,

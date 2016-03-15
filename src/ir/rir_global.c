@@ -1,15 +1,14 @@
 #include <ir/rir_global.h>
+
+#include <rflib/utils/hash.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_common.h>
+#include <rflib/string/rf_str_manipulationx.h>
+
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <ir/parser/rirparser.h>
-
-#include <Utils/hash.h>
-#include <String/rf_str_core.h>
-#include <String/rf_str_common.h>
-#include <String/rf_str_manipulationx.h>
-
 #include <utils/common_strings.h>
-
 #include <ast/ast.h>
 #include <ast/identifier.h>
 #include <ast/string_literal.h>

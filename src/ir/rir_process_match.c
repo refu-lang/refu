@@ -1,4 +1,7 @@
 #include <ir/rir_process.h>
+
+#include <rflib/utils/sanity.h>
+
 #include <ir/rir.h>
 #include <ir/rir_binaryop.h>
 #include <ir/rir_constant.h>
@@ -7,7 +10,6 @@
 #include <types/type.h>
 #include <types/type_operators.h>
 #include <ast/matchexpr.h>
-#include <Utils/sanity.h>
 
 const struct rir_value *rir_sum_subtype(
     const struct type *rtype,

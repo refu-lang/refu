@@ -3,14 +3,14 @@
 
 #include <info/info.h>
 #include <info/msg.h>
-#include <refu.h>
+#include <rflib/refu.h>
 #include <check.h>
 
 #include <ast/ast.h>
 
 #include <types/type_function.h>
 
-#define ck_analyzer_check_abort(file_, line_, msg_, ...)                 \
+#define ck_analyzer_check_abort(file_, line_, msg_, ...)                \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
                  file_, line_, __VA_ARGS__)
 

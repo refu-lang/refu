@@ -1,13 +1,12 @@
 #ifndef LFR_RIR_STRMAP_H
 #define LFR_RIR_STRMAP_H
 
-#include <Data_Structures/strmap.h>
-#include <Definitions/inline.h>
+#include <rflib/datastructs/strmap.h>
+#include <rflib/defs/inline.h>
 
 struct symbol_table_record;
 struct rir_common;
 struct rir_block;
-
 
 struct rirobj_strmap {
     STRMAP_MEMBERS(struct rir_object*);

@@ -1,4 +1,6 @@
 #include <ir/parser/rirtoken.h>
+
+#include <rflib/string/rf_str_core.h>
 #include "rirtoken_htable.h"
 
 static struct RFstring strings_[] = {

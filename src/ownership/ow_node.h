@@ -1,16 +1,14 @@
 #ifndef LFR_OWNERSHIP_NODE_H
 #define LFR_OWNERSHIP_NODE_H
 
-#include <Data_Structures/objset.h>
-#include <Data_Structures/darray.h>
-#include <Definitions/inline.h>
-#include <Utils/sanity.h>
+#include <rflib/datastructs/objset.h>
+#include <rflib/datastructs/darray.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/sanity.h>
 
 struct rir_value;
 struct rir_expression;
 struct ow_edge;
-
-
 
 struct ow_node_full {
     const struct rir_value *val;

@@ -1,7 +1,8 @@
 #include <ast/string_literal.h>
 
-#include <ast/ast.h>
+#include <rflib/string/rf_str_core.h>
 
+#include <ast/ast.h>
 #include <module.h>
 
 struct ast_node *ast_string_literal_create(struct inplocation *loc)
@@ -11,8 +12,11 @@ struct ast_node *ast_string_literal_create(struct inplocation *loc)
     if (!ret) {
         return NULL;
     }
-    RF_STRING_SHALLOW_INIT(&ret->string_literal.string, loc->start.p + 1,
-                           loc->end.p - loc->start.p - 1);
+    RF_STRING_SHALLOW_INIT(
+        &ret->string_literal.string,
+        loc->start.p + 1,
+        loc->end.p - loc->start.p - 1
+    );
     ret->string_literal.hash = rf_hash_str_stable(&ret->string_literal.string, 0);
 
     return ret;

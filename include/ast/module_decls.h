@@ -2,7 +2,7 @@
 #define LFR_AST_MODULE_DECLS_H
 
 #include <stdbool.h>
-#include <Data_Structures/darray.h>
+#include <rflib/datastructs/darray.h>
 
 struct ast_node;
 

@@ -3,6 +3,9 @@
 
 #include "../testsupport_front.h"
 #include "../analyzer/testsupport_analyzer.h"
+
+#include <rflib/defs/inline.h>
+
 #include <ir/rir.h>
 #include <ir/rir_global.h>
 #include <ir/rir_constant.h>
@@ -10,7 +13,6 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_typedef.h>
 #include <ir/parser/rirparser.h>
-#include <Definitions/inline.h>
 
 struct rir_testdriver {
     struct front_testdriver *front_driver;

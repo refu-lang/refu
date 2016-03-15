@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include <String/rf_str_decl.h>
-#include <Definitions/inline.h>
+#include <rflib/string/rf_str_decl.h>
+#include <rflib/defs/inline.h>
 
 struct ast_node;
 struct inplocation;

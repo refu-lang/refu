@@ -1,10 +1,11 @@
 #ifndef LFR_ANALYZER_SYMBOL_TABLE_H
 #define LFR_ANALYZER_SYMBOL_TABLE_H
 
-#include <Utils/sanity.h>
-#include <Data_Structures/htable.h>
-#include <String/rf_str_decl.h>
-#include <Definitions/inline.h>
+#include <rflib/utils/sanity.h>
+#include <rflib/datastructs/htable.h>
+#include <rflib/string/rf_str_decl.h>
+#include <rflib/defs/inline.h>
+
 #include <types/type_decls.h>
 
 struct ast_node;

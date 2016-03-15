@@ -1,9 +1,8 @@
 #ifndef LFR_INPSTRING_H
 #define LFR_INPSTRING_H
 
-#include <RFstring.h>
-#include <Definitions/inline.h> //for inline
-#include <Utils/array.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/array.h>
 
 struct inpstr {
     struct RFstringx str;

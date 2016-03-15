@@ -1,11 +1,12 @@
 #include <ir/rir_strmap.h>
+
+#include <rflib/string/rf_str_core.h>
+
 #include <ir/rir.h>
 #include <ir/rir_block.h>
 #include <ir/rir_object.h>
 #include <ir/rir_function.h>
 #include <analyzer/symbol_table.h>
-
-#include <String/rf_str_core.h>
 
 bool rirobj_strmap_add(
     struct rirobj_strmap *map,

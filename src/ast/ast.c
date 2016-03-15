@@ -1,14 +1,15 @@
 #include <ast/ast.h>
 
+#include <rflib/utils/sanity.h>
+#include <rflib/utils/build_assert.h>
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ast/block.h>
 #include <ast/function.h>
 #include <ast/type.h>
 #include <ast/matchexpr.h>
 #include <ast/module.h>
-
-#include <Utils/sanity.h>
-#include <Utils/build_assert.h>
-#include <RFmemory.h>
 
 static const struct RFstring ast_type_strings[] = {
     [AST_ROOT] = RF_STRING_STATIC_INIT("root"),

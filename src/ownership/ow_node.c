@@ -1,9 +1,11 @@
 #include "ow_node.h"
+
+#include <rflib/string/rf_str_core.h>
+
 #include "ow_edge.h"
 #include "ow_debug.h"
 #include <ownership/ownership.h>
 #include <ir/rir_object.h>
-#include <String/rf_str_core.h>
 
 static void ow_node_init_common(struct ow_node *n, const struct RFstring *fnname)
 {

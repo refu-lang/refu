@@ -1,8 +1,8 @@
 #ifndef LFR_TYPES_ELEMENTARY_H
 #define LFR_TYPES_ELEMENTARY_H
 
-#include <Definitions/inline.h>
-#include <Utils/sanity.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/sanity.h>
 
 #include <types/type_decls.h>
 

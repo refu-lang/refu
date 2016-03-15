@@ -1,7 +1,7 @@
 #include "testsupport_front.h"
 
-#include <refu.h>
-#include <Definitions/threadspecific.h>
+#include <rflib/refu.h>
+#include <rflib/defs/threadspecific.h>
 
 #include <compiler.h>
 #include <ast/type.h>

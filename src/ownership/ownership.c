@@ -1,4 +1,7 @@
 #include <ownership/ownership.h>
+
+#include <rflib/datastructs/objset.h>
+
 #include <compiler.h>
 #include <ir/rir.h>
 #include <ir/rir_object.h>
@@ -6,7 +9,6 @@
 #include <ir/rir_block.h>
 #include <ir/rir_call.h>
 #include <analyzer/symbol_table.h>
-#include <Data_Structures/objset.h>
 
 #include "ow_graph.h"
 #include "ow_debug.h"

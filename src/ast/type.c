@@ -1,8 +1,10 @@
 #include <ast/type.h>
 
+#include <rflib/utils/sanity.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ast/ast.h>
 #include <ast/identifier.h>
-#include <Utils/sanity.h>
 
 static const struct RFstring op_str_prod_  = RF_STRING_STATIC_INIT(",");
 static const struct RFstring op_str_sum_   = RF_STRING_STATIC_INIT("|");

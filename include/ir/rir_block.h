@@ -1,7 +1,8 @@
 #ifndef LFR_IR_RIR_BLOCK_H
 #define LFR_IR_RIR_BLOCK_H
 
-#include <RFintrusive_list.h>
+#include <rflib/datastructs/intrusive_list.h>
+
 #include <ir/rir_branch.h>
 #include <ir/rir_strmap.h>
 #include <ir/rir_expression.h>
@@ -33,14 +34,20 @@ i_INLINE_DECL const struct RFstring *rir_block_exit_type_str(const struct rir_bl
     return rir_blockexit_type_str(b->type);
 }
 
-bool rir_block_exit_init_branch(struct rir_block_exit *exit,
-                                struct rir_value *branch_dst);
-bool rir_block_exit_init_condbranch(struct rir_block_exit *exit,
-                                    const struct rir_value *cond,
-                                    struct rir_value *taken,
-                                    struct rir_value *fallthrough);
-void rir_block_exit_return_init(struct rir_block_exit *exit,
-                                const struct rir_value *val);
+bool rir_block_exit_init_branch(
+    struct rir_block_exit *exit,
+    struct rir_value *branch_dst
+);
+bool rir_block_exit_init_condbranch(
+    struct rir_block_exit *exit,
+    const struct rir_value *cond,
+    struct rir_value *taken,
+    struct rir_value *fallthrough
+);
+void rir_block_exit_return_init(
+    struct rir_block_exit *exit,
+    const struct rir_value *val
+);
 
 struct rir_block {
     struct rir_block_exit exit;

@@ -1,11 +1,11 @@
 #ifndef LFR_AST_FUNCTIONS_H
 #define LFR_AST_FUNCTIONS_H
 
+#include <rflib/utils/sanity.h>
+
 #include <ast/ast.h>
-#include <Utils/sanity.h>
 #include <ast/identifier.h>
 #include <types/type_decls.h>
-
 #include <analyzer/symbol_table.h>
 
 /* -- function declaration functions -- */

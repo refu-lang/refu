@@ -1,9 +1,9 @@
 #include <analyzer/symbol_table.h>
 
-#include <String/rf_str_core.h>
-#include <Utils/hash.h>
-#include <Utils/memory.h>
-#include <Utils/fixed_memory_pool.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/utils/hash.h>
+#include <rflib/utils/memory.h>
+#include <rflib/utils/fixed_memory_pool.h>
 
 #include <module.h>
 #include <ast/ast.h>
@@ -68,8 +68,8 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     }
 
     if (node->type != AST_TYPE_DECLARATION && type_is_defined(rec->data)) {
-        // make sure that all records whose type is a type declaration point to the correct
-        // ast type declaration node
+        // make sure that all records whose type is a type declaration point to
+        // the correct ast type declaration node
         struct symbol_table_record *r = symbol_table_lookup_record(
             st, type_defined_get_name(rec->data), NULL
         );

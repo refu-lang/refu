@@ -2,10 +2,10 @@
 #define LFR_AST_IDENTIFIER_H
 
 #include <stdbool.h>
-#include <String/rf_str_decl.h>
 
-#include <Utils/hash.h>
-#include <Utils/sanity.h>
+#include <rflib/string/rf_str_decl.h>
+#include <rflib/utils/hash.h>
+#include <rflib/utils/sanity.h>
 
 struct ast_node;
 struct inplocation;

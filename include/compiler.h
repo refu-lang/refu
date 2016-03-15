@@ -2,9 +2,11 @@
 #define LFR_REFU_COMPILER_H
 
 #include <stdbool.h>
+
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <utils/common.h>
-#include <RFintrusive_list.h>
-#include <String/rf_str_core.h>
 #include <module.h>
 
 struct compiler_args;

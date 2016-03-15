@@ -1,8 +1,8 @@
 #ifndef LFR_STRING_SET_H
 #define LFR_STRING_SET_H
 
-#include <Data_Structures/objset.h>
-#include <Definitions/inline.h>
+#include <rflib/datastructs/objset.h>
+#include <rflib/defs/inline.h>
 
 struct RFstring;
 

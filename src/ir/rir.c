@@ -1,4 +1,10 @@
 #include <ir/rir.h>
+
+#include <rflib/utils/memory.h>
+#include <rflib/utils/fixed_memory_pool.h>
+#include <rflib/string/rf_str_common.h>
+#include <rflib/string/rf_str_corex.h>
+
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>
 #include <ir/rir_object.h>
@@ -7,10 +13,6 @@
 #include <ir/rir_utils.h>
 #include <types/type.h>
 #include <types/type_operators.h>
-#include <Utils/memory.h>
-#include <Utils/fixed_memory_pool.h>
-#include <String/rf_str_common.h>
-#include <String/rf_str_corex.h>
 #include <ast/ast.h>
 #include <ast/ast_utils.h>
 #include <ast/string_literal.h>

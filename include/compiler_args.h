@@ -7,9 +7,9 @@
 #ifndef LFR_COMPILER_ARGS_H
 #define LFR_COMPILER_ARGS_H
 
-#include <RFstring.h>
 #include <stdbool.h>
 
+#include <rflib/string/rf_str_xdecl.h>
 
 struct arg_file;
 struct arg_lit;

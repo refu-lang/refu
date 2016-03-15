@@ -1,8 +1,8 @@
 #ifndef LFR_INFO_MSG_H
 #define LFR_INFO_MSG_H
 
-#include <RFstring.h>
-#include <RFintrusive_list.h>
+#include <rflib/string.h>
+#include <rflib/datastructs/intrusive_list.h>
 
 #include <inplocation.h>
 #include <info/info.h>

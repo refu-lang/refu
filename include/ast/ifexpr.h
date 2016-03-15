@@ -1,10 +1,10 @@
 #ifndef LFR_AST_IF_EXPRESSION_H
 #define LFR_AST_IF_EXPRESSION_H
 
-#include <ast/ast.h>
+#include <rflib/defs/inline.h>
+#include <rflib/utils/sanity.h>
 
-#include <Definitions/inline.h>
-#include <Utils/sanity.h>
+#include <ast/ast.h>
 #include <lexer/tokens.h>
 
 struct ast_node;

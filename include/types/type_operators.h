@@ -1,10 +1,11 @@
 #ifndef LFR_TYPES_TYPE_OPERATORS_H
 #define LFR_TYPES_TYPE_OPERATORS_H
 
+#include <rflib/utils/sanity.h>
+#include <rflib/defs/inline.h>
+#include <rflib/string/rf_str_decl.h>
+
 #include <types/type_decls.h>
-#include <Utils/sanity.h>
-#include <Definitions/inline.h>
-#include <String/rf_str_decl.h>
 
 /**
  * Add a type as a subtype operand of a type operator

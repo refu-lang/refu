@@ -1,8 +1,9 @@
 #ifndef LFR_PARSER_H
 #define LFR_PARSER_H
 
-#include <RFintrusive_list.h>
-#include <RFstring.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/string.h>
+
 #include <parser/parser_common.h>
 
 struct info_ctx;

@@ -1,5 +1,7 @@
 #include <ir/parser/rirparser.h>
 
+#include <rflib/string/rf_str_conversion.h>
+
 #include <lexer/lexer.h>
 #include <ast/constants.h>
 #include <ir/parser/rirtoken.h>

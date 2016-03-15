@@ -1,8 +1,10 @@
 #ifndef LFR_IR_RIR_EXPRESSION_H
 #define LFR_IR_RIR_EXPRESSION_H
 
-#include <RFintrusive_list.h>
 #include <stdint.h>
+
+#include <rflib/datastructs/intrusive_list.h>
+
 #include <ast/constants_decls.h>
 #include <ir/rir_value.h>
 #include <ir/rir_argument.h>

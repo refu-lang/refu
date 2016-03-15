@@ -1,8 +1,10 @@
 #include <ast/generics.h>
 
+#include <rflib/utils/sanity.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ast/ast.h>
 #include <ast/identifier.h>
-#include <Utils/sanity.h>
 
 struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id)
 {

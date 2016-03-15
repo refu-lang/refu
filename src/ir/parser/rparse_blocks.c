@@ -1,14 +1,18 @@
 #include <ir/parser/rirparser.h>
 
+#include <rflib/utils/sanity.h>
+
 #include <lexer/lexer.h>
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <ir/rir_convert.h>
 #include <ir/rir.h>
 
-#include <Utils/sanity.h>
-
-static struct rir_object *parse_assignment(struct rir_parser *p, struct token *tok, const struct RFstring *name)
+static struct rir_object *parse_assignment(
+    struct rir_parser *p,
+    struct token *tok,
+    const struct RFstring *name
+)
 {
     struct rir_object *retobj = NULL;
     rir_pctx_set_id(&p->ctx, name);
@@ -49,7 +53,12 @@ static struct rir_object *parse_assignment(struct rir_parser *p, struct token *t
     return retobj;
 }
 
-static struct rir_object *rir_parse_label(struct rir_parser *p, struct rir_block *b, struct rirobj_strmap *map, const char *msg)
+static struct rir_object *rir_parse_label(
+    struct rir_parser *p,
+    struct rir_block *b,
+    struct rirobj_strmap *map,
+    const char *msg
+)
 {
     struct token *tok;
     if (!(tok = lexer_expect_token(parser_lexer(p), RIR_TOK_IDENTIFIER_LABEL))) {

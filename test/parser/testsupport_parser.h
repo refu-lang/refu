@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <check.h>
-#include <Preprocessor/rf_xmacro_argcount.h>
+#include <rflib/preprocessor/rf_xmacro_argcount.h>
 #include <ast/identifier.h>
 
 struct front_testdriver;
@@ -27,11 +27,17 @@ struct front_testdriver;
 #define i_testsupport_parser_node_create0(node_, type_, sl_, sc_, el_, ec_) \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
         node_ = ast_##type_##_create(&temp_location_.start,             \
                                      &temp_location_.end);              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
-    } while(0)
+} while(0)
 
 /**
  * Utility testing macros to generate a typedesc node at location with its
@@ -44,7 +50,13 @@ struct front_testdriver;
                                                        ec_)             \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
     node_ = ast_typedesc_create(                                        \
         ast_xidentifier_create(                                         \
         &temp_location_.start, &temp_location_.end,                     \
@@ -59,7 +71,13 @@ struct front_testdriver;
                                               ec_, type_, ...)          \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
         node_ = ast_typedesc_create(                                    \
             ast_##type_##_create(&temp_location_.start, &temp_location_.end, __VA_ARGS__) \
         );                                                              \
@@ -71,7 +89,13 @@ struct front_testdriver;
                                               ec_, type_)               \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
         node_ = ast_typedesc_create(                                    \
             ast_##type_##_create(&temp_location_.start, &temp_location_.end) \
         );                                                              \
@@ -86,20 +110,32 @@ struct front_testdriver;
                                            ec_, type_, value_)          \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
-        node_ = ast_constant_create_##type_(&temp_location_, value_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
+        node_ = ast_constant_create_##type_(&temp_location_, value_);   \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
 
 /**
  * A utility testing macro to generate a string literal at a location
  */
-#define testsupport_parser_string_literal_create(node_,          \
+#define testsupport_parser_string_literal_create(node_,                 \
                                                  sl_, sc_, el_,         \
                                                  ec_)                   \
     struct ast_node *node_;                                             \
     do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
         node_ = ast_string_literal_create(&temp_location_);             \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
@@ -112,7 +148,13 @@ struct front_testdriver;
                                         ec_)                            \
         struct ast_node *node_;                                         \
         do {                                                            \
-            struct inplocation temp_location_ = LOC_INIT(get_front_testdriver()->current_front->file, sl_, sc_, el_, ec_); \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
             node_ = ast_block_create();                                 \
             ast_node_set_start(node_, &temp_location_.start);           \
             ast_node_set_end(node_, &temp_location_.end);               \
@@ -122,10 +164,12 @@ struct front_testdriver;
 /**
  * A utility testing function to generate an identifier at a location
  */
-struct ast_node *testsupport_parser_identifier_create(unsigned int sline,
-                                                      unsigned int scol,
-                                                      unsigned int eline,
-                                                      unsigned int ecol);
+struct ast_node *testsupport_parser_identifier_create(
+    unsigned int sline,
+    unsigned int scol,
+    unsigned int eline,
+    unsigned int ecol
+);
 
 /**
  * A utility test macro to help create an xidentifier node wrapped over

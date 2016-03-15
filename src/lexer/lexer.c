@@ -1,6 +1,9 @@
 #include <lexer/lexer.h>
-#include <inpfile.h>
 
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_conversion.h>
+
+#include <inpfile.h>
 #include <ast/constants.h>
 #include <ast/string_literal.h>
 

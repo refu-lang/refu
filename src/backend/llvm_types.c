@@ -8,9 +8,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
-#include <Utils/hash.h>
-#include <String/rf_str_common.h>
-#include <String/rf_str_conversion.h>
+#include <rflib/utils/hash.h>
+#include <rflib/string/rf_str_common.h>
+#include <rflib/string/rf_str_conversion.h>
 
 #include <analyzer/symbol_table.h>
 #include <types/type.h>

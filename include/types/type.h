@@ -1,9 +1,9 @@
 #ifndef LFR_TYPES_TYPE_H
 #define LFR_TYPES_TYPE_H
 
-#include <Utils/sanity.h>
-#include <Definitions/inline.h>
-#include <String/rf_str_decl.h>
+#include <rflib/utils/sanity.h>
+#include <rflib/defs/inline.h>
+#include <rflib/string/rf_str_decl.h>
 
 #include <utils/traversal.h>
 #include <types/type_decls.h>

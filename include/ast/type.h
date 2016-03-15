@@ -1,13 +1,12 @@
 #ifndef LFR_AST_TYPE_H
 #define LFR_AST_TYPE_H
 
-#include <RFintrusive_list.h>
-#include <Utils/container_of.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/utils/container_of.h>
 
 #include <ast/ast.h>
 
 struct analyzer;
-
 
 /* -- functions concerning both type description and operators */
 

@@ -1,7 +1,7 @@
 #ifndef LFR_BACKEND_LLVM_TYPES_H
 #define LFR_BACKEND_LLVM_TYPES_H
 
-#include <Data_Structures/htable.h>
+#include <rflib/datastructs/htable.h>
 #include <types/type_decls.h>
 
 struct RFstring;

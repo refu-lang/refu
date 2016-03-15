@@ -1,11 +1,11 @@
 #include <ir/parser/rirparser.h>
 
+#include <rflib/utils/sanity.h>
+
 #include <lexer/lexer.h>
 #include <ir/rir_function.h>
 #include <ir/rir_object.h>
 #include <ir/rir.h>
-
-#include <Utils/sanity.h>
 
 static bool rir_parse_fn_common(
     struct rir_parser *p,

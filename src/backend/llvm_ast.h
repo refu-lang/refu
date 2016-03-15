@@ -3,9 +3,10 @@
 
 #include <stdbool.h>
 
-#include <Definitions/inline.h>
-#include <Data_Structures/darray.h>
-#include <Data_Structures/strmap.h>
+#include <rflib/defs/inline.h>
+#include <rflib/datastructs/darray.h>
+#include <rflib/datastructs/strmap.h>
+
 #include <types/type_decls.h>
 #include "llvm_types.h"
 

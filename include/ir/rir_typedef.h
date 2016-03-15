@@ -2,8 +2,8 @@
 #define LFR_IR_RIR_TYPEDEF_H
 
 #include <stdbool.h>
+#include <rflib/datastructs/darray.h>
 #include <ir/rir_argument.h>
-#include <Data_Structures/darray.h>
 
 struct rir_ctx;
 struct rir_fndef;

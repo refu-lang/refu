@@ -1,9 +1,10 @@
 #ifndef LFR_PARSER_COMMON_H
 #define LFR_PARSER_COMMON_H
 
-#include <Definitions/inline.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+#include <rflib/defs/inline.h>
 
 struct inpfile;
 struct lexer;

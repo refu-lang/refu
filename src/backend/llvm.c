@@ -6,9 +6,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
-#include <String/rf_str_core.h>
-#include <System/rf_system.h>
-#include <Persistent/buffers.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/system/rf_system.h>
+#include <rflib/persistent/buffers.h>
 
 #include <info/info.h>
 #include <analyzer/analyzer.h>
@@ -19,7 +19,6 @@
 
 #include "llvm_ast.h"
 #include "llvm_utils.h"
-
 
 static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
                                            struct compiler_args *args)

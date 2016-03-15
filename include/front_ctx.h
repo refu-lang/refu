@@ -1,9 +1,10 @@
 #ifndef LFR_FRONT_CTX_H
 #define LFR_FRONT_CTX_H
 
+#include <rflib/datastructs/intrusive_list.h>
+
 #include <inpfile.h>
 #include <analyzer/analyzer.h>
-#include <RFintrusive_list.h>
 #include <module.h>
 #include <utils/common.h>
 
@@ -12,7 +13,6 @@ struct lexer;
 struct parser;
 struct compiler_args;
 struct ast_node;
-
 
 /**
  * The front end context

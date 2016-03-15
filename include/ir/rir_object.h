@@ -1,14 +1,15 @@
 #ifndef LFR_IR_RIR_OBJECT_H
 #define LFR_IR_RIR_OBJECT_H
 
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/utils/sanity.h>
+
 #include <ir/rir_expression.h>
 #include <ir/rir_argument.h>
 #include <ir/rir_block.h>
 #include <ir/rir_typedef.h>
 #include <ir/rir_global.h>
 #include <ir/rir_variable.h>
-#include <RFintrusive_list.h>
-#include <Utils/sanity.h>
 
 struct rir_fndef;
 

@@ -1,4 +1,9 @@
 #include <ir/rir_expression.h>
+
+#include <rflib/utils/sanity.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_manipulationx.h>
+
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <ir/rir_call.h>
@@ -10,7 +15,6 @@
 #include <ir/rir_convert.h>
 #include <ir/rir_call.h>
 #include <ir/rir_type.h>
-#include <Utils/sanity.h>
 #include <ast/ast.h>
 
 void rir_expression_init_with_nilval(struct rir_expression *e,

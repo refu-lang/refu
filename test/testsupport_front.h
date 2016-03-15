@@ -3,7 +3,9 @@
 
 #include <stdbool.h>
 #include <check.h>
-#include <Data_Structures/darray.h>
+
+#include <rflib/datastructs/darray.h>
+
 #include <inpfile.h>
 #include <front_ctx.h>
 #include <ast/ast.h>

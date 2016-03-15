@@ -1,8 +1,8 @@
 #ifndef LFR_TESTSUPPORT_H
 #define LFR_TESTSUPPORT_H
 
-#include <Preprocessor/rf_xmacro_argcount.h>
-#include <String/rf_str_common.h>
+#include <rflib/preprocessor/rf_xmacro_argcount.h>
+#include <rflib/string/rf_str_common.h>
 #include <check.h>
 
 void setup_base_tests();

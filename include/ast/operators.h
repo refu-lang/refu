@@ -1,8 +1,9 @@
 #ifndef LFR_AST_OPERATORS_H
 #define LFR_AST_OPERATORS_H
 
-#include <Definitions/inline.h>
+#include <rflib/defs/inline.h>
 #include <ast/ast.h>
+
 struct token;
 
 struct ast_node *ast_binaryop_create(const struct inplocation_mark *start,

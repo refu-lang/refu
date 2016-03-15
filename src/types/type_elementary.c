@@ -1,8 +1,8 @@
 #include <types/type_elementary.h>
 
-#include <Utils/bits.h>         // for RF_BITFLAG_SET
-#include <Utils/build_assert.h> // for BUILD_ASSERT
-#include <String/rf_str_core.h> // for RF_STRING_STATIC_INIT
+#include <rflib/utils/bits.h>
+#include <rflib/utils/build_assert.h>
+#include <rflib/string/rf_str_core.h>
 
 #include <types/type.h>
 #include <types/type_comparisons.h>

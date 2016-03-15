@@ -1,4 +1,9 @@
 #include <ir/rir_value.h>
+
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_manipulationx.h>
+#include <rflib/utils/memory.h>
+
 #include <ir/rir.h>
 #include <ir/rir_call.h>
 #include <ir/rir_function.h>
@@ -7,9 +12,6 @@
 #include <ir/parser/rirparser.h>
 #include <ast/constants.h>
 #include <types/type_elementary.h>
-#include <String/rf_str_core.h>
-#include <String/rf_str_manipulationx.h>
-#include <Utils/memory.h>
 #include <utils/common_strings.h>
 
 void rir_valuearr_deinit(struct value_arr *arr, enum rvalue_pos pos)

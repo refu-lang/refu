@@ -1,9 +1,10 @@
 #include <types/type.h>
 
-#include <Persistent/buffers.h>
-#include <Utils/fixed_memory_pool.h>
-#include <Utils/bits.h>
-#include <Definitions/threadspecific.h>
+#include <rflib/persistent/buffers.h>
+#include <rflib/utils/fixed_memory_pool.h>
+#include <rflib/utils/bits.h>
+#include <rflib/defs/threadspecific.h>
+#include <rflib/string/rf_str_core.h>
 
 #include <module.h>
 #include <analyzer/analyzer.h>

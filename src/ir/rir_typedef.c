@@ -1,13 +1,15 @@
 #include <ir/rir_typedef.h>
+
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_manipulationx.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/math/math.h>
+
 #include <ir/rir.h>
 #include <ir/rir_object.h>
 #include <ir/rir_strmap.h>
 #include <types/type.h>
 #include <types/type_operators.h>
-#include <math/math.h>
-#include <Utils/memory.h>
-#include <String/rf_str_manipulationx.h>
-#include <String/rf_str_core.h>
 
 static bool rir_typedef_init_from_type(struct rir_object *obj, struct type *t, struct rir_ctx *ctx)
 {

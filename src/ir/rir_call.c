@@ -1,4 +1,8 @@
 #include <ir/rir_call.h>
+
+#include <rflib/string/rf_str_core.h>
+#include <rflib/string/rf_str_manipulationx.h>
+
 #include <ir/rir.h>
 #include <ir/rir_argument.h>
 #include <ir/rir_block.h>

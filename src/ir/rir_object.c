@@ -1,8 +1,10 @@
 #include <ir/rir_object.h>
+
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ir/rir.h>
 #include <ir/rir_function.h>
-#include <Utils/memory.h>
-#include <String/rf_str_core.h>
 
 struct rir_object *rir_object_create(enum rir_obj_category category, struct rir *r)
 {

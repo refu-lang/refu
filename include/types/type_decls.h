@@ -2,10 +2,12 @@
 #define LFR_TYPES_DECL_H
 
 #include <stdbool.h>
-#include <String/rf_str_decl.h>
+
+#include <rflib/string/rf_str_decl.h>
+#include <rflib/datastructs/intrusive_list.h>
+#include <rflib/datastructs/darray.h>
+
 #include <ast/operators_decls.h> // for binary operations enum
-#include <Data_Structures/intrusive_list.h>
-#include <Data_Structures/darray.h>
 
 struct rir_type;
 struct type;

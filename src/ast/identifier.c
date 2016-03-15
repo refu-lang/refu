@@ -1,11 +1,11 @@
 #include <ast/identifier.h>
 
+#include <rflib/utils/sanity.h>
+#include <rflib/string/rf_str_core.h>
+
 #include <ast/ast.h>
 #include <module.h>
 #include <types/type.h>
-
-#include <Utils/sanity.h>
-
 
 struct ast_node *ast_identifier_create(struct inplocation *loc, unsigned skip_start)
 {

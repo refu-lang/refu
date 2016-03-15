@@ -1,7 +1,7 @@
 #include <lexer/tokens.h>
 
-#include <String/rf_str_core.h>
-#include <Utils/build_assert.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/utils/build_assert.h>
 
 static struct RFstring strings_[] = {
     RF_STRING_STATIC_INIT("identifier"),

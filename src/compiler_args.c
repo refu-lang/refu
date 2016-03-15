@@ -1,16 +1,22 @@
 #include <compiler_args.h>
 
-#include <info/info.h>
 #include <string.h>
 
-#include <RFsystem.h>
-#include <Utils/memory.h>
+#include <rflib/utils/memory.h>
+#include <rflib/string/rf_str_corex.h>
+#include <rflib/string/rf_str_core.h>
+#include <rflib/system/rf_system.h>
+
+
+#include <info/info.h>
+
 #include <argtable/argtable3.h>
 
 #define i_eval(_def) #_def
 #define i_str(_def) i_eval(_def)
 static const char* version_message = ""
-    "Refu language compiler ver"i_str(RF_LANG_MAJOR_VERSION)"." i_str(RF_LANG_MINOR_VERSION) "." i_str(RF_LANG_PATCH_VERSION) "\n";
+    "Refu language compiler ver"i_str(RF_LANG_MAJOR_VERSION)"."
+    i_str(RF_LANG_MINOR_VERSION) "." i_str(RF_LANG_PATCH_VERSION) "\n";
 #undef i_str
 #undef i_eval
 
@@ -36,13 +42,48 @@ bool compiler_args_init(struct compiler_args *a)
     RF_STRUCT_ZERO(a);
     a->help = arg_litn(NULL, "help", 0, 1, "display this help and exit");
     a->version = arg_litn(NULL, "version", 0, 1, "display version info and exit");
-    a->verbosity = arg_int0("v", "verbose-level", "1-4", "Set compiler verbosity level");
-    a->backend = arg_rex0(NULL, "backend", "GCC|LLVM", NULL, 0, "The backend connection the refu compiler will user");
-    a->output_ast = arg_lit0(NULL, "output-ast", "If given then after analysis state the AST will be output in JSON format");
-    a->backend_debug = arg_litn(NULL, "backend-debug", 0, 1, "If given then some debug information about the backend code will be printed");
-    a->output_name = arg_str0("o", "output", "name", "output file name. Defaults to input.exe if not given");
-    a->input_rir = arg_lit0(NULL, "rir", "Interpret the input file as a RIR file and parse it.");
-    a->rir_print = arg_lit0("r", "print-rir", "If given will output the intermediate representation in a file");
+    a->verbosity = arg_int0(
+        "v",
+        "verbose-level",
+        "1-4",
+        "Set compiler verbosity level"
+    );
+    a->backend = arg_rex0(
+        NULL,
+        "backend",
+        "GCC|LLVM",
+        NULL,
+        0,
+        "The backend connection the refu compiler will user"
+    );
+    a->output_ast = arg_lit0(
+        NULL,
+        "output-ast",
+        "If given then after analysis state the AST will be output in JSON format"
+    );
+    a->backend_debug = arg_litn(
+        NULL,
+        "backend-debug",
+        0,
+        1,
+        "If given then some debug information about the backend code will be printed"
+    );
+    a->output_name = arg_str0(
+        "o",
+        "output",
+        "name",
+        "output file name. Defaults to input.exe if not given"
+    );
+    a->input_rir = arg_lit0(
+        NULL,
+        "rir",
+        "Interpret the input file as a RIR file and parse it."
+    );
+    a->rir_print = arg_lit0(
+        "r",
+        "print-rir",
+        "If given will output the intermediate representation in a file"
+    );
     a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 100, "input files");
     a->end = arg_end(20);
 
@@ -101,7 +142,11 @@ static bool compiler_args_read_input(struct compiler_args *args)
     }
 
     // else parse input file names
-    RF_MALLOC(args->input_files, sizeof(struct RFstring) * args->positional_file->count, return false);
+    RF_MALLOC(
+        args->input_files,
+        sizeof(struct RFstring) * args->positional_file->count,
+        return false
+    );
     for (i = 0; i < args->positional_file->count; ++i) {
          if (!rf_string_init(&args->input_files[i], args->positional_file->filename[i])) {
              ERROR("Internal error while consuming an input file argument");
