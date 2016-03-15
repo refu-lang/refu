@@ -7,7 +7,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include <rflib/string/core.h>
-#include <rflib/system/rf_system.h>
+#include <rflib/system/system.h>
 #include <rflib/persistent/buffers.h>
 
 #include <info/info.h>

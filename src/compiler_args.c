@@ -5,7 +5,7 @@
 #include <rflib/utils/memory.h>
 #include <rflib/string/corex.h>
 #include <rflib/string/core.h>
-#include <rflib/system/rf_system.h>
+#include <rflib/system/system.h>
 
 
 #include <info/info.h>
