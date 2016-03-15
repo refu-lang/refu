@@ -1,5 +1,5 @@
 #include <utils/common_strings.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 const struct RFstring g_str_true = RF_STRING_STATIC_INIT("true");
 const struct RFstring g_str_false = RF_STRING_STATIC_INIT("false");

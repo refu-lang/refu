@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include <rflib/string/rf_str_decl.h>
+#include <rflib/string/decl.h>
 #include <rflib/utils/hash.h>
 #include <rflib/utils/sanity.h>
 

@@ -8,9 +8,9 @@
 #include <llvm-c/Linker.h>
 
 #include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string/rf_str_common.h>
-#include <rflib/string/rf_str_core.h>
-#include <rflib/string/rf_str_conversion.h>
+#include <rflib/string/common.h>
+#include <rflib/string/core.h>
+#include <rflib/string/conversion.h>
 #include <rflib/utils/sanity.h>
 #include <rflib/utils/bits.h>
 

@@ -4,7 +4,7 @@
 #include <rflib/utils/fixed_memory_pool.h>
 #include <rflib/utils/bits.h>
 #include <rflib/defs/threadspecific.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <module.h>
 #include <analyzer/analyzer.h>

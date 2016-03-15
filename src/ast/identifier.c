@@ -1,7 +1,7 @@
 #include <ast/identifier.h>
 
 #include <rflib/utils/sanity.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <ast/ast.h>
 #include <module.h>

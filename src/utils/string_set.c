@@ -1,6 +1,6 @@
 #include <utils/string_set.h>
 
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 i_INLINE_INS const void *string_objset_key(const struct RFstring *s);
 

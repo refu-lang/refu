@@ -2,7 +2,7 @@
 
 #include <rflib/utils/bits.h>
 #include <rflib/utils/build_assert.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <types/type.h>
 #include <types/type_comparisons.h>

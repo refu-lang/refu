@@ -5,7 +5,7 @@
 
 #include <rflib/datastructs/darray.h>
 #include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string/rf_str_corex.h>
+#include <rflib/string/corex.h>
 
 enum info_msg_type {
     MESSAGE_ANY = 0xFF,

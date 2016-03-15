@@ -3,7 +3,7 @@
 
 #include <rflib/utils/sanity.h>
 #include <rflib/datastructs/htable.h>
-#include <rflib/string/rf_str_decl.h>
+#include <rflib/string/decl.h>
 #include <rflib/defs/inline.h>
 
 #include <types/type_decls.h>

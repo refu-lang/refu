@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include <rflib/utils/memory.h>
-#include <rflib/string/rf_str_corex.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/corex.h>
+#include <rflib/string/core.h>
 #include <rflib/system/rf_system.h>
 
 

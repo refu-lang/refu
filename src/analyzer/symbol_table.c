@@ -1,6 +1,6 @@
 #include <analyzer/symbol_table.h>
 
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 #include <rflib/utils/hash.h>
 #include <rflib/utils/memory.h>
 #include <rflib/utils/fixed_memory_pool.h>

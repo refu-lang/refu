@@ -4,9 +4,9 @@
 #include CLIB_TEST_HELPERS
 
 #include <rflib/utils/memory.h>
-#include <rflib/string/rf_str_core.h>
-#include <rflib/string/rf_str_files.h>
-#include <rflib/string/rf_str_conversion.h>
+#include <rflib/string/core.h>
+#include <rflib/string/files.h>
+#include <rflib/string/conversion.h>
 #include <rflib/system/rf_system.h>
 
 #include <compiler_args.h>

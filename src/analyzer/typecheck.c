@@ -3,7 +3,7 @@
 #include <rflib/utils/build_assert.h>
 #include <rflib/utils/bits.h>
 #include <rflib/persistent/buffers.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <module.h>
 #include <ast/ast.h>

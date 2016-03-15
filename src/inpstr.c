@@ -1,7 +1,7 @@
 #include <inpstr.h>
 
-#include <rflib/string/rf_str_corex.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/corex.h>
+#include <rflib/string/core.h>
 #include <rflib/utils/sanity.h>
 
 bool inpstr_init(struct inpstr *s,

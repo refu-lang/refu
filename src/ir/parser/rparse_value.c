@@ -1,6 +1,6 @@
 #include <ir/parser/rirparser.h>
 
-#include <rflib/string/rf_str_conversion.h>
+#include <rflib/string/conversion.h>
 
 #include <lexer/lexer.h>
 #include <ast/constants.h>

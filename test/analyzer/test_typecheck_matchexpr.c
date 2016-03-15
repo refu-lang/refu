@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <info/msg.h>
 #include <analyzer/analyzer.h>

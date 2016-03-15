@@ -2,7 +2,7 @@
 
 #include <rflib/utils/memory.h>
 #include <rflib/system/rf_system.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <analyzer/analyzer.h>
 #include <front_ctx.h>

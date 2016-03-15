@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <utils/common.h>
 #include <module.h>

@@ -2,8 +2,8 @@
 
 #include <rflib/utils/memory.h>
 #include <rflib/utils/fixed_memory_pool.h>
-#include <rflib/string/rf_str_common.h>
-#include <rflib/string/rf_str_corex.h>
+#include <rflib/string/common.h>
+#include <rflib/string/corex.h>
 
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>

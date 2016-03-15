@@ -1,6 +1,6 @@
 #include <ir/rir_strmap.h>
 
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 
 #include <ir/rir.h>
 #include <ir/rir_block.h>

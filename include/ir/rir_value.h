@@ -3,7 +3,7 @@
 
 #include <rflib/defs/inline.h>
 #include <rflib/datastructs/darray.h>
-#include <rflib/string/rf_str_decl.h>
+#include <rflib/string/decl.h>
 
 #include <ast/constants_decls.h>
 #include <types/type_decls.h>

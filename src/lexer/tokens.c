@@ -1,6 +1,6 @@
 #include <lexer/tokens.h>
 
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/core.h>
 #include <rflib/utils/build_assert.h>
 
 static struct RFstring strings_[] = {

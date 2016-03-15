@@ -2,7 +2,7 @@
 #define LFR_TESTSUPPORT_H
 
 #include <rflib/preprocessor/rf_xmacro_argcount.h>
-#include <rflib/string/rf_str_common.h>
+#include <rflib/string/common.h>
 #include <check.h>
 
 void setup_base_tests();

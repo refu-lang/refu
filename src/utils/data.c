@@ -2,8 +2,8 @@
 
 #include <rflib/defs/threadspecific.h>
 #include <rflib/system/rf_system.h>
-#include <rflib/string/rf_str_common.h>
-#include <rflib/string/rf_str_core.h>
+#include <rflib/string/common.h>
+#include <rflib/string/core.h>
 
 static i_THREAD__ struct RFstring *s_data_dir = NULL;
 

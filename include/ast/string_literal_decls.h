@@ -1,7 +1,7 @@
 #ifndef LFR_AST_STRING_LITERAL_DECLS_H
 #define LFR_AST_STRING_LITERAL_DECLS_H
 
-#include <rflib/string/rf_str_decl.h>
+#include <rflib/string/decl.h>
 
 struct ast_string_literal {
     struct RFstring string;

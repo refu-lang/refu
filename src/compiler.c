@@ -2,8 +2,8 @@
 
 #include <rflib/refu.h>
 #include <rflib/utils/memory.h>
-#include <rflib/string/rf_str_corex.h>
-#include <rflib/string/rf_str_traversalx.h>
+#include <rflib/string/corex.h>
+#include <rflib/string/traversalx.h>
 
 #include <utils/string_set.h>
 #include <info/info.h>

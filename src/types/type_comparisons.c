@@ -3,10 +3,10 @@
 #include <rflib/utils/sanity.h>
 #include <rflib/utils/bits.h>
 #include <rflib/defs/threadspecific.h>
-#include <rflib/string/rf_str_common.h>
-#include <rflib/string/rf_str_core.h>
-#include <rflib/string/rf_str_corex.h>
-#include <rflib/string/rf_str_manipulationx.h>
+#include <rflib/string/common.h>
+#include <rflib/string/core.h>
+#include <rflib/string/corex.h>
+#include <rflib/string/manipulationx.h>
 #include <rflib/datastructs/darray.h>
 
 #include <ast/ast.h>
