@@ -7,7 +7,7 @@
 #include <rflib/string/core.h>
 #include <rflib/string/files.h>
 #include <rflib/string/conversion.h>
-#include <rflib/system/rf_system.h>
+#include <rflib/system/system.h>
 
 #include <compiler_args.h>
 
