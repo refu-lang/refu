@@ -307,6 +307,7 @@ struct ast_node *do_front_testdriver_generate_node(
     struct inplocation_mark *smark = &temp_loc.start;
     struct inplocation_mark *emark = &temp_loc.end;
     bool is_constant = false;
+    bool is_array = false;
 
     va_start(args, args_num);
 
@@ -322,7 +323,7 @@ struct ast_node *do_front_testdriver_generate_node(
         if (args_num > 2) {
             n2 = va_arg(args, struct ast_node *);
         }
-        ret = ast_xidentifier_create(smark, emark, n1, is_constant, n2);
+        ret = ast_xidentifier_create(smark, emark, n1, is_constant, is_array, n2);
         break;
     case AST_TYPE_DESCRIPTION:
         ck_assert_uint_gt(args_num, 0);

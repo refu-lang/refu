@@ -60,15 +60,19 @@ bool ast_identifier_hash_create(struct ast_node *n, struct module *m);
 struct ast_xidentifier {
     struct ast_node *id;
     bool is_constant;
+    bool is_array;
     struct ast_node *genr;
 };
 
 
-struct ast_node *ast_xidentifier_create(const struct inplocation_mark *start,
-                                        const struct inplocation_mark *end,
-                                        struct ast_node *id,
-                                        bool is_constant,
-                                        struct ast_node *genr);
+struct ast_node *ast_xidentifier_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    struct ast_node *id,
+    bool is_constant,
+    bool is_array,
+    struct ast_node *genr
+);
 
 /**
  * String getter for only for an xidentifier's string

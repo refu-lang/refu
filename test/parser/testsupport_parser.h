@@ -57,11 +57,11 @@ struct front_testdriver;
             el_,                                                        \
             ec_                                                         \
         );                                                              \
-    node_ = ast_typedesc_create(                                        \
-        ast_xidentifier_create(                                         \
-        &temp_location_.start, &temp_location_.end,                     \
-        testsupport_parser_identifier_create(sl_, sc_, el_,ec_),        \
-                                             false, NULL)               \
+        node_ = ast_typedesc_create(                                    \
+            ast_xidentifier_create(                                     \
+                &temp_location_.start, &temp_location_.end,             \
+                testsupport_parser_identifier_create(sl_, sc_, el_,ec_), \
+                false, false, NULL)                                     \
         );                                                              \
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
@@ -181,7 +181,7 @@ struct ast_node *testsupport_parser_identifier_create(
                                    sl_, sc_, el_, ec_,                  \
                                    testsupport_parser_identifier_create( \
                                        sl_, sc_, el_, ec_),             \
-                                   false, NULL)
+                                   false, false, NULL)
 
 #define testsupport_parser_prepare()                                    \
     do {                                                                \

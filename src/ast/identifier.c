@@ -75,11 +75,14 @@ bool ast_identifier_is_wildcard(const struct ast_node *n)
 
 /* -- xidentifier functions -- */
 
-struct ast_node *ast_xidentifier_create(const struct inplocation_mark *start,
-                                        const struct inplocation_mark *end,
-                                        struct ast_node *id,
-                                        bool is_constant,
-                                        struct ast_node *genr)
+struct ast_node *ast_xidentifier_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    struct ast_node *id,
+    bool is_constant,
+    bool is_array,
+    struct ast_node *genr
+)
 {
     struct ast_node *ret;
     ret = ast_node_create_marks(AST_XIDENTIFIER, start, end);
@@ -91,6 +94,7 @@ struct ast_node *ast_xidentifier_create(const struct inplocation_mark *start,
     ret->xidentifier.is_constant = is_constant;
     ret->xidentifier.id = id;
     ret->xidentifier.genr = genr;
+    ret->xidentifier.is_array = is_array;
     if (genr) {
         ast_node_add_child(ret, genr);
     }
