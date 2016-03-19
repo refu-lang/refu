@@ -479,6 +479,31 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
             return false;
         }
         break;
+    case AST_XIDENTIFIER:
+        if (got->xidentifier.is_constant != expect->xidentifier.is_constant) {
+            ck_astcheck_abort(
+                filename, line,
+                "constness mismatch: Got \"%s\" != expected \"%s\" for the "
+                "constant state of \""RFS_PF"\"",
+                FMT_BOOL(got->xidentifier.is_constant),
+                FMT_BOOL(expect->xidentifier.is_constant),
+                RFS_PA(ast_identifier_str(expect))
+            );
+            return false;
+        }
+
+        if (got->xidentifier.is_constant != expect->xidentifier.is_constant) {
+            ck_astcheck_abort(
+                filename, line,
+                "array existence mismatch: Got \"%s\" != expected \"%s\" for "
+                "existence of array \""RFS_PF"\"",
+                FMT_BOOL(got->xidentifier.is_array),
+                FMT_BOOL(expect->xidentifier.is_array),
+                RFS_PA(ast_identifier_str(expect))
+            );
+            return false;
+        }
+        break;
     case AST_IMPORT:
         if (ast_import_is_foreign(got) != ast_import_is_foreign(expect)) {
 

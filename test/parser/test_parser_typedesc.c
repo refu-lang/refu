@@ -257,7 +257,61 @@ START_TEST(test_acc_typedesc_complex_right) {
     testsupport_parser_typedesc_create(op1, 0, 3, 0, 9, typeop,
                                    TYPEOP_SUM, id_i16, id_f32);
     testsupport_parser_node_create(t1, typeleaf, 0, 0, 0, 9, id_a, op1);
-    
+
+    ck_test_parse_as(n, typedesc, "type description", t1);
+    ast_node_destroy(n);
+    ast_node_destroy(t1);
+}END_TEST
+
+START_TEST(test_acc_identifier_const) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("a:const i16");
+    front_testdriver_new_ast_main_source(&s);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
+    testsupport_parser_xidentifier_create(
+        id_i16, true, false,
+        0, 2, 0, 10,
+        0, 8, 0, 10
+    );
+    testsupport_parser_node_create(t1, typeleaf, 0, 0, 0, 10, id_a, id_i16);
+
+    ck_test_parse_as(n, typedesc, "type description", t1);
+    ast_node_destroy(n);
+    ast_node_destroy(t1);
+}END_TEST
+
+START_TEST(test_acc_identifier_arr) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("a:i16[]");
+    front_testdriver_new_ast_main_source(&s);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
+    testsupport_parser_xidentifier_create(
+        id_i16, false, true,
+        0, 2, 0, 6,
+        0, 2, 0, 4
+    );
+    testsupport_parser_node_create(t1, typeleaf, 0, 0, 0, 6, id_a, id_i16);
+
+    ck_test_parse_as(n, typedesc, "type description", t1);
+    ast_node_destroy(n);
+    ast_node_destroy(t1);
+}END_TEST
+
+START_TEST(test_acc_identifier_constarr) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT("a: const i16[]");
+    front_testdriver_new_ast_main_source(&s);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
+    testsupport_parser_xidentifier_create(
+        id_i16, true, true,
+        0, 3, 0, 13,
+        0, 9, 0, 11
+    );
+    testsupport_parser_node_create(t1, typeleaf, 0, 0, 0, 13, id_a, id_i16);
+
     ck_test_parse_as(n, typedesc, "type description", t1);
     ast_node_destroy(n);
     ast_node_destroy(t1);
@@ -267,32 +321,38 @@ Suite *parser_typedesc_suite_create(void)
 {
     Suite *s = suite_create("parser_type_description");
 
-    TCase *simple = tcase_create("parser_type_description_simple");
-    tcase_add_checked_fixture(simple, setup_front_tests, teardown_front_tests);
-    tcase_add_test(simple, test_acc_typedesc_simple1);
-    tcase_add_test(simple, test_acc_typedesc_simple2);
-    tcase_add_test(simple, test_acc_typedesc_no_colon);
+    TCase *tc1 = tcase_create("parser_type_description_simple");
+    tcase_add_checked_fixture(tc1, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc1, test_acc_typedesc_simple1);
+    tcase_add_test(tc1, test_acc_typedesc_simple2);
+    tcase_add_test(tc1, test_acc_typedesc_no_colon);
 
-    tcase_add_test(simple, test_acc_typedesc_fail1);
-    tcase_add_test(simple, test_acc_typedesc_fail2);
-    tcase_add_test(simple, test_acc_typedesc_fail3);
+    tcase_add_test(tc1, test_acc_typedesc_fail1);
+    tcase_add_test(tc1, test_acc_typedesc_fail2);
+    tcase_add_test(tc1, test_acc_typedesc_fail3);
 
-    TCase *ops = tcase_create("parser_type_description_operators");
-    tcase_add_checked_fixture(ops, setup_front_tests, teardown_front_tests);
-    tcase_add_test(ops, test_acc_typedesc_prod1);
-    tcase_add_test(ops, test_acc_typedesc_sum1);
-    tcase_add_test(ops, test_acc_typedesc_impl1);
-    tcase_add_test(ops, test_acc_typedesc_prod2);
+    TCase *tc2 = tcase_create("parser_type_description_operators");
+    tcase_add_checked_fixture(tc2, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc2, test_acc_typedesc_prod1);
+    tcase_add_test(tc2, test_acc_typedesc_sum1);
+    tcase_add_test(tc2, test_acc_typedesc_impl1);
+    tcase_add_test(tc2, test_acc_typedesc_prod2);
 
+    TCase *tc3 = tcase_create("parser_type_description_tc3_operations");
+    tcase_add_checked_fixture(tc3, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc3, test_acc_typedesc_sum_associativity);
+    tcase_add_test(tc3, test_acc_typedesc_sum_impl_associativity);
+    tcase_add_test(tc3, test_acc_typedesc_complex_right);
 
-    TCase *complex = tcase_create("parser_type_description_complex_operations");
-    tcase_add_checked_fixture(complex, setup_front_tests, teardown_front_tests);
-    tcase_add_test(complex, test_acc_typedesc_sum_associativity);
-    tcase_add_test(complex, test_acc_typedesc_sum_impl_associativity);
-    tcase_add_test(complex, test_acc_typedesc_complex_right);
+    TCase *tc4 = tcase_create("parser_type_description_identifier_attrs");
+    tcase_add_checked_fixture(tc4, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc4, test_acc_identifier_const);
+    tcase_add_test(tc4, test_acc_identifier_arr);
+    tcase_add_test(tc4, test_acc_identifier_constarr);
 
-    suite_add_tcase(s, simple);
-    suite_add_tcase(s, ops);
-    suite_add_tcase(s, complex);
+    suite_add_tcase(s, tc1);
+    suite_add_tcase(s, tc2);
+    suite_add_tcase(s, tc3);
+    suite_add_tcase(s, tc4);
     return s;
 }
