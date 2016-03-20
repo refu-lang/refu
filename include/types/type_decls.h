@@ -12,6 +12,9 @@
 struct rir_type;
 struct type;
 
+//! An array of types
+struct arr_types {darray(struct type*);};
+
 // NOTE: preserve order, some functions depend on it
 // order should be same as rir elementary types
 enum elementary_type {
@@ -59,8 +62,8 @@ struct type_elementary {
 
 struct type_operator {
     enum typeop_type type;
-    //! Array of types constitute this type.
-    struct {darray(struct type*);} operands;
+    //! Types that consitute this type
+    struct arr_types operands;
 };
 
 struct type_defined {
@@ -86,6 +89,4 @@ struct type {
         struct type_module module;
     };
 };
-
-struct type_arr {darray(struct type*);};
 #endif

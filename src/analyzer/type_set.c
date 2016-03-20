@@ -60,7 +60,7 @@ void type_objset_destroy(struct rf_objset_type *set,
     free(set);
 }
 
-static void type_array_append(struct type_arr *arr, struct type *t)
+static void array_types_append(struct arr_types *arr, struct type *t)
 {
     struct type **it_t;
     darray_foreach(it_t, *arr) {
@@ -71,13 +71,13 @@ static void type_array_append(struct type_arr *arr, struct type *t)
     darray_append(*arr, t);
 }
 
-bool typeset_to_ordered_array(struct rf_objset_type *set, struct type_arr *arr)
+bool typeset_to_ordered_array(struct rf_objset_type *set, struct arr_types *arr)
 {
     struct rf_objset_iter it;
     struct type *t;
     struct rf_objset_iter it2;
     struct type *t2;
-    struct type_arr depending_types;
+    struct arr_types depending_types;
     darray_init(*arr);
     rf_objset_foreach(set, &it, t) {
         darray_init(depending_types);
@@ -89,13 +89,13 @@ bool typeset_to_ordered_array(struct rf_objset_type *set, struct type_arr *arr)
             }
         }
         if (darray_size(depending_types) == 0) {
-            type_array_append(arr, t);
+            array_types_append(arr, t);
         } else {
             struct type **it_t;
             darray_foreach(it_t, depending_types) {
-                type_array_append(arr, *it_t);
+                array_types_append(arr, *it_t);
             }
-            type_array_append(arr, t);
+            array_types_append(arr, t);
         }
         darray_free(depending_types);
     }

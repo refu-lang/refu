@@ -81,7 +81,7 @@ static void ck_assert_type_set_equal_impl(const struct type **expected_types,
 
 #define ck_assert_type_set_can_be_ordered_properly(i_typeset_)          \
     do {                                                                \
-        struct type_arr arr;                                            \
+        struct arr_types arr;                                           \
         ck_assert(typeset_to_ordered_array(i_typeset_, &arr));          \
         struct type **t;                                                \
         struct type **t2;                                               \

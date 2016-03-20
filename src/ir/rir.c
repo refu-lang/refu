@@ -245,7 +245,7 @@ static inline bool rir_create_typedefs(struct rf_objset_type *typeset,
                                        struct rir_ctx *ctx)
 {
     struct type **t;
-    struct type_arr tarr;
+    struct arr_types tarr;
     bool ret = false;
     // ORDER MATTERS here, since types that depend on others should be done first
     if (!typeset_to_ordered_array(typeset, &tarr)) {

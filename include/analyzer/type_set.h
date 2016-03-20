@@ -59,7 +59,7 @@ struct type *type_objset_has_string(const struct rf_objset_type *set, const stru
 void type_objset_destroy(struct rf_objset_type *set,
                          struct rf_fixed_memorypool *types_pool);
 
-bool typeset_to_ordered_array(struct rf_objset_type *set, struct type_arr *arr);
+bool typeset_to_ordered_array(struct rf_objset_type *set, struct arr_types *arr);
 
 #ifdef RF_OPTION_DEBUG
 void type_objset_print(struct rf_objset_type *set);
