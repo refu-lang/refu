@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <rflib/datastructs/darray.h>
+#include <ast/ast_utils.h>
 
 struct ast_node;
 
@@ -10,7 +11,7 @@ struct ast_import {
     //! Distinguish between foreign and normal imports
     bool foreign;
     //! Array of the importees
-    struct {darray(struct ast_node*);} member;
+    struct arr_ast_nodes member;
 };
 
 struct ast_module {

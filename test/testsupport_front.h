@@ -9,6 +9,7 @@
 #include <inpfile.h>
 #include <front_ctx.h>
 #include <ast/ast.h>
+#include <ast/ast_utils.h>
 #include <compiler.h>
 
 
@@ -18,7 +19,7 @@ struct front_testdriver {
     struct module *current_module;
     //! A buffer of ast node pointers for easy freeing
     //! of some nodes at test teardown
-    struct {darray(struct ast_node*);} nodes;
+    struct arr_ast_nodes nodes;
 };
 
 /**

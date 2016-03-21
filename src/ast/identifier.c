@@ -80,8 +80,8 @@ struct ast_node *ast_xidentifier_create(
     const struct inplocation_mark *end,
     struct ast_node *id,
     bool is_constant,
-    bool is_array,
-    struct ast_node *genr
+    struct ast_node *genr,
+    struct ast_node *arrspec
 )
 {
     struct ast_node *ret;
@@ -94,9 +94,12 @@ struct ast_node *ast_xidentifier_create(
     ret->xidentifier.is_constant = is_constant;
     ret->xidentifier.id = id;
     ret->xidentifier.genr = genr;
-    ret->xidentifier.is_array = is_array;
+    ret->xidentifier.arrspec = arrspec;
     if (genr) {
         ast_node_add_child(ret, genr);
+    }
+    if (arrspec) {
+        ast_node_add_child(ret, arrspec);
     }
 
     return ret;

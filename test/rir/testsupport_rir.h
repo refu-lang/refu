@@ -159,21 +159,6 @@ struct rir_value *testsupport_rir_value(char *name);
 #define testsupport_rir_ctype(type_, is_ptr_)                           \
     {.category=RIR_TYPE_COMPOSITE, .is_pointer=is_ptr_, .tdef=type_}
 
-// make a copy of the static arguments array and put the copy in the darray.
-// We are doing this because the darray takes ownership of the copy and will
-// free it later. If we just did a raw copy, there would be an attempt to free
-// a static array.
-#define testsupport_rir_typedef_add_arguments(tdef_, args_) \
-    do {                                                    \
-        struct rir_type **newarr = malloc(sizeof(args_));   \
-        memcpy(newarr, args_, sizeof(args_));               \
-        darray_raw_copy(                                    \
-            (tdef_)->argument_types,                        \
-            newarr,                                         \
-            sizeof(args_)/sizeof(struct rir_type*)          \
-        );                                                  \
-    } while (0)
-
 #define testsupport_rir_typearr(tdef_, elemcstr_)                       \
     do {                                                                \
         RFS_PUSH();                                                     \

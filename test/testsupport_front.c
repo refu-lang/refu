@@ -4,6 +4,7 @@
 #include <rflib/defs/threadspecific.h>
 
 #include <compiler.h>
+#include <ast/arr.h>
 #include <ast/type.h>
 #include <ast/string_literal.h>
 #include <ast/constants.h>
@@ -35,7 +36,7 @@ struct front_ctx *front_testdriver_curr_front()
 
     ck_assert_msg(!rf_ilist_is_empty(&get_front_testdriver()->compiler->front_ctxs),
                   "Attempted to request a front_ctx while the compiler has an empty list of fronts");
-    
+
     return get_front_testdriver()->current_front = rf_ilist_top(&get_front_testdriver()->compiler->front_ctxs, struct front_ctx, ln);
 }
 
@@ -75,7 +76,7 @@ struct module *front_testdriver_module()
     }
     ck_assert_msg(darray_size(get_front_testdriver()->compiler->modules) >= 1,
                   "Attempted to request a module from a front wih empty modules array");
-    
+
     return get_front_testdriver()->current_module = darray_item(get_front_testdriver()->compiler->modules, 0);
 }
 
@@ -302,12 +303,12 @@ struct ast_node *do_front_testdriver_generate_node(
     struct ast_node *ret;
     struct ast_node *n1 = NULL;
     struct ast_node *n2 = NULL;
+    struct ast_node *n3 = NULL;
     struct front_testdriver *d = get_front_testdriver();
     struct inplocation temp_loc = LOC_INIT(d->current_front->file, sl, sc, el, ec);
     struct inplocation_mark *smark = &temp_loc.start;
     struct inplocation_mark *emark = &temp_loc.end;
     bool is_constant = false;
-    bool is_array = false;
 
     va_start(args, args_num);
 
@@ -319,11 +320,13 @@ struct ast_node *do_front_testdriver_generate_node(
         if (args_num > 1) {
             is_constant = va_arg(args, int);
         }
-
         if (args_num > 2) {
             n2 = va_arg(args, struct ast_node *);
         }
-        ret = ast_xidentifier_create(smark, emark, n1, is_constant, is_array, n2);
+        if (args_num > 3) {
+            n3 = va_arg(args, struct ast_node *);
+        }
+        ret = ast_xidentifier_create(smark, emark, n1, is_constant, n2, n3);
         break;
     case AST_TYPE_DESCRIPTION:
         ck_assert_uint_gt(args_num, 0);
@@ -397,6 +400,10 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
     struct ast_node *child;
     int got_children = 0;
     int expect_children = 0;
+    if (!got && !expect) { // comparing 2 NULL values
+        return true;
+    }
+
     if (got->type != expect->type) {
         ck_astcheck_abort(
             filename, line,
@@ -491,18 +498,24 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
             );
             return false;
         }
-
-        if (got->xidentifier.is_constant != expect->xidentifier.is_constant) {
+        break;
+    case AST_ARRAY_SPEC:
+    {
+        if (ast_arrspec_dimensions_num(got) != ast_arrspec_dimensions_num(expect)) {
             ck_astcheck_abort(
                 filename, line,
-                "array existence mismatch: Got \"%s\" != expected \"%s\" for "
-                "existence of array \""RFS_PF"\"",
-                FMT_BOOL(got->xidentifier.is_array),
-                FMT_BOOL(expect->xidentifier.is_array),
-                RFS_PA(ast_identifier_str(expect))
+                "array dimensions mismatch: Got \"%u\" != expected \"%u\".",
+                ast_arrspec_dimensions_num(got),
+                ast_arrspec_dimensions_num(expect)
             );
-            return false;
         }
+        struct ast_node **gnode;
+        unsigned int i = 0;
+        darray_foreach(gnode, got->arrspec.dimensions) {
+            struct ast_node *enode = darray_item(expect->arrspec.dimensions, i++);
+            check_nodes(*gnode, enode, ifile, filename, line);
+        }
+    }
         break;
     case AST_IMPORT:
         if (ast_import_is_foreign(got) != ast_import_is_foreign(expect)) {
@@ -513,7 +526,7 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 ast_import_is_foreign(got) ? "foreign" : "normal",
                 ast_import_is_foreign(expect) ? "foreign" : "normal"
             );
-                
+
         }
         break;
     case AST_TYPE_OPERATOR:

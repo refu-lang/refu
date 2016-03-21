@@ -7,11 +7,13 @@
 #include "../../src/parser/recursive_descent/type.h"
 #include <parser/parser.h>
 #include <ast/ast.h>
+#include <ast/arr.h>
 #include <ast/type.h>
 #include <lexer/lexer.h>
 #include <info/msg.h>
 
 #include "../testsupport_front.h"
+#include "../testsupport.h"
 #include "testsupport_parser.h"
 
 #include CLIB_TEST_HELPERS
@@ -270,7 +272,7 @@ START_TEST(test_acc_identifier_const) {
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
     testsupport_parser_xidentifier_create(
-        id_i16, true, false,
+        id_i16, true, NULL, NULL,
         0, 2, 0, 10,
         0, 8, 0, 10
     );
@@ -287,8 +289,10 @@ START_TEST(test_acc_identifier_arr) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
+    struct ast_node *dimensions_arr[] = { NULL };
+    testsupport_parser_arrspec_create(arrspec, dimensions_arr, 0, 5, 0, 6);
     testsupport_parser_xidentifier_create(
-        id_i16, false, true,
+        id_i16, false, NULL, arrspec,
         0, 2, 0, 6,
         0, 2, 0, 4
     );
@@ -305,8 +309,10 @@ START_TEST(test_acc_identifier_constarr) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
+    struct ast_node *dimensions_arr[] = { NULL };
+    testsupport_parser_arrspec_create(arrspec, dimensions_arr, 0, 12, 0, 13);
     testsupport_parser_xidentifier_create(
-        id_i16, true, true,
+        id_i16, true, NULL, arrspec,
         0, 3, 0, 13,
         0, 9, 0, 11
     );

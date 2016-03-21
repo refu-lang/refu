@@ -2,10 +2,13 @@
 #define LFR_AST_UTILS_H
 
 #include <stdbool.h>
+#include <rflib/datastructs/darray.h>
 #include <utils/traversal.h>
 
 struct ast_node;
 
+//! An array of ast nodes
+struct arr_ast_nodes {darray(struct ast_node*);};
 
 /**
  * Callback function used by simple ast node traversal

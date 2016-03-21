@@ -8,6 +8,7 @@
 #include <ast/function.h>
 
 #include "testsupport_rir.h"
+#include "../testsupport.h"
 
 #include CLIB_TEST_HELPERS
 
@@ -49,7 +50,7 @@ START_TEST (test_rir_parse_single_function) {
         testsupport_rir_etype("string", false)
     };
     RFS_POP();
-    testsupport_rir_typedef_add_arguments(t1, t1_args);
+    testsupport_arr_to_darray(t1->argument_types, t1_args, struct rir_type);
 
     RFS_PUSH();
     struct rir_type *fn_args[] = {

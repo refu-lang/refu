@@ -11,6 +11,7 @@
 #include <front_ctx.h>
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/type_set.h>
+#include <ast/ast_utils.h>
 
 struct parser;
 struct inpfile;
@@ -32,7 +33,7 @@ struct analyzer_traversal_ctx {
     //! Used for assigning types to blocks
     const struct type *last_node_type;
     //! A queue of nodes to remember the current parent of a node during traversal
-    struct {darray(struct ast_node*);} parent_nodes;
+    struct arr_ast_nodes parent_nodes;
     //! Pattern matching related data
     struct pattern_matching_ctx matching_ctx;
 };

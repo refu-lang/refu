@@ -19,6 +19,7 @@
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
 #include <ast/module_decls.h>
+#include <ast/arr_decls.h>
 #include <types/type_elementary.h>
 
 #include <analyzer/symbol_table.h>
@@ -55,6 +56,7 @@ struct ast_root {
 
 enum ast_type {
     AST_ROOT = 0,
+    AST_ARRAY_SPEC,
     AST_BLOCK,
     AST_VARIABLE_DECLARATION,
     AST_RETURN_STATEMENT,
@@ -131,6 +133,7 @@ struct ast_node {
         struct ast_string_literal string_literal;
         struct ast_constant constant;
         struct ast_returnstmt returnstmt;
+        struct ast_arrspec arrspec;
     };
 };
 

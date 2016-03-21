@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <ast/identifier.h>
 
+#include "arr.h"
 #include "generics.h"
 
 #include "common.h"
@@ -13,6 +14,7 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
     struct ast_node *id;
     struct ast_node *xid;
     struct ast_node *genr;
+    struct ast_node *arrspec;
     bool is_const = false;
     const struct inplocation_mark *start;
     const struct inplocation_mark *end;
@@ -52,22 +54,23 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
     end = ast_node_endmark(id);
 
     tok = lexer_lookahead(parser_lexer(p), 1);
-    struct token *tok2 = lexer_lookahead(parser_lexer(p), 2);
-    bool is_array = false;
     genr = ast_parser_acc_genrattr(p, false); // can be NULL for example in: if a < 15 { .. }
     if (!genr && ast_parser_has_syntax_error(p)) {
         return NULL;
     }
     if (genr) {
         end = ast_node_endmark(genr);
-    } else if (tok2 && tok->type == TOKEN_SM_OSBRACE && tok2->type == TOKEN_SM_CSBRACE) {
-        is_array = true;
-        end = token_get_end(tok2);
-        lexer_curr_token_advance(parser_lexer(p));
-        lexer_curr_token_advance(parser_lexer(p));
     }
 
-    xid = ast_xidentifier_create(start, end, id, is_const, is_array, genr);
+    arrspec = ast_parser_acc_arrspec(p);
+    if (!arrspec && ast_parser_has_syntax_error(p)) {
+        return NULL;
+    }
+    if (arrspec) {
+        end = ast_node_endmark(arrspec);
+    }
+
+    xid = ast_xidentifier_create(start, end, id, is_const, genr, arrspec);
     if (!xid) {
         RF_ERRNOMEM();
         return NULL;

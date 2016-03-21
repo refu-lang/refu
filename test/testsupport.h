@@ -34,4 +34,22 @@ void teardown_base_tests();
         line_                                                   \
     )
 
+// make a copy of a static array and put the copy in the darray.
+// We are doing this only if the darray takes ownership of the copy and will
+// free it later. If we just did a raw copy, there would be an attempt to free
+// a static array.
+#define testsupport_arr_to_darray(darr_, arr_, type_)       \
+    do {                                                    \
+        type_ **newarr = malloc(sizeof(arr_));              \
+        if (!newarr) {                                      \
+            ck_abort_msg("Failed to allocate an array");    \
+        }                                                   \
+        memcpy(newarr, arr_, sizeof(arr_));                 \
+        darray_raw_copy(                                    \
+            darr_,                                          \
+            newarr,                                         \
+            sizeof(arr_) / sizeof(type_*)                   \
+        );                                                  \
+    } while (0)
+
 #endif

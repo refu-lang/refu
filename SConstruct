@@ -32,6 +32,7 @@ refu_src = [
     'lexer/tokens.c',
 
     'ast/ast.c',
+    'ast/arr.c',
     'ast/block.c',
     'ast/identifier.c',
     'ast/string_literal.c',
@@ -126,6 +127,7 @@ if local_env['PARSER_IMPLEMENTATION'] == 'RECURSIVE_DESCENT':
         'parser/recursive_descent/ifexpr.c',
         'parser/recursive_descent/matchexpr.c',
         'parser/recursive_descent/module.c',
+        'parser/recursive_descent/arr.c',
     ]
 
 # add specific environment variables

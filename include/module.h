@@ -4,6 +4,7 @@
 #include <rflib/datastructs/darray.h>
 #include <rflib/datastructs/intrusive_list.h>
 
+#include <ast/ast_utils.h>
 #include <utils/string_set.h>
 
 struct module;
@@ -25,7 +26,7 @@ struct module {
     //! A dynamic array of all the modules this module depends on
     struct modules_arr dependencies;
     //! A dynamic array of foreign functions this module needs
-    struct {darray(struct ast_node*);} foreignfn_arr;
+    struct arr_ast_nodes foreignfn_arr;
 
     /* -- Members used only for the analysis stage of the module -- */
     /* Memory pools */

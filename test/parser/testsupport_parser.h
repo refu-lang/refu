@@ -66,22 +66,26 @@ struct front_testdriver;
         node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
     } while (0)
     
-#define i_testsupport_parser_typedesc_create1(node_,                    \
-                                              sl_, sc_, el_,            \
-                                              ec_, type_, ...)          \
-    struct ast_node *node_;                                             \
-    do {                                                                \
-        struct inplocation temp_location_ = LOC_INIT(                   \
-            get_front_testdriver()->current_front->file,                \
-            sl_,                                                        \
-            sc_,                                                        \
-            el_,                                                        \
-            ec_                                                         \
-        );                                                              \
-        node_ = ast_typedesc_create(                                    \
-            ast_##type_##_create(&temp_location_.start, &temp_location_.end, __VA_ARGS__) \
-        );                                                              \
-        node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
+#define i_testsupport_parser_typedesc_create1(node_,            \
+                                              sl_, sc_, el_,    \
+                                              ec_, type_, ...)  \
+    struct ast_node *node_;                                     \
+    do {                                                        \
+        struct inplocation temp_location_ = LOC_INIT(           \
+            get_front_testdriver()->current_front->file,        \
+            sl_,                                                \
+            sc_,                                                \
+            el_,                                                \
+            ec_                                                 \
+        );                                                      \
+        node_ = ast_typedesc_create(                            \
+            ast_##type_##_create(                               \
+                &temp_location_.start,                          \
+                &temp_location_.end,                            \
+                __VA_ARGS__                                     \
+            )                                                   \
+        );                                                      \
+        node_->state = AST_NODE_STATE_AFTER_PARSING;            \
     } while (0)
 
 #define i_testsupport_parser_typedesc_create0(node_,                    \
@@ -182,7 +186,7 @@ struct ast_node *testsupport_parser_identifier_create(
         node_, xidentifier,                                             \
         sl_, sc_, el_, ec_,                                             \
         testsupport_parser_identifier_create(sl_, sc_, el_, ec_),       \
-        false, false, NULL                                              \
+        false, NULL, NULL                                               \
     )
 
 /**
@@ -192,15 +196,38 @@ struct ast_node *testsupport_parser_identifier_create(
 #define testsupport_parser_xidentifier_create(                          \
     node_,                                                              \
     is_constant_,                                                       \
-    is_array_,                                                          \
+    genr_,                                                              \
+    arr_,                                                               \
     sl_, sc_, el_, ec_,                                                 \
     isl_, isc_, iel_, iec_)                                             \
     testsupport_parser_node_create(                                     \
         node_, xidentifier,                                             \
         sl_, sc_, el_, ec_,                                             \
         testsupport_parser_identifier_create(isl_, isc_, iel_, iec_),   \
-        is_constant_, is_array_, NULL                                   \
+        is_constant_, genr_, arr_                                       \
     )
+
+/**
+ * A utility testing macro to generate an array spec at a location
+ */
+#define testsupport_parser_arrspec_create(node_, arr_,                  \
+                                          sl_, sc_, el_, ec_)           \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct inplocation temp_location_ = LOC_INIT(                   \
+            get_front_testdriver()->current_front->file,                \
+            sl_,                                                        \
+            sc_,                                                        \
+            el_,                                                        \
+            ec_                                                         \
+        );                                                              \
+        struct arr_ast_nodes dimensions;                                \
+        testsupport_arr_to_darray(dimensions, arr_, struct ast_node);   \
+        node_ = ast_arrspec_create(                                     \
+            &temp_location_.start,                                      \
+            &temp_location_.end,                                        \
+            &dimensions);                                               \
+    } while (0)
 
 #define testsupport_parser_prepare()                                    \
     do {                                                                \

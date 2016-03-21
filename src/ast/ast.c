@@ -13,6 +13,7 @@
 
 static const struct RFstring ast_type_strings[] = {
     [AST_ROOT] = RF_STRING_STATIC_INIT("root"),
+    [AST_ARRAY_SPEC] = RF_STRING_STATIC_INIT("array specifier"),
     [AST_BLOCK] = RF_STRING_STATIC_INIT("block"),
     [AST_VARIABLE_DECLARATION] = RF_STRING_STATIC_INIT("variable declaration"),
     [AST_RETURN_STATEMENT] = RF_STRING_STATIC_INIT("return statement"),
@@ -137,6 +138,17 @@ void ast_node_destroy(struct ast_node *n)
             // no type specific destruction for the rest
             break;
         }
+    }
+
+    // generic type specific destructions
+    if (n->type == AST_ARRAY_SPEC) {
+        struct ast_node **it;
+        darray_foreach(it, n->arrspec.dimensions) {
+            if (*it) {
+                ast_node_destroy(*it);
+            }
+        }
+        darray_free(n->arrspec.dimensions);
     }
 
     rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
