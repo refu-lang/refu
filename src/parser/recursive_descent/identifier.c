@@ -54,7 +54,7 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
     end = ast_node_endmark(id);
 
     tok = lexer_lookahead(parser_lexer(p), 1);
-    genr = ast_parser_acc_genrattr(p, false); // can be NULL for example in: if a < 15 { .. }
+    genr = ast_parser_acc_genrattr(p, false);
     if (!genr && ast_parser_has_syntax_error(p)) {
         return NULL;
     }
@@ -64,7 +64,7 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
 
     arrspec = ast_parser_acc_arrspec(p);
     if (!arrspec && ast_parser_has_syntax_error(p)) {
-        return NULL;
+        goto fail_free_genr;
     }
     if (arrspec) {
         end = ast_node_endmark(arrspec);
@@ -73,8 +73,18 @@ struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it
     xid = ast_xidentifier_create(start, end, id, is_const, genr, arrspec);
     if (!xid) {
         RF_ERRNOMEM();
-        return NULL;
+        goto fail_free_arrspec;
     }
 
     return xid;
+
+fail_free_arrspec:
+    if (arrspec) {
+        ast_node_destroy(arrspec);
+    }
+fail_free_genr:
+    if (genr) {
+        ast_node_destroy(genr);
+    }
+    return NULL;
 }

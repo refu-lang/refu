@@ -5,7 +5,7 @@ struct ast_parser;
 
 /**
  * single_array_specificer = "[" constant_expression "]"
- * array_specifier' = single_aray_specifier 
+ * array_specifier' = single_aray_specifier
  *                  / EMPTY
  * array_specificer = single_array_specifier array_specifier'
  */
