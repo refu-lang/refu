@@ -104,12 +104,12 @@ static bool astprinter_handle_node(struct astprinter *p,
         if (new_json) {
             json_children = json_object_new_array();
         }
-        struct ast_node *child;
-        rf_ilist_for_each(&n->children, child, lh) {
+        struct ast_node **child;
+        darray_foreach(child, n->children) {
             if (new_json) {
                 p->current = json_children;
             }
-            if (!astprinter_handle_node(p, child)) {
+            if (!astprinter_handle_node(p, *child)) {
                 return false;
             }
         }
@@ -136,15 +136,14 @@ bool ast_output_to_file(const struct ast_node *root,
         return false;
     }
 
-    struct ast_node *child;
-    rf_ilist_for_each(&root->children, child, lh) {
-        if (!astprinter_handle_node(&p, child)) {
+    struct ast_node **child;
+    darray_foreach(child, root->children) {
+        if (!astprinter_handle_node(&p, *child)) {
             return false;
         }
     }
 
     fprintf(f, "%s", json_object_to_json_string(p.root));
     fflush(f);
-
     return true;
 }

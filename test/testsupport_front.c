@@ -277,16 +277,15 @@ void front_testdriver_node_remove_children_from_array(struct front_testdriver *d
                                                       struct ast_node *n)
 {
     // extremey inefficient but this is just testing code
-    struct ast_node *child;
     struct ast_node **arr_n;
     unsigned int i;
-    rf_ilist_for_each(&n->children, child, lh) {
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
 
-        front_testdriver_node_remove_children_from_array(d, child);
-
+        front_testdriver_node_remove_children_from_array(d, *child);
         i = 0;
         darray_foreach(arr_n, d->nodes) {
-            if (*arr_n == child) {
+            if (*arr_n == *child) {
                 darray_remove(d->nodes, i);
                 break;
             }
@@ -397,9 +396,6 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                         unsigned int line)
 {
     enum constant_type ctype;
-    struct ast_node *child;
-    int got_children = 0;
-    int expect_children = 0;
     if (!got && !expect) { // comparing 2 NULL values
         return true;
     }
@@ -433,13 +429,8 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
         return false;
     }
 
-    rf_ilist_for_each(&got->children, child, lh) {
-        got_children ++;
-    }
-    rf_ilist_for_each(&expect->children, child, lh) {
-        expect_children ++;
-    }
-
+    unsigned int got_children = darray_size(got->children);
+    unsigned int expect_children = darray_size(expect->children);
     if (got_children != expect_children) {
         ck_astcheck_abort(
             filename, line,
@@ -636,26 +627,18 @@ bool check_ast_match_impl(struct ast_node *got,
                           const char* file,
                           unsigned int line)
 {
-    struct ast_node *got_child;
-    struct ast_node *expect_child;
-    int i = 0;
-    int j = 0;
-
+    unsigned int i = 0;
     if (!check_nodes(got, expect, ifile, file, line)) {
         return false;
     }
 
-    rf_ilist_for_each(&got->children, got_child, lh) {
-
-        j = 0;
-        rf_ilist_for_each(&expect->children, expect_child, lh) {
-            if (i == j &&
-                !check_ast_match_impl(got_child, expect_child, ifile, file, line)) {
-                return false;
-            }
-            ++j;
+    struct ast_node **got_child;
+    struct ast_node *expect_child;
+    darray_foreach(got_child, got->children) {
+        expect_child = darray_item(expect->children, i++);
+        if (!check_ast_match_impl(*got_child, expect_child, ifile, file, line)) {
+            return false;
         }
-        ++i;
     }
     return true;
 }

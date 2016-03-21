@@ -6,14 +6,13 @@ bool ast_pre_traverse_tree(struct ast_node *n,
                            ast_node_cb cb,
                            void *user_arg)
 {
-    struct ast_node *child;
-
     if (!cb(n, user_arg)) {
         return false;
     }
 
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (!ast_pre_traverse_tree(child, cb, user_arg)) {
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        if (!ast_pre_traverse_tree(*child, cb, user_arg)) {
             return false;
         }
     }
@@ -25,10 +24,9 @@ bool ast_post_traverse_tree(struct ast_node *n,
                             ast_node_cb cb,
                             void *user_arg)
 {
-    struct ast_node *child;
-
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (!ast_post_traverse_tree(child, cb, user_arg)) {
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        if (!ast_post_traverse_tree(*child, cb, user_arg)) {
             return false;
         }
     }
@@ -46,13 +44,13 @@ bool ast_traverse_tree(struct ast_node *n,
                        ast_node_cb post_cb,
                        void *post_user_arg)
 {
-    struct ast_node *child;
     if (!pre_cb(n, pre_user_arg)) {
         return false;
     }
 
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (!ast_traverse_tree(child, pre_cb, pre_user_arg,
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        if (!ast_traverse_tree(*child, pre_cb, pre_user_arg,
                                post_cb, post_user_arg)) {
             return false;
         }
@@ -71,7 +69,6 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
                                                        ast_node_nostop_cb post_cb,
                                                        void *post_user_arg)
 {
-    struct ast_node *child;
     enum traversal_cb_res rc;
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
@@ -79,8 +76,15 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
         return false;
     }
 
-    rf_ilist_for_each(&n->children, child, lh) {
-        rc = ast_traverse_tree_nostop_post_cb(child, pre_cb, pre_user_arg, post_cb, post_user_arg);
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        rc = ast_traverse_tree_nostop_post_cb(
+            *child,
+            pre_cb,
+            pre_user_arg,
+            post_cb,
+            post_user_arg
+        );
         if (rc == TRAVERSAL_CB_FATAL_ERROR) {
             return rc;
         } else if (rc == TRAVERSAL_CB_ERROR) {

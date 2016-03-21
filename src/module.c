@@ -103,22 +103,22 @@ void module_destroy(struct module* m)
 void module_add_foreign_import(struct module *m, struct ast_node *import)
 {
     RF_ASSERT(ast_node_is_foreign_import(import), "Expected a foreign import node");
-    struct ast_node *child;
-    rf_ilist_for_each(&import->children, child, lh) {
+    struct ast_node **child;
+    darray_foreach(child, import->children) {
         // for now foreign import should only import function decls
-        AST_NODE_ASSERT_TYPE(child, AST_FUNCTION_DECLARATION);
-        darray_append(m->foreignfn_arr, child);
+        AST_NODE_ASSERT_TYPE(*child, AST_FUNCTION_DECLARATION);
+        darray_append(m->foreignfn_arr, *child);
     }
 }
 
 bool module_add_import(struct module *m, struct ast_node *import)
 {
     AST_NODE_ASSERT_TYPE(import, AST_IMPORT);
-    struct ast_node *c;
+    struct ast_node **c;
     struct module *other_mod;
-    rf_ilist_for_each(&import->children, c, lh) {
+    darray_foreach(c, import->children) {
 
-        other_mod = compiler_module_get(ast_identifier_str(c));
+        other_mod = compiler_module_get(ast_identifier_str(*c));
         if (!other_mod) {
             // requested import module not found
             i_info_ctx_add_msg(
@@ -127,7 +127,7 @@ bool module_add_import(struct module *m, struct ast_node *import)
                 ast_node_startmark(import),
                 ast_node_endmark(import),
                 "Requested module \""RFS_PF"\" not found for importing.",
-                RFS_PA(ast_identifier_str(c))
+                RFS_PA(ast_identifier_str(*c))
             );
             return false;
         }

@@ -171,8 +171,8 @@ bool ast_matchexpr_cases_indices_set(struct ast_node *n);
 void ast_matchexpr_add_case(struct ast_node *n, struct ast_node *mcase);
 
 struct ast_matchexpr_it {
-    const struct RFilist_head *lh;
-    const struct RFilist_node *ln;
+    const struct arr_ast_nodes *cases;
+    unsigned int idx;
 };
 
 /**

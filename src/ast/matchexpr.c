@@ -163,39 +163,28 @@ struct ast_node *ast_matchexpr_first_case(const struct ast_node *n,
                                           struct ast_matchexpr_it *it)
 {
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
-    unsigned int i = 0;
-    struct ast_node *child;
-    // ugly way to get second child if we have a matched identifier so that we
+    // get second child if we have a matched identifier so that we
     // start from the first matchase
-    unsigned int start = ast_matchexpr_has_header(n) ? 1 : 0;
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (i >= start) {
-            it->lh = &n->children;
-            it->ln = &child->lh;
-            return child;
-        }
-        ++i;
-    }
-    return NULL;
+    it->idx = ast_matchexpr_has_header(n) ? 1 : 0;
+    it->cases = &n->children;
+    return darray_item(n->children, it->idx);
 }
 
 bool ast_match_expr_next_case_is_last(const struct ast_node *matchexpr,
                                       struct ast_matchexpr_it *it)
 {
     AST_NODE_ASSERT_TYPE(matchexpr, AST_MATCH_EXPRESSION);
-    return it->ln->next == &it->lh->n;
+    return it->idx + 1 == darray_size(*it->cases);
 }
 
 struct ast_node *ast_matchexpr_next_case(const struct ast_node *n,
                                          struct ast_matchexpr_it *it)
 {
-    struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(n, AST_MATCH_EXPRESSION);
-    if (it->ln->next == &it->lh->n) {
+    if (it->idx + 1 >= darray_size(*it->cases)) {
         return NULL;
     }
-    it->ln = it->ln->next;
-    return rf_ilist_node_to_off(it->ln, rf_ilist_off_var(ret, lh));
+    return darray_item(*it->cases, ++it->idx);
 }
 
 struct ast_node *ast_matchexpr_get_case(const struct ast_node *n, unsigned int i)

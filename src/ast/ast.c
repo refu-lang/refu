@@ -58,7 +58,7 @@ void ast_node_init(struct ast_node *n, enum ast_type type)
     RF_STRUCT_ZERO(n);
     n->state = AST_NODE_STATE_CREATED;
     n->type = type;
-    rf_ilist_head_init(&n->children);
+    darray_init(n->children);
 }
 
 struct ast_node *ast_node_create(enum ast_type type)
@@ -113,9 +113,6 @@ struct ast_node *ast_node_create_ptrs(enum ast_type type,
 
 void ast_node_destroy(struct ast_node *n)
 {
-    struct ast_node *child;
-    struct ast_node *tmp;
-
     /* type specific destruction  -- only if owned by analyzer and after */
     if (n->state >= AST_NODE_STATE_ANALYZER_PASS1) {
         switch(n->type) {
@@ -151,9 +148,11 @@ void ast_node_destroy(struct ast_node *n)
         darray_free(n->arrspec.dimensions);
     }
 
-    rf_ilist_for_each_safe(&n->children, child, tmp, lh) {
-        ast_node_destroy(child);
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        ast_node_destroy(*child);
     }
+    darray_free(n->children);
 
     // free node unless it's a value node still at lexing/parsing phase
     if (!(n->state == AST_NODE_STATE_CREATED && ast_node_has_value(n))) {
@@ -181,7 +180,7 @@ void ast_node_set_end(struct ast_node *n, const struct inplocation_mark *end)
 void ast_node_add_child(struct ast_node *parent,
                         struct ast_node *child)
 {
-    rf_ilist_add_tail(&parent->children, &child->lh);
+    darray_append(parent->children, child);
 }
 
 const struct RFstring *ast_node_get_name_str(const struct ast_node *n)
@@ -308,7 +307,7 @@ i_INLINE_INS struct symbol_table *ast_root_symbol_table_get(struct ast_node *n);
 
 void ast_print(struct ast_node *n, struct inpfile *f, int depth)
 {
-    struct ast_node *c;
+    struct ast_node **c;
     ast_print_prelude(n, f, depth, "");
 
     switch(n->type) {
@@ -317,8 +316,8 @@ void ast_print(struct ast_node *n, struct inpfile *f, int depth)
         break;
     default:
         printf(RFS_PF"\n", RFS_PA(ast_node_str(n)));
-        rf_ilist_for_each(&n->children, c, lh) {
-            ast_print(c, f, depth + 1);
+        darray_foreach(c, n->children) {
+            ast_print(*c, f, depth + 1);
         }
         break;
     }

@@ -42,12 +42,12 @@ struct ast_node *ast_genrdecl_create(const struct inplocation_mark *start,
 struct ast_node *ast_genrdecl_string_is_genr(struct ast_node *n,
                                              const struct RFstring *id)
 {
-    struct ast_node *child;
 
     AST_NODE_ASSERT_TYPE(n, AST_GENERIC_DECLARATION);
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (rf_string_equal(id, ast_genrtype_id_str(child))) {
-            return child;
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        if (rf_string_equal(id, ast_genrtype_id_str(*child))) {
+            return *child;
         }
     }
     return NULL;

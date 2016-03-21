@@ -245,7 +245,6 @@ static bool rir_block_init_from_ast(
         return false;
     }
 
-    struct ast_node *child;
     if (n) {
         // add basic block to the current function
         rir_fndef_add_block(rir_ctx_curr_fn(ctx), b);
@@ -256,8 +255,9 @@ static bool rir_block_init_from_ast(
             // create allocas for block's symbols and populate the symbol table with rir objects
             rir_ctx_st_create_and_add_allocas(ctx);
             // for each expression of the block create a rir expression and add it to the block
-            rf_ilist_for_each(&n->children, child, lh) {
-                if (!rir_process_ast_node(child, ctx)) {
+            struct ast_node **child;
+            darray_foreach(child, n->children) {
+                if (!rir_process_ast_node(*child, ctx)) {
                     return false;
                 }
             }

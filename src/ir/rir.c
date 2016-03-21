@@ -273,7 +273,6 @@ static bool rir_process_do(struct rir *r, struct module *m)
     RF_ASSERT(module_rir_codepath(m) == RIRPOS_AST,
               "Should not come here from a RIR parsing codepath");
     bool ret = false;
-    struct ast_node *child;
     struct rir_ctx ctx;
 
     rir_move_from_module(r, m);
@@ -335,9 +334,10 @@ static bool rir_process_do(struct rir *r, struct module *m)
 
     // for each function of the module, create a rir equivalent
     struct rir_fndef *fndef;
-    rf_ilist_for_each(&m->node->children, child, lh) {
-        if (child->type == AST_FUNCTION_IMPLEMENTATION) {
-            fndef = rir_fndef_create_from_ast(child, &ctx);
+    struct ast_node **child;
+    darray_foreach(child, m->node->children) {
+        if ((*child)->type == AST_FUNCTION_IMPLEMENTATION) {
+            fndef = rir_fndef_create_from_ast(*child, &ctx);
             if (!fndef) {
                 RF_ERROR("Failed to create a RIR function definition");
                 goto end;

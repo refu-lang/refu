@@ -6,6 +6,7 @@
 
 #include <inplocation.h>
 #include <ast/type_decls.h>
+#include <ast/ast_utils.h>
 #include <ast/typeclass_decls.h>
 #include <ast/generics_decls.h>
 #include <ast/vardecl_decls.h>
@@ -104,8 +105,7 @@ struct ast_node {
     enum ast_node_state state;
     const struct type *expression_type;
     struct inplocation location;
-    struct RFilist_node lh;
-    struct RFilist_head children;
+    struct arr_ast_nodes children;
     union {
         struct ast_root root;
         struct ast_block block;
@@ -187,26 +187,15 @@ const struct RFstring * ast_node_get_name_str(const struct ast_node *n);
 i_INLINE_DECL struct ast_node *ast_node_get_child(struct ast_node *n,
                                                   unsigned int num)
 {
-    struct ast_node *child;
-    rf_ilist_for_each(&n->children, child, lh) {
-        if (num == 0) {
-            return child;
-        }
-        num--;
+    if (num > darray_size(n->children) - 1) {
+        return NULL;
     }
-
-    return NULL;
+    return darray_item(n->children, num);
 }
 
 i_INLINE_DECL unsigned int ast_node_get_children_number(const struct ast_node *n)
 {
-    struct ast_node *child;
-    unsigned int num = 0;
-    rf_ilist_for_each(&n->children, child, lh) {
-        ++num;
-    }
-
-    return num;
+    return darray_size(n->children);
 }
 
 i_INLINE_DECL const char *ast_node_startsp(const struct ast_node *n)
