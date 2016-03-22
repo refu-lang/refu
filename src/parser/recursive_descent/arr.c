@@ -19,6 +19,8 @@ static bool ast_parser_acc_array_single(
     struct token *tok = lexer_lookahead(parser_lexer(p), 1);
     RF_ASSERT(tok, "Check existence of '[' before calling this function");
     if (tok->type == TOKEN_SM_CSBRACE) {
+        // we got an empty array specifier. Make a placeholder
+        *ret = ast_node_placeholder();
         // no expression in array specifier, consume ']'
         lexer_curr_token_advance(parser_lexer(p));
         *end = *token_get_end(tok);
@@ -26,13 +28,11 @@ static bool ast_parser_acc_array_single(
     }
     *ret = ast_parser_acc_expression(p);
     if (!*ret) {
-        if (ast_parser_has_syntax_error(p)) {
-            parser_synerr(
-                p, lexer_last_token_start(parser_lexer(p)), NULL,
-                "Expected expression inside array brackets"
-            );
-            return false;
-        }
+        parser_synerr(
+            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            "Expected expression inside array brackets"
+        );
+        return false;
     }
     if (!(tok = lexer_expect_token(parser_lexer(p), TOKEN_SM_CSBRACE))) {
             parser_synerr(

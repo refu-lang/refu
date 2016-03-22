@@ -14,7 +14,7 @@ struct ast_node *ast_arrspec_create(
         return NULL;
     }
 
-    darray_shallow_copy(ret->arrspec.dimensions, *dimensions);
+    ast_node_copy_children(ret, dimensions);
     return ret;
 }
 

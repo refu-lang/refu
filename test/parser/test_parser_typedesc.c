@@ -289,7 +289,7 @@ START_TEST(test_acc_identifier_arr) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
-    struct ast_node *dimensions_arr[] = { NULL };
+    struct ast_node *dimensions_arr[] = { ast_node_placeholder() };
     testsupport_parser_arrspec_create(arrspec, dimensions_arr, 0, 5, 0, 6);
     testsupport_parser_xidentifier_create(
         id_i16, false, NULL, arrspec,
@@ -309,7 +309,7 @@ START_TEST(test_acc_identifier_constarr) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(0, 0, 0, 0);
-    struct ast_node *dimensions_arr[] = { NULL };
+    struct ast_node *dimensions_arr[] = { ast_node_placeholder() };
     testsupport_parser_arrspec_create(arrspec, dimensions_arr, 0, 12, 0, 13);
     testsupport_parser_xidentifier_create(
         id_i16, true, NULL, arrspec,

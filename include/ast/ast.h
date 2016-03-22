@@ -20,7 +20,6 @@
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
 #include <ast/module_decls.h>
-#include <ast/arr_decls.h>
 #include <types/type_elementary.h>
 
 #include <analyzer/symbol_table.h>
@@ -88,6 +87,7 @@ enum ast_type {
     AST_STRING_LITERAL,
     AST_IDENTIFIER,
     AST_CONSTANT,
+    AST_PLACEHOLDER,
 
     AST_TYPES_COUNT /* always last */
 };
@@ -133,7 +133,6 @@ struct ast_node {
         struct ast_string_literal string_literal;
         struct ast_constant constant;
         struct ast_returnstmt returnstmt;
-        struct ast_arrspec arrspec;
     };
 };
 
@@ -159,8 +158,8 @@ void ast_node_destroy_from_lexer(struct ast_node *n);
 void ast_node_set_start(struct ast_node *n, const struct inplocation_mark *start);
 void ast_node_set_end(struct ast_node *n, const struct inplocation_mark *end);
 
-void ast_node_add_child(struct ast_node *parent,
-                        struct ast_node *child);
+void ast_node_add_child(struct ast_node *parent, struct ast_node *child);
+void ast_node_copy_children(struct ast_node *parent, struct arr_ast_nodes *children);
 
 /**
  * Depending on the node type, it finds the child node
@@ -268,6 +267,7 @@ i_INLINE_DECL const struct type *ast_node_get_type_or_nil(const struct ast_node 
 const struct RFstring *ast_nodetype_str(enum ast_type type);
 const struct RFstring *ast_nodestate_str(enum ast_node_state state);
 const struct RFstring *ast_node_str(const struct ast_node *n);
+struct ast_node *ast_node_placeholder();
 
 struct symbol_table *ast_node_symbol_table_get(struct ast_node *n);
 

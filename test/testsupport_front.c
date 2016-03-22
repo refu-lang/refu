@@ -390,10 +390,12 @@ void teardown_front_tests()
                  file_, line_, __VA_ARGS__)
 
 
-static bool check_nodes(struct ast_node *got, struct ast_node *expect,
-                        struct inpfile *ifile,
-                        const char* filename,
-                        unsigned int line)
+static bool check_nodes(
+    struct ast_node *got, struct ast_node *expect,
+    struct inpfile *ifile,
+    const char* filename,
+    unsigned int line
+)
 {
     enum constant_type ctype;
     if (!got && !expect) { // comparing 2 NULL values
@@ -499,12 +501,6 @@ static bool check_nodes(struct ast_node *got, struct ast_node *expect,
                 ast_arrspec_dimensions_num(got),
                 ast_arrspec_dimensions_num(expect)
             );
-        }
-        struct ast_node **gnode;
-        unsigned int i = 0;
-        darray_foreach(gnode, got->arrspec.dimensions) {
-            struct ast_node *enode = darray_item(expect->arrspec.dimensions, i++);
-            check_nodes(*gnode, enode, ifile, filename, line);
         }
     }
         break;

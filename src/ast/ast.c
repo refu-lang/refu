@@ -42,6 +42,7 @@ static const struct RFstring ast_type_strings[] = {
     [AST_STRING_LITERAL] = RF_STRING_STATIC_INIT("string literal"),
     [AST_IDENTIFIER] = RF_STRING_STATIC_INIT("identifier"),
     [AST_CONSTANT] = RF_STRING_STATIC_INIT("constant number"),
+    [AST_PLACEHOLDER] = RF_STRING_STATIC_INIT("placeholder"),
 };
 
 static const struct RFstring ast_state_strings[] = {
@@ -137,25 +138,16 @@ void ast_node_destroy(struct ast_node *n)
         }
     }
 
-    // generic type specific destructions
-    if (n->type == AST_ARRAY_SPEC) {
-        struct ast_node **it;
-        darray_foreach(it, n->arrspec.dimensions) {
-            if (*it) {
-                ast_node_destroy(*it);
-            }
-        }
-        darray_free(n->arrspec.dimensions);
-    }
-
     struct ast_node **child;
     darray_foreach(child, n->children) {
         ast_node_destroy(*child);
     }
     darray_free(n->children);
 
-    // free node unless it's a value node still at lexing/parsing phase
-    if (!(n->state == AST_NODE_STATE_CREATED && ast_node_has_value(n))) {
+    // free node unless it's a value node still at lexing/parsing phase, or
+    // unless it's the placeholder node
+    if (!((n->state == AST_NODE_STATE_CREATED && ast_node_has_value(n)) ||
+          n->type == AST_PLACEHOLDER)) {
         free(n);
     }
 }
@@ -177,10 +169,18 @@ void ast_node_set_end(struct ast_node *n, const struct inplocation_mark *end)
     inplocation_set_end(&n->location, end);
 }
 
-void ast_node_add_child(struct ast_node *parent,
-                        struct ast_node *child)
+void ast_node_add_child(struct ast_node *parent, struct ast_node *child)
 {
     darray_append(parent->children, child);
+}
+
+void ast_node_copy_children(struct ast_node *parent, struct arr_ast_nodes *children)
+{
+    RF_ASSERT(
+        darray_empty(parent->children) && parent->children.alloc == 0,
+        "Make sure that this is only called for empty, unitnialized arrays"
+    );
+    darray_shallow_copy(parent->children, *children);
 }
 
 const struct RFstring *ast_node_get_name_str(const struct ast_node *n)
@@ -231,6 +231,18 @@ const struct RFstring *ast_node_str(const struct ast_node *n)
         sizeof(ast_type_strings)/sizeof(struct RFstring) == AST_TYPES_COUNT
     );
     return ast_nodetype_str(n->type);
+}
+
+static struct ast_node g_ast_node_placeholder = {
+    .type=AST_PLACEHOLDER,
+    .state=AST_NODE_STATE_CREATED,
+    .expression_type=NULL,
+    .location={.start=LOCMARK_INIT_ZERO(), .end=LOCMARK_INIT_ZERO()},
+    .children={{NULL, 0, 0}}
+};
+struct ast_node *ast_node_placeholder()
+{
+    return &g_ast_node_placeholder;
 }
 
 static void ast_print_prelude(struct ast_node *n, struct inpfile *f,

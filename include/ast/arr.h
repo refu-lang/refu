@@ -16,7 +16,7 @@ struct ast_node *ast_arrspec_create(
 i_INLINE_DECL unsigned int ast_arrspec_dimensions_num(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_ARRAY_SPEC);
-    return darray_size(n->arrspec.dimensions);
+    return darray_size(n->children);
 }
 
 
