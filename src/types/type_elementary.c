@@ -33,9 +33,9 @@ static struct type i_elementary_types[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX(i_type)    \
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
+        .is_constant = false,                       \
         .elementary = {                             \
             .etype=i_type,                          \
-            .is_constant = false                    \
         }                                           \
     }
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX(ELEMENTARY_TYPE_INT_8),
@@ -59,9 +59,9 @@ static struct type i_elementary_types_constant[] = {
 #define INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(i_type)   \
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
+        .is_constant = true,                        \
         .elementary = {                             \
             .etype=i_type,                          \
-            .is_constant = true                     \
         }                                           \
     }
     INIT_ELEMENTARY_TYPE_ARRAY_INDEX2(ELEMENTARY_TYPE_INT_8),

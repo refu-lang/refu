@@ -56,8 +56,6 @@ enum type_category {
 struct type_elementary {
     //! What kind of elementary type this is
     enum elementary_type etype;
-    //! If this is a type of a constant literal
-    bool is_constant;
 };
 
 struct type_operator {
@@ -81,6 +79,7 @@ struct type_module {
 
 struct type {
     enum type_category category;
+    bool is_constant;
     union {
         struct type_defined defined;
         struct type_operator operator;

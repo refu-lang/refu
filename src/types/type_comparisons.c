@@ -209,7 +209,7 @@ static bool type_elementary_compare(const struct type *fromtype,
             // implicit conversion from bigger to smaller type is allowed also in pattern marching
             if (type_elementary_bytesize(from) > type_elementary_bytesize(to)) {
 
-                if (from->is_constant) {
+                if (fromtype->is_constant) {
                     // error
                     current_error_type = TYPECMP_ERRXPLAIN_LARGESMALL_CONSTANT;
                     goto end_error_msg;
@@ -229,7 +229,7 @@ static bool type_elementary_compare(const struct type *fromtype,
             }
             // implicit conversion from signed to unsigned allowed but not during pattern matching
             if (!type_elementary_int_is_unsigned(from) && type_elementary_int_is_unsigned(to)) {
-                if (from->is_constant || reason == TYPECMP_PATTERN_MATCHING) {
+                if (fromtype->is_constant || reason == TYPECMP_PATTERN_MATCHING) {
                     // error
                     current_error_type = TYPECMP_ERRXPLAIN_SIGNEDUNSIGNED_CONSTANT;
                     goto end_error_msg;
@@ -268,7 +268,7 @@ static bool type_elementary_compare(const struct type *fromtype,
 
         // explicit conversion from int constant numeric literal to string is ok
         if (to->etype == ELEMENTARY_TYPE_STRING &&
-            from->is_constant &&
+            fromtype->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
             
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
@@ -288,7 +288,7 @@ static bool type_elementary_compare(const struct type *fromtype,
 
         // explicit conversion from float constant numeric literal to string is ok
         if (to->etype == ELEMENTARY_TYPE_STRING &&
-            from->is_constant &&
+            fromtype->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
             
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);

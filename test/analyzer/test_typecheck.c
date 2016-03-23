@@ -129,8 +129,8 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor) {
     struct ast_node *ctor2 = ast_binaryop_right(bop2);
     ck_assert(ctor1->type = AST_FUNCTION_CALL);
     ck_assert(ctor2->type = AST_FUNCTION_CALL);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
     ck_assert(type_compare(ctor1->fncall.params_type, t_string, TYPECMP_IDENTICAL));
     ck_assert(type_compare(ctor2->fncall.params_type, t_u32, TYPECMP_IDENTICAL));
 } END_TEST
@@ -159,11 +159,11 @@ START_TEST(test_typecheck_valid_custom_sum_type_constructor2) {
     ck_assert(ctor1->type = AST_FUNCTION_CALL);
     ck_assert(ctor2->type = AST_FUNCTION_CALL);
 
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING, false);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64, false);
+    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32, false);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64, false);
+    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
 
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_string,

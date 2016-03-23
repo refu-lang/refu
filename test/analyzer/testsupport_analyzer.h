@@ -105,8 +105,7 @@ void teardown_analyzer_tests_before_firstpass();
     } while(0)
 
 
-struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype,
-                                                         bool constant);
+struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype);
 
 #define testsupport_analyzer_type_create_operator(i_optype_, ...)       \
     i_testsupport_analyzer_type_create_operator(i_optype_, RF_NARG(__VA_ARGS__), __VA_ARGS__)

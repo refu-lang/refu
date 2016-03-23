@@ -201,6 +201,6 @@ i_INLINE_DECL bool type_is_explicitly_convertable_elementary(const struct type *
  */
 i_INLINE_DECL bool type_is_constant_elementary(const struct type *t)
 {
-    return t->category == TYPE_CATEGORY_ELEMENTARY && t->elementary.is_constant;
+    return t->category == TYPE_CATEGORY_ELEMENTARY && t->is_constant;
 }
 #endif
