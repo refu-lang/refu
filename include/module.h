@@ -81,21 +81,6 @@ bool module_is_main(const struct module *m);
 enum rir_pos module_rir_codepath(const struct module *m);
 
 /**
- * If existing, retrieve the type and if not existing create the type
- * for ast node @c desc
- *
- * @param m          The module containing the type
- * @param desc       The node whose type to check
- * @param st         The symbol table to check for type existence
- * @param genrdecl   Optional generic delcation that accompanied @c desc.
- *                   Can be NULL.
- * @return           The retrieved or created type, or NULL in error.
- */
-struct type *module_get_or_create_type(struct module *m,
-                                       const struct ast_node *desc,
-                                       struct symbol_table *st,
-                                       struct ast_node *genrdecl);
-/**
  * Add a new type to the types set of this module
  *
  * @param m            The module to add the type to

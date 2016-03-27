@@ -191,38 +191,6 @@ bool module_types_set_add(struct module *m, struct type *new_type, const struct 
     return rf_objset_add(m->types_set, type, new_type);
 }
 
-struct type *module_get_or_create_type(struct module *mod,
-                                       const struct ast_node *desc,
-                                       struct symbol_table *st,
-                                       struct ast_node *genrdecl)
-{
-    struct type *t;
-    if (desc->type == AST_TYPE_LEAF) {
-        desc = ast_typeleaf_right(desc);
-    }
-    if (desc->type == AST_XIDENTIFIER) {
-        return type_lookup_xidentifier(desc, mod, st, genrdecl);
-    }
-    struct rf_objset_iter it;
-    rf_objset_foreach(mod->types_set, &it, t) {
-        if (type_equals_ast_node(t, desc, mod, st, genrdecl, TYPECMP_IDENTICAL)) {
-            return t;
-        }
-    }
-
-    // else we have to create a new type
-    t = type_create_from_node(desc, mod, st, genrdecl);
-    if (!t) {
-        return NULL;
-    }
-
-    // TODO: Should it not have been added already by the proper creation function?
-    // add it to the list
-    module_types_set_add(mod, t, desc);
-    return t;
-}
-
-
 static bool module_determine_dependencies_do(struct ast_node *n, void *user_arg)
 {
     struct module *mod = user_arg;

@@ -508,7 +508,8 @@ static bool ast_type_equality_cb(
     struct type *t,
     struct ast_type_equality_ctx *ctx)
 {
-    struct type *lookedup_t = type_lookup_xidentifier(desc, ctx->mod, ctx->st, ctx->genrdecl);
+    type_creation_ctx_set_args(ctx->mod, ctx->st, ctx->genrdecl, NULL);
+    struct type *lookedup_t = type_lookup_xidentifier(desc);
     if (!lookedup_t) {
         RF_ERROR("Failed to lookup type of an identifier");
         return false;

@@ -392,11 +392,8 @@ static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
                                                 struct analyzer_traversal_ctx *ctx)
 {
     // an ast_type_leaf's type is a type leaf
-    traversal_node_set_type(
-        n,
-        module_get_or_create_type(ctx->m, n, ctx->current_st, NULL),
-        ctx
-    );
+    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL, NULL);
+    traversal_node_set_type(n, module_get_or_create_type(n), ctx);
     return TRAVERSAL_CB_OK;
 }
 
@@ -434,7 +431,8 @@ static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
     }
 
     // for the rest we need to create it here
-    n->expression_type = type_lookup_or_create(n, ctx->m, ctx->current_st, NULL);
+    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL, NULL);
+    n->expression_type = type_lookup_or_create(n);
     RF_ASSERT_OR_EXIT(n->expression_type, "Could not determine type of matchase type operation");
     return TRAVERSAL_CB_OK;
 }

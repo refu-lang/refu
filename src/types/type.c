@@ -26,13 +26,20 @@ const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
 struct type_creation_ctx {
     //! A queue of type operators during creation
     struct {darray(struct type_operator*);} operators;
+
+    /* -- arguments to be passed down to type creation functions -- */
+    struct module *m;
+    struct symbol_table *st;
+    struct ast_node *genrdecl;
+    struct type_arr *arr;
 };
 i_THREAD__ struct type_creation_ctx *g_type_creation_ctx = NULL;
+
 
 void type_creation_ctx_init()
 {
     RF_ASSERT_OR_EXIT(!g_type_creation_ctx, "Global type creation context was already initialized.");
-    g_type_creation_ctx = malloc(sizeof(struct type_creation_ctx));
+    g_type_creation_ctx = calloc(sizeof(struct type_creation_ctx), 1);
     RF_ASSERT_OR_EXIT(g_type_creation_ctx, "Could not allocate a global type creation context");
     darray_init(g_type_creation_ctx->operators);
 }
@@ -57,6 +64,50 @@ static inline void type_creation_ctx_pop_op()
     RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
     RF_ASSERT(darray_size(g_type_creation_ctx->operators) != 0, "Tried to pop non-existing typeop");
     (void)darray_pop(g_type_creation_ctx->operators);
+}
+
+void type_creation_ctx_set_args(
+    struct module *m,
+    struct symbol_table *st,
+    struct ast_node *genrdecl,
+    struct type_arr *arr
+)
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    g_type_creation_ctx->m = m;
+    g_type_creation_ctx->st = st;
+    g_type_creation_ctx->genrdecl = genrdecl;
+    g_type_creation_ctx->arr = arr;
+}
+
+static inline struct module *type_creation_ctx_mod()
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    return g_type_creation_ctx->m;
+}
+
+static inline struct symbol_table *type_creation_ctx_st()
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    return g_type_creation_ctx->st;
+}
+
+static inline struct ast_node *type_creation_ctx_genrdecl()
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    return g_type_creation_ctx->genrdecl;
+}
+
+static inline struct type_arr *type_creation_ctx_arr()
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    return g_type_creation_ctx->arr;
+}
+
+static inline void type_creation_ctx_set_genrdecl(struct ast_node *n)
+{
+    RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
+    g_type_creation_ctx->genrdecl = n;
 }
 
 static struct type_operator *type_creation_ctx_top_op()
@@ -91,11 +142,7 @@ bool type_add_to_currop(struct type* t)
 }
 
 /* -- forward declarations of functions -- */
-static bool type_operator_init_from_node(struct type *t,
-                                         const struct ast_node *n,
-                                         struct module *m,
-                                         struct symbol_table *st,
-                                         struct ast_node *genrdecl);
+static bool type_operator_init_from_node(struct type *t, const struct ast_node *n);
 
 /* -- miscellaneous type functions used internally (static) -- */
 struct function_args_ctx {
@@ -105,10 +152,12 @@ struct function_args_ctx {
     bool success;
 };
 
-static inline void function_args_ctx_init(struct function_args_ctx *ctx,
-                                          struct symbol_table *function_st,
-                                          struct symbol_table *parent_st,
-                                          struct module *m)
+static inline void function_args_ctx_init(
+    struct function_args_ctx *ctx,
+    struct symbol_table *function_st,
+    struct symbol_table *parent_st,
+    struct module *m
+)
 {
     ctx->function_st = function_st;
     ctx->parent_st = parent_st;
@@ -172,23 +221,15 @@ void type_free(struct type *t, struct rf_fixed_memorypool *pool)
 }
 
 /* -- type creation and initialization functions used internally -- */
-static bool type_init_from_typeelem(struct type *t,
-                                    const struct ast_node *typeelem,
-                                    struct module *m,
-                                    struct symbol_table *st,
-                                    struct ast_node *genrdecl)
+static bool type_init_from_typeelem(struct type *t, const struct ast_node *elem)
 {
-    switch(typeelem->type) {
+    switch(elem->type) {
     case AST_TYPE_OPERATOR:
-        return type_operator_init_from_node(t,
-                                            typeelem,
-                                            m,
-                                            st,
-                                            genrdecl);
+        return type_operator_init_from_node(t, elem);
     case AST_TYPE_DESCRIPTION:
         // case of anonymous type on the right of a typeleaf
         // e.g.:  foo:(i32 | string)
-        return type_init_from_typeelem(t, ast_typedesc_desc_get(typeelem), m, st, genrdecl);
+        return type_init_from_typeelem(t, ast_typedesc_desc_get(elem));
     default:
         RF_CRITICAL_FAIL("Case should never happen");
         break;
@@ -196,36 +237,31 @@ static bool type_init_from_typeelem(struct type *t,
     return false;
 }
 
-struct type *type_operator_lookup_or_create(const struct ast_node *opdesc,
-                                            struct module *m,
-                                            struct symbol_table *st,
-                                            struct ast_node *genrdecl)
+static struct type *type_operator_lookup_or_create(const struct ast_node *opdesc)
 {
     struct type_operator *currop = type_creation_ctx_top_op();
     if (currop && currop->type == ast_typeop_op(opdesc)) {
         // if we are already inside a type operator of the same type
-        struct type *left = type_lookup_or_create(ast_typeop_left(opdesc), m, st, genrdecl);
+        struct type *left = type_lookup_or_create(ast_typeop_left(opdesc));
         if (!left) {
             RF_ERROR("Failed to find the left type of a typeop");
             return NULL;
         }
-        struct type *right = type_lookup_or_create(ast_typeop_right(opdesc), m, st, genrdecl);
+        struct type *right = type_lookup_or_create(ast_typeop_right(opdesc));
         if (!right) {
             RF_ERROR("Failed to find the right type of a typeop");
             return NULL;
         }
         return typeop_to_type(currop);
     } else {
-        return module_get_or_create_type(m, opdesc, st, genrdecl);
+        return module_get_or_create_type(opdesc);
     }
 }
 
-struct type *type_create_from_typeelem(const struct ast_node *typedesc,
-                                       struct module *m,
-                                       struct symbol_table *st,
-                                       struct ast_node *genrdecl)
+struct type *type_create_from_typeelem(const struct ast_node *typedesc)
 {
     struct type *ret;
+    struct module *m = type_creation_ctx_mod();
     RF_ASSERT(typedesc->type != AST_TYPE_LEAF && typedesc->type != AST_XIDENTIFIER,
               "Typeleaf or identifier should never get here");
 
@@ -234,7 +270,7 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
         RF_ERROR("Type allocation failed");
         return NULL;
     }
-    if (!type_init_from_typeelem(ret, typedesc, m, st, genrdecl)) {
+    if (!type_init_from_typeelem(ret, typedesc)) {
         type_free(ret, m->types_pool);
         return NULL;
     }
@@ -242,26 +278,23 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc,
     return ret;
 }
 
-struct type *type_lookup_or_create(const struct ast_node *n,
-                                   struct module *m,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl)
+struct type *type_lookup_or_create(const struct ast_node *n)
 {
     struct type *ret = NULL;
     switch (n->type) {
     case AST_XIDENTIFIER:
-        ret = type_lookup_xidentifier(n, m, st, genrdecl);
+        ret = type_lookup_xidentifier(n);
         break;
     case AST_TYPE_LEAF:
-        ret = module_get_or_create_type(m, ast_typeleaf_right(n), st, genrdecl);
+        ret = module_get_or_create_type(ast_typeleaf_right(n));
         break;
     case AST_TYPE_DESCRIPTION:
-        return type_lookup_or_create(ast_typedesc_desc_get(n), m, st, genrdecl);
+        return type_lookup_or_create(ast_typedesc_desc_get(n));
     case AST_TYPE_OPERATOR:
-        ret = type_operator_lookup_or_create(n, m, st, genrdecl);
+        ret = type_operator_lookup_or_create(n);
         break;
     case AST_VARIABLE_DECLARATION:
-        return type_lookup_or_create(ast_vardecl_desc_get(n), m, st, genrdecl);
+        return type_lookup_or_create(ast_vardecl_desc_get(n));
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return false,
@@ -314,22 +347,19 @@ struct type *type_create_from_operation(enum typeop_type typeop,
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create_from_node(const struct ast_node *node,
-                                   struct module *m,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl)
+struct type *type_create_from_node(const struct ast_node *node)
 {
     switch (node->type) {
     case AST_XIDENTIFIER:
-        return type_lookup_xidentifier(node, m, st, genrdecl);
+        return type_lookup_xidentifier(node);
     case AST_TYPE_DECLARATION:
-        return type_create_from_typedecl(node, m, st);
+        return type_create_from_typedecl(node);
     case AST_TYPE_DESCRIPTION:
     case AST_TYPE_OPERATOR:
     case AST_TYPE_LEAF:
-        return type_create_from_typeelem(node, m, st, genrdecl);
+        return type_create_from_typeelem(node);
     case AST_FUNCTION_DECLARATION:
-        return type_create_from_fndecl(node, m, st);
+        return type_create_from_fndecl(node);
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return false,
@@ -341,36 +371,30 @@ struct type *type_create_from_node(const struct ast_node *node,
     return NULL;
 }
 
-struct type *type_create_from_typedecl(const struct ast_node *n,
-                                       struct module *m,
-                                       struct symbol_table *st)
+struct type *type_create_from_typedecl(const struct ast_node *n)
 {
     struct type *t;
+    struct module *mod = type_creation_ctx_mod();
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
-    t = type_alloc(m);
+    t = type_alloc(mod);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
     }
     t->category = TYPE_CATEGORY_DEFINED;
     t->defined.name = ast_typedecl_name_str(n);
-    t->defined.type = type_lookup_or_create(ast_typedecl_typedesc_get(n),
-                                            m,
-                                            st,
-                                            ast_typedecl_genrdecl_get(n));
+    type_creation_ctx_set_genrdecl(ast_typedecl_genrdecl_get(n));
+    t->defined.type = type_lookup_or_create(ast_typedecl_typedesc_get(n));
     if (!t->defined.type) {
-        type_free(t, m->types_pool);
+        type_free(t, mod->types_pool);
         return NULL;
     }
 
-    module_types_set_add(m, t, n);
+    module_types_set_add(mod, t, n);
     return t;
 }
 
-static bool type_init_from_fndecl(struct type *t,
-                                  const struct ast_node *n,
-                                  struct module *m,
-                                  struct symbol_table *st)
+static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     struct ast_node *args = ast_fndecl_args_get(n);
@@ -380,14 +404,20 @@ static bool type_init_from_fndecl(struct type *t,
 
     // set argument type (left part of the operand)
     if (args) {
-        arg_type = type_lookup_or_create(args, m, st, ast_fndecl_genrdecl_get(n));
+        type_creation_ctx_set_genrdecl(ast_fndecl_genrdecl_get(n));
+        arg_type = type_lookup_or_create(args);
         if (!arg_type) {
             return false;
         }
         // also add the function's arguments to its symbol table if needed
         if (ast_fndecl_position_get(n) != FNDECL_PARTOF_FOREIGN_IMPORT) {
             struct function_args_ctx ctx;
-            function_args_ctx_init(&ctx, ast_fndecl_symbol_table_get((struct ast_node*)n), st, m);
+            function_args_ctx_init(
+                &ctx,
+                ast_fndecl_symbol_table_get((struct ast_node*)n),
+                type_creation_ctx_st(),
+                type_creation_ctx_mod()
+            );
             ast_type_foreach_arg(args, arg_type, (ast_type_cb)type_function_add_args_to_st, &ctx);
             if (!ctx.success) {
                 RF_ERROR("Failed to add a function's arguments to its symbol table");
@@ -399,8 +429,8 @@ static bool type_init_from_fndecl(struct type *t,
     }
 
     if (ret) {
-        ret_type = type_lookup_or_create(ret, m, st,
-                                         ast_fndecl_genrdecl_get(n));
+        type_creation_ctx_set_genrdecl(ast_fndecl_genrdecl_get(n));
+        ret_type = type_lookup_or_create(ret);
         if (!ret_type) {
             return false;
         }
@@ -412,11 +442,10 @@ static bool type_init_from_fndecl(struct type *t,
     return true;
 }
 
-struct type *type_create_from_fndecl(const struct ast_node *n,
-                                     struct module *m,
-                                     struct symbol_table *st)
+struct type *type_create_from_fndecl(const struct ast_node *n)
 {
     struct type *t;
+    struct module *m = type_creation_ctx_mod();
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
 
     t = type_alloc(m);
@@ -425,7 +454,7 @@ struct type *type_create_from_fndecl(const struct ast_node *n,
         return NULL;
     }
 
-    if (!type_init_from_fndecl(t, n, m, st)) {
+    if (!type_init_from_fndecl(t, n)) {
         RF_ERROR("Function type initialization failure");
         type_free(t, m->types_pool);
         return NULL;
@@ -435,9 +464,11 @@ struct type *type_create_from_fndecl(const struct ast_node *n,
     return t;
 }
 
-struct type *type_function_create(struct module *m,
-                                  struct type *arg_type,
-                                  struct type *ret_type)
+struct type *type_function_create(
+    struct module *m,
+    struct type *arg_type,
+    struct type *ret_type
+)
 {
     struct type *t;
     t = type_alloc(m);
@@ -461,11 +492,7 @@ struct type *type_module_create(struct module *m, const struct RFstring *name)
     return t;
 }
 
-static bool type_operator_init_from_node(struct type *t,
-                                         const struct ast_node *n,
-                                         struct module *m,
-                                         struct symbol_table *st,
-                                         struct ast_node *genrdecl)
+static bool type_operator_init_from_node(struct type *t, const struct ast_node *n)
 {
     bool ret = false;
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_OPERATOR);
@@ -475,11 +502,11 @@ static bool type_operator_init_from_node(struct type *t,
     t->operator.type = ast_typeop_op(n);
 
     type_creation_ctx_push_op(&t->operator);
-    struct type *left = type_lookup_or_create(ast_typeop_left(n), m, st, genrdecl);
+    struct type *left = type_lookup_or_create(ast_typeop_left(n));
     if (!left) {
         goto end;
     }
-    struct type *right = type_lookup_or_create(ast_typeop_right(n), m, st, genrdecl);
+    struct type *right = type_lookup_or_create(ast_typeop_right(n));
     if (!right) {
         goto end;
     }
@@ -491,19 +518,17 @@ end:
     return ret;
 }
 
-struct type *type_operator_create_from_node(struct ast_node *n,
-                                            struct module *m,
-                                            struct symbol_table *st,
-                                            struct ast_node *genrdecl)
+struct type *type_operator_create_from_node(struct ast_node *n)
 {
     struct type *t;
+    struct module *m = type_creation_ctx_mod();
     t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
     }
 
-    if (!type_operator_init_from_node(t, n, m, st, genrdecl)) {
+    if (!type_operator_init_from_node(t, n)) {
         type_free(t, m->types_pool);
         return NULL;
     }
@@ -513,10 +538,7 @@ struct type *type_operator_create_from_node(struct ast_node *n,
 }
 
 /* -- type getters -- */
-struct type *type_lookup_xidentifier(const struct ast_node *n,
-                                     struct module *mod,
-                                     struct symbol_table *st,
-                                     struct ast_node *genrdecl)
+struct type *type_lookup_xidentifier(const struct ast_node *n)
 {
     const struct RFstring *id;
     struct type* ret;
@@ -524,15 +546,15 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
     AST_NODE_ASSERT_TYPE(n, AST_XIDENTIFIER);
     id = ast_xidentifier_str(n);
 
-    ret = type_lookup_identifier_string(id, st);
+    ret = type_lookup_identifier_string(id, type_creation_ctx_st());
     if (ret) {
         return ret;
     }
 
     // if not check if we have generic and if it is one of them
-    if (genrdecl) {
+    if (type_creation_ctx_genrdecl()) {
         struct ast_node *genrtype;
-        genrtype = ast_genrdecl_string_is_genr(genrdecl, id);
+        genrtype = ast_genrdecl_string_is_genr(type_creation_ctx_genrdecl(), id);
         if (genrtype) {
             // TODO: read the generic type ast_node and create a generic type
             RF_ASSERT(false, "TODO: Not yet implemented");
@@ -542,7 +564,7 @@ struct type *type_lookup_xidentifier(const struct ast_node *n,
 
     // if we get here the type can't be recognized
     analyzer_err(
-        mod, ast_node_startmark(n),
+        type_creation_ctx_mod(), ast_node_startmark(n),
         ast_node_endmark(n),
         "Type \""RFS_PF"\" is not defined",
         RFS_PA(id)
@@ -574,6 +596,40 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     }
 
     return NULL;
+}
+
+struct type *module_get_or_create_type(const struct ast_node *desc)
+{
+    struct type *t;
+    if (desc->type == AST_TYPE_LEAF) {
+        desc = ast_typeleaf_right(desc);
+    }
+    if (desc->type == AST_XIDENTIFIER) {
+        return type_lookup_xidentifier(desc);
+    }
+    struct rf_objset_iter it;
+    struct module *mod = type_creation_ctx_mod();
+    rf_objset_foreach(mod->types_set, &it, t) {
+        if (type_equals_ast_node(
+                t,
+                desc,
+                mod,
+                type_creation_ctx_st(),
+                type_creation_ctx_genrdecl(),
+                TYPECMP_IDENTICAL)) {
+            return t;
+        }
+    }
+
+    // else we have to create a new type
+    if (!(t = type_create_from_node(desc))) {
+        return NULL;
+    }
+
+    // TODO: Should it not have been added already by the proper creation function?
+    // add it to the list
+    module_types_set_add(mod, t, desc);
+    return t;
 }
 
 static struct RFstring *type_str_do(const struct type *t, int options)

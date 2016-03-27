@@ -18,6 +18,21 @@ extern const struct RFstring g_wildcard_s;
 
 void type_creation_ctx_init();
 void type_creation_ctx_deinit();
+/**
+ * Set the common arguments type creation functions need for a single type
+ *
+ * @param m            The module for which to create the type
+ * @param st           The symbol table to check for the type
+ * @param genrdecl     An optional generic declaration node that describes @c n.
+ *                     Can be NULL.
+ * @param arr          Optional array specifier. Can be NULL
+ */
+void type_creation_ctx_set_args(
+    struct module *m,
+    struct symbol_table *st,
+    struct ast_node *genrdecl,
+    struct type_arr *arr
+);
 
 bool type_add_to_currop(struct type* t);
 
@@ -28,34 +43,23 @@ void type_free(struct type *t, struct rf_fixed_memorypool *pool);
 
 /* -- various type creation and initialization functions -- */
 
-struct type *type_create_from_node(const struct ast_node *n,
-                                   struct module *m,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl);
+// Arguments are set by @ref type_creation_ctx_set_args()
+struct type *type_create_from_node(const struct ast_node *n);
+// Arguments are set by @ref type_creation_ctx_set_args()
+struct type *type_create_from_typedecl(const struct ast_node *n);
+// Arguments are set by @ref type_creation_ctx_set_args()
+struct type *type_create_from_fndecl(const struct ast_node *n);
+// Arguments are set by @ref type_creation_ctx_set_args()
+struct type *type_create_from_typeelem(const struct ast_node *typedesc);
+// Arguments are set by @ref type_creation_ctx_set_args()
+struct type *type_operator_create_from_node(struct ast_node *n);
 
-struct type *type_create_from_typedecl(const struct ast_node *n,
-                                       struct module *m,
-                                       struct symbol_table *st);
-
-struct type *type_create_from_fndecl(const struct ast_node *n,
-                                     struct module *m,
-                                     struct symbol_table *st);
-
-struct type *type_function_create(struct module *m,
-                                  struct type *arg_type,
-                                  struct type *ret_type);
-
+struct type *type_function_create(
+    struct module *m,
+    struct type *arg_type,
+    struct type *ret_type
+);
 struct type *type_module_create(struct module *m, const struct RFstring *name);
-
-struct type *type_create_from_typeelem(const struct ast_node *typedesc,
-                                       struct module *m,
-                                       struct symbol_table *st,
-                                       struct ast_node *genrdecl);
-
-struct type *type_operator_create_from_node(struct ast_node *n,
-                                            struct module *m,
-                                            struct symbol_table *st,
-                                            struct ast_node *genrdecl);
 
 /* -- type getters -- */
 /**
@@ -65,17 +69,13 @@ struct type *type_operator_create_from_node(struct ast_node *n,
  * @note: If @c n is an ast description of a single type_leaf say a:f64 this is
  *        the kind of type this should return
  *
+ * Arguments are set by @ref type_creation_ctx_set_args()
+ *
  * @param n            The node whose type to retrieve/create
- * @param m            The module for which to do it
- * @param st           The symbol table to check for the type
- * @param genrdecl     An optional generic declaration node that describes @c n.
- *                     Can be NULL.
- * @return             Return either the type of @c n or NULL if there was an error
+ * @return             Return either the type of @c n or NULL if there
+ *                      was an error
  */
-struct type *type_lookup_or_create(const struct ast_node *n,
-                                   struct module *m,
-                                   struct symbol_table *st,
-                                   struct ast_node *genrdecl);
+struct type *type_lookup_or_create(const struct ast_node *n);
 
 /**
  * Applies a type operator to 2 types and returns the result. If either of the 2
@@ -98,10 +98,23 @@ struct type *type_create_from_operation(enum typeop_type type,
 
 struct type *type_lookup_identifier_string(const struct RFstring *str,
                                            const struct symbol_table *st);
-struct type *type_lookup_xidentifier(const struct ast_node *n,
-                                     struct module *mod,
-                                     struct symbol_table *st,
-                                     struct ast_node *genrdecl);
+/**
+ * Lookup the type of an xidentifier
+ *
+ * Arguments are set by @ref type_creation_ctx_set_args()
+ */
+struct type *type_lookup_xidentifier(const struct ast_node *n);
+
+/**
+ * If existing, retrieve the type and if not existing create the type
+ * for ast node @c desc
+ *
+ * Arguments are set by @ref type_creation_ctx_set_args()
+ *
+ * @param desc       The node whose type to check
+ * @return           The retrieved or created type, or NULL in error.
+ */
+struct type *module_get_or_create_type(const struct ast_node *desc);
 
 //! Options for invoking type_str()
 enum type_str_options {

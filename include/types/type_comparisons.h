@@ -70,12 +70,14 @@ bool type_compare(const struct type *from,
  * @return          true if the type and the node describe the same type.
  *                  false otherwise.
  */
-bool type_equals_ast_node(struct type *t,
-                          const struct ast_node *n,
-                          struct module *m,
-                          struct symbol_table *st,
-                          struct ast_node *genrdecl,
-                          enum comparison_reason options);
+bool type_equals_ast_node(
+    struct type *t,
+    const struct ast_node *n,
+    struct module *m,
+    struct symbol_table *st,
+    struct ast_node *genrdecl,
+    enum comparison_reason options
+);
 
 
 /**
