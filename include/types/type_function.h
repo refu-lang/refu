@@ -70,5 +70,10 @@ void type_function_init(
     struct type *arg_type,
     struct type *ret_type
 );
+struct type *type_function_create(
+    struct module *m,
+    struct type *arg_type,
+    struct type *ret_type
+);
 
 #endif

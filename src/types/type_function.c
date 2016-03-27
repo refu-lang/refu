@@ -48,3 +48,20 @@ void type_function_init(
     darray_append(t->operator.operands, arg_type);
     darray_append(t->operator.operands, ret_type);
 }
+
+struct type *type_function_create(
+    struct module *m,
+    struct type *arg_type,
+    struct type *ret_type
+)
+{
+    struct type *t;
+    t = type_alloc(m);
+    if (!t) {
+        RF_ERROR("Type allocation failed");
+        return NULL;
+    }
+    type_function_init(t, arg_type, ret_type);
+    return t;
+}
+
