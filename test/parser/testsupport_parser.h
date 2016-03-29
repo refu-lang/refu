@@ -222,7 +222,7 @@ struct ast_node *testsupport_parser_identifier_create(
             ec_                                                         \
         );                                                              \
         struct arr_ast_nodes dimensions;                                \
-        testsupport_arr_to_darray(dimensions, arr_, struct ast_node);   \
+        testsupport_arr_to_darray(dimensions, arr_, struct ast_node*);  \
         node_ = ast_arrspec_create(                                     \
             &temp_location_.start,                                      \
             &temp_location_.end,                                        \

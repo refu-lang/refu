@@ -19,18 +19,22 @@
 #include <types/type_elementary.h>
 #include <types/type_function.h>
 #include <types/type_comparisons.h>
+#include <types/type_arr.h>
 
 const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
 
 static struct RFstring *type_str_do(const struct type *t, int options)
 {
-
+    struct RFstring *ret = RFS("");
     switch(t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        return (struct RFstring*)type_elementary_get_str(t->elementary.etype);
+        ret = RFS(
+            RFS_PF,
+            RFS_PA((struct RFstring*)type_elementary_get_str(t->elementary.etype))
+        );
+        break;
     case TYPE_CATEGORY_OPERATOR:
     {
-        struct RFstring *ret = RFS("");
         size_t sz = 0;
         struct type **subt;
         darray_foreach(subt, t->operator.operands) {
@@ -40,18 +44,24 @@ static struct RFstring *type_str_do(const struct type *t, int options)
             }
             ++sz;
         }
-        return ret;
     }
+    break;
     case TYPE_CATEGORY_DEFINED:
-        return RFS(RFS_PF, RFS_PA(t->defined.name));
+        ret = RFS(RFS_PF, RFS_PA(t->defined.name));
+        break;
     case TYPE_CATEGORY_WILDCARD:
-        return RFS(RFS_PF, RFS_PA(&g_wildcard_s));
+        ret = RFS(RFS_PF, RFS_PA(&g_wildcard_s));
+        break;
     default:
         RF_CRITICAL_FAIL("TODO: Not yet implemented");
-        break;
+        return NULL;
     }
 
-    return NULL;
+    // also if the type has an array specifier add it to the representation
+    if (t->array) {
+        ret = type_str_add_array(ret, t->array);
+    }
+    return ret;
 }
 
 struct RFstring *type_str(const struct type *t, int options)

@@ -92,6 +92,15 @@ enum rir_pos module_rir_codepath(const struct module *m);
 bool module_types_set_add(struct module *m, struct type *new_type, const struct ast_node *n);
 
 /**
+ * Query if a module knows of a specific type by string representation
+ *
+ * @param m            The module to query
+ * @param s            The string representation of the type to search for
+ * @return             The type that was found or NULL if no type is found.
+ */
+struct type *module_types_set_has_str(struct module *m, const struct RFstring *s);
+
+/**
  * Manually add the standard library as a dependency to a module
  */
 bool module_add_stdlib(struct module *m);

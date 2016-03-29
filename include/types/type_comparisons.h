@@ -54,9 +54,11 @@ i_INLINE_DECL bool type_category_equals(const struct type* t,
  * @param reason    The reason for the comparison. @see enum comparison_reason
  * @return          True or false if comparisons succeeds or not.
  */
-bool type_compare(const struct type *from,
-                  const struct type *to,
-                  enum comparison_reason reason);
+bool type_compare(
+    const struct type *from,
+    const struct type *to,
+    enum comparison_reason reason
+);
 
 /**
  * Compare a type and an AST node that describes a type.

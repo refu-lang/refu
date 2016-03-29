@@ -39,6 +39,7 @@ bool type_add_to_currop(struct type* t);
 /* -- type allocation functions -- */
 
 struct type *type_alloc(struct module *m);
+struct type *type_alloc_copy(struct module *m, struct type *source);
 void type_free(struct type *t, struct rf_fixed_memorypool *pool);
 
 /* -- various type creation and initialization functions -- */

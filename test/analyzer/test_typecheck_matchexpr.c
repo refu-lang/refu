@@ -53,11 +53,11 @@ START_TEST(test_typecheck_matchexpr_simple) {
     TEST_TYPECHECK_GET_MEXPR();
 
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_c0 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_c0 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
     testsupport_types_same(c0->matchcase.matched_type, t_c0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_same(c1->matchcase.matched_type, t_c1);
 
 } END_TEST
@@ -75,13 +75,13 @@ START_TEST(test_typecheck_matchexpr_simple_product_of_2) {
     );
     TEST_TYPECHECK_GET_MEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i32, t_bool);
     testsupport_types_same(c0->matchcase.matched_type, t_prod_1);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_same(c1->matchcase.matched_type, t_c1);
 } END_TEST
 
@@ -98,13 +98,13 @@ START_TEST(test_typecheck_matchexpr_simple_2_wildcards) {
     );
     TEST_TYPECHECK_GET_MEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i32, t_bool);
     testsupport_types_same(c0->matchcase.matched_type, t_prod_1);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_same(c1->matchcase.matched_type, t_c1);
 } END_TEST
 
@@ -124,20 +124,20 @@ START_TEST(test_typecheck_matchexpr_simple_3_wildcards) {
     );
     TEST_TYPECHECK_GET_MEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c0->matchcase.matched_type, t_string);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
     struct type *t_prod_0 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_u64,
                                                                       t_f64);
     testsupport_types_equal(c1->matchcase.matched_type, t_prod_0);
 
     struct ast_node *c2 = ast_matchexpr_get_case(mexpr, 2);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i32,
                                                                       t_bool,
@@ -160,12 +160,12 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_single) {
     );
     TEST_TYPECHECK_GET_ASSIGNMEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_c0 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c0 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c0->matchcase.matched_type, t_c0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i32,
                                                                       t_bool);
@@ -185,12 +185,12 @@ START_TEST(test_typecheck_matchexpr_assign_to_check_type_sum_of_2) {
     );
     TEST_TYPECHECK_GET_ASSIGNMEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_c0 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c0 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c0->matchcase.matched_type, t_c0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i32,
                                                                       t_bool);
@@ -210,11 +210,11 @@ START_TEST (test_typecheck_access_field) {
     );
     TEST_TYPECHECK_GET_ASSIGNMEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_c0 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_c0 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
     testsupport_types_equal(c0->matchcase.matched_type, t_c0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c1->matchcase.matched_type, t_c1);
 } END_TEST
 
@@ -231,11 +231,11 @@ START_TEST (test_typecheck_access_field_same_name_as_parent_block) {
     );
     TEST_TYPECHECK_GET_ASSIGNMEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_c0 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_c0 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
     testsupport_types_equal(c0->matchcase.matched_type, t_c0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c1->matchcase.matched_type, t_c1);
 } END_TEST
 
@@ -252,13 +252,13 @@ START_TEST (test_typecheck_access_fieldname_in_typeop) {
     );
     TEST_TYPECHECK_GET_ASSIGNMEXPR();
     struct ast_node *c0 = ast_matchexpr_get_case(mexpr, 0);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
     struct type *t_prod_0 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT, t_i32, t_f32);
     testsupport_types_equal(c0->matchcase.matched_type, t_prod_0);
 
     struct ast_node *c1 = ast_matchexpr_get_case(mexpr, 1);
-    struct type *t_c1 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_c1 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     testsupport_types_equal(c1->matchcase.matched_type, t_c1);
 } END_TEST
 

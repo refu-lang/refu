@@ -77,9 +77,15 @@ struct type_module {
     const struct RFstring *name;
 };
 
+struct arr_int64 { darray(int64_t);};
+struct type_arr {
+    struct arr_int64 dimensions;
+};
+
 struct type {
     enum type_category category;
     bool is_constant;
+    struct type_arr *array;
     union {
         struct type_defined defined;
         struct type_operator operator;

@@ -40,7 +40,7 @@ void teardown_base_tests();
 // a static array.
 #define testsupport_arr_to_darray(darr_, arr_, type_)       \
     do {                                                    \
-        type_ **newarr = malloc(sizeof(arr_));              \
+        type_ *newarr = malloc(sizeof(arr_));               \
         if (!newarr) {                                      \
             ck_abort_msg("Failed to allocate an array");    \
         }                                                   \
@@ -48,7 +48,7 @@ void teardown_base_tests();
         darray_raw_copy(                                    \
             darr_,                                          \
             newarr,                                         \
-            sizeof(arr_) / sizeof(type_*)                   \
+            sizeof(arr_) / sizeof(type_)                    \
         );                                                  \
     } while (0)
 

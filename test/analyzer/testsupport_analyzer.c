@@ -9,6 +9,7 @@
 #include <ast/ast.h>
 
 #include <types/type_function.h>
+#include <types/type_arr.h>
 
 #define ck_analyzer_check_abort(file_, line_, msg_, ...)                \
     ck_abort_msg("Checking expected parser error from: %s:%u\n\t"msg_,  \
@@ -98,7 +99,7 @@ void teardown_analyzer_tests_before_firstpass()
 }
 
 
-struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype)
+struct type *testsupport_analyzer_type_create_simple_elementary(enum elementary_type etype)
 {
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;

@@ -2,6 +2,7 @@
 #define LFR_TESTSUPPORT_ANALYZER_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <rflib/datastructs/darray.h>
 
@@ -11,7 +12,10 @@
 
 #include <types/type.h>
 #include <types/type_comparisons.h>
+#include <types/type_arr.h>
 #include <analyzer/typecheck.h>
+
+#include "../testsupport.h"
 
 struct ast_node;
 
@@ -105,7 +109,15 @@ void teardown_analyzer_tests_before_firstpass();
     } while(0)
 
 
-struct type *testsupport_analyzer_type_create_elementary(enum elementary_type etype);
+
+struct type *testsupport_analyzer_type_create_simple_elementary(enum elementary_type etype);
+#define testsupport_analyzer_type_create_elementary(name_, etype_, arr_) \
+    struct type *name_ = testsupport_analyzer_type_create_simple_elementary( \
+        etype_                                                          \
+    );                                                                  \
+    struct arr_int64 dimensions;                                        \
+    testsupport_arr_to_darray(dimensions, arr_, int64_t);               \
+    (name_)->array = type_arr_create(&dimensions);
 
 #define testsupport_analyzer_type_create_operator(i_optype_, ...)       \
     i_testsupport_analyzer_type_create_operator(i_optype_, RF_NARG(__VA_ARGS__), __VA_ARGS__)

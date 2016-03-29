@@ -14,6 +14,7 @@
 
 #include <types/type.h>
 #include <types/type_operators.h>
+#include <types/type_arr.h>
 #include <types/type_elementary.h>
 
 /* -- typecmp_ctx functions -- */
@@ -164,9 +165,11 @@ static bool type_operator_compare(const struct type *from,
 
 
 
-static bool type_elementary_compare(const struct type *fromtype,
-                                    const struct type *totype,
-                                    enum comparison_reason reason)
+static bool type_elementary_compare(
+    const struct type *fromtype,
+    const struct type *totype,
+    enum comparison_reason reason
+)
 {
     // keep the enum and the array synced
     enum error_explanation_indices {
@@ -333,12 +336,25 @@ end:
     TYPECMP_RETURN(false);
 }
 
-static bool type_same_categories_compare(const struct type *from,
-                                         const struct type *to,
-                                         enum comparison_reason reason)
+static bool type_same_categories_compare(
+    const struct type *from,
+    const struct type *to,
+    enum comparison_reason reason
+)
 {
-    RF_ASSERT(from->category == to->category, "type_same_categories_equals() called "
-              "with types of different categories");
+    RF_ASSERT(
+        from->category == to->category,
+        "type_same_categories_equals() called with different categories"
+    );
+    // if either type has an array specifier let's check if it matches
+    if (!type_arr_equal(from->array, to->array)) {
+        rf_stringx_assignv(
+            &g_typecmp_ctx.err_buff,
+            "Array mismatch at type comparison"
+        );
+        TYPECMP_RETURN(false);
+    }
+
     switch (from->category) {
     case TYPE_CATEGORY_OPERATOR:
         return type_operator_compare(from, to, reason);

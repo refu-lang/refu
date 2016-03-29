@@ -40,7 +40,7 @@ i_INLINE_DECL struct ast_node *ast_types_right(const struct ast_node *n)
 
 /**
  * Traverses an ast node type along with an actual type. If they don't have an
- * equal layout false will be returned. If they are do and a  callback has been
+ * equal layout false will be returned. If they do and a callback has been
  * given, it will be ran for each argument.
  *
  * @param n        The ast node containing the type description

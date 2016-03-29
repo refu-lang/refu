@@ -50,7 +50,7 @@ START_TEST (test_rir_parse_single_function) {
         testsupport_rir_etype("string", false)
     };
     RFS_POP();
-    testsupport_arr_to_darray(t1->argument_types, t1_args, struct rir_type);
+    testsupport_arr_to_darray(t1->argument_types, t1_args, struct rir_type*);
 
     RFS_PUSH();
     struct rir_type *fn_args[] = {

@@ -1,4 +1,5 @@
 #include <types/type.h>
+#include <types/type_arr.h>
 #include <types/type_operators.h>
 #include <types/type_function.h>
 #include <types/type_comparisons.h>
@@ -204,11 +205,21 @@ struct type *type_alloc(struct module *m)
     return ret;
 }
 
+struct type *type_alloc_copy(struct module *m, struct type *source)
+{
+    struct type *ret = rf_fixed_memorypool_alloc_element(m->types_pool);
+    memcpy(ret, source, sizeof(*source));
+    return ret;
+}
+
 void type_free(struct type *t, struct rf_fixed_memorypool *pool)
 {
     RF_ASSERT(pool, "Can't free type without a memory pool");
     if (t->category == TYPE_CATEGORY_OPERATOR) {
         darray_free(t->operator.operands);
+    }
+    if (t->array) {
+        type_arr_destroy(t->array);
     }
     rf_fixed_memorypool_free_element(pool, t);
 }
@@ -304,11 +315,13 @@ struct type *type_lookup_or_create(const struct ast_node *n)
     return ret;
 }
 
-struct type *type_create_from_operation(enum typeop_type typeop,
-                                        const struct ast_node *n,
-                                        struct type *left,
-                                        struct type *right,
-                                        struct module *m)
+struct type *type_create_from_operation(
+    enum typeop_type typeop,
+    const struct ast_node *n,
+    struct type *left,
+    struct type *right,
+    struct module *m
+)
 {
     struct type *t;
     if (left->category == TYPE_CATEGORY_OPERATOR && left->operator.type == typeop) {
@@ -317,7 +330,7 @@ struct type *type_create_from_operation(enum typeop_type typeop,
     } else if (right->category == TYPE_CATEGORY_OPERATOR && right->operator.type == typeop) {
         darray_prepend(right->operator.operands, left);
         t = right;
-    } else if (!(t = type_objset_has_string(m->types_set, type_op_create_str(left, right, typeop)))) {
+    } else if (!(t = module_types_set_has_str(m, type_op_create_str(left, right, typeop)))) {
         // else if the type [left OP right] is not already in the set create a new type
         t = type_alloc(m);
         if (!t) {
@@ -519,39 +532,59 @@ struct type *type_lookup_xidentifier(const struct ast_node *n)
 {
     const struct RFstring *id;
     struct type* ret;
+    struct module *mod = type_creation_ctx_mod();
 
     AST_NODE_ASSERT_TYPE(n, AST_XIDENTIFIER);
     id = ast_xidentifier_str(n);
 
-    ret = type_lookup_identifier_string(id, type_creation_ctx_st());
-    if (ret) {
-        return ret;
+    if (!(ret = type_lookup_identifier_string(id, type_creation_ctx_st()))) {
+        analyzer_err(
+            type_creation_ctx_mod(), ast_node_startmark(n),
+            ast_node_endmark(n),
+            "Type \""RFS_PF"\" is not defined",
+            RFS_PA(id)
+        );
+        return NULL;
     }
 
     // if not check if we have generic and if it is one of them
-    if (type_creation_ctx_genrdecl()) {
-        struct ast_node *genrtype;
-        genrtype = ast_genrdecl_string_is_genr(type_creation_ctx_genrdecl(), id);
-        if (genrtype) {
-            // TODO: read the generic type ast_node and create a generic type
-            RF_ASSERT(false, "TODO: Not yet implemented");
-            return NULL;
-        }
+    struct ast_node *genrdecl = n->xidentifier.genr;
+    if (genrdecl) {
+        // TODO: read the generic type ast_node and create a generic type
+        RF_ASSERT(false, "TODO: Not yet implemented");
+        return NULL;
     }
 
-    // if we get here the type can't be recognized
-    analyzer_err(
-        type_creation_ctx_mod(), ast_node_startmark(n),
-        ast_node_endmark(n),
-        "Type \""RFS_PF"\" is not defined",
-        RFS_PA(id)
-    );
-    return NULL;
+    if (n->xidentifier.arrspec) {
+        struct type_arr *arrtype = type_arr_create_from_ast(n->xidentifier.arrspec);
+        // check if the type with the added specifier already exists in the mod
+        RFS_PUSH();
+        struct type *found_type = module_types_set_has_str(
+            mod,
+            type_str_add_array(type_str(ret, TSTR_DEFAULT), arrtype)
+        );
+        RFS_POP();
+        if (!found_type) {
+            // if not found, we gotta create it and add it
+            if (!(found_type = type_alloc_copy(mod, ret))) {
+                RF_ERROR("Failed to create a copy of a type");
+                return NULL;
+            }
+            found_type->array = arrtype;
+            module_types_set_add(mod, found_type, NULL);
+        } else {
+            type_arr_destroy(arrtype);
+        }
+        ret = found_type;
+    }
 
+    return ret;
 }
 
-struct type *type_lookup_identifier_string(const struct RFstring *str,
-                                           const struct symbol_table *st)
+struct type *type_lookup_identifier_string(
+    const struct RFstring *str,
+    const struct symbol_table *st
+)
 {
     struct symbol_table_record *rec;
     int elementary_type;
@@ -567,8 +600,7 @@ struct type *type_lookup_identifier_string(const struct RFstring *str,
     }
 
     // if not check if we know about it from the symbol tables
-    rec = symbol_table_lookup_record(st, str, NULL);
-    if (rec) {
+    if ((rec = symbol_table_lookup_record(st, str, NULL))) {
         return symbol_table_record_type(rec);
     }
 

@@ -18,9 +18,9 @@
 #include CLIB_TEST_HELPERS
 
 START_TEST (test_type_comparison_identical) {
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
 
 
     // normal type comparison should work
@@ -41,10 +41,10 @@ START_TEST (test_type_comparison_for_sum_fncall) {
     // just like the typechecking for function calls
     // check that comparing a subtype gives the correct matched type
 
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
                                                                    t_i64,
                                                                    t_u64,
@@ -90,10 +90,10 @@ START_TEST (test_type_comparison_for_sum_fncall) {
 } END_TEST
 
 START_TEST (test_type_comparison_for_sum_fncall_with_conversion) {
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
 
     struct type *t_sum = testsupport_analyzer_type_create_operator(TYPEOP_SUM,
                                                                    t_i64,
@@ -112,21 +112,21 @@ START_TEST (test_type_comparison_for_sum_fncall_with_conversion) {
 
 START_TEST (test_elementary_get_category) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT);
+    struct type *t_u = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_16);
+    struct type *t_u16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_16);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_nil = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_NIL);
 
     ck_assert_int_eq(type_elementary_get_category(t_i), ELEMENTARY_TYPE_CATEGORY_SIGNED);
     ck_assert_int_eq(type_elementary_get_category(t_u), ELEMENTARY_TYPE_CATEGORY_UNSIGNED);
@@ -147,21 +147,21 @@ START_TEST (test_elementary_get_category) {
 
 START_TEST (test_is_signed_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT);
+    struct type *t_u = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_16);
+    struct type *t_u16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_16);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_nil = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_NIL);
 
     ck_assert(type_is_signed_elementary(t_i));
     ck_assert(!type_is_signed_elementary(t_u));
@@ -182,21 +182,21 @@ START_TEST (test_is_signed_elementary) {
 
 START_TEST (test_is_unsigned_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT);
+    struct type *t_u = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_16);
+    struct type *t_u16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_16);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_nil = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_NIL);
 
     ck_assert(!type_is_unsigned_elementary(t_i));
     ck_assert(type_is_unsigned_elementary(t_u));
@@ -217,21 +217,21 @@ START_TEST (test_is_unsigned_elementary) {
 
 START_TEST (test_is_floating_elementary) {
 
-    struct type *t_i = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT);
-    struct type *t_u = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT);
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
-    struct type *t_i16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_16);
-    struct type *t_u16 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_16);
-    struct type *t_i32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_32);
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_bool = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_BOOL);
-    struct type *t_nil = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_NIL);
+    struct type *t_i = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT);
+    struct type *t_u = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_16);
+    struct type *t_u16 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_16);
+    struct type *t_i32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_32);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_bool = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_BOOL);
+    struct type *t_nil = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_NIL);
 
     ck_assert(!type_is_floating_elementary(t_i));
     ck_assert(!type_is_floating_elementary(t_u));
@@ -260,7 +260,7 @@ START_TEST(test_determine_block_type1) {
     front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
     block = ast_node_get_child(front_testdriver_module()->node, 0);
     ck_assert_msg(block, "Block should be the first child of the root");
     const struct type *block_type = ast_node_get_type(block);
@@ -280,8 +280,8 @@ START_TEST(test_determine_block_type2) {
     front_testdriver_new_ast_main_source(&s);
     ck_assert_typecheck_ok();
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i8,
                                                                       t_string);
@@ -344,8 +344,8 @@ START_TEST(test_type_ast_traversal1) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i8,
                                                                       t_string);
@@ -368,9 +368,9 @@ START_TEST(test_type_ast_traversal2) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
     struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                       t_i8,
                                                                       t_string,
@@ -395,10 +395,10 @@ START_TEST(test_type_ast_traversal3) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
     struct type *t_prod = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                     t_i8,
                                                                     t_string,
@@ -425,10 +425,10 @@ START_TEST(test_type_ast_traversal4) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
     struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                      t_i8,
                                                                      t_string);
@@ -459,12 +459,12 @@ START_TEST(test_type_ast_traversal5) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
     struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                      t_i8,
                                                                      t_string,
@@ -502,12 +502,12 @@ START_TEST(test_type_ast_traversal6) {
     front_testdriver_new_ast_main_source(&s);
     testsupport_scan_and_parse(); // go only up to the parsing stage, don't analyze
 
-    struct type *t_i8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_8);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
-    struct type *t_i64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_INT_64);
-    struct type *t_f32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_32);
-    struct type *t_u64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_64);
-    struct type *t_u8 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_8);
+    struct type *t_i8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_8);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_i64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_INT_64);
+    struct type *t_f32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_32);
+    struct type *t_u64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_64);
+    struct type *t_u8 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_8);
     struct type *t_prod1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                      t_i8,
                                                                      t_string,
@@ -548,9 +548,9 @@ START_TEST(test_type_ast_traversal6) {
 
 START_TEST (test_type_to_str) {
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
-    struct type *t_string = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_STRING);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_string = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_STRING);
     struct type *t_prod_1 = testsupport_analyzer_type_create_operator(TYPEOP_PRODUCT,
                                                                      t_u32,
                                                                      t_f64);
@@ -574,8 +574,8 @@ START_TEST (test_type_to_str) {
 
 START_TEST (test_type_op_create_str) {
 
-    struct type *t_u32 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_UINT_32);
-    struct type *t_f64 = testsupport_analyzer_type_create_elementary(ELEMENTARY_TYPE_FLOAT_64);
+    struct type *t_u32 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_UINT_32);
+    struct type *t_f64 = testsupport_analyzer_type_create_simple_elementary(ELEMENTARY_TYPE_FLOAT_64);
     RFS_PUSH();
     ck_assert_rf_str_eq_cstr(type_op_create_str(t_u32, t_f64, TYPEOP_PRODUCT), "u32,f64");
     ck_assert_rf_str_eq_cstr(type_op_create_str(t_u32, t_f64, TYPEOP_SUM), "u32|f64");
@@ -612,6 +612,72 @@ START_TEST (test_type_get_uid) {
     const struct type *t2 = ast_node_get_type_or_die(b_u32);
     size_t s2 = type_get_uid(t2);
     ck_assert_uint_eq(s2, 3813314396);
+} END_TEST
+
+START_TEST(test_array_type1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a:i8[]\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+
+    int64_t dims[] = {-1};
+    testsupport_analyzer_type_create_elementary(
+        t_i8,
+        ELEMENTARY_TYPE_INT_8,
+        dims
+    );
+    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
+    const struct type *n_type = ast_node_get_type(typedesc);
+    ck_assert_msg(n_type, "Type should not be NULL");
+    ck_assert_msg(
+        type_compare(n_type, t_i8, TYPECMP_IDENTICAL),
+        "Node type comparison failure"
+    );
+} END_TEST
+
+START_TEST(test_array_type2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a:u64[42]\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+
+    int64_t dims[] = {42};
+    testsupport_analyzer_type_create_elementary(
+        t_i64,
+        ELEMENTARY_TYPE_UINT_64,
+        dims
+    );
+    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
+    const struct type *n_type = ast_node_get_type(typedesc);
+    ck_assert_msg(n_type, "Type should not be NULL");
+    ck_assert_msg(
+        type_compare(n_type, t_i64, TYPECMP_IDENTICAL),
+        "Node type comparison failure"
+    );
+} END_TEST
+
+START_TEST(test_array_type3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "a:u64[42][13][24]\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+
+    int64_t dims[] = {42, 13, 24};
+    testsupport_analyzer_type_create_elementary(
+        t_i64,
+        ELEMENTARY_TYPE_UINT_64,
+        dims
+    );
+    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
+    const struct type *n_type = ast_node_get_type(typedesc);
+    ck_assert_msg(n_type, "Type should not be NULL");
+    ck_assert_msg(
+        type_compare(n_type, t_i64, TYPECMP_IDENTICAL),
+        "Node type comparison failure"
+    );
 } END_TEST
 
 Suite *types_suite_create(void)
@@ -654,11 +720,18 @@ Suite *types_suite_create(void)
     tcase_add_checked_fixture(st6, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
     tcase_add_test(st6, test_type_get_uid);
 
+    TCase *st7 = tcase_create("type_arrays");
+    tcase_add_checked_fixture(st7, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
+    tcase_add_test(st7, test_array_type1);
+    tcase_add_test(st7, test_array_type2);
+    tcase_add_test(st7, test_array_type3);
+
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
     suite_add_tcase(s, st4);
     suite_add_tcase(s, st5);
     suite_add_tcase(s, st6);
+    suite_add_tcase(s, st7);
     return s;
 }
