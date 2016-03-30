@@ -95,4 +95,17 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
                                                        ast_node_nostop_cb post_cb,
                                                        void *post_user_arg);
 
+
+
+typedef bool (*exprlist_cb) (struct ast_node *n, void *user_arg);
+/**
+ * In a big comma-separated expression iterate all sub-expressions
+ *
+ * Should be called only after typechecking
+ *
+ * @param n            The comma separated expression to iterate
+ * @param cb           The callback to execute for each sub expression
+ * @param user         The extra argument to provide to the callback
+ */
+bool ast_foreach_expr(struct ast_node *n, exprlist_cb cb, void *user);
 #endif

@@ -89,3 +89,54 @@ err:
     lexer_rollback(parser_lexer(p));
     return NULL;
 }
+
+struct ast_node *ast_parser_acc_bracketlist(struct ast_parser *p)
+{
+    struct token *tok = lexer_curr_token(parser_lexer(p));
+    RF_ASSERT(
+        tok->type == TOKEN_SM_OSBRACE,
+        "Parser should call this function only if current token is '['"
+    );
+    lexer_push(parser_lexer(p));
+
+    //consume '['
+    lexer_curr_token_advance(parser_lexer(p));
+    const struct inplocation_mark *start = token_get_start(tok);
+    struct ast_node *args = ast_parser_acc_expression(p);
+    if (!args) {
+        if (ast_parser_has_syntax_error(p)) {
+                parser_synerr(
+                    p, lexer_last_token_start(parser_lexer(p)), NULL,
+                    "Expected a list of comma separated expressions inside '[ ... ]'"
+                );
+                goto err;
+        }
+    }
+    tok = lexer_lookahead(parser_lexer(p), 1);
+    if (!tok || tok->type != TOKEN_SM_CSBRACE) {
+        parser_synerr(
+            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            "Expected a closing ']' at the end of a bracket list"
+        );
+        goto err_free_args;
+    }
+    //consume '['
+    lexer_curr_token_advance(parser_lexer(p));
+
+    struct ast_node *n = ast_bracketlist_create(start, token_get_end(tok), args);
+    if (!n) {
+        RF_ERROR("Failed to create an ast bracketlist during parsing");
+        goto err_free_args;
+    }
+
+    lexer_pop(parser_lexer(p));
+    return n;
+
+err_free_args:
+    if (args) {
+        ast_node_destroy(args);
+    }
+err:
+    lexer_rollback(parser_lexer(p));
+    return NULL;
+}

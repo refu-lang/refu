@@ -15,7 +15,9 @@
 #include <ast/typeclass.h>
 #include <ast/generics.h>
 #include <ast/block.h>
+#include <ast/vardecl.h>
 #include <ast/operators.h>
+#include <ast/arr.h>
 #include <ast/constants.h>
 #include <ast/module.h>
 #include <ast/string_literal.h>
@@ -161,6 +163,136 @@ START_TEST (test_acc_import_statements_fail2) {
 
 } END_TEST
 
+START_TEST (test_acc_bracketlist1) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i16[] = [1, 2, 3]}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(0, 1, 0, 1);
+    struct ast_node *dimensions_arr[] = { ast_node_placeholder() };
+    testsupport_parser_arrspec_create(arrspec, dimensions_arr, 0, 6, 0, 7);
+    testsupport_parser_xidentifier_create(
+        id_i16, false, NULL, arrspec,
+        0, 3, 0, 7,
+        0, 3, 0, 5
+    );
+    testsupport_parser_node_create(type1, typeleaf, 0, 1, 0, 7, id_a, id_i16);
+
+    testsupport_parser_constant_create(cnum1, 0, 12, 0, 12, integer, 1);
+    testsupport_parser_constant_create(cnum2, 0, 15, 0, 15, integer, 2);
+    testsupport_parser_constant_create(cnum3, 0, 18, 0, 18, integer, 3);
+    testsupport_parser_node_create(comm1_2, binaryop, 0, 12, 0, 15,
+                                   BINARYOP_COMMA,
+                                   cnum1, cnum2);
+    testsupport_parser_node_create(blistargs, binaryop, 0, 12, 0, 18,
+                                   BINARYOP_COMMA,
+                                   comm1_2, cnum3);
+    testsupport_parser_node_create(blist, bracketlist, 0, 11, 0, 19, blistargs);
+    testsupport_parser_node_create(vardecl, vardecl, 0, 1, 0, 7, type1);
+    testsupport_parser_node_create(assignment, binaryop, 0, 1, 0, 19,
+                                   BINARYOP_ASSIGN,
+                                   vardecl, blist);
+
+    testsupport_parser_block_create(bnode, 0, 0, 0, 20);
+    ast_node_add_child(bnode, assignment);
+    ck_test_parse_as(n, block, "bracket list assignment", bnode, true);
+    ast_node_destroy(n);
+    ast_node_destroy(bnode);
+} END_TEST
+
+START_TEST (test_acc_bracketlist_fail1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i16[] = [}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_file();
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a closing ']' at the end of a bracket list",
+            0, 12),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression after \"=\"",
+            0, 9),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression or a '}' at block end",
+            0, 11),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an outermost statement",
+            0, 12),
+    };
+    ck_assert_parser_errors(errors);
+
+} END_TEST
+
+START_TEST (test_acc_bracketlist_fail2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i16[] = [1}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_file();
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a closing ']' at the end of a bracket list",
+            0, 13),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression after \"=\"",
+            0, 9),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression or a '}' at block end",
+            0, 11),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an outermost statement",
+            0, 12),
+    };
+    ck_assert_parser_errors(errors);
+
+} END_TEST
+
+START_TEST (test_acc_bracketlist_fail3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{a:i16[] = [1,}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_file();
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression after \",\"",
+            0, 13),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a list of comma separated expressions inside '[ ... ]'",
+            0, 14),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression after \"=\"",
+            0, 9),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression or a '}' at block end",
+            0, 11),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an outermost statement",
+            0, 12),
+    };
+    ck_assert_parser_errors(errors);
+
+} END_TEST
+
 Suite *parser_misc_suite_create(void)
 {
     Suite *s = suite_create("parser_misc");
@@ -169,11 +301,22 @@ Suite *parser_misc_suite_create(void)
     tcase_add_checked_fixture(tc1, setup_front_tests, teardown_front_tests);
     tcase_add_test(tc1, test_acc_string_literals);
     tcase_add_test(tc1, test_acc_boolean_constants);
-    tcase_add_test(tc1, test_acc_import_statements);
 
-    tcase_add_test(tc1, test_acc_import_statements_fail1);
-    tcase_add_test(tc1, test_acc_import_statements_fail2);
+    TCase *tc2 = tcase_create("parser_import");
+    tcase_add_checked_fixture(tc2, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc2, test_acc_import_statements);
+    tcase_add_test(tc2, test_acc_import_statements_fail1);
+    tcase_add_test(tc2, test_acc_import_statements_fail2);
+
+    TCase *tc3 = tcase_create("parser_bracketlist_and_arrays");
+    tcase_add_checked_fixture(tc3, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc3, test_acc_bracketlist1);
+    tcase_add_test(tc3, test_acc_bracketlist_fail1);
+    tcase_add_test(tc3, test_acc_bracketlist_fail2);
+    tcase_add_test(tc3, test_acc_bracketlist_fail3);
 
     suite_add_tcase(s, tc1);
+    suite_add_tcase(s, tc2);
+    suite_add_tcase(s, tc3);
     return s;
 }

@@ -15,6 +15,7 @@
 #include "ifexpr.h"
 #include "block.h"
 #include "matchexpr.h"
+#include "arr.h"
 
 #define MAX_LEVEL_OP_PRECEDENCE 13
 
@@ -69,6 +70,8 @@ static struct ast_node *ast_parser_acc_expr_element(struct ast_parser *p)
         return n;
     } else if (TOKENS_ARE_FNCALL(tok, tok2)) { //normal function call
         return ast_parser_acc_fncall(p, true);
+    } else if (tok->type == TOKEN_SM_OSBRACE) {
+        return ast_parser_acc_bracketlist(p);
     } else if (tok->type == TOKEN_SM_OCBRACE) {
         n = ast_parser_acc_block(p, true);
         if (!n) {
@@ -262,9 +265,13 @@ static struct ast_node *ast_parser_acc_expression_prime(
     //consume operator
     lexer_curr_token_advance(parser_lexer(p));
 
-    op = ast_binaryop_create(ast_node_startmark(left_hand_side), NULL,
-                             binaryop_type_from_token(tok),
-                             left_hand_side, NULL);
+    op = ast_binaryop_create(
+        ast_node_startmark(left_hand_side),
+        NULL,
+        binaryop_type_from_token(tok),
+        left_hand_side,
+        NULL
+    );
     if (!op) {
         RF_ERRNOMEM();
         return NULL;

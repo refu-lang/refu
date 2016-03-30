@@ -13,4 +13,7 @@
         ast_parser_set_syntax_error(parser_);     \
     } while(0)
 
+
+bool ast_parser_acc_exprlist();
+
 #endif

@@ -5,6 +5,7 @@
 
 #include <ast/ast.h>
 #include <ast/identifier.h>
+#include <ast/ast_utils.h>
 #include <types/type_decls.h>
 #include <analyzer/symbol_table.h>
 
@@ -222,16 +223,17 @@ i_INLINE_DECL bool ast_node_is_fncall_preprocessed(const struct ast_node *n)
     return n->type == AST_FUNCTION_CALL && (ast_fncall_is_ctor(n));
 }
 
-typedef bool (*fncall_args_cb) (struct ast_node *n, void *user_arg);
-/**
- * Function call arguments iteration callback.
- *
- * Should be called only after typechecking
- *
- * @param n            The function call ast node
- * @param cb           The callback to execute for each argument expression
- * @param user_arg     The extra argument to provide to the callback
- */
-bool ast_fncall_for_each_arg(const struct ast_node *n, fncall_args_cb cb, void *user_arg);
-
+i_INLINE_DECL bool ast_fncall_foreach_arg(
+    const struct ast_node *n,
+    exprlist_cb cb,
+    void *user
+)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    struct ast_node *args = ast_fncall_args(n);
+    if (!args) {
+        return true;
+    }
+    return ast_foreach_expr(args, cb, user);
+}
 #endif

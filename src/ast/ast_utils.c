@@ -1,6 +1,7 @@
 #include <ast/ast_utils.h>
 
 #include <ast/ast.h>
+#include <ast/operators.h>
 
 bool ast_pre_traverse_tree(struct ast_node *n,
                            ast_node_cb cb,
@@ -100,4 +101,18 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
     }
 
     return ret;
+}
+
+bool ast_foreach_expr(struct ast_node *n, exprlist_cb cb, void *user)
+{
+    if (ast_node_is_specific_binaryop(n, BINARYOP_COMMA)) {
+        if (!ast_foreach_expr(ast_binaryop_left(n), cb, user)) {
+            return false;
+        }
+        if (!ast_foreach_expr(ast_binaryop_right(n), cb, user)) {
+            return false;
+        }
+        return true;
+    }
+    return cb(n, user);
 }

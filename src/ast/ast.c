@@ -39,6 +39,7 @@ static const struct RFstring ast_type_strings[] = {
     [AST_XIDENTIFIER] = RF_STRING_STATIC_INIT("annotated identifier"),
     [AST_BINARY_OPERATOR] = RF_STRING_STATIC_INIT("binary operator"),
     [AST_UNARY_OPERATOR] = RF_STRING_STATIC_INIT("unary operator"),
+    [AST_BRACKET_LIST] = RF_STRING_STATIC_INIT("bracket list"),
     [AST_STRING_LITERAL] = RF_STRING_STATIC_INIT("string literal"),
     [AST_IDENTIFIER] = RF_STRING_STATIC_INIT("identifier"),
     [AST_CONSTANT] = RF_STRING_STATIC_INIT("constant number"),

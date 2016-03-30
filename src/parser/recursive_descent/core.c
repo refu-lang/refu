@@ -17,6 +17,7 @@
 #include "block.h"
 #include "vardecl.h"
 #include "module.h"
+#include "expression.h"
 
 static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p);
 

@@ -387,7 +387,7 @@ START_TEST(test_acc_fncall_err2) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "Expected a string literal, a numeric constant or an identifier after \",\"",
+            "Expected an expression after \",\"",
             0, 5),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,

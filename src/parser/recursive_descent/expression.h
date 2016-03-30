@@ -6,7 +6,7 @@
 struct ast_node;
 struct ast_parser;
 
-#define EXPR_ELEMENT_START "a string literal, a numeric constant or an identifier"
+#define EXPR_ELEMENT_START "an expression"
 
 /**
  * expression = expr_level1 expression'

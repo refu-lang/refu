@@ -53,8 +53,7 @@ START_TEST(test_acc_block_no_braces_1) {
     testsupport_parser_xidentifier_create_simple(id2, 1, 2, 1, 4);
     testsupport_parser_node_create(type1, typeleaf,
                                    1, 0, 1, 4, id1, id2);
-    testsupport_parser_node_create(vardecl, vardecl,
-                                   1, 0, 1, 4, type1);
+    testsupport_parser_node_create(vardecl, vardecl, 1, 0, 1, 4, type1);
     ast_node_add_child(bnode, vardecl);
 
     struct ast_node *id3 = testsupport_parser_identifier_create(2, 0, 2, 0);

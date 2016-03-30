@@ -36,7 +36,15 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
     info_ctx_get_iter(info, MESSAGE_ANY, &iter);
 
     while ((msg = info_ctx_msg_iterator_next(&iter))) {
-
+        if (i == num) {
+            ck_parser_check_abort(
+                filename, line,
+                "For parser error number %u: Got:\n\""RFS_PF"\"\n"
+                "but expected no error.", i,
+                RFS_PA(&msg->s)
+            );
+            return false;
+        }
         // check for error message string
         if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {
             ck_parser_check_abort(

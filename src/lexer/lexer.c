@@ -734,8 +734,10 @@ void lexer_rollback(struct lexer *l)
     unsigned int idx;
     unsigned int i;
     struct token *tok;
-    RF_ASSERT(!darray_empty(l->indices),
-              "lexer_rollback called with empty array");
+    RF_ASSERT(
+        !darray_empty(l->indices),
+        "lexer_rollback called with empty array"
+    );
     idx = darray_pop(l->indices);
     RF_ASSERT(l->tok_index >= idx, "asked to rollback to a token ahead of us?");
     // make sure that all value tokens in between now and rollback belong to the lexer

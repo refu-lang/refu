@@ -10,24 +10,32 @@
 #include <lexer/lexer.h>
 #include "common.h"
 #include "type.h"
+#include "expression.h"
 
 // parsing a variable declaration is basically like a type leaf
 struct ast_node *ast_parser_acc_vardecl(struct ast_parser *p)
 {
-    struct ast_node *n;
-    struct ast_node *desc;
+    lexer_push(parser_lexer(p));
 
-    desc = ast_parser_acc_typeleaf(p);
+    struct ast_node *desc = ast_parser_acc_typeleaf(p);
     if (!desc) {
-        return NULL;
+        goto fail;
     }
 
-    n = ast_vardecl_create(ast_node_startmark(desc), ast_node_endmark(desc),
-                           desc);
+    struct ast_node *n = ast_vardecl_create(
+        ast_node_startmark(desc),
+        ast_node_endmark(desc),
+        desc
+    );
     if (!n) {
         RF_ERRNOMEM();
-        return NULL;
+        goto fail;
     }
 
+    lexer_pop(parser_lexer(p));
     return n;
+
+fail:
+    lexer_rollback(parser_lexer(p));
+    return NULL;
 }

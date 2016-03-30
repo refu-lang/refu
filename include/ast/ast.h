@@ -82,6 +82,7 @@ enum ast_type {
     AST_XIDENTIFIER,
     AST_BINARY_OPERATOR,
     AST_UNARY_OPERATOR,
+    AST_BRACKET_LIST,
 
     /* from this value and under all types should have no children */
     AST_STRING_LITERAL,

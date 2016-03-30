@@ -13,6 +13,12 @@ struct ast_node *ast_arrspec_create(
     struct arr_ast_nodes *dimensions
 );
 
+struct ast_node *ast_bracketlist_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    struct ast_node *args
+);
+
 i_INLINE_DECL unsigned int ast_arrspec_dimensions_num(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_ARRAY_SPEC);

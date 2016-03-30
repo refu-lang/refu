@@ -10,4 +10,9 @@ struct ast_parser;
  * array_specificer = single_array_specifier array_specifier'
  */
 struct ast_node *ast_parser_acc_arrspec(struct ast_parser *p);
+
+/**
+ * bracket_list = "[" expression "]"
+ */
+struct ast_node *ast_parser_acc_bracketlist(struct ast_parser *p);
 #endif

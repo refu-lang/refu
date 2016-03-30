@@ -9,7 +9,7 @@ struct ast_parser;
      (tok2_)->type == TOKEN_SM_COLON)
 
 /**
- * variable_declaration = type_leaf
+ * variable_declaration = type_leaf [ TOKEN_OP_ASSIGN expression]
  */
 struct ast_node *ast_parser_acc_vardecl(struct ast_parser *p);
 

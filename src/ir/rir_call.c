@@ -113,7 +113,7 @@ static bool rir_populate_from_astcall(
     // now for whichever object (normal type, or union type sutype) is loaded as left hand side
     // assign from constructor's arguments
     args_to_val_ctx_init(&argsctx, objmemory, ctx);
-    ast_fncall_for_each_arg(ast_call, (fncall_args_cb)ctor_args_to_value_cb, &argsctx);
+    ast_fncall_foreach_arg(ast_call, (exprlist_cb)ctor_args_to_value_cb, &argsctx);
     return true;
 }
 
@@ -224,7 +224,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
         // turn the function call args into a rir value array
         struct fncall_args_toarr_ctx fncarg_ctx;
         fncall_args_toarr_ctx_init(&fncarg_ctx, n, ctx, &arr);
-        if (!ast_fncall_for_each_arg(n, (fncall_args_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
+        if (!ast_fncall_foreach_arg(n, (exprlist_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
             return NULL;
         }
     }

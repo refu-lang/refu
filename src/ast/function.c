@@ -108,27 +108,8 @@ i_INLINE_INS bool ast_fncall_is_conversion(const struct ast_node *n);
 i_INLINE_INS bool ast_fncall_is_foreign(const struct ast_node *n);
 i_INLINE_INS bool ast_node_is_conversion(const struct ast_node *n);
 i_INLINE_INS bool ast_node_is_fncall_preprocessed(const struct ast_node *n);
-
-static bool do_ast_fncall_for_each_arg(struct ast_node *arg, fncall_args_cb cb, void *user_arg)
-{
-    if (ast_node_is_specific_binaryop(arg, BINARYOP_COMMA)) {
-        if (!do_ast_fncall_for_each_arg(ast_binaryop_left(arg), cb, user_arg)) {
-            return false;
-        }
-        if (!do_ast_fncall_for_each_arg(ast_binaryop_right(arg), cb, user_arg)) {
-            return false;
-        }
-        return true;
-    }
-    return cb(arg, user_arg);
-}
-
-bool ast_fncall_for_each_arg(const struct ast_node *n, fncall_args_cb cb, void *user_arg)
-{
-    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
-    struct ast_node *args = ast_fncall_args(n);
-    if (!args) {
-        return true;
-    }
-    return do_ast_fncall_for_each_arg(args, cb, user_arg);
-}
+i_INLINE_INS bool ast_fncall_foreach_arg(
+    const struct ast_node *n,
+    exprlist_cb cb,
+    void *user
+);
