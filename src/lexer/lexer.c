@@ -741,13 +741,15 @@ void lexer_rollback(struct lexer *l)
     idx = darray_pop(l->indices);
     RF_ASSERT(l->tok_index >= idx, "asked to rollback to a token ahead of us?");
     // make sure that all value tokens in between now and rollback belong to the lexer
-    i = darray_size(l->tokens) - 1;
+    i = darray_size(l->tokens);
     darray_foreach_reverse(tok, l->tokens) {
-        if (i <= l->tok_index && i >= idx && lexer_token_has_value(l, tok)) {
+        if (--i < idx) {
+            break;
+        }
+        if (i <= l->tok_index && lexer_token_has_value(l, tok)) {
             tok->value.owned_by_lexer = true;
             tok->value.value.ast->state = AST_NODE_STATE_CREATED;
         }
-        --i;
     }
     // set new token index
     l->tok_index = idx;

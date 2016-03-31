@@ -315,5 +315,12 @@ static struct ast_node *ast_parser_acc_expression_prime(
 
 struct ast_node *ast_parser_acc_expression(struct ast_parser *p)
 {
-    return ast_parser_acc_exprlevel(p, 1);
+    lexer_push(parser_lexer(p));
+    struct ast_node *ret = ast_parser_acc_exprlevel(p, 1);
+    if (!ret && ast_parser_has_syntax_error(p)) {
+        lexer_rollback(parser_lexer(p));
+    } else {
+        lexer_pop(parser_lexer(p));
+    }
+    return ret;
 }

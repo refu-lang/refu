@@ -720,7 +720,6 @@ Suite *lexer_suite_create(void)
     tcase_add_test(lexer_utils, test_lexer_push_pop);
     tcase_add_test(lexer_utils, test_lexer_push_rollback);
     tcase_add_test(lexer_utils, test_lexer_many_push_rollback);
-    
 
     suite_add_tcase(s, scan);
     suite_add_tcase(s, scan_edge);

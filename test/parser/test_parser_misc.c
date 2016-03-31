@@ -221,11 +221,11 @@ START_TEST (test_acc_bracketlist_fail1) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression or a '}' at block end",
-            0, 11),
+            0, 1),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 12),
+            0, 2),
     };
     ck_assert_parser_errors(errors);
 
@@ -250,11 +250,11 @@ START_TEST (test_acc_bracketlist_fail2) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression or a '}' at block end",
-            0, 11),
+            0, 1),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 12),
+            0, 2),
     };
     ck_assert_parser_errors(errors);
 
@@ -275,7 +275,7 @@ START_TEST (test_acc_bracketlist_fail3) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected a list of comma separated expressions inside '[ ... ]'",
-            0, 14),
+            0, 12),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression after \"=\"",
@@ -283,11 +283,11 @@ START_TEST (test_acc_bracketlist_fail3) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an expression or a '}' at block end",
-            0, 11),
+            0, 1),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 12),
+            0, 2),
     };
     ck_assert_parser_errors(errors);
 

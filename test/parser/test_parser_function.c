@@ -392,7 +392,7 @@ START_TEST(test_acc_fncall_err2) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected argument expression for function call",
-            0, 5)
+            0, 4)
     };
     ck_assert_parser_errors(errors);
 }END_TEST
