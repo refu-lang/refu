@@ -225,7 +225,7 @@ START_TEST (test_acc_bracketlist_fail1) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 2),
+            0, 1),
     };
     ck_assert_parser_errors(errors);
 
@@ -254,7 +254,7 @@ START_TEST (test_acc_bracketlist_fail2) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 2),
+            0, 1),
     };
     ck_assert_parser_errors(errors);
 
@@ -287,7 +287,7 @@ START_TEST (test_acc_bracketlist_fail3) {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
             "Expected an outermost statement",
-            0, 2),
+            0, 1),
     };
     ck_assert_parser_errors(errors);
 

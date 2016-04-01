@@ -246,21 +246,44 @@ START_TEST(test_acc_block_value_with_return) {
     ast_node_destroy(bnode);
 }END_TEST
 
+START_TEST(test_acc_block_fail1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:i32\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(block, true);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an expression or a '}' at block end",
+            1, 4)
+    };
+    ck_assert_parser_errors(errors);
+
+}END_TEST
+
 Suite *parser_block_suite_create(void)
 {
     Suite *s = suite_create("parser_block");
 
-    TCase *fp = tcase_create("parser_block_parsing");
-    tcase_add_checked_fixture(fp, setup_front_tests, teardown_front_tests);
-    tcase_add_test(fp, test_acc_block_empty);
-    tcase_add_test(fp, test_acc_block_no_braces_1);
-    tcase_add_test(fp, test_acc_block_no_braces_2);
-    tcase_add_test(fp, test_acc_block_1);
-    tcase_add_test(fp, test_acc_block_2);
-    tcase_add_test(fp, test_acc_block_value_without_return);
-    tcase_add_test(fp, test_acc_block_value_with_return);
+    TCase *tc1 = tcase_create("parser_block_parsing");
+    tcase_add_checked_fixture(tc1, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc1, test_acc_block_empty);
+    tcase_add_test(tc1, test_acc_block_no_braces_1);
+    tcase_add_test(tc1, test_acc_block_no_braces_2);
+    tcase_add_test(tc1, test_acc_block_1);
+    tcase_add_test(tc1, test_acc_block_2);
+    tcase_add_test(tc1, test_acc_block_value_without_return);
+    tcase_add_test(tc1, test_acc_block_value_with_return);
 
-    suite_add_tcase(s, fp);
+    TCase *tc2 = tcase_create("block_parsing_fail");
+    tcase_add_checked_fixture(tc2, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tc2, test_acc_block_fail1);
+
+    suite_add_tcase(s, tc1);
+    suite_add_tcase(s, tc2);
 
     return s;
 }

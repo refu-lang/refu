@@ -86,30 +86,28 @@ struct ast_node *ast_parser_acc_block(struct ast_parser *p, bool expect_braces)
     struct ast_node *element;
     const struct inplocation_mark *start = NULL;
     const struct inplocation_mark *end = NULL;
+    lexer_push(parser_lexer(p));
 
     tok = lexer_lookahead(parser_lexer(p), 1);
     if (!tok) {
-        return NULL;
+        goto err;
     }
 
     if (expect_braces) {
         if (tok->type != TOKEN_SM_OCBRACE) {
-            return NULL;
+            goto err;
         }
         // consume '{'
         lexer_curr_token_advance(parser_lexer(p));
         start = token_get_start(tok);
     }
 
-    n = ast_block_create();
-    if (!n) {
-        RF_ERRNOMEM();
-        return NULL;
+    if (!(n = ast_block_create())) {
+        goto err;
     }
 
     //try to parse the first element
-    element = ast_parser_acc_block_element(p);
-    if (!element) {
+    if (!(element = ast_parser_acc_block_element(p))) {
         if (!expect_braces) {
             goto err_free_block;
         }
@@ -117,8 +115,12 @@ struct ast_node *ast_parser_acc_block(struct ast_parser *p, bool expect_braces)
         //else just find the terminating '}' and return
         tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                          "Expected an expression or a '}' at block end");
+            parser_synerr(
+                p,
+                lexer_last_token_end(parser_lexer(p)),
+                NULL,
+                "Expected an expression or a '}' at block end"
+            );
             goto err_free_block;
         }
         //consume the '}'
@@ -144,8 +146,12 @@ struct ast_node *ast_parser_acc_block(struct ast_parser *p, bool expect_braces)
     if (expect_braces) {
         tok = lexer_lookahead(parser_lexer(p), 1);
         if (!tok || tok->type != TOKEN_SM_CCBRACE) {
-            parser_synerr(p, lexer_last_token_end(parser_lexer(p)), NULL,
-                          "Expected an expression or a '}' at block end");
+            parser_synerr(
+                p,
+                lexer_last_token_end(parser_lexer(p)),
+                NULL,
+                "Expected an expression or a '}' at block end"
+            );
             goto err_free_block;
         }
         //consume the '}'
@@ -156,10 +162,12 @@ struct ast_node *ast_parser_acc_block(struct ast_parser *p, bool expect_braces)
 
     ast_node_set_start(n, start);
     ast_node_set_end(n, end);
+    lexer_pop(parser_lexer(p));
     return n;
 
 err_free_block:
-        ast_node_destroy(n);
-        return NULL;
-
+    ast_node_destroy(n);
+err:
+    lexer_rollback(parser_lexer(p));
+    return NULL;
 }
