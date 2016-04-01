@@ -108,7 +108,6 @@ void check_lexer_tokens_impl(struct lexer *l,
                        num, darray_size(l->tokens));
     }
 
-
     darray_foreach(t, l->tokens) {
         test_tokens_cmp(&tokens[i], t, i, l->file, filename, line);
         i ++;

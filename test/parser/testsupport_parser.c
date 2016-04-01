@@ -88,6 +88,17 @@ bool ck_assert_parser_errors_impl(struct info_ctx *info,
 
         i ++;
     }
+
+
+    if (i < num) {
+        ck_parser_check_abort(
+            filename, line,
+            "Got %u parser errors but expected %u.",
+            i,
+            num
+        );
+    }
+
     return true;
 }
 
