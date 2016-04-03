@@ -28,9 +28,10 @@
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/analyzer_pass1.h> // for analyzer symbol table change functions
 
-void traversal_node_set_type(struct ast_node *n,
-                             const struct type *t,
-                             struct analyzer_traversal_ctx *ctx)
+void traversal_node_set_type(
+    struct ast_node *n,
+    const struct type *t,
+    struct analyzer_traversal_ctx *ctx)
 {
     n->expression_type = t;
     ctx->last_node_type = t;
@@ -42,8 +43,7 @@ static bool typecheck_binaryop_get_operands(
     const struct type **tleft,
     struct ast_node *right,
     const struct type **tright,
-    struct analyzer_traversal_ctx *ctx
-)
+    struct analyzer_traversal_ctx *ctx)
 {
     *tleft = ast_node_get_type(left);
     if (!*tleft) {
@@ -62,9 +62,10 @@ static bool typecheck_binaryop_get_operands(
     return true;
 }
 
-static bool i_should_be_changed(struct ast_node *left,
-                                struct ast_node *right,
-                                struct analyzer_traversal_ctx *ctx)
+static bool i_should_be_changed(
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     // TODO: this is just a callback which should never exist. Should check if op is applicable
     // Wherever it's used it's just temporary and should be changed to
@@ -75,9 +76,10 @@ static bool i_should_be_changed(struct ast_node *left,
     return false;
 }
 
-static const struct type *typecheck_do_type_conversion(const struct type *left,
-                                                       const struct type *right,
-                                                       struct analyzer_traversal_ctx *ctx)
+static const struct type *typecheck_do_type_conversion(
+    const struct type *left,
+    const struct type *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     // if both are elementary always try to convert the smaller to the bigger size
     if (left->category == TYPE_CATEGORY_ELEMENTARY &&
@@ -104,11 +106,12 @@ static const struct type *typecheck_do_type_conversion(const struct type *left,
     return NULL;
 }
 
-static enum traversal_cb_res typecheck_unaryop_generic(struct ast_node *n,
-                                                       const struct type *operand_type,
-                                                       const char *error_intro,
-                                                       const char *error_conj,
-                                                       struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_unaryop_generic(
+    struct ast_node *n,
+    const struct type *operand_type,
+    const char *error_intro,
+    const char *error_conj,
+    struct analyzer_traversal_ctx *ctx)
 {
     const struct type *final_type = NULL;
 
@@ -133,14 +136,15 @@ fail:
 
 // Generic typecheck function for binary operations. If special functionality
 // needs to be implemented for an operator do that in a separate function
-static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
-                                                        struct ast_node *left,
-                                                        struct ast_node *right,
-                                                        struct analyzer_traversal_ctx *ctx,
-                                                        enum binaryop_type operation,
-                                                        bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
-                                                        const char *error_intro,
-                                                        const char *error_conj)
+static enum traversal_cb_res typecheck_binaryop_generic(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx,
+    enum binaryop_type operation,
+    bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+    const char *error_intro,
+    const char *error_conj)
 {
     enum traversal_cb_res rc = TRAVERSAL_CB_ERROR;
     const struct type *tright;
@@ -171,14 +175,15 @@ static enum traversal_cb_res typecheck_binaryop_generic(struct ast_node *n,
 }
 
 // Generic typecheck function for binary operations whose type should be a boolean
-static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
-                                                             struct ast_node *left,
-                                                             struct ast_node *right,
-                                                             struct analyzer_traversal_ctx *ctx,
-                                                             enum binaryop_type operation,
-                                                             bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
-                                                             const char *error_intro,
-                                                             const char *error_conj)
+static enum traversal_cb_res typecheck_bool_binaryop_generic(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx,
+    enum binaryop_type operation,
+    bool(*operator_applicable_cb)(struct ast_node*, struct ast_node*, struct analyzer_traversal_ctx*),
+    const char *error_intro,
+    const char *error_conj)
 {
     const struct type *tright;
     const struct type *tleft;
@@ -206,10 +211,11 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_arrayref(struct ast_node *n,
-                                                struct ast_node *left,
-                                                struct ast_node *right,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_arrayref(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     // TODO
     (void)n;
@@ -224,8 +230,9 @@ struct typecheck_member_access_iter_ctx {
     struct type *member_type;
 };
 
-static inline void typecheck_member_access_iter_ctx_init(struct typecheck_member_access_iter_ctx *ctx,
-                                                         struct ast_node *member_identifier)
+static inline void typecheck_member_access_iter_ctx_init(
+    struct typecheck_member_access_iter_ctx *ctx,
+    struct ast_node *member_identifier)
 {
     ctx->member_identifier = member_identifier;
     ctx->member_type = NULL;
@@ -246,10 +253,11 @@ static bool typecheck_member_access_iter_cb(
     return true;
 }
 
-static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
-                                                     struct ast_node *left,
-                                                     struct ast_node *right,
-                                                     struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_member_access(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     const struct type *tleft;
     struct typecheck_member_access_iter_ctx member_access_iter_ctx;
@@ -285,7 +293,10 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     }
 
     // get ast type description of the left member
-    const struct ast_node *desc = symbol_table_lookup_node(ctx->current_st, ast_identifier_str(left), NULL);
+    const struct ast_node *desc = symbol_table_lookup_node(
+        ctx->current_st,
+        ast_identifier_str(left), NULL
+    );
     if (desc->type == AST_TYPE_LEAF) {
         // if it's a typeleaf we need the type description of it's right member
         desc = ast_typeleaf_right(desc);
@@ -323,8 +334,9 @@ static enum traversal_cb_res typecheck_member_access(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_constant(struct ast_node *n,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_constant(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     traversal_node_set_type(n, ast_constant_get_storagetype(n), ctx);
     return ast_node_get_type(n) ? TRAVERSAL_CB_OK : TRAVERSAL_CB_ERROR;
@@ -336,8 +348,9 @@ static bool wilcard_parent_is_matchcase(const struct ast_node *n, void *user_arg
     return n->type == AST_MATCH_CASE;
 }
 
-static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
-                                                  struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_identifier(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     if (ast_identifier_is_wildcard(n)) {
@@ -377,8 +390,9 @@ static enum traversal_cb_res typecheck_identifier(struct ast_node *n,
     return TRAVERSAL_CB_ERROR;
 }
 
-static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
-                                                   struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_xidentifier(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     traversal_node_set_type(
         n,
@@ -388,8 +402,9 @@ static enum traversal_cb_res typecheck_xidentifier(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typeleaf(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     // an ast_type_leaf's type is a type leaf
     type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL, NULL);
@@ -397,8 +412,9 @@ static enum traversal_cb_res typecheck_typeleaf(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typedesc(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     // a type descriptions's type is the type of its description
     traversal_node_set_type(
@@ -409,8 +425,9 @@ static enum traversal_cb_res typecheck_typedesc(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typedecl(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     traversal_node_set_type(
         n,
@@ -420,8 +437,9 @@ static enum traversal_cb_res typecheck_typedecl(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
-                                              struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_typeop(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     // during symbol table population, if the typeoperator is a child of some specific
     // nodes there will be calls to analyzer_get_or_create_type() and the type will
@@ -437,9 +455,10 @@ static enum traversal_cb_res typecheck_typeop(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static bool analyzer_types_assignable(struct ast_node *left,
-                                      struct ast_node *right,
-                                      struct analyzer_traversal_ctx *ctx)
+static bool analyzer_types_assignable(
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     // TODO: Check if two types that are not strictly equal can still be assignable
     // if for example there is an assignment typeclass instance
@@ -449,10 +468,11 @@ static bool analyzer_types_assignable(struct ast_node *left,
     return false;
 }
 
-static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
-                                                  struct ast_node *left,
-                                                  struct ast_node *right,
-                                                  struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_assignment(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     const struct type *tright;
     const struct type *tleft;
@@ -512,10 +532,11 @@ static enum traversal_cb_res typecheck_assignment(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_comma(struct ast_node *n,
-                                             struct ast_node *left,
-                                             struct ast_node *right,
-                                             struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_comma(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
 {
     const struct type *tright;
     const struct type *tleft;
@@ -545,8 +566,9 @@ static enum traversal_cb_res typecheck_comma(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
-                                                     struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_function_call(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     const struct RFstring *fn_name;
     const struct type *fn_type;
@@ -567,7 +589,11 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
     }
     // also check the ast node of the function declaration to get more information if it's not a conversion
     if (!type_is_explicitly_convertable_elementary(fn_type)) {
-        const struct ast_node *fndecl = symbol_table_lookup_node(ctx->current_st, fn_name, NULL);
+        const struct ast_node *fndecl = symbol_table_lookup_node(
+            ctx->current_st,
+            fn_name,
+            NULL
+        );
         RF_ASSERT(fndecl, "Since fn_type was found so should fndecl be found here");
         if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
             n->fncall.type = AST_FNCALL_FOREIGN;
@@ -608,9 +634,12 @@ static enum traversal_cb_res typecheck_function_call(struct ast_node *n,
             n->fncall.type = AST_FNCALL_SUM;
         }
         typecmp_ctx_set_flags(TYPECMP_FLAG_FUNCTION_CALL);
-        if (!type_compare(fn_found_args_type,
-                          fn_declared_args_type,
-                          n->fncall.type == AST_FNCALL_SUM ? TYPECMP_PATTERN_MATCHING : TYPECMP_IMPLICIT_CONVERSION)) {
+        if (!type_compare(
+                fn_found_args_type,
+                fn_declared_args_type,
+                n->fncall.type == AST_FNCALL_SUM
+                    ? TYPECMP_PATTERN_MATCHING :
+                    TYPECMP_IMPLICIT_CONVERSION)) {
             RFS_PUSH();
             analyzer_err(
                 ctx->m, ast_node_startmark(n), ast_node_endmark(n),
@@ -642,8 +671,9 @@ fail:
     return TRAVERSAL_CB_ERROR;
 }
 
-static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
-                                                   struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_return_stmt(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *fn_decl = symbol_table_get_fndecl(ctx->current_st);
     const struct type *fn_type;
@@ -680,16 +710,18 @@ static enum traversal_cb_res typecheck_return_stmt(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_block(struct ast_node *n,
-                                             struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_block(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     // a block's type is the type of it's last expression
     n->expression_type = ctx->last_node_type;
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_import(struct ast_node *n,
-                                              struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_import(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     if (ast_import_is_foreign(n)) {
         module_add_foreign_import(ctx->m, n);
@@ -699,8 +731,9 @@ static enum traversal_cb_res typecheck_import(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_binaryop(struct ast_node *n,
-                                                struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_binaryop(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     struct ast_node *left = ast_binaryop_left(n);
     struct ast_node *right = ast_binaryop_right(n);
@@ -792,8 +825,9 @@ static enum traversal_cb_res typecheck_binaryop(struct ast_node *n,
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_unaryop(struct ast_node *n,
-                                               struct analyzer_traversal_ctx *ctx)
+static enum traversal_cb_res typecheck_unaryop(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     enum unaryop_type uop_type = ast_unaryop_op(n);
     const struct type *operand_type;
@@ -832,7 +866,10 @@ static enum traversal_cb_res typecheck_fndecl(struct ast_node *n,
     const struct type *t;
     t = type_lookup_identifier_string(ast_fndecl_name_str(n), ctx->current_st);
     if (!t) {
-        RF_ERROR("Function declaration name not found in the symbol table at impossible point");
+        RF_ERROR(
+            "Function declaration name not found in the symbol table at "
+            "impossible point"
+        );
         return TRAVERSAL_CB_ERROR;
     }
     traversal_node_set_type(n, t, ctx);
