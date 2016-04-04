@@ -191,7 +191,7 @@ bool module_types_set_add(struct module *m, struct type *new_type, const struct 
     return rf_objset_add(m->types_set, type, new_type);
 }
 
-struct type *module_types_set_has_str(struct module *m, const struct RFstring *s)
+struct type *module_types_set_has_str(const struct module *m, const struct RFstring *s)
 {
     return type_objset_has_string(m->types_set, s);
 }

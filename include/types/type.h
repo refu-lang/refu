@@ -39,7 +39,7 @@ bool type_add_to_currop(struct type* t);
 /* -- type allocation functions -- */
 
 struct type *type_alloc(struct module *m);
-struct type *type_alloc_copy(struct module *m, struct type *source);
+struct type *type_alloc_copy(struct module *m, const struct type *source);
 void type_free(struct type *t, struct rf_fixed_memorypool *pool);
 
 /* -- various type creation and initialization functions -- */
@@ -86,14 +86,19 @@ struct type *type_lookup_or_create(const struct ast_node *n);
  * @param a             The module instance for which we are typechecking
  * @return              The new type or NULL if there was an error
  */
-struct type *type_create_from_operation(enum typeop_type type,
-                                        const struct ast_node *n,
-                                        struct type *left,
-                                        struct type *right,
-                                        struct module *m);
+struct type *type_create_from_operation(
+    enum typeop_type type,
+    const struct ast_node *n,
+    struct type *left,
+    struct type *right,
+    struct module *m
+);
 
-struct type *type_lookup_identifier_string(const struct RFstring *str,
-                                           const struct symbol_table *st);
+struct type *type_lookup_identifier_string(
+    const struct RFstring *str,
+    const struct symbol_table *st
+);
+
 /**
  * Lookup the type of an xidentifier
  *
@@ -151,9 +156,11 @@ i_INLINE_DECL struct RFstring *type_str_or_die(const struct type *t, int options
  * to remember the temporary string buffer position and after it you need to
  * pop it with @ref RFS_POP().
  */
-struct RFstring *type_op_create_str(const struct type *t1,
-                                    const struct type *t2,
-                                    enum typeop_type type);
+struct RFstring *type_op_create_str(
+    const struct type *t1,
+    const struct type *t2,
+    enum typeop_type type
+);
 
 /**
  * Get a unique id for this type for use as a hash/key in data structures.

@@ -614,72 +614,6 @@ START_TEST (test_type_get_uid) {
     ck_assert_uint_eq(s2, 3813314396);
 } END_TEST
 
-START_TEST(test_array_type1) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "a:i8[]\n"
-    );
-    front_testdriver_new_ast_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    int64_t dims[] = {-1};
-    testsupport_analyzer_type_create_elementary(
-        t_i8,
-        ELEMENTARY_TYPE_INT_8,
-        dims
-    );
-    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
-    const struct type *n_type = ast_node_get_type(typedesc);
-    ck_assert_msg(n_type, "Type should not be NULL");
-    ck_assert_msg(
-        type_compare(n_type, t_i8, TYPECMP_IDENTICAL),
-        "Node type comparison failure"
-    );
-} END_TEST
-
-START_TEST(test_array_type2) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "a:u64[42]\n"
-    );
-    front_testdriver_new_ast_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    int64_t dims[] = {42};
-    testsupport_analyzer_type_create_elementary(
-        t_i64,
-        ELEMENTARY_TYPE_UINT_64,
-        dims
-    );
-    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
-    const struct type *n_type = ast_node_get_type(typedesc);
-    ck_assert_msg(n_type, "Type should not be NULL");
-    ck_assert_msg(
-        type_compare(n_type, t_i64, TYPECMP_IDENTICAL),
-        "Node type comparison failure"
-    );
-} END_TEST
-
-START_TEST(test_array_type3) {
-    static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "a:u64[42][13][24]\n"
-    );
-    front_testdriver_new_ast_main_source(&s);
-    ck_assert_typecheck_ok();
-
-    int64_t dims[] = {42, 13, 24};
-    testsupport_analyzer_type_create_elementary(
-        t_i64,
-        ELEMENTARY_TYPE_UINT_64,
-        dims
-    );
-    struct ast_node *typedesc = ast_node_get_child(front_testdriver_module()->node, 0);
-    const struct type *n_type = ast_node_get_type(typedesc);
-    ck_assert_msg(n_type, "Type should not be NULL");
-    ck_assert_msg(
-        type_compare(n_type, t_i64, TYPECMP_IDENTICAL),
-        "Node type comparison failure"
-    );
-} END_TEST
-
 Suite *types_suite_create(void)
 {
     Suite *s = suite_create("types");
@@ -720,18 +654,11 @@ Suite *types_suite_create(void)
     tcase_add_checked_fixture(st6, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
     tcase_add_test(st6, test_type_get_uid);
 
-    TCase *st7 = tcase_create("type_arrays");
-    tcase_add_checked_fixture(st7, setup_analyzer_tests_no_stdlib, teardown_analyzer_tests);
-    tcase_add_test(st7, test_array_type1);
-    tcase_add_test(st7, test_array_type2);
-    tcase_add_test(st7, test_array_type3);
-
     suite_add_tcase(s, st1);
     suite_add_tcase(s, st2);
     suite_add_tcase(s, st3);
     suite_add_tcase(s, st4);
     suite_add_tcase(s, st5);
     suite_add_tcase(s, st6);
-    suite_add_tcase(s, st7);
     return s;
 }

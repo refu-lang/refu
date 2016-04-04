@@ -5,6 +5,8 @@
 #include <rflib/defs/inline.h>
 #include <types/type_decls.h>
 
+struct module;
+
 void type_arr_init(struct type_arr *arr, struct arr_int64 *dimensions);
 struct type_arr *type_arr_create(struct arr_int64 *dimensions);
 struct type_arr *type_arr_create_from_ast(struct ast_node *astarr);
@@ -26,9 +28,20 @@ const struct RFstring* type_arr_str(const struct type_arr *arr);
  */
 i_INLINE_DECL struct RFstring *type_str_add_array(
     struct RFstring *str,
-    const struct type_arr *arr
-)
+    const struct type_arr *arr)
 {
     return RFS(RFS_PF " " RFS_PF, RFS_PA(str), RFS_PA(type_arr_str(arr)));
 }
+
+struct type *module_getorcreate_type_as_arr(
+    struct module *mod,
+    const struct type *t,
+    struct type_arr *arrtype
+);
+
+struct type *module_getorcreate_type_as_singlearr(
+    struct module *mod,
+    const struct type *t,
+    int64_t dimensions
+);
 #endif

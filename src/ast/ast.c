@@ -115,7 +115,7 @@ struct ast_node *ast_node_create_ptrs(enum ast_type type,
 
 void ast_node_destroy(struct ast_node *n)
 {
-    /* type specific destruction  -- only if owned by analyzer and after */
+    // type specific destruction  -- only if owned by analyzer and after
     if (n->state >= AST_NODE_STATE_ANALYZER_PASS1) {
         switch(n->type) {
         case AST_ROOT:
@@ -136,6 +136,13 @@ void ast_node_destroy(struct ast_node *n)
         default:
             // no type specific destruction for the rest
             break;
+        }
+    }
+
+    // destroy data that are created during typechecking
+    if (n->state >= AST_NODE_STATE_TYPECHECK_1) {
+        if (n->type == AST_BRACKET_LIST) {
+            darray_free(n->bracketlist.members);
         }
     }
 

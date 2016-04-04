@@ -5,6 +5,7 @@
 #include <rflib/utils/bits.h>
 
 #include <inplocation.h>
+#include <ast/arr_decls.h>
 #include <ast/type_decls.h>
 #include <ast/ast_utils.h>
 #include <ast/typeclass_decls.h>
@@ -98,6 +99,7 @@ enum ast_node_state {
     AST_NODE_STATE_CREATED = 0,    /*!< State node is in at initial creation */
     AST_NODE_STATE_AFTER_PARSING,  /*!< State after parsing has been succesfull */
     AST_NODE_STATE_ANALYZER_PASS1, /*!< State after the first pass of the analyzer */
+    AST_NODE_STATE_TYPECHECK_1, /*!< Context-dependent typechecking state */
     AST_NODE_STATE_RIR_END         /*!< State after the rir types have been created. Last state before backend */
 };
 
@@ -110,6 +112,7 @@ struct ast_node {
     union {
         struct ast_root root;
         struct ast_block block;
+        struct ast_bracketlist bracketlist;
         struct ast_identifier identifier;
         struct ast_xidentifier xidentifier;
         struct ast_vardecl vardecl;

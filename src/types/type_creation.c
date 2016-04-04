@@ -205,7 +205,7 @@ struct type *type_alloc(struct module *m)
     return ret;
 }
 
-struct type *type_alloc_copy(struct module *m, struct type *source)
+struct type *type_alloc_copy(struct module *m, const struct type *source)
 {
     struct type *ret = rf_fixed_memorypool_alloc_element(m->types_pool);
     memcpy(ret, source, sizeof(*source));
@@ -320,8 +320,7 @@ struct type *type_create_from_operation(
     const struct ast_node *n,
     struct type *left,
     struct type *right,
-    struct module *m
-)
+    struct module *m)
 {
     struct type *t;
     if (left->category == TYPE_CATEGORY_OPERATOR && left->operator.type == typeop) {
@@ -556,26 +555,11 @@ struct type *type_lookup_xidentifier(const struct ast_node *n)
     }
 
     if (n->xidentifier.arrspec) {
-        struct type_arr *arrtype = type_arr_create_from_ast(n->xidentifier.arrspec);
-        // check if the type with the added specifier already exists in the mod
-        RFS_PUSH();
-        struct type *found_type = module_types_set_has_str(
+        ret = module_getorcreate_type_as_arr(
             mod,
-            type_str_add_array(type_str(ret, TSTR_DEFAULT), arrtype)
+            ret,
+            type_arr_create_from_ast(n->xidentifier.arrspec)
         );
-        RFS_POP();
-        if (!found_type) {
-            // if not found, we gotta create it and add it
-            if (!(found_type = type_alloc_copy(mod, ret))) {
-                RF_ERROR("Failed to create a copy of a type");
-                return NULL;
-            }
-            found_type->array = arrtype;
-            module_types_set_add(mod, found_type, NULL);
-        } else {
-            type_arr_destroy(arrtype);
-        }
-        ret = found_type;
     }
 
     return ret;

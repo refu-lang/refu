@@ -98,7 +98,7 @@ bool module_types_set_add(struct module *m, struct type *new_type, const struct 
  * @param s            The string representation of the type to search for
  * @return             The type that was found or NULL if no type is found.
  */
-struct type *module_types_set_has_str(struct module *m, const struct RFstring *s);
+struct type *module_types_set_has_str(const struct module *m, const struct RFstring *s);
 
 /**
  * Manually add the standard library as a dependency to a module

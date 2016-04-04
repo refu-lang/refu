@@ -6,11 +6,12 @@
 
 struct token;
 
-struct ast_node *ast_binaryop_create(const struct inplocation_mark *start,
-                                     const struct inplocation_mark *end,
-                                     enum binaryop_type type,
-                                     struct ast_node *left,
-                                     struct ast_node *right);
+struct ast_node *ast_binaryop_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    enum binaryop_type type,
+    struct ast_node *left,
+    struct ast_node *right);
 
 i_INLINE_DECL void ast_binaryop_set_right(struct ast_node *op, struct ast_node *r)
 {
