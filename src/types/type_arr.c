@@ -81,7 +81,7 @@ const struct RFstring* type_arr_str(const struct type_arr *arr)
         if (*val == -1) {
             ret = RFS(RFS_PF "[]", RFS_PA(ret));
         } else {
-            ret = RFS(RFS_PF "[" PRId64 "]", RFS_PA(ret), *val);
+            ret = RFS(RFS_PF "[%" PRId64 "]", RFS_PA(ret), *val);
         }
     }
     return ret;

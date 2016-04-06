@@ -30,7 +30,7 @@ i_INLINE_DECL struct RFstring *type_str_add_array(
     struct RFstring *str,
     const struct type_arr *arr)
 {
-    return RFS(RFS_PF " " RFS_PF, RFS_PA(str), RFS_PA(type_arr_str(arr)));
+    return RFS(RFS_PF RFS_PF, RFS_PA(str), RFS_PA(type_arr_str(arr)));
 }
 
 struct type *module_getorcreate_type_as_arr(
