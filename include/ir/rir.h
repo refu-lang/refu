@@ -44,6 +44,8 @@ struct rir {
     struct RFstringx *buff;
     //! Memory pool for the rir types
     struct rf_fixed_memorypool *rir_types_pool;
+    //! RIR types string map. Used to confirm uniqueness of a type
+    struct rirtype_strmap types_map;
     //! Map from strings to rir objects.
     struct rirobj_strmap map;
 };

@@ -23,7 +23,7 @@ struct rir_type *rir_parse_type(struct rir_parser *p, const struct RFstring *msg
     // consume type identifier
     tok = lexer_next_token(parser_lexer(p));
     if (tok && rir_toktype(tok) == RIR_TOK_OP_MULTI) {
-        ret = rir_type_set_pointer(&ret, true);
+        ret = rir_type_get_or_create_from_other(ret, rir_parser_rir(p), true);
         // consume '*'
         lexer_next_token(parser_lexer(p));
     }

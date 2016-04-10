@@ -157,6 +157,7 @@ static bool rir_init(struct rir *r)
 {
     RF_STRUCT_ZERO(r);
     strmap_init(&r->map);
+    strmap_init(&r->types_map);
     strmap_init(&r->global_literals);
     rf_ilist_head_init(&r->functions);
     rf_ilist_head_init(&r->objects);
@@ -188,6 +189,7 @@ static void rir_deinit(struct rir *r)
     struct rir_fndecl *tmp;
     darray_free(r->dependencies);
     strmap_clear(&r->map);
+    rirtype_strmap_free(&r->types_map);
     strmap_clear(&r->global_literals);
 
     rf_ilist_for_each_safe(&r->functions, fn, tmp, ln) {
@@ -524,7 +526,7 @@ struct rir_typedef *rir_typedef_byname(const struct rir *r, const struct RFstrin
 
 struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name)
 {
-    const struct rir_type *type = rir_type_elem_get_from_string(name, false);
+    const struct rir_type *type = rir_type_elem_get_from_string(r, name, false);
     if (type) {
         return (struct rir_type*)type;
     }
@@ -533,7 +535,7 @@ struct rir_type *rir_type_byname(struct rir *r, const struct RFstring *name)
     if (!def) {
         return NULL;
     }
-    return rir_type_comp_create(def, r, false);
+    return rir_type_comp_get_or_create(def, r, false);
 }
 
 struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *n)

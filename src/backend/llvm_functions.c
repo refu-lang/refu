@@ -89,7 +89,10 @@ static bool llvm_create_blockexit(const struct rir_block_exit *e, struct llvm_tr
     return true;
 }
 
-static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_ctx *ctx)
+static bool llvm_create_block(
+    const struct rir_block *b,
+    struct rir *rir,
+    struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef llvmval;
     // create and enter the block
@@ -110,7 +113,7 @@ static bool llvm_create_block(const struct rir_block *b, struct llvm_traversal_c
     if (rir_block_is_first(b) && ctx->current_rfn->retslot_val) {
         struct rir_type *rettype = ctx->current_rfn->retslot_val->type;
         // Val->type is the type of the alloca, so drop the pointer from it
-        rettype = rir_type_set_pointer(&rettype, false);
+        rettype = rir_type_get_or_create_from_other(rettype, rir, false);
 
         llvmval = LLVMBuildAlloca(
             ctx->builder,
@@ -143,12 +146,15 @@ static bool llvm_connect_block(const struct rir_block *b, struct llvm_traversal_
     return llvm_create_blockexit(&b->exit, ctx);
 }
 
-static bool bllvm_create_fndef(const struct rir_fndef *fn, struct llvm_traversal_ctx *ctx)
+static bool bllvm_create_fndef(
+    const struct rir_fndef *fn,
+    struct rir *rir,
+    struct llvm_traversal_ctx *ctx)
 {
     struct rir_block **b;
     // create all blocks and their contents
     darray_foreach(b, fn->blocks) {
-        if (!llvm_create_block(*b, ctx)) {
+        if (!llvm_create_block(*b, rir, ctx)) {
             return false;
         }
     }
@@ -161,7 +167,9 @@ static bool bllvm_create_fndef(const struct rir_fndef *fn, struct llvm_traversal
     return true;
 }
 
-static struct LLVMOpaqueValue *bllvm_create_fndecl(struct rir_fndecl *fn, struct llvm_traversal_ctx *ctx)
+static struct LLVMOpaqueValue *bllvm_create_fndecl(
+    struct rir_fndecl *fn,
+    struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef *arg_types = bllvm_rir_to_llvm_types(&fn->argument_types, ctx);
     // arg_types can also be null here, if the function has no arguments
@@ -197,7 +205,7 @@ bool bllvm_create_module_functions(struct rir *r, struct llvm_traversal_ctx *ctx
             // make it the current function
             ctx->current_function = llvmfn;
             ctx->current_rfn = rir_fndecl_to_fndef(decl);
-            if (!bllvm_create_fndef(ctx->current_rfn, ctx)) {
+            if (!bllvm_create_fndef(ctx->current_rfn, r, ctx)) {
                 RF_ERROR("Failed to create a function definition in LLVM");
                 return false;
             }

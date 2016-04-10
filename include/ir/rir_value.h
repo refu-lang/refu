@@ -84,7 +84,7 @@ bool rir_value_literal_init(
     struct rir_object *obj,
     const struct RFstring *name,
     const struct RFstring *value,
-    struct rirobj_strmap *global_rir_map
+    struct rir *r
 );
 
 bool rir_value_label_init_string(
@@ -98,13 +98,24 @@ bool rir_value_label_init_string(
  * Initialize a constant value
  * @param v        The value to initialize
  * @param c        The ast_constant from whicn to populate the value
- * @param type     Optional type information regarding the constant. This allows us
- *                 to have constants smaller than i64 or f64. If not given
- *                 (value = ELEMENTARY_TYPE_TYPES_COUNT) then the
+ * @param r        The rir module, used to check for type existence.
+ * @param type     Optional type information regarding the constant. This
+ *                 allows us to have constants smaller than i64 or f64. If not
+ *                 given (value = ELEMENTARY_TYPE_TYPES_COUNT) then the
  *                 biggest type for the constant is used.
  * @return         true for success
  */
-bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, enum elementary_type type);
+bool rir_value_constant_init(
+    struct rir_value *v,
+    const struct ast_constant *c,
+    struct rir *r,
+    enum elementary_type type
+);
+bool rir_value_static_constant_init(
+    struct rir_value *v,
+    const struct ast_constant *c,
+    struct rir_type *t
+);
 void rir_value_nil_init(struct rir_value *v);
 
 

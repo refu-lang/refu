@@ -17,7 +17,7 @@ static bool rir_global_init_string(struct rir_object *obj,
                                    const struct rir_type *type,
                                    const struct RFstring *name,
                                    const void *value,
-                                   struct rirobj_strmap *global_rir_map)
+                                   struct rir *r)
 {
     // only elementary types for now
     if (!rir_type_is_elementary(type)) {
@@ -36,7 +36,7 @@ static bool rir_global_init_string(struct rir_object *obj,
         obj,
         RFS(RFS_PF, RFS_PA(name)),
         value,
-        global_rir_map
+        r
     );
     RFS_POP();
     return ret;
@@ -51,7 +51,7 @@ struct rir_object *rir_global_create_string(const struct rir_type *type,
     if (!ret) {
         return NULL;
     }
-    if (!rir_global_init_string(ret, type, name, value, &rir->map)) {
+    if (!rir_global_init_string(ret, type, name, value, rir)) {
         goto fail_free_ret;
     }
     // now also add the key to the global literals map
@@ -96,7 +96,7 @@ struct rir_object *rir_global_create_parsed(struct rir_parser *p,
     }
 
     ret = rir_global_create_string(
-        rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),
+        rir_type_elem_get_or_create(rir_parser_rir(p), ELEMENTARY_TYPE_STRING, false),
         name,
         valstr,
         rir_parser_rir(p)
@@ -138,7 +138,7 @@ struct rir_object *rir_global_addorget_string(struct rir *rir, const struct RFst
     if (!gstring) {
         RFS_PUSH();
         gstring = rir_global_create_string(
-            rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),
+            rir_type_elem_get_or_create(rir, ELEMENTARY_TYPE_STRING, false),
             RFS("$gstr_%u", rf_hash_str_stable(s, 0)),
             s,
             rir

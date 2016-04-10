@@ -14,9 +14,51 @@ bool rirobj_strmap_add(
     struct rir_object *obj
 )
 {
-    bool ret = strmap_add(map, id, obj);
-    RF_ASSERT(ret || errno != EEXIST, "Tried to add an already existing RIR object to the map");
+    bool ret = strmap_add(map, (struct RFstring*)id, obj);
+    RF_ASSERT(
+        ret || errno != EEXIST,
+        "Tried to add an already existing RIR object to the map"
+    );
     return ret;
+}
+
+bool rirtype_strmap_add(
+    struct rirtype_strmap *map,
+    const struct RFstring *id,
+    struct rir_type *t)
+{
+    struct RFstring *id_copy = rf_string_copy_out(id);
+    if (!id_copy) {
+        return false;
+    }
+    bool ret = strmap_add(map, id_copy, t);
+    RF_ASSERT(
+        ret || errno != EEXIST,
+        "Tried to add an already existing RIR object to the map"
+    );
+    if (!ret) {
+        rf_string_destroy(id_copy);
+    }
+    return ret;
+}
+
+struct rir_type *rirtype_strmap_get(struct rirtype_strmap *map, const struct RFstring *id)
+{
+    return strmap_get(map, id);
+}
+
+static bool itfree_rirtypestring(struct RFstring *s, struct rir_type *t, void *u)
+{
+    (void)t;
+    (void)u;
+    rf_string_destroy(s);
+    return true;
+}
+
+void rirtype_strmap_free(struct rirtype_strmap *map)
+{
+    strmap_iterate(map, (strmap_it_cb)itfree_rirtypestring, NULL);
+    strmap_clear(map);
 }
 
 bool rir_map_addobj(

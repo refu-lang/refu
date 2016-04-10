@@ -16,7 +16,12 @@ struct rir_object *rir_constant_create_obj(const struct ast_node *c, struct rir_
         return NULL;
     }
     ret->expr.type = RIR_EXPRESSION_CONSTANT;
-    return rir_value_constant_init(&ret->expr.val, &c->constant, ELEMENTARY_TYPE_TYPES_COUNT) ? ret : NULL;
+    return rir_value_constant_init(
+        &ret->expr.val,
+        &c->constant,
+        rir_ctx_rir(ctx),
+        ELEMENTARY_TYPE_TYPES_COUNT
+    ) ? ret : NULL;
 }
 
 struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_ctx *ctx)
@@ -29,7 +34,7 @@ struct rir_value *rir_constantval_create_fromint64(int64_t n, struct rir *r)
 {
     struct rir_value *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_constantval_init_fromint64(ret, n)) {
+    if (!rir_constantval_init_fromint64(ret, r, n)) {
         free(ret);
         ret = NULL;
     }
@@ -38,19 +43,19 @@ struct rir_value *rir_constantval_create_fromint64(int64_t n, struct rir *r)
     return ret;
 }
 
-bool rir_constantval_init_fromint64(struct rir_value *v, int64_t n)
+bool rir_constantval_init_fromint64(struct rir_value *v, struct rir *r, int64_t n)
 {
     struct ast_constant c;
     v->category = RIR_VALUE_CONSTANT;
     ast_constant_init_int(&c, n);
-    return rir_value_constant_init(v, &c, ELEMENTARY_TYPE_INT_64);
+    return rir_value_constant_init(v, &c, r, ELEMENTARY_TYPE_INT_64);
 }
 
 struct rir_value *rir_constantval_create_fromint32(int32_t n, struct rir *r)
 {
     struct rir_value *ret;
     RF_MALLOC(ret, sizeof(*ret), return NULL);
-    if (!rir_constantval_init_fromint32(ret, n)) {
+    if (!rir_constantval_init_fromint32(ret, r, n)) {
         free(ret);
         ret = NULL;
     }
@@ -59,12 +64,12 @@ struct rir_value *rir_constantval_create_fromint32(int32_t n, struct rir *r)
     return ret;
 }
 
-bool rir_constantval_init_fromint32(struct rir_value *v, int32_t n)
+bool rir_constantval_init_fromint32(struct rir_value *v, struct rir *r, int32_t n)
 {
     struct ast_constant c;
     v->category = RIR_VALUE_CONSTANT;
     ast_constant_init_int(&c, n);
-    return rir_value_constant_init(v, &c, ELEMENTARY_TYPE_INT_32);
+    return rir_value_constant_init(v, &c, r, ELEMENTARY_TYPE_INT_32);
 }
 
 const struct RFstring *rir_constant_string(const struct rir_value *val)

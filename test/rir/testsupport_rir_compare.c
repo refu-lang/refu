@@ -152,7 +152,7 @@ static bool ckr_compare_value(
         return false;
     }
 
-    if (got->type != expect->type) {
+    if (!rir_type_identical(got->type, expect->type)) {
         ck_abort_at(
             file,
             line,

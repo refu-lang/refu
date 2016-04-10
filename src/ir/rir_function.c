@@ -84,7 +84,7 @@ static bool rir_fndecl_init_args_from_ast(
             return false;
         }
         struct rir_type *t;
-        if (!(t = rir_type_comp_create(def, ctx->common.rir, true))) {
+        if (!(t = rir_type_comp_get_or_create(def, rir_ctx_rir(ctx), true))) {
             return false;
         }
         darray_init(*arr);
@@ -211,10 +211,18 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
         }
         // if user defined type, return as a pointer
         if (return_type->category == RIR_TYPE_COMPOSITE) {
-            return_type = rir_type_set_pointer(&return_type, true);
+            return_type = rir_type_get_or_create_from_other(
+                return_type,
+                rir_ctx_rir(ctx),
+                true
+            );
         }
     } else {
-        return_type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_NIL, false);
+        return_type = rir_type_elem_get_or_create(
+            rir_ctx_rir(ctx),
+            ELEMENTARY_TYPE_NIL,
+            false
+        );
         if (!return_type) {
             RF_ERROR("Could not create nil type for a function's return");
             return false;

@@ -39,7 +39,11 @@ bool rir_value_label_init_string(
     return rir_map_addobj(common, &v->id, obj);
 }
 
-bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, enum elementary_type type)
+bool rir_value_constant_init(
+    struct rir_value *v,
+    const struct ast_constant *c,
+    struct rir *r,
+    enum elementary_type type)
 {
     bool ret;
     v->category = RIR_VALUE_CONSTANT;
@@ -47,16 +51,54 @@ bool rir_value_constant_init(struct rir_value *v, const struct ast_constant *c, 
     switch (v->constant.type) {
     case CONSTANT_NUMBER_INTEGER:
         RF_ASSERT(type == ELEMENTARY_TYPE_TYPES_COUNT || elementary_type_is_int(type), "Should have gotten an elementary type here");
-        v->type = (struct rir_type*)rir_type_elem_get(type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_INT_64, false);
+        v->type = rir_type_elem_get_or_create(
+            r,
+            type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_INT_64,
+            false
+        );
         ret = rf_string_initv(&v->id, "%"PRId64, v->constant.value.integer);
         break;
     case CONSTANT_NUMBER_FLOAT:
         RF_ASSERT(type == ELEMENTARY_TYPE_TYPES_COUNT || elementary_type_is_float(type), "Should have gotten a floating type here");
-        v->type = (struct rir_type*)rir_type_elem_get(type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_FLOAT_64, false);
+        v->type = rir_type_elem_get_or_create(
+            r,
+            type != ELEMENTARY_TYPE_TYPES_COUNT ? type : ELEMENTARY_TYPE_FLOAT_64,
+            false
+        );
         ret = rf_string_initv(&v->id, "%f", v->constant.value.floating);
         break;
     case CONSTANT_BOOLEAN:
-        v->type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_BOOL, false);
+        v->type = rir_type_elem_get_or_create(
+            r,
+            ELEMENTARY_TYPE_BOOL,
+            false
+        );
+        ret = rf_string_initv(&v->id, "%s", v->constant.value.boolean ? "true" : "false");
+        break;
+    }
+    return ret;
+}
+
+bool rir_value_static_constant_init(
+    struct rir_value *v,
+    const struct ast_constant *c,
+    struct rir_type *t)
+{
+    bool ret;
+    v->category = RIR_VALUE_CONSTANT;
+    v->constant = *c;
+    RF_ASSERT(t && t->category == RIR_TYPE_ELEMENTARY, "rir type should be elementary here");
+    switch (v->constant.type) {
+    case CONSTANT_NUMBER_INTEGER:
+        v->type = t;
+        ret = rf_string_initv(&v->id, "%"PRId64, v->constant.value.integer);
+        break;
+    case CONSTANT_NUMBER_FLOAT:
+        v->type = t;
+        ret = rf_string_initv(&v->id, "%f", v->constant.value.floating);
+        break;
+    case CONSTANT_BOOLEAN:
+        v->type = t;
         ret = rf_string_initv(&v->id, "%s", v->constant.value.boolean ? "true" : "false");
         break;
     }
@@ -68,18 +110,17 @@ bool rir_value_literal_init(
     struct rir_object *obj,
     const struct RFstring *name,
     const struct RFstring *value,
-    struct rirobj_strmap *global_rir_map
-)
+    struct rir *r)
 {
     v->category = RIR_VALUE_LITERAL;
-    v->type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_STRING, false);
+    v->type = rir_type_elem_get_or_create(r, ELEMENTARY_TYPE_STRING, false);
     if (!rf_string_copy_in(&v->id, name)) {
         return false;
     }
     if (!rf_string_copy_in(&v->literal, value)) {
         return false;
     }
-    return rirobj_strmap_add(global_rir_map, &v->id, obj);
+    return rirobj_strmap_add(&r->map, &v->id, obj);
 }
 
 bool rir_value_variable_init(
@@ -87,8 +128,7 @@ bool rir_value_variable_init(
     struct rir_object *obj,
     struct rir_type *type,
     enum rir_pos pos,
-    rir_data data
-)
+    rir_data data)
 {
     bool ret = false;
     struct rir_common *c;
@@ -114,10 +154,10 @@ bool rir_value_variable_init(
         struct rir_expression *expr = &obj->expr;
         switch (obj->expr.type) {
         case RIR_EXPRESSION_CONVERT:
-            v->type = rir_type_create_from_other(expr->convert.type, c->rir, false);
+            v->type = rir_type_get_or_create_from_other(expr->convert.type, c->rir, false);
             break;
         case RIR_EXPRESSION_ALLOCA:
-            v->type = rir_type_create_from_other(expr->alloca.type, c->rir, true);
+            v->type = rir_type_get_or_create_from_other(expr->alloca.type, c->rir, true);
             break;
         case RIR_EXPRESSION_CMP_EQ:
         case RIR_EXPRESSION_CMP_NE:
@@ -125,35 +165,32 @@ bool rir_value_variable_init(
         case RIR_EXPRESSION_CMP_GT:
         case RIR_EXPRESSION_CMP_LE:
         case RIR_EXPRESSION_CMP_LT:
-            v->type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_BOOL, false);
+            v->type = rir_type_elem_get_or_create(c->rir, ELEMENTARY_TYPE_BOOL, false);
             break;
         case RIR_EXPRESSION_GETUNIONIDX:
-            v->type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_INT_64, false);
+            v->type = rir_type_elem_get_or_create(c->rir, ELEMENTARY_TYPE_INT_64, false);
             break;
         case RIR_EXPRESSION_READ:
             if (!expr->read.memory->type->is_pointer) {
                 RF_ERROR("Tried to rir read from a location not in memory");
                 goto end;
             }
-            v->type = rir_type_create_from_other(expr->read.memory->type, c->rir, false);
+            v->type = rir_type_get_or_create_from_other(expr->read.memory->type, c->rir, false);
             break;
         case RIR_EXPRESSION_CALL:
             // figure out the type
-            v->type = rir_type_copy_from_other(
-                rir_call_return_type(&expr->call, c),
-                c->rir
-            );
+            v->type = rir_call_return_type(&expr->call, c);
             break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:
         case RIR_EXPRESSION_MUL:
         case RIR_EXPRESSION_DIV:
             RF_ASSERT(rir_type_is_elementary(expr->binaryop.a->type), "Expected elementary type to be used in either part of rir binary op");
-            v->type = (struct rir_type*)rir_type_elem_get(expr->binaryop.a->type->etype, false);
+            v->type = rir_type_elem_get_or_create(c->rir, expr->binaryop.a->type->etype, false);
             break;
         case RIR_EXPRESSION_OBJMEMBERAT:
             RF_ASSERT(rir_type_is_composite(expr->objmemberat.objmemory->type), "Expected composite type at objmemberat");
-            v->type = rir_type_create_from_other(
+            v->type = rir_type_get_or_create_from_other(
                 rir_type_comp_member_type(
                     expr->objmemberat.objmemory->type,
                     expr->objmemberat.idx
@@ -166,7 +203,7 @@ bool rir_value_variable_init(
             // for now value type determining is the same as objmemberat.
             // the memberat index does not take into account the union index
             RF_ASSERT(rir_type_is_composite(expr->unionmemberat.unimemory->type), "Expected composite type at unionmemberat");
-            v->type = rir_type_create_from_other(
+            v->type = rir_type_get_or_create_from_other(
                 rir_type_comp_member_type(
                     expr->unionmemberat.unimemory->type,
                     expr->unionmemberat.idx
@@ -183,7 +220,7 @@ bool rir_value_variable_init(
         // object variable constructor create the type, so just assign it here
         v->type = type;
     } else if (obj->category == RIR_OBJ_GLOBAL) {
-        v->type = rir_type_copy_from_other(type, c->rir);
+        v->type = type;
     } else {
         RF_CRITICAL_FAIL("TODO ... should this even ever happen?");
     }

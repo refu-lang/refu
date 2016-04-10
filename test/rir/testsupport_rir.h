@@ -66,9 +66,16 @@ struct rir *testsupport_rir_add_module();
     do {                                                                \
         static const struct RFstring temps_ = RF_STRING_STATIC_INIT(i_val_); \
         RFS_PUSH();                                                     \
-        const struct RFstring *namestr = RFS("$gstr_%u", rf_hash_str_stable(&temps_, 0)); \
+        const struct RFstring *namestr = RFS(                           \
+            "$gstr_%u",                                                 \
+            rf_hash_str_stable(&temps_, 0)                              \
+        );                                                              \
         rir_global_create_string(                                       \
-            rir_type_elem_get(ELEMENTARY_TYPE_STRING, false),           \
+            rir_type_elem_get_or_create(                                \
+                testsupport_rir_curr_module(),                          \
+                ELEMENTARY_TYPE_STRING,                                 \
+                false                                                   \
+            ),                                                          \
             namestr,                                                    \
             &temps_,                                                    \
             testsupport_rir_curr_module()                               \
@@ -153,20 +160,27 @@ struct rir_expression *testsupport_rir_add_binaryop(
 struct rir_value *testsupport_rir_value(char *name);
 
 // needs to be enclosed in RFS_PUSH()/RFS_POP()
-#define testsupport_rir_etype(type_, is_ptr_)                           \
-    (struct rir_type*)rir_type_elem_get_from_string(RFS("%s", type_), is_ptr_)
+#define testsupport_rir_etype(type_, is_ptr_)   \
+    rir_type_elem_get_from_string(              \
+        testsupport_rir_curr_module(),          \
+        RFS("%s", type_),                       \
+        is_ptr_                                 \
+    )
 
 #define testsupport_rir_ctype(type_, is_ptr_)                           \
     {.category=RIR_TYPE_COMPOSITE, .is_pointer=is_ptr_, .tdef=type_}
 
-#define testsupport_rir_typearr(tdef_, elemcstr_)                       \
-    do {                                                                \
-        RFS_PUSH();                                                     \
-        darray_append(                                                  \
-            (tdef_)->argument_types,                                    \
-            (struct rir_type*)rir_type_elem_get_from_string(RFS("%s", elemcstr_), false) \
-        );                                                              \
-        RFS_POP();                                                      \
+#define testsupport_rir_typearr(tdef_, elemcstr_)   \
+    do {                                            \
+        RFS_PUSH();                                 \
+        darray_append(                              \
+            (tdef_)->argument_types,                \
+            rir_type_elem_get_from_string(          \
+                testsupport_rir_curr_module(),      \
+                RFS("%s", elemcstr_),               \
+                false                               \
+        ));                                         \
+        RFS_POP();                                  \
     } while(0)
 
 

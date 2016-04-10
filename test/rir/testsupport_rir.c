@@ -132,7 +132,7 @@ struct rir_fndef *testsupport_rir_add_fndef_impl(
     }
 
     if (!return_type) {
-        return_type = (struct rir_type*)rir_type_elem_get(ELEMENTARY_TYPE_NIL, false);
+        return_type = rir_type_elem_get_or_create(testsupport_rir_curr_module(), ELEMENTARY_TYPE_NIL, false);
     }
 
     // let's use same initialization rir parsing uses

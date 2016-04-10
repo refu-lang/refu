@@ -97,7 +97,7 @@ struct rir_object *rir_parse_write(struct rir_parser *p)
         goto fail_destroy_src;
     }
 
-    struct rir_type *valtype = rir_type_create_from_other(type, rir_parser_rir(p), false);
+    struct rir_type *valtype = rir_type_get_or_create_from_other(type, rir_parser_rir(p), false);
     if (!rir_type_identical(valtype, srcval->type)) {
         RFS_PUSH();
         rirparser_synerr(

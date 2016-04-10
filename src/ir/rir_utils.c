@@ -8,16 +8,29 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_object.h>
 
+#include <ast/constants.h>
+
 struct rir_value g_rir_const_1;
 struct rir_value g_rir_const_m1;
+struct rir_type g_rir_i32_type;
 static bool utils_created = false;
+
+static bool rir_static_constantval_init_fromint32(struct rir_value *v, int32_t n)
+{
+    struct ast_constant c;
+    v->category = RIR_VALUE_CONSTANT;
+    ast_constant_init_int(&c, n);
+    return rir_value_static_constant_init(v, &c, &g_rir_i32_type);
+}
 
 bool rir_utils_create()
 {
-    if (!rir_constantval_init_fromint32(&g_rir_const_1, 1)) {
+    // first create some global statuc types that will be useful elsewhere
+    rir_type_elem_init(&g_rir_i32_type, ELEMENTARY_TYPE_INT_32, false);
+    if (!rir_static_constantval_init_fromint32(&g_rir_const_1, 1)) {
         return false;
     }
-    if (!rir_constantval_init_fromint32(&g_rir_const_m1, -1)) {
+    if (!rir_static_constantval_init_fromint32(&g_rir_const_m1, -1)) {
         return false;
     }
     utils_created = true;

@@ -9,14 +9,16 @@
 #include <types/type.h>
 #include <types/type_operators.h>
 
-static bool rir_typearr_add_single(struct rir_type_arr *arr,
-                                   const struct type *type,
-                                   enum typearr_create_reason reason,
-                                   struct rir_ctx *ctx)
+static bool rir_typearr_add_single(
+    struct rir_type_arr *arr,
+    const struct type *type,
+    enum typearr_create_reason reason,
+    struct rir_ctx *ctx)
 {
     struct rir_type *t;
     if (type_is_elementary(type)) {
-        t = (struct rir_type*)rir_type_elem_get(
+        t = rir_type_elem_get_or_create(
+            rir_ctx_rir(ctx),
             type_elementary(type),
             // If it's a string make sure it's passed by pointer to function calls
             // TODO: at some point do away with this distinction (?)

@@ -91,7 +91,7 @@ static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
 {
     bool ret;
     RF_ASSERT(rv->category != RIR_VALUE_NIL, "Nil RIR Value should never get here");
-    ret = strmap_add(&ctx->valmap, &rv->id, lv);
+    ret = strmap_add(&ctx->valmap, (struct RFstring*)&rv->id, lv);
     if (!ret) {
         if (errno == EEXIST) {
             RF_ERROR("Tried to add an already existing rir value string to the llvm val mapping");
@@ -166,8 +166,14 @@ struct LLVMOpaqueValue *bllvm_compile_literal(const struct RFstring *lit, struct
 static struct LLVMOpaqueValue *bllvm_compile_objmemberat(const struct rir_expression *expr,
                                                          struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(expr->objmemberat.objmemory->type->is_pointer, "You can only get an index to a pointer");
-    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->objmemberat.objmemory, ctx);
+    RF_ASSERT(
+        expr->objmemberat.objmemory->type->is_pointer,
+        "You can only get an index to a pointer"
+    );
+    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(
+        expr->objmemberat.objmemory,
+        ctx
+    );
     return bllvm_gep_to_struct(llvm_mval, expr->objmemberat.idx, ctx);
 }
 

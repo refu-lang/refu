@@ -10,48 +10,6 @@
 #include <analyzer/type_set.h>
 #include <utils/common_strings.h>
 
-static const struct rir_type elementary_types[] = {
-#define RIR_TYPE_ELEMINIT(i_type_)                                     \
-    [i_type_] = {.category = RIR_TYPE_ELEMENTARY, .etype = i_type_, .is_pointer = false}
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT_8),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_8),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT_16),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_16),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT_32),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_32),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT_64),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_UINT_64),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_INT),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_UINT),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_FLOAT_32),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_FLOAT_64),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_STRING),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_BOOL),
-    RIR_TYPE_ELEMINIT(ELEMENTARY_TYPE_NIL)
-#undef RIR_TYPE_ELEMINIT
-};
-
-static const struct rir_type elementary_ptr_types[] = {
-#define RIR_TYPE_PTRELEMINIT(i_type_)                                     \
-    [i_type_] = {.category = RIR_TYPE_ELEMENTARY, .etype = i_type_, .is_pointer = true}
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT_8),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_UINT_8),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT_16),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_UINT_16),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT_32),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_UINT_32),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT_64),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_UINT_64),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_INT),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_UINT),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_FLOAT_32),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_FLOAT_64),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_STRING),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_BOOL),
-    RIR_TYPE_PTRELEMINIT(ELEMENTARY_TYPE_NIL)
-#undef RIR_TYPE_PTRELEMINIT
-};
-
 i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);
 i_INLINE_INS bool rir_type_is_specific_elementary(const struct rir_type *t,
                                                   enum elementary_type etype);
@@ -61,11 +19,11 @@ bool rir_type_is_union(const struct rir_type *t)
     return t->category == RIR_TYPE_COMPOSITE && t->tdef->is_union;
 }
 
-void rir_type_elem_init(struct rir_type *t, enum elementary_type etype)
+void rir_type_elem_init(struct rir_type *t, enum elementary_type etype, bool is_pointer)
 {
     t->category = RIR_TYPE_ELEMENTARY;
     t->etype = etype;
-    t->is_pointer = false;
+    t->is_pointer = is_pointer;
 }
 
 struct rir_type *rir_type_alloc(struct rir *r)
@@ -82,15 +40,57 @@ void rir_type_destroy(struct rir_type *t, struct rir *r)
     }
 }
 
-const struct rir_type *rir_type_elem_get_from_string(const struct RFstring *name, bool is_pointer)
+struct rir_type *rir_type_elem_get_from_string(
+    struct rir *r,
+    const struct RFstring *name,
+    bool is_pointer)
 {
     enum elementary_type etype = type_elementary_from_str(name);
-    return etype == ELEMENTARY_TYPE_TYPES_COUNT ? NULL : rir_type_elem_get(etype, is_pointer);
+    return etype == ELEMENTARY_TYPE_TYPES_COUNT
+        ? NULL
+        : rir_type_elem_get_or_create(r, etype, is_pointer);
 }
 
-const struct rir_type *rir_type_elem_get(enum elementary_type etype, bool is_pointer)
+static inline const struct RFstring *rir_form_elemtype_string(
+    enum elementary_type etype,
+    bool is_pointer)
 {
-    return is_pointer ? &elementary_ptr_types[etype] : &elementary_types[etype];
+    return RFS(
+        RFS_PF"%s",
+        RFS_PA(type_elementary_get_str(etype)),
+        is_pointer ? "*" : ""
+    );
+}
+
+static inline const struct RFstring *rir_form_comptype_string(
+    const struct rir_typedef *tdef,
+    bool is_pointer)
+{
+    return RFS(RFS_PF"%s", RFS_PA((&tdef->name)), is_pointer ? "*" : "");
+}
+
+struct rir_type *rir_type_elem_get_or_create(
+    struct rir *r,
+    enum elementary_type etype,
+    bool is_pointer)
+{
+    RFS_PUSH();
+    const struct RFstring *id = rir_form_elemtype_string(etype, is_pointer);
+    struct rir_type *ret = rirtype_strmap_get(&r->types_map, id);
+    if (ret) {
+        goto end;
+    }
+
+    // else
+    if (!(ret = rir_type_alloc(r))) {
+        goto end;
+    }
+    rir_type_elem_init(ret, etype, is_pointer);
+    rirtype_strmap_add(&r->types_map, id, ret);
+
+end:
+    RFS_POP();
+    return ret;
 }
 
 void rir_type_comp_init(struct rir_type *t, const struct rir_typedef *def, bool is_pointer)
@@ -100,13 +100,27 @@ void rir_type_comp_init(struct rir_type *t, const struct rir_typedef *def, bool 
     t->is_pointer = is_pointer;
 }
 
-struct rir_type *rir_type_comp_create(const struct rir_typedef *def, struct rir *r, bool is_pointer)
+struct rir_type *rir_type_comp_get_or_create(
+    const struct rir_typedef *def,
+    struct rir *r,
+    bool is_pointer)
 {
-    struct rir_type *ret = rir_type_alloc(r);
-    if (!ret) {
-        return NULL;
+    RFS_PUSH();
+    const struct RFstring *id = rir_form_comptype_string(def, is_pointer);
+    struct rir_type *ret = rirtype_strmap_get(&r->types_map, id);
+    if (ret) {
+        RF_ASSERT(ret->is_pointer == is_pointer,"Should never happen.");
+        goto end;
+    }
+
+    // else
+    if (!(ret = rir_type_alloc(r))) {
+        goto end;
     }
     rir_type_comp_init(ret, def, is_pointer);
+    rirtype_strmap_add(&r->types_map, id, ret);
+end:
+    RFS_POP();
     return ret;
 }
 
@@ -114,7 +128,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
 {
     struct rir_typedef *tdef;
     if (t->category == TYPE_CATEGORY_ELEMENTARY) {
-        return (struct rir_type*)rir_type_elem_get(t->elementary.etype, false);
+        return rir_type_elem_get_or_create(rir_ctx_rir(ctx), t->elementary.etype, false);
     } else if (t->category == TYPE_CATEGORY_DEFINED) {
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {
@@ -126,7 +140,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, ctx->common.rir, false);
+        return rir_type_comp_get_or_create(tdef, rir_ctx_rir(ctx), false);
     } else if (t->category == TYPE_CATEGORY_OPERATOR) {
         struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
@@ -140,28 +154,22 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        return rir_type_comp_create(tdef, ctx->common.rir, false);
+        return rir_type_comp_get_or_create(tdef, ctx->common.rir, false);
     } else {
         RF_CRITICAL_FAIL("Unexpected type category");
         return NULL;
     }
 }
 
-struct rir_type *rir_type_create_from_other(const struct rir_type *other, struct rir *r, bool is_pointer)
+struct rir_type *rir_type_get_or_create_from_other(
+    const struct rir_type *other,
+    struct rir *r,
+    bool is_pointer)
 {
     if (other->category == RIR_TYPE_ELEMENTARY) {
-        return (struct rir_type*)rir_type_elem_get(other->etype, is_pointer);
+        return rir_type_elem_get_or_create(r, other->etype, is_pointer);
     } else { // composite
-        return rir_type_comp_create(other->tdef, r, is_pointer);
-    }
-}
-
-struct rir_type *rir_type_copy_from_other(const struct rir_type *other, struct rir *r)
-{
-    if (other->category == RIR_TYPE_ELEMENTARY) {
-        return (struct rir_type*)rir_type_elem_get(other->etype, other->is_pointer);
-    } else { // composite
-        return rir_type_comp_create(other->tdef, r, other->is_pointer);
+        return rir_type_comp_get_or_create(other->tdef, r, is_pointer);
     }
 }
 
@@ -184,6 +192,9 @@ bool rir_type_equal(const struct rir_type *a, const struct rir_type *b)
 
 bool rir_type_identical(const struct rir_type *a, const struct rir_type *b)
 {
+    if (!a || !b) { // if one is NULL, the other one has to be too
+        return a == b;
+    }
     if (a->is_pointer != b->is_pointer) {
         return false;
     }
@@ -198,24 +209,12 @@ size_t rir_type_bytesize(const struct rir_type *t)
     return rir_typedef_bytesize(t->tdef);
 }
 
-struct rir_type *rir_type_set_pointer(struct rir_type **t, bool has_pointer)
-{
-    if (rir_type_is_elementary(*t)) {
-        *t = (struct rir_type*)rir_type_elem_get((*t)->etype, has_pointer);
-    } else {
-        (*t)->is_pointer = has_pointer;
-    }
-    return *t;
-}
-
 const struct RFstring *rir_type_string(const struct rir_type *t)
 {
     if (t->category == RIR_TYPE_ELEMENTARY) {
-        return RFS(RFS_PF"%s",
-                   RFS_PA(type_elementary_get_str(t->etype)),
-                   t->is_pointer ? "*" : "");
+        return rir_form_elemtype_string(t->etype, t->is_pointer);
     } else {
-        return RFS(RFS_PF"%s", RFS_PA((&t->tdef->name)), t->is_pointer ? "*" : "");
+        return rir_form_comptype_string(t->tdef, t->is_pointer);
     }
 }
 

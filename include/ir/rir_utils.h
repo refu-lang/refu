@@ -6,6 +6,7 @@
 
 extern struct rir_value g_rir_const_1;
 extern struct rir_value g_rir_const_m1;
+extern struct rir_type g_rir_i32_type;
 
 /**
  * Initialize all the utils needed by all rir functions

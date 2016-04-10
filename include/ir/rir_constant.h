@@ -25,10 +25,10 @@ struct rir_expression *rir_constant_create(const struct ast_node *c, struct rir_
  * @return         A pointer to the allocated value
  */
 struct rir_value *rir_constantval_create_fromint64(int64_t n, struct rir* r);
-bool rir_constantval_init_fromint64(struct rir_value *v, int64_t n);
+bool rir_constantval_init_fromint64(struct rir_value *v, struct rir *r, int64_t n);
 
 struct rir_value *rir_constantval_create_fromint32(int32_t n, struct rir* r);
-bool rir_constantval_init_fromint32(struct rir_value *v, int32_t n);
+bool rir_constantval_init_fromint32(struct rir_value *v, struct rir *r, int32_t n);
 
 const struct RFstring *rir_constant_string(const struct rir_value *val);
 bool rir_constant_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e);

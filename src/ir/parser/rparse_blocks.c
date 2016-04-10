@@ -265,7 +265,7 @@ static bool rir_parse_create_basic_blocks(struct rir_parser *p, struct rirobj_st
     while ((tok = lexer_lookahead(parser_lexer(p), 1)) &&
            (type = rir_toktype(tok)) != RIR_TOK_SM_CCBRACE) {
         if (type == RIR_TOK_IDENTIFIER_LABEL) {
-            const struct RFstring *id = ast_identifier_str(tok->value.value.ast);
+            struct RFstring *id = (struct RFstring*)ast_identifier_str(tok->value.value.ast);
             struct rir_object *obj = strmap_get(map, id);
             if (!obj) {
                 // if in this block we have not seen the destination label before, make a block
