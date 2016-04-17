@@ -101,3 +101,8 @@ end:
     RFS_POP();
     return ret;
 }
+
+void rir_fixedarr_deinit(struct rir_fixedarr *arr)
+{
+    darray_free(arr->members);
+}

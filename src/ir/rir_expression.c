@@ -61,6 +61,9 @@ void rir_expression_deinit(struct rir_expression *expr)
     case RIR_EXPRESSION_CALL:
         rir_call_deinit(&expr->call);
         break;
+    case RIR_EXPRESSION_FIXEDARR:
+        rir_fixedarr_deinit(&expr->fixedarr);
+        break;
     default:
         break;
     }
