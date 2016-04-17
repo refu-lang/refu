@@ -181,6 +181,16 @@ bool ck_assert_analyzer_errors_impl(struct info_msg *exp_errors,
         info_ctx_get_iter(front->info, MESSAGE_ANY, &iter);
 
         while ((msg = info_ctx_msg_iterator_next(&iter))) {
+            if (i >= num) {
+                ck_analyzer_check_abort(
+                    filename, line,
+                    "Got more analyzer errors than the expected %u. The extra "
+                    "error we got is:\n\""RFS_PF"\".",
+                    num,
+                    RFS_PA(&msg->s)
+                );
+                return false;
+            }
 
             // check for error message string
             if (!rf_string_equal(&msg->s, &exp_errors[i].s)) {

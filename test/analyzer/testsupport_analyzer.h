@@ -138,10 +138,12 @@ struct type *testsupport_analyzer_type_create_function(struct type *arg,
         expected_arr_,                                  \
         sizeof(expected_arr_)/sizeof(struct info_msg),  \
         __FILE__, __LINE__)
-bool ck_assert_analyzer_errors_impl(struct info_msg *errors,
-                                    unsigned num,
-                                    const char *filename,
-                                    unsigned int line);
+bool ck_assert_analyzer_errors_impl(
+    struct info_msg *errors,
+    unsigned num,
+    const char *filename,
+    unsigned int line
+);
 
 
 

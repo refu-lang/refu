@@ -268,7 +268,7 @@ static enum traversal_cb_res typecheck_member_access(
     if (!type_category_equals(tleft, TYPE_CATEGORY_DEFINED)) {
         analyzer_err(ctx->m, ast_node_startmark(left),
                      ast_node_endmark(left),
-                     "Left part of member access operator \""RFS_PF"\"is "
+                     "Left part of member access operator \""RFS_PF"\" is "
                      "not a user defined type",
                      RFS_PA(ast_node_str(left)));
         return TRAVERSAL_CB_ERROR;

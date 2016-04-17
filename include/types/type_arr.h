@@ -39,9 +39,25 @@ struct type *module_getorcreate_type_as_arr(
     struct type_arr *arrtype
 );
 
+struct type *module_getorcreate_type_without_arr(
+    struct module *mod,
+    const struct type *t
+);
+
 struct type *module_getorcreate_type_as_singlearr(
     struct module *mod,
     const struct type *t,
     int64_t dimensions
 );
+
+/**
+ * Get the size of the first array dimension
+ */
+i_INLINE_DECL int64_t type_get_arr_size(const struct type *t)
+{
+    RF_ASSERT(t->array, "Called for a non array type");
+    return darray_size(t->array->dimensions) == 0
+        ? -1
+        : darray_item(t->array->dimensions, 0);
+}
 #endif

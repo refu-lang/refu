@@ -160,6 +160,7 @@ i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum element
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
 i_INLINE_INS bool type_is_numeric_elementary(const struct type *t);
 i_INLINE_INS enum elementary_type type_elementary(const struct type *t);
+i_INLINE_INS bool type_is_int_elementary(const struct type *t);
 i_INLINE_INS bool type_is_signed_elementary(const struct type *t);
 i_INLINE_INS bool type_is_unsigned_elementary(const struct type *t);
 i_INLINE_INS bool type_is_floating_elementary(const struct type *t);

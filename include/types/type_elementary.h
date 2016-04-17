@@ -161,6 +161,15 @@ i_INLINE_DECL enum elementary_type type_elementary(const struct type *t)
 }
 
 /**
+ * Check if the type is an integer elementary type
+ */
+i_INLINE_DECL bool type_is_int_elementary(const struct type *t)
+{
+    return t->category == TYPE_CATEGORY_ELEMENTARY &&
+        elementary_type_is_int(t->elementary.etype);
+}
+
+/**
  * Check if the type is a signed elementary type
  */
 i_INLINE_DECL bool type_is_signed_elementary(const struct type *t)

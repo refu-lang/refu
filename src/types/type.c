@@ -126,4 +126,3 @@ const struct type *type_get_wildcard()
 i_INLINE_INS bool type_is_defined(const struct type *t);
 i_INLINE_INS const struct RFstring *type_defined_get_name(const struct type *t);
 i_INLINE_INS struct type *type_defined_get_type(const struct type *t);
-i_INLINE_INS int64_t type_get_arr_size(const struct type *t);

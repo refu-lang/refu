@@ -117,6 +117,33 @@ struct type *module_getorcreate_type_as_arr(
     return found_type;
 }
 
+struct type *module_getorcreate_type_without_arr(
+    struct module *mod,
+    const struct type *t)
+{
+    RF_ASSERT(t->array, "Should be called for types that already have array");
+    struct type check_t;
+    check_t = *t;
+    check_t.array = NULL;
+    RFS_PUSH();
+    struct type *found_type = module_types_set_has_str(
+        mod,
+        type_str_or_die(&check_t, TSTR_DEFAULT)
+    );
+    RFS_POP();
+    if (!found_type) {
+        // if not found, we gotta create it and add it
+        if (!(found_type = type_alloc_copy(mod, t))) {
+            RF_ERROR("Failed to create a copy of a type");
+            return NULL;
+        }
+        found_type->array = NULL;
+        module_types_set_add(mod, found_type, NULL);
+    }
+
+    return found_type;
+}
+
 struct type *module_getorcreate_type_as_singlearr(
     struct module *mod,
     const struct type *t,
@@ -129,3 +156,5 @@ struct type *module_getorcreate_type_as_singlearr(
     struct type_arr *arrtype = type_arr_create(&dims);
     return module_getorcreate_type_as_arr(mod, t, arrtype);
 }
+
+i_INLINE_INS int64_t type_get_arr_size(const struct type *t);

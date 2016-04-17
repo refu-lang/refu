@@ -215,6 +215,106 @@ START_TEST(test_array_type_compare_fail2) {
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
+START_TEST(test_array_index_access1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u64[2] = [1, 2]\n"
+        "b:u64 = a[0]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+} END_TEST
+
+START_TEST(test_array_index_access2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "idx:u32 = 3"
+        "a:string[3] = [\"foo\", \"boo\", \"bar\"]\n"
+        "b:string = a[idx]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+} END_TEST
+
+START_TEST(test_array_index_access3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "idx:u32 = 3"
+        "a:u16[3] = [1, 2, 3]\n"
+        "b:u32 = 15 + a[idx]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+} END_TEST
+
+START_TEST(test_array_index_access_fail1) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type foo {a:u16, b:string}\n"
+        "{\n"
+        "f:foo = foo(15, \"Celina\")\n"
+        "c:u16 = f[3]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Applying index access operator at non-array type \"foo\".",
+            3, 8, 3, 8),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            3, 8, 3, 11),
+    };
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
+START_TEST(test_array_index_access_fail2) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u16[3] = [1, 2, 3]\n"
+        "b:u16 = a[\"foo\"]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Expected an integer type for the index but got \"string\".",
+            2, 10, 2, 14),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            2, 8, 2, 15),
+    };
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
+START_TEST(test_array_index_access_fail3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "a:u16[3] = [1, 2, 3]\n"
+        "b:u16 = a[3]\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Accessing array out of bounds. Array size is '3' and you are "
+            "attempting to access index '3'.",
+            2, 10, 2, 10),
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Type of right side of \"=\" can not be determined",
+            2, 8, 2, 11),
+    };
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
 Suite *analyzer_typecheck_array_suite_create(void)
 {
     Suite *s = suite_create("typecheck_arrays");
@@ -248,9 +348,31 @@ Suite *analyzer_typecheck_array_suite_create(void)
     tcase_add_test(tc3, test_array_type_compare_fail1);
     tcase_add_test(tc3, test_array_type_compare_fail2);
 
+    TCase *tc4 = tcase_create("typecheck_array_index_access");
+    tcase_add_checked_fixture(
+        tc4,
+        setup_analyzer_tests,
+        teardown_analyzer_tests
+    );
+    tcase_add_test(tc4, test_array_index_access1);
+    tcase_add_test(tc4, test_array_index_access2);
+    tcase_add_test(tc4, test_array_index_access3);
+
+    TCase *tc5 = tcase_create("typecheck_array_index_access_fail");
+    tcase_add_checked_fixture(
+        tc5,
+        setup_analyzer_tests,
+        teardown_analyzer_tests
+    );
+    tcase_add_test(tc5, test_array_index_access_fail1);
+    tcase_add_test(tc5, test_array_index_access_fail2);
+    tcase_add_test(tc5, test_array_index_access_fail3);
+
     suite_add_tcase(s, tc1);
     suite_add_tcase(s, tc2);
     suite_add_tcase(s, tc3);
+    suite_add_tcase(s, tc4);
+    suite_add_tcase(s, tc5);
 
     return s;
 }
