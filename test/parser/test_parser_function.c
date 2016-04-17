@@ -525,7 +525,7 @@ START_TEST(test_acc_fnimpl_2) {
     testsupport_parser_constant_create(cnum3,
                                        3, 7, 3, 8, integer, 33);
     testsupport_parser_node_create(arr, binaryop, 3, 0, 3, 3,
-                                   BINARYOP_ARRAY_REFERENCE, id9, cnum2);
+                                   BINARYOP_INDEX_ACCESS, id9, cnum2);
     testsupport_parser_node_create(bop3, binaryop, 3, 0, 3, 8,
                                    BINARYOP_ASSIGN, arr, cnum3);
     ast_node_add_child(bnode, bop3);

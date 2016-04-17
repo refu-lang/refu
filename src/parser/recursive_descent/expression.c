@@ -257,7 +257,6 @@ static struct ast_node *ast_parser_acc_expression_prime(
     struct ast_node *right_hand_side;
     struct ast_node *ret;
 
-
     tok = lexer_lookahead(parser_lexer(p), 1);
     if (!check_operator_type(tok, level)) {
         return NULL;
@@ -288,7 +287,7 @@ static struct ast_node *ast_parser_acc_expression_prime(
     }
     ast_binaryop_set_right(op, right_hand_side);
     // special case here for array reference operator we need to consume the closing bracket
-    if (ast_binaryop_op(op) == BINARYOP_ARRAY_REFERENCE) {
+    if (ast_binaryop_op(op) == BINARYOP_INDEX_ACCESS) {
         tok = lexer_lookahead(parser_lexer(p), 1);
         if (tok->type != TOKEN_SM_CSBRACE) {
             parser_synerr(

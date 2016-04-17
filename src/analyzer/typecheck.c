@@ -215,19 +215,7 @@ static enum traversal_cb_res typecheck_bool_binaryop_generic(
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_arrayref(
-    struct ast_node *n,
-    struct ast_node *left,
-    struct ast_node *right,
-    struct analyzer_traversal_ctx *ctx)
-{
-    // TODO
-    (void)n;
-    (void)left;
-    (void)right;
-    (void)ctx;
-    return TRAVERSAL_CB_OK;
-}
+
 
 struct typecheck_member_access_iter_ctx {
     struct ast_node *member_identifier;
@@ -820,8 +808,8 @@ static enum traversal_cb_res typecheck_binaryop(
             n, left, right, ctx, bop_type, i_should_be_changed,
             "Can't apply bitwise XOR to", "and");
 
-    case BINARYOP_ARRAY_REFERENCE:
-        return typecheck_arrayref(n, left, right, ctx);
+    case BINARYOP_INDEX_ACCESS:
+        return typecheck_indexaccess(n, left, right, ctx);
     case BINARYOP_MEMBER_ACCESS:
         return typecheck_member_access(n, left, right, ctx);
 

@@ -12,6 +12,13 @@ enum traversal_cb_res typecheck_bracketlist(
     struct analyzer_traversal_ctx *ctx
 );
 
+enum traversal_cb_res typecheck_indexaccess(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx
+);
+
 /**
  * Adjust the types of an array holding elementary values during assignment.
  *

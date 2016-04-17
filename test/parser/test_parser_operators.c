@@ -283,7 +283,7 @@ START_TEST(test_acc_complex_binary_op_4) {
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 1, 0, 5);
     testsupport_parser_constant_create(cnum1, 0, 7, 0, 8, integer, 56);
     testsupport_parser_node_create(arr, binaryop, 0, 1, 0, 9,
-                                   BINARYOP_ARRAY_REFERENCE, id1, cnum1);
+                                   BINARYOP_INDEX_ACCESS, id1, cnum1);
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(0, 13, 0, 15);
     testsupport_parser_constant_create(cnum2, 0, 17, 0, 17, integer, 3);
@@ -365,7 +365,7 @@ START_TEST(test_acc_operator_precedence_2) {
     // a.foo[13]
     testsupport_parser_constant_create(cnum_13, 0, 6, 0, 7, integer, 13);
     testsupport_parser_node_create(arr_ref, binaryop, 0, 0, 0, 8,
-                                   BINARYOP_ARRAY_REFERENCE, bop1, cnum_13);
+                                   BINARYOP_INDEX_ACCESS, bop1, cnum_13);
 
     ck_test_parse_as(n, expression, "binary operator", arr_ref);
 
@@ -387,7 +387,7 @@ START_TEST(test_acc_operator_precedence_3) {
     // a.foo[13]
     testsupport_parser_constant_create(cnum_13, 0, 10, 0, 11, integer, 13);
     testsupport_parser_node_create(arr_ref, binaryop, 0, 4, 0, 12,
-                                   BINARYOP_ARRAY_REFERENCE, bop1, cnum_13);
+                                   BINARYOP_INDEX_ACCESS, bop1, cnum_13);
 
     // a.foo[13] - 10
     testsupport_parser_constant_create(cnum_10, 0, 16, 0, 17, integer, 10);

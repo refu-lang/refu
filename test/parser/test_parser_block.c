@@ -87,7 +87,7 @@ START_TEST(test_acc_block_no_braces_2) {
     struct ast_node *id2 = testsupport_parser_identifier_create(0, 6, 0, 9);
     struct ast_node *id3 = testsupport_parser_identifier_create(0, 11, 0, 15);
     testsupport_parser_node_create(arr, binaryop, 0, 6, 0, 16,
-                                   BINARYOP_ARRAY_REFERENCE, id2, id3);
+                                   BINARYOP_INDEX_ACCESS, id2, id3);
 
     testsupport_parser_constant_create(cnum, 0, 20, 0, 25, float, 92.324);
     testsupport_parser_node_create(op1, binaryop, 0, 6, 0, 25, BINARYOP_MUL, arr, cnum);
@@ -153,7 +153,7 @@ START_TEST(test_acc_block_2) {
     struct ast_node *id3 = testsupport_parser_identifier_create(1, 21, 1, 23);
     testsupport_parser_constant_create(cnum1, 1, 25, 1, 26, integer, 15);
     testsupport_parser_node_create(arr, binaryop, 1, 21, 1, 27,
-                                   BINARYOP_ARRAY_REFERENCE, id3, cnum1);
+                                   BINARYOP_INDEX_ACCESS, id3, cnum1);
 
     testsupport_parser_node_create(bop1, binaryop, 1, 7, 1, 18,
                                    BINARYOP_COMMA,

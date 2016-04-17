@@ -46,7 +46,7 @@ static const struct RFstring binaryop_operation_names[] = {
     [BINARYOP_LOGIC_AND]         =   RF_STRING_STATIC_INIT("logical and"),
     [BINARYOP_LOGIC_OR]          =   RF_STRING_STATIC_INIT("logical or"),
 
-    [BINARYOP_ARRAY_REFERENCE]   =   RF_STRING_STATIC_INIT("array reference"),
+    [BINARYOP_INDEX_ACCESS]      =   RF_STRING_STATIC_INIT("index access"),
     [BINARYOP_MEMBER_ACCESS]     =   RF_STRING_STATIC_INIT("member access"),
 
     [BINARYOP_BITWISE_OR]        =   RF_STRING_STATIC_INIT("bitwise or"),
@@ -79,7 +79,7 @@ static const enum binaryop_type  bop_type_lookup[] = {
     [TOKEN_OP_LOGIC_AND] =   BINARYOP_LOGIC_AND,
     [TOKEN_OP_LOGIC_OR]  =   BINARYOP_LOGIC_OR,
 
-    [TOKEN_SM_OSBRACE]        =   BINARYOP_ARRAY_REFERENCE,
+    [TOKEN_SM_OSBRACE]        =   BINARYOP_INDEX_ACCESS,
     [TOKEN_OP_MEMBER_ACCESS]  =   BINARYOP_MEMBER_ACCESS,
 
     [TOKEN_OP_TYPESUM]   =   BINARYOP_BITWISE_OR,
@@ -116,7 +116,7 @@ static const enum token_type  token_type_from_bop_lookup[] = {
     [BINARYOP_LOGIC_AND]          =   TOKEN_OP_LOGIC_AND,
     [BINARYOP_LOGIC_OR]           =   TOKEN_OP_LOGIC_OR,
 
-    [BINARYOP_ARRAY_REFERENCE]    =   TOKEN_SM_OSBRACE,
+    [BINARYOP_INDEX_ACCESS]       =   TOKEN_SM_OSBRACE,
     [BINARYOP_MEMBER_ACCESS]      =   TOKEN_OP_MEMBER_ACCESS,
 
     [BINARYOP_BITWISE_OR]         =   TOKEN_OP_BITWISE_OR,

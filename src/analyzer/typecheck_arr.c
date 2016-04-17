@@ -94,3 +94,17 @@ void typecheck_adjust_elementary_arr_const_values(
     n->expression_type = tleft;
     return;
 }
+
+enum traversal_cb_res typecheck_indexaccess(
+    struct ast_node *n,
+    struct ast_node *left,
+    struct ast_node *right,
+    struct analyzer_traversal_ctx *ctx)
+{
+    // TODO
+    (void)n;
+    (void)left;
+    (void)right;
+    (void)ctx;
+    return TRAVERSAL_CB_OK;
+}
