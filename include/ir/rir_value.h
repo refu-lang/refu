@@ -14,6 +14,7 @@ struct rir_ctx;
 struct rir_expression;
 struct rirobj_strmap;
 struct rir_object;
+struct rirtostr_ctx;
 
 /**
  * Used to denote processing position of the value. Used mainly for proper
@@ -49,6 +50,13 @@ struct rir_value {
 //! An array of values
 struct value_arr {darray(struct rir_value*);};
 void rir_valuearr_deinit(struct value_arr *arr, enum rvalue_pos pos);
+/**
+ * Turn a rir value array to string and close a parentheses in that string
+ * @param ctx         The rir to string context
+ * @param arr         The value array to turn into a string
+ * @return            True for success and false for failure
+ */
+bool rir_valuearr_tostring_close(struct rirtostr_ctx *ctx, const struct value_arr *arr);
 
 /**
  * Initialize the value of a variable

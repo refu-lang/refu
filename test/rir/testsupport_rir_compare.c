@@ -674,6 +674,35 @@ bool ckr_compare_expression(
         );
         break;
 
+    case RIR_EXPRESSION_FIXEDARR:
+        ckr_compare_type(
+            got->fixedarr.member_type,
+            expect->fixedarr.member_type,
+            file,
+            line,
+            RFS(RFS_PF". At a fixedarr expression", RFS_PA(intro))
+        );
+        if (got->fixedarr.size != expect->fixedarr.size) {
+            ck_abort_at(
+                file,
+                line,
+                "Failure at RIR expression comparison",
+                RFS_PF". Expected 'fixedarr.size' to be %"PRIu64" but got %"PRIu64".",
+                RFS_PA(intro),
+                FMT_BOOL(expect->fixedarr.size),
+                FMT_BOOL(got->fixedarr.size)
+            );
+            return false;
+        }
+        ckr_compare_valarr(
+            &got->fixedarr.members,
+            &expect->fixedarr.members,
+            file,
+            line,
+            RFS(RFS_PF". At members array of a fixedarr", RFS_PA(intro))
+        );
+        break;
+
     case RIR_EXPRESSION_ALLOCA:
         if (got->alloca.alloc_location != expect->alloca.alloc_location) {
             ck_abort_at(

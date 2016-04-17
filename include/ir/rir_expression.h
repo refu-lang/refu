@@ -25,6 +25,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_SETUNIONIDX,
     RIR_EXPRESSION_GETUNIONIDX,
     RIR_EXPRESSION_UNIONMEMBERAT,
+    RIR_EXPRESSION_FIXEDARR,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
@@ -139,6 +140,15 @@ struct rir_getunionidx {
     const struct rir_value *unimemory;
 };
 
+struct rir_fixedarr {
+    //! The type of the array members
+    const struct rir_type *member_type;
+    //! The size of the array
+    uint64_t size;
+    //! An array of values that comprise the members of this array
+    struct value_arr members;
+};
+
 
 struct rir_object *rir_alloca_create_obj(
     const struct rir_type *type,
@@ -225,6 +235,7 @@ struct rir_expression {
         struct rir_binaryop binaryop;
         struct rir_read read;
         struct rir_write write;
+        struct rir_fixedarr fixedarr;
     };
     struct rir_value val;
     // Control to be added to expression list of a rir block

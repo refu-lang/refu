@@ -206,4 +206,15 @@ i_INLINE_DECL struct type *type_defined_get_type(const struct type *t)
     RF_ASSERT(t->category == TYPE_CATEGORY_DEFINED, "Called with non defined type category");
     return t->defined.type;
 }
+
+/**
+ * Get the size of the first array dimension
+ */
+i_INLINE_DECL int64_t type_get_arr_size(const struct type *t)
+{
+    RF_ASSERT(t->array, "Called for a non array type");
+    return darray_size(t->array->dimensions) == 0
+        ? -1
+        : darray_item(t->array->dimensions, 0);
+}
 #endif

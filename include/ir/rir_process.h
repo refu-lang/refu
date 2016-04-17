@@ -66,7 +66,10 @@ i_INLINE_DECL const struct rir_value *rir_process_ast_node_getreadval(
 
 bool rir_process_ifexpr(const struct ast_node *n, struct rir_ctx *ctx);
 bool rir_process_matchexpr(struct ast_node *n, struct rir_ctx *ctx);
-bool rir_match_st_populate_allocas(const struct ast_node *mcase,
-                                   struct rir_object *matched_rir_obj,
-                                   struct rir_ctx *ctx);
+bool rir_match_st_populate_allocas(
+    const struct ast_node *mcase,
+    struct rir_object *matched_rir_obj,
+    struct rir_ctx *ctx
+);
+
 #endif

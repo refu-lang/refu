@@ -61,6 +61,7 @@ refu_src = [
     'analyzer/typecheck.c',
     'analyzer/type_set.c',
     'analyzer/typecheck_matchexpr.c',
+    'analyzer/typecheck_arr.c',
 
     'types/type.c',
     'types/type_creation.c',
@@ -77,6 +78,7 @@ refu_src = [
     'ir/rir_object.c',
     'ir/rir_argument.c',
     'ir/rir_function.c',
+    'ir/rir_array.c',
     'ir/rir_call.c',
     'ir/rir_block.c',
     'ir/rir_binaryop.c',

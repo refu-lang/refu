@@ -23,6 +23,29 @@ void rir_valuearr_deinit(struct value_arr *arr, enum rvalue_pos pos)
     darray_free(*arr);
 }
 
+bool rir_valuearr_tostring_close(struct rirtostr_ctx *ctx, const struct value_arr *arr)
+{
+    RFS_PUSH();
+    bool success = false;
+    struct rir_value **value;
+    darray_foreach(value, *arr) {
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(", "RFS_PF, RFS_PA(rir_value_string(*value)))
+            )) {
+            goto end;
+        }
+    }
+    if (!rf_stringx_append_cstr(ctx->rir->buff, ")\n")) {
+        goto end;
+    }
+
+    success = true;
+end:
+    RFS_POP();
+    return success;
+}
+
 bool rir_value_label_init_string(
     struct rir_value *v,
     struct rir_object *obj,
@@ -180,6 +203,15 @@ bool rir_value_variable_init(
         case RIR_EXPRESSION_CALL:
             // figure out the type
             v->type = rir_call_return_type(&expr->call, c);
+            break;
+        case RIR_EXPRESSION_FIXEDARR:
+            // figure out the type
+            v->type = rir_type_arr_get_or_create(
+                c->rir,
+                expr->fixedarr.member_type,
+                expr->fixedarr.size,
+                false // not a pointer to an array
+            );
             break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:

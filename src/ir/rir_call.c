@@ -294,16 +294,7 @@ bool rir_call_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *ce
         }
     }
 
-    struct rir_value **arg_val;
-    darray_foreach(arg_val, cexpr->call.args) {
-        if (!rf_stringx_append(
-                ctx->rir->buff,
-                RFS(", "RFS_PF, RFS_PA(rir_value_string(*arg_val)))
-        )) {
-            goto end;
-        }
-    }
-    if (!rf_stringx_append_cstr(ctx->rir->buff, ")\n")) {
+    if (!rir_valuearr_tostring_close(ctx, &cexpr->call.args)) {
         goto end;
     }
     // success

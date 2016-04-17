@@ -34,6 +34,7 @@ static struct type i_elementary_types[] = {
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
         .is_constant = false,                       \
+        .array = NULL,                              \
         .elementary = {                             \
             .etype=i_type,                          \
         }                                           \
@@ -60,6 +61,7 @@ static struct type i_elementary_types_constant[] = {
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
         .is_constant = true,                        \
+        .array = NULL,                              \
         .elementary = {                             \
             .etype=i_type,                          \
         }                                           \

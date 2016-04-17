@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <ir/rir_common.h>
+
 struct ast_node;
 struct rir_value;
 struct value_arr;

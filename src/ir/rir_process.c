@@ -6,6 +6,7 @@
 #include <ir/rir_constant.h>
 #include <ir/rir_function.h>
 #include <ir/rir_call.h>
+#include <ir/rir_array.h>
 #include <ast/returnstmt.h>
 #include <ast/type.h>
 #include <ast/vardecl.h>
@@ -93,6 +94,8 @@ bool rir_process_ast_node(const struct ast_node *n,
         return rir_process_ifexpr(n, ctx);
     case AST_VARIABLE_DECLARATION:
         return rir_process_vardecl(n, ctx);
+    case AST_BRACKET_LIST:
+        return rir_process_bracketlist(n, ctx);
     case AST_BINARY_OPERATOR:
         return rir_process_binaryop(&n->binaryop, ctx);
     case AST_UNARY_OPERATOR:

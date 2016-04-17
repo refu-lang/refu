@@ -13,5 +13,6 @@ extern const struct RFstring g_str_defined;
 extern const struct RFstring g_str_foreign;
 extern const struct RFstring g_str_elementary;
 extern const struct RFstring g_str_composite;
+extern const struct RFstring g_str_array;
 
 #endif

@@ -15,6 +15,7 @@
 #include <ir/rir_convert.h>
 #include <ir/rir_call.h>
 #include <ir/rir_type.h>
+#include <ir/rir_array.h>
 #include <ast/ast.h>
 
 void rir_expression_init_with_nilval(struct rir_expression *e,
@@ -338,6 +339,11 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
+    case RIR_EXPRESSION_FIXEDARR:
+        if (!rir_fixedarr_tostring(ctx, e)) {
+            goto end;
+        }
+        break;
     case RIR_EXPRESSION_SETUNIONIDX:
         if (!rf_stringx_append(
                 ctx->rir->buff,
@@ -470,6 +476,7 @@ static const struct RFstring rir_expression_type_strings[] = {
     [RIR_EXPRESSION_SETUNIONIDX] = RF_STRING_STATIC_INIT("setunionidx"),
     [RIR_EXPRESSION_GETUNIONIDX] = RF_STRING_STATIC_INIT("getunionidx"),
     [RIR_EXPRESSION_UNIONMEMBERAT] = RF_STRING_STATIC_INIT("unionmemberat"),
+    [RIR_EXPRESSION_FIXEDARR] = RF_STRING_STATIC_INIT("fixedarr"),
     [RIR_EXPRESSION_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
     [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
     [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),

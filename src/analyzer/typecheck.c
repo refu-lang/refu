@@ -29,6 +29,7 @@
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
 #include <analyzer/typecheck_matchexpr.h>
+#include <analyzer/typecheck_arr.h>
 #include <analyzer/analyzer_pass1.h> // for analyzer symbol table change functions
 
 void traversal_node_set_type(
@@ -511,6 +512,13 @@ static enum traversal_cb_res typecheck_assignment(
                               RFS_PA(warning));
             }
         }
+
+        // if the right side is a bracket list of an elementary array
+        if (right->type == AST_BRACKET_LIST &&
+            tright->category == TYPE_CATEGORY_ELEMENTARY &&
+            tright->array) {
+            typecheck_adjust_elementary_arr_const_values(right, tleft);
+        }
     } else {
         if (!analyzer_types_assignable(left, right, ctx)) {
             RFS_PUSH();
@@ -734,55 +742,6 @@ static enum traversal_cb_res typecheck_import(
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_bracketlist(
-    struct ast_node *n,
-    struct analyzer_traversal_ctx *ctx)
-{
-    struct ast_node **c;
-    unsigned i = 1;
-
-    struct arr_ast_nodes *members = ast_bracketlist_members(n);
-
-    if (darray_size(*members) == 0) {
-        // type of empty array
-        n->expression_type = NULL;
-        return TRAVERSAL_CB_OK;
-    }
-    struct ast_node *first_child = darray_item(*members, 0);
-    const struct type *first_type = ast_node_get_type(first_child);
-    if (!first_type) {
-        analyzer_err(
-            ctx->m,
-            ast_node_startmark(first_child),
-            ast_node_endmark(first_child),
-            "Type of the first node in a bracket_list could not be determined"
-        );
-        return TRAVERSAL_CB_ERROR;
-    }
-    darray_foreach(c, *members) {
-        if (!type_compare(first_type, ast_node_get_type(*c), TYPECMP_IMPLICIT_CONVERSION)) {
-            RFS_PUSH();
-            analyzer_err(
-                ctx->m,
-                ast_node_startmark(*c),
-                ast_node_endmark(*c),
-                "Type of the "RFS_PF" item in a bracket list is \""RFS_PF"\" "
-                "which does not match the type of the first time \""RFS_PF"\"",
-                RFS_PA(rf_string_ordinal(i)),
-                RFS_PA(type_str_or_die(ast_node_get_type(*c), TSTR_DEFAULT)),
-                RFS_PA(type_str_or_die(first_type, TSTR_DEFAULT))
-            );
-            RFS_POP();
-            return TRAVERSAL_CB_ERROR;
-        }
-        i++;
-    }
-
-    // at the end create the array type
-    n->expression_type = module_getorcreate_type_as_singlearr(ctx->m, first_type, i - 1);
-    return TRAVERSAL_CB_OK;
-}
-
 static enum traversal_cb_res typecheck_binaryop(
     struct ast_node *n,
     struct analyzer_traversal_ctx *ctx)
@@ -966,9 +925,11 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_constant(n, ctx);
         break;
     case AST_STRING_LITERAL:
-        traversal_node_set_type(n,
-                                type_elementary_get_type_constant(ELEMENTARY_TYPE_STRING),
-                                ctx);
+        traversal_node_set_type(
+            n,
+            type_elementary_get_type_constant(ELEMENTARY_TYPE_STRING),
+            ctx
+        );
         break;
     case AST_VARIABLE_DECLARATION:
         // for a variable definition, the variable's type description should be

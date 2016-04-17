@@ -208,6 +208,15 @@ void ow_ctx_check_expr(struct rir_expression *expr)
         }
     }
         break;
+    case RIR_EXPRESSION_FIXEDARR:
+        // check if any of the array's members should be in the graph
+    {
+        struct rir_value **val;
+        darray_foreach(val, expr->fixedarr.members) {
+            ow_ctx_check_value_from_expr(*val, expr);
+        }
+    }
+        break;
     case RIR_EXPRESSION_OBJMEMBERAT:
         ow_ctx_check_value_from_expr(expr->objmemberat.objmemory, expr);
         break;
