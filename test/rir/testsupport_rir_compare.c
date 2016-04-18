@@ -838,6 +838,23 @@ bool ckr_compare_expression(
         }
         break;
 
+    case RIR_EXPRESSION_OBJIDX:
+        ckr_compare_value(
+            got->objidx.objmemory,
+            expect->objidx.objmemory,
+            file,
+            line,
+            RFS(RFS_PF". At an objidx() memory value", RFS_PA(intro))
+        );
+        ckr_compare_value(
+            got->objidx.idx,
+            expect->objidx.idx,
+            file,
+            line,
+            RFS(RFS_PF". At an objidx() index value", RFS_PA(intro))
+        );
+        break;
+
         // should not get to such a comparison
     case RIR_EXPRESSION_RETURN:
     case RIR_EXPRESSION_CONSTANT:

@@ -124,17 +124,31 @@ LLVMTypeRef bllvm_type_from_rir_type(const struct rir_type *type,
                                      struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ret;
-    if (type->category == RIR_TYPE_ELEMENTARY) {
+    switch (type->category) {
+    case RIR_TYPE_ELEMENTARY:
         ret = bllvm_elementary_to_type(type->etype, ctx);
-    } else if (type->category == RIR_TYPE_COMPOSITE) {
+        break;
+    case RIR_TYPE_COMPOSITE:
         RFS_PUSH();
-        ret = LLVMGetTypeByName(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(&type->tdef->name));
+        ret = LLVMGetTypeByName(
+            ctx->llvm_mod,
+            rf_string_cstr_from_buff_or_die(&type->tdef->name)
+        );
         RF_ASSERT(ret, "Type should have already been declared in LLVM");
         RFS_POP();
-    } else {
+        break;
+    case RIR_TYPE_ARRAY:
+        RF_ASSERT(type->array.size > 0, "Only fixed size array types supported for now");
+        ret = LLVMArrayType(
+            bllvm_type_from_rir_type(type->array.type, ctx),
+            type->array.size
+        );
+        break;
+    default:
         RF_CRITICAL_FAIL("Unexpected rir type encountered");
         return NULL;
     }
+
     // if it's a pointer to the type
     if (type->is_pointer) {
         ret = LLVMPointerType(ret, 0);

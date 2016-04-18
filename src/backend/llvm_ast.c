@@ -44,6 +44,7 @@
 #include <backend/llvm.h>
 #include "llvm_utils.h"
 #include "llvm_globals.h"
+#include "llvm_arrays.h"
 #include "llvm_operators.h"
 #include "llvm_functions.h"
 #include "llvm_types.h"
@@ -163,8 +164,9 @@ struct LLVMOpaqueValue *bllvm_compile_literal(const struct RFstring *lit, struct
     return bllvm_literal_to_global_string(lit, ctx);
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_objmemberat(const struct rir_expression *expr,
-                                                         struct llvm_traversal_ctx *ctx)
+static struct LLVMOpaqueValue *bllvm_compile_objmemberat(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
 {
     RF_ASSERT(
         expr->objmemberat.objmemory->type->is_pointer,
@@ -177,35 +179,90 @@ static struct LLVMOpaqueValue *bllvm_compile_objmemberat(const struct rir_expres
     return bllvm_gep_to_struct(llvm_mval, expr->objmemberat.idx, ctx);
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_setunionidx(const struct rir_expression *expr,
-                                                         struct llvm_traversal_ctx *ctx)
+static struct LLVMOpaqueValue *bllvm_compile_setunionidx(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(expr->setunionidx.unimemory->type->is_pointer, "You can only set an index to a pointer");
-    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->setunionidx.unimemory, ctx);
+    RF_ASSERT(
+        expr->setunionidx.unimemory->type->is_pointer,
+        "You can only set an index to a pointer"
+    );
+    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(
+        expr->setunionidx.unimemory,
+        ctx
+    );
     // the union index is the first member of the struct
     LLVMValueRef llvm_idx_loc = bllvm_gep_to_struct(llvm_mval, 0, ctx);
-    return LLVMBuildStore(ctx->builder, bllvm_value_from_rir_value_or_die(expr->setunionidx.idx, ctx), llvm_idx_loc);
+    return LLVMBuildStore(
+        ctx->builder,
+        bllvm_value_from_rir_value_or_die(expr->setunionidx.idx, ctx),
+        llvm_idx_loc
+    );
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_getunionidx(const struct rir_expression *expr,
-                                                         struct llvm_traversal_ctx *ctx)
+static struct LLVMOpaqueValue *bllvm_compile_getunionidx(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(expr->getunionidx.unimemory->type->is_pointer, "You can only get an index to a pointer");
-    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->getunionidx.unimemory, ctx);
+    RF_ASSERT(
+        expr->getunionidx.unimemory->type->is_pointer,
+        "You can only get an index to a pointer"
+    );
+    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(
+        expr->getunionidx.unimemory,
+        ctx
+    );
     // the union index is the first member of the struct
     LLVMValueRef llvm_idx_gep = bllvm_gep_to_struct(llvm_mval, 0, ctx);
     // but since this was a gep you have to read it
     return LLVMBuildLoad(ctx->builder, llvm_idx_gep, "");
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(const struct rir_expression *expr,
-                                                           struct llvm_traversal_ctx *ctx)
+static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
 {
-    RF_ASSERT(expr->unionmemberat.unimemory->type->is_pointer, "You can only get an index to a pointer");
-    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(expr->unionmemberat.unimemory, ctx);
+    RF_ASSERT(
+        expr->unionmemberat.unimemory->type->is_pointer,
+        "You can only get an index to a pointer"
+    );
+    LLVMValueRef llvm_mval = bllvm_value_from_rir_value_or_die(
+        expr->unionmemberat.unimemory,
+        ctx
+    );
     // get the member location, it's index is +1, in order to skip the selector index
-    LLVMValueRef llvm_member_gep = bllvm_gep_to_struct(llvm_mval, expr->unionmemberat.idx + 1, ctx);
+    LLVMValueRef llvm_member_gep = bllvm_gep_to_struct(
+        llvm_mval,
+        expr->unionmemberat.idx + 1,
+        ctx
+    );
     return llvm_member_gep;
+}
+
+static struct LLVMOpaqueValue *bllvm_compile_objidx(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
+{
+    RF_ASSERT(
+        rir_type_is_array(expr->objidx.objmemory->type),
+        "You can only get an index to an array type"
+    );
+    LLVMValueRef llvm_idxval = bllvm_value_from_rir_value_or_die(
+        expr->objidx.idx,
+        ctx
+    );
+    LLVMValueRef indices[] = {
+        LLVMConstInt(LLVMInt32Type(), 0, 0),
+        llvm_idxval
+    };
+    LLVMValueRef gep = LLVMBuildGEP(
+        ctx->builder,
+        bllvm_value_from_rir_value_or_die(expr->objidx.objmemory, ctx),
+        indices,
+        2,
+        ""
+    );
+    return LLVMBuildLoad(ctx->builder, gep, "");
 }
 
 static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression *expr,
@@ -225,8 +282,9 @@ static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression 
     return LLVMBuildBitCast(ctx->builder, retval, LLVMPointerType(type, 0), "");
 }
 
-struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
-                                              struct llvm_traversal_ctx *ctx)
+struct LLVMOpaqueValue *bllvm_compile_rirexpr(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef llvmval;
     switch(expr->type) {
@@ -236,6 +294,9 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         break;
     case RIR_EXPRESSION_CALL:
         llvmval = bllvm_compile_functioncall(&expr->call, ctx);
+        break;
+    case RIR_EXPRESSION_FIXEDARR:
+        llvmval = bllvm_compile_fixedarr(expr, ctx);
         break;
     case RIR_EXPRESSION_ALLOCA:
         llvmval = bllvm_compile_alloca(expr, ctx);
@@ -289,6 +350,9 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
         break;
     case RIR_EXPRESSION_UNIONMEMBERAT:
         llvmval = bllvm_compile_unionmemberat(expr, ctx);
+        break;
+    case RIR_EXPRESSION_OBJIDX:
+        llvmval = bllvm_compile_objidx(expr, ctx);
         break;
     default:
         RF_CRITICAL_FAIL("Unknown rir expression type encountered at LLVM backend generation");

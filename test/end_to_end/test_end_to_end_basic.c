@@ -724,6 +724,20 @@ START_TEST (test_matchexpr_in_functions) {
     ck_end_to_end_run(inputs, 0, &output);
 } END_TEST
 
+START_TEST (test_fixedarr_1) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "a:u64[3] = [1, 73, 3]\n"
+            "b:u64 = a[1]\n"
+            "return b"
+            "}"
+        )};
+    ck_end_to_end_run(inputs, 73, NULL);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -811,6 +825,12 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_match_expr, test_matchexpr_2);
     tcase_add_test(st_match_expr, test_matchexpr_in_functions);
 
+    TCase *st_arrays = tcase_create("end_to_end_arrays");
+    tcase_add_checked_fixture(st_arrays,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_arrays, test_fixedarr_1);
+
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_print);
     suite_add_tcase(s, st_basic_types);
@@ -820,6 +840,7 @@ Suite *end_to_end_basic_suite_create(void)
     suite_add_tcase(s, st_explicit_conversions);
     suite_add_tcase(s, st_unary_operations);
     suite_add_tcase(s, st_match_expr);
+    suite_add_tcase(s, st_arrays);
 
     return s;
 }

@@ -25,6 +25,7 @@ enum rir_expression_type {
     RIR_EXPRESSION_SETUNIONIDX,
     RIR_EXPRESSION_GETUNIONIDX,
     RIR_EXPRESSION_UNIONMEMBERAT,
+    RIR_EXPRESSION_OBJIDX,
     RIR_EXPRESSION_FIXEDARR,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
@@ -140,6 +141,11 @@ struct rir_getunionidx {
     const struct rir_value *unimemory;
 };
 
+struct rir_objidx {
+    const struct rir_value *objmemory;
+    const struct rir_value *idx;
+};
+
 struct rir_fixedarr {
     //! The type of the array members
     const struct rir_type *member_type;
@@ -195,6 +201,19 @@ struct rir_expression *rir_objmemberat_create(
     rir_data data
 );
 
+struct rir_object *rir_objidx_create_obj(
+    const struct rir_value *objmemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data
+);
+struct rir_expression *rir_objidx_create(
+    const struct rir_value *objmemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data
+);
+
 struct rir_expression *rir_read_create(
     const struct rir_value *memory_to_read,
     enum rir_pos pos,
@@ -232,6 +251,7 @@ struct rir_expression {
         struct rir_getunionidx getunionidx;
         struct rir_unionmemberat unionmemberat;
         struct rir_objmemberat objmemberat;
+        struct rir_objidx objidx;
         struct rir_binaryop binaryop;
         struct rir_read read;
         struct rir_write write;

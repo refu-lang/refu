@@ -243,6 +243,7 @@ void ow_ctx_check_expr(struct rir_expression *expr)
         // returns are handled at the end of each block's iteration (block exits)
     case RIR_EXPRESSION_SETUNIONIDX:
     case RIR_EXPRESSION_GETUNIONIDX:
+    case RIR_EXPRESSION_OBJIDX: // TODO: anything needed here for objidx?
     case RIR_EXPRESSION_CONSTANT:
 
     case RIR_EXPRESSION_CMP_EQ:

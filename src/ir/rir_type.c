@@ -14,7 +14,9 @@ i_INLINE_INS bool rir_type_is_elementary(const struct rir_type *t);
 i_INLINE_INS bool rir_type_is_specific_elementary(const struct rir_type *t,
                                                   enum elementary_type etype);
 i_INLINE_INS bool rir_type_is_composite(const struct rir_type *t);
+i_INLINE_INS bool rir_type_is_array(const struct rir_type *t);
 i_INLINE_INS int64_t rir_type_array_size(const struct rir_type *t);
+i_INLINE_INS const struct rir_type *rir_type_array_membertype(const struct rir_type *t);
 bool rir_type_is_union(const struct rir_type *t)
 {
     return t->category == RIR_TYPE_COMPOSITE && t->tdef->is_union;

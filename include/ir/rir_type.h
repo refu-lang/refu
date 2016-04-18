@@ -59,10 +59,21 @@ i_INLINE_DECL bool rir_type_is_composite(const struct rir_type *t)
     return t->category == RIR_TYPE_COMPOSITE;
 }
 
+i_INLINE_DECL bool rir_type_is_array(const struct rir_type *t)
+{
+    return t->category == RIR_TYPE_ARRAY;
+}
+
 i_INLINE_DECL int64_t rir_type_array_size(const struct rir_type *t)
 {
     RF_ASSERT(t->category == RIR_TYPE_ARRAY, "Expected rir array type");
     return t->array.size;
+}
+
+i_INLINE_DECL const struct rir_type *rir_type_array_membertype(const struct rir_type *t)
+{
+    RF_ASSERT(t->category == RIR_TYPE_ARRAY, "Expected rir array type");
+    return t->array.type;
 }
 
 bool rir_type_is_union(const struct rir_type *t);

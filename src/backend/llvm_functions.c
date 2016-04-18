@@ -26,18 +26,23 @@ LLVMValueRef bllvm_compile_functioncall(const struct rir_call *call,
 {
     LLVMValueRef ret;
     RFS_PUSH();
-    LLVMValueRef llvm_fn = LLVMGetNamedFunction(ctx->llvm_mod, rf_string_cstr_from_buff_or_die(&call->name));
+    LLVMValueRef llvm_fn = LLVMGetNamedFunction(
+        ctx->llvm_mod,
+        rf_string_cstr_from_buff_or_die(&call->name)
+    );
     RFS_POP();
     if (!llvm_fn) {
         RF_ERROR("Could not find an llvm function by name");
         return NULL;
     }
     bllvm_value_arr_to_values(&call->args, ctx); // can be NULL if there are no args
-    ret = LLVMBuildCall(ctx->builder,
-                        llvm_fn,
-                        llvm_traversal_ctx_get_values(ctx),
-                        llvm_traversal_ctx_get_values_count(ctx),
-                        "");
+    ret = LLVMBuildCall(
+        ctx->builder,
+        llvm_fn,
+        llvm_traversal_ctx_get_values(ctx),
+        llvm_traversal_ctx_get_values_count(ctx),
+        ""
+    );
     return ret;
 }
 
@@ -133,6 +138,10 @@ static bool llvm_create_block(
     struct rir_expression *expr;
     rf_ilist_for_each(&b->expressions, expr, ln) {
         if (!(llvmval = bllvm_compile_rirexpr(expr, ctx))) {
+            RF_ERROR(
+                "Failed to compile rir expression \""RFS_PF"\"",
+                RFS_PA(rir_expression_type_string(expr))
+            );
             return false;
         }
     }

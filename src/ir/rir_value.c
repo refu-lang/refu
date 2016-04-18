@@ -221,7 +221,10 @@ bool rir_value_variable_init(
             v->type = rir_type_elem_get_or_create(c->rir, expr->binaryop.a->type->etype, false);
             break;
         case RIR_EXPRESSION_OBJMEMBERAT:
-            RF_ASSERT(rir_type_is_composite(expr->objmemberat.objmemory->type), "Expected composite type at objmemberat");
+            RF_ASSERT(
+                rir_type_is_composite(expr->objmemberat.objmemory->type),
+                "Expected composite type at objmemberat"
+            );
             v->type = rir_type_get_or_create_from_other(
                 rir_type_comp_member_type(
                     expr->objmemberat.objmemory->type,
@@ -234,7 +237,10 @@ bool rir_value_variable_init(
         case RIR_EXPRESSION_UNIONMEMBERAT:
             // for now value type determining is the same as objmemberat.
             // the memberat index does not take into account the union index
-            RF_ASSERT(rir_type_is_composite(expr->unionmemberat.unimemory->type), "Expected composite type at unionmemberat");
+            RF_ASSERT(
+                rir_type_is_composite(expr->unionmemberat.unimemory->type),
+                "Expected composite type at unionmemberat"
+            );
             v->type = rir_type_get_or_create_from_other(
                 rir_type_comp_member_type(
                     expr->unionmemberat.unimemory->type,
@@ -242,6 +248,17 @@ bool rir_value_variable_init(
                 ),
                 c->rir,
                 true
+            );
+            break;
+        case RIR_EXPRESSION_OBJIDX:
+            RF_ASSERT(
+                rir_type_is_array(expr->objidx.objmemory->type),
+                "Expected array type at objidx"
+            );
+            v->type = rir_type_get_or_create_from_other(
+                rir_type_array_membertype(expr->objidx.objmemory->type),
+                c->rir,
+                false
             );
             break;
         default:

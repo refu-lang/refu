@@ -81,12 +81,17 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
         LLVMConstInt(LLVMInt32Type(), length, 0),
         gep_to_string_buff
     };
-    LLVMValueRef string_decl = LLVMConstNamedStruct(LLVMGetTypeByName(ctx->llvm_mod, "string"),
-                                                    string_struct_layout, 2);
+    LLVMValueRef string_decl = LLVMConstNamedStruct(
+        LLVMGetTypeByName(ctx->llvm_mod, "string"),
+        string_struct_layout,
+        2
+    );
 
-    LLVMValueRef global_val = LLVMAddGlobal(ctx->llvm_mod,
-                                            LLVMGetTypeByName(ctx->llvm_mod, "string"),
-                                            rf_string_cstr_from_buff_or_die(string_name));
+    LLVMValueRef global_val = LLVMAddGlobal(
+        ctx->llvm_mod,
+        LLVMGetTypeByName(ctx->llvm_mod, "string"),
+        rf_string_cstr_from_buff_or_die(string_name)
+    );
     LLVMSetInitializer(global_val, string_decl);
     RFS_POP();
     return global_val;

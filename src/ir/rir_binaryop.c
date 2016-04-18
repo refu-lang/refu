@@ -34,6 +34,7 @@ static const enum rir_expression_type binaryop_operation_to_rir[] = {
     [BINARYOP_LOGIC_AND]         =   RIR_EXPRESSION_LOGIC_AND,
     [BINARYOP_LOGIC_OR]          =   RIR_EXPRESSION_LOGIC_OR,
     [BINARYOP_ASSIGN]            =   RIR_EXPRESSION_WRITE,
+    [BINARYOP_INDEX_ACCESS]      =   RIR_EXPRESSION_OBJIDX,
 };
 
 static enum rir_expression_type rir_binaryop_type_from_ast(const struct ast_binaryop *op)
@@ -235,8 +236,7 @@ fail:
     RIRCTX_RETURN_EXPR(ctx, false, NULL);
 }
 
-bool rir_process_binaryop(const struct ast_binaryop *op,
-                          struct rir_ctx *ctx)
+bool rir_process_binaryop(const struct ast_binaryop *op, struct rir_ctx *ctx)
 {
     struct rir_object *obj = NULL;
     // special treatment for member access
@@ -266,6 +266,11 @@ bool rir_process_binaryop(const struct ast_binaryop *op,
         // else, create a rir_write
         rval = rirctx_getread_val(rval, ctx);
         if (!(obj = rir_write_create_obj(lval, rval, RIRPOS_AST, ctx))) {
+            goto fail;
+        }
+    } else if (op->type == BINARYOP_INDEX_ACCESS) { // index access is also a special case
+        if (!(obj = rir_objidx_create_obj(lval, rval, RIRPOS_AST, ctx))) {
+            RF_ERROR("Failed to create a rir objidx expression");
             goto fail;
         }
     } else { // normal binary operator processing

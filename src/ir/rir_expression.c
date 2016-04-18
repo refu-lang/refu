@@ -316,6 +316,35 @@ static struct rir_object *rir_unionmemberat_create_obj(
     return ret;
 }
 
+struct rir_object *rir_objidx_create_obj(
+    const struct rir_value *objmemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_data_rir(data));
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.objidx.objmemory = objmemory;
+    ret->expr.objidx.idx = idx;
+    if (!rir_object_expression_init(ret, RIR_EXPRESSION_OBJIDX, pos, data)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+struct rir_expression *rir_objidx_create(
+    const struct rir_value *objmemory,
+    const struct rir_value *idx,
+    enum rir_pos pos,
+    rir_data data)
+{
+    struct rir_object *obj = rir_objidx_create_obj(objmemory, idx, pos, data);
+    return obj ? &obj->expr : NULL;
+}
+
 struct rir_expression *rir_unionmemberat_create(
     const struct rir_value *unimemory,
     uint32_t idx,
@@ -387,6 +416,18 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
                     RFS_PA(rir_type_string(e->unionmemberat.unimemory->type)),
                     RFS_PA(rir_value_string(e->unionmemberat.unimemory)),
                     e->setunionidx.idx)
+            )) {
+            goto end;
+        }
+        break;
+    case RIR_EXPRESSION_OBJIDX:
+        if (!rf_stringx_append(
+                ctx->rir->buff,
+                RFS(RIRTOSTR_INDENT RFS_PF" = objidx(" RFS_PF ", " RFS_PF ")\n",
+                    RFS_PA(rir_value_string(&e->val)),
+                    RFS_PA(rir_value_string(e->objidx.objmemory)),
+                    RFS_PA(rir_value_string(e->objidx.idx))
+                )
             )) {
             goto end;
         }
@@ -479,6 +520,7 @@ static const struct RFstring rir_expression_type_strings[] = {
     [RIR_EXPRESSION_SETUNIONIDX] = RF_STRING_STATIC_INIT("setunionidx"),
     [RIR_EXPRESSION_GETUNIONIDX] = RF_STRING_STATIC_INIT("getunionidx"),
     [RIR_EXPRESSION_UNIONMEMBERAT] = RF_STRING_STATIC_INIT("unionmemberat"),
+    [RIR_EXPRESSION_OBJIDX] = RF_STRING_STATIC_INIT("objidx"),
     [RIR_EXPRESSION_FIXEDARR] = RF_STRING_STATIC_INIT("fixedarr"),
     [RIR_EXPRESSION_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
     [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
