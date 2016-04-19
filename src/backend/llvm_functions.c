@@ -96,7 +96,6 @@ static bool llvm_create_blockexit(const struct rir_block_exit *e, struct llvm_tr
 
 static bool llvm_create_block(
     const struct rir_block *b,
-    struct rir *rir,
     struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef llvmval;
@@ -118,7 +117,11 @@ static bool llvm_create_block(
     if (rir_block_is_first(b) && ctx->current_rfn->retslot_val) {
         struct rir_type *rettype = ctx->current_rfn->retslot_val->type;
         // Val->type is the type of the alloca, so drop the pointer from it
-        rettype = rir_type_get_or_create_from_other(rettype, rir, false);
+        rettype = rir_type_get_or_create_from_other(
+            rettype,
+            llvm_traversal_ctx_rir(ctx),
+            false
+        );
 
         llvmval = LLVMBuildAlloca(
             ctx->builder,
@@ -157,13 +160,12 @@ static bool llvm_connect_block(const struct rir_block *b, struct llvm_traversal_
 
 static bool bllvm_create_fndef(
     const struct rir_fndef *fn,
-    struct rir *rir,
     struct llvm_traversal_ctx *ctx)
 {
     struct rir_block **b;
     // create all blocks and their contents
     darray_foreach(b, fn->blocks) {
-        if (!llvm_create_block(*b, rir, ctx)) {
+        if (!llvm_create_block(*b, ctx)) {
             return false;
         }
     }
@@ -214,7 +216,7 @@ bool bllvm_create_module_functions(struct rir *r, struct llvm_traversal_ctx *ctx
             // make it the current function
             ctx->current_function = llvmfn;
             ctx->current_rfn = rir_fndecl_to_fndef(decl);
-            if (!bllvm_create_fndef(ctx->current_rfn, r, ctx)) {
+            if (!bllvm_create_fndef(ctx->current_rfn, ctx)) {
                 RF_ERROR("Failed to create a function definition in LLVM");
                 return false;
             }

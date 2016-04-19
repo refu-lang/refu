@@ -16,26 +16,52 @@ LLVMValueRef bllvm_compile_fixedarr(
     RF_ASSERT(expr->type == RIR_EXPRESSION_FIXEDARR, "unexpexted expression");
     const struct rir_fixedarr *fixedarr = &expr->fixedarr;
     // can be NULL if there are no args
-    LLVMValueRef *vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
+    LLVMValueRef *vals;
+    LLVMTypeRef member_type;
+
+    if (rir_type_is_specific_elementary(fixedarr->member_type, ELEMENTARY_TYPE_STRING)) {
+        member_type = bllvm_type_from_rir_type(
+            rir_type_elem_get_or_create(
+                llvm_traversal_ctx_rir(ctx),
+                ELEMENTARY_TYPE_STRING,
+                true),
+            ctx
+        );
+        vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
+    } else {
+        member_type = bllvm_type_from_rir_type(fixedarr->member_type, ctx);
+        vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
+    }
     LLVMValueRef llvm_constarr = LLVMConstArray(
-        bllvm_type_from_rir_type(expr->val.type, ctx),
+        member_type,
         vals,
         fixedarr->size
     );
     return llvm_constarr;
 }
 
-LLVMValueRef bllvm_compile_constfixedarr(
-    const struct rir_fixedarr *fixedarr,
+struct LLVMOpaqueValue *bllvm_compile_objidx(
+    const struct rir_expression *expr,
     struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef ret;
-    // can be NULL if there are no args
-    LLVMValueRef *vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
-    ret = LLVMConstArray(
-        bllvm_type_from_rir_type(fixedarr->member_type, ctx),
-        vals,
-        fixedarr->size
+    RF_ASSERT(
+        rir_type_is_array(expr->objidx.objmemory->type),
+        "You can only get an index to an array type"
     );
-    return ret;
+    LLVMValueRef llvm_idxval = bllvm_value_from_rir_value_or_die(
+        expr->objidx.idx,
+        ctx
+    );
+    LLVMValueRef indices[] = {
+        LLVMConstInt(LLVMInt32Type(), 0, 0),
+        llvm_idxval
+    };
+    LLVMValueRef gep = LLVMBuildGEP(
+        ctx->builder,
+        bllvm_value_from_rir_value_or_die(expr->objidx.objmemory, ctx),
+        indices,
+        2,
+        ""
+    );
+    return LLVMBuildLoad(ctx->builder, gep, "");
 }

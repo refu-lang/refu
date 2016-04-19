@@ -57,8 +57,7 @@ struct llvm_traversal_ctx {
     struct rirval_strmap valmap;
 };
 
-bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx,
-                                struct ast_node *root);
+bool bllvm_create_ir_ast(struct llvm_traversal_ctx *ctx, struct ast_node *root);
 struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
                                             struct llvm_traversal_ctx *ctx,
                                             struct LLVMOpaqueModule *link_source);
@@ -97,6 +96,8 @@ static inline void llvm_traversal_ctx_prepend_param(struct llvm_traversal_ctx *c
 {
     darray_prepend(ctx->params, type);
 }
+
+struct rir *llvm_traversal_ctx_rir(struct llvm_traversal_ctx *ctx);
 
 /**
  * Gets the values array from the llvm traversal ctx or NULL if
@@ -138,8 +139,10 @@ enum llvm_expression_compile_options {
     RFLLVM_OPTION_IDENTIFIER_VALUE = 0x1,
 };
 
-struct LLVMOpaqueValue *bllvm_compile_rirexpr(const struct rir_expression *expr,
-                                              struct llvm_traversal_ctx *ctx);
+struct LLVMOpaqueValue *bllvm_compile_rirexpr(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx
+);
 
 
 

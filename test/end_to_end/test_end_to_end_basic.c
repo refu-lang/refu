@@ -738,6 +738,21 @@ START_TEST (test_fixedarr_1) {
     ck_end_to_end_run(inputs, 73, NULL);
 } END_TEST
 
+START_TEST (test_fixedarr_2) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "a:string[3] = [\"Berlin\", \"Krosno\", \"Thessaloniki\"]\n"
+            "print(a[2])\n"
+            "return 3"
+            "}"
+        )};
+    static const struct RFstring output = RF_STRING_STATIC_INIT("Thessaloniki");
+    ck_end_to_end_run(inputs, 3, &output);
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
@@ -830,6 +845,7 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_arrays, test_fixedarr_1);
+    tcase_add_test(st_arrays, test_fixedarr_2);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_print);

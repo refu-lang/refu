@@ -86,6 +86,11 @@ i_INLINE_INS struct LLVMOpaqueValue **llvm_traversal_ctx_get_values(struct llvm_
 i_INLINE_INS unsigned llvm_traversal_ctx_get_values_count(struct llvm_traversal_ctx *ctx);
 i_INLINE_INS void llvm_traversal_ctx_reset_values(struct llvm_traversal_ctx *ctx);
 
+struct rir *llvm_traversal_ctx_rir(struct llvm_traversal_ctx *ctx)
+{
+    return ctx->mod->rir;
+}
+
 static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
                                        const struct rir_value *rv,
                                        void *lv)
@@ -239,31 +244,6 @@ static struct LLVMOpaqueValue *bllvm_compile_unionmemberat(
     return llvm_member_gep;
 }
 
-static struct LLVMOpaqueValue *bllvm_compile_objidx(
-    const struct rir_expression *expr,
-    struct llvm_traversal_ctx *ctx)
-{
-    RF_ASSERT(
-        rir_type_is_array(expr->objidx.objmemory->type),
-        "You can only get an index to an array type"
-    );
-    LLVMValueRef llvm_idxval = bllvm_value_from_rir_value_or_die(
-        expr->objidx.idx,
-        ctx
-    );
-    LLVMValueRef indices[] = {
-        LLVMConstInt(LLVMInt32Type(), 0, 0),
-        llvm_idxval
-    };
-    LLVMValueRef gep = LLVMBuildGEP(
-        ctx->builder,
-        bllvm_value_from_rir_value_or_die(expr->objidx.objmemory, ctx),
-        indices,
-        2,
-        ""
-    );
-    return LLVMBuildLoad(ctx->builder, gep, "");
-}
 
 static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression *expr,
                                                     struct llvm_traversal_ctx *ctx)
