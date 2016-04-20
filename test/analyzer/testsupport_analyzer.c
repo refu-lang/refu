@@ -113,7 +113,10 @@ struct type *testsupport_analyzer_type_create_simple_elementary(enum elementary_
     return t;
 }
 
-struct type *i_testsupport_analyzer_type_create_operator(enum typeop_type type, unsigned int argsn, ...)
+struct type *i_testsupport_analyzer_type_create_operator(
+    enum typeop_type type,
+    unsigned int argsn,
+    ...)
 {
     va_list valist;
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
@@ -136,8 +139,9 @@ struct type *i_testsupport_analyzer_type_create_operator(enum typeop_type type, 
     return t;
 }
 
-struct type *testsupport_analyzer_type_create_defined(const struct RFstring *name,
-                                                      struct type *type)
+struct type *testsupport_analyzer_type_create_defined(
+    const struct RFstring *name,
+    struct type *type)
 {
     struct analyzer_testdriver *adriver = get_analyzer_testdriver();
     struct type *t;
@@ -147,6 +151,24 @@ struct type *testsupport_analyzer_type_create_defined(const struct RFstring *nam
     t->category = TYPE_CATEGORY_DEFINED;
     t->defined.name = name;
     t->defined.type = type;
+
+    darray_append(adriver->types, t);
+    return t;
+}
+
+struct type *i_testsupport_analyzer_type_create_array(
+    const struct type *member_type,
+    int64_t *arr,
+    size_t arr_size)
+{
+    struct analyzer_testdriver *adriver = get_analyzer_testdriver();
+    struct type *t;
+    t = type_alloc(front_testdriver_module());
+    ck_assert_msg(t, "Failed to allocate type");
+
+    struct arr_int64 dimensions;
+    testsupport_arr_with_size_to_darray(dimensions, arr, arr_size, int64_t);
+    type_array_init(t, member_type, &dimensions);
 
     darray_append(adriver->types, t);
     return t;

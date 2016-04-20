@@ -166,8 +166,8 @@ static bool pattern_match_types(const struct type *pattern,
         return pattern_match_type_operators(pattern, target, ctx);
     case TYPE_CATEGORY_ELEMENTARY:
         if (pattern->category == TYPE_CATEGORY_WILDCARD ||
-            (pattern->category == TYPE_CATEGORY_ELEMENTARY &&
-             pattern->elementary.etype == target->elementary.etype)) {
+            type_is_specific_elementary(pattern, target->elementary.etype)) {
+
             return true;
         }
         break;

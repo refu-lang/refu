@@ -11,7 +11,10 @@
 #include <types/type.h>
 #include <types/type_operators.h>
 
-static bool rir_typedef_init_from_type(struct rir_object *obj, struct type *t, struct rir_ctx *ctx)
+static bool rir_typedef_init_from_type(
+    struct rir_object *obj,
+    struct type *t,
+    struct rir_ctx *ctx)
 {
     struct rir_typedef *def = &obj->tdef;
     RF_ASSERT(!type_is_elementary(t), "Typedef can't be created from an elementary type");
@@ -52,7 +55,7 @@ static bool rir_typedef_init_from_type(struct rir_object *obj, struct type *t, s
     }
 
     // finally add the typedef to the rir's strmap
-    if (!strmap_add(&ctx->common.rir->map, &def->name, obj)) {
+    if (!rir_map_addobj(&ctx->common, &def->name, obj)) {
         RF_ERROR("Failed to add a typedef to the rir strmap");
         return false;
     }

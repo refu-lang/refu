@@ -50,7 +50,8 @@ enum type_category {
     TYPE_CATEGORY_DEFINED,              /* a user defined type */
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
-    TYPE_CATEGORY_MODULE                /* type of a module */
+    TYPE_CATEGORY_MODULE,               /* type of a module */
+    TYPE_CATEGORY_ARRAY                 /* type of an array */
 };
 
 struct type_elementary {
@@ -78,20 +79,21 @@ struct type_module {
 };
 
 struct arr_int64 { darray(int64_t);};
-struct type_arr {
+struct type_array {
     struct arr_int64 dimensions;
+    const struct type *member_type;
 };
 
 struct type {
     enum type_category category;
     bool is_constant;
-    struct type_arr *array;
     union {
         struct type_defined defined;
         struct type_operator operator;
         struct type_elementary elementary;
         struct type_foreignfn foreignfn;
         struct type_module module;
+        struct type_array array;
     };
 };
 #endif

@@ -6,6 +6,7 @@
 #include <ir/rir_typedef.h>
 #include <ir/rir_object.h>
 #include <types/type.h>
+#include <types/type_arr.h>
 #include <ast/function.h>
 #include <analyzer/type_set.h>
 #include <utils/common_strings.h>
@@ -182,9 +183,12 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
 {
     struct rir_typedef *tdef;
     struct rir_type *ret = NULL;
-    if (t->category == TYPE_CATEGORY_ELEMENTARY) {
+    switch (t->category) {
+    case TYPE_CATEGORY_ELEMENTARY:
         ret = rir_type_elem_get_or_create(rir_ctx_rir(ctx), t->elementary.etype, false);
-    } else if (t->category == TYPE_CATEGORY_DEFINED) {
+        break;
+    case TYPE_CATEGORY_DEFINED:
+    {
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {
             RF_ERROR("Could not find typedef identifier RIR object in symbol table");
@@ -196,7 +200,10 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             return NULL;
         }
         ret = rir_type_comp_get_or_create(tdef, rir_ctx_rir(ctx), false);
-    } else if (t->category == TYPE_CATEGORY_OPERATOR) {
+        break;
+    }
+    case TYPE_CATEGORY_OPERATOR:
+    {
         struct rir_object *obj = rir_ctx_st_getobj(ctx, type_get_unique_type_str(t));
         if (!obj) {
             symbol_table_print(rir_ctx_curr_st(ctx));
@@ -210,19 +217,24 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             return NULL;
         }
         ret = rir_type_comp_get_or_create(tdef, ctx->common.rir, false);
-    } else {
-        RF_CRITICAL_FAIL("Unexpected type category");
+        break;
     }
-
-    if (t->array) {
+    case TYPE_CATEGORY_ARRAY:
         // for now totally ignore multi-dimension arrays when creating rir type arrays
         ret = rir_type_arr_get_or_create(
             rir_ctx_rir(ctx),
-            ret,
-            darray_size(t->array->dimensions) == 0 ? -1 : darray_item(t->array->dimensions, 0),
+            rir_type_create_from_type(type_array_member_type(t), ctx),
+            type_get_arr_first_size(t),
             false // not a pointer to array
         );
+        break;
+    case TYPE_CATEGORY_WILDCARD:
+    case TYPE_CATEGORY_GENERIC:
+    case TYPE_CATEGORY_MODULE:
+        RF_CRITICAL_FAIL("Unexpected type category");
+        break;
     }
+
     return ret;
 }
 

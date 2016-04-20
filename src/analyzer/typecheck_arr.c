@@ -70,13 +70,11 @@ void typecheck_adjust_elementary_arr_const_values(
     const struct type *tleft)
 {
     RF_ASSERT(
-        tleft->category == TYPE_CATEGORY_ELEMENTARY &&
-        tleft->array,
+        type_is_elementary_array(tleft),
         "Left type should also have been determined to be an array here"
     );
     RF_ASSERT(
-        n->expression_type->category == TYPE_CATEGORY_ELEMENTARY &&
-        n->expression_type->array,
+        type_is_elementary_array(n->expression_type),
         "Bracket list should also be an elementary array here"
     );
     struct arr_ast_nodes *members = ast_bracketlist_members(n);
@@ -84,7 +82,9 @@ void typecheck_adjust_elementary_arr_const_values(
         return;
     }
 
-    if (n->expression_type->elementary.etype == tleft->elementary.etype) {
+    if (type_get_elementary(type_array_member_type(n->expression_type)) ==
+        type_get_elementary(type_array_member_type(tleft))) {
+
         return;
     }
 
@@ -95,7 +95,7 @@ void typecheck_adjust_elementary_arr_const_values(
 
     struct ast_node **c;
     darray_foreach(c, *members) {
-        (*c)->expression_type = type_elementary_get_type(tleft->elementary.etype);
+        (*c)->expression_type = type_array_member_type(tleft);
     }
     n->expression_type = tleft;
     return;
@@ -123,7 +123,7 @@ enum traversal_cb_res typecheck_indexaccess(
     }
 
     // left type of index access should be an array type
-    if (!tleft->array) {
+    if (tleft->category != TYPE_CATEGORY_ARRAY) {
         RFS_PUSH();
         analyzer_err(
             ctx->m,
@@ -162,7 +162,7 @@ enum traversal_cb_res typecheck_indexaccess(
     // we can have an extra check for constant indices of fixed size arrays
     // note: we completely ignore multidimensional arrays here
     int64_t arrsize;
-    if (right->type == AST_CONSTANT && (arrsize = type_get_arr_size(tleft)) != -1) {
+    if (right->type == AST_CONSTANT && (arrsize = type_get_arr_first_size(tleft)) != -1) {
         int64_t val;
         RF_ASSERT(
             ast_constant_get_integer(&right->constant, &val),
@@ -181,6 +181,6 @@ enum traversal_cb_res typecheck_indexaccess(
         }
     }
 
-    traversal_node_set_type(n, module_getorcreate_type_without_arr(ctx->m, tleft), ctx);
+    traversal_node_set_type(n, type_array_member_type(tleft), ctx);
     return TRAVERSAL_CB_OK;
 }

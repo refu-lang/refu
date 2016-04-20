@@ -22,8 +22,7 @@ START_TEST(test_array_type1) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {-1};
-    testsupport_analyzer_type_create_elementary(
-        t_i8,
+    struct type *t_i8 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_INT_8,
         dims
     );
@@ -44,8 +43,7 @@ START_TEST(test_array_type2) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {42};
-    testsupport_analyzer_type_create_elementary(
-        t_u64,
+    struct type *t_u64 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_UINT_64,
         dims
     );
@@ -66,8 +64,7 @@ START_TEST(test_array_type3) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {42, 13, 24};
-    testsupport_analyzer_type_create_elementary(
-        t_u64,
+    struct type *t_u64 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_UINT_64,
         dims
     );
@@ -90,11 +87,11 @@ START_TEST(test_array_type4) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {3};
-    testsupport_analyzer_type_create_elementary(
-        t_u64,
+    struct type *t_u64 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_UINT_64,
         dims
     );
+
     struct ast_node *block = ast_node_get_child(front_testdriver_module()->node, 0);
     struct ast_node *blist = ast_binaryop_right(ast_node_get_child(block, 0));
     const struct type *blist_type = ast_node_get_type(blist);
@@ -123,8 +120,7 @@ START_TEST(test_array_type_compare1) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {3};
-    testsupport_analyzer_type_create_elementary(
-        t_u64,
+    struct type *t_u64 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_UINT_64,
         dims
     );
@@ -156,8 +152,7 @@ START_TEST(test_array_type_compare2) {
     ck_assert_typecheck_ok();
 
     int64_t dims[] = {5};
-    testsupport_analyzer_type_create_elementary(
-        t_i64,
+    struct type *t_i64 = testsupport_analyzer_type_create_elemarray(
         ELEMENTARY_TYPE_INT_64,
         dims
     );
@@ -191,7 +186,8 @@ START_TEST(test_array_type_compare_fail1) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"u8[3]\" to \"u64[2]\". Array mismatch at type comparison.",
+            "\"u8[3]\" to \"u64[2]\". Mismatch at the size of "
+            "the 1st array dimension 3 != 2.",
             1, 0, 1, 19),
     };
     ck_assert_typecheck_with_messages(false, messages);
@@ -208,8 +204,8 @@ START_TEST(test_array_type_compare_fail2) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
             "Assignment between incompatible types. Can't assign "
-            "\"string[2]\" to \"u64[2]\". Unable to convert from"
-            " \"string\" to \"u64\".",
+            "\"string[2]\" to \"u64[2]\". Array member type "
+            "mismatch. \"string\" != \"u64\".",
             1, 0, 1, 24),
     };
     ck_assert_typecheck_with_messages(false, messages);

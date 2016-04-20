@@ -399,7 +399,7 @@ static enum traversal_cb_res typecheck_typeleaf(
     struct analyzer_traversal_ctx *ctx)
 {
     // an ast_type_leaf's type is a type leaf
-    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL, NULL);
+    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL);
     traversal_node_set_type(n, module_get_or_create_type(n), ctx);
     return TRAVERSAL_CB_OK;
 }
@@ -441,7 +441,7 @@ static enum traversal_cb_res typecheck_typeop(
     }
 
     // for the rest we need to create it here
-    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL, NULL);
+    type_creation_ctx_set_args(ctx->m, ctx->current_st, NULL);
     n->expression_type = type_lookup_or_create(n);
     RF_ASSERT_OR_EXIT(n->expression_type, "Could not determine type of matchase type operation");
     return TRAVERSAL_CB_OK;
@@ -501,10 +501,10 @@ static enum traversal_cb_res typecheck_assignment(
             }
         }
 
-        // if the right side is a bracket list of an elementary array
-        if (right->type == AST_BRACKET_LIST &&
-            tright->category == TYPE_CATEGORY_ELEMENTARY &&
-            tright->array) {
+        // if the right side is a bracket list of an elementary array the
+        // make sure that the constant types are upped to the integer level
+        // of the left type
+        if (right->type == AST_BRACKET_LIST && type_is_elementary_array(tright)) {
             typecheck_adjust_elementary_arr_const_values(right, tleft);
         }
     } else {

@@ -242,9 +242,10 @@ static inline void rir_move_from_module(struct rir *r, struct module *m)
     m->types_pool = 0;
 }
 
-static inline bool rir_create_typedefs(struct rf_objset_type *typeset,
-                                       struct RFilist_head *typedefs_list,
-                                       struct rir_ctx *ctx)
+static inline bool rir_create_typedefs(
+    struct rf_objset_type *typeset,
+    struct RFilist_head *typedefs_list,
+    struct rir_ctx *ctx)
 {
     struct type **t;
     struct arr_types tarr;

@@ -109,27 +109,42 @@ void teardown_analyzer_tests_before_firstpass();
     } while(0)
 
 
-
 struct type *testsupport_analyzer_type_create_simple_elementary(enum elementary_type etype);
-#define testsupport_analyzer_type_create_elementary(name_, etype_, arr_) \
-    struct type *name_ = testsupport_analyzer_type_create_simple_elementary( \
-        etype_                                                          \
-    );                                                                  \
-    struct arr_int64 dimensions;                                        \
-    testsupport_arr_to_darray(dimensions, arr_, int64_t);               \
-    (name_)->array = type_arr_create(&dimensions);
+
 
 #define testsupport_analyzer_type_create_operator(i_optype_, ...)       \
     i_testsupport_analyzer_type_create_operator(i_optype_, RF_NARG(__VA_ARGS__), __VA_ARGS__)
-struct type *i_testsupport_analyzer_type_create_operator(enum typeop_type type,
-                                                         unsigned int argsn,
-                                                         ...);
+struct type *i_testsupport_analyzer_type_create_operator(
+    enum typeop_type type,
+    unsigned int argsn,
+    ...
+);
 
-struct type *testsupport_analyzer_type_create_defined(const struct RFstring *name,
-                                                      struct type *type);
+struct type *testsupport_analyzer_type_create_defined(
+    const struct RFstring *name,
+    struct type *type
+);
 
-struct type *testsupport_analyzer_type_create_function(struct type *arg,
-                                                       struct type *ret);
+struct type *testsupport_analyzer_type_create_function(
+    struct type *arg,
+    struct type *ret
+);
+
+#define testsupport_analyzer_type_create_array(mtype_, arr_)            \
+    i_testsupport_analyzer_type_create_array(mtype_, arr_, sizeof(arr_))
+
+struct type *i_testsupport_analyzer_type_create_array(
+    const struct type *member_type,
+    int64_t *arr,
+    size_t arr_size
+);
+
+#define testsupport_analyzer_type_create_elemarray(etype_, arr_)    \
+    i_testsupport_analyzer_type_create_array(                       \
+        testsupport_analyzer_type_create_simple_elementary(etype_), \
+        arr_,                                                       \
+        sizeof(arr_)                                                \
+    )
 
 /* -- general analyzer/front context of the compiler support*/
 

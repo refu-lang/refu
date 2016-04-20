@@ -54,6 +54,15 @@ i_INLINE_DECL bool type_is_elementary(const struct type *t)
 }
 
 /**
+ * Get the elementary kind of a given type. Must be an elementary type.
+ */
+i_INLINE_DECL enum elementary_type type_get_elementary(const struct type *t)
+{
+    RF_ASSERT(type_is_elementary(t), "Expected elementary type");
+    return t->elementary.etype;
+}
+
+/**
  * Given a type, check if it's a specific elementary type
  */
 i_INLINE_DECL bool type_is_specific_elementary(const struct type *t, enum elementary_type etype)

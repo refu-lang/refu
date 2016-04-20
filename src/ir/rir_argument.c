@@ -34,10 +34,11 @@ static bool rir_typearr_add_single(
     return true;
 }
 
-bool rir_typearr_from_type(struct rir_type_arr *arr,
-                           const struct type *type,
-                           enum typearr_create_reason reason,
-                           struct rir_ctx *ctx)
+bool rir_typearr_from_type(
+    struct rir_type_arr *arr,
+    const struct type *type,
+    enum typearr_create_reason reason,
+    struct rir_ctx *ctx)
 {
     RF_ASSERT(!type_is_implop(type), "Called with illegal type");
     struct type **subtype;
@@ -45,6 +46,7 @@ bool rir_typearr_from_type(struct rir_type_arr *arr,
     switch(type->category) {
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_DEFINED:
+    case TYPE_CATEGORY_ARRAY:
         return rir_typearr_add_single(arr, type, reason, ctx);
     case TYPE_CATEGORY_OPERATOR:
         darray_foreach(subtype, type->operator.operands) {
@@ -53,7 +55,9 @@ bool rir_typearr_from_type(struct rir_type_arr *arr,
             }
         }
         return true;
-    default:
+    case TYPE_CATEGORY_WILDCARD:
+    case TYPE_CATEGORY_GENERIC:
+    case TYPE_CATEGORY_MODULE:
         RF_CRITICAL_FAIL("Unexpected type category encountered");
         break;
     }

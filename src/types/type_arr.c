@@ -8,20 +8,21 @@
 #include <ast/ast.h>
 #include <ast/constants.h>
 
-void type_arr_init(struct type_arr *arr, struct arr_int64 *dimensions)
+void type_array_init(
+    struct type *tarr,
+    const struct type *member_type,
+    struct arr_int64 *dimensions)
 {
-    darray_shallow_copy(arr->dimensions, *dimensions);
+    tarr->category = TYPE_CATEGORY_ARRAY;
+    tarr->is_constant = false;
+    darray_shallow_copy(tarr->array.dimensions, *dimensions);
+    tarr->array.member_type = member_type;
 }
 
-struct type_arr *type_arr_create(struct arr_int64 *dimensions)
-{
-    struct type_arr *ret;
-    RF_MALLOC(ret, sizeof(*ret), return NULL);
-    type_arr_init(ret, dimensions);
-    return ret;
-}
-
-struct type_arr *type_arr_create_from_ast(struct ast_node *astarr)
+struct type *type_array_get_or_create_from_ast(
+    struct module *mod,
+    struct ast_node *astarr,
+    const struct type *member_type)
 {
     AST_NODE_ASSERT_TYPE(astarr, AST_ARRAY_SPEC);
     struct arr_int64 dimensions;
@@ -39,45 +40,23 @@ struct type_arr *type_arr_create_from_ast(struct ast_node *astarr)
             darray_append(dimensions, value);
         }
     }
-    return type_arr_create(&dimensions);
+    return module_getorcreate_type_as_arr(mod, member_type, &dimensions);
 }
 
-void type_arr_destroy(struct type_arr *arr)
+void type_array_destroy(struct type *tarr)
 {
-    darray_free(arr->dimensions);
-    free(arr);
+    darray_free(tarr->array.dimensions);
 }
 
-bool type_arr_equal(const struct type_arr *a1, const struct type_arr *a2)
-{
-    if (!a1 && !a2) {
-        return true;
-    }
+i_INLINE_INS const struct type * type_array_member_type(const struct type *t);
+i_INLINE_INS int64_t type_get_arr_first_size(const struct type *t);
+i_INLINE_INS bool type_is_elementary_array(const struct type *t);
 
-    if (!!a1 ^ !!a2) {
-        return false;
-    }
-
-    if (darray_size(a1->dimensions) != darray_size(a2->dimensions)) {
-        return false;
-    }
-
-    int64_t *fromval;
-    unsigned i = 0;
-    darray_foreach(fromval, a1->dimensions) {
-        int64_t toval = darray_item(a2->dimensions, i++);
-        if (*fromval != toval && *fromval != -1 && toval != -1) {
-            return false;
-        }
-    }
-    return true;
-}
-
-const struct RFstring* type_arr_str(const struct type_arr *arr)
+const struct RFstring* type_array_specifier_str(const struct arr_int64 *dims)
 {
     struct RFstring *ret = RFS("");
     int64_t *val;
-    darray_foreach(val, arr->dimensions) {
+    darray_foreach(val, *dims) {
         if (*val == -1) {
             ret = RFS(RFS_PF "[]", RFS_PA(ret));
         } else {
@@ -89,58 +68,31 @@ const struct RFstring* type_arr_str(const struct type_arr *arr)
 
 i_INLINE_INS struct RFstring *type_str_add_array(
     struct RFstring *str,
-    const struct type_arr *arr
+    const struct arr_int64 *dimensions
 );
 
 struct type *module_getorcreate_type_as_arr(
     struct module *mod,
     const struct type *t,
-    struct type_arr *arrtype)
+    struct arr_int64 *dimensions)
 {
     RFS_PUSH();
     struct type *found_type = module_types_set_has_str(
         mod,
-        type_str_add_array(type_str(t, TSTR_DEFAULT), arrtype)
+        type_str_add_array(type_str(t, TSTR_DEFAULT), dimensions)
     );
     RFS_POP();
     if (!found_type) {
         // if not found, we gotta create it and add it
-        if (!(found_type = type_alloc_copy(mod, t))) {
-            RF_ERROR("Failed to create a copy of a type");
+        if (!(found_type = type_alloc(mod))) {
+            RF_ERROR("Failed to create a type");
             return NULL;
         }
-        found_type->array = arrtype;
+        type_array_init(found_type, t, dimensions);
         module_types_set_add(mod, found_type, NULL);
     } else {
-        type_arr_destroy(arrtype);
+        darray_free(*dimensions);
     }
-    return found_type;
-}
-
-struct type *module_getorcreate_type_without_arr(
-    struct module *mod,
-    const struct type *t)
-{
-    RF_ASSERT(t->array, "Should be called for types that already have array");
-    struct type check_t;
-    check_t = *t;
-    check_t.array = NULL;
-    RFS_PUSH();
-    struct type *found_type = module_types_set_has_str(
-        mod,
-        type_str_or_die(&check_t, TSTR_DEFAULT)
-    );
-    RFS_POP();
-    if (!found_type) {
-        // if not found, we gotta create it and add it
-        if (!(found_type = type_alloc_copy(mod, t))) {
-            RF_ERROR("Failed to create a copy of a type");
-            return NULL;
-        }
-        found_type->array = NULL;
-        module_types_set_add(mod, found_type, NULL);
-    }
-
     return found_type;
 }
 
@@ -152,9 +104,5 @@ struct type *module_getorcreate_type_as_singlearr(
     struct arr_int64 dims;
     darray_init(dims);
     darray_append(dims, dimension);
-
-    struct type_arr *arrtype = type_arr_create(&dims);
-    return module_getorcreate_type_as_arr(mod, t, arrtype);
+    return module_getorcreate_type_as_arr(mod, t, &dims);
 }
-
-i_INLINE_INS int64_t type_get_arr_size(const struct type *t);

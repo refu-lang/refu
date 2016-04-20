@@ -6,6 +6,7 @@
 #include <rflib/string/common.h>
 #include <rflib/string/core.h>
 #include <rflib/string/corex.h>
+#include <rflib/string/conversion.h>
 #include <rflib/string/manipulationx.h>
 #include <rflib/datastructs/darray.h>
 
@@ -237,7 +238,7 @@ static bool type_elementary_compare(
                     current_error_type = TYPECMP_ERRXPLAIN_SIGNEDUNSIGNED_CONSTANT;
                     goto end_error_msg;
                 }
-                
+
                 if (reason != TYPECMP_EXPLICIT_CONVERSION) {
                     // warning
                     RFS_PUSH();
@@ -273,7 +274,7 @@ static bool type_elementary_compare(
         if (to->etype == ELEMENTARY_TYPE_STRING &&
             fromtype->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
-            
+
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
         break;
@@ -293,7 +294,7 @@ static bool type_elementary_compare(
         if (to->etype == ELEMENTARY_TYPE_STRING &&
             fromtype->is_constant &&
             reason == TYPECMP_EXPLICIT_CONVERSION) {
-            
+
             TYPECMP_RETSET_SUCCESS_CONVERSION(totype);
         }
         break;
@@ -325,6 +326,7 @@ static bool type_elementary_compare(
 
 
 end_error_msg:
+    RFS_PUSH();
     rf_stringx_assignv(
         &g_typecmp_ctx.err_buff,
         "Unable to convert from \""RFS_PF"\" to \""RFS_PF"\"%s",
@@ -332,28 +334,72 @@ end_error_msg:
         RFS_PA(type_elementary_get_str(to->etype)),
         error_explanations[current_error_type]
     );
+    RFS_POP();
 end:
     TYPECMP_RETURN(false);
+}
+
+static bool type_array_compare(
+    const struct type *from,
+    const struct type *to,
+    enum comparison_reason reason)
+{
+    if (!type_compare(from->array.member_type, to->array.member_type, reason)) {
+        RFS_PUSH();
+        rf_stringx_assignv(
+            &g_typecmp_ctx.err_buff,
+            "Array member type mismatch. \""RFS_PF"\" != \""RFS_PF"\"",
+            RFS_PA(type_str_or_die(from->array.member_type, TSTR_DEFAULT)),
+            RFS_PA(type_str_or_die(to->array.member_type, TSTR_DEFAULT))
+        );
+        RFS_POP();
+        TYPECMP_RETURN(false);
+    }
+
+    unsigned from_d = darray_size(from->array.dimensions);
+    unsigned to_d = darray_size(to->array.dimensions);
+    if (from_d != to_d) {
+        rf_stringx_assignv(
+            &g_typecmp_ctx.err_buff,
+            "Array dimensions mismatch. %u != %u",
+            from_d,
+            to_d
+        );
+        TYPECMP_RETURN(false);
+    }
+
+    int64_t *fromval;
+    unsigned i = 0;
+    darray_foreach(fromval, from->array.dimensions) {
+        int64_t toval = darray_item(to->array.dimensions, i++);
+        if (*fromval != toval && *fromval != -1 && toval != -1) {
+            RFS_PUSH();
+            rf_stringx_assignv(
+                &g_typecmp_ctx.err_buff,
+                "Mismatch at the size of the "RFS_PF" array dimension "
+                "%"PRId64" != %"PRId64"",
+                RFS_PA(rf_string_ordinal(i)),
+                *fromval,
+                toval
+            );
+            RFS_POP();
+            TYPECMP_RETURN(false);
+        }
+    }
+
+
+    TYPECMP_RETURN(true);
 }
 
 static bool type_same_categories_compare(
     const struct type *from,
     const struct type *to,
-    enum comparison_reason reason
-)
+    enum comparison_reason reason)
 {
     RF_ASSERT(
         from->category == to->category,
         "type_same_categories_equals() called with different categories"
     );
-    // if either type has an array specifier let's check if it matches
-    if (!type_arr_equal(from->array, to->array)) {
-        rf_stringx_assignv(
-            &g_typecmp_ctx.err_buff,
-            "Array mismatch at type comparison"
-        );
-        TYPECMP_RETURN(false);
-    }
 
     switch (from->category) {
     case TYPE_CATEGORY_OPERATOR:
@@ -362,6 +408,8 @@ static bool type_same_categories_compare(
         return type_elementary_compare(from, to, reason);
     case TYPE_CATEGORY_DEFINED:
         return rf_string_equal(from->defined.name, to->defined.name);
+    case TYPE_CATEGORY_ARRAY:
+        return type_array_compare(from, to, reason);
     case TYPE_CATEGORY_GENERIC:
         //TODO
         RF_CRITICAL_FAIL("Not yet implemented");
@@ -404,7 +452,7 @@ static bool type_compare_to_operator(const struct type *from,
             TYPECMP_RETSET_SUCCESS(converted_type);
         }
     }
-        
+
     return false;
 }
 
@@ -524,7 +572,7 @@ static bool ast_type_equality_cb(
     struct type *t,
     struct ast_type_equality_ctx *ctx)
 {
-    type_creation_ctx_set_args(ctx->mod, ctx->st, ctx->genrdecl, NULL);
+    type_creation_ctx_set_args(ctx->mod, ctx->st, ctx->genrdecl);
     struct type *lookedup_t = type_lookup_xidentifier(desc);
     if (!lookedup_t) {
         RF_ERROR("Failed to lookup type of an identifier");

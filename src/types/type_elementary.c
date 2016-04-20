@@ -34,7 +34,6 @@ static struct type i_elementary_types[] = {
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
         .is_constant = false,                       \
-        .array = NULL,                              \
         .elementary = {                             \
             .etype=i_type,                          \
         }                                           \
@@ -61,7 +60,6 @@ static struct type i_elementary_types_constant[] = {
     [i_type] = {                                    \
         .category = TYPE_CATEGORY_ELEMENTARY,       \
         .is_constant = true,                        \
-        .array = NULL,                              \
         .elementary = {                             \
             .etype=i_type,                          \
         }                                           \
@@ -156,6 +154,7 @@ i_INLINE_INS bool elementary_type_is_numeric(enum elementary_type etype);
 i_INLINE_INS int elementary_type_to_bytesize(enum elementary_type etype);
 i_INLINE_INS int type_elementary_bytesize(const struct type_elementary *t);
 i_INLINE_INS bool type_is_elementary(const struct type *t);
+i_INLINE_INS enum elementary_type type_get_elementary(const struct type *t);
 i_INLINE_INS bool type_is_specific_elementary(const struct type *t, enum elementary_type etype);
 i_INLINE_INS bool type_is_simple_elementary(const struct type *t);
 i_INLINE_INS bool type_is_numeric_elementary(const struct type *t);

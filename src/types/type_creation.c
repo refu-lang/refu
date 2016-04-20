@@ -61,15 +61,13 @@ static inline void type_creation_ctx_pop_op()
 void type_creation_ctx_set_args(
     struct module *m,
     struct symbol_table *st,
-    struct ast_node *genrdecl,
-    struct type_arr *arr
+    struct ast_node *genrdecl
 )
 {
     RF_ASSERT(g_type_creation_ctx, "No global type creation context exists");
     g_type_creation_ctx->m = m;
     g_type_creation_ctx->st = st;
     g_type_creation_ctx->genrdecl = genrdecl;
-    g_type_creation_ctx->arr = arr;
 }
 
 static inline struct module *type_creation_ctx_mod()
@@ -218,8 +216,8 @@ void type_free(struct type *t, struct rf_fixed_memorypool *pool)
     if (t->category == TYPE_CATEGORY_OPERATOR) {
         darray_free(t->operator.operands);
     }
-    if (t->array) {
-        type_arr_destroy(t->array);
+    if (t->category == TYPE_CATEGORY_ARRAY) {
+        type_array_destroy(t);
     }
     rf_fixed_memorypool_free_element(pool, t);
 }
@@ -555,11 +553,7 @@ struct type *type_lookup_xidentifier(const struct ast_node *n)
     }
 
     if (n->xidentifier.arrspec) {
-        ret = module_getorcreate_type_as_arr(
-            mod,
-            ret,
-            type_arr_create_from_ast(n->xidentifier.arrspec)
-        );
+        ret = type_array_get_or_create_from_ast(mod, n->xidentifier.arrspec, ret);
     }
 
     return ret;

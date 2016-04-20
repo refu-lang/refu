@@ -44,17 +44,17 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         rec->data = type_module_create(mod, id);
         break;
     case AST_FUNCTION_DECLARATION:
-        type_creation_ctx_set_args(mod, st, NULL, NULL);
+        type_creation_ctx_set_args(mod, st, NULL);
         rec->data = type_create_from_fndecl(node);
         break;
     case AST_TYPE_DECLARATION:
-        type_creation_ctx_set_args(mod, st, NULL, NULL);
+        type_creation_ctx_set_args(mod, st, NULL);
         rec->data = type_create_from_typedecl(node);
         break;
     case AST_VARIABLE_DECLARATION:
     case AST_TYPE_DESCRIPTION:
     case AST_TYPE_LEAF:
-        type_creation_ctx_set_args(mod, st, NULL, NULL);
+        type_creation_ctx_set_args(mod, st, NULL);
         rec->data = type_lookup_or_create(node);
         break;
     default:

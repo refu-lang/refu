@@ -52,15 +52,17 @@ static struct RFstring *type_str_do(const struct type *t, int options)
     case TYPE_CATEGORY_WILDCARD:
         ret = RFS(RFS_PF, RFS_PA(&g_wildcard_s));
         break;
+    case TYPE_CATEGORY_ARRAY:
+        ret = type_str_add_array(
+            type_str_or_die(t->array.member_type, TSTR_DEFAULT),
+            &t->array.dimensions
+        );
+        break;
     default:
         RF_CRITICAL_FAIL("TODO: Not yet implemented");
         return NULL;
     }
 
-    // also if the type has an array specifier add it to the representation
-    if (t->array) {
-        ret = type_str_add_array(ret, t->array);
-    }
     return ret;
 }
 

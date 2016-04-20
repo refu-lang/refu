@@ -25,13 +25,11 @@ void type_creation_ctx_deinit();
  * @param st           The symbol table to check for the type
  * @param genrdecl     An optional generic declaration node that describes @c n.
  *                     Can be NULL.
- * @param arr          Optional array specifier. Can be NULL
  */
 void type_creation_ctx_set_args(
     struct module *m,
     struct symbol_table *st,
-    struct ast_node *genrdecl,
-    struct type_arr *arr
+    struct ast_node *genrdecl
 );
 
 bool type_add_to_currop(struct type* t);
