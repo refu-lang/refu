@@ -30,7 +30,9 @@ struct ast_node *ast_bracketlist_create(
  *
  * The first time this function is called the members array is created
  * and then all subsequent calls simply return it
- * @return the members array of the bracketlist
+ *
+ * @param n    The ast bracketlist whose members to get/create
+ * @return     the members array of the bracketlist
  */
 struct arr_ast_nodes *ast_bracketlist_members(struct ast_node *n);
 

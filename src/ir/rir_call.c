@@ -17,58 +17,59 @@
 #include <types/type_operators.h>
 #include <types/type_function.h>
 
-/* -- code to process a constructor call -- */
-
-struct args_to_val_ctx {
-    struct rir_ctx *rirctx;
-    //! left hand of assignment
-    struct rir_value *lhs;
-    //! index of the argument we are iterating
-    unsigned index;
-};
-
-static void args_to_val_ctx_init(struct args_to_val_ctx *ctx, struct rir_value *lhs, struct rir_ctx *rirctx)
+static bool ctor_args_to_value(
+    struct ast_node *call,
+    struct rir_value *lhs,
+    struct rir_ctx *ctx)
 {
-    ctx->rirctx = rirctx;
-    ctx->lhs = lhs;
-    ctx->index = 0;
-}
-
-static bool ctor_args_to_value_cb(const struct ast_node *n, struct args_to_val_ctx *ctx)
-{
-    // for each argument, process the ast node and create the rir arg expression
-    const struct rir_value *argexprval = rir_process_ast_node_getreadval(n, ctx->rirctx);
-    if (!argexprval) {
-        RF_ERROR("Could not create rir expression from constructor argument");
-        return false;
-    }
-
-    struct rir_expression *e;
-    // find the target value to write to
-    struct rir_value *targetval;
-    if (ctx->lhs->type->category == RIR_TYPE_COMPOSITE) {
-        // if lhs type is composite create expression to read its index from the lhs composite type
-        if (!(e = rir_objmemberat_create(ctx->lhs, ctx->index, RIRPOS_AST, ctx->rirctx))) {
-            RF_ERROR("Failed to create rir expression to get rir object's member memory");
+    struct arr_ast_nodes *args = ast_fncall_arguments(call);
+    struct ast_node **n;
+    unsigned int index = 0;
+    darray_foreach(n, *args) {
+        // for each argument, process the ast node and create the rir arg expression
+        const struct rir_value *argexprval = rir_process_ast_node_getreadval(*n, ctx);
+        if (!argexprval) {
+            RF_ERROR("Could not create rir expression from constructor argument");
             return false;
         }
-        rir_common_block_add(&ctx->rirctx->common, e);
-        if (!(targetval = rirctx_getread_exprval(e, ctx->rirctx))) {
-            RF_ERROR("Failed to create rir expression to read an object's value");
+
+        struct rir_expression *e;
+        // find the target value to write to
+        struct rir_value *targetval;
+        switch (lhs->type->category) {
+        case RIR_TYPE_COMPOSITE:
+            // if lhs type is composite create expression to read its index from the lhs composite type
+            if (!(e = rir_objmemberat_create(lhs, index, RIRPOS_AST, ctx))) {
+                RF_ERROR("Failed to create rir expression to get rir object's member memory");
+                return false;
+            }
+            rir_common_block_add(&ctx->common, e);
+            if (!(targetval = rirctx_getread_exprval(e, ctx))) {
+                RF_ERROR("Failed to create rir expression to read an object's value");
+                return false;
+            }
+            break;
+        case RIR_TYPE_ELEMENTARY:
+            RF_ASSERT(
+                index == 0,
+                "Only at 0 index can a non composite type have been found."
+            );
+            targetval = lhs;
+            break;
+        case RIR_TYPE_ARRAY:
+            RF_ASSERT(false, "TODO");
+            break;
+        }
+
+        // write the arg expression to the position
+        if (!(e = rir_write_create(targetval, argexprval, RIRPOS_AST, ctx))) {
+            RF_ERROR("Failed to create expression to write to an object's member");
             return false;
         }
-    } else {
-        RF_ASSERT(ctx->index == 0, "Only at 0 index can a non composite type have been found.");
-        targetval = ctx->lhs;
-    }
-    // write the arg expression to the position
-    if (!(e = rir_write_create(targetval, argexprval, RIRPOS_AST, ctx->rirctx))) {
-        RF_ERROR("Failed to create expression to write to an object's member");
-        return false;
-    }
-    rir_common_block_add(&ctx->rirctx->common, e);
+        rir_common_block_add(&ctx->common, e);
 
-    ++ctx->index;
+        ++index;
+    }
     return true;
 }
 
@@ -85,7 +86,6 @@ static bool rir_populate_from_astcall(
     struct rir_ctx *ctx
 )
 {
-    struct args_to_val_ctx argsctx;
     if (type_is_sumtype(ast_fncall_type(ast_call))) {
         RF_ASSERT(rir_type_is_composite(objmemory->type), "Constructor should assign to a composite type");
         int union_idx = rir_type_union_matched_type_from_fncall(objmemory->type, ast_call, ctx);
@@ -110,11 +110,9 @@ static bool rir_populate_from_astcall(
             return false;
         }
     }
-    // now for whichever object (normal type, or union type sutype) is loaded as left hand side
-    // assign from constructor's arguments
-    args_to_val_ctx_init(&argsctx, objmemory, ctx);
-    ast_fncall_foreach_arg(ast_call, (exprlist_cb)ctor_args_to_value_cb, &argsctx);
-    return true;
+    // now for whichever object (normal type, or union type sumtype) is loaded
+    // as left hand side assign from constructor's arguments
+    return ctor_args_to_value((struct ast_node*)ast_call, objmemory, ctx);
 }
 
 static bool rir_process_ctorcall(const struct ast_node *n, struct rir_ctx *ctx)
@@ -128,39 +126,52 @@ static bool rir_process_ctorcall(const struct ast_node *n, struct rir_ctx *ctx)
 }
 
 /* -- code to process a normal function call -- */
-struct fncall_args_toarr_ctx {
-    struct rir_ctx *rirctx;
-    const struct type *fndecl_type;
-    struct value_arr *arr;
-};
-
-static void fncall_args_toarr_ctx_init(struct fncall_args_toarr_ctx *ctx,
-                                       const struct ast_node *ast_call,
-                                       struct rir_ctx *rirctx,
-                                       struct value_arr *arr)
+/**
+ * Turn the ast node arguments of a function call into a rir value array
+ *
+ * @param call[in]         The function call ast node to use
+ * @param arr[out]         Pass an unitinialized rir value array here to get
+ *                         it initialized and populated by this function
+ * @param ctx[in]          The rir context
+ */
+static bool ast_fncall_args_toarr(
+    struct ast_node *call,
+    struct value_arr *arr,
+    struct rir_ctx *ctx)
 {
-    ctx->rirctx = rirctx;
-    ctx->arr = arr;
+
+    struct arr_ast_nodes *args = ast_fncall_arguments(call);
+    const struct type *fndecl_type = ast_fncall_type(call);
+    struct ast_node **n;
     darray_init(*arr);
-    ctx->fndecl_type = ast_fncall_type(ast_call);
-}
+    darray_foreach(n, *args) {
+        const struct rir_value *argexprval = rir_process_ast_node_getreadval(*n, ctx);
+        if (!argexprval) {
+            RF_ERROR("Could not create rir expression from fncall argument");
+            goto fail;
+        }
 
-static bool ast_fncall_args_toarr_cb(const struct ast_node *n, struct fncall_args_toarr_ctx *ctx)
-{
-    const struct rir_value *argexprval = rir_process_ast_node_getreadval(n, ctx->rirctx);
-    if (!argexprval) {
-        RF_ERROR("Could not create rir expression from fncall argument");
-        return false;
+        const struct type *argtype = fndecl_type->category == TYPE_CATEGORY_OPERATOR
+            ? type_get_subtype(fndecl_type, darray_size(*arr))
+            : fndecl_type;
+        argexprval = rir_maybe_convert_acquire_type(
+            argexprval,
+            rir_type_create_from_type(argtype, ctx),
+            RIRPOS_AST,
+            ctx
+        );
+        if (!argexprval) {
+            RF_ERROR("Could not create conversion for rir call argument");
+            goto fail;
+        }
+        darray_append(*arr, (struct rir_value*)argexprval);
     }
-    const struct type *argtype = ctx->fndecl_type->category == TYPE_CATEGORY_OPERATOR
-        ? type_get_subtype(ctx->fndecl_type, darray_size(*ctx->arr))
-        : ctx->fndecl_type;
-    if (!(argexprval = rir_maybe_convert_acquire_type(argexprval, rir_type_create_from_type(argtype, ctx->rirctx), RIRPOS_AST, ctx->rirctx))) {
-        RF_ERROR("Could not create conversion for rir call argument");
-        return false;
-    }
-    darray_append(*ctx->arr, (struct rir_value*)argexprval);
+
     return true;
+
+fail:
+    darray_free(*arr);
+    return false;
 }
 
 struct rir_object *rir_call_create_obj(
@@ -222,9 +233,7 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
         darray_append(arr, &e->val);
     } else {
         // turn the function call args into a rir value array
-        struct fncall_args_toarr_ctx fncarg_ctx;
-        fncall_args_toarr_ctx_init(&fncarg_ctx, n, ctx, &arr);
-        if (!ast_fncall_foreach_arg(n, (exprlist_cb)ast_fncall_args_toarr_cb, &fncarg_ctx)) {
+        if (!ast_fncall_args_toarr((struct ast_node*)n, &arr, ctx)) {
             return NULL;
         }
     }

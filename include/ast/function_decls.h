@@ -2,6 +2,7 @@
 #define LFR_AST_FUNCTIONS_DECLS_H
 
 #include <analyzer/symbol_table.h>
+#include <ast/ast_utils.h>
 
 struct ast_node;
 struct inplocation_mark;
@@ -69,6 +70,9 @@ struct ast_fncall {
     const struct type *declared_type;
     //! Type of call
     enum ast_fncall_type type;
+    //! An array of all the arguments of this function call
+    //! Populated at the beginning of typechecking.
+    struct arr_ast_nodes arguments;
     //! Optional: generic attribute
     struct ast_node *genr;
 };

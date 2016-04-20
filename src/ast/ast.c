@@ -143,6 +143,8 @@ void ast_node_destroy(struct ast_node *n)
     if (n->state >= AST_NODE_STATE_TYPECHECK_1) {
         if (n->type == AST_BRACKET_LIST) {
             darray_free(n->bracketlist.members);
+        } else if (n->type == AST_FUNCTION_CALL) {
+            darray_free(n->fncall.arguments);
         }
     }
 

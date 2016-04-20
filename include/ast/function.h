@@ -223,6 +223,25 @@ i_INLINE_DECL bool ast_node_is_fncall_preprocessed(const struct ast_node *n)
     return n->type == AST_FUNCTION_CALL && (ast_fncall_is_ctor(n));
 }
 
+/**
+ * Get or create the arguments of a function call.
+ *
+ * The first time this function is called the arguments array is created
+ * and then all subsequent calls simply return it
+ *
+ * @param n    The ast function call whose arguments to get/create
+ * @return     the arguments array of the function call
+ */
+struct arr_ast_nodes *ast_fncall_arguments(struct ast_node *n);
+
+/**
+ * A way to iterate a function call's arguments before typechecking
+ * creates the array of ast_node members
+ *
+ * @param n        The function call whose ast node arguments to iterate
+ * @param cb       The callback function to call for each call argument
+ * @param user     The extra user argument to provide to the callback
+ */
 i_INLINE_DECL bool ast_fncall_foreach_arg(
     const struct ast_node *n,
     exprlist_cb cb,
@@ -230,6 +249,10 @@ i_INLINE_DECL bool ast_fncall_foreach_arg(
 )
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    RF_ASSERT(
+        n->state < AST_NODE_STATE_TYPECHECK_1,
+        "Do not use this function after typechecking"
+    );
     struct ast_node *args = ast_fncall_args(n);
     if (!args) {
         return true;

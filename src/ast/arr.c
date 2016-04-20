@@ -24,8 +24,7 @@ i_INLINE_INS unsigned int ast_arrspec_dimensions_num(struct ast_node *n);
 struct ast_node *ast_bracketlist_create(
     const struct inplocation_mark *start,
     const struct inplocation_mark *end,
-    struct ast_node *args
-)
+    struct ast_node *args)
 {
     struct ast_node *ret;
     ret = ast_node_create_marks(AST_BRACKET_LIST, start, end);

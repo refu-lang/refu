@@ -34,7 +34,12 @@ enum traversal_cb_res typecheck_function_call(
                      RFS_PA(fn_name));
         goto fail;
     }
-    // also check the ast node of the function declaration to get more information if it's not a conversion
+
+    // create the arguments ast node array
+    ast_fncall_arguments(n);
+
+    // also check the ast node of the function declaration to get more
+    // information if it's not a conversion
     if (!type_is_explicitly_convertable_elementary(fn_type)) {
         const struct ast_node *fndecl = symbol_table_lookup_node(
             ctx->current_st,
@@ -47,7 +52,8 @@ enum traversal_cb_res typecheck_function_call(
         }
     }
 
-    fn_found_args_type = (fn_call_args) ? ast_node_get_type(fn_call_args)
+    fn_found_args_type = (fn_call_args)
+        ? ast_node_get_type(fn_call_args)
         : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
 
     if (!fn_found_args_type) { // argument typechecking failed
@@ -57,11 +63,14 @@ enum traversal_cb_res typecheck_function_call(
     if (type_is_explicitly_convertable_elementary(fn_type)) {
         // silly way to check if it's only 1 argument. Maybe figure out safer way?
         if (!fn_call_args || fn_found_args_type->category == TYPE_CATEGORY_OPERATOR) {
-            analyzer_err(ctx->m, ast_node_startmark(n),
-                         ast_node_endmark(n),
-                         "Invalid arguments for explicit conversion to \""
-                         RFS_PF"\".",
-                         RFS_PA(fn_name));
+            analyzer_err(
+                ctx->m,
+                ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Invalid arguments for explicit conversion to \""
+                RFS_PF"\".",
+                RFS_PA(fn_name)
+            );
             goto fail;
         }
 

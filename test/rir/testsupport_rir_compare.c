@@ -230,6 +230,7 @@ static bool ckr_compare_valarr(
             );
             return false;
         }
+        RFS_PUSH();
         ckr_compare_value(
             *gval,
             eval,
@@ -238,6 +239,7 @@ static bool ckr_compare_valarr(
             RFS(RFS_PF". At the "RFS_PF "value in the array",
                 RFS_PA(rf_string_ordinal(i + 1)))
         );
+        RFS_POP();
         i++;
     }
     return true;

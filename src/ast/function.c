@@ -96,6 +96,27 @@ struct ast_node *ast_fncall_create(const struct inplocation_mark *start,
     return ret;
 }
 
+static bool populate_arglist_cb(struct ast_node *n, struct arr_ast_nodes *args)
+{
+    darray_push(*args, n);
+    return true;
+}
+
+struct arr_ast_nodes *ast_fncall_arguments(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_CALL);
+    if (n->state <= AST_NODE_STATE_ANALYZER_PASS1) {
+        darray_init(n->fncall.arguments);
+        ast_fncall_foreach_arg(
+            n,
+            (exprlist_cb)populate_arglist_cb,
+            &n->fncall.arguments
+        );
+        n->state = AST_NODE_STATE_TYPECHECK_1;
+    }
+    return &n->fncall.arguments;
+}
+
 i_INLINE_INS const struct RFstring* ast_fncall_name(const struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_args(const struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_fncall_genr(struct ast_node *n);
