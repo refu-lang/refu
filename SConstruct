@@ -58,8 +58,9 @@ refu_src = [
     'analyzer/analyzer.c',
     'analyzer/symbol_table.c',
     'analyzer/analyzer_pass1.c',
-    'analyzer/typecheck.c',
     'analyzer/type_set.c',
+    'analyzer/typecheck.c',
+    'analyzer/typecheck_functions.c',
     'analyzer/typecheck_matchexpr.c',
     'analyzer/typecheck_arr.c',
 
