@@ -36,8 +36,7 @@ static bool rir_function_add_variable(
     struct rir_type *rtype,
     const struct RFstring *name, // can be NULL is pos == RIRPOS_PARSE
     enum rir_pos pos,
-    rir_data data
-)
+    rir_data data)
 {
     struct rir_object *objvar = rir_variable_create(rtype, pos, data);
     if (!objvar) {
@@ -66,8 +65,7 @@ static bool rir_fndecl_init_args_from_ast(
     const struct ast_node *ast_desc,
     bool foreign,
     struct rir_fndecl *decl,
-    struct rir_ctx *ctx
-)
+    struct rir_ctx *ctx)
 {
     if (!args_type) {
         darray_init(*arr);
@@ -122,8 +120,7 @@ bool rir_fndecl_init(
     struct rir_type *return_type,
     bool foreign,
     enum rir_pos pos,
-    rir_data data
-)
+    rir_data data)
 {
     RF_STRUCT_ZERO(fndecl);
     RF_ASSERT(args, "args should never be NULL. Instead pass an empty array");

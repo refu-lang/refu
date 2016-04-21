@@ -182,28 +182,6 @@ const struct rir_value *rir_maybe_convert(
     return val;
 }
 
-const struct rir_value *rir_maybe_convert_acquire_type(
-    const struct rir_value *val,
-    struct rir_type *checktype,
-    enum rir_pos pos,
-    rir_data data
-)
-{
-    if (!rir_type_equal(val->type, checktype)) {
-        struct rir_object *obj;
-        checktype = rir_type_get_or_create_from_other(checktype, rir_data_rir(data), false);
-        if (!(obj = rir_convert_create_obj_maybeadd(val, checktype, pos, data))) {
-            return NULL;
-        }
-        val = rir_object_value(obj);
-    } else {
-        // since the function has acquired checktype and not assigning it anywhere
-        rir_type_destroy(checktype, rir_data_rir(data));
-    }
-    return val;
-}
-
-
 bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct ast_node *args = ast_fncall_args(n);

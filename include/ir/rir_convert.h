@@ -39,17 +39,6 @@ const struct rir_value *rir_maybe_convert(
 );
 
 /**
- * Acts just like @ref rir_maybe_convert() except that @a checktype
- * is acquired by the function and should not be accessed after it.
- */
-const struct rir_value *rir_maybe_convert_acquire_type(
-    const struct rir_value *val,
-    struct rir_type *checktype,
-    enum rir_pos pos,
-    rir_data data
-);
-
-/**
  * Creates a convert object and adds it to the current block if the returned
  * object was a rir expression.
  *

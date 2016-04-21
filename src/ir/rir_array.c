@@ -43,7 +43,7 @@ struct rir_object *rir_fixedarr_create_obj_from_ast(
             return false;
         }
 
-        if (!(argexprval = rir_maybe_convert_acquire_type(argexprval, member_type, RIRPOS_AST, ctx))) {
+        if (!(argexprval = rir_maybe_convert(argexprval, member_type, RIRPOS_AST, ctx))) {
             RF_ERROR("Could not create conversion for rir call argument");
             return false;
         }

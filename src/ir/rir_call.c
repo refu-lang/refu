@@ -154,7 +154,7 @@ static bool ast_fncall_args_toarr(
         const struct type *argtype = fndecl_type->category == TYPE_CATEGORY_OPERATOR
             ? type_get_subtype(fndecl_type, darray_size(*arr))
             : fndecl_type;
-        argexprval = rir_maybe_convert_acquire_type(
+        argexprval = rir_maybe_convert(
             argexprval,
             rir_type_create_from_type(argtype, ctx),
             RIRPOS_AST,
