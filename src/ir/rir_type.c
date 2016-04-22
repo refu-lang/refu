@@ -179,13 +179,16 @@ end:
     return ret;
 }
 
-struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx *ctx)
+struct rir_type *rir_type_create_from_type(
+    const struct type *t,
+    bool make_ptr,
+    struct rir_ctx *ctx)
 {
     struct rir_typedef *tdef;
     struct rir_type *ret = NULL;
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
-        ret = rir_type_elem_get_or_create(rir_ctx_rir(ctx), t->elementary.etype, false);
+        ret = rir_type_elem_get_or_create(rir_ctx_rir(ctx), t->elementary.etype, make_ptr);
         break;
     case TYPE_CATEGORY_DEFINED:
     {
@@ -199,7 +202,7 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        ret = rir_type_comp_get_or_create(tdef, rir_ctx_rir(ctx), false);
+        ret = rir_type_comp_get_or_create(tdef, rir_ctx_rir(ctx), make_ptr);
         break;
     }
     case TYPE_CATEGORY_OPERATOR:
@@ -216,14 +219,14 @@ struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx 
             RF_ERROR("Could not retrieve typedef from rir object. Invalid rir object?");
             return NULL;
         }
-        ret = rir_type_comp_get_or_create(tdef, ctx->common.rir, false);
+        ret = rir_type_comp_get_or_create(tdef, ctx->common.rir, make_ptr);
         break;
     }
     case TYPE_CATEGORY_ARRAY:
         // for now totally ignore multi-dimension arrays when creating rir type arrays
         ret = rir_type_arr_get_or_create(
             rir_ctx_rir(ctx),
-            rir_type_create_from_type(type_array_member_type(t), ctx),
+            rir_type_create_from_type(type_array_member_type(t), make_ptr, ctx),
             type_get_arr_first_size(t),
             false // not a pointer to array
         );

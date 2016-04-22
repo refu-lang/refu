@@ -27,6 +27,7 @@ struct rir_object *rir_fixedarr_create_obj_from_ast(
     );
     struct rir_type *member_type = rir_type_create_from_type(
         ast_node_get_type_or_die(darray_item(*astnodes, 0)),
+        false,
         ctx
     );
     // initialize fixedarray members

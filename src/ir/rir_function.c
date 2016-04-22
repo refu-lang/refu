@@ -47,12 +47,21 @@ static bool rir_function_add_variable(
     return pos == RIRPOS_AST ? rir_ctx_st_setobj(data, name, objvar) : true;
 }
 
-static bool rir_type_fn_cb(const struct RFstring *name,
-                           const struct ast_node *desc,
-                           struct type *t,
-                           struct rir_type_fn_ctx *ctx)
+/**
+ * For each argument of a function create the rir type. If the argument type
+ * is a user defined type make sure it's passed as pointer
+ */
+static bool rir_type_fn_cb(
+    const struct RFstring *name,
+    const struct ast_node *desc,
+    struct type *t,
+    struct rir_type_fn_ctx *ctx)
 {
-    struct rir_type *rtype = rir_type_create_from_type(t, ctx->rirctx);
+    struct rir_type *rtype = rir_type_create_from_type(
+        t,
+        t->category == TYPE_CATEGORY_DEFINED, // user defined is passed as pointer
+        ctx->rirctx
+    );
     if (!rtype) {
         return false;
     }
@@ -104,7 +113,7 @@ static bool rir_fndecl_init_args_from_ast(
             RF_ASSERT(ast_desc, "An ast type description should have been given at this point");
             struct rir_type_fn_ctx fnctx;
             rir_type_fn_ctx_init(&fnctx, fndef, ctx);
-            if (!ast_type_foreach_arg(ast_desc, args_type, (ast_type_cb)rir_type_fn_cb, &fnctx)) {
+            if (!ast_type_foreach_leaf_arg(ast_desc, args_type, (ast_type_cb)rir_type_fn_cb, &fnctx)) {
                 RF_ERROR("Failed to add rir types to a function's symbol tables");
                 return false;
             }
@@ -198,22 +207,18 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
     // take return type from the AST node
     struct rir_type *return_type;
     if (ast_returns) {
+        struct type *ast_ret_type = (struct type*)ast_node_get_type(ast_returns);
         return_type = rir_type_create_from_type(
-            (struct type*)ast_node_get_type(ast_returns),
+            ast_ret_type,
+            // if user defined then return as a pointer
+            ast_ret_type->category == TYPE_CATEGORY_DEFINED,
             ctx
         );
         if (!return_type) {
             RF_ERROR("Could not find function's rir return type");
             return false;
         }
-        // if user defined type, return as a pointer
-        if (return_type->category == RIR_TYPE_COMPOSITE) {
-            return_type = rir_type_get_or_create_from_other(
-                return_type,
-                rir_ctx_rir(ctx),
-                true
-            );
-        }
+
     } else {
         return_type = rir_type_elem_get_or_create(
             rir_ctx_rir(ctx),
@@ -393,8 +398,8 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     if (!rir_fndef_init_common_outro(
             ret,
             ast_returns
-                ? rir_type_create_from_type(ast_node_get_type(ast_returns), ctx)
-                : NULL,
+            ? rir_type_create_from_type(ast_node_get_type(ast_returns), false, ctx)
+            : NULL,
             RIRPOS_AST,
             ctx
         )) {

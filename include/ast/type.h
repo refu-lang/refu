@@ -39,12 +39,16 @@ i_INLINE_DECL struct ast_node *ast_types_right(const struct ast_node *n)
 }
 
 /**
- * Traverses an ast node type along with an actual type. If they don't have an
- * equal layout false will be returned. If they do and a callback has been
- * given, it will be ran for each argument.
+ * Traverses an ast node type and performs an optional callback for each leaf
+ * type. A type can also be given to traverse along with the ast node. If a type
+ * is not given then then ast node *must* have a type associated with it.  If
+ * the given type and the ast node don't have an equal layout false will be
+ * returned. If they do and a callback has been given, it will be ran for each
+ * argument.
  *
  * @param n        The ast node containing the type description
- * @param t        The type to use for the traversal
+ * @param t        The type to use for the traversal or NULL. In the case of
+ *                 no type given the ast node @a n should have a type.
  * @param cb       An optional callback to call for each final argument of the type.
  *                 The argument's type name is taken from the corresponding ast node
  *                 and the type from traversing the given type. If a callback
@@ -52,8 +56,13 @@ i_INLINE_DECL struct ast_node *ast_types_right(const struct ast_node *n)
  * @param user     An optional user argument to provide to the callback
  * @return         true if they are equal and if all callback calls returned true.
  */
-typedef bool(*ast_type_cb)(const struct RFstring *name, const struct ast_node *desc, struct type *t, void *user);
-bool ast_type_foreach_arg(const struct ast_node *n, struct type *t, ast_type_cb cb, void *user);
+typedef bool(*ast_type_cb)(const struct RFstring *name, const struct ast_node *desc, const struct type *t, void *user);
+bool ast_type_foreach_leaf_arg(
+    const struct ast_node *n,
+    const struct type *t,
+    ast_type_cb cb,
+    void *user
+);
 
 /* -- type leaf functions -- */
 struct ast_node *ast_typeleaf_create(const struct inplocation_mark *start,

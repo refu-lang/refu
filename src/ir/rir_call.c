@@ -156,7 +156,7 @@ static bool ast_fncall_args_toarr(
             : fndecl_type;
         argexprval = rir_maybe_convert(
             argexprval,
-            rir_type_create_from_type(argtype, ctx),
+            rir_type_create_from_type(argtype, false, ctx),
             RIRPOS_AST,
             ctx
         );
@@ -211,7 +211,11 @@ struct rir_object *rir_call_create_obj_from_ast(const struct ast_node *n, struct
     struct rir_object *ret;
     if (ast_fncall_is_sum(n)) {
         // if it's a call to a function with a sum type, get the type the call matched
-        struct rir_type *sumtype = rir_type_create_from_type(ast_fncall_type(n), ctx);
+        struct rir_type *sumtype = rir_type_create_from_type(
+            ast_fncall_type(n),
+            false,
+            ctx
+        );
         if (!sumtype) {
             RF_ERROR("Could not get the rir type of a sum function call");
             return NULL;

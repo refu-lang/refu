@@ -9,8 +9,8 @@
 struct ast_type_traversal_ctx {
     //! Current type operation while iterating the rir type to type comparison
     enum typeop_type current_op;
-    //! A stack of the currently visited rir types
-    struct {darray(struct type*);} visited_types;
+    //! A stack of the currently visited types
+    struct {darray(const struct type*);} visited_types;
     //! A stack of the indices of the currently visited rir types. -1 for uninitialized
     darray(int) indices;
     //! Pointer to the identifier's string (left part) of the last ast typeleaf
@@ -39,17 +39,20 @@ static inline void ctx_depth_down(struct ast_type_traversal_ctx *ctx)
 #define ctx_depth_down(i_ctx_)
 #endif
 
-static inline void ast_type_traversal_ctx_push_type(struct ast_type_traversal_ctx *ctx,
-                                                    struct type *type)
+static inline void ast_type_traversal_ctx_push_type(
+    struct ast_type_traversal_ctx *ctx,
+    const struct type *type)
 {
     darray_push(ctx->visited_types, type);
     darray_push(ctx->indices, -1);
     ctx_depth_up(ctx);
 }
 
-static inline struct type *ast_type_traversal_ctx_current_type(struct ast_type_traversal_ctx *ctx)
+static inline const struct type *ast_type_traversal_ctx_current_type(
+    struct ast_type_traversal_ctx *ctx
+)
 {
-    struct type *top_type = darray_top(ctx->visited_types);
+    const struct type *top_type = darray_top(ctx->visited_types);
     if (darray_top(ctx->indices) == -1) {
         return top_type;
     }
@@ -82,7 +85,9 @@ static const char * g_depth_str = "                                             
 #define DD(...)
 #endif
 
-static inline void ast_type_traversal_ctx_go_up(struct ast_type_traversal_ctx *ctx, const struct ast_node *n)
+static inline void ast_type_traversal_ctx_go_up(
+    struct ast_type_traversal_ctx *ctx,
+    const struct ast_node *n)
 {
     // this should only be called at the end of a typeop traversal
     RF_ASSERT(n->type == AST_TYPE_OPERATOR, "Expected ast type operator");
@@ -103,7 +108,11 @@ static inline void ast_type_traversal_ctx_go_up(struct ast_type_traversal_ctx *c
     }
 }
 
-static void ast_type_traversal_ctx_init(struct ast_type_traversal_ctx *ctx, struct type *start_t, ast_type_cb cb, void *user)
+static void ast_type_traversal_ctx_init(
+    struct ast_type_traversal_ctx *ctx,
+    const struct type *start_t,
+    ast_type_cb cb,
+    void *user)
 {
     darray_init(ctx->visited_types);
     darray_init(ctx->indices);
@@ -123,9 +132,11 @@ static void ast_type_traversal_ctx_deinit(struct ast_type_traversal_ctx *ctx)
     darray_free(ctx->indices);
 }
 
-static bool ast_type_operator_traversal_pre(const struct ast_node *n, struct ast_type_traversal_ctx *ctx)
+static bool ast_type_operator_traversal_pre(
+    const struct ast_node *n,
+    struct ast_type_traversal_ctx *ctx)
 {
-    struct type *current_t = ast_type_traversal_ctx_current_type(ctx);
+    const struct type *current_t = ast_type_traversal_ctx_current_type(ctx);
     if (!current_t) {
         DD("PRE: FAIL. Failed to take current_t\n");
         return false;
@@ -157,7 +168,9 @@ static bool ast_type_operator_traversal_pre(const struct ast_node *n, struct ast
     return true;
 }
 
-static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_traversal_ctx *ctx)
+static bool ast_type_foreach_arg_do(
+    const struct ast_node *n,
+    struct ast_type_traversal_ctx *ctx)
 {
     switch(n->type) {
     case AST_TYPE_LEAF:
@@ -203,7 +216,7 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
         return ast_type_foreach_arg_do(ast_typedecl_typedesc_get(n) , ctx);
     case AST_XIDENTIFIER:
     {
-        struct type *currtype = ast_type_traversal_ctx_current_type(ctx);
+        const struct type *currtype = ast_type_traversal_ctx_current_type(ctx);
         if (!currtype) { // if we don't have a type here traversal should fail
             return false;
         }
@@ -227,10 +240,13 @@ static bool ast_type_foreach_arg_do(const struct ast_node *n, struct ast_type_tr
     return true;
 }
 
-bool ast_type_foreach_arg(const struct ast_node *n, struct type *t, ast_type_cb cb, void *user)
+bool ast_type_foreach_leaf_arg(const struct ast_node *n, const struct type *t, ast_type_cb cb, void *user)
 {
     struct ast_type_traversal_ctx ctx;
     DD("At beginning of ast_type_foreacharg\n\n");
+    if (!t) {
+        t = ast_node_get_type_or_die(n);
+    }
     ast_type_traversal_ctx_init(&ctx, t, cb, user);
     bool ret = ast_type_foreach_arg_do(n, &ctx);
     ast_type_traversal_ctx_deinit(&ctx);

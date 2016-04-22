@@ -358,7 +358,7 @@ START_TEST(test_type_ast_traversal1) {
     };
     struct type *expected_types [] = { t_i8, t_string };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST(test_type_ast_traversal2) {
@@ -385,7 +385,7 @@ START_TEST(test_type_ast_traversal2) {
     };
     struct type *expected_types [] = { t_i8, t_string, t_f32 };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST(test_type_ast_traversal3) {
@@ -415,7 +415,7 @@ START_TEST(test_type_ast_traversal3) {
     };
     struct type *expected_types [] = { t_i8, t_string, t_f32, t_u64 };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_prod, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST(test_type_ast_traversal4) {
@@ -449,7 +449,7 @@ START_TEST(test_type_ast_traversal4) {
     };
     struct type *expected_types [] = { t_i8, t_string, t_f32, t_u64 };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST(test_type_ast_traversal5) {
@@ -492,7 +492,7 @@ START_TEST(test_type_ast_traversal5) {
     struct type *expected_types [] = { t_i8, t_string, t_i64,
                                        t_f32, t_u64, t_string, t_u8 };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST(test_type_ast_traversal6) {
@@ -543,7 +543,7 @@ START_TEST(test_type_ast_traversal6) {
         t_string
     };
     test_traversal_cb_ctx_init(&ctx, expected_names, expected_types);
-    ck_assert(ast_type_foreach_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
+    ck_assert(ast_type_foreach_leaf_arg(ast_desc, t_sum, (ast_type_cb)test_traversal_cb, &ctx));
 } END_TEST
 
 START_TEST (test_type_to_str) {

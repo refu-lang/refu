@@ -304,7 +304,7 @@ static enum traversal_cb_res typecheck_member_access(
         return TRAVERSAL_CB_ERROR;
     }
     typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
-    ast_type_foreach_arg(
+    ast_type_foreach_leaf_arg(
         desc,
         tleft->defined.type,
         (ast_type_cb)typecheck_member_access_iter_cb,

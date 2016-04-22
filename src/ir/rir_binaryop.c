@@ -206,7 +206,7 @@ static bool rir_process_memberaccess(const struct ast_binaryop *op,
     }
     struct rir_member_access_ctx cbctx;
     rir_member_access_ctx_init(&cbctx, rightstr);
-    ast_type_foreach_arg(
+    ast_type_foreach_leaf_arg(
         ast_desc,
         (struct type*)ast_node_get_type_or_die(ast_desc),
         (ast_type_cb)rir_member_access_cb,

@@ -196,7 +196,7 @@ bool rir_process_convertcall(const struct ast_node *n, struct rir_ctx *ctx)
     // create the conversion
     struct rir_object *obj = rir_convert_create_obj_maybeadd(
         argexprval,
-        rir_type_create_from_type(ast_node_get_type(n), ctx),
+        rir_type_create_from_type(ast_node_get_type(n), false, ctx),
         RIRPOS_AST,
         ctx
     );

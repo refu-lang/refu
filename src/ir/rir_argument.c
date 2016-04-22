@@ -25,7 +25,11 @@ static bool rir_typearr_add_single(
             reason == ARGARR_AT_FNDECL && type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)
         );
     } else {
-        t = rir_type_create_from_type(type, ctx);
+        t = rir_type_create_from_type(
+            type,
+            false,
+            ctx
+        );
     }
     if (!t) {
         return false;

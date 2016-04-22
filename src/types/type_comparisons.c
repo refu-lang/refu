@@ -590,5 +590,5 @@ bool type_equals_ast_node(struct type *t,
 {
     struct ast_type_equality_ctx ctx;
     ast_type_equality_ctx_init(&ctx, mod, st, genrdecl, options);
-    return ast_type_foreach_arg(type_desc, t, (ast_type_cb)ast_type_equality_cb, &ctx);
+    return ast_type_foreach_leaf_arg(type_desc, t, (ast_type_cb)ast_type_equality_cb, &ctx);
 }

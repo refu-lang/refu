@@ -110,7 +110,12 @@ struct rir_type *rir_type_arr_get_or_create(
     bool is_pointer
 );
 
-struct rir_type *rir_type_create_from_type(const struct type *t, struct rir_ctx *ctx);
+struct rir_type *rir_type_create_from_type(
+    const struct type *t,
+    bool make_ptr,
+    struct rir_ctx *ctx
+);
+
 void rir_type_destroy(struct rir_type *t, struct rir *r);
 
 

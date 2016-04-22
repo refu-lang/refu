@@ -421,7 +421,7 @@ static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
                 type_creation_ctx_st(),
                 type_creation_ctx_mod()
             );
-            ast_type_foreach_arg(args, arg_type, (ast_type_cb)type_function_add_args_to_st, &ctx);
+            ast_type_foreach_leaf_arg(args, arg_type, (ast_type_cb)type_function_add_args_to_st, &ctx);
             if (!ctx.success) {
                 RF_ERROR("Failed to add a function's arguments to its symbol table");
                 return false;
