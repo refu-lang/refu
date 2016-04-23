@@ -181,17 +181,26 @@ end:
 
 struct rir_type *rir_type_create_from_type(
     const struct type *t,
-    bool make_ptr,
+    enum rir_code_loc loc,
     struct rir_ctx *ctx)
 {
+    bool make_ptr = false;
     struct rir_typedef *tdef;
     struct rir_type *ret = NULL;
     switch (t->category) {
     case TYPE_CATEGORY_ELEMENTARY:
+        if (type_is_specific_elementary(t, ELEMENTARY_TYPE_STRING) &&
+            (loc != RIR_LOC_SYMBOL_TABLE_ALLOCA && loc != RIR_LOC_TYPEDESC)) {
+            make_ptr = true;
+        }
+
         ret = rir_type_elem_get_or_create(rir_ctx_rir(ctx), t->elementary.etype, make_ptr);
         break;
     case TYPE_CATEGORY_DEFINED:
     {
+        if (loc != RIR_LOC_SYMBOL_TABLE_ALLOCA) {
+            make_ptr = true;
+        }
         struct rir_object *tdef_obj = rir_ctx_st_getobj(ctx, type_defined_get_name(t));
         if (!tdef_obj) {
             RF_ERROR("Could not find typedef identifier RIR object in symbol table");
@@ -226,7 +235,7 @@ struct rir_type *rir_type_create_from_type(
         // for now totally ignore multi-dimension arrays when creating rir type arrays
         ret = rir_type_arr_get_or_create(
             rir_ctx_rir(ctx),
-            rir_type_create_from_type(type_array_member_type(t), make_ptr, ctx),
+            rir_type_create_from_type(type_array_member_type(t), loc, ctx),
             type_get_arr_first_size(t),
             false // not a pointer to array
         );
@@ -360,7 +369,7 @@ int rir_type_union_matched_type_from_fncall(
     RF_ASSERT(rir_type_is_union(t), "Expected a union type");
     const struct type *matched = ast_fncall_params_type(n);
     struct rir_type_arr tarr;
-    if (!rir_typearr_from_type(&tarr, matched, ARGARR_AT_TYPEDESC, ctx)) {
+    if (!rir_typearr_from_type(&tarr, matched, RIR_LOC_TYPEDESC, ctx)) {
         return -1;
     }
 

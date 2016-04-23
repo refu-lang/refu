@@ -49,7 +49,7 @@ static bool rir_typedef_init_from_type(
             return false;
         }
     }
-    if (!rir_typearr_from_type(&def->argument_types, t, ARGARR_AT_TYPEDESC, ctx)) {
+    if (!rir_typearr_from_type(&def->argument_types, t, RIR_LOC_TYPEDESC, ctx)) {
         RF_ERROR("Failed to turn a type to an arg array");
         return false;
     }

@@ -5,6 +5,7 @@
 #include <rflib/defs/inline.h>
 #include <rflib/utils/sanity.h>
 #include <types/type_decls.h>
+#include <ir/rir_utils.h>
 
 struct rir_ctx;
 struct rir;
@@ -110,9 +111,18 @@ struct rir_type *rir_type_arr_get_or_create(
     bool is_pointer
 );
 
+/**
+ * Turn a normal type to a rir type also depending on context (rir location)
+ *
+ * @param t            The normal type to convert
+ * @param loc          The location in the rir where the type is used. This
+ *                     is important since it provides context to decide value
+ *                     passing semantics among other things.
+ * @param ctx          The rir context
+ */
 struct rir_type *rir_type_create_from_type(
     const struct type *t,
-    bool make_ptr,
+    enum rir_code_loc loc,
     struct rir_ctx *ctx
 );
 

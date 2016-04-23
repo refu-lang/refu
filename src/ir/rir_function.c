@@ -59,7 +59,7 @@ static bool rir_type_fn_cb(
 {
     struct rir_type *rtype = rir_type_create_from_type(
         t,
-        t->category == TYPE_CATEGORY_DEFINED, // user defined is passed as pointer
+        RIR_LOC_FNDECL_ARGUMENTS,
         ctx->rirctx
     );
     if (!rtype) {
@@ -104,7 +104,7 @@ static bool rir_fndecl_init_args_from_ast(
             }
         }
     } else {
-        if (!rir_typearr_from_type(arr, args_type, ARGARR_AT_FNDECL, ctx)) {
+        if (!rir_typearr_from_type(arr, args_type, RIR_LOC_FNDECL_ARGUMENTS, ctx)) {
             RF_ERROR("Could not turn types to function arg array in the RIR");
             return false;
         }
@@ -210,8 +210,7 @@ static bool rir_fndecl_init_from_ast(struct rir_fndecl *ret,
         struct type *ast_ret_type = (struct type*)ast_node_get_type(ast_returns);
         return_type = rir_type_create_from_type(
             ast_ret_type,
-            // if user defined then return as a pointer
-            ast_ret_type->category == TYPE_CATEGORY_DEFINED,
+            RIR_LOC_FNDECL_RETURN,
             ctx
         );
         if (!return_type) {
@@ -398,7 +397,7 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     if (!rir_fndef_init_common_outro(
             ret,
             ast_returns
-            ? rir_type_create_from_type(ast_node_get_type(ast_returns), false, ctx)
+            ? rir_type_create_from_type(ast_node_get_type(ast_returns), RIR_LOC_FNDECL_RETURN, ctx)
             : NULL,
             RIRPOS_AST,
             ctx

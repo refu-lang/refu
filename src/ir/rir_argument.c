@@ -12,25 +12,14 @@
 static bool rir_typearr_add_single(
     struct rir_type_arr *arr,
     const struct type *type,
-    enum typearr_create_reason reason,
+    enum rir_code_loc loc,
     struct rir_ctx *ctx)
 {
-    struct rir_type *t;
-    if (type_is_elementary(type)) {
-        t = rir_type_elem_get_or_create(
-            rir_ctx_rir(ctx),
-            type_elementary(type),
-            // If it's a string make sure it's passed by pointer to function calls
-            // TODO: at some point do away with this distinction (?)
-            reason == ARGARR_AT_FNDECL && type_is_specific_elementary(type, ELEMENTARY_TYPE_STRING)
-        );
-    } else {
-        t = rir_type_create_from_type(
-            type,
-            false,
-            ctx
-        );
-    }
+    struct rir_type *t = rir_type_create_from_type(
+        type,
+        loc,
+        ctx
+    );
     if (!t) {
         return false;
     }
@@ -41,7 +30,7 @@ static bool rir_typearr_add_single(
 bool rir_typearr_from_type(
     struct rir_type_arr *arr,
     const struct type *type,
-    enum typearr_create_reason reason,
+    enum rir_code_loc loc,
     struct rir_ctx *ctx)
 {
     RF_ASSERT(!type_is_implop(type), "Called with illegal type");
@@ -51,10 +40,10 @@ bool rir_typearr_from_type(
     case TYPE_CATEGORY_ELEMENTARY:
     case TYPE_CATEGORY_DEFINED:
     case TYPE_CATEGORY_ARRAY:
-        return rir_typearr_add_single(arr, type, reason, ctx);
+        return rir_typearr_add_single(arr, type, loc, ctx);
     case TYPE_CATEGORY_OPERATOR:
         darray_foreach(subtype, type->operator.operands) {
-            if (!rir_typearr_add_single(arr, *subtype, reason, ctx)) {
+            if (!rir_typearr_add_single(arr, *subtype, loc, ctx)) {
                 return false;
             }
         }

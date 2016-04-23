@@ -46,10 +46,17 @@ void rir_utils_destroy()
     utils_created = false;
 }
 
+static inline bool rir_type_no_read_required(const struct rir_type *t)
+{
+    return
+        rir_type_is_specific_elementary(t, ELEMENTARY_TYPE_STRING) ||
+        rir_type_is_composite(t);
+}
+
 struct rir_value *rirctx_getread_val(struct rir_value *v, struct rir_ctx *ctx)
 {
     // if a pointer and not a string, also perform a read
-    if (!v->type->is_pointer || rir_type_is_specific_elementary(v->type, ELEMENTARY_TYPE_STRING)) {
+    if (!v->type->is_pointer || rir_type_no_read_required(v->type)) {
         return v;
     }
     struct rir_expression *read;
@@ -73,9 +80,7 @@ struct rir_expression *rirctx_getread_expr(struct rir_expression *e, struct rir_
     struct rir_expression *ret = NULL;
     // gotta read the memory value from an alloca
     // unless it's a string, which is passed by pointer at least at the moment
-    if (e->type == RIR_EXPRESSION_ALLOCA &&
-        !rir_type_is_specific_elementary(e->alloca.type, ELEMENTARY_TYPE_STRING)
-    ) {
+    if (e->type == RIR_EXPRESSION_ALLOCA && !rir_type_no_read_required(e->alloca.type)) {
         struct rir_expression *read;
         read = rir_read_create(&e->val, RIRPOS_AST, ctx);
         if (!read) {

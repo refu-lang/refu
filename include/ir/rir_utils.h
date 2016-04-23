@@ -4,6 +4,17 @@
 #include <stdbool.h>
 #include <ir/rir_value.h>
 
+enum rir_code_loc {
+    RIR_LOC_FIXEDARR,
+    RIR_LOC_CONVERSION,
+    RIR_LOC_FNDECL_ARGUMENTS,
+    RIR_LOC_FNDECL_RETURN,
+    RIR_LOC_TYPEDESC,
+    RIR_LOC_FNCALL_MAYBE_CONVERT,
+    RIR_LOC_FNCALL_SUM_CALL,
+    RIR_LOC_SYMBOL_TABLE_ALLOCA,
+};
+
 extern struct rir_value g_rir_const_1;
 extern struct rir_value g_rir_const_m1;
 extern struct rir_type g_rir_i32_type;

@@ -95,7 +95,7 @@ void rir_strec_create_allocas(struct symbol_table_record *rec,
 {
     struct rir_type *type = rir_type_create_from_type(
         symbol_table_record_type(rec),
-        false,
+        RIR_LOC_SYMBOL_TABLE_ALLOCA,
         ctx
     );
     RF_ASSERT_OR_EXIT(type, "Could not create a rir_type during symbol table iteration");
