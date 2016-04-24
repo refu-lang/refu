@@ -15,23 +15,9 @@ LLVMValueRef bllvm_compile_fixedarr(
 {
     RF_ASSERT(expr->type == RIR_EXPRESSION_FIXEDARR, "unexpexted expression");
     const struct rir_fixedarr *fixedarr = &expr->fixedarr;
+    LLVMTypeRef member_type = bllvm_type_from_rir_type(fixedarr->member_type, ctx);
     // can be NULL if there are no args
-    LLVMValueRef *vals;
-    LLVMTypeRef member_type;
-
-    if (rir_type_is_specific_elementary(fixedarr->member_type, ELEMENTARY_TYPE_STRING)) {
-        member_type = bllvm_type_from_rir_type(
-            rir_type_elem_get_or_create(
-                llvm_traversal_ctx_rir(ctx),
-                ELEMENTARY_TYPE_STRING,
-                true),
-            ctx
-        );
-        vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
-    } else {
-        member_type = bllvm_type_from_rir_type(fixedarr->member_type, ctx);
-        vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
-    }
+    LLVMValueRef *vals = bllvm_value_arr_to_values(&fixedarr->members, ctx);
     LLVMValueRef llvm_constarr = LLVMConstArray(
         member_type,
         vals,

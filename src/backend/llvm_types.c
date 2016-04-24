@@ -141,15 +141,7 @@ LLVMTypeRef bllvm_type_from_rir_type(
     case RIR_TYPE_ARRAY:
     {
         RF_ASSERT(type->array.size > 0, "Only fixed size array types supported for now");
-        // if member type is string always treat it as pointer for now
         const struct rir_type *member_type = rir_type_array_membertype(type);
-        if (rir_type_is_specific_elementary(member_type, ELEMENTARY_TYPE_STRING)) {
-            member_type = rir_type_elem_get_or_create(
-                llvm_traversal_ctx_rir(ctx),
-                ELEMENTARY_TYPE_STRING,
-                true
-            );
-        }
         ret = LLVMArrayType(
             bllvm_type_from_rir_type(member_type, ctx),
             type->array.size

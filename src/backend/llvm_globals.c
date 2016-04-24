@@ -206,8 +206,10 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
 static bool iterate_literals_cb(const struct RFstring *member, struct rir_object *obj, struct llvm_traversal_ctx *ctx)
 {
     struct rir_global *g = &obj->global;
-    RF_ASSERT(rir_type_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
-              "Found non string global in string literals map");
+    RF_ASSERT(
+        rir_type_is_specific_elementary(rir_global_type(g), ELEMENTARY_TYPE_STRING),
+        "Found non string global in string literals map"
+    );
     RFS_PUSH();
     bllvm_create_global_const_string(
         // skip the initial '$'

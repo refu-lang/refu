@@ -235,7 +235,7 @@ struct rir_type *rir_type_create_from_type(
         // for now totally ignore multi-dimension arrays when creating rir type arrays
         ret = rir_type_arr_get_or_create(
             rir_ctx_rir(ctx),
-            rir_type_create_from_type(type_array_member_type(t), loc, ctx),
+            rir_type_create_from_type(type_array_member_type(t), RIR_LOC_FIXEDARR, ctx),
             type_get_arr_first_size(t),
             false // not a pointer to array
         );
