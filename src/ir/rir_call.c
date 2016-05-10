@@ -83,8 +83,7 @@ static bool ctor_args_to_value(
 static bool rir_populate_from_astcall(
     struct rir_value *objmemory,
     const struct ast_node *ast_call,
-    struct rir_ctx *ctx
-)
+    struct rir_ctx *ctx)
 {
     if (type_is_sumtype(ast_fncall_type(ast_call))) {
         RF_ASSERT(rir_type_is_composite(objmemory->type), "Constructor should assign to a composite type");
@@ -118,11 +117,25 @@ static bool rir_populate_from_astcall(
 static bool rir_process_ctorcall(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_value *lhs = rir_ctx_lastassignval_get(ctx);
+    struct rir_object *obj = ctx->returned_obj;
     if (!lhs) {
-        RF_ERROR("RIR constructor call should have a valid left hand side in the assignment");
+        // that means it's a constructor call nested inside something else
+        struct rir_type *calltype = rir_type_create_from_type(
+            ast_fncall_type(n),
+            RIR_LOC_SYMBOL_TABLE_ALLOCA,
+            ctx
+        );
+        if (!(obj = rir_alloca_create_obj(calltype, NULL, RIRPOS_AST, ctx))) {
+            RF_ERROR("Failed to create a rir alloca instruction");
+            return false;
+        }
+        rir_common_block_add(&ctx->common, &obj->expr);
+        lhs = &obj->expr.val;
+    }
+    if (!rir_populate_from_astcall(lhs, n, ctx)) {
         return false;
     }
-    return rir_populate_from_astcall(lhs, n, ctx);
+    RIRCTX_RETURN_EXPR(ctx, true, obj);
 }
 
 /* -- code to process a normal function call -- */

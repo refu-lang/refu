@@ -270,6 +270,25 @@ START_TEST (test_function_with_defined_type_arg) {
     ck_end_to_end_run(inputs, 22, &output);
 } END_TEST
 
+START_TEST (test_function_with_defined_type_arg2) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+        "type foo {a:u32, b:f32}\n"
+        "fn take_foo(f:foo)\n"
+        "{\n"
+         "    print(f.a + 2)\n"
+        "}\n"
+        "fn main()->u32{\n"
+        "    take_foo(foo(40, 2.124))\n"
+        "    return 22\n"
+        "}")
+    };
+    static const struct RFstring output = RF_STRING_STATIC_INIT("42");
+    ck_end_to_end_run(inputs, 22, &output);
+} END_TEST
+
 START_TEST (test_simple_if) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
@@ -814,6 +833,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_functions, test_function_creation_and_call_assigned_return);
     tcase_add_test(st_functions, test_function_creation_and_call_assigned_return_obj);
     tcase_add_test(st_functions, test_function_with_defined_type_arg);
+    tcase_add_test(st_functions, test_function_with_defined_type_arg2);
 
     TCase *st_control_flow = tcase_create("end_to_end_control_flow");
     tcase_add_checked_fixture(st_control_flow,
