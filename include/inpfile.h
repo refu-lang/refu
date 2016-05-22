@@ -1,7 +1,7 @@
 #ifndef LFR_INPFILE_H
 #define LFR_INPFILE_H
 
-#include <rflib/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/intrusive_list.h>
 
 #include <info/info.h>
 #include <inpstr.h>

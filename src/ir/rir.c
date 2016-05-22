@@ -1,9 +1,9 @@
 #include <ir/rir.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/utils/fixed_memory_pool.h>
-#include <rflib/string/common.h>
-#include <rflib/string/corex.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/utils/fixed_memory_pool.h>
+#include <rfbase/string/common.h>
+#include <rfbase/string/corex.h>
 
 #include <ir/rir_function.h>
 #include <ir/rir_block.h>

@@ -4,7 +4,7 @@
 #include <types/type_function.h>
 #include <types/type_comparisons.h>
 
-#include <rflib/utils/fixed_memory_pool.h>
+#include <rfbase/utils/fixed_memory_pool.h>
 
 #include <ast/ast.h>
 #include <ast/vardecl.h>

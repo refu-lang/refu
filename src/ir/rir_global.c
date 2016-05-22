@@ -1,9 +1,9 @@
 #include <ir/rir_global.h>
 
-#include <rflib/utils/hash.h>
-#include <rflib/string/core.h>
-#include <rflib/string/common.h>
-#include <rflib/string/manipulationx.h>
+#include <rfbase/utils/hash.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/common.h>
+#include <rfbase/string/manipulationx.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

@@ -1,8 +1,8 @@
 #include <ir/rir_expression.h>
 
-#include <rflib/utils/sanity.h>
-#include <rflib/string/core.h>
-#include <rflib/string/manipulationx.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/manipulationx.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

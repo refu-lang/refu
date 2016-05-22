@@ -3,8 +3,8 @@
 
 #include <llvm-c/Core.h>
 
-#include <rflib/string/common.h>
-#include <rflib/string/conversion.h>
+#include <rfbase/string/common.h>
+#include <rfbase/string/conversion.h>
 
 #include <module.h>
 #include <analyzer/symbol_table.h>

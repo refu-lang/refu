@@ -1,14 +1,14 @@
 #include <types/type_comparisons.h>
 
-#include <rflib/utils/sanity.h>
-#include <rflib/utils/bits.h>
-#include <rflib/defs/threadspecific.h>
-#include <rflib/string/common.h>
-#include <rflib/string/core.h>
-#include <rflib/string/corex.h>
-#include <rflib/string/conversion.h>
-#include <rflib/string/manipulationx.h>
-#include <rflib/datastructs/darray.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/utils/bits.h>
+#include <rfbase/defs/threadspecific.h>
+#include <rfbase/string/common.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/corex.h>
+#include <rfbase/string/conversion.h>
+#include <rfbase/string/manipulationx.h>
+#include <rfbase/datastructs/darray.h>
 
 #include <ast/ast.h>
 #include <ast/type.h>

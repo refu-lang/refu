@@ -1,7 +1,7 @@
 #ifndef LFR_FRONT_CTX_H
 #define LFR_FRONT_CTX_H
 
-#include <rflib/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/intrusive_list.h>
 
 #include <inpfile.h>
 #include <analyzer/analyzer.h>

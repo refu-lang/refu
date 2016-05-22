@@ -1,7 +1,7 @@
 #include <parser/parser.h>
 #include <parser/parser_common.h>
 
-#include <rflib/utils/memory.h>
+#include <rfbase/utils/memory.h>
 
 #include <info/info.h>
 #include <ast/ast.h>

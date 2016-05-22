@@ -1,6 +1,6 @@
 #include <ir/rir_unaryop.h>
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ir/rir_object.h>
 #include <ir/rir_expression.h>

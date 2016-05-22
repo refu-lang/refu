@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include <rflib/defs/inline.h>
-#include <rflib/utils/log.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/log.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

@@ -1,8 +1,8 @@
 #ifndef LFR_TYPES_TYPE_ARRAY_H
 #define LFR_TYPES_TYPE_ARRAY_H
 
-#include <rflib/string/common.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/string/common.h>
+#include <rfbase/defs/inline.h>
 #include <types/type_decls.h>
 
 struct module;

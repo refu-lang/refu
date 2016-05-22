@@ -1,7 +1,7 @@
 #include <ir/parser/rirparser.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/corex.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/corex.h>
 
 #include <front_ctx.h>
 #include <utils/common_strings.h>

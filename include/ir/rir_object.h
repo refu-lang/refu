@@ -1,8 +1,8 @@
 #ifndef LFR_IR_RIR_OBJECT_H
 #define LFR_IR_RIR_OBJECT_H
 
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ir/rir_expression.h>
 #include <ir/rir_argument.h>

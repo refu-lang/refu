@@ -1,8 +1,8 @@
 #ifndef LFR_AST_MODULE_H
 #define LFR_AST_MODULE_H
 
-#include <rflib/defs/inline.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ast/ast.h>
 #include <lexer/tokens.h>

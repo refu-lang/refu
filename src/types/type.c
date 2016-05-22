@@ -1,9 +1,9 @@
 #include <types/type.h>
 
-#include <rflib/persistent/buffers.h>
-#include <rflib/utils/bits.h>
-#include <rflib/defs/threadspecific.h>
-#include <rflib/string/core.h>
+#include <rfbase/persistent/buffers.h>
+#include <rfbase/utils/bits.h>
+#include <rfbase/defs/threadspecific.h>
+#include <rfbase/string/core.h>
 
 #include <module.h>
 #include <analyzer/analyzer.h>

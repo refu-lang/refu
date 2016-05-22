@@ -1,8 +1,8 @@
 #ifndef LFR_LEXER_TOKENS_H
 #define LFR_LEXER_TOKENS_H
 
-#include <rflib/defs/inline.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 
 #include <inplocation.h>
 #include <ast/ast.h>

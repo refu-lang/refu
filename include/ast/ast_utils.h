@@ -2,7 +2,7 @@
 #define LFR_AST_UTILS_H
 
 #include <stdbool.h>
-#include <rflib/datastructs/darray.h>
+#include <rfbase/datastructs/darray.h>
 #include <utils/traversal.h>
 
 struct ast_node;

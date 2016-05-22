@@ -1,7 +1,7 @@
 #ifndef LFR_IR_RIR_BLOCK_H
 #define LFR_IR_RIR_BLOCK_H
 
-#include <rflib/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/intrusive_list.h>
 
 #include <ir/rir_branch.h>
 #include <ir/rir_strmap.h>

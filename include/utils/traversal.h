@@ -2,7 +2,7 @@
 #define LFR_UTILS_TRAVERSAL_H
 
 #include <stdbool.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 enum traversal_cb_res {
     //! Error occured in the callback

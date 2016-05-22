@@ -1,7 +1,7 @@
 #ifndef LFR_AST_OPERATORS_H
 #define LFR_AST_OPERATORS_H
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 #include <ast/ast.h>
 
 struct token;

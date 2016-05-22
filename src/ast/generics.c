@@ -1,7 +1,7 @@
 #include <ast/generics.h>
 
-#include <rflib/utils/sanity.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/string/core.h>
 
 #include <ast/ast.h>
 #include <ast/identifier.h>

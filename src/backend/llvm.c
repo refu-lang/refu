@@ -6,9 +6,9 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
-#include <rflib/string/core.h>
-#include <rflib/system/system.h>
-#include <rflib/persistent/buffers.h>
+#include <rfbase/string/core.h>
+#include <rfbase/system/system.h>
+#include <rfbase/persistent/buffers.h>
 
 #include <info/info.h>
 #include <analyzer/analyzer.h>

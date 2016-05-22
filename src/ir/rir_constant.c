@@ -1,7 +1,7 @@
 #include <ir/rir_constant.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/manipulationx.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/manipulationx.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

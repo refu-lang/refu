@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include <rflib/utils/sanity.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/defs/inline.h>
 
 struct module;
 struct ast_node;

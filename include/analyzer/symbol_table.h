@@ -1,10 +1,10 @@
 #ifndef LFR_ANALYZER_SYMBOL_TABLE_H
 #define LFR_ANALYZER_SYMBOL_TABLE_H
 
-#include <rflib/utils/sanity.h>
-#include <rflib/datastructs/htable.h>
-#include <rflib/string/decl.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/datastructs/htable.h>
+#include <rfbase/string/decl.h>
+#include <rfbase/defs/inline.h>
 
 #include <types/type_decls.h>
 

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 #include <ast/ast.h>
 
 struct ast_node *ast_matchcase_create(const struct inplocation_mark *start,

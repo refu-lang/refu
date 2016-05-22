@@ -1,8 +1,8 @@
 #include <inpfile.h>
 
-#include <rflib/io/rf_textfile.h>
-#include <rflib/string/core.h>
-#include <rflib/string/traversalx.h>
+#include <rfbase/io/rf_textfile.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/traversalx.h>
 
 #include <ast/ast.h>
 #include <inpstr.h>

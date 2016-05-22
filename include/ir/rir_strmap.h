@@ -1,8 +1,8 @@
 #ifndef LFR_RIR_STRMAP_H
 #define LFR_RIR_STRMAP_H
 
-#include <rflib/datastructs/strmap.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/datastructs/strmap.h>
+#include <rfbase/defs/inline.h>
 
 struct symbol_table_record;
 struct rir_common;

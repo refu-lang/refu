@@ -1,7 +1,7 @@
 #ifndef LFR_INPOFFSET_H
 #define LFR_INPOFFSET_H
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 struct inpoffset {
     unsigned int bytes_moved;

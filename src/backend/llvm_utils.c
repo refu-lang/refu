@@ -1,6 +1,6 @@
 #include "llvm_utils.h"
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <stdio.h>
 #include <llvm-c/Core.h>

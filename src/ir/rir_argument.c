@@ -1,8 +1,8 @@
 #include <ir/rir_argument.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/manipulationx.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/manipulationx.h>
+#include <rfbase/string/core.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

@@ -1,6 +1,6 @@
 #include <ast/vardecl.h>
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ast/ast.h>
 #include <ast/identifier.h>

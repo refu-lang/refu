@@ -1,7 +1,7 @@
 #include <analyzer/typecheck_functions.h>
 
-#include <rflib/string/core.h>
-#include <rflib/string/conversion.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/conversion.h>
 
 #include <ast/ast.h>
 #include <ast/function.h>

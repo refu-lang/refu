@@ -1,6 +1,6 @@
 #include <ir/rir_type.h>
 
-#include <rflib/utils/fixed_memory_pool.h>
+#include <rfbase/utils/fixed_memory_pool.h>
 
 #include <ir/rir.h>
 #include <ir/rir_typedef.h>

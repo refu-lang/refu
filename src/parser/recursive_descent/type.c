@@ -1,6 +1,6 @@
 #include "type.h"
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ast/type.h>
 #include <ast/identifier.h>

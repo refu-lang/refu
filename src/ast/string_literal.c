@@ -1,6 +1,6 @@
 #include <ast/string_literal.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include <ast/ast.h>
 #include <module.h>

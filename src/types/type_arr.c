@@ -1,6 +1,6 @@
 #include <types/type_arr.h>
 
-#include <rflib/utils/memory.h>
+#include <rfbase/utils/memory.h>
 
 #include <types/type.h>
 #include <module.h>

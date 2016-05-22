@@ -1,6 +1,6 @@
 #include <ownership/ownership.h>
 
-#include <rflib/datastructs/objset.h>
+#include <rfbase/datastructs/objset.h>
 
 #include <compiler.h>
 #include <ir/rir.h>

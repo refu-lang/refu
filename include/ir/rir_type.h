@@ -2,8 +2,8 @@
 #define LFR_IR_TYPE_H
 
 #include <stdbool.h>
-#include <rflib/defs/inline.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 #include <types/type_decls.h>
 #include <ir/rir_utils.h>
 

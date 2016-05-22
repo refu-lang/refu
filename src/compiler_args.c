@@ -2,10 +2,10 @@
 
 #include <string.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/corex.h>
-#include <rflib/string/core.h>
-#include <rflib/system/system.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/corex.h>
+#include <rfbase/string/core.h>
+#include <rfbase/system/system.h>
 
 
 #include <info/info.h>

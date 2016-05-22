@@ -1,9 +1,9 @@
 #ifndef LFR_IR_FUNCTION
 #define LFR_IR_FUNCTION
 
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/datastructs/darray.h>
-#include <rflib/utils/container_of.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/utils/container_of.h>
 
 #include <ir/rir_strmap.h>
 #include <ir/rir_argument.h>

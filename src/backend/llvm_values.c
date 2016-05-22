@@ -2,7 +2,7 @@
 
 #include <llvm-c/Core.h>
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ir/rir_value.h>
 #include <ir/rir_function.h>

@@ -2,7 +2,7 @@
 #define LFR_TYPES_TYPE_COMPARISONS_H
 
 #include <stdlib.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 #include <types/type_decls.h>
 
 struct symbol_table;

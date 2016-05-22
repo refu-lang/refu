@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <rflib/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/intrusive_list.h>
 
 #include <ast/constants_decls.h>
 #include <ir/rir_value.h>

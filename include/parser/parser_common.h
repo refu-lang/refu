@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 struct inpfile;
 struct lexer;

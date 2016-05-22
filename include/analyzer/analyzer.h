@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 
-#include <rflib/datastructs/darray.h>
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/defs/inline.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 
 #include <front_ctx.h>
 #include <analyzer/typecheck_matchexpr.h>

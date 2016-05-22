@@ -1,8 +1,8 @@
 #include <info/msg.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/utils/sanity.h>
-#include <rflib/utils/build_assert.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/utils/build_assert.h>
 
 #include <inpfile.h>
 

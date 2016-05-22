@@ -1,6 +1,6 @@
 #include <module.h>
 
-#include <rflib/utils/fixed_memory_pool.h>
+#include <rfbase/utils/fixed_memory_pool.h>
 
 #include <utils/common_strings.h>
 #include <compiler.h>

@@ -1,6 +1,6 @@
 #include "ow_graph.h"
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include "ow_debug.h"
 #include <ownership/ownership.h>

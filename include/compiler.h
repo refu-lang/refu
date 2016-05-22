@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string/core.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/string/core.h>
 
 #include <utils/common.h>
 #include <module.h>

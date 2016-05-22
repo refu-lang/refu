@@ -2,7 +2,7 @@
 #define LFR_IR_RIR_TYPEDEF_H
 
 #include <stdbool.h>
-#include <rflib/datastructs/darray.h>
+#include <rfbase/datastructs/darray.h>
 #include <ir/rir_argument.h>
 
 struct rir_ctx;

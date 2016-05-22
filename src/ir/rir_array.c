@@ -1,6 +1,6 @@
 #include <ir/rir_array.h>
 
-#include <rflib/string/manipulationx.h>
+#include <rfbase/string/manipulationx.h>
 
 #include <ir/rir.h>
 #include <ir/rir_object.h>

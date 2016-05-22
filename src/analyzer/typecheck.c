@@ -1,10 +1,10 @@
 #include <analyzer/typecheck.h>
 
-#include <rflib/utils/build_assert.h>
-#include <rflib/utils/bits.h>
-#include <rflib/persistent/buffers.h>
-#include <rflib/string/core.h>
-#include <rflib/string/conversion.h>
+#include <rfbase/utils/build_assert.h>
+#include <rfbase/utils/bits.h>
+#include <rfbase/persistent/buffers.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/conversion.h>
 
 #include <module.h>
 #include <ast/ast.h>

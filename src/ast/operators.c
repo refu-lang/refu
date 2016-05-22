@@ -1,6 +1,6 @@
 #include <ast/operators.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include <lexer/tokens.h>
 #include <lexer/lexer.h>

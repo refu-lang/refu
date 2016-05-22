@@ -1,7 +1,7 @@
 #include <lexer/lexer.h>
 
-#include <rflib/string/core.h>
-#include <rflib/string/conversion.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/conversion.h>
 
 #include <inpfile.h>
 #include <ast/constants.h>

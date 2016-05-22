@@ -1,8 +1,8 @@
 #ifndef LFR_INPLOCATION_H
 #define LFR_INPLOCATION_H
 
-#include <rflib/defs/retcodes.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/retcodes.h>
+#include <rfbase/defs/inline.h>
 
 #include <inpfile.h>
 

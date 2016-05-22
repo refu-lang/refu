@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 #include <lexer/tokens.h>
 

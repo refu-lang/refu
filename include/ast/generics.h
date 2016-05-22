@@ -1,7 +1,7 @@
 #ifndef LFR_AST_GENERICS_H
 #define LFR_AST_GENERICS_H
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 #include <ast/generics_decls.h>
 
 struct inplocation_mark;

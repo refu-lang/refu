@@ -1,9 +1,9 @@
 #include "llvm_globals.h"
 
-#include <rflib/utils/hash.h>
-#include <rflib/string/common.h>
-#include <rflib/string/conversion.h>
-#include <rflib/string/manipulation.h>
+#include <rfbase/utils/hash.h>
+#include <rfbase/string/common.h>
+#include <rfbase/string/conversion.h>
+#include <rfbase/string/manipulation.h>
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>

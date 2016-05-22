@@ -1,9 +1,9 @@
 #include <ast/ast.h>
 
-#include <rflib/utils/sanity.h>
-#include <rflib/utils/build_assert.h>
-#include <rflib/utils/memory.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/sanity.h>
+#include <rfbase/utils/build_assert.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/core.h>
 
 #include <ast/block.h>
 #include <ast/function.h>

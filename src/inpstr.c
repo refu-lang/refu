@@ -1,8 +1,8 @@
 #include <inpstr.h>
 
-#include <rflib/string/corex.h>
-#include <rflib/string/core.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/string/corex.h>
+#include <rfbase/string/core.h>
+#include <rfbase/utils/sanity.h>
 
 bool inpstr_init(struct inpstr *s,
                  struct RFstringx *input_str,

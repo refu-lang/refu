@@ -1,8 +1,8 @@
 #ifndef LFR_PARSER_H
 #define LFR_PARSER_H
 
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/string.h>
 
 #include <parser/parser_common.h>
 

@@ -1,8 +1,8 @@
 #ifndef LFR_MODULE_H
 #define LFR_MODULE_H
 
-#include <rflib/datastructs/darray.h>
-#include <rflib/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/datastructs/intrusive_list.h>
 
 #include <ast/ast_utils.h>
 #include <utils/string_set.h>

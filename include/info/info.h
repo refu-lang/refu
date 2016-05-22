@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#include <rflib/datastructs/darray.h>
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/string/corex.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/string/corex.h>
 
 enum info_msg_type {
     MESSAGE_ANY = 0xFF,

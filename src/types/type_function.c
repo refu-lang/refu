@@ -1,6 +1,6 @@
 #include <types/type_function.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include <module.h>
 #include <types/type.h>

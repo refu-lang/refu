@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include <rflib/string/decl.h>
-#include <rflib/utils/hash.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/string/decl.h>
+#include <rfbase/utils/hash.h>
+#include <rfbase/utils/sanity.h>
 
 struct ast_node;
 struct inplocation;

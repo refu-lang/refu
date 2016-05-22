@@ -1,6 +1,6 @@
 #include <ir/parser/rirparser.h>
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <lexer/lexer.h>
 #include <ir/rir_function.h>

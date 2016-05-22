@@ -1,8 +1,8 @@
 #include <ir/rir_value.h>
 
-#include <rflib/string/core.h>
-#include <rflib/string/manipulationx.h>
-#include <rflib/utils/memory.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/manipulationx.h>
+#include <rfbase/utils/memory.h>
 
 #include <ir/rir.h>
 #include <ir/rir_call.h>

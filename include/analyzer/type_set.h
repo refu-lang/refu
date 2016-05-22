@@ -1,8 +1,8 @@
 #ifndef LFR_TYPES_SET_H
 #define LFR_TYPES_SET_H
 
-#include <rflib/datastructs/objset.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/datastructs/objset.h>
+#include <rfbase/defs/inline.h>
 
 #include <types/type_decls.h>
 

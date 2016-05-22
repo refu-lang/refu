@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include <ast/ast.h>
 #include <types/type_elementary.h>

@@ -1,8 +1,8 @@
 #include <types/type_elementary.h>
 
-#include <rflib/utils/bits.h>
-#include <rflib/utils/build_assert.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/bits.h>
+#include <rfbase/utils/build_assert.h>
+#include <rfbase/string/core.h>
 
 #include <types/type.h>
 #include <types/type_comparisons.h>

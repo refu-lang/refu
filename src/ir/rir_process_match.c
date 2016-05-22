@@ -1,6 +1,6 @@
 #include <ir/rir_process.h>
 
-#include <rflib/utils/sanity.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ir/rir.h>
 #include <ir/rir_binaryop.h>

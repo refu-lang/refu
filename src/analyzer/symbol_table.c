@@ -1,9 +1,9 @@
 #include <analyzer/symbol_table.h>
 
-#include <rflib/string/core.h>
-#include <rflib/utils/hash.h>
-#include <rflib/utils/memory.h>
-#include <rflib/utils/fixed_memory_pool.h>
+#include <rfbase/string/core.h>
+#include <rfbase/utils/hash.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/utils/fixed_memory_pool.h>
 
 #include <module.h>
 #include <ast/ast.h>

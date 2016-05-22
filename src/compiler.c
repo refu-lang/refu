@@ -1,9 +1,9 @@
 #include "compiler.h"
 
-#include <rflib/refu.h>
-#include <rflib/utils/memory.h>
-#include <rflib/string/corex.h>
-#include <rflib/string/traversalx.h>
+#include <rfbase/refu.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/corex.h>
+#include <rfbase/string/traversalx.h>
 
 #include <utils/string_set.h>
 #include <info/info.h>

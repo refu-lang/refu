@@ -9,7 +9,7 @@
 
 #include <stdbool.h>
 
-#include <rflib/string/xdecl.h>
+#include <rfbase/string/xdecl.h>
 
 struct arg_file;
 struct arg_lit;

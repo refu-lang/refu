@@ -1,7 +1,7 @@
 #ifndef LFR_TYPES_TYPE_UTILS_H
 #define LFR_TYPES_TYPE_UTILS_H
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 #include <types/type_elementary.h>
 #include <ast/ast.h>

@@ -1,7 +1,7 @@
 #include <ir/rir_object.h>
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/core.h>
 
 #include <ir/rir.h>
 #include <ir/rir_function.h>

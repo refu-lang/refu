@@ -1,8 +1,8 @@
 #ifndef LFR_AST_TYPE_H
 #define LFR_AST_TYPE_H
 
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/utils/container_of.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/utils/container_of.h>
 
 #include <ast/ast.h>
 

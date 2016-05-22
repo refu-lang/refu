@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include <rflib/string/decl.h>
-#include <rflib/datastructs/intrusive_list.h>
-#include <rflib/datastructs/darray.h>
+#include <rfbase/string/decl.h>
+#include <rfbase/datastructs/intrusive_list.h>
+#include <rfbase/datastructs/darray.h>
 
 #include <ast/operators_decls.h> // for binary operations enum
 

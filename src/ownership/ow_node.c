@@ -1,6 +1,6 @@
 #include "ow_node.h"
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 
 #include "ow_edge.h"
 #include "ow_debug.h"
