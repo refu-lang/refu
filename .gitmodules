@@ -1,0 +1,3 @@
+[submodule "rfbase"]
+	path = rfbase
+	url = git@github.com:refu-lang/rfbase.git
