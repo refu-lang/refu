@@ -12,7 +12,7 @@
 
 #include "ow_graph.h"
 #include "ow_debug.h"
-#if RF_WITH_GRAPHVIZ
+#if RF_OPTION_WITH_GRAPHVIZ
 #include "ow_graphviz.h"
 #endif
 
@@ -122,7 +122,7 @@ static struct ow_graph *ow_ctx_graph_from_ploc(struct ow_passed_loc *ploc, struc
     return NULL;
 }
 
-#if RF_WITH_GRAPHVIZ
+#if RF_OPTION_WITH_GRAPHVIZ
 bool ow_ctx_create_graphviz()
 {
     bool ret = false;
@@ -332,7 +332,7 @@ bool ow_module_pass(struct rir *r)
         }
     }
     
-#if RF_WITH_GRAPHVIZ
+#if RF_OPTION_WITH_GRAPHVIZ
     rf_ilist_for_each(&r->functions, decl, ln) {
         // for now just always create the SVG graphs per function
         ow_ctx_create_graphviz();

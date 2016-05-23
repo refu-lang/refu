@@ -1,10 +1,10 @@
 #ifndef LFR_OWNERSHIP_NODE_H
 #define LFR_OWNERSHIP_NODE_H
 
-#include <rflib/datastructs/objset.h>
-#include <rflib/datastructs/darray.h>
-#include <rflib/defs/inline.h>
-#include <rflib/utils/sanity.h>
+#include <rfbase/datastructs/objset.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 
 struct rir_value;
 struct rir_expression;

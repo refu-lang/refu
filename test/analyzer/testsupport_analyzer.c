@@ -3,7 +3,7 @@
 
 #include <info/info.h>
 #include <info/msg.h>
-#include <rflib/refu.h>
+#include <rfbase/refu.h>
 #include <check.h>
 
 #include <ast/ast.h>

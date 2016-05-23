@@ -1,6 +1,6 @@
 #ifndef LFR_PARSER_IDENTIFIER_H
 #define LFR_PARSER_IDENTIFIER_H
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 #include <parser/parser.h>
 #include <lexer/lexer.h>

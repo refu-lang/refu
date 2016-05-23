@@ -4,7 +4,7 @@
 #include "../testsupport_front.h"
 #include "../analyzer/testsupport_analyzer.h"
 
-#include <rflib/defs/inline.h>
+#include <rfbase/defs/inline.h>
 
 #include <ir/rir.h>
 #include <ir/rir_global.h>

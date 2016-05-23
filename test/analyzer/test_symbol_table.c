@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rflib/string/core.h>
-#include <rflib/utils/hash.h>
+#include <rfbase/string/core.h>
+#include <rfbase/utils/hash.h>
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>

@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include <rflib/defs/inline.h>
-#include <rflib/datastructs/darray.h>
-#include <rflib/datastructs/strmap.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/datastructs/darray.h>
+#include <rfbase/datastructs/strmap.h>
 
 #include <types/type_decls.h>
 #include "llvm_types.h"

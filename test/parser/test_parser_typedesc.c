@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 #include "../../src/parser/recursive_descent/type.h"
 #include <parser/parser.h>
 #include <ast/ast.h>

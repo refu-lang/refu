@@ -1,7 +1,7 @@
 #include "testsupport_lexer.h"
 
-#include <rflib/utils/constcmp.h>
-#include <rflib/string/core.h>
+#include <rfbase/utils/constcmp.h>
+#include <rfbase/string/core.h>
 
 #include <ast/constants.h>
 #include <ast/string_literal.h>

@@ -1,6 +1,6 @@
 #include "testsupport.h"
 
-#include <rflib/refu.h>
+#include <rfbase/refu.h>
 
 #include <check.h>
 

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 #include <parser/parser.h>
 #include "../../src/parser/recursive_descent/module.h"
 #include <ast/type.h>

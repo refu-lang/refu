@@ -36,6 +36,7 @@ void serializer_destroy(struct serializer *sr)
 bool serializer_process(struct serializer *sr,
                         const struct module *mod)
 {
+#if RF_OPTION_HAVE_JSONC
     struct RFstring *out_name;
     static const struct RFstring s_stdout = RF_STRING_STATIC_INIT("stdout");
     if (compiler_args_output_ast(sr->args, &out_name)) {
@@ -57,5 +58,6 @@ bool serializer_process(struct serializer *sr,
         }
         return SERC_SUCCESS_EXIT;
     }
+#endif
     return SERC_SUCCESS_CONTINUE;
 }

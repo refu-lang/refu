@@ -4,6 +4,9 @@
 build_test
 # unit test executable
 check_exec
+# cmake related
+build/
+
 
 # object files
 *.pyc
@@ -22,4 +25,3 @@ src/lexer/tokens_htable.h
 src/ir/parser/rirtoken_htable.h
 src/types/builtin_types_htable.h
 src/types/elementary_types_htable.h
-

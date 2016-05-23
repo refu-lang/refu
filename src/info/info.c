@@ -12,7 +12,7 @@ static bool info_ctx_init(struct info_ctx *ctx, struct inpfile *f)
     RF_STRUCT_ZERO(ctx);
     darray_init(ctx->last_msgs_arr);
     rf_ilist_head_init(&ctx->msg_list);
-    if (!rf_stringx_init_buff(&ctx->buff, INFO_CTX_BUFF_INITIAL_SIZE, "")) {
+    if (!rf_stringx_init_buff(&ctx->buff, RF_OPTION_INFO_CTX_BUFF_INITIAL_SIZE, "")) {
         return false;
     }
     ctx->syntax_error = false;

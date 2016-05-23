@@ -1,0 +1,7 @@
+target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ownership.c")
+target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ow_edge.c")
+target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ow_graph.c")
+target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ow_node.c")
+if (${RF_OPTION_WITH_GRAPHVIZ})
+  target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ow_graphviz.c")
+endif()

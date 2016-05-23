@@ -88,7 +88,7 @@ bool compiler_args_init(struct compiler_args *a)
     a->end = arg_end(20);
 
     // set default values
-    a->verbosity->ival[0] = VERBOSE_LEVEL_DEFAULT;
+    a->verbosity->ival[0] = RF_OPTION_VERBOSE_LEVEL_DEFAULT;
 
     rf_stringx_init_buff(&a->buff, 128, "");
 

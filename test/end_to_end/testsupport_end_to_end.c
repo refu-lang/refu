@@ -3,11 +3,11 @@
 #include <check.h>
 #include CLIB_TEST_HELPERS
 
-#include <rflib/utils/memory.h>
-#include <rflib/string/core.h>
-#include <rflib/string/files.h>
-#include <rflib/string/conversion.h>
-#include <rflib/system/system.h>
+#include <rfbase/utils/memory.h>
+#include <rfbase/string/core.h>
+#include <rfbase/string/files.h>
+#include <rfbase/string/conversion.h>
+#include <rfbase/system/system.h>
 
 #include <compiler_args.h>
 

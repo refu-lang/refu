@@ -2,7 +2,7 @@
 
 #include "../testsupport.h"
 #include "testsupport_rir.h"
-#include <rflib/string/core.h>
+#include <rfbase/string/core.h>
 #include <ast/constants.h>
 #include <ir/rir_expression.h>
 #include <ir/rir_global.h>

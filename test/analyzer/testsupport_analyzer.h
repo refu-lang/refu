@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <rflib/datastructs/darray.h>
+#include <rfbase/datastructs/darray.h>
 
 #include <inplocation.h>
 #include <parser/parser.h>

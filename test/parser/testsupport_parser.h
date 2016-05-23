@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <check.h>
-#include <rflib/preprocessor/rf_xmacro_argcount.h>
+#include <rfbase/preprocessor/rf_xmacro_argcount.h>
 #include <ast/identifier.h>
 #include "../testsupport.h"
 

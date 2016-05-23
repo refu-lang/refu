@@ -1,7 +1,7 @@
 #include "ow_graph.h"
 #include "ow_edge.h"
 #include <graphviz/gvc.h>
-#include <String/rf_str_conversion.h>
+#include <rfbase/string/conversion.h>
 
 #include <ir/rir_value.h>
 #include <ir/rir_object.h>

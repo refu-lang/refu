@@ -1,8 +1,8 @@
 #ifndef LFR_OWNERSHIP_GRAPH_H
 #define LFR_OWNERSHIP_GRAPH_H
 
-#include <rflib/utils/bits.h>
-#include <rflib/defs/inline.h>
+#include <rfbase/utils/bits.h>
+#include <rfbase/defs/inline.h>
 
 #include "ow_node.h"
 
@@ -69,7 +69,7 @@ i_INLINE_DECL bool ow_graph_has_attr(const struct ow_graph *g, enum graph_attrs 
     return RF_BITFLAG_ON(g->graph_attrs, attr);
 }
 
-#if RF_WITH_GRAPHVIZ
+#if RF_OPTION_WITH_GRAPHVIZ
 /**
  * Turn a graph to a graphviz dot graph
  */

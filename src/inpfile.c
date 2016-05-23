@@ -16,7 +16,7 @@ static bool inpfile_init(struct inpfile* f,
     struct RFarray lines_arr;
     unsigned int lines;
     RF_STRUCT_ZERO(f);
-    RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, INPUT_STRING_STARTING_LINES);
+    RF_ARRAY_TEMP_INIT(&lines_arr, uint32_t, RF_OPTION_INPUT_STRING_STARTING_LINES);
 
     if (!rf_string_copy_in(&f->file_name, name)) {
         RF_ERRNOMEM();
