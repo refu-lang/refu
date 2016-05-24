@@ -10,12 +10,12 @@ add_subdirectory(serializer)
 add_subdirectory(types)
 add_subdirectory(utils)
 
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/compiler.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/compiler_args.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/front_ctx.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inpfile.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inplocation.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inpoffset.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/inpstr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/module.c")
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/compiler.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/compiler_args.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/front_ctx.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/inpfile.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/inplocation.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/inpoffset.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/inpstr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/main.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/module.c")

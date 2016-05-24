@@ -1,8 +1,8 @@
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/analyzer.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/analyzer_pass1.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/symbol_table.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/type_set.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typecheck.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_arr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_functions.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_matchexpr.c")
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/analyzer.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/analyzer_pass1.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/symbol_table.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/type_set.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typecheck.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_arr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_functions.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typecheck_matchexpr.c")

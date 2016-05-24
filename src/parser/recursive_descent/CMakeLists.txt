@@ -1,13 +1,13 @@
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/arr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/block.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/expression.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/function.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/generics.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/identifier.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ifexpr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/matchexpr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/module.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/type.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typeclass.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vardecl.c")
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/arr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/block.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/core.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/expression.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/function.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/generics.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/identifier.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ifexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/matchexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/module.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/type.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typeclass.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/vardecl.c")

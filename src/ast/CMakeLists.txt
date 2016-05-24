@@ -1,18 +1,18 @@
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/arr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ast.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ast_type_traversal.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ast_utils.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/block.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/constants.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/function.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/generics.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/identifier.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ifexpr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/matchexpr.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/module.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/operators.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/returnstmt.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/string_literal.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/type.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/typeclass.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/vardecl.c")
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/arr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ast.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ast_type_traversal.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ast_utils.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/block.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/constants.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/function.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/generics.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/identifier.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ifexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/matchexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/module.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/operators.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/returnstmt.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/string_literal.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/type.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/typeclass.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/vardecl.c")

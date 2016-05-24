@@ -1,27 +1,26 @@
 add_subdirectory(parser)
 
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_argument.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_array.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_binaryop.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_block.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_branch.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_call.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_common.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_constant.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_convert.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_expression.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_function.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_global.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_object.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_process.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_process_cond.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_process_match.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_strmap.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_type.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_typedef.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_unaryop.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_utils.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_value.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/rir_variable.c")
-
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/rir_argument.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_array.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_binaryop.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_block.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_branch.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_call.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_common.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_constant.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_convert.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_expression.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_function.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_global.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_object.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_process.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_process_cond.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_process_match.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_strmap.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_type.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_typedef.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_unaryop.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_utils.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_value.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_variable.c")

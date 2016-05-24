@@ -1,10 +1,10 @@
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_arrays.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_ast.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_conversion.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_functions.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_globals.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_operators.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_types.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_utils.c")
-target_sources(refu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llvm_values.c")
+target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/llvm.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_arrays.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_ast.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_conversion.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_functions.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_globals.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_operators.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_types.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_utils.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/llvm_values.c")
