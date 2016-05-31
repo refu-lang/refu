@@ -1,4 +1,4 @@
-target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/arr.c"
+rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/arr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/ast.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/ast_type_traversal.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/ast_utils.c"

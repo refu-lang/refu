@@ -2,16 +2,15 @@
 #
 # Required Arguments:
 #
-# TARGET -- The target for which to call the gperf command
+# DIR -- The directory in which the input and output files should be located
 # INPUT -- The name of the input .gperf file
 # OUTPUT -- The name of the output header file
 #
 
-function(create_gperf_header TARGET INPUT OUTPUT)
-  add_custom_command(OUTPUT ${OUTPUT}
+function(create_gperf_header DIR INPUT OUTPUT)
+  add_custom_command(OUTPUT ${DIR}/${OUTPUT}
     PRE_BUILD
-    COMMAND "${GPERF_EXECUTABLE} -t --output-file=${OUTPUT} ${INPUT}"
-    COMMENT "Generating perfect hash table from ${INPUT}")
-  add_custom_target(gperf_${INPUT} DEPENDS ${INPUT})
-  add_dependencies(${TARGET} gperf_${INPUT})
+    COMMAND ${GPERF_EXECUTABLE} -t --output-file=${DIR}/${OUTPUT} ${DIR}/${INPUT}
+    COMMENT "Generating perfect hash table from ${DIR}/${INPUT}")
+   add_custom_target(gperf_${INPUT} ALL DEPENDS ${DIR}/${OUTPUT})
 endfunction()

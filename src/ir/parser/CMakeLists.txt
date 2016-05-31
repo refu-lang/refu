@@ -1,8 +1,8 @@
 include(CreateGperfHeader)
 # generate hash table for the rir parser using gperf
-create_gperf_header(refu rirtoken_htable.gperf rirtoken_htable.h)
+create_gperf_header(${CMAKE_CURRENT_SOURCE_DIR} rirtoken_htable.gperf rirtoken_htable.h)
 
-target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/rirparser.c"
+rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/rirparser.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rirtoken.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rparse_binaryop.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rparse_blocks.c"

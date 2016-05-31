@@ -1,4 +1,4 @@
-target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/analyzer.c"
+rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/analyzer.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/analyzer_pass1.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/symbol_table.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/type_set.c"

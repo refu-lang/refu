@@ -1,6 +1,6 @@
 add_subdirectory(parser)
 
-target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/rir_argument.c"
+rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/rir_argument.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_array.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_binaryop.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_block.c"

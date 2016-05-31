@@ -1,4 +1,4 @@
-target_sources(refu PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/llvm.c"
+rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/llvm.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/llvm_arrays.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/llvm_ast.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/llvm_conversion.c"

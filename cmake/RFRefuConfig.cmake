@@ -8,6 +8,7 @@
 #
 
 include(RFOption)
+include (RFUseLLVM)
 
 function(refu_config TARGET)
   # --- Add refu options
@@ -59,10 +60,7 @@ buffer used by the compiler to store all messages"
   find_package(LLVM REQUIRED CONFIG)
   message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
   message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-  target_include_directories(${TARGET} PUBLIC ${LLVM_INCLUDE_DIRS})
-  target_compile_definitions(${TARGET} PRIVATE ${LLVM_DEFINITIONS})
-  llvm_map_components_to_libnames(llvm_libs core analysis executionengine interpreter native linker)
-  target_link_libraries(${TARGET} PUBLIC ${llvm_libs})
+  rf_use_llvm(${TARGET})
 
 
   # link with rfbase
