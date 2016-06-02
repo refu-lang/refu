@@ -141,7 +141,7 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
     LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
 }
 
-static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
+static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
 {
     // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
     LLVMValueRef fn = LLVMAddFunction(ctx->llvm_mod, "llvm.donothing",
@@ -150,32 +150,36 @@ static void bllcm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
     LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
 }
 
-static bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
+bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 {
+    LLVMValueRef rc;
     /* -- add printf() declaration -- */
     LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
-    LLVMAddFunction(ctx->llvm_mod, "printf",
-                    LLVMFunctionType(LLVMInt32Type(),
-                                     printf_args,
-                                     1,
-                                     true));
+    rc = LLVMAddFunction(
+        ctx->llvm_mod,
+        "printf",
+        LLVMFunctionType(LLVMInt32Type(), printf_args, 1, true)
+    );
+    RF_ASSERT(rc, "Failed to add printf() as a global LLVM function");
     /* -- add exit() -- */
     LLVMTypeRef exit_args[] = { LLVMInt32Type() };
-    LLVMAddFunction(ctx->llvm_mod, "exit",
-                    LLVMFunctionType(LLVMVoidType(),
-                                     exit_args,
-                                     1,
-                                     false));
+    rc = LLVMAddFunction(
+        ctx->llvm_mod,
+        "exit",
+        LLVMFunctionType(LLVMVoidType(), exit_args, 1, false)
+    );
+    RF_ASSERT(rc, "Failed to add exit() as a global LLVM function");
     /* -- add malloc -- */
     LLVMTypeRef malloc_args[] = { LLVMInt64Type() };
-    LLVMAddFunction(ctx->llvm_mod, "malloc",
-                   LLVMFunctionType(LLVMPointerType(LLVMInt8Type(), 0),
-                                    malloc_args,
-                                    1,
-                                    false)
+    LLVMTypeRef malloc_ret = LLVMPointerType(LLVMInt8Type(), 0);
+    rc = LLVMAddFunction(
+        ctx->llvm_mod,
+        "malloc",
+        LLVMFunctionType(malloc_ret, malloc_args, 1, false)
     );
+    RF_ASSERT(rc, "Failed to add malloc() as a global LLVM function");
     /* -- add donothing() -- */
-    bllcm_create_global_donothing_decl(ctx);
+    bllvm_create_global_donothing_decl(ctx);
     /* -- add memcpy intrinsic declaration -- */
     bllvm_create_global_memcpy_decl(ctx);
     return true;
@@ -195,11 +199,12 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
                       llvm_traversal_ctx_get_params(ctx),
                       llvm_traversal_ctx_get_param_count(ctx),
                       true);
-    // create some global functions
-    if (!bllvm_create_global_functions(ctx)) {
-        RF_ERROR("Could not create global functions");
-        return false;
-    }
+
+    // In the past we used to have the global function creations (like malloc,
+    // memcpy, exit) here. Unfortunately after llvm 3.8 LLVMLinkModules() no
+    // longer passes them to the linked module so we are calling it for every
+    // module now.
+
     return true;
 }
 

@@ -3,10 +3,11 @@
 #
 # A script to run tests for refu
 
-TEST_CMD="./build/test/test_refu CK_VERBOSE False"
+WORKING_DIR="./build/test/"
+TEST_CMD="./test_refu CK_VERBOSE True"
 
-if [[ ! -d ./build/test/ ]]; then
-    echo "test.sh - ERROR: Could not find build/test/ directory"
+if [[ ! -d $WORKING_DIR ]]; then
+    echo "test.sh - ERROR: Could not find ${WORKING_DIR} directory"
     exit 1
 fi
 
@@ -16,6 +17,7 @@ if [[ ! -x ./build/test/test_refu ]]; then
 fi
 
 # Execute the tests
+cd $WORKING_DIR
 $TEST_CMD
 if [[ $? -ne 0 ]]; then
     echo "test.sh - ERROR: tests failed"

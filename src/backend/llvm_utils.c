@@ -154,6 +154,7 @@ struct LLVMOpaqueBasicBlock *bllvm_add_fatal_block_before(struct LLVMOpaqueBasic
     LLVMBasicBlockRef ret = LLVMInsertBasicBlock(target, "");
     bllvm_enter_block(ctx, ret);
     LLVMValueRef exit_fn = LLVMGetNamedFunction(ctx->llvm_mod, "exit");
+    RF_ASSERT(exit_fn, "We should get the exit function here");
     LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt32Type(), exit_code, 0) };
     LLVMBuildCall(ctx->builder, exit_fn, call_args, 1, "");
     LLVMBuildBr(ctx->builder, target);
@@ -193,6 +194,7 @@ void bllvm_memcpyn(LLVMValueRef from,
     LLVMValueRef src_cast = LLVMBuildBitCast(ctx->builder, from,
                                              LLVMPointerType(LLVMInt8Type(), 0), "");
     LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->llvm_mod, "llvm.memcpy.p0i8.p0i8.i64");
+    RF_ASSERT(llvm_memcpy, "We should get the memcpy intrinsic here");
 
     LLVMValueRef call_args[] = { dst_cast, src_cast,
                                  LLVMConstInt(LLVMInt64Type(), bytes, 0),

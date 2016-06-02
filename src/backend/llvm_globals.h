@@ -10,6 +10,7 @@ struct RFstring;
 struct LLVMOpaqueValue;
 
 bool bllvm_create_globals(struct llvm_traversal_ctx *ctx);
+bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx);
 bool bllvm_create_module_types(struct rir *r, struct llvm_traversal_ctx *ctx);
 bool bllvm_create_module_globals(struct rir* r, struct llvm_traversal_ctx *ctx);
 

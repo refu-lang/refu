@@ -252,7 +252,11 @@ static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression 
     if (expr->alloca.alloc_location == RIR_ALLOC_STACK) {
         return LLVMBuildAlloca(ctx->builder, type, "");
     }
+    LLVMValueRef other_fn = LLVMGetNamedFunction(ctx->llvm_mod, "exit");
+    RF_ASSERT(other_fn, "OTHER FN NOT FOUND!");
+    (void)other_fn;
     LLVMValueRef malloc_fn = LLVMGetNamedFunction(ctx->llvm_mod, "malloc");
+    RF_ASSERT(malloc_fn, "We should get a malloc function here");
     LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt64Type(), rir_type_bytesize(expr->alloca.type), 0) };
     LLVMValueRef retval = LLVMBuildCall(ctx->builder, malloc_fn, call_args, 1, "");
     // TODO: CHECK AND HANDLE malloc failure
@@ -363,6 +367,11 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
     RFS_POP();
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
+    if (!bllvm_create_global_functions(ctx)) {
+        RF_ERROR("Could not create global functions");
+        goto fail;
+    }
+
     if (rf_string_equal(&rir->name, &g_str_stdlib)) {
         // create some global definitions that the stdlib should offer
         if (!bllvm_create_globals(ctx)) {
@@ -370,14 +379,12 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
             goto fail;
         }
     } else {
-        char *error = NULL;
         RF_ASSERT(link_source, "If module is not stdlib, linking with something is mandatory at least for now");
         // if an error occurs LLVMLinkModules() returns true ...
-        if (true == LLVMLinkModules(ctx->llvm_mod, link_source, LLVMLinkerDestroySource, &error)) {
-            bllvm_error("Could not link LLVM modules", &error);
+        if (true == LLVMLinkModules2(ctx->llvm_mod, link_source)) {
+            RF_ERROR("Could not link LLVM modules");
             goto fail;
         }
-        bllvm_error_dispose(&error);
     }
 
     // create globals
