@@ -184,7 +184,8 @@ START_TEST (test_function_creation_and_call_noarg) {
         "return 1\n"
         "}")
     };
-    ck_end_to_end_run(inputs, 1, NULL);
+    static const struct RFstring output = RF_STRING_STATIC_INIT("foo");
+    ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
 START_TEST (test_function_creation_and_call_1arg) {

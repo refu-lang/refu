@@ -164,8 +164,10 @@ free_strings_arr:
     return ret;
 }
 
-bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
-                           const struct RFstring *expected_output)
+bool end_to_end_driver_run(
+    struct end_to_end_driver *d,
+    int *ret_value,
+    const struct RFstring *expected_output)
 {
     char stdout_buff[1024];
     FILE *proc;
@@ -192,8 +194,18 @@ bool end_to_end_driver_run(struct end_to_end_driver *d, int *ret_value,
         }
         ck_assert_rf_str_eq_nntstr(expected_output, stdout_buff, output_length);
     }
-
-    *ret_value = WEXITSTATUS(rf_pclose(proc));
+    int status = rf_pclose(proc);
+    if (WIFEXITED(status)) {
+        *ret_value = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+       ck_abort_msg("killed by signal %d\n", WTERMSIG(status));
+    } else if (WIFSTOPPED(status)) {
+        ck_abort_msg("stopped by signal %d\n", WSTOPSIG(status));
+    } else if (WIFCONTINUED(status)) {
+        ck_abort_msg("continued\n");
+    } else {
+        ck_abort_msg("unknown exit status");
+    }
     return true;
 }
 
