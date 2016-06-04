@@ -78,7 +78,7 @@ struct LLVMOpaqueType **bllvm_rir_to_llvm_types(const struct rir_type_arr *typea
                                                 struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueType *bllvm_type_from_rir_type(const struct rir_type *type,
-                                                 struct llvm_traversal_ctx *ctx);
+                                                struct llvm_traversal_ctx *ctx);
 
 struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
                                                 struct llvm_traversal_ctx *ctx);
@@ -86,13 +86,22 @@ struct LLVMOpaqueType *bllvm_elementary_to_type(enum elementary_type etype,
 /**
  * Given an LLVMType check if it's any int type
  */
-bool bllvm_type_is_int(const struct LLVMOpaqueType *type);
+bool bllvm_type_is_int(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type
+);
 /**
  * Given an LLVMType check if it's a float/double type
  */
-bool bllvm_type_is_floating(const struct LLVMOpaqueType *type);
+bool bllvm_type_is_floating(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type
+);
 /**
  * Given an LLVMType check if it's elementary plain old data type
  */
-bool bllvm_type_is_elementary(const struct LLVMOpaqueType *type);
+bool bllvm_type_is_elementary(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type
+);
 #endif

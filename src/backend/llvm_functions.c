@@ -101,9 +101,11 @@ static bool llvm_create_block(
     LLVMValueRef llvmval;
     // create and enter the block
     RFS_PUSH();
-    LLVMBasicBlockRef llvm_b = LLVMAppendBasicBlock(
+    LLVMBasicBlockRef llvm_b = LLVMAppendBasicBlockInContext(
+        ctx->llvm_context,
         ctx->current_function,
-        rf_string_cstr_from_buff_or_die(rir_block_label_str(b)));
+        rf_string_cstr_from_buff_or_die(rir_block_label_str(b))
+    );
     RFS_POP();
     bllvm_enter_block(ctx, llvm_b);
     // also add the block to the map

@@ -132,6 +132,9 @@ struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
                                             unsigned int member_num,
                                             struct llvm_traversal_ctx *ctx);
 
-unsigned long long  bllvm_type_storagesize(struct LLVMOpaqueTargetData *tdata,
-                                           struct LLVMOpaqueType *type);
+unsigned long long  bllvm_type_storagesize(
+    struct LLVMOpaqueTargetData *tdata,
+    struct LLVMOpaqueType *type,
+    struct llvm_traversal_ctx *ctx
+);
 #endif

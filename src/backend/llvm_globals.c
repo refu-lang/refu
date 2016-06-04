@@ -45,8 +45,17 @@ static LLVMValueRef bllvm_add_global_strbuff(char *str_data,
     if (!optional_name) {
         optional_name = str_data;
     }
-    LLVMValueRef stringbuff = LLVMConstString(str_data, str_len, true);
-    LLVMValueRef global_stringbuff = LLVMAddGlobal(ctx->llvm_mod, LLVMTypeOf(stringbuff), optional_name);
+    LLVMValueRef stringbuff = LLVMConstStringInContext(
+        ctx->llvm_context,
+        str_data,
+        str_len,
+        true
+    );
+    LLVMValueRef global_stringbuff = LLVMAddGlobal(
+        ctx->llvm_mod,
+        LLVMTypeOf(stringbuff),
+        optional_name
+    );
     LLVMSetInitializer(global_stringbuff, stringbuff);
     LLVMSetUnnamedAddr(global_stringbuff, true);
     LLVMSetLinkage(global_stringbuff, LLVMPrivateLinkage);
@@ -73,12 +82,12 @@ LLVMValueRef bllvm_create_global_const_string_with_hash(
     );
 
     LLVMValueRef indices_0 [] = {
-        LLVMConstInt(LLVMInt32Type(), 0, 0),
-        LLVMConstInt(LLVMInt32Type(), 0, 0)
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0)
     };
     LLVMValueRef gep_to_string_buff = LLVMConstInBoundsGEP(global_stringbuff, indices_0, 2);
     LLVMValueRef string_struct_layout[] = {
-        LLVMConstInt(LLVMInt32Type(), length, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), length, 0),
         gep_to_string_buff
     };
     LLVMValueRef string_decl = LLVMConstNamedStruct(
@@ -125,13 +134,18 @@ struct LLVMOpaqueValue *bllvm_literal_to_global_string(const struct RFstring *li
 
 static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
 {
-    LLVMTypeRef args[] = { LLVMPointerType(LLVMInt8Type(), 0),
-                           LLVMPointerType(LLVMInt8Type(), 0),
-                           LLVMInt64Type(),
-                           LLVMInt32Type(),
-                           LLVMInt1Type() };
-    LLVMValueRef fn =  LLVMAddFunction(ctx->llvm_mod, "llvm.memcpy.p0i8.p0i8.i64",
-                                       LLVMFunctionType(LLVMVoidType(), args, 5, false));
+    LLVMTypeRef args[] = {
+        LLVMPointerType(LLVMInt8TypeInContext(ctx->llvm_context), 0),
+        LLVMPointerType(LLVMInt8TypeInContext(ctx->llvm_context), 0),
+        LLVMInt64TypeInContext(ctx->llvm_context),
+        LLVMInt32TypeInContext(ctx->llvm_context),
+        LLVMInt1TypeInContext(ctx->llvm_context)
+    };
+    LLVMValueRef fn =  LLVMAddFunction(
+        ctx->llvm_mod,
+        "llvm.memcpy.p0i8.p0i8.i64",
+        LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), args, 5, false)
+    );
 
     // adding attributes to the arguments of memcpy as seen when generating llvm code via clang
     //@llvm.memcpy(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
@@ -144,8 +158,10 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
 static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
 {
     // Mainly used for debugging llvm bytecode atm. Maybe remove if not really needed?
-    LLVMValueRef fn = LLVMAddFunction(ctx->llvm_mod, "llvm.donothing",
-                                      LLVMFunctionType(LLVMVoidType(), NULL, 0, false));
+    LLVMValueRef fn = LLVMAddFunction(
+        ctx->llvm_mod,
+        "llvm.donothing",
+        LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), NULL, 0, false));
     LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
     LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
 }
@@ -154,24 +170,26 @@ bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
 {
     LLVMValueRef rc;
     /* -- add printf() declaration -- */
-    LLVMTypeRef printf_args[] = { LLVMPointerType(LLVMInt8Type(), 0) };
+    LLVMTypeRef printf_args[] = {
+        LLVMPointerType(LLVMInt8TypeInContext(ctx->llvm_context), 0)
+    };
     rc = LLVMAddFunction(
         ctx->llvm_mod,
         "printf",
-        LLVMFunctionType(LLVMInt32Type(), printf_args, 1, true)
+        LLVMFunctionType(LLVMInt32TypeInContext(ctx->llvm_context), printf_args, 1, true)
     );
     RF_ASSERT(rc, "Failed to add printf() as a global LLVM function");
     /* -- add exit() -- */
-    LLVMTypeRef exit_args[] = { LLVMInt32Type() };
+    LLVMTypeRef exit_args[] = { LLVMInt32TypeInContext(ctx->llvm_context) };
     rc = LLVMAddFunction(
         ctx->llvm_mod,
         "exit",
-        LLVMFunctionType(LLVMVoidType(), exit_args, 1, false)
+        LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), exit_args, 1, false)
     );
     RF_ASSERT(rc, "Failed to add exit() as a global LLVM function");
     /* -- add malloc -- */
-    LLVMTypeRef malloc_args[] = { LLVMInt64Type() };
-    LLVMTypeRef malloc_ret = LLVMPointerType(LLVMInt8Type(), 0);
+    LLVMTypeRef malloc_args[] = { LLVMInt64TypeInContext(ctx->llvm_context) };
+    LLVMTypeRef malloc_ret = LLVMPointerType(LLVMInt8TypeInContext(ctx->llvm_context), 0);
     rc = LLVMAddFunction(
         ctx->llvm_mod,
         "malloc",
@@ -192,9 +210,13 @@ bool bllvm_create_globals(struct llvm_traversal_ctx *ctx)
     //       parent of all submodules.
     llvm_traversal_ctx_reset_params(ctx);
 
-    llvm_traversal_ctx_add_param(ctx, LLVMInt32Type());
-    llvm_traversal_ctx_add_param(ctx, LLVMPointerType(LLVMInt8Type(), DEFAULT_PTR_ADDRESS_SPACE));
-    LLVMTypeRef string_type = LLVMStructCreateNamed(LLVMGetGlobalContext(), "string");
+    llvm_traversal_ctx_add_param(ctx, LLVMInt32TypeInContext(ctx->llvm_context));
+    llvm_traversal_ctx_add_param(
+        ctx,
+        LLVMPointerType(LLVMInt8TypeInContext(ctx->llvm_context), DEFAULT_PTR_ADDRESS_SPACE)
+    );
+    LLVMTypeRef string_type = LLVMStructCreateNamed(ctx->llvm_context, "string");
+    /* LLVMTypeRef string_type = LLVMStructCreateNamed(LLVMGetGlobalContext(), "string"); */
     LLVMStructSetBody(string_type,
                       llvm_traversal_ctx_get_params(ctx),
                       llvm_traversal_ctx_get_param_count(ctx),

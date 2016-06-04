@@ -22,7 +22,7 @@ void bllvm_type_debug(LLVMTypeRef t, const char *type_name, struct llvm_traversa
     printf("[DEBUG]: Type \"%s\" is %s with store size %llu \n",
            type_name,
            str,
-           bllvm_type_storagesize(ctx->target_data, t));
+           bllvm_type_storagesize(ctx->target_data, t, ctx));
     fflush(stdout);
     LLVMDisposeMessage(str);
 }
@@ -93,9 +93,9 @@ LLVMValueRef bllvm_cast_value_to_type_maybe(LLVMValueRef val,
     LLVMTypeRef val_type = LLVMTypeOf(val);
     if (val_type != type) {
         // we have to do typecasts
-        if (bllvm_type_is_floating(val_type)) {
+        if (bllvm_type_is_floating(ctx, val_type)) {
             val = LLVMBuildFPCast(ctx->builder, val, type, "");
-        } else if (bllvm_type_is_int(val_type)) {
+        } else if (bllvm_type_is_int(ctx, val_type)) {
             uint32_t val_size = LLVMStoreSizeOfType(ctx->target_data, val_type);
             uint32_t to_type_size =  LLVMStoreSizeOfType(ctx->target_data, type);
             if (val_size < to_type_size) {
@@ -104,7 +104,7 @@ LLVMValueRef bllvm_cast_value_to_type_maybe(LLVMValueRef val,
                 val = LLVMBuildTruncOrBitCast(ctx->builder, val, type, "");
             }
         } else if (LLVMPointerType(type, 0) == val_type &&
-                   bllvm_type_is_elementary(LLVMGetElementType(val_type))) {
+                   bllvm_type_is_elementary(ctx, LLVMGetElementType(val_type))) {
             // if we are trying to assign a pointer to an elementary value, just load it
             val = LLVMBuildLoad(ctx->builder, val, "");
         } else {
@@ -120,7 +120,7 @@ void bllvm_store(LLVMValueRef val,
                  struct llvm_traversal_ctx *ctx)
 {
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
-    if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && !bllvm_type_is_elementary(ptr_element_type)) {
+    if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && !bllvm_type_is_elementary(ctx, ptr_element_type)) {
         // string is a special case
         if (ptr_element_type == LLVMGetTypeByName(ctx->llvm_mod, "string")) {
             bllvm_copy_string(val, ptr, ctx);
@@ -136,7 +136,11 @@ void bllvm_store(LLVMValueRef val,
 
 LLVMBasicBlockRef bllvm_add_block_before_funcend(struct llvm_traversal_ctx *ctx)
 {
-    return LLVMInsertBasicBlock(LLVMGetLastBasicBlock(ctx->current_function), "");
+    return LLVMInsertBasicBlockInContext(
+        ctx->llvm_context,
+        LLVMGetLastBasicBlock(ctx->current_function),
+        ""
+    );
 }
 
 void bllvm_enter_block(struct llvm_traversal_ctx *ctx,
@@ -151,11 +155,13 @@ struct LLVMOpaqueBasicBlock *bllvm_add_fatal_block_before(struct LLVMOpaqueBasic
                                                           struct llvm_traversal_ctx *ctx)
 {
     LLVMBasicBlockRef prev_block = ctx->current_block;
-    LLVMBasicBlockRef ret = LLVMInsertBasicBlock(target, "");
+    LLVMBasicBlockRef ret = LLVMInsertBasicBlockInContext(ctx->llvm_context, target, "");
     bllvm_enter_block(ctx, ret);
     LLVMValueRef exit_fn = LLVMGetNamedFunction(ctx->llvm_mod, "exit");
     RF_ASSERT(exit_fn, "We should get the exit function here");
-    LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt32Type(), exit_code, 0) };
+    LLVMValueRef call_args[] = {
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), exit_code, 0)
+    };
     LLVMBuildCall(ctx->builder, exit_fn, call_args, 1, "");
     LLVMBuildBr(ctx->builder, target);
     bllvm_enter_block(ctx, prev_block);
@@ -196,10 +202,13 @@ void bllvm_memcpyn(LLVMValueRef from,
     LLVMValueRef llvm_memcpy = LLVMGetNamedFunction(ctx->llvm_mod, "llvm.memcpy.p0i8.p0i8.i64");
     RF_ASSERT(llvm_memcpy, "We should get the memcpy intrinsic here");
 
-    LLVMValueRef call_args[] = { dst_cast, src_cast,
-                                 LLVMConstInt(LLVMInt64Type(), bytes, 0),
-                                 LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                 LLVMConstInt(LLVMInt1Type(), 0, 0) };
+    LLVMValueRef call_args[] = {
+        dst_cast,
+        src_cast,
+        LLVMConstInt(LLVMInt64TypeInContext(ctx->llvm_context), bytes, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0),
+        LLVMConstInt(LLVMInt1TypeInContext(ctx->llvm_context), 0, 0)
+    };
     LLVMBuildCall(ctx->builder, llvm_memcpy, call_args, 5, "");
 }
 
@@ -217,12 +226,19 @@ struct LLVMOpaqueValue *bllvm_gep_to_struct(struct LLVMOpaqueValue *ptr,
                                             unsigned int member_num,
                                             struct llvm_traversal_ctx *ctx)
 {
-    LLVMValueRef indices[] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), member_num, 0) };
+    LLVMValueRef indices[] = {
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), member_num, 0)
+    };
     return LLVMBuildGEP(ctx->builder, ptr, indices, 2, "");    
 }
 
-unsigned long long  bllvm_type_storagesize(struct LLVMOpaqueTargetData *tdata,
-                                           struct LLVMOpaqueType *type)
+unsigned long long bllvm_type_storagesize(
+    struct LLVMOpaqueTargetData *tdata,
+    struct LLVMOpaqueType *type,
+    struct llvm_traversal_ctx *ctx)
 {
-    return type == LLVMVoidType() ? 0 : LLVMStoreSizeOfType(tdata, type);
+    return type == LLVMVoidTypeInContext(ctx->llvm_context)
+        ? 0
+        : LLVMStoreSizeOfType(tdata, type);
 }

@@ -51,13 +51,15 @@ struct LLVMOpaqueType *rir_types_map_get(struct rir_types_map *m,
     return htable_get(&m->table, hash_pointer(rtype, 0), rir_types_map_eq_, rtype);
 }
 
-static LLVMTypeRef bllvm_create_struct(const struct RFstring *name)
+static LLVMTypeRef bllvm_create_struct(
+    struct llvm_traversal_ctx *ctx,
+    const struct RFstring *name)
 {
     const char *name_cstr;
     RFS_PUSH();
     name_cstr = rf_string_cstr_from_buff_or_die(name);
-    LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(),
-                                                  name_cstr);
+    LLVMTypeRef llvm_type = LLVMStructCreateNamed(ctx->llvm_context, name_cstr);
+    /* LLVMTypeRef llvm_type = LLVMStructCreateNamed(LLVMGetGlobalContext(), name_cstr); */
     RFS_POP();
     return llvm_type;
 }
@@ -67,10 +69,10 @@ LLVMTypeRef bllvm_compile_typedef(const struct rir_typedef *def,
 {
     llvm_traversal_ctx_reset_params(ctx);
     // else it's the same thing but just need to add an extra index for the union
-    LLVMTypeRef llvm_type = bllvm_create_struct(&def->name);
+    LLVMTypeRef llvm_type = bllvm_create_struct(ctx, &def->name);
     bllvm_rir_to_llvm_types(&def->argument_types, ctx);
     if (def->is_union) { // add the member selector in the beginning
-        llvm_traversal_ctx_prepend_param(ctx, LLVMInt32Type());
+        llvm_traversal_ctx_prepend_param(ctx, LLVMInt32TypeInContext(ctx->llvm_context));
     }
     LLVMStructSetBody(llvm_type, llvm_traversal_ctx_get_params(ctx), llvm_traversal_ctx_get_param_count(ctx), true);
     llvm_traversal_ctx_reset_params(ctx);
@@ -84,31 +86,31 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
         // LLVM does not differentiate between signed and unsigned
     case ELEMENTARY_TYPE_INT_8:
     case ELEMENTARY_TYPE_UINT_8:
-        return LLVMInt8Type();
+        return LLVMInt8TypeInContext(ctx->llvm_context);
     case ELEMENTARY_TYPE_INT_16:
     case ELEMENTARY_TYPE_UINT_16:
-        return LLVMInt16Type();
+        return LLVMInt16TypeInContext(ctx->llvm_context);
     case ELEMENTARY_TYPE_INT_32:
     case ELEMENTARY_TYPE_UINT_32:
-        return LLVMInt32Type();
+        return LLVMInt32TypeInContext(ctx->llvm_context);
     case ELEMENTARY_TYPE_INT:
     case ELEMENTARY_TYPE_UINT:
     case ELEMENTARY_TYPE_INT_64:
     case ELEMENTARY_TYPE_UINT_64:
-        return LLVMInt64Type();
+        return LLVMInt64TypeInContext(ctx->llvm_context);
 
     case ELEMENTARY_TYPE_FLOAT_32:
-        return LLVMFloatType();
+        return LLVMFloatTypeInContext(ctx->llvm_context);
     case ELEMENTARY_TYPE_FLOAT_64:
-        return LLVMDoubleType();
+        return LLVMDoubleTypeInContext(ctx->llvm_context);
 
     case ELEMENTARY_TYPE_STRING:
         return LLVMGetTypeByName(ctx->llvm_mod, "string");
 
     case ELEMENTARY_TYPE_BOOL:
-        return LLVMInt1Type();
+        return LLVMInt1TypeInContext(ctx->llvm_context);
     case ELEMENTARY_TYPE_NIL:
-        return LLVMVoidType();
+        return LLVMVoidTypeInContext(ctx->llvm_context);
 
     default:
         RF_CRITICAL_FAIL(
@@ -173,18 +175,27 @@ LLVMTypeRef *bllvm_rir_to_llvm_types(const struct rir_type_arr *arr,
     return llvm_traversal_ctx_get_params(ctx);
 }
 
-bool bllvm_type_is_int(const struct LLVMOpaqueType *type)
+bool bllvm_type_is_int(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type)
 {
-    return type == LLVMInt8Type() || type == LLVMInt16Type() ||
-        type == LLVMInt32Type() || type == LLVMInt64Type();
+    return type == LLVMInt8TypeInContext(ctx->llvm_context)
+        || type == LLVMInt16TypeInContext(ctx->llvm_context)
+        || type == LLVMInt32TypeInContext(ctx->llvm_context)
+        || type == LLVMInt64TypeInContext(ctx->llvm_context);
 }
 
-bool bllvm_type_is_floating(const struct LLVMOpaqueType *type)
+bool bllvm_type_is_floating(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type)
 {
-    return type == LLVMDoubleType() || type == LLVMFloatType();
+    return type == LLVMDoubleTypeInContext(ctx->llvm_context)
+        || type == LLVMFloatTypeInContext(ctx->llvm_context);
 }
 
-bool bllvm_type_is_elementary(const struct LLVMOpaqueType *type)
+bool bllvm_type_is_elementary(
+    struct llvm_traversal_ctx *ctx,
+    const struct LLVMOpaqueType *type)
 {
-    return bllvm_type_is_int(type) || bllvm_type_is_floating(type);
+    return bllvm_type_is_int(ctx, type) || bllvm_type_is_floating(ctx, type);
 }

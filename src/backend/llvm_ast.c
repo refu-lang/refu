@@ -154,9 +154,13 @@ struct LLVMOpaqueValue *bllvm_compile_constant(const struct ast_constant *n,
         if (!ast_constant_get_float(n, &float_val)) {
             RF_ERROR("Failed to convert a constant num node to float number for LLVM");
         }
-        return LLVMConstReal(LLVMDoubleType(), float_val);
+        return LLVMConstReal(LLVMDoubleTypeInContext(ctx->llvm_context), float_val);
     case CONSTANT_BOOLEAN:
-        return LLVMConstInt(LLVMInt1Type(), ast_constant_get_bool(n), 0);
+        return LLVMConstInt(
+            LLVMInt1TypeInContext(ctx->llvm_context),
+            ast_constant_get_bool(n),
+            0
+        );
     default:
         RF_CRITICAL_FAIL("Invalid constant type");
         break;
@@ -257,7 +261,11 @@ static struct LLVMOpaqueValue *bllvm_compile_alloca(const struct rir_expression 
     (void)other_fn;
     LLVMValueRef malloc_fn = LLVMGetNamedFunction(ctx->llvm_mod, "malloc");
     RF_ASSERT(malloc_fn, "We should get a malloc function here");
-    LLVMValueRef call_args[] = { LLVMConstInt(LLVMInt64Type(), rir_type_bytesize(expr->alloca.type), 0) };
+    LLVMValueRef call_args[] = {
+        LLVMConstInt(LLVMInt64TypeInContext(ctx->llvm_context),
+                     rir_type_bytesize(expr->alloca.type),
+                     0)
+    };
     LLVMValueRef retval = LLVMBuildCall(ctx->builder, malloc_fn, call_args, 1, "");
     // TODO: CHECK AND HANDLE malloc failure
     // TODO: free? (ideally follow the global ownership graph and free at the end)
@@ -363,7 +371,7 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
         RFS_POP();
         return NULL;
     }
-    ctx->llvm_mod = LLVMModuleCreateWithName(mod_name);
+    ctx->llvm_mod = LLVMModuleCreateWithNameInContext(mod_name, ctx->llvm_context);
     RFS_POP();
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 

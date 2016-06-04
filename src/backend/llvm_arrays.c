@@ -39,7 +39,7 @@ struct LLVMOpaqueValue *bllvm_compile_objidx(
         ctx
     );
     LLVMValueRef indices[] = {
-        LLVMConstInt(LLVMInt32Type(), 0, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0),
         llvm_idxval
     };
     LLVMValueRef gep = LLVMBuildGEP(

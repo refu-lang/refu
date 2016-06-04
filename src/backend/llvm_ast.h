@@ -38,6 +38,7 @@ struct rirval_strmap {
 
 struct llvm_traversal_ctx {
     struct module *mod;
+    struct LLVMOpaqueContext *llvm_context;
     struct LLVMOpaqueModule *llvm_mod;
     struct LLVMOpaqueBuilder *builder;
     struct LLVMOpaqueValue *current_value;

@@ -20,13 +20,30 @@
 #include "llvm_ast.h"
 #include "llvm_utils.h"
 
-static inline void llvm_traversal_ctx_init(struct llvm_traversal_ctx *ctx,
-                                           struct compiler_args *args)
+static void bllvm_diagnostic_handler(struct LLVMOpaqueDiagnosticInfo *di, void *u)
+{
+    char *str = LLVMGetDiagInfoDescription(di);
+    printf("[LLVM-error]:%s.", str);
+    fflush(stdout);
+    LLVMDisposeMessage(str);
+}
+
+static inline void llvm_traversal_ctx_init(
+    struct llvm_traversal_ctx *ctx,
+    struct compiler_args *args)
 {
     ctx->mod = NULL;
     ctx->current_function = NULL;
     ctx->args = args;
-    ctx->builder = LLVMCreateBuilder();
+    ctx->llvm_context = LLVMContextCreate();
+    LLVMContextSetDiagnosticHandler(
+        ctx->llvm_context,
+        bllvm_diagnostic_handler,
+        NULL
+    );
+
+    ctx->builder = LLVMCreateBuilderInContext(ctx->llvm_context);
+
     darray_init(ctx->params);
     darray_init(ctx->values);
     rir_types_map_init(&ctx->types_map);
@@ -37,6 +54,7 @@ static inline void llvm_traversal_ctx_deinit(struct llvm_traversal_ctx *ctx)
 {
     LLVMDisposeBuilder(ctx->builder);
     LLVMDisposeModule(ctx->llvm_mod);
+    LLVMContextDispose(ctx->llvm_context);
 }
 
 static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *ctx,
