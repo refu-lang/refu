@@ -2,6 +2,8 @@
 #define LFR_BACKEND_LLVM_TYPES_H
 
 #include <rfbase/datastructs/htable.h>
+#include <llvm-c/Core.h>
+#include <rfbase/utils/sanity.h>
 #include <types/type_decls.h>
 
 struct RFstring;
@@ -11,7 +13,7 @@ struct type;
 struct llvm_traversal_ctx;
 struct LLVMOpaqueType;
 struct rir_typedef;
-struct rir_type_arr;;
+struct rir_type_arr;
 
 struct rir_types_map {
     //! Hash for the map
@@ -104,4 +106,14 @@ bool bllvm_type_is_elementary(
     struct llvm_traversal_ctx *ctx,
     const struct LLVMOpaqueType *type
 );
+
+/**
+ * Get the String type
+ */
+i_INLINE_DECL struct LLVMOpaqueType *bllvm_type_string(struct LLVMOpaqueModule *mod)
+{
+    struct LLVMOpaqueType *s = LLVMGetTypeByName(mod, "string");
+    RF_ASSERT(s, "The LLVM Module should have a string type declared");
+    return s;
+}
 #endif

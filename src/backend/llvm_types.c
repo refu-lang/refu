@@ -105,7 +105,7 @@ LLVMTypeRef bllvm_elementary_to_type(enum elementary_type etype,
         return LLVMDoubleTypeInContext(ctx->llvm_context);
 
     case ELEMENTARY_TYPE_STRING:
-        return LLVMGetTypeByName(ctx->llvm_mod, "string");
+        return bllvm_type_string(ctx->llvm_mod);
 
     case ELEMENTARY_TYPE_BOOL:
         return LLVMInt1TypeInContext(ctx->llvm_context);
@@ -199,3 +199,5 @@ bool bllvm_type_is_elementary(
 {
     return bllvm_type_is_int(ctx, type) || bllvm_type_is_floating(ctx, type);
 }
+
+i_INLINE_INS struct LLVMOpaqueType *bllvm_type_string(struct LLVMOpaqueModule *mod);

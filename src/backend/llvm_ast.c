@@ -359,9 +359,10 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(
     return llvmval;
 }
 
-struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
-                                            struct llvm_traversal_ctx *ctx,
-                                            struct LLVMOpaqueModule *link_source)
+struct LLVMOpaqueModule *blvm_create_module(
+    struct rir *rir,
+    struct llvm_traversal_ctx *ctx,
+    struct LLVMOpaqueModule *link_source)
 {
     // temporary. Name checking should be abstracted elsewhere
     RFS_PUSH();
@@ -387,9 +388,15 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
             goto fail;
         }
     } else {
-        RF_ASSERT(link_source, "If module is not stdlib, linking with something is mandatory at least for now");
+        RF_ASSERT(
+            link_source,
+            "If the module is not the stdlib, linking with something "
+            "is mandatory at least for now"
+        );
+        // LLVMLinkeModules2() destroys the source module so we need to clone
+        LLVMModuleRef clone_of_link =  LLVMCloneModule(link_source);
         // if an error occurs LLVMLinkModules() returns true ...
-        if (true == LLVMLinkModules2(ctx->llvm_mod, link_source)) {
+        if (true == LLVMLinkModules2(ctx->llvm_mod, clone_of_link)) {
             RF_ERROR("Could not link LLVM modules");
             goto fail;
         }
@@ -415,7 +422,6 @@ struct LLVMOpaqueModule *blvm_create_module(struct rir *rir,
     if (compiler_args_print_backend_debug(ctx->args)) {
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
     }
-
     return ctx->llvm_mod;
 
 fail:

@@ -127,6 +127,9 @@ static bool bllvm_ir_generate(struct modules_arr *modules, struct compiler_args 
         goto end_pop_rfs;
     }
     bllvm_error_dispose(&error);
+    if (stdlib_module) {
+        LLVMDisposeModule(stdlib_module);
+    }
     llvm_traversal_ctx_deinit(&ctx);
     ret = true;
 

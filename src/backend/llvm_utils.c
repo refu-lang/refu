@@ -122,7 +122,7 @@ void bllvm_store(LLVMValueRef val,
     LLVMTypeRef ptr_element_type = LLVMGetElementType(LLVMTypeOf(ptr));
     if (LLVMTypeOf(val) == LLVMTypeOf(ptr) && !bllvm_type_is_elementary(ctx, ptr_element_type)) {
         // string is a special case
-        if (ptr_element_type == LLVMGetTypeByName(ctx->llvm_mod, "string")) {
+        if (ptr_element_type == bllvm_type_string(ctx->llvm_mod)) {
             bllvm_copy_string(val, ptr, ctx);
         } else {
             // just memcpy
