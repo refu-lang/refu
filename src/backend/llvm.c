@@ -12,6 +12,7 @@
 
 #include <info/info.h>
 #include <analyzer/analyzer.h>
+#include <compiler.h>
 #include <compiler_args.h>
 #include <front_ctx.h>
 #include <module.h>
@@ -141,7 +142,7 @@ end:
 }
 
 static bool transformation_step_do(struct compiler_args *args,
-                                   const char *executable,
+                                   const struct RFstring*executable,
                                    const char *insuff,
                                    const char *outsuff,
                                    const char *extra)
@@ -156,12 +157,13 @@ static bool transformation_step_do(struct compiler_args *args,
 
     inname = RFS(RFS_PF".%s", RFS_PA(output), insuff);
     cmd = RFS(
-        "%s "RFS_PF" %s -o "RFS_PF".%s",
-        executable,
+        RFS_PF"  "RFS_PF" %s -o "RFS_PF".%s",
+        RFS_PA(executable),
         RFS_PA(inname),
         extra ? extra : "",
         RFS_PA(output),
-        outsuff);
+        outsuff
+    );
     proc = rf_popen(cmd, "r");
 
     if (!proc) {
@@ -171,7 +173,7 @@ static bool transformation_step_do(struct compiler_args *args,
 
     rc = rf_pclose(proc);
     if (0 != rc) {
-        ERROR("%s failed with error code: %d", executable, rc);
+        ERROR(RFS_PF" failed with error code: %d", RFS_PA(executable), rc);
         ret = false;
         goto end;
     }
@@ -186,12 +188,13 @@ end:
 
 static bool bllvm_ir_to_asm(struct compiler_args *args)
 {
-    return transformation_step_do(args, "llc", "ll", "s", NULL);
+    return transformation_step_do(args, &compiler_instance_get()->llc_exec_path, "ll", "s", NULL);
 }
 
 static bool backend_asm_to_exec(struct compiler_args *args)
 {
-    return transformation_step_do(args, "gcc", "s", "exe", "-L"RF_LANG_CORE_ROOT"/build/rfbase/ -lrfbase -static");
+    static const struct RFstring compiler_exec = RF_STRING_STATIC_INIT("gcc");
+    return transformation_step_do(args, &compiler_exec, "s", "exe", "-L"RF_LANG_CORE_ROOT"/build/rfbase/ -lrfbase -static");
 }
 
 bool bllvm_generate(struct modules_arr *modules, struct compiler_args *args)

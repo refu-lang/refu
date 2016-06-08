@@ -1,0 +1,34 @@
+# Refulang travis yaml file
+#
+# We run the tests inside a docker instance since that way it's easier to setup a development
+# environment containing LLVM and the other dependencies that refulang has
+#
+# -- Some useful links of other travis file
+# This seems to be a nice travis file for using many different llvm versions.
+# https://github.com/scross99/locic/blob/master/.travis.yml
+# This is using docker and many llvm versions:
+# https://github.com/fuzzylite/fuzzylite/blob/master/.travis.yml
+# And rust changed to using docker due to the LLVM Apt server being brought offline
+# https://github.com/rust-lang/rust/commit/b1651fb4d2c0349ccca108b8d24210d688507936
+
+sudo: required
+dist: trusty
+services:
+  - docker
+compiler:
+  - gcc
+
+
+before_install:
+  - sudo apt-get update -y -qq
+
+  # Use docker to get LLVM without requiring LLVM's APT server to be online
+  - docker build -t refu -f test/Dockerfile test/
+
+script:
+  - docker run -v `pwd`:/build refu
+    sh -c "
+      mkdir build && cd build &&
+      cmake -DTEST=1 ..  &&
+      make -j4 && cd .. && ./test.sh --rfbase
+    "

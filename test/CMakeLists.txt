@@ -15,8 +15,11 @@ add_subdirectory(types)
 
 # --- general stuff needed for tests
 target_compile_definitions(test_refu PUBLIC RF_UNIT_TESTS)
+include(FindPkgConfig)
 find_package(Check REQUIRED)
+pkg_check_modules(LIBCHECK REQUIRED check) # <-- this sets a bunch of variables
 target_link_libraries(test_refu PUBLIC check)
+target_link_libraries(test_refu PUBLIC ${LIBCHECK_LDFLAGS})
 # --- stuff needed for refu tests
 target_link_libraries(test_refu PUBLIC test_refu_helper)
 rf_use_llvm(test_refu)
