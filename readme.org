@@ -1,7 +1,52 @@
-#+TITLE: Refulang Core
+#+TITLE: Refulang
 #+AUTHOR: Lefteris Karapetsas
 
-This is the main repository for the core of [[http://refu.co/spec.html][refulang]]. All PRs and issues regarding the core should 
-go here.
 
-It is also indexed for convenience under the [[https://github.com/LefterisJP/refulang][umbrella]] refulang project.
+This is the code repository for [[http://refu.co/spec.html][refulang]], a statically typed, compiled system language.
+
+* Building
+Building from source is the only way to obtain refu at the moment.
+
+** Dependencies
+
+ The required dependencies are:
+ - For building we need [[https://cmake.org/][cmake]]
+ - For the backend code generation we need [[http://llvm.org/][llvm]]
+ - For hash table generation we use [[https://www.gnu.org/software/gperf/][gperf]]
+ - For units tests we need [[http://check.sourceforge.net/][libcheck]]
+
+The optional dependencies are:
+ - For generating dependency graphs, we can use [[http://www.graphviz.org/][graphviz]]
+ - For extra memory checks during unit testing, we can use [[http://valgrind.org/][valgrind]]
+ - For generating a json file of the AST, we can use [[https://github.com/json-c/json-c][json-c]]
+
+** How to build
+#+BEGIN_SRC sh
+git clone --recursive https://github.com/refu-lang/refu
+cd refu
+mkdir build
+cd build
+cmake ..
+make
+#+END_SRC
+
+** Run the tests
+In order to run the tests you have to also build them. This is done by providing an extra
+option to cmake.
+#+BEGIN_SRC sh
+cmake -DCMAKE_BUILD_TYPE=Debug .. -DTEST=1
+#+END_SRC
+
+There is a convenience test script that runs all of the tests for the refu and its rfbase
+submodule.
+
+#+BEGIN_SRC sh
+./test.sh --rfbase
+#+END_SRC
+
+* Contributing
+You are more than welcome to open a Pull Request here in github if you would like to contribute
+to the development of refu.
+
+** Coding Style and Best Practises
+TODO

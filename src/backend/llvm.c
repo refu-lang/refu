@@ -62,7 +62,7 @@ static inline void llvm_traversal_ctx_set_singlepass(struct llvm_traversal_ctx *
 {
     ctx->mod = m;
     ctx->llvm_mod = NULL;
-    ctx->current_function = NULL;;
+    ctx->current_function = NULL;
     darray_init(ctx->params);
     darray_init(ctx->values);
     rir_types_map_init(&ctx->types_map);
