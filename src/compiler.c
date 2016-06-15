@@ -4,6 +4,7 @@
 #include <rfbase/utils/memory.h>
 #include <rfbase/string/corex.h>
 #include <rfbase/string/traversalx.h>
+#include <rfbase/system/system.h>
 
 #include <utils/string_set.h>
 #include <info/info.h>
@@ -27,11 +28,12 @@ bool compiler_init(struct compiler *c, int rf_logtype, bool with_stdlib)
     RF_STRUCT_ZERO(c);
 
     // initialize Refu library
-    rf_init(rf_logtype,
-            "refu.log",
-            LOG_WARNING,
-            RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
-            RF_DEFAULT_TS_SBUFF_INITIAL_SIZE
+    rf_init(
+        rf_logtype,
+        "refu.log",
+        LOG_WARNING,
+        RF_DEFAULT_TS_MBUFF_INITIAL_SIZE,
+        RF_DEFAULT_TS_SBUFF_INITIAL_SIZE
     );
 
     darray_init(c->modules);
@@ -54,6 +56,18 @@ bool compiler_init(struct compiler *c, int rf_logtype, bool with_stdlib)
     }
     rf_ilist_head_init(&c->front_ctxs);
     c->use_stdlib = with_stdlib;
+
+    // locate LLVM's llc executable in the user's system
+    static const struct RFstring llc_s = RF_STRING_STATIC_INIT("llc");
+    static const struct RFstring llc_38s = RF_STRING_STATIC_INIT("llc-3.8");
+    static const struct RFstring llc_37s = RF_STRING_STATIC_INIT("llc-3.7");
+    if (!rf_system_file_in_path(&llc_s, &c->llc_exec_path) &&
+        !rf_system_file_in_path(&llc_38s, &c->llc_exec_path) &&
+        !rf_system_file_in_path(&llc_37s, &c->llc_exec_path)) {
+
+        RF_ERROR("Could not find LLVM's llc in the operating system");
+        return false;
+    }
 
     return true;
 }
@@ -139,6 +153,7 @@ static void compiler_deinit(struct compiler *c)
     compiler_args_destroy(c->args);
     typecmp_ctx_deinit();
     rf_stringx_deinit(&c->err_buff);
+    rf_string_deinit(&c->llc_exec_path);
     rf_deinit();
 }
 

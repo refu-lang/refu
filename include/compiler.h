@@ -32,6 +32,7 @@ struct compiler {
     bool use_stdlib;
     //! Pointer to the main front_ctxs
     struct front_ctx *main_front;
+    struct RFstring llc_exec_path;
 };
 
 // a compiler will always be a unique singleton so we can get its instance

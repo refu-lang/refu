@@ -19,6 +19,7 @@ The optional dependencies are:
  - For generating dependency graphs, we can use [[http://www.graphviz.org/][graphviz]]
  - For extra memory checks during unit testing, we can use [[http://valgrind.org/][valgrind]]
  - For generating a json file of the AST, we can use [[https://github.com/json-c/json-c][json-c]]
+ - For regular expressions (not yet used anywhere), we can use [[http://www.regular-expressions.info/pcre2.html][pcre2]]
 
 ** How to build
 #+BEGIN_SRC sh
