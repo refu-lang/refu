@@ -20,6 +20,8 @@ rf_project_config(refu)
 if (${TEST})
   refu_config(test_refu_helper)
   rf_project_config(test_refu_helper)
+  include(RFCoverage)
+  rf_setup_coverage(test_refu_helper)
 endif()
 
 add_subdirectory(src)
