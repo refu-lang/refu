@@ -17,10 +17,12 @@ FROM ubuntu:xenial
 #   FileCheck is used to run tests in src/test/codegen
 
 RUN apt-get update && apt-get -y install \
-    curl g++ git make pkg-config\
-    cmake gperf check \
+    curl g++ git make pkg-config \
+    cmake gperf check lcov ruby \
     libedit-dev zlib1g-dev \
     valgrind llvm-3.7-tools
+
+RUN gem install coveralls-lcov
 
 RUN mkdir /build
 WORKDIR /build

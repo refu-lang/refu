@@ -2,7 +2,14 @@
 #+AUTHOR: Lefteris Karapetsas
 
 
+#+ATTR_HTML: title="https://travis-ci.org/refu-lang/refu"
+[[https://travis-ci.org/refu-lang/refu][file:http://img.shields.io/travis/refu-lang/refu.svg]]
+#+ATTR_HTML: title="https://coveralls.io/github/refu-lang/refu?branch=master"
+[[https://coveralls.io/github/refu-lang/refu?branch=master][file:https://coveralls.io/repos/github/refu-lang/refu/badge.svg?branch=master]]
+
+
 This is the code repository for [[http://refu.co/spec.html][refulang]], a statically typed, compiled system language.
+
 
 * Building
 Building from source is the only way to obtain refu at the moment.
