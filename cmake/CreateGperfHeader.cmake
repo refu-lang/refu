@@ -8,9 +8,16 @@
 #
 
 function(create_gperf_header DIR INPUT OUTPUT)
-  add_custom_command(OUTPUT ${DIR}/${OUTPUT}
+  # Add a fake custom target so that gperf creation always runs
+  add_custom_target(
+    gperf_${INPUT}_always_run ALL
+    DEPENDS ${DIR}/fake.h)
+
+  add_custom_command(
+    OUTPUT
+        ${DIR}/fake.h # This is the fake
+        ${DIR}/${OUTPUT}
     PRE_BUILD
     COMMAND ${GPERF_EXECUTABLE} -t --output-file=${DIR}/${OUTPUT} ${DIR}/${INPUT}
     COMMENT "Generating perfect hash table from ${DIR}/${INPUT}")
-   add_custom_target(gperf_${INPUT} ALL DEPENDS ${DIR}/${OUTPUT})
 endfunction()
