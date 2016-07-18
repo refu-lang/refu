@@ -85,6 +85,8 @@ enum token_type {
     TOKEN_KW_IF,
     TOKEN_KW_ELIF,
     TOKEN_KW_ELSE,
+    TOKEN_KW_FOR,
+    TOKEN_KW_IN,
     TOKEN_KW_RETURN,
     TOKEN_KW_TRUE,
     TOKEN_KW_FALSE,

@@ -58,6 +58,8 @@ START_TEST(test_lexer_scan_tokens_2) {
         "match\n"
         "=>\n"
         "module\n"
+        "for\n"
+        "in\n"
     );
     front = front_testdriver_new_ast_main_source(&s);
     ck_assert_msg(front, "Failed to assign string to file ");
@@ -216,6 +218,16 @@ START_TEST(test_lexer_scan_tokens_2) {
         {
             .type=TOKEN_KW_MODULE,
             .location=LOC_INIT(f, 19, 0, 19, 5)
+        },
+        /* 20th line */
+        {
+            .type=TOKEN_KW_FOR,
+            .location=LOC_INIT(f, 20, 0, 20, 2)
+        },
+        /* 21st line */
+        {
+            .type=TOKEN_KW_IN,
+            .location=LOC_INIT(f, 21, 0, 21, 1)
         },
     };
     ck_assert_lexer_scan("Scanning failed");
