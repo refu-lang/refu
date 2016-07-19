@@ -17,6 +17,7 @@
 #include <ast/constants_decls.h>
 #include <ast/operators_decls.h>
 #include <ast/ifexpr_decls.h>
+#include <ast/forexpr_decls.h>
 #include <ast/matchexpr_decls.h>
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
@@ -76,6 +77,7 @@ enum ast_type {
     AST_INDEX_ACCESS,
     AST_CONDITIONAL_BRANCH,
     AST_IF_EXPRESSION,
+    AST_FOR_EXPRESSION,
     AST_MATCH_EXPRESSION,
     AST_MATCH_CASE,
     AST_MODULE,
@@ -128,6 +130,7 @@ struct ast_node {
         struct ast_fncall fncall;
         struct ast_condbranch condbranch;
         struct ast_ifexpr ifexpr;
+        struct ast_forexpr forexpr;
         struct ast_matchcase matchcase;
         struct ast_matchexpr matchexpr;
         struct ast_module module;
