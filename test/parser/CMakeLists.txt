@@ -3,6 +3,7 @@ target_sources(test_refu PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_function.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_generics.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_ifexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_forexpr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_matchexpr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_misc.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_parser_modules.c"
