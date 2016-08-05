@@ -9,6 +9,7 @@
 #include <ast/function.h>
 #include <ast/type.h>
 #include <ast/matchexpr.h>
+#include <ast/forexpr.h>
 #include <ast/module.h>
 
 static const struct RFstring ast_type_strings[] = {
@@ -133,6 +134,9 @@ void ast_node_destroy(struct ast_node *n)
             break;
         case AST_MODULE:
             symbol_table_deinit(ast_module_symbol_table_get(n));
+            break;
+        case AST_FOR_EXPRESSION:
+            symbol_table_deinit(ast_forexpr_symbol_table_get(n));
             break;
         default:
             // no type specific destruction for the rest
@@ -297,6 +301,8 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_matchcase_symbol_table_get(n);
     case AST_MODULE:
         return ast_module_symbol_table_get(n);
+    case AST_FOR_EXPRESSION:
+        return ast_forexpr_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return NULL,

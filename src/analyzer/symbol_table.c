@@ -64,6 +64,7 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
             "for illegal ast node type \""RFS_PF"\"",
             RFS_PA(ast_node_str(node))
         );
+        break;
     }
 
     if (!rec->data) {
