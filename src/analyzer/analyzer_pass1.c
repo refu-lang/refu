@@ -9,6 +9,7 @@
 #include <ast/vardecl.h>
 #include <ast/function.h>
 #include <ast/matchexpr.h>
+#include <ast/forexpr.h>
 #include <ast/string_literal.h>
 #include <ast/module.h>
 #include <ast/ast_utils.h>
@@ -239,6 +240,12 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
         }
         symbol_table_swap_current(&ctx->current_st, ast_module_symbol_table_get(n));
         break;
+    case AST_FOR_EXPRESSION:
+        if (!ast_forexpr_symbol_table_init(n, ctx->m)) {
+            return false;
+        }
+        symbol_table_swap_current(&ctx->current_st, ast_forexpr_symbol_table_get(n));
+        break;
     case AST_FUNCTION_DECLARATION:
         if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
             return false;
@@ -345,6 +352,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
             ctx->current_st = ast_typedesc_symbol_table_get(n)->parent;
         }
     }
+    break;
+    case AST_FOR_EXPRESSION:
+        ctx->current_st = ast_forexpr_symbol_table_get(n)->parent;
         break;
     default:
         // do nothing
@@ -384,6 +394,9 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
         break;
     case AST_MATCH_EXPRESSION:
         return pattern_matching_ctx_init(&ctx->matching_ctx, ctx->current_st, n);
+    case AST_FOR_EXPRESSION:
+        ctx->current_st = ast_forexpr_symbol_table_get(n);
+        break;
     default:
         break;
     }

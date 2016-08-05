@@ -305,6 +305,20 @@ START_TEST (test_typecheck_valid_if_stmt) {
     ck_assert_typecheck_ok();
 } END_TEST
 
+START_TEST (test_typecheck_valid_for) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    array:u16[3] = [1, 2, 3]\n"
+        "    b:u64\n"
+        "    for a in array{\n"
+        "        b += 1\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    ck_assert_typecheck_ok();
+} END_TEST
+
 Suite *analyzer_typecheck_suite_create(void)
 {
     Suite *s = suite_create("analyzer_type_check");
@@ -358,12 +372,19 @@ Suite *analyzer_typecheck_suite_create(void)
                               teardown_analyzer_tests);
     tcase_add_test(t_if_val, test_typecheck_valid_if_stmt);
 
+    TCase *t_for_val = tcase_create("typecheck_valid_for");
+    tcase_add_checked_fixture(t_for_val,
+                              setup_analyzer_tests,
+                              teardown_analyzer_tests);
+    tcase_add_test(t_for_val, test_typecheck_valid_for);
+
     suite_add_tcase(s, t_typecheck_misc);
     suite_add_tcase(s, t_custom_types_val);
     suite_add_tcase(s, t_custom_types_inv);
     suite_add_tcase(s, t_block_val);
     suite_add_tcase(s, t_block_inv);
     suite_add_tcase(s, t_if_val);
+    suite_add_tcase(s, t_for_val);
 
     return s;
 }
