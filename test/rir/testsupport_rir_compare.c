@@ -237,6 +237,7 @@ static bool ckr_compare_valarr(
             file,
             line,
             RFS(RFS_PF". At the "RFS_PF "value in the array",
+                RFS_PA(intro),
                 RFS_PA(rf_string_ordinal(i + 1)))
         );
         RFS_POP();
@@ -496,6 +497,7 @@ static bool ckr_compare_block(
     const struct RFstring *fn_name
 )
 {
+    RFS_PUSH();
     ckr_compare_value(
         &got->label,
         &expect->label,
@@ -505,6 +507,7 @@ static bool ckr_compare_block(
             RFS_PA(rf_string_ordinal(bl_idx)),
             RFS_PA(fn_name))
     );
+    RFS_POP();
 
     if (got->exit.type != expect->exit.type) {
         ck_abort_at(
@@ -601,6 +604,7 @@ static bool ckr_compare_block(
                 RFS_PA(fn_name)
             );
         }
+        RFS_PUSH();
         ckr_compare_expression(
             gexpr,
             eexpr,
@@ -612,6 +616,7 @@ static bool ckr_compare_block(
                 RFS_PA(rf_string_ordinal(bl_idx)),
                 RFS_PA(fn_name))
         );
+        RFS_POP();
         expr_idx++;
     }
 
