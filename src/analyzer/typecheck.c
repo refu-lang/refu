@@ -11,6 +11,7 @@
 #include <ast/arr.h>
 #include <ast/operators.h>
 #include <ast/function.h>
+#include <ast/forexpr.h>
 #include <ast/block.h>
 #include <ast/constants.h>
 #include <ast/vardecl.h>
@@ -28,6 +29,7 @@
 
 #include <analyzer/analyzer.h>
 #include <analyzer/symbol_table.h>
+#include <analyzer/typecheck_forexpr.h>
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/typecheck_arr.h>
 #include <analyzer/typecheck_functions.h>
@@ -876,7 +878,7 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     case AST_MATCH_EXPRESSION:
         ret = typecheck_matchexpr(n, ctx);
         break;
-    case AST_MATCH_EXPRESSION:
+    case AST_FOR_EXPRESSION:
         ret = typecheck_forexpr(n, ctx);
         break;
     case AST_MATCH_CASE:
