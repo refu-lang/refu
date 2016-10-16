@@ -14,6 +14,7 @@
 #include <ast/module.h>
 #include <ast/ast_utils.h>
 
+#include <analyzer/typecheck_forexpr.h>
 #include <types/type_function.h>
 
 static inline void analyzer_traversal_ctx_prev_parent(struct analyzer_traversal_ctx *ctx)
@@ -346,7 +347,7 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
         struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent(0, ctx);
         // If this is the type description of a match case pattern's then
         // don't go to parent symbol table here, since when going downwards
-        // again for the match case expression we would be pointing to the 
+        // again for the match case expression we would be pointing to the
         // enclosing block's symbol table
         if (!parent || parent->type != AST_MATCH_CASE) {
             ctx->current_st = ast_typedesc_symbol_table_get(n)->parent;
@@ -366,8 +367,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     return true;
 }
 
-bool analyzer_handle_traversal_descending(struct ast_node *n,
-                                          struct analyzer_traversal_ctx *ctx)
+bool analyzer_handle_traversal_descending(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     analyzer_traversal_ctx_push_parent(ctx, n);
     switch(n->type) {
@@ -395,8 +397,7 @@ bool analyzer_handle_traversal_descending(struct ast_node *n,
     case AST_MATCH_EXPRESSION:
         return pattern_matching_ctx_init(&ctx->matching_ctx, ctx->current_st, n);
     case AST_FOR_EXPRESSION:
-        ctx->current_st = ast_forexpr_symbol_table_get(n);
-        break;
+        return typecheck_forexpr_descending(n, ctx);
     default:
         break;
     }

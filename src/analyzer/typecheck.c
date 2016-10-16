@@ -329,53 +329,6 @@ static enum traversal_cb_res typecheck_member_access(
     return TRAVERSAL_CB_OK;
 }
 
-static enum traversal_cb_res typecheck_forepxr(
-    struct ast_node *n,
-    struct analyzer_traversal_ctx *ctx)
-{
-    const struct type *titerable;
-    const struct type *tloopvar;
-    struct ast_node *iterable = ast_forexpr_iterable_get(n);
-    struct ast_node *loopvar = ast_forexpr_loopvar_get(n);
-
-    if (!(tloopvar = ast_node_get_type(loopvar))) {
-        analyzer_err(ctx->m, ast_node_startmark(loopvar),
-                     ast_node_endmark(loopvar),
-                     "Undeclared identifier \""RFS_PF"\" as the loop variable "
-                     "of a for expression",
-                     RFS_PA(ast_identifier_str(loopvar)));
-        return TRAVERSAL_CB_ERROR;
-    }
-
-    if (!(titerable = ast_node_get_type(iterable))) {
-        analyzer_err(ctx->m, ast_node_startmark(iterable),
-                     ast_node_endmark(iterable),
-                     "Undeclared identifier \""RFS_PF"\" as the iterable of "
-                     "a for expression",
-                     RFS_PA(ast_identifier_str(iterable)));
-        return TRAVERSAL_CB_ERROR;
-    }
-
-    // the iterable should be an array type
-    if (titerable->category != TYPE_CATEGORY_ARRAY) {
-        RFS_PUSH();
-        analyzer_err(
-            ctx->m,
-            ast_node_startmark(iterable),
-            ast_node_endmark(iterable),
-            "Trying to loop over non-array type \""RFS_PF"\".",
-            RFS_PA(type_str_or_die(titerable, TSTR_DEFAULT))
-        );
-        RFS_POP();
-        return TRAVERSAL_CB_ERROR;
-    }
-
-
-    // TODO: what should the type of a forepxr be here?
-    // traversal_node_set_type(n, member_access_iter_ctx.member_type, ctx);
-    return TRAVERSAL_CB_OK;
-}
-
 static enum traversal_cb_res typecheck_constant(
     struct ast_node *n,
     struct analyzer_traversal_ctx *ctx)
@@ -396,9 +349,12 @@ static enum traversal_cb_res typecheck_identifier(
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     if (ast_identifier_is_wildcard(n)) {
-        if (!analyzer_traversal_ctx_traverse_parents(ctx,
-                                                    wilcard_parent_is_matchcase,
-                                                    NULL)) {
+        if (!analyzer_traversal_ctx_traverse_parents(
+                ctx,
+                wilcard_parent_is_matchcase,
+                NULL
+            )) {
+
             analyzer_err(ctx->m, ast_node_startmark(n),
                          ast_node_endmark(n),
                          "Reserved wildcard identifier '_' used outside of "
@@ -409,10 +365,11 @@ static enum traversal_cb_res typecheck_identifier(
         return TRAVERSAL_CB_OK;
     }
 
-    traversal_node_set_type(n,
-                            type_lookup_identifier_string(ast_identifier_str(n),
-                                                          ctx->current_st),
-                            ctx);
+    traversal_node_set_type(
+        n,
+        type_lookup_identifier_string(ast_identifier_str(n), ctx->current_st),
+        ctx
+    );
 
     const struct type *id_type = ast_node_get_type(n);
     if (id_type) {
@@ -879,7 +836,7 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         ret = typecheck_matchexpr(n, ctx);
         break;
     case AST_FOR_EXPRESSION:
-        ret = typecheck_forexpr(n, ctx);
+        ret = typecheck_forexpr_ascending(n, ctx);
         break;
     case AST_MATCH_CASE:
         ret = typecheck_matchcase(n, ctx);

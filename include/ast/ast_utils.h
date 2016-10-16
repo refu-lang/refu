@@ -80,14 +80,14 @@ bool ast_traverse_tree(struct ast_node *n,
 /**
  * Traversal of the AST tree without stopping at errors at @c post_cb
  *
- * Identical to @see ast_traverse_tree except for the fact that it offers more choices
- * to the post_order traversal callback.
+ * Identical to @see ast_traverse_tree except for the fact that it offers
+ * more choices to the post_order traversal callback.
  *
  * @used_by  Typechecking
  *
- * @return              AST_TRAVERSAL_OK if all went fine with all the callbacks
- *                      of the traversal and other values of @ref ast_traversal_cb_res
- *                      in case of errors
+ * @return   AST_TRAVERSAL_OK if all went fine with all the callbacks
+ *           of the traversal and other values of @ref ast_traversal_cb_res
+ *           in case of errors
  */
 enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
                                                        ast_node_cb pre_cb,

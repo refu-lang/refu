@@ -268,7 +268,7 @@ i_INLINE_DECL const struct type *ast_node_get_type_or_die(const struct ast_node 
 
 i_INLINE_DECL const struct type *ast_node_get_type_or_nil(const struct ast_node *n)
 {
-    return n ? ast_node_get_type_or_die(n) : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
+    return n ? ast_node_get_type(n) : type_elementary_get_type(ELEMENTARY_TYPE_NIL);
 }
 
 const struct RFstring *ast_nodetype_str(enum ast_type type);

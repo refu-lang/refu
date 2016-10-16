@@ -57,6 +57,16 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
         type_creation_ctx_set_args(mod, st, NULL);
         rec->data = type_lookup_or_create(node);
         break;
+    case AST_IDENTIFIER:
+        // we can only come here if the identifier's type is already determined
+        // e.g. by type inference, say on the loop variable of a for expression
+        RF_ASSERT(
+            ast_node_get_type(node),
+            "Attempting to create a symbol table record with an identifier "
+            "whose type has not yet been determined."
+        );
+        rec->data = (struct type*)ast_node_get_type(node);
+        break;
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return false,

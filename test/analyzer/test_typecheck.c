@@ -310,8 +310,8 @@ START_TEST (test_typecheck_valid_for) {
         "{\n"
         "    array:u16[3] = [1, 2, 3]\n"
         "    b:u64\n"
-        "    for a in array{\n"
-        "        b += 1\n"
+        "    for a in array {\n"
+        "        b = b + a\n"
         "    }\n"
         "}\n"
     );
