@@ -75,7 +75,6 @@ struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
 
     return n;
 
-
 err_free_body:
     ast_node_destroy(body);
 err:
