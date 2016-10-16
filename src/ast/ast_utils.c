@@ -64,17 +64,18 @@ bool ast_traverse_tree(struct ast_node *n,
     return true;
 }
 
-enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
-                                                       ast_node_cb pre_cb,
-                                                       void *pre_user_arg,
-                                                       ast_node_nostop_cb post_cb,
-                                                       void *post_user_arg)
+enum traversal_cb_res ast_traverse_tree_nostop_post_cb(
+    struct ast_node *n,
+    ast_node_cb pre_cb,
+    void *pre_user_arg,
+    ast_node_nostop_cb post_cb,
+    void *post_user_arg)
 {
     enum traversal_cb_res rc;
     enum traversal_cb_res ret = TRAVERSAL_CB_OK;
 
     if (!pre_cb(n, pre_user_arg)) {
-        return false;
+        return TRAVERSAL_CB_ERROR;
     }
 
     struct ast_node **child;
@@ -89,6 +90,7 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
         if (rc == TRAVERSAL_CB_FATAL_ERROR) {
             return rc;
         } else if (rc == TRAVERSAL_CB_ERROR) {
+            // keep the fact we errored for return but keep traversing
             ret = rc;
         }
     }
@@ -97,6 +99,7 @@ enum traversal_cb_res ast_traverse_tree_nostop_post_cb(struct ast_node *n,
     if (rc == TRAVERSAL_CB_FATAL_ERROR) {
         return rc;
     } else if (rc == TRAVERSAL_CB_ERROR) {
+        // keep the fact we errored for return but keep traversing
         ret = rc;
     }
 

@@ -37,7 +37,7 @@ bool typecheck_forexpr_descending(
             ctx->m,
             ast_node_startmark(iterable),
             ast_node_endmark(iterable),
-            "Trying to loop over non-array type \""RFS_PF"\".",
+            "Trying to iterate over non-iterable type \""RFS_PF"\".",
             RFS_PA(type_str_or_die(titerable, TSTR_DEFAULT))
         );
         RFS_POP();
