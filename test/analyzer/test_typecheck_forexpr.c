@@ -33,10 +33,9 @@ START_TEST (test_typecheck_valid_for2) {
         "{\n"
         "    array:u16[3] = [1, 2, 3]\n"
         "    b:u64\n"
-        "    c:u64 = for a in array {\n"
+        "    newlist:u16[3] = for a in array {\n"
         "        b = b + a\n"
         "    }\n"
-        "    c = c + 1\n"
         "}\n"
     );
     front_testdriver_new_ast_main_source(&s);
@@ -84,6 +83,50 @@ START_TEST (test_typecheck_invalid_for2) {
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
 
+START_TEST (test_typecheck_invalid_for3) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    array:u16[3] = [1, 2, 3]\n"
+        "    b:u64\n"
+        "    newlist:string[3] = for a in array {\n"
+        "        b = b + a\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign \"u64[3]\" to"
+            " \"string[3]\". Array member type mismatch. \"u64\" != \"string\".",
+            3, 4, 5, 4)
+    };
+
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
+START_TEST (test_typecheck_invalid_for4) {
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    array:u64[3] = [1, 2, 3]\n"
+        "    b:u64\n"
+        "    newlist:u64[5] = for a in array {\n"
+        "        b = b + a\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+    struct info_msg messages[] = {
+        TESTSUPPORT_INFOMSG_INIT_BOTH(
+            MESSAGE_SEMANTIC_ERROR,
+            "Assignment between incompatible types. Can't assign \"u64[3]\" to"
+            " \"u64[5]\". Mismatch at the size of the 1st array dimension 3 != 5.",
+            3, 4, 5, 4)
+    };
+
+    ck_assert_typecheck_with_messages(false, messages);
+} END_TEST
+
 Suite *analyzer_typecheck_forexpr_suite_create(void)
 {
     Suite *s = suite_create("typecheck_forexpr");
@@ -105,6 +148,8 @@ Suite *analyzer_typecheck_forexpr_suite_create(void)
     );
     tcase_add_test(tc2, test_typecheck_invalid_for1);
     tcase_add_test(tc2, test_typecheck_invalid_for2);
+    tcase_add_test(tc2, test_typecheck_invalid_for3);
+    tcase_add_test(tc2, test_typecheck_invalid_for4);
 
     suite_add_tcase(s, tc1);
     suite_add_tcase(s, tc2);

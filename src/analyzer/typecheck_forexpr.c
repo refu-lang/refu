@@ -63,9 +63,18 @@ enum traversal_cb_res typecheck_forexpr_ascending(
     struct analyzer_traversal_ctx *ctx)
 {
     // forexpr type is essentially the returning type of the block
+    const struct type *block_type = ast_node_get_type_or_die(n->forexpr.body);
+    struct type *forexpr_type = module_getorcreate_type_as_singlearr(
+        ctx->m,
+        block_type,
+        // if the iterable type has finite size, the return type would have
+        // the same size
+        type_get_arr_first_size(ast_node_get_type(ast_forexpr_iterable_get(n)))
+    );
+
     traversal_node_set_type(
         n,
-        ast_node_get_type_or_die(n->forexpr.body),
+        forexpr_type,
         ctx
     );
     return TRAVERSAL_CB_OK;
