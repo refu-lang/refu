@@ -21,11 +21,7 @@ struct ast_node *ast_forexpr_create(
 i_INLINE_DECL bool ast_forexpr_symbol_table_init(struct ast_node *n, struct module *m)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FOR_EXPRESSION);
-    if (!symbol_table_init(&n->forexpr.st, m)) {
-        return false;
-    }
-
-    return true;
+    return symbol_table_init(&n->forexpr.st, m);
 }
 
 i_INLINE_DECL struct symbol_table* ast_forexpr_symbol_table_get(struct ast_node *n)
