@@ -42,4 +42,10 @@ i_INLINE_DECL struct ast_node* ast_forexpr_loopvar_get(const struct ast_node *n)
     return n->forexpr.loopvar;
 }
 
+i_INLINE_DECL struct ast_node* ast_forexpr_body_get(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FOR_EXPRESSION);
+    return n->forexpr.body;
+}
+
 #endif

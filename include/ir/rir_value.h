@@ -165,4 +165,6 @@ i_INLINE_DECL bool rir_value_is_nil(const struct rir_value *v)
 {
     return v->category == RIR_VALUE_NIL;
 }
+
+
 #endif

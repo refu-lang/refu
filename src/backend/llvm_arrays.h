@@ -12,6 +12,11 @@ struct LLVMOpaqueValue *bllvm_compile_fixedarr(
     struct llvm_traversal_ctx *ctx
 );
 
+struct LLVMOpaqueValue *bllvm_compile_fixedarrsize(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx
+);
+
 struct LLVMOpaqueValue *bllvm_compile_objidx(
     const struct rir_expression *expr,
     struct llvm_traversal_ctx *ctx

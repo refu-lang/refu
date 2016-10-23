@@ -710,6 +710,16 @@ bool ckr_compare_expression(
         );
         break;
 
+    case RIR_EXPRESSION_FIXEDARRSIZE:
+        ckr_compare_value(
+            got->fixedarrsize.array,
+            expect->fixedarrsize.array,
+            file,
+            line,
+            RFS(RFS_PF". At a fixedarrsize expression", RFS_PA(intro))
+        );
+        break;
+
     case RIR_EXPRESSION_ALLOCA:
         if (got->alloca.alloc_location != expect->alloca.alloc_location) {
             ck_abort_at(

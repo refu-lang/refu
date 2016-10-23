@@ -59,6 +59,14 @@ struct rir_block {
     struct symbol_table *st;
 };
 
+enum block_position {
+    BLOCK_POSITION_NORMAL, // generic value, not used for anything yet
+    BLOCK_POSITION_FUNCTIONSTART,
+    BLOCK_POSITION_LOOP,
+    BLOCK_POSITION_MATCH, // not really used for anything yet
+    BLOCK_POSITION_IF // not really used for anything yet
+};
+
 /**
  * Create a new rir basic block directly from AST
  *
@@ -68,17 +76,18 @@ struct rir_block {
  *                        if this is given then the basic block will be added
  *                        to the function's basic blocks. If not it's left up
  *                        to the caller to add it himself.
- * @param function_start  If true, then this is the first block of a function
+ * @param position        Where the block is located. @see enum block_position
+ *                        for possible values
  * @param ctx             The rir ctx for traversal
  */
 struct rir_object *rir_block_create_obj_from_ast(
     const struct ast_node *n,
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 );
 struct rir_block *rir_block_create_from_ast(
     const struct ast_node *n,
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 );
 
@@ -104,10 +113,8 @@ struct rir_block *rir_block_matchcase_create(const struct ast_node *mcase,
 void rir_block_destroy(struct rir_block* b);
 void rir_block_deinit(struct rir_block* b);
 
-bool rir_process_ast_node(const struct ast_node *n,
-                          struct rir_ctx *ctx);
-bool rir_process_identifier(const struct ast_node *n,
-                            struct rir_ctx *ctx);
+bool rir_process_ast_node(const struct ast_node *n, struct rir_ctx *ctx);
+bool rir_process_identifier(const struct ast_node *n, struct rir_ctx *ctx);
 
 bool rir_block_tostring(struct rirtostr_ctx *ctx, const struct rir_block *b);
 

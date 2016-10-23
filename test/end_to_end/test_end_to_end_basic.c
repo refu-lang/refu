@@ -790,7 +790,26 @@ START_TEST (test_fixedarr_2) {
             "}"
         )};
     static const struct RFstring output = RF_STRING_STATIC_INIT("Thessaloniki");
-    ck_end_to_end_run(inputs, 3, &output);
+    ck_end_to_end_run(inputs, 3, &output, "test_input_file.rf");
+} END_TEST
+
+START_TEST (test_forexpr_1) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()->u32{\n"
+            "    b:u64 = 0\n"
+            "    a:u64[3] = [4, 73, 122]\n"
+            "    for i in a {\n"
+            "        b = b + i\n"
+            "    }\n"
+            "    print(b)\n"
+            "    return 5"
+            "}"
+        )};
+    static const struct RFstring output = RF_STRING_STATIC_INIT("199");
+    ck_end_to_end_run(inputs, 5, &output, "test_input_file.rf");
 } END_TEST
 
 Suite *end_to_end_basic_suite_create(void)
@@ -889,6 +908,12 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_arrays, test_fixedarr_1);
     tcase_add_test(st_arrays, test_fixedarr_2);
 
+    TCase *st_forexpr = tcase_create("end_to_end_forexpr");
+    tcase_add_checked_fixture(st_forexpr,
+                              setup_end_to_end_tests,
+                              teardown_end_to_end_tests);
+    tcase_add_test(st_forexpr, test_forexpr_1);
+
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_print);
     suite_add_tcase(s, st_basic_types);
@@ -899,6 +924,7 @@ Suite *end_to_end_basic_suite_create(void)
     suite_add_tcase(s, st_unary_operations);
     suite_add_tcase(s, st_match_expr);
     suite_add_tcase(s, st_arrays);
+    suite_add_tcase(s, st_forexpr);
 
     return s;
 }

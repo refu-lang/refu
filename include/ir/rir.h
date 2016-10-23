@@ -4,6 +4,7 @@
 #include <rfbase/datastructs/intrusive_list.h>
 #include <rfbase/datastructs/darray.h>
 #include <rfbase/string/decl.h>
+#include <rfbase/utils/sanity.h>
 
 #include <ir/rir_common.h>
 #include <ir/rir_strmap.h>
@@ -96,6 +97,13 @@ struct rir_ctx {
     unsigned expression_idx;
     //! Used to enumerate numeric value for all labels. Is reset for each function.
     unsigned label_idx;
+    // used to pass the string of the identifier of a loop variable down into
+    // the block_init function
+    const struct RFstring *loopvar_str;
+    // used to pass the index rir_object down into the block_init function
+    struct rir_object *indexobj;
+    // used to pass the array loop iterable object down into block_init function
+    const struct rir_value *itervalue;
 };
 
 void rir_ctx_reset(struct rir_ctx *ctx);
@@ -119,6 +127,31 @@ i_INLINE_DECL struct rir *rir_ctx_rir(struct rir_ctx *ctx)
 {
     return ctx->common.rir;
 }
+
+i_INLINE_DECL void rir_ctx_set_loopvars(
+    struct rir_ctx *ctx,
+    const struct RFstring *loopvar_str,
+    struct rir_object *indexobj,
+    const struct rir_value *itervalue)
+{
+    RF_ASSERT(
+        ctx->loopvar_str == NULL
+        && ctx->indexobj == NULL
+        && ctx->itervalue == NULL,
+        "Loop variables already initialized"
+    );
+    ctx->loopvar_str = loopvar_str;
+    ctx->indexobj = indexobj;
+    ctx->itervalue = itervalue;
+}
+
+i_INLINE_DECL void rir_ctx_reset_loopvars(struct rir_ctx *ctx)
+{
+    ctx->loopvar_str = NULL;
+    ctx->indexobj = NULL;
+    ctx->itervalue = NULL;
+}
+
 
 bool rir_ctx_st_newobj(struct rir_ctx *ctx, const struct RFstring *id, struct type *t, struct rir_object *obj);
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj);

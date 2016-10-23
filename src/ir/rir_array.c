@@ -6,6 +6,7 @@
 #include <ir/rir_object.h>
 #include <ir/rir_process.h>
 #include <ir/rir_convert.h>
+#include <ir/rir_constant.h>
 
 #include <ast/ast.h>
 #include <ast/arr.h>
@@ -106,4 +107,46 @@ end:
 void rir_fixedarr_deinit(struct rir_fixedarr *arr)
 {
     darray_free(arr->members);
+}
+
+
+
+struct rir_object *rir_fixedarrsize_create(struct rir_value *v, struct rir_ctx *ctx)
+{
+    struct rir_object *ret = rir_object_create(RIR_OBJ_EXPRESSION, rir_ctx_rir(ctx));
+    if (!ret) {
+        return NULL;
+    }
+    ret->expr.fixedarrsize.array = v;
+    ret->expr.type = RIR_EXPRESSION_FIXEDARRSIZE;
+    int64_t size = rir_type_array_size(v->type);
+    if (!rir_constantval_init_fromint64(&ret->expr.val, rir_ctx_rir(ctx), size)) {
+        free(ret);
+        ret = NULL;
+    }
+    return ret;
+}
+
+bool rir_fixedarrsize_tostring(struct rirtostr_ctx *ctx, const struct rir_expression *e)
+{
+    bool ret = false;
+    RFS_PUSH();
+
+    if (!rf_stringx_append(
+            ctx->rir->buff,
+            RFS(
+                RIRTOSTR_INDENT RFS_PF" = fixedarrsize("RFS_PF")\n",
+                RFS_PA(rir_value_string(&e->val)),
+                RFS_PA(rir_value_string(e->fixedarrsize.array))
+            )
+        )) {
+        goto end;
+    }
+
+    // success
+    ret = true;
+
+end:
+    RFS_POP();
+    return ret;
 }

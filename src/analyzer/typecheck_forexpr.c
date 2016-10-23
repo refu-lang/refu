@@ -23,11 +23,13 @@ bool typecheck_forexpr_descending(
     // find the type of the loop iterable
     titerable = type_lookup_identifier_string(ast_identifier_str(iterable), ctx->current_st);
     if (!(titerable)) {
-        analyzer_err(ctx->m, ast_node_startmark(iterable),
-                     ast_node_endmark(iterable),
-                     "Undeclared identifier \""RFS_PF"\" as the iterable of "
-                     "a for expression",
-                     RFS_PA(ast_identifier_str(iterable)));
+        analyzer_err(
+            ctx->m, ast_node_startmark(iterable),
+            ast_node_endmark(iterable),
+            "Undeclared identifier \""RFS_PF"\" as the iterable of "
+            "a for expression",
+            RFS_PA(ast_identifier_str(iterable))
+        );
         return false;
     }
     // the iterable should be an array type
@@ -63,7 +65,7 @@ enum traversal_cb_res typecheck_forexpr_ascending(
     struct analyzer_traversal_ctx *ctx)
 {
     // forexpr type is essentially the returning type of the block
-    const struct type *block_type = ast_node_get_type_or_die(n->forexpr.body);
+    const struct type *block_type = ast_node_get_type_or_die(ast_forexpr_body_get(n));
     struct type *forexpr_type = module_getorcreate_type_as_singlearr(
         ctx->m,
         block_type,

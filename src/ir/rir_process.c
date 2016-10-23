@@ -26,8 +26,7 @@ static bool rir_process_vardecl(const struct ast_node *n,
     RIRCTX_RETURN_EXPR(ctx, true, varobj);
 }
 
-static bool rir_process_return(const struct ast_node *n,
-                               struct rir_ctx *ctx)
+static bool rir_process_return(const struct ast_node *n, struct rir_ctx *ctx)
 {
     if (!rir_process_ast_node(ast_returnstmt_expr_get(n), ctx)) {
         RIRCTX_RETURN_EXPR(ctx, false, NULL);
@@ -64,8 +63,7 @@ static bool rir_process_constant(const struct ast_node *n,
     RIRCTX_RETURN_EXPR(ctx, true, ret_expr);
 }
 
-bool rir_process_identifier(const struct ast_node *n,
-                            struct rir_ctx *ctx)
+bool rir_process_identifier(const struct ast_node *n, struct rir_ctx *ctx)
 {
     struct rir_object *obj = rir_ctx_st_getobj(ctx, ast_identifier_str(n));
     if (!obj) {
@@ -86,12 +84,13 @@ static bool rir_process_strlit(const struct ast_node *n,
     RIRCTX_RETURN_EXPR(ctx, true, litobj);
 }
 
-bool rir_process_ast_node(const struct ast_node *n,
-                          struct rir_ctx *ctx)
+bool rir_process_ast_node(const struct ast_node *n, struct rir_ctx *ctx)
 {
     switch (n->type) {
     case AST_IF_EXPRESSION:
         return rir_process_ifexpr(n, ctx);
+    case AST_FOR_EXPRESSION:
+        return rir_process_forexpr(n, ctx);
     case AST_VARIABLE_DECLARATION:
         return rir_process_vardecl(n, ctx);
     case AST_BRACKET_LIST:
@@ -122,9 +121,12 @@ bool rir_process_ast_node(const struct ast_node *n,
     return false;
 }
 
-i_INLINE_INS struct rir_object *rir_process_ast_node_getobj(const struct ast_node *n,
-                                                             struct rir_ctx *ctx);
-i_INLINE_INS struct rir_value *rir_process_ast_node_getval(const struct ast_node *n,
-                                                           struct rir_ctx *ctx);
-i_INLINE_INS const struct rir_value *rir_process_ast_node_getreadval(const struct ast_node *n,
-                                                                     struct rir_ctx *ctx);
+i_INLINE_INS struct rir_object *rir_process_ast_node_getobj(
+    const struct ast_node *n,
+    struct rir_ctx *ctx);
+i_INLINE_INS struct rir_value *rir_process_ast_node_getval(
+    const struct ast_node *n,
+    struct rir_ctx *ctx);
+i_INLINE_INS const struct rir_value *rir_process_ast_node_getreadval(
+    const struct ast_node *n,
+    struct rir_ctx *ctx);

@@ -213,11 +213,17 @@ bool rir_value_variable_init(
                 false // not a pointer to an array
             );
             break;
+        case RIR_EXPRESSION_FIXEDARRSIZE:
+            RF_CRITICAL_FAIL("Fixedarrsize value is initialized directly in rir_fixedarrsize_create()");            
+            break;
         case RIR_EXPRESSION_ADD:
         case RIR_EXPRESSION_SUB:
         case RIR_EXPRESSION_MUL:
         case RIR_EXPRESSION_DIV:
-            RF_ASSERT(rir_type_is_elementary(expr->binaryop.a->type), "Expected elementary type to be used in either part of rir binary op");
+            RF_ASSERT(
+                rir_type_is_elementary(expr->binaryop.a->type),
+                "Expected elementary type to be used in either part of rir binary op"
+            );
             v->type = rir_type_elem_get_or_create(c->rir, expr->binaryop.a->type->etype, false);
             break;
         case RIR_EXPRESSION_OBJMEMBERAT:

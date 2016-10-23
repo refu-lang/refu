@@ -15,8 +15,7 @@ static bool rir_variable_init(
 struct rir_object *rir_variable_create(
     struct rir_type *type,
     enum rir_pos pos,
-    rir_data data
-)
+    rir_data data)
 {
     struct rir_object *ret = rir_object_create(RIR_OBJ_VARIABLE, rir_data_rir(data));
     if (!ret) {

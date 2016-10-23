@@ -25,3 +25,4 @@ i_INLINE_INS struct symbol_table* ast_forexpr_symbol_table_get(struct ast_node *
 i_INLINE_INS bool ast_forexpr_symbol_table_init(struct ast_node *n, struct module *m);
 i_INLINE_INS struct ast_node* ast_forexpr_iterable_get(const struct ast_node *n);
 i_INLINE_INS struct ast_node* ast_forexpr_loopvar_get(const struct ast_node *n);
+i_INLINE_INS struct ast_node* ast_forexpr_body_get(const struct ast_node *n);

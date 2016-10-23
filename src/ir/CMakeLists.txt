@@ -13,6 +13,7 @@ rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_expression.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_function.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_global.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/rir_loops.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_object.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_process.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/rir_process_cond.c"

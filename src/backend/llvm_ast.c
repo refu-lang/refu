@@ -91,9 +91,10 @@ struct rir *llvm_traversal_ctx_rir(struct llvm_traversal_ctx *ctx)
     return ctx->mod->rir;
 }
 
-static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
-                                       const struct rir_value *rv,
-                                       void *lv)
+static bool llvm_traversal_ctx_map_val(
+    struct llvm_traversal_ctx *ctx,
+    const struct rir_value *rv,
+    void *lv)
 {
     bool ret;
     RF_ASSERT(rv->category != RIR_VALUE_NIL, "Nil RIR Value should never get here");
@@ -108,15 +109,17 @@ static bool llvm_traversal_ctx_map_val(struct llvm_traversal_ctx *ctx,
     return ret;
 }
 
-bool llvm_traversal_ctx_map_llvmval(struct llvm_traversal_ctx *ctx,
-                                    const struct rir_value *rv,
-                                    struct LLVMOpaqueValue *lv)
+bool llvm_traversal_ctx_map_llvmval(
+    struct llvm_traversal_ctx *ctx,
+    const struct rir_value *rv,
+    struct LLVMOpaqueValue *lv)
 {
     return llvm_traversal_ctx_map_val(ctx, rv, lv);
 }
-bool llvm_traversal_ctx_map_llvmblock(struct llvm_traversal_ctx *ctx,
-                                      const struct rir_value *rv,
-                                      struct LLVMOpaqueBasicBlock *lv)
+bool llvm_traversal_ctx_map_llvmblock(
+    struct llvm_traversal_ctx *ctx,
+    const struct rir_value *rv,
+    struct LLVMOpaqueBasicBlock *lv)
 {
     return llvm_traversal_ctx_map_val(ctx, rv, lv);
 }
@@ -289,6 +292,9 @@ struct LLVMOpaqueValue *bllvm_compile_rirexpr(
         break;
     case RIR_EXPRESSION_FIXEDARR:
         llvmval = bllvm_compile_fixedarr(expr, ctx);
+        break;
+    case RIR_EXPRESSION_FIXEDARRSIZE:
+        llvmval = bllvm_compile_fixedarrsize(expr, ctx);
         break;
     case RIR_EXPRESSION_ALLOCA:
         llvmval = bllvm_compile_alloca(expr, ctx);

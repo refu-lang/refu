@@ -58,15 +58,27 @@ static struct rir_object *rir_convert_init(
         struct rir_value *allocv = rir_object_value(retobj);
         // create the blocks
         struct rir_block *prev_block = rir_data_curr_block(data);
-        struct rir_block *taken_block = rir_block_create_from_ast(NULL, false, ctx);
+        struct rir_block *taken_block = rir_block_create_from_ast(
+            NULL,
+            BLOCK_POSITION_IF,
+            ctx
+        );
         if (!taken_block) {
             return NULL;
         }
-        struct rir_block *fallthrough_block = rir_block_create_from_ast(NULL, false, ctx);
+        struct rir_block *fallthrough_block = rir_block_create_from_ast(
+            NULL,
+            BLOCK_POSITION_IF,
+            ctx
+        );
         if (!fallthrough_block) {
             return NULL;
         }
-        struct rir_block *after_block = rir_block_create_from_ast(NULL, false, ctx);
+        struct rir_block *after_block = rir_block_create_from_ast(
+            NULL,
+            BLOCK_POSITION_NORMAL,
+            ctx
+        );
         if (!after_block) {
             return NULL;
         }

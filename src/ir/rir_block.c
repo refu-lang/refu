@@ -8,6 +8,8 @@
 #include <ir/rir_expression.h>
 #include <ir/rir_value.h>
 #include <ir/rir_function.h>
+#include <ir/rir_binaryop.h>
+#include <ir/rir_constant.h>
 #include <ir/rir_process.h>
 #include <ast/block.h>
 #include <ast/matchexpr.h>
@@ -184,11 +186,11 @@ static bool rir_block_init(
 
 // @warning: wrap in RFS_PUSH() and RFS_POP()
 static inline const struct RFstring *rir_block_from_ast_new_labelname(
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 )
 {
-   if (function_beginning) {
+   if (pos == BLOCK_POSITION_FUNCTIONSTART) {
        return &g_str_fnstart;
    } else {
        return RFS("label_%d", ctx->label_idx++);
@@ -197,13 +199,13 @@ static inline const struct RFstring *rir_block_from_ast_new_labelname(
 
 static inline bool rir_block_init_from_ast_common(
     struct rir_object *obj,
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 )
 {
     bool ret = false;
     RFS_PUSH();
-    const struct RFstring *name = rir_block_from_ast_new_labelname(function_beginning, ctx);
+    const struct RFstring *name = rir_block_from_ast_new_labelname(pos, ctx);
     if (!name) {
         goto end;
     }
@@ -221,27 +223,27 @@ end:
 /**
  * Initialize a rir block from an ast node
  *
- * @param obj                    The rir object of the block to get initialized
- * @param n                      An ast node expression. Can  be:
- *                               - ast_block:
- *                               in which case the ast_block creates an
- *                               equivalent rir block, or
- *                               - ast_expression
- *                               case a rir block with that expression is created.
- *                               - NULL
- *                               in which case an empty rir block is created
- * @param function_beginning     True if it's the first block of a function
- * @param ctx                    The rir context
+ * @param obj            The rir object of the block to get initialized
+ * @param n              An ast node expression. Can  be:
+ *                         - ast_block:
+ *                             in which case the ast_block creates an
+ *                             equivalent rir block, or
+ *                         - ast_expression
+ *                             case a rir block with that expression is created.
+ *                         - NULL
+ *                             in which case an empty rir block is created
+ * @param position        Where the block is located. @see enum block_position
+ *                        for possible values
+ * @param ctx             The rir context
  */
 static bool rir_block_init_from_ast(
     struct rir_object *obj,
     const struct ast_node *n,
-    bool function_beginning,
-    struct rir_ctx *ctx
-)
+    enum block_position pos,
+    struct rir_ctx *ctx)
 {
     struct rir_block *b = &obj->block;
-    if (!rir_block_init_from_ast_common(obj, function_beginning, ctx)) {
+    if (!rir_block_init_from_ast_common(obj, pos, ctx)) {
         return false;
     }
 
@@ -250,8 +252,43 @@ static bool rir_block_init_from_ast(
         rir_fndef_add_block(rir_ctx_curr_fn(ctx), b);
         if (n->type == AST_BLOCK) {
             ctx->current_ast_block = n;
+
+            struct symbol_table *block_st = ast_block_symbol_table_get((struct ast_node*)n);
+            struct rir_expression *curridx;
+            if (pos == BLOCK_POSITION_LOOP) {
+                rir_ctx_push_st(ctx, block_st->parent);
+                // create allocas for block's symbols and populate the symbol table with rir objects
+                rir_ctx_st_create_and_add_allocas(ctx);
+                // now get the loopvariable symbol table record object
+                struct symbol_table_record *rec = symbol_table_lookup_record(
+                    block_st->parent,
+                    ctx->loopvar_str,
+                    NULL
+                );
+                // read the current index
+                if (!(curridx = rir_read_create(
+                        rir_object_value(ctx->indexobj),
+                        RIRPOS_AST,
+                        ctx))) {
+                    return false;
+                }
+                rir_common_block_add(&ctx->common, curridx);
+                // create a comparison of current index to iterable's size
+                struct rir_object *idxaccessobj = rir_objidx_create_obj(
+                    ctx->itervalue,
+                    &curridx->val,
+                    RIRPOS_AST,
+                    ctx
+                );
+                if (!idxaccessobj) {
+                    return false;
+                }
+                rec->rirobj = idxaccessobj;
+                rir_common_block_add(&ctx->common, &idxaccessobj->expr);
+            }
+
             // set current symbol table
-            rir_ctx_push_st(ctx, ast_block_symbol_table_get((struct ast_node*)n));
+            rir_ctx_push_st(ctx, block_st);
             // create allocas for block's symbols and populate the symbol table with rir objects
             rir_ctx_st_create_and_add_allocas(ctx);
             // for each expression of the block create a rir expression and add it to the block
@@ -263,6 +300,36 @@ static bool rir_block_init_from_ast(
             }
             b->st = rir_ctx_curr_st(ctx);
             rir_ctx_pop_st(ctx);
+
+            if (pos == BLOCK_POSITION_LOOP) {
+                // add 1 to the index
+                struct rir_value *oneval = rir_constantval_create_fromint64(
+                    1,
+                    rir_ctx_rir(ctx)
+                );
+                struct rir_expression *addone = rir_binaryop_create_nonast(
+                    RIR_EXPRESSION_ADD,
+                    &curridx->val,
+                    oneval,
+                    RIRPOS_AST,
+                    ctx
+                );
+                rir_common_block_add(&ctx->common, addone);
+                // write the new index to the index object
+                struct rir_expression *writenewidx = rir_write_create(
+                    rir_object_value(ctx->indexobj),
+                    &addone->val,
+                    RIRPOS_AST,
+                    ctx
+                );
+                if (!writenewidx) {
+                    return false;
+                }
+                rir_common_block_add(&ctx->common, writenewidx);
+
+                rir_ctx_pop_st(ctx);
+                rir_ctx_reset_loopvars(ctx);
+            }
         } else if (n->type == AST_MATCH_EXPRESSION) {
             // process match expression as body
             b->st = rir_ctx_curr_st(ctx);
@@ -283,7 +350,7 @@ static bool rir_block_init_from_ast(
 
 struct rir_object *rir_block_create_obj_from_ast(
     const struct ast_node *n,
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 )
 {
@@ -291,7 +358,7 @@ struct rir_object *rir_block_create_obj_from_ast(
     if (!ret) {
         return NULL;
     }
-    if (!rir_block_init_from_ast(ret, n, function_beginning, ctx)) {
+    if (!rir_block_init_from_ast(ret, n, pos, ctx)) {
         RF_ERROR("Failed to initialize a rir block");
         rir_object_listrem_destroy(ret, rir_ctx_rir(ctx), rir_ctx_curr_fn(ctx));
         ret = NULL;
@@ -301,11 +368,11 @@ struct rir_object *rir_block_create_obj_from_ast(
 
 struct rir_block *rir_block_create_from_ast(
     const struct ast_node *n,
-    bool function_beginning,
+    enum block_position pos,
     struct rir_ctx *ctx
 )
 {
-    struct rir_object *obj = rir_block_create_obj_from_ast(n, function_beginning, ctx);
+    struct rir_object *obj = rir_block_create_obj_from_ast(n, pos, ctx);
     return obj ? &obj->block : NULL;
 }
 
@@ -318,7 +385,7 @@ static struct rir_object *rir_block_matchcase_create_obj(const struct ast_node *
         goto fail;
     }
     struct rir_block *b = &ret->block;
-    if (!rir_block_init_from_ast_common(ret, false, ctx)) {
+    if (!rir_block_init_from_ast_common(ret, BLOCK_POSITION_NORMAL, ctx)) {
         goto fail;
     }
 

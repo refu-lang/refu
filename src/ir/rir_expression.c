@@ -376,6 +376,11 @@ bool rir_expression_tostring(struct rirtostr_ctx *ctx, const struct rir_expressi
             goto end;
         }
         break;
+    case RIR_EXPRESSION_FIXEDARRSIZE:
+        if (!rir_fixedarrsize_tostring(ctx, e)) {
+            goto end;
+        }
+        break;
     case RIR_EXPRESSION_SETUNIONIDX:
         if (!rf_stringx_append(
                 ctx->rir->buff,
@@ -522,6 +527,7 @@ static const struct RFstring rir_expression_type_strings[] = {
     [RIR_EXPRESSION_UNIONMEMBERAT] = RF_STRING_STATIC_INIT("unionmemberat"),
     [RIR_EXPRESSION_OBJIDX] = RF_STRING_STATIC_INIT("objidx"),
     [RIR_EXPRESSION_FIXEDARR] = RF_STRING_STATIC_INIT("fixedarr"),
+    [RIR_EXPRESSION_FIXEDARRSIZE] = RF_STRING_STATIC_INIT("fixedarrsize"),
     [RIR_EXPRESSION_CONSTANT] = RF_STRING_STATIC_INIT("constant"),
     [RIR_EXPRESSION_ADD] = RF_STRING_STATIC_INIT("add"),
     [RIR_EXPRESSION_SUB] = RF_STRING_STATIC_INIT("sub"),

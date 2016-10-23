@@ -59,6 +59,12 @@ struct symbol_table *rir_ctx_curr_st(struct rir_ctx *ctx)
 i_INLINE_INS struct rir_block *rir_ctx_curr_block(struct rir_ctx *ctx);
 i_INLINE_INS struct rir_fndef *rir_ctx_curr_fn(struct rir_ctx *ctx);
 i_INLINE_INS struct rir *rir_ctx_rir(struct rir_ctx *ctx);
+i_INLINE_INS void rir_ctx_set_loopvars(
+    struct rir_ctx *ctx,
+    const struct RFstring *loopvar_str,
+    struct rir_object *indexobj,
+    const struct rir_value *itervalue);
+i_INLINE_INS void rir_ctx_reset_loopvars(struct rir_ctx *ctx);
 
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)
 {
@@ -112,8 +118,9 @@ void rir_strec_add_allocas(struct symbol_table_record *rec,
     rir_common_block_add(&ctx->common, &rec->rirobj->expr);
 }
 
-static void rir_strec_create_and_add_allocas(struct symbol_table_record *rec,
-                                             struct rir_ctx *ctx)
+static void rir_strec_create_and_add_allocas(
+    struct symbol_table_record *rec,
+    struct rir_ctx *ctx)
 {
     rir_strec_create_allocas(rec, ctx);
     rir_strec_add_allocas(rec, ctx);

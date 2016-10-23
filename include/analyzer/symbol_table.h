@@ -113,9 +113,10 @@ bool symbol_table_add_record(struct symbol_table *t,
  * Arguments are just like @rec symbol_table_lookup_record()
  * @return  The found ast_node or NULL for failure
  */
-const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
-                                                const struct RFstring *id,
-                                                bool *at_first_symbol_table);
+const struct ast_node *symbol_table_lookup_node(
+    struct symbol_table *t,
+    const struct RFstring *id,
+    bool *at_first_symbol_table);
 /**
  * Lookup a record in a symbol table
  *
@@ -126,9 +127,10 @@ const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
  *                                 in @c t itself (true) or in any of its parents (false)
  * @return                         The symbol table record or NULL for failure.
  */
-struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table *t,
-                                                       const struct RFstring *id,
-                                                       bool *at_first_symbol_table);
+struct symbol_table_record *symbol_table_lookup_record(
+    const struct symbol_table *t,
+    const struct RFstring *id,
+    bool *at_first_symbol_table);
 
 /**
 s * Lookup a typedesc node in a symbol table. This function is to be used only
@@ -143,9 +145,10 @@ s * Lookup a typedesc node in a symbol table. This function is to be used only
  *                                 in @c t itself (true) or in any of its parents (false)
  * @return                         The symbol table record or NULL for failure.
  */
-struct symbol_table_record *symbol_table_lookup_typedesc(const struct symbol_table *t,
-                                                         const struct ast_node *typedesc,
-                                                         bool *at_first_symbol_table);
+struct symbol_table_record *symbol_table_lookup_typedesc(
+    const struct symbol_table *t,
+    const struct ast_node *typedesc,
+    bool *at_first_symbol_table);
 
 /**
  * Lookup a defined type by name in the symbol table
@@ -157,9 +160,10 @@ struct symbol_table_record *symbol_table_lookup_typedesc(const struct symbol_tab
  *                                 in @c t itself (true) or in any of its parents (false)
  * @return                         The defined type or NULL for not found.
  */
-struct type *symbol_table_lookup_defined_type(const struct symbol_table *t,
-                                              const struct RFstring *id,
-                                              bool *at_first_symbol_table);
+struct type *symbol_table_lookup_defined_type(
+    const struct symbol_table *t,
+    const struct RFstring *id,
+    bool *at_first_symbol_table);
 
 /**
  * Lookup if a rir object has an entry in a symbol table or its parents
@@ -169,19 +173,22 @@ struct type *symbol_table_lookup_defined_type(const struct symbol_table *t,
  * @param obj                       The rir object to search for in the symbol
  *                                  table.
  */
-struct symbol_table_record *symbol_table_lookup_rirobj(const struct symbol_table *t,
-                                                       struct rir_object *obj);
+struct symbol_table_record *symbol_table_lookup_rirobj(
+    const struct symbol_table *t,
+    struct rir_object *obj);
 
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user);
 
-i_INLINE_DECL void symbol_table_set_parent(struct symbol_table *t,
-                                           struct symbol_table *parent)
+i_INLINE_DECL void symbol_table_set_parent(
+    struct symbol_table *t,
+    struct symbol_table *parent)
 {
     t->parent = parent;
 }
 
-i_INLINE_DECL void symbol_table_set_fndecl(struct symbol_table *t,
-                                           struct ast_node *decl)
+i_INLINE_DECL void symbol_table_set_fndecl(
+    struct symbol_table *t,
+    struct ast_node *decl)
 {
     t->fndecl = decl;
 }
@@ -206,8 +213,9 @@ i_INLINE_DECL bool symbol_table_is_empty(const struct symbol_table *t)
  * traversing the AST downwards in symbol table creation. Never try to swap 
  * a symbol table with itself.
  */
-i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_ptr,
-                                             struct symbol_table *new_st)
+i_INLINE_DECL void symbol_table_swap_current(
+    struct symbol_table **current_st_ptr,
+    struct symbol_table *new_st)
 {
     RF_ASSERT(*current_st_ptr != new_st, "Tried to swap a symbol table with itself");
     symbol_table_set_parent(new_st, *current_st_ptr);
@@ -215,9 +223,10 @@ i_INLINE_DECL void symbol_table_swap_current(struct symbol_table **current_st_pt
     *current_st_ptr = new_st;
 }
 
-i_INLINE_DECL struct type *symbol_table_lookup_type(struct symbol_table *t,
-                                                    const struct RFstring *id,
-                                                    bool *at_first_symbol_table)
+i_INLINE_DECL struct type *symbol_table_lookup_type(
+    struct symbol_table *t,
+    const struct RFstring *id,
+    bool *at_first_symbol_table)
 {
     struct symbol_table_record *rec = symbol_table_lookup_record(t, id, at_first_symbol_table);
     if (!rec) {

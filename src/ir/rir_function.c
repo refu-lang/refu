@@ -23,9 +23,10 @@ struct rir_type_fn_ctx {
     struct rir_fndef *def;
 };
 
-static inline void rir_type_fn_ctx_init(struct rir_type_fn_ctx *ctx,
-                                        struct rir_fndef *def,
-                                        struct rir_ctx *rirctx)
+static inline void rir_type_fn_ctx_init(
+    struct rir_type_fn_ctx *ctx,
+    struct rir_fndef *def,
+    struct rir_ctx *rirctx)
 {
     ctx->rirctx = rirctx;
     ctx->def = def;
@@ -332,8 +333,7 @@ static inline bool rir_fndef_init_common_outro(
     struct rir_fndef *ret,
     const struct rir_type *ret_type,
     enum rir_pos pos,
-    rir_data data
-)
+    rir_data data)
 {
     bool rc = true;
     darray_init(ret->blocks);
@@ -381,9 +381,10 @@ struct rir_fndef *rir_fndef_create_no_decl(enum rir_pos pos, rir_data data)
     return ret;
 }
 
-static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
-                                    const struct ast_node *n,
-                                    struct rir_ctx *ctx)
+static bool rir_fndef_init_from_ast(
+    struct rir_fndef *ret,
+    const struct ast_node *n,
+    struct rir_ctx *ctx)
 {
     bool success = false;
     const struct ast_node *decl = ast_fnimpl_fndecl_get(n);
@@ -414,7 +415,11 @@ static bool rir_fndef_init_from_ast(struct rir_fndef *ret,
     ret->end_label = &end_block->label;
 
     // finally create the first block of the body
-    struct rir_block *first_block  = rir_block_create_from_ast(ast_fnimpl_body_get(n), true, ctx);
+    struct rir_block *first_block  = rir_block_create_from_ast(
+        ast_fnimpl_body_get(n),
+        BLOCK_POSITION_FUNCTIONSTART,
+        ctx
+    );
     if (!first_block) {
         RF_ERROR("Failed to turn the body of a function into the RIR format");
         goto end;

@@ -127,12 +127,14 @@ static inline void llvm_traversal_ctx_add_value(struct llvm_traversal_ctx *ctx,
     darray_append(ctx->values, value);
 }
 
-bool llvm_traversal_ctx_map_llvmval(struct llvm_traversal_ctx *ctx,
-                                    const struct rir_value *rv,
-                                    struct LLVMOpaqueValue *lv);
-bool llvm_traversal_ctx_map_llvmblock(struct llvm_traversal_ctx *ctx,
-                                      const struct rir_value *rv,
-                                      struct LLVMOpaqueBasicBlock *lb);
+bool llvm_traversal_ctx_map_llvmval(
+    struct llvm_traversal_ctx *ctx,
+    const struct rir_value *rv,
+    struct LLVMOpaqueValue *lv);
+bool llvm_traversal_ctx_map_llvmblock(
+    struct llvm_traversal_ctx *ctx,
+    const struct rir_value *rv,
+    struct LLVMOpaqueBasicBlock *lb);
 void llvm_traversal_ctx_reset_valmap(struct llvm_traversal_ctx *ctx);
 
 enum llvm_expression_compile_options {

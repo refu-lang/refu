@@ -217,6 +217,9 @@ void ow_ctx_check_expr(struct rir_expression *expr)
         }
     }
         break;
+    case RIR_EXPRESSION_FIXEDARRSIZE:
+        // TODO
+        break;
     case RIR_EXPRESSION_OBJMEMBERAT:
         ow_ctx_check_value_from_expr(expr->objmemberat.objmemory, expr);
         break;

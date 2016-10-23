@@ -26,6 +26,14 @@ LLVMValueRef bllvm_compile_fixedarr(
     return llvm_constarr;
 }
 
+LLVMValueRef bllvm_compile_fixedarrsize(
+    const struct rir_expression *expr,
+    struct llvm_traversal_ctx *ctx)
+{
+    RF_ASSERT(expr->type == RIR_EXPRESSION_FIXEDARRSIZE, "unexpexted expression");
+    return bllvm_value_from_rir_value_or_die(&expr->val, ctx);
+}
+
 struct LLVMOpaqueValue *bllvm_compile_objidx(
     const struct rir_expression *expr,
     struct llvm_traversal_ctx *ctx)

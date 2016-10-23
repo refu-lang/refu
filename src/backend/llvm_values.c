@@ -35,7 +35,7 @@ void *bllvm_value_from_rir_value(
                 RF_ERROR("Failed to add a rir argument to rir value to llvm mapping");
                 ret = NULL;
             }
-        }// else it's a failure, with ret == NULL
+        } // else it's a failure, with ret == NULL
     }
     return ret;
 }
