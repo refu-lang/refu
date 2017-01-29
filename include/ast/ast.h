@@ -18,6 +18,7 @@
 #include <ast/operators_decls.h>
 #include <ast/ifexpr_decls.h>
 #include <ast/forexpr_decls.h>
+#include <ast/iterable_decls.h>
 #include <ast/matchexpr_decls.h>
 #include <ast/block_decls.h>
 #include <ast/returnstmt_decls.h>
@@ -78,6 +79,7 @@ enum ast_type {
     AST_CONDITIONAL_BRANCH,
     AST_IF_EXPRESSION,
     AST_FOR_EXPRESSION,
+    AST_ITERABLE,
     AST_MATCH_EXPRESSION,
     AST_MATCH_CASE,
     AST_MODULE,
@@ -131,6 +133,7 @@ struct ast_node {
         struct ast_condbranch condbranch;
         struct ast_ifexpr ifexpr;
         struct ast_forexpr forexpr;
+        struct ast_iterable iterable;
         struct ast_matchcase matchcase;
         struct ast_matchexpr matchexpr;
         struct ast_module module;
@@ -148,12 +151,14 @@ struct ast_node *ast_node_create(enum ast_type type);
 
 struct ast_node *ast_node_create_loc(enum ast_type type,
                                      const struct inplocation *loc);
-struct ast_node *ast_node_create_marks(enum ast_type type,
-                                       const struct inplocation_mark *start,
-                                       const struct inplocation_mark *end);
-struct ast_node *ast_node_create_ptrs(enum ast_type type,
-                                      struct inpfile *f,
-                                      char *sp, char *ep);
+struct ast_node *ast_node_create_marks(
+    enum ast_type type,
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end);
+struct ast_node *ast_node_create_ptrs(
+    enum ast_type type,
+    struct inpfile *f,
+    char *sp, char *ep);
 
 void ast_node_destroy(struct ast_node *n);
 /**

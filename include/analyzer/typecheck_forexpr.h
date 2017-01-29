@@ -14,4 +14,8 @@ enum traversal_cb_res typecheck_forexpr_ascending(
     struct ast_node *n,
     struct analyzer_traversal_ctx *ctx);
 
+enum traversal_cb_res typecheck_iterable(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx);
+
 #endif

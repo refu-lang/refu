@@ -2,6 +2,7 @@
 
 #include <ast/ast.h>
 #include <ast/forexpr.h>
+#include <ast/iterable.h>
 #include <info/info.h>
 #include <parser/parser.h>
 #include <lexer/lexer.h>
@@ -9,6 +10,21 @@
 #include "common.h"
 #include "identifier.h"
 #include "block.h"
+
+struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
+{
+    struct ast_node *iterable = ast_parser_acc_identifier(p);
+    if (iterable) {
+        return ast_iterable_create_identifier(iterable);
+    }
+
+    return NULL; //remove when range parsing is done
+
+    struct token *tok = lexer_lookahead(parser_lexer(p), 1);
+    if (!tok || !token_is_numeric_constant(tok)) {
+        return NULL;
+    }
+}
 
 struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
 {
@@ -25,7 +41,7 @@ struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
     }
     lexer_push(parser_lexer(p));
     start = token_get_start(tok);
-    //console 'for'
+    //consume 'for'
     lexer_curr_token_advance(parser_lexer(p));
 
     if (!(loopvar = ast_parser_acc_identifier(p))) {
@@ -48,12 +64,12 @@ struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
         goto err;
     }
 
-    if (!(iterable = ast_parser_acc_identifier(p))) {
+    if (!(iterable = ast_parser_acc_iterable(p))) {
         parser_synerr(
             p,
             lexer_last_token_start(parser_lexer(p)),
             NULL,
-            "Expected an identifier for the iterable after 'in'"
+            "Expected an iterable after 'in'"
         );
         goto err;
     }

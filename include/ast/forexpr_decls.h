@@ -4,6 +4,7 @@
 #include <analyzer/symbol_table.h>
 
 struct ast_node;
+struct ast_iterable;
 
 struct ast_forexpr {
     //! The loop variable that changes in each iteration

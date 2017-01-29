@@ -6,11 +6,16 @@
 #include <ir/rir_binaryop.h>
 
 #include <ast/forexpr.h>
+#include <ast/iterable.h>
 
 bool rir_process_forexpr(const struct ast_node *n, struct rir_ctx *ctx)
 {
     // read the size of the iterable
-    if (!rir_process_identifier(ast_forexpr_iterable_get(n), ctx)) {
+    // TODO: Some work needed here when range is implemented
+    if (!rir_process_identifier(
+            ast_iterable_identifier_get(ast_forexpr_iterable_get(n)),
+            ctx
+        )) {
         goto fail;
     }
     struct rir_value *arr = rir_ctx_lastval_get(ctx);

@@ -34,6 +34,7 @@ static const struct RFstring ast_type_strings[] = {
     [AST_CONDITIONAL_BRANCH] = RF_STRING_STATIC_INIT("conditional branch"),
     [AST_IF_EXPRESSION] = RF_STRING_STATIC_INIT("if expression"),
     [AST_FOR_EXPRESSION] = RF_STRING_STATIC_INIT("for expression"),
+    [AST_ITERABLE] = RF_STRING_STATIC_INIT("iterable"),
     [AST_MATCH_EXPRESSION] = RF_STRING_STATIC_INIT("match expression"),
     [AST_MATCH_CASE] = RF_STRING_STATIC_INIT("match case"),
     [AST_MODULE] = RF_STRING_STATIC_INIT("module"),

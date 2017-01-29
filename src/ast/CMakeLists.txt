@@ -9,6 +9,7 @@ rf_target_and_test_sources(refu test_refu_helper PUBLIC "${CMAKE_CURRENT_SOURCE_
   "${CMAKE_CURRENT_SOURCE_DIR}/identifier.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/ifexpr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/forexpr.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/iterable.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/matchexpr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/module.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/operators.c"

@@ -9,6 +9,7 @@
 #include "../../src/parser/recursive_descent/forexpr.h"
 #include "../../src/parser/recursive_descent/block.h"
 #include <ast/forexpr.h>
+#include <ast/iterable.h>
 #include <ast/function.h>
 #include <ast/operators.h>
 #include <ast/block.h>
@@ -34,7 +35,7 @@ START_TEST(test_acc_forexpr_1) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *id1 = testsupport_parser_identifier_create(0, 4, 0, 4);
-    struct ast_node *id2 = testsupport_parser_identifier_create(0, 9, 0, 13);
+    testsupport_parser_iterable_identifier_create(id2, 0, 9, 0, 13);
     testsupport_parser_block_create(bnode, 0, 15, 2, 0);
     struct ast_node *fn_name = testsupport_parser_identifier_create(
         1, 4, 1, 9
@@ -71,7 +72,7 @@ START_TEST(test_acc_forexpr_2) {
     ast_node_add_child(bnode, vardecl);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(2, 8, 2, 8);
-    struct ast_node *id_arr = testsupport_parser_identifier_create(2, 13, 2, 17);
+    testsupport_parser_iterable_identifier_create(id_arr, 2, 13, 2, 17);
     testsupport_parser_block_create(forblock, 2, 19, 4, 4);
 
     struct ast_node *id_b2 = testsupport_parser_identifier_create(3, 8, 3, 8);
@@ -141,7 +142,7 @@ START_TEST(test_acc_forexpr_errors_3) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "Expected an identifier for the iterable after 'in'",
+            "Expected an iterable after 'in'",
             0, 6),
     };
     ck_assert_parser_errors(errors);

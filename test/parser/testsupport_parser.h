@@ -209,6 +209,21 @@ struct ast_node *testsupport_parser_identifier_create(
     )
 
 /**
+ * A utility testing macro to generate an iterable identifier at location
+ */
+#define testsupport_parser_iterable_identifier_create(                  \
+    node_,                                                              \
+    sl_, sc_, el_, ec_)                                                 \
+    struct ast_node *node_;                                             \
+    do {                                                                \
+        struct ast_node *tmpid = testsupport_parser_identifier_create(  \
+            sl_, sc_, el_, ec_                                          \
+        );                                                              \
+        node_ = ast_iterable_create_identifier(tmpid);                  \
+        node_->state = AST_NODE_STATE_AFTER_PARSING;                    \
+    } while (0)
+
+/**
  * A utility testing macro to generate an array spec at a location
  */
 #define testsupport_parser_arrspec_create(node_, arr_,                  \

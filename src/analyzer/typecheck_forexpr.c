@@ -2,6 +2,7 @@
 
 #include <ast/ast.h>
 #include <ast/forexpr.h>
+#include <ast/iterable.h>
 #include <ast/identifier.h>
 
 #include <analyzer/analyzer.h>
@@ -21,14 +22,19 @@ bool typecheck_forexpr_descending(
     // on the type of the loop iterable
 
     // find the type of the loop iterable
-    titerable = type_lookup_identifier_string(ast_identifier_str(iterable), ctx->current_st);
+    // TODO: Some more work needed here when ranges make it into type checking
+    struct ast_node *iterable_id = ast_iterable_identifier_get(iterable);
+    titerable = type_lookup_identifier_string(
+        ast_identifier_str(iterable_id),
+        ctx->current_st
+    );
     if (!(titerable)) {
         analyzer_err(
             ctx->m, ast_node_startmark(iterable),
             ast_node_endmark(iterable),
             "Undeclared identifier \""RFS_PF"\" as the iterable of "
             "a for expression",
-            RFS_PA(ast_identifier_str(iterable))
+            RFS_PA(ast_identifier_str(iterable_id))
         );
         return false;
     }
@@ -79,5 +85,18 @@ enum traversal_cb_res typecheck_forexpr_ascending(
         forexpr_type,
         ctx
     );
+    return TRAVERSAL_CB_OK;
+}
+
+enum traversal_cb_res typecheck_iterable(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_ITERABLE);
+    RF_ASSERT(
+        n->iterable.type == ITERABLE_COLLECTION,
+        "Other iterable not implemented yet"
+    );
+    traversal_node_set_type(n, ast_node_get_type(n->iterable.identifier), ctx);
     return TRAVERSAL_CB_OK;
 }
