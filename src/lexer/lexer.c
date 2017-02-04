@@ -710,7 +710,11 @@ bool lexer_token_has_value(const struct lexer *l, struct token *tok)
         tok->type == TOKEN_CONSTANT_INTEGER ||
         tok->type == TOKEN_CONSTANT_FLOAT;
 }
-i_INLINE_INS struct ast_node *lexer_token_get_value(const struct lexer *l, struct token *tok);
+i_INLINE_INS struct ast_node *lexer_token_get_value_impl(
+    const struct lexer *l,
+    struct token *tok,
+    bool remove_from_lexer
+);
 
 i_INLINE_INS struct token *lexer_expect_token(struct lexer *l, unsigned int type);
 i_INLINE_INS struct inplocation *lexer_last_token_location(struct lexer *l);

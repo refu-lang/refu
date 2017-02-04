@@ -27,7 +27,7 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
         }
         const struct inplocation_mark *start = token_get_start(tok);
 
-        struct ast_node *n = lexer_token_get_value(parser_lexer(p), tok);
+        n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
         int64_t range_start;
         int64_t range_end;
         int64_t range_step;
@@ -61,6 +61,7 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
             goto err;
         }
         const struct inplocation_mark *end = token_get_end(tok);
+        n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
         RF_ASSERT(
             ast_constant_get_integer(&n->constant, &range_end),
             "We should only have constant integer here"
@@ -85,6 +86,7 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
             }
             end = token_get_end(tok);
             range_step = range_end;
+            n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
             RF_ASSERT(
                 ast_constant_get_integer(&n->constant, &range_end),
                 "We should only have constant integer here"
@@ -169,7 +171,7 @@ struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
             NULL,
             "Expected a block following the 'for' expression"
         );
-        goto err;
+        goto err_free_iterable;
     }
 
     if (!(n = ast_forexpr_create(start, ast_node_endmark(body), loopvar, iterable, body))) {
@@ -182,6 +184,8 @@ struct ast_node *ast_parser_acc_forexpr(struct ast_parser *p)
 
 err_free_body:
     ast_node_destroy(body);
+err_free_iterable:
+    ast_node_destroy(iterable);
 err:
     lexer_rollback(parser_lexer(p));
     return NULL;

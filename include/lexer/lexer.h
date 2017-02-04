@@ -46,12 +46,21 @@ struct token *lexer_lookback(struct lexer *l, unsigned int num);
 struct token *lexer_last_token_valid(struct lexer *l);
 
 bool lexer_token_has_value(const struct lexer *l, struct token *tok);
-i_INLINE_DECL struct ast_node *lexer_token_get_value(const struct lexer *l, struct token *tok)
+i_INLINE_DECL struct ast_node *lexer_token_get_value_impl(
+    const struct lexer *l,
+    struct token *tok,
+    bool remove_from_lexer)
 {
     RF_ASSERT(lexer_token_has_value(l, tok), "Requesting value of illegal token type");
-    tok->value.owned_by_lexer = false;
+    tok->value.owned_by_lexer = !remove_from_lexer;
     return tok->value.value.ast;
 }
+
+#define lexer_token_get_value(lexer_, token_)               \
+    lexer_token_get_value_impl((lexer_), (token_), true)    \
+
+#define lexer_token_get_value_but_keep_ownership(lexer_, token_)    \
+    lexer_token_get_value_impl((lexer_), (token_), false)
 
 /**
  * Consumes and returns the next token iff it's a token of @c type

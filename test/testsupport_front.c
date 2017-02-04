@@ -550,6 +550,50 @@ static bool check_nodes(
                 RFS_PA(ast_string_literal_get_str(expect)));
         }
         break;
+    case AST_ITERABLE:
+        if (got->iterable.type != expect->iterable.type) {
+            ck_astcheck_abort(
+                filename, line,
+                "iterable ast node type mismatch"
+            );
+            return false;
+        }
+
+        if (got->iterable.type == ITERABLE_RANGE) {
+            if (got->iterable.range.start != expect->iterable.range.start) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "iterable range start mismatch: "
+                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    got->iterable.range.start,
+                    expect->iterable.range.start
+                );
+                return false;
+            }
+
+            if (got->iterable.range.step != expect->iterable.range.step) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "iterable range step mismatch: "
+                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    got->iterable.range.step,
+                    expect->iterable.range.step
+                );
+                return false;
+            }
+
+            if (got->iterable.range.end != expect->iterable.range.end) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "iterable range end mismatch: "
+                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    got->iterable.range.end,
+                    expect->iterable.range.end
+                );
+                return false;
+            }
+        }
+        break;
     case AST_CONSTANT:
         ctype = ast_constant_get_type(&got->constant);
         if (ctype != ast_constant_get_type(&expect->constant)) {
