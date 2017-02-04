@@ -65,6 +65,7 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
             ast_constant_get_integer(&n->constant, &range_end),
             "We should only have constant integer here"
         );
+        lexer_curr_token_advance(parser_lexer(p));
         range_step = 1;
 
         tok = lexer_lookahead(parser_lexer(p), 1);
@@ -88,6 +89,7 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
                 ast_constant_get_integer(&n->constant, &range_end),
                 "We should only have constant integer here"
             );
+            lexer_curr_token_advance(parser_lexer(p));
         }
 
         iterable = ast_iterable_create_range(
