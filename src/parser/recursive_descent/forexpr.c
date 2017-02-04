@@ -3,6 +3,7 @@
 #include <ast/ast.h>
 #include <ast/forexpr.h>
 #include <ast/iterable.h>
+#include <ast/constants.h>
 #include <info/info.h>
 #include <parser/parser.h>
 #include <lexer/lexer.h>
@@ -30,7 +31,10 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
         int64_t range_start;
         int64_t range_end;
         int64_t range_step;
-        RF_ASSERT(ast_constant_get_integer(&n->constant, &range_start));
+        RF_ASSERT(
+            ast_constant_get_integer(&n->constant, &range_start),
+            "We should only have constant integer here"
+        );
         lexer_curr_token_advance(parser_lexer(p));
 
         tok = lexer_lookahead(parser_lexer(p), 1);
@@ -57,7 +61,10 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
             goto err;
         }
         const struct inplocation_mark *end = token_get_end(tok);
-        RF_ASSERT(ast_constant_get_integer(&n->constant, &range_end));
+        RF_ASSERT(
+            ast_constant_get_integer(&n->constant, &range_end),
+            "We should only have constant integer here"
+        );
         range_step = 1;
 
         tok = lexer_lookahead(parser_lexer(p), 1);
@@ -77,7 +84,10 @@ struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
             }
             end = token_get_end(tok);
             range_step = range_end;
-            RF_ASSERT(ast_constant_get_integer(&n->constant, &range_end));
+            RF_ASSERT(
+                ast_constant_get_integer(&n->constant, &range_end),
+                "We should only have constant integer here"
+            );
         }
 
         iterable = ast_iterable_create_range(

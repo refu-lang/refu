@@ -17,6 +17,25 @@ struct ast_node *ast_iterable_create_identifier(struct ast_node *identifier)
     return ret;
 }
 
+struct ast_node *ast_iterable_create_range(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    int rstart,
+    int rstep,
+    int rend)
+{
+    struct ast_node *ret = ast_node_create_marks(AST_ITERABLE, start, end);
+    if (!ret) {
+        return NULL;
+    }
+    ret->iterable.type = ITERABLE_RANGE;
+    ret->iterable.range.start = rstart;
+    ret->iterable.range.step = rstep;
+    ret->iterable.range.end = rend;
+
+    return ret;
+}
+
 struct ast_node* ast_iterable_identifier_get(const struct ast_node *it)
 {
     RF_ASSERT(

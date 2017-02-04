@@ -11,7 +11,7 @@ enum iterable_type {
 struct int_range {
     int start;
     int step;
-    int stop;
+    int end;
 };
 
 struct ast_iterable {
