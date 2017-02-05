@@ -564,7 +564,7 @@ static bool check_nodes(
                 ck_astcheck_abort(
                     filename, line,
                     "iterable range start mismatch: "
-                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    "Got \"%"PRId64"\" != expected \"%"PRId64"\"",
                     got->iterable.range.start,
                     expect->iterable.range.start
                 );
@@ -575,7 +575,7 @@ static bool check_nodes(
                 ck_astcheck_abort(
                     filename, line,
                     "iterable range step mismatch: "
-                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    "Got \"%"PRId64"\" != expected \"%"PRId64"\"",
                     got->iterable.range.step,
                     expect->iterable.range.step
                 );
@@ -586,7 +586,7 @@ static bool check_nodes(
                 ck_astcheck_abort(
                     filename, line,
                     "iterable range end mismatch: "
-                    "Got \"%"PRIu64"\" != expected \"%"PRIu64"\"",
+                    "Got \"%"PRId64"\" != expected \"%"PRId64"\"",
                     got->iterable.range.end,
                     expect->iterable.range.end
                 );

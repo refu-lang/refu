@@ -36,11 +36,19 @@ struct ast_node *ast_iterable_create_range(
     return ret;
 }
 
-struct ast_node* ast_iterable_identifier_get(const struct ast_node *it)
+int64_t ast_iterable_range_number_of_loops(const struct ast_node *n)
 {
-    RF_ASSERT(
-        it->type == AST_ITERABLE && it->iterable.type == ITERABLE_COLLECTION,
-        "Illegal ast node type. Expected a collection iterable"
-    );
-    return it->iterable.identifier;
+    // TODO: When it's impossible to determine in compile time (variable ranges)
+    // return -1
+    int64_t breadth = abs(ast_iterable_range_end_get(n) - ast_iterable_range_start_get(n));
+    int64_t abs_step = abs(ast_iterable_range_step_get(n));
+    return abs_step == 0 ? breadth : breadth / abs_step;
 }
+
+i_INLINE_INS struct ast_node* ast_iterable_identifier_get(const struct ast_node *it);
+
+i_INLINE_INS enum iterable_type ast_iterable_type_get(const struct ast_node *n);
+
+i_INLINE_INS int64_t ast_iterable_range_start_get(const struct ast_node *n);
+i_INLINE_INS int64_t ast_iterable_range_step_get(const struct ast_node *n);
+i_INLINE_INS int64_t ast_iterable_range_end_get(const struct ast_node *n);

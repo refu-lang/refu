@@ -838,6 +838,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
     case AST_FOR_EXPRESSION:
         ret = typecheck_forexpr_ascending(n, ctx);
         break;
+    case AST_ITERABLE:
+        ret = typecheck_iterable(n, ctx);
+        break;
     case AST_MATCH_CASE:
         ret = typecheck_matchcase(n, ctx);
         break;

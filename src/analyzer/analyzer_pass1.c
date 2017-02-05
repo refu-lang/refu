@@ -357,9 +357,6 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     case AST_FOR_EXPRESSION:
         ctx->current_st = ast_forexpr_symbol_table_get(n)->parent;
         break;
-    case AST_ITERABLE:
-        typecheck_iterable(n, ctx);
-        break;
     default:
         // do nothing
         break;
