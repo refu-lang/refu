@@ -673,7 +673,7 @@ START_TEST (test_unaryop_minus) {
     ck_end_to_end_run(inputs, 1, &output);
 } END_TEST
 
-START_TEST (test_unaryop_post_inc) {
+START_TEST (test_unaryop_pre_inc) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
             "test_input_file.rf",
@@ -687,7 +687,7 @@ START_TEST (test_unaryop_post_inc) {
     ck_end_to_end_run(inputs, 65);
 } END_TEST
 
-START_TEST (test_unaryop_post_dec) {
+START_TEST (test_unaryop_pre_dec) {
     struct test_input_pair inputs[] = {
         TEST_DECL_SRC(
             "test_input_file.rf",
@@ -890,8 +890,8 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_unary_operations, test_unaryop_minus);
-    tcase_add_test(st_unary_operations, test_unaryop_post_inc);
-    tcase_add_test(st_unary_operations, test_unaryop_post_dec);
+    tcase_add_test(st_unary_operations, test_unaryop_pre_inc);
+    tcase_add_test(st_unary_operations, test_unaryop_pre_dec);
 
     TCase *st_match_expr = tcase_create("end_to_end_match_expressions");
     tcase_add_checked_fixture(st_match_expr,
