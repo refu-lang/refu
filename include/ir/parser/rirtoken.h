@@ -81,7 +81,11 @@ enum rir_token_type {
 
 const struct rinternal_token *rir_lexer_lexeme_is_token(
     register const char *str,
+#if GPERF_MAJOR_VERSION >= 3 && GPERF_MINOR_VERSION >= 1
+    register size_t len
+#else
     register unsigned int len
+#endif
 );
 
 const struct RFstring *rir_tokentype_to_str(enum rir_token_type type);

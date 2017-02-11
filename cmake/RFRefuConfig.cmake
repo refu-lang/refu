@@ -9,6 +9,7 @@
 
 include(RFOption)
 include (RFUseLLVM)
+include (FindGperf)
 
 function(refu_config TARGET)
   # --- Add refu options
@@ -52,9 +53,7 @@ buffer used by the compiler to store all messages"
     endif()
   endif()
 
-
-
-  find_package(Gperf REQUIRED)
+  rf_use_gperf(${TARGET})
 
   # Deal with LLVM
   find_package(LLVM REQUIRED CONFIG)
