@@ -88,4 +88,9 @@ i_INLINE_DECL bool ast_constant_get_bool(const struct ast_constant *n)
               "Function called for invalid ast node");
     return n->value.boolean;
 }
+
+i_INLINE_DECL bool ast_is_constant_integer(const struct ast_node *n)
+{
+    return n->type == AST_CONSTANT && n->constant.type == CONSTANT_NUMBER_INTEGER;
+}
 #endif

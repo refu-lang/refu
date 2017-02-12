@@ -12,11 +12,9 @@ struct inplocation_mark;
 struct ast_node *ast_iterable_create_identifier(struct ast_node *identifier);
 
 struct ast_node *ast_iterable_create_range(
-    const struct inplocation_mark *start,
-    const struct inplocation_mark *end,
-    int rstart,
-    int rstep,
-    int rend
+    struct ast_node *start_node,
+    struct ast_node *step_node,
+    struct ast_node *end_node
 );
 
 /**
@@ -42,31 +40,16 @@ i_INLINE_DECL enum iterable_type ast_iterable_type_get(const struct ast_node *n)
     return n->iterable.type;
 }
 
-i_INLINE_DECL int64_t ast_iterable_range_start_get(const struct ast_node *n)
-{
-    RF_ASSERT(
-        n->type == AST_ITERABLE && n->iterable.type == ITERABLE_RANGE,
-        "Illegal ast node type. Expected a range iterable"
-    );
-    return n->iterable.range.start;
-}
+bool ast_iterable_range_start_get(const struct ast_node *n, int64_t *ret);
+bool ast_iterable_range_step_get(const struct ast_node *n, int64_t *ret);
+bool ast_iterable_range_end_get(const struct ast_node *n, int64_t *ret);
 
-i_INLINE_DECL int64_t ast_iterable_range_step_get(const struct ast_node *n)
-{
-    RF_ASSERT(
-        n->type == AST_ITERABLE && n->iterable.type == ITERABLE_RANGE,
-        "Illegal ast node type. Expected a range iterable"
-    );
-    return n->iterable.range.step;
-}
+bool ast_iterable_range_compiletime_computable(
+    const struct ast_node *n,
+    int64_t *start,
+    int64_t *step,
+    int64_t* end
+);
 
-i_INLINE_DECL int64_t ast_iterable_range_end_get(const struct ast_node *n)
-{
-    RF_ASSERT(
-        n->type == AST_ITERABLE && n->iterable.type == ITERABLE_RANGE,
-        "Illegal ast node type. Expected a range iterable"
-    );
-    return n->iterable.range.end;
-}
 
 #endif

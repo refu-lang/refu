@@ -12,99 +12,89 @@
 #include "identifier.h"
 #include "block.h"
 
+static struct ast_node *ast_parser_acc_range_member(struct ast_parser *p, struct token *tok)
+{
+    struct ast_node *n = NULL;
+    if (!tok) {
+        return NULL;
+    }
+    if (tok->type == TOKEN_IDENTIFIER) {
+        n = ast_parser_acc_identifier(p);
+    } else if (token_is_numeric_constant(tok)) {
+        n = lexer_token_get_value(parser_lexer(p), tok);
+    } else {
+        return NULL;
+    }
+    // consume the identifier or constant
+    lexer_curr_token_advance(parser_lexer(p));
+    return n;
+}
+
+
 struct ast_node *ast_parser_acc_iterable(struct ast_parser *p)
 {
     lexer_push(parser_lexer(p));
     struct ast_node *iterable;
-    struct ast_node *n = ast_parser_acc_identifier(p);
-    if (n) {
-        iterable = ast_iterable_create_identifier(n);
-    } else {
+    struct token *tok = lexer_lookahead(parser_lexer(p), 1);
+    struct token *tok2 = lexer_lookahead(parser_lexer(p), 2);
+    if (!tok) {
+        goto err;
+    }
 
-        struct token *tok = lexer_lookahead(parser_lexer(p), 1);
-        if (!tok || !token_is_numeric_constant(tok)) {
+    if (tok2 && tok2->type == TOKEN_SM_COLON) {
+        struct ast_node *start_node;
+        struct ast_node *step_node = NULL;
+        struct ast_node *end_node;
+        if (!(start_node = ast_parser_acc_range_member(p, tok))) {
             goto err;
         }
-        const struct inplocation_mark *start = token_get_start(tok);
-
-        n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
-        int64_t range_start;
-        int64_t range_end;
-        int64_t range_step;
-        RF_ASSERT(
-            ast_constant_get_integer(&n->constant, &range_start),
-            "We should only have constant integer here"
-        );
+        // consume ':'
         lexer_curr_token_advance(parser_lexer(p));
 
         tok = lexer_lookahead(parser_lexer(p), 1);
-        if (!tok || tok->type != TOKEN_SM_COLON) {
+        if (!(end_node = ast_parser_acc_range_member(p, tok))) {
             parser_synerr(
                 p,
                 lexer_last_token_start(parser_lexer(p)),
                 NULL,
-                "Expected a ':' after the first number of a numeric range iterator"
+                "An identifier or constant should follow the ':'"
             );
             goto err;
         }
-        //consume ':'
-        lexer_curr_token_advance(parser_lexer(p));
-
-        tok = lexer_lookahead(parser_lexer(p), 1);
-        if (!tok || !token_is_numeric_constant(tok)) {
-            parser_synerr(
-                p,
-                lexer_last_token_start(parser_lexer(p)),
-                NULL,
-                "A range step or a range end integer should follow the ':'"
-            );
-            goto err;
-        }
-        const struct inplocation_mark *end = token_get_end(tok);
-        n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
-        RF_ASSERT(
-            ast_constant_get_integer(&n->constant, &range_end),
-            "We should only have constant integer here"
-        );
-        lexer_curr_token_advance(parser_lexer(p));
-        range_step = 1;
 
         tok = lexer_lookahead(parser_lexer(p), 1);
         if (tok && tok->type == TOKEN_SM_COLON) {
+            step_node = end_node;
             //consume second ':'
             lexer_curr_token_advance(parser_lexer(p));
 
             tok = lexer_lookahead(parser_lexer(p), 1);
-            if (!tok || !token_is_numeric_constant(tok)) {
+            if (!(end_node = ast_parser_acc_range_member(p, tok))) {
                 parser_synerr(
                     p,
                     lexer_last_token_start(parser_lexer(p)),
                     NULL,
-                    "A range end integer should follow the second ':'"
+                    "An identifier or constant should follow the second ':'"
                 );
                 goto err;
             }
-            end = token_get_end(tok);
-            range_step = range_end;
-            n = lexer_token_get_value_but_keep_ownership(parser_lexer(p), tok);
-            RF_ASSERT(
-                ast_constant_get_integer(&n->constant, &range_end),
-                "We should only have constant integer here"
-            );
-            lexer_curr_token_advance(parser_lexer(p));
         }
-
         iterable = ast_iterable_create_range(
-            start,
-            end,
-            range_start,
-            range_step,
-            range_end
+            start_node,
+            step_node,
+            end_node
         );
+
+    } else { // simple iteration of a collection identified by identifier
+        struct ast_node *n = ast_parser_acc_identifier(p);
+        if (!n) {
+            goto err;
+        }
+        iterable = ast_iterable_create_identifier(n);
     }
 
     if (!iterable) {
-        RF_ERROR("Could not initialize an iterale ast_node");
+        RF_ERROR("Could not initialize an iterable ast_node");
         goto err;
     }
 

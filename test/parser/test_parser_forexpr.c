@@ -119,7 +119,9 @@ START_TEST(test_acc_forexpr_3) {
     ast_node_add_child(bnode, vardecl);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(2, 8, 2, 8);
-    testsupport_parser_iterable_range_create(niterable, 2, 13, 2, 16, 0, 1, 25);
+    testsupport_parser_constant_create(const0, 2, 13, 2, 13, integer, 0);
+    testsupport_parser_constant_create(const25, 2, 15, 2, 16, integer, 25);
+    testsupport_parser_iterable_range_create(niterable, const0, NULL, const25);
     testsupport_parser_block_create(forblock, 2, 18, 4, 4);
 
     struct ast_node *id_b2 = testsupport_parser_identifier_create(3, 8, 3, 8);
@@ -166,7 +168,10 @@ START_TEST(test_acc_forexpr_4) {
     ast_node_add_child(bnode, vardecl);
 
     struct ast_node *id_a = testsupport_parser_identifier_create(2, 8, 2, 8);
-    testsupport_parser_iterable_range_create(niterable, 2, 13, 2, 17, 0, 2, 5);
+    testsupport_parser_constant_create(const0, 2, 13, 2, 13, integer, 0);
+    testsupport_parser_constant_create(const2, 2, 15, 2, 15, integer, 2);
+    testsupport_parser_constant_create(const5, 2, 17, 2, 17, integer, 5);
+    testsupport_parser_iterable_range_create(niterable, const0, const2, const5);
     testsupport_parser_block_create(forblock, 2, 19, 4, 4);
 
     struct ast_node *id_b2 = testsupport_parser_identifier_create(3, 8, 3, 8);
@@ -267,10 +272,6 @@ START_TEST(test_acc_forexpr_errors_5) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "Expected a ':' after the first number of a numeric range iterator",
-            0, 10),
-        TESTSUPPORT_INFOMSG_INIT_START(
-            MESSAGE_SYNTAX_ERROR,
             "Expected an iterable after 'in'",
             0, 9),
     };
@@ -279,7 +280,7 @@ START_TEST(test_acc_forexpr_errors_5) {
 
 START_TEST(test_acc_forexpr_errors_6) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "for a in 2:abc"
+        "for a in 2:\"foo\""
     );
     front_testdriver_new_ast_main_source(&s);
 
@@ -287,7 +288,7 @@ START_TEST(test_acc_forexpr_errors_6) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "A range step or a range end integer should follow the ':'",
+            "An identifier or constant should follow the ':'",
             0, 11),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
@@ -299,7 +300,7 @@ START_TEST(test_acc_forexpr_errors_6) {
 
 START_TEST(test_acc_forexpr_errors_7) {
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "for a in 0:2:abc"
+        "for a in 0:2:\"foo\""
     );
     front_testdriver_new_ast_main_source(&s);
 
@@ -307,7 +308,7 @@ START_TEST(test_acc_forexpr_errors_7) {
     struct info_msg errors[] = {
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,
-            "A range end integer should follow the second ':'",
+            "An identifier or constant should follow the second ':'",
             0, 13),
         TESTSUPPORT_INFOMSG_INIT_START(
             MESSAGE_SYNTAX_ERROR,

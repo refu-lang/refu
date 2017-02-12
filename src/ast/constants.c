@@ -122,3 +122,5 @@ i_INLINE_INS enum constant_type ast_constant_get_type(const struct ast_constant 
 i_INLINE_INS bool ast_constant_get_float(const struct ast_constant *n, double *v);
 i_INLINE_INS bool ast_constant_get_integer(const struct ast_constant *n, int64_t *v);
 i_INLINE_INS bool ast_constant_get_bool(const struct ast_constant *n);
+
+i_INLINE_INS bool ast_is_constant_integer(const struct ast_node *n);

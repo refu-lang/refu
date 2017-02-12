@@ -131,44 +131,47 @@ enum traversal_cb_res typecheck_iterable(
         break;
     case ITERABLE_RANGE:
     {
-        int64_t start = ast_iterable_range_start_get(n);
-        int64_t step = ast_iterable_range_step_get(n);
-        int64_t end = ast_iterable_range_end_get(n);
+        int64_t start;
+        int64_t step;
+        int64_t end;
 
-        if (step == 0) {
-            analyzer_err(
-                ctx->m,
-                ast_node_startmark(n),
-                ast_node_endmark(n),
-                "Providing zero as range step is invalid."
-            );
-            return TRAVERSAL_CB_ERROR;
-        }
+        if (ast_iterable_range_compiletime_computable(n, &start, &step, &end)) {
 
-        if (end <= start && step > 0) {
-            analyzer_err(
-                ctx->m,
-                ast_node_startmark(n),
-                ast_node_endmark(n),
-                "Provided range start \"%"PRId64"\" is greater or equal to the"
-                " end \"%"PRId64"\" while the step is increasing.",
-                start,
-                end
-            );
-            return TRAVERSAL_CB_ERROR;
-        }
+            if (step == 0) {
+                analyzer_err(
+                    ctx->m,
+                    ast_node_startmark(n),
+                    ast_node_endmark(n),
+                    "Providing zero as range step is invalid."
+                );
+                return TRAVERSAL_CB_ERROR;
+            }
 
-        if (start <= end && step < 0) {
-            analyzer_err(
-                ctx->m,
-                ast_node_startmark(n),
-                ast_node_endmark(n),
-                "Provided range start \"%"PRId64"\" is less or equal to the"
-                " end \"%"PRId64"\" while the step is decreasing.",
-                start,
-                end
-            );
-            return TRAVERSAL_CB_ERROR;
+            if (end <= start && step > 0) {
+                analyzer_err(
+                    ctx->m,
+                    ast_node_startmark(n),
+                    ast_node_endmark(n),
+                    "Provided range start \"%"PRId64"\" is greater or equal to the"
+                    " end \"%"PRId64"\" while the step is increasing.",
+                    start,
+                    end
+                );
+                return TRAVERSAL_CB_ERROR;
+            }
+
+            if (start <= end && step < 0) {
+                analyzer_err(
+                    ctx->m,
+                    ast_node_startmark(n),
+                    ast_node_endmark(n),
+                    "Provided range start \"%"PRId64"\" is less or equal to the"
+                    " end \"%"PRId64"\" while the step is decreasing.",
+                    start,
+                    end
+                );
+                return TRAVERSAL_CB_ERROR;
+            }
         }
         traversal_node_set_type(n, type_elementary_get_type(ELEMENTARY_TYPE_INT_64), ctx);
         break;

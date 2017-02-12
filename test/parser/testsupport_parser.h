@@ -110,22 +110,12 @@ struct front_testdriver;
 
 #define testsupport_parser_iterable_range_create(           \
     node_,                                                  \
-    sl_, sc_, el_, ec_,                                     \
     rstart_,                                                \
     rstep_,                                                 \
     rend_)                                                  \
     struct ast_node *node_;                                 \
     do {                                                    \
-        struct inplocation temp_location_ = LOC_INIT(       \
-            get_front_testdriver()->current_front->file,    \
-            sl_,                                            \
-            sc_,                                            \
-            el_,                                            \
-            ec_                                             \
-        );                                                  \
         node_ = ast_iterable_create_range(                  \
-            &temp_location_.start,                          \
-            &temp_location_.end,                            \
             rstart_,                                        \
             rstep_,                                         \
             rend_                                           \
