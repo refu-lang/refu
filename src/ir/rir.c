@@ -63,7 +63,9 @@ i_INLINE_INS void rir_ctx_set_loopvars(
     struct rir_ctx *ctx,
     const struct RFstring *loopvar_str,
     struct rir_object *indexobj,
-    const struct rir_value *itervalue);
+    const struct rir_value *itervalue,
+    const struct rir_value *iterstep
+);
 i_INLINE_INS void rir_ctx_reset_loopvars(struct rir_ctx *ctx);
 
 bool rir_ctx_st_setobj(struct rir_ctx *ctx, const struct RFstring *id, struct rir_object *obj)

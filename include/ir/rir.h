@@ -100,10 +100,13 @@ struct rir_ctx {
     // used to pass the string of the identifier of a loop variable down into
     // the block_init function
     const struct RFstring *loopvar_str;
-    // used to pass the index rir_object down into the block_init function
+    // used to pass the index rir_object down into the block_init function for loops
     struct rir_object *indexobj;
     // used to pass the array loop iterable object down into block_init function
+    // for loops. It can also be NULL if it's a simple range iteration
     const struct rir_value *itervalue;
+    // used to pass the loop step object down into the block_init function for loops
+    const struct rir_value *iterstep;
 };
 
 void rir_ctx_reset(struct rir_ctx *ctx);
@@ -132,17 +135,20 @@ i_INLINE_DECL void rir_ctx_set_loopvars(
     struct rir_ctx *ctx,
     const struct RFstring *loopvar_str,
     struct rir_object *indexobj,
-    const struct rir_value *itervalue)
+    const struct rir_value *itervalue,
+    const struct rir_value *iterstep)
 {
     RF_ASSERT(
         ctx->loopvar_str == NULL
         && ctx->indexobj == NULL
-        && ctx->itervalue == NULL,
+        && ctx->itervalue == NULL
+        && ctx->iterstep == NULL,
         "Loop variables already initialized"
     );
     ctx->loopvar_str = loopvar_str;
     ctx->indexobj = indexobj;
     ctx->itervalue = itervalue;
+    ctx->iterstep = iterstep;
 }
 
 i_INLINE_DECL void rir_ctx_reset_loopvars(struct rir_ctx *ctx)
@@ -150,6 +156,7 @@ i_INLINE_DECL void rir_ctx_reset_loopvars(struct rir_ctx *ctx)
     ctx->loopvar_str = NULL;
     ctx->indexobj = NULL;
     ctx->itervalue = NULL;
+    ctx->iterstep = NULL;
 }
 
 

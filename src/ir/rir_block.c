@@ -302,23 +302,19 @@ static bool rir_block_init_from_ast(
             rir_ctx_pop_st(ctx);
 
             if (pos == BLOCK_POSITION_LOOP) {
-                // add 1 to the index
-                struct rir_value *oneval = rir_constantval_create_fromint64(
-                    1,
-                    rir_ctx_rir(ctx)
-                );
-                struct rir_expression *addone = rir_binaryop_create_nonast(
+                // add step to the index
+                struct rir_expression *add_step = rir_binaryop_create_nonast(
                     RIR_EXPRESSION_ADD,
                     &curridx->val,
-                    oneval,
+                    ctx->iterstep,
                     RIRPOS_AST,
                     ctx
                 );
-                rir_common_block_add(&ctx->common, addone);
+                rir_common_block_add(&ctx->common, add_step);
                 // write the new index to the index object
                 struct rir_expression *writenewidx = rir_write_create(
                     rir_object_value(ctx->indexobj),
-                    &addone->val,
+                    &add_step->val,
                     RIRPOS_AST,
                     ctx
                 );
