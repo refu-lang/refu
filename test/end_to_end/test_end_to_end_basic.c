@@ -828,7 +828,7 @@ START_TEST (test_forexpr_2) {
             "}"
         )};
     static const struct RFstring output = RF_STRING_STATIC_INIT("0 2 4 6 8 ");
-    ck_end_to_end_run(inputs, sum, &output, "test_input_file.rf");
+    ck_end_to_end_run(inputs, 20, &output, "test_input_file.rf");
 } END_TEST
 
 START_TEST (test_forexpr_3) {
