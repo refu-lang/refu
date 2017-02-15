@@ -5,7 +5,7 @@
 [![Coveralls](https://coveralls.io/repos/github/refu-lang/refu/badge.svg?branch=master)](https://coveralls.io/github/refu-lang/refu?branch=master)
 [![Join chat in gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/refu-lang/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
-This is the code repository for [refulang](http://refu.co/spec.html), a strongly typed, lazily evaluated programming language.
+This is the code repository for [refu](http://refu.co/spec.html), a strongly typed, lazily evaluated programming language.
 
 
 ## Building
@@ -50,6 +50,42 @@ submodule.
 ```sh
 ./test.sh --rfbase
 ```
+
+## Usage
+
+You can invoke `refu --help` in order to get all the possible arguments along with
+their description.
+
+Example:
+
+```
+ --help                                                  display this help and exit
+ --version                                               display version info and exit
+ -v, --verbose-level=1-4                                 Set compiler verbosity level
+ --backend=GCC|LLVM                                      The backend connection the refu compiler will user
+ --backend-debug                                         If given then some debug information about the backend code will be printed
+ --output-ast                                            If given then after analysis state the AST will be output in JSON format
+ -o, --output=name                                       output file name. Defaults to input.exe if not given
+ --rir                                                   Interpret the input file as a RIR file and parse it.
+ -r, --print-rir                                         If given will output the intermediate representation in a file
+ <file>                                                  input files
+ ```
+
+At the moment these are the important arguments.
+
+- `--verbose-level`
+Will determine how verbose the output of the compiler will be.
+
+- `--backend-debug`
+Will print out to the stdout the [LLVM IR](http://llvm.org/docs/LangRef.html) for
+debugging purposes.
+
+- `--output-ast`
+Will output the Abstract Syntax Tree in a .json format
+
+- `--print-rir`
+Will print the generated Refu Intermediate Format (RIR) for deugging purposes.
+
 
 ## Contributing
 You are more than welcome to open a Pull Request here in Github if you would like to contribute
