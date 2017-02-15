@@ -273,18 +273,25 @@ static bool rir_block_init_from_ast(
                     return false;
                 }
                 rir_common_block_add(&ctx->common, curridx);
-                // create a comparison of current index to iterable's size
-                struct rir_object *idxaccessobj = rir_objidx_create_obj(
-                    ctx->itervalue,
-                    &curridx->val,
-                    RIRPOS_AST,
-                    ctx
-                );
-                if (!idxaccessobj) {
-                    return false;
+
+                // if it's a normal iteration of a collection
+                if (ctx->itervalue) {
+                    // create a comparison of current index to iterable's size
+                    struct rir_object *idxaccessobj = rir_objidx_create_obj(
+                        ctx->itervalue,
+                        &curridx->val,
+                        RIRPOS_AST,
+                        ctx
+                    );
+                    if (!idxaccessobj) {
+                        return false;
+                    }
+                    rec->rirobj = idxaccessobj;
+                    rir_common_block_add(&ctx->common, &idxaccessobj->expr);
+                } else { // it can only be a range iteration
+                    // so get the index object directly
+                    rec->rirobj = ctx->indexobj;
                 }
-                rec->rirobj = idxaccessobj;
-                rir_common_block_add(&ctx->common, &idxaccessobj->expr);
             }
 
             // set current symbol table

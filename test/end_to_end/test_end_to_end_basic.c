@@ -798,7 +798,7 @@ START_TEST (test_forexpr_1) {
         TEST_DECL_SRC(
             "test_input_file.rf",
 
-            "fn main()->u32{\n"
+            "fn main()-> u32{\n"
             "    b:u64 = 0\n"
             "    a:u64[3] = [4, 73, 122]\n"
             "    for i in a {\n"
@@ -810,6 +810,44 @@ START_TEST (test_forexpr_1) {
         )};
     static const struct RFstring output = RF_STRING_STATIC_INIT("199");
     ck_end_to_end_run(inputs, 5, &output, "test_input_file.rf");
+} END_TEST
+
+START_TEST (test_forexpr_2) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()-> u32{\n"
+            "    sum:i64 = 0\n"
+            "    for i in 0:2:10 {\n"
+            "        print(i)\n"
+            "        print(\" \")\n"
+            "        sum = sum + i\n"
+            "    }\n"
+            "    return sum"
+            "}"
+        )};
+    static const struct RFstring output = RF_STRING_STATIC_INIT("0 2 4 6 8 ");
+    ck_end_to_end_run(inputs, sum, &output, "test_input_file.rf");
+} END_TEST
+
+START_TEST (test_forexpr_3) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()-> u32{\n"
+            "    sum:i64 = 0\n"
+            "    for i in 10:-2:-11 {\n"
+            "        print(i)\n"
+            "        print(\" \")\n"
+            "        sum = sum + i\n"
+            "    }\n"
+            "    return sum"
+            "}"
+        )};
+    static const struct RFstring output = RF_STRING_STATIC_INIT("10 8 6 4 2 0 -2 -4 -6 -8 -10 ");
+    ck_end_to_end_run(inputs, 0, &output, "test_input_file.rf");
 } END_TEST
 
 Suite *end_to_end_basic_suite_create(void)
@@ -913,6 +951,8 @@ Suite *end_to_end_basic_suite_create(void)
                               setup_end_to_end_tests,
                               teardown_end_to_end_tests);
     tcase_add_test(st_forexpr, test_forexpr_1);
+    tcase_add_test(st_forexpr, test_forexpr_2);
+    tcase_add_test(st_forexpr, test_forexpr_3);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_print);
