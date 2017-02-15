@@ -8,46 +8,110 @@
 #include <ast/forexpr.h>
 #include <ast/iterable.h>
 
+/**
+ * Convenience macro to read into the RIR either a constant range
+ *  attribute or a variable one
+ *
+ * @param attribute_         One of start, step, end
+ * @param iterable_          The ast_iterable node to read from
+ * @param attribute_int_     An int64_t to read into
+ * @param attribute_val_     A rir_value to read into
+ */
+#define iterable_range_attribute_to_rir(                                \
+    attribute_,                                                         \
+    iterable_,                                                          \
+    attribute_int_,                                                     \
+    attribute_val_                                                      \
+)                                                                       \
+    do {                                                                \
+        if (ast_iterable_range_##attribute_##_get(iterable_, &attribute_int_)) { \
+            /* attribute is constant */                                 \
+            attribute_val_ = rir_constantval_create_fromint64(attribute_int_, rir_ctx_rir(ctx)); \
+        } else {                                                        \
+            /* read the attribute variable */                           \
+            if (!rir_process_identifier(                                \
+                    iterable->iterable.range.attribute_##_node,         \
+                    ctx                                                 \
+                )) {                                                    \
+                goto fail;                                              \
+            }                                                           \
+            stepvalue = rir_ctx_lastval_get(ctx);                       \
+        }                                                               \
+    } while (0)
+
 bool rir_process_forexpr(const struct ast_node *n, struct rir_ctx *ctx)
 {
-    // read the size of the iterable
-    // TODO: Some work needed here when range is implemented
-    if (!rir_process_identifier(
-            ast_iterable_identifier_get(ast_forexpr_iterable_get(n)),
-            ctx
-        )) {
-        goto fail;
-    }
-    struct rir_value *arr = rir_ctx_lastval_get(ctx);
-    struct rir_object *sizeobj = rir_fixedarrsize_create(arr, ctx);
-    if (!sizeobj) {
-        RF_ERROR("Could not create fixedarrsize rir expression");
-        goto fail;
-    }
-    rir_common_block_add(&ctx->common, &sizeobj->expr);
+    struct ast_node *iterable = ast_forexpr_iterable_get(n);
+    struct rir_value *end_index_value;
+    struct rir_value *iterablevalue = NULL;
+    struct rir_object *indexobj;
+    struct rir_value *stepvalue;
+    struct rir_value *start_index_value;
+    int64_t start_index = 0;
+    int64_t step = 1;
+    int64_t end;
 
-    // allocate and initialize the index to 0
-    struct rir_object *indexobj = rir_alloca_create_obj(
-        rir_type_elem_get_or_create(rir_ctx_rir(ctx), ELEMENTARY_TYPE_UINT_64, false),
-        NULL,
-        RIRPOS_AST,
-        ctx
-    );
-    if (!indexobj) {
+    switch (ast_iterable_type_get(iterable)) {
+    case ITERABLE_RANGE:
+        RF_ASSERT(
+            ast_iterable_range_start_get(iterable, &start_index),
+            "Variable range not implemented yet"
+        );
+
+        iterable_range_attribute_to_rir(
+            start,
+            iterable,
+            start_index,
+            start_index_value
+        );
+        iterable_range_attribute_to_rir(step, iterable, step, stepvalue);
+        iterable_range_attribute_to_rir(end, iterable, end, end_index_value);
+
+        break;
+    case ITERABLE_COLLECTION:
+    {
+        // read the size of the iterable
+        if (!rir_process_identifier(
+                ast_iterable_identifier_get(iterable),
+                ctx
+            )) {
+            goto fail;
+        }
+        iterablevalue = rir_ctx_lastval_get(ctx);
+        struct rir_object *sizeobj = rir_fixedarrsize_create(iterablevalue, ctx);
+        if (!sizeobj) {
+            RF_ERROR("Could not create fixedarrsize rir expression");
+            goto fail;
+        }
+        rir_common_block_add(&ctx->common, &sizeobj->expr);
+        // end index is the size of the array
+        end_index_value = rir_object_value(sizeobj);
+
+        // starting index is zero
+        start_index_value = rir_constantval_create_fromint64(0, rir_ctx_rir(ctx));
+        // step is constant
+        stepvalue = rir_constantval_create_fromint64(step, rir_ctx_rir(ctx));
+        break;
+    }
+    default:
+        RF_ASSERT_OR_CRITICAL(false, return false, "Should never get here");
+        break;
+    }
+
+    // allocate, initialize and add the loop index to the block
+    if (!(indexobj = rirctx_alloc_write_add(
+            rir_type_elem_get_or_create(rir_ctx_rir(ctx), ELEMENTARY_TYPE_UINT_64, false),
+            start_index_value,
+            ctx))) {
         goto fail;
     }
-    rir_common_block_add(&ctx->common, &indexobj->expr);
-    struct rir_value *zeroval = rir_constantval_create_fromint64(0, rir_ctx_rir(ctx));
-    struct rir_expression *writezero = rir_write_create(
-        rir_object_value(indexobj),
-        zeroval,
-        RIRPOS_AST,
-        ctx
-    );
-    if (!writezero) {
+    // allocate, initialize and add the step to the block
+    if (!rirctx_alloc_write_add(
+            rir_type_elem_get_or_create(rir_ctx_rir(ctx), ELEMENTARY_TYPE_UINT_64, false),
+            stepvalue,
+            ctx)) {
         goto fail;
     }
-    rir_common_block_add(&ctx->common, writezero);
 
     // create the comparison block
     struct rir_block *old_block = rir_ctx_curr_block(ctx);
@@ -69,10 +133,22 @@ bool rir_process_forexpr(const struct ast_node *n, struct rir_ctx *ctx)
     }
     rir_common_block_add(&ctx->common, curridx);
     // create a comparison of current index to iterable's size
+    enum rir_expression_type comparison_type;
+    if (ast_iterable_type_get(iterable) == ITERABLE_COLLECTION) {
+        // when iterating array the index is simply increasing
+        // by 1 until it reaches end index
+        comparison_type = RIR_EXPRESSION_CMP_EQ;
+    } else {
+        if (start_index <= end) {
+            comparison_type = RIR_EXPRESSION_CMP_GE;
+        } else {
+            comparison_type = RIR_EXPRESSION_CMP_LE;
+        }
+    }
     struct rir_expression *cmp = rir_binaryop_create_nonast(
-        RIR_EXPRESSION_CMP_EQ,
+        comparison_type,
         &curridx->val,
-        rir_object_value(sizeobj),
+        end_index_value,
         RIRPOS_AST,
         ctx
     );
@@ -93,7 +169,8 @@ bool rir_process_forexpr(const struct ast_node *n, struct rir_ctx *ctx)
         ctx,
         ast_identifier_str(ast_forexpr_loopvar_get(n)),
         indexobj,
-        arr
+        iterablevalue,
+        stepvalue
     );
     struct rir_block *loop_body = rir_block_create_from_ast(
         ast_forexpr_body_get(n),

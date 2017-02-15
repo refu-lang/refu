@@ -65,17 +65,26 @@ LLVMValueRef bllvm_compile_comparison(const struct rir_expression *expr,
     case RIR_EXPRESSION_CMP_NE:
         llvm_int_compare_type = LLVMIntNE;
         break;
+        /*
+         * TODO: All 4 of GE/GT/LE/LT used to be UGE/UGT/ULE/ULT
+         *       Naturally this does not really work when we compare
+         *       signed numbers. Move the abstraction to the RIR so that
+         *       we can define the type of the comparison there since at the
+         *       moment we get here in the LLVM backend it's hard to see whether
+         *       we are comparing signed or unsigned integers.
+         *
+         */
     case RIR_EXPRESSION_CMP_GE:
-        llvm_int_compare_type = LLVMIntUGE;
+        llvm_int_compare_type = LLVMIntSGE;
         break;
     case RIR_EXPRESSION_CMP_GT:
-        llvm_int_compare_type = LLVMIntUGT;
+        llvm_int_compare_type = LLVMIntSGT;
         break;
     case RIR_EXPRESSION_CMP_LE:
-        llvm_int_compare_type = LLVMIntULE;
+        llvm_int_compare_type = LLVMIntSLE;
         break;
     case RIR_EXPRESSION_CMP_LT:
-        llvm_int_compare_type = LLVMIntULT;
+        llvm_int_compare_type = LLVMIntSLT;
         break;
     default:
             RF_CRITICAL_FAIL("Illegal operand types at comparison code generation");

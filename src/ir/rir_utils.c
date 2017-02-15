@@ -101,3 +101,28 @@ struct rir_object *rirctx_getread_obj(struct rir_object *o, struct rir_ctx *ctx)
     struct rir_expression *e = rirctx_getread_expr(&o->expr, ctx);
     return e ? rir_expression_to_obj(e) : NULL;
 }
+
+struct rir_object *rirctx_alloc_write_add(
+    struct rir_type *t,
+    struct rir_value *value_to_write,
+    struct rir_ctx *ctx)
+{
+    // allocate and initialize the object
+    struct rir_object *obj = rir_alloca_create_obj(t, NULL, RIRPOS_AST, ctx);
+    if (!obj) {
+        return NULL;
+    }
+    rir_common_block_add(&ctx->common, &obj->expr);
+    struct rir_expression *writeobj = rir_write_create(
+        rir_object_value(obj),
+        value_to_write,
+        RIRPOS_AST,
+        ctx
+    );
+    if (!writeobj) {
+        return NULL;
+    }
+    rir_common_block_add(&ctx->common, writeobj);
+    return obj;
+
+}

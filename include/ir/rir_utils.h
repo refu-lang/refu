@@ -42,4 +42,21 @@ struct rir_expression *rirctx_getread_expr(struct rir_expression *e, struct rir_
  */
 struct rir_object *rirctx_getread_obj(struct rir_object *e, struct rir_ctx *ctx);
 
+
+/**
+ * Allocates a rir object, writes to it and adds both operations to
+ * the current block
+ *
+ * @param t                   The rir type of which to allocate an object
+ * @param value_to_write      The rir value to write to the allocated object
+ * @param ctx                 The rir context
+ * @return                    The rir_object that was created for the allocation
+ *                            or NULL in failure.
+ */
+struct rir_object *rirctx_alloc_write_add(
+    struct rir_type *t,
+    struct rir_value *value_to_write,
+    struct rir_ctx *ctx
+);
+
 #endif
