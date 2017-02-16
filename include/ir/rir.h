@@ -72,6 +72,26 @@ struct rir_object *rir_strlit_obj(const struct rir *r, const struct ast_node *li
 
 void rir_freevalues_add(struct rir *r, struct rir_value *v);
 
+
+/**
+ * A context passing looping related data between functions. It's part of
+ * rir_ctx and allows communication between rir_process_forexpr() of rir_loops.c
+ * and rir_block_init_from_ast() of rir_block.c.
+ */
+struct rir_loop_ctx {
+    //! Passes the string of the identifier of a loop variable down into
+    //! the block_init function
+    const struct RFstring *loopvar_str;
+    //! Passes the index rir_object down into the block_init function for loops
+    struct rir_object *indexobj;
+    // Passes the array loop iterable object down into block_init function
+    // for loops. It can also be NULL if it's a simple range iteration
+    const struct rir_value *itervalue;
+    // Passes the loop step object down into the block_init function for loops
+    const struct rir_value *iterstep;
+};
+
+
 /**
  * A context carrying various rir related data to be passed around the
  * rir functions when accessing them for converting AST directly to RIR.
@@ -97,16 +117,7 @@ struct rir_ctx {
     unsigned expression_idx;
     //! Used to enumerate numeric value for all labels. Is reset for each function.
     unsigned label_idx;
-    // used to pass the string of the identifier of a loop variable down into
-    // the block_init function
-    const struct RFstring *loopvar_str;
-    // used to pass the index rir_object down into the block_init function for loops
-    struct rir_object *indexobj;
-    // used to pass the array loop iterable object down into block_init function
-    // for loops. It can also be NULL if it's a simple range iteration
-    const struct rir_value *itervalue;
-    // used to pass the loop step object down into the block_init function for loops
-    const struct rir_value *iterstep;
+    struct rir_loop_ctx loops;
 };
 
 void rir_ctx_reset(struct rir_ctx *ctx);
@@ -139,24 +150,24 @@ i_INLINE_DECL void rir_ctx_set_loopvars(
     const struct rir_value *iterstep)
 {
     RF_ASSERT(
-        ctx->loopvar_str == NULL
-        && ctx->indexobj == NULL
-        && ctx->itervalue == NULL
-        && ctx->iterstep == NULL,
+        ctx->loops.loopvar_str == NULL
+        && ctx->loops.indexobj == NULL
+        && ctx->loops.itervalue == NULL
+        && ctx->loops.iterstep == NULL,
         "Loop variables already initialized"
     );
-    ctx->loopvar_str = loopvar_str;
-    ctx->indexobj = indexobj;
-    ctx->itervalue = itervalue;
-    ctx->iterstep = iterstep;
+    ctx->loops.loopvar_str = loopvar_str;
+    ctx->loops.indexobj = indexobj;
+    ctx->loops.itervalue = itervalue;
+    ctx->loops.iterstep = iterstep;
 }
 
 i_INLINE_DECL void rir_ctx_reset_loopvars(struct rir_ctx *ctx)
 {
-    ctx->loopvar_str = NULL;
-    ctx->indexobj = NULL;
-    ctx->itervalue = NULL;
-    ctx->iterstep = NULL;
+    ctx->loops.loopvar_str = NULL;
+    ctx->loops.indexobj = NULL;
+    ctx->loops.itervalue = NULL;
+    ctx->loops.iterstep = NULL;
 }
 
 

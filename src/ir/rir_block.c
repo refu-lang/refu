@@ -262,12 +262,12 @@ static bool rir_block_init_from_ast(
                 // now get the loopvariable symbol table record object
                 struct symbol_table_record *rec = symbol_table_lookup_record(
                     block_st->parent,
-                    ctx->loopvar_str,
+                    ctx->loops.loopvar_str,
                     NULL
                 );
                 // read the current index
                 if (!(curridx = rir_read_create(
-                        rir_object_value(ctx->indexobj),
+                        rir_object_value(ctx->loops.indexobj),
                         RIRPOS_AST,
                         ctx))) {
                     return false;
@@ -275,10 +275,10 @@ static bool rir_block_init_from_ast(
                 rir_common_block_add(&ctx->common, curridx);
 
                 // if it's a normal iteration of a collection
-                if (ctx->itervalue) {
+                if (ctx->loops.itervalue) {
                     // create a comparison of current index to iterable's size
                     struct rir_object *idxaccessobj = rir_objidx_create_obj(
-                        ctx->itervalue,
+                        ctx->loops.itervalue,
                         &curridx->val,
                         RIRPOS_AST,
                         ctx
@@ -290,7 +290,7 @@ static bool rir_block_init_from_ast(
                     rir_common_block_add(&ctx->common, &idxaccessobj->expr);
                 } else { // it can only be a range iteration
                     // so get the index object directly
-                    rec->rirobj = ctx->indexobj;
+                    rec->rirobj = ctx->loops.indexobj;
                 }
             }
 
@@ -313,14 +313,14 @@ static bool rir_block_init_from_ast(
                 struct rir_expression *add_step = rir_binaryop_create_nonast(
                     RIR_EXPRESSION_ADD,
                     &curridx->val,
-                    ctx->iterstep,
+                    ctx->loops.iterstep,
                     RIRPOS_AST,
                     ctx
                 );
                 rir_common_block_add(&ctx->common, add_step);
                 // write the new index to the index object
                 struct rir_expression *writenewidx = rir_write_create(
-                    rir_object_value(ctx->indexobj),
+                    rir_object_value(ctx->loops.indexobj),
                     &add_step->val,
                     RIRPOS_AST,
                     ctx
