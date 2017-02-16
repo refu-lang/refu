@@ -22,11 +22,11 @@ static struct ast_node *ast_parser_acc_range_member(struct ast_parser *p, struct
         n = ast_parser_acc_identifier(p);
     } else if (token_is_numeric_constant(tok)) {
         n = lexer_token_get_value(parser_lexer(p), tok);
+        // consume the constant
+        lexer_curr_token_advance(parser_lexer(p));
     } else {
         return NULL;
     }
-    // consume the identifier or constant
-    lexer_curr_token_advance(parser_lexer(p));
     return n;
 }
 

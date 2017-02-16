@@ -850,6 +850,28 @@ START_TEST (test_forexpr_3) {
     ck_end_to_end_run(inputs, 0, &output, "test_input_file.rf");
 } END_TEST
 
+START_TEST (test_forexpr_4) {
+    struct test_input_pair inputs[] = {
+        TEST_DECL_SRC(
+            "test_input_file.rf",
+
+            "fn main()-> u32{\n"
+            "    sum:i64 = 0\n"
+            "    start:i64 = 0\n"
+            "    step:i64 = 2\n"
+            "    end:i64 = 10\n"
+            "    for i in start:step:end {\n"
+            "        print(i)\n"
+            "        print(\" \")\n"
+            "        sum = sum + i\n"
+            "    }\n"
+            "    return sum"
+            "}"
+        )};
+    static const struct RFstring output = RF_STRING_STATIC_INIT("0 2 4 6 8 ");
+    ck_end_to_end_run(inputs, 20, &output, "test_input_file.rf");
+} END_TEST
+
 Suite *end_to_end_basic_suite_create(void)
 {
     Suite *s = suite_create("end_to_end_basic");
