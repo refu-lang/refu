@@ -25,7 +25,7 @@
 
 #include CLIB_TEST_HELPERS
 
-START_TEST(test_acc_forexpr_1) {
+START_TEST(test_acc_simple_forexpr_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "for a in array {\n"
@@ -52,7 +52,7 @@ START_TEST(test_acc_forexpr_1) {
     ast_node_destroy(fexpr);
 }END_TEST
 
-START_TEST(test_acc_forexpr_2) {
+START_TEST(test_acc_simple_forexpr_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
@@ -99,7 +99,7 @@ START_TEST(test_acc_forexpr_2) {
     ast_node_destroy(bnode);
 }END_TEST
 
-START_TEST(test_acc_forexpr_3) {
+START_TEST(test_acc_range_forexpr_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
@@ -148,7 +148,7 @@ START_TEST(test_acc_forexpr_3) {
     ast_node_destroy(bnode);
 }END_TEST
 
-START_TEST(test_acc_forexpr_4) {
+START_TEST(test_acc_range_forexpr_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "{\n"
@@ -189,6 +189,126 @@ START_TEST(test_acc_forexpr_4) {
     );
     ast_node_add_child(forblock, assignment);
     testsupport_parser_node_create(fexpr, forexpr, 2, 4, 4, 4, id_a, niterable, forblock);
+
+    ast_node_add_child(bnode, fexpr);
+
+    ck_test_parse_as(n, block, "block with for_expression", bnode, true);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bnode);
+}END_TEST
+
+START_TEST(test_acc_range_forexpr_3) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    b:u64\n"
+        "    step:i64\n"
+        "    for a in 0:step:5 {\n"
+        "        b = b + a\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    testsupport_parser_block_create(bnode, 0, 0, 6, 0);
+    struct ast_node *id_b = testsupport_parser_identifier_create(1, 4, 1, 4);
+    testsupport_parser_xidentifier_create_simple(id_u64, 1, 6, 1, 8);
+    testsupport_parser_node_create(type1, typeleaf, 1, 4, 1, 8, id_b, id_u64);
+    testsupport_parser_node_create(vardecl1, vardecl, 1, 4, 1, 8, type1);
+    struct ast_node *id_step = testsupport_parser_identifier_create(2, 4, 2, 7);
+    testsupport_parser_xidentifier_create_simple(id_i64, 2, 9, 2, 11);
+    testsupport_parser_node_create(type2, typeleaf, 2, 4, 2, 11, id_step, id_i64);
+    testsupport_parser_node_create(vardecl2, vardecl, 2, 4, 2, 11, type2);
+
+    ast_node_add_child(bnode, vardecl1);
+    ast_node_add_child(bnode, vardecl2);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(3, 8, 3, 8);
+    testsupport_parser_constant_create(const0, 3, 13, 3, 13, integer, 0);
+    struct ast_node *id_step2 = testsupport_parser_identifier_create(3, 15, 3, 18);
+    testsupport_parser_constant_create(const5, 3, 20, 3, 20, integer, 5);
+    testsupport_parser_iterable_range_create(niterable, const0, id_step2, const5);
+    testsupport_parser_block_create(forblock, 3, 22, 5, 4);
+
+    struct ast_node *id_b2 = testsupport_parser_identifier_create(4, 8, 4, 8);
+    struct ast_node *id_b3 = testsupport_parser_identifier_create(4, 12, 4, 12);
+    struct ast_node *id_a2 = testsupport_parser_identifier_create(4, 16, 4, 16);
+    testsupport_parser_node_create(
+        addition, binaryop, 4, 12, 4, 16,
+        BINARYOP_ADD,
+        id_b3, id_a2
+    );
+    testsupport_parser_node_create(
+        assignment, binaryop, 4, 8, 4, 16,
+        BINARYOP_ASSIGN,
+        id_b2, addition
+    );
+    ast_node_add_child(forblock, assignment);
+    testsupport_parser_node_create(fexpr, forexpr, 3, 4, 5, 4, id_a, niterable, forblock);
+
+    ast_node_add_child(bnode, fexpr);
+
+    ck_test_parse_as(n, block, "block with for_expression", bnode, true);
+
+    ast_node_destroy(n);
+    ast_node_destroy(bnode);
+}END_TEST
+
+START_TEST(test_acc_range_forexpr_4) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "{\n"
+        "    b:u64\n"
+        "    start:i64\n"
+        "    end:i64\n"
+        "    for a in start:b:end {\n"
+        "        b = b + 1\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    testsupport_parser_block_create(bnode, 0, 0, 7, 0);
+    struct ast_node *id_b = testsupport_parser_identifier_create(1, 4, 1, 4);
+    testsupport_parser_xidentifier_create_simple(id_u64, 1, 6, 1, 8);
+    testsupport_parser_node_create(type1, typeleaf, 1, 4, 1, 8, id_b, id_u64);
+    testsupport_parser_node_create(vardecl1, vardecl, 1, 4, 1, 8, type1);
+    struct ast_node *id_start = testsupport_parser_identifier_create(2, 4, 2, 8);
+    testsupport_parser_xidentifier_create_simple(id_i64, 2, 10, 2, 12);
+    testsupport_parser_node_create(type2, typeleaf, 2, 4, 2, 12, id_start, id_i64);
+    testsupport_parser_node_create(vardecl2, vardecl, 2, 4, 2, 12, type2);
+    struct ast_node *id_end = testsupport_parser_identifier_create(3, 4, 3, 6);
+    testsupport_parser_xidentifier_create_simple(id2_i64, 3, 8, 3, 10);
+    testsupport_parser_node_create(type3, typeleaf, 3, 4, 3, 10, id_end, id2_i64);
+    testsupport_parser_node_create(vardecl3, vardecl, 3, 4, 3, 10, type3);
+
+    ast_node_add_child(bnode, vardecl1);
+    ast_node_add_child(bnode, vardecl2);
+    ast_node_add_child(bnode, vardecl3);
+
+    struct ast_node *id_a = testsupport_parser_identifier_create(4, 8, 4, 8);
+    struct ast_node *id_start2 = testsupport_parser_identifier_create(4, 13, 4, 17);
+    struct ast_node *id_b4 = testsupport_parser_identifier_create(4, 19, 4, 19);
+    struct ast_node *id_end2 = testsupport_parser_identifier_create(4, 21, 4, 23);
+    testsupport_parser_iterable_range_create(niterable, id_start2, id_b4, id_end2);
+    testsupport_parser_block_create(forblock, 4, 25, 6, 4);
+
+    struct ast_node *id_b2 = testsupport_parser_identifier_create(5, 8, 5, 8);
+    struct ast_node *id_b3 = testsupport_parser_identifier_create(5, 12, 5, 12);
+    testsupport_parser_constant_create(const1, 5, 16, 5, 16, integer, 1);
+    testsupport_parser_node_create(
+        addition, binaryop, 5, 12, 5, 16,
+        BINARYOP_ADD,
+        id_b3, const1
+    );
+    testsupport_parser_node_create(
+        assignment, binaryop, 5, 8, 5, 16,
+        BINARYOP_ASSIGN,
+        id_b2, addition
+    );
+    ast_node_add_child(forblock, assignment);
+    testsupport_parser_node_create(fexpr, forexpr, 4, 4, 6, 4, id_a, niterable, forblock);
 
     ast_node_add_child(bnode, fexpr);
 
@@ -322,12 +442,17 @@ Suite *parser_forexpr_suite_create(void)
 {
     Suite *s = suite_create("parser_for_expression");
 
-    TCase *fep = tcase_create("for_expression_parsing");
+    TCase *fep = tcase_create("simple_for_expression_parsing");
     tcase_add_checked_fixture(fep, setup_front_tests, teardown_front_tests);
-    tcase_add_test(fep, test_acc_forexpr_1);
-    tcase_add_test(fep, test_acc_forexpr_2);
-    tcase_add_test(fep, test_acc_forexpr_3);
-    tcase_add_test(fep, test_acc_forexpr_4);
+    tcase_add_test(fep, test_acc_simple_forexpr_1);
+    tcase_add_test(fep, test_acc_simple_forexpr_2);
+
+    TCase *frp = tcase_create("range_for_expression_parsing");
+    tcase_add_checked_fixture(frp, setup_front_tests, teardown_front_tests);
+    tcase_add_test(frp, test_acc_range_forexpr_1);
+    tcase_add_test(frp, test_acc_range_forexpr_2);
+    tcase_add_test(frp, test_acc_range_forexpr_3);
+    tcase_add_test(frp, test_acc_range_forexpr_4);
 
     TCase *ferr = tcase_create("for_expression_parsing_errors");
     tcase_add_checked_fixture(ferr, setup_front_tests, teardown_front_tests);
@@ -340,6 +465,7 @@ Suite *parser_forexpr_suite_create(void)
     tcase_add_test(ferr, test_acc_forexpr_errors_7);
 
     suite_add_tcase(s, fep);
+    suite_add_tcase(s, frp);
     suite_add_tcase(s, ferr);
 
     return s;
