@@ -142,7 +142,7 @@ LLVMTypeRef bllvm_type_from_rir_type(
         break;
     case RIR_TYPE_ARRAY:
     {
-        RF_ASSERT(type->array.size > 0, "Only fixed size array types supported for now");
+        /* RF_ASSERT(type->array.size > 0, "Only fixed size array types supported for now"); */
         const struct rir_type *member_type = rir_type_array_membertype(type);
         ret = LLVMArrayType(
             bllvm_type_from_rir_type(member_type, ctx),

@@ -150,3 +150,20 @@ end:
     RFS_POP();
     return ret;
 }
+
+
+
+
+struct rir_object *rir_dynamicarr_create_obj_from_ast(
+    const struct ast_node *n,
+    struct rir_ctx *ctx)
+{
+    // TODO
+    return NULL;
+}
+
+struct rir_object *rir_dynamicarrsize_create(struct rir_value *v, struct rir_ctx *ctx)
+{
+    // TODO
+    return NULL;
+}

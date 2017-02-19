@@ -975,6 +975,7 @@ Suite *end_to_end_basic_suite_create(void)
     tcase_add_test(st_forexpr, test_forexpr_1);
     tcase_add_test(st_forexpr, test_forexpr_2);
     tcase_add_test(st_forexpr, test_forexpr_3);
+    tcase_add_test(st_forexpr, test_forexpr_4);
 
     suite_add_tcase(s, st_basic);
     suite_add_tcase(s, st_print);

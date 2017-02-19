@@ -28,6 +28,8 @@ enum rir_expression_type {
     RIR_EXPRESSION_OBJIDX,
     RIR_EXPRESSION_FIXEDARR,
     RIR_EXPRESSION_FIXEDARRSIZE,
+    RIR_EXPRESSION_DYNAMICARR,
+    RIR_EXPRESSION_DYNAMICARRSIZE,
     RIR_EXPRESSION_CONSTANT,
     RIR_EXPRESSION_ADD,
     RIR_EXPRESSION_SUB,
@@ -147,6 +149,9 @@ struct rir_objidx {
     const struct rir_value *idx;
 };
 
+/**
+ * Creates a fixed size array
+ */
 struct rir_fixedarr {
     //! The type of the array members
     const struct rir_type *member_type;
@@ -160,6 +165,24 @@ struct rir_fixedarr {
  * Reads the size of a fixed-size array
  */
 struct rir_fixedarrsize {
+    //! The array whose size to read
+    const struct rir_value *array;
+};
+
+/**
+ * Creates a dynamic size array
+ */
+struct rir_dynamicarr {
+    //! The type of the array members
+    const struct rir_type *member_type;
+    //! The initial size of the array to allocate
+    uint64_t initial_size;
+};
+
+/**
+ * Reads the size of a dynamic array
+ */
+struct rir_dynamicarrsize {
     //! The array whose size to read
     const struct rir_value *array;
 };
@@ -266,6 +289,8 @@ struct rir_expression {
         struct rir_write write;
         struct rir_fixedarr fixedarr;
         struct rir_fixedarrsize fixedarrsize;
+        struct rir_dynamicarr dynamicarr;
+        struct rir_dynamicarrsize dynamicarrsize;
     };
     struct rir_value val;
     // Control to be added to expression list of a rir block
