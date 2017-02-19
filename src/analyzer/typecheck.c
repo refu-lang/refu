@@ -33,6 +33,7 @@
 #include <analyzer/typecheck_matchexpr.h>
 #include <analyzer/typecheck_arr.h>
 #include <analyzer/typecheck_functions.h>
+#include <analyzer/typecheck_typeclass.h>
 #include <analyzer/analyzer_pass1.h> // for analyzer symbol table change functions
 
 void traversal_node_set_type(
@@ -846,6 +847,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_IMPORT:
         ret = typecheck_import(n, ctx);
+        break;
+    case AST_TYPECLASS_INSTANCE:
+        ret = typecheck_typeinstance(n, ctx);
         break;
     default:
         // do nothing. Think what to do for the remaining nodes if anything ...

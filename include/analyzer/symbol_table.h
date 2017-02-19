@@ -25,16 +25,19 @@ struct symbol_table_record {
     //! Can actually be NULL.
     const struct ast_node *node;
     //! Description of the type the identifier refers to
+    //! Can be NULL only if referring to a typeclass
     struct type *data;
     //! The rir object used for this symbol, or NULL if not set
     struct rir_object *rirobj;
 };
 
-bool symbol_table_record_init(struct symbol_table_record *rec,
-                              struct module *mod,
-                              struct symbol_table *st,
-                              const struct ast_node *node,
-                              const struct RFstring *id);
+bool symbol_table_record_init(
+    struct symbol_table_record *rec,
+    struct module *mod,
+    struct symbol_table *st,
+    const struct ast_node *node,
+    const struct RFstring *id
+);
 
 struct symbol_table_record *symbol_table_record_create(
     struct symbol_table *st,

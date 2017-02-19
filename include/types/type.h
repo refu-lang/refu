@@ -53,7 +53,10 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc);
 // Arguments are set by @ref type_creation_ctx_set_args()
 struct type *type_operator_create_from_node(struct ast_node *n);
 
-struct type *type_module_create(struct module *m, const struct RFstring *name);
+struct type *type_simple_create(
+    enum type_category category,
+    const struct RFstring *name
+);
 
 /* -- type getters -- */
 /**

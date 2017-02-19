@@ -4,6 +4,9 @@
 struct ast_node;
 struct ast_parser;
 
+#define TOKEN_IS_TYPECLASS_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_TYPECLASS)
+#define TOKEN_IS_TYPEINSTANCE_START(tok_) ((tok_) && (tok_)->type == TOKEN_KW_TYPEINSTANCE)
+
 /**
  * typeclass = TOKEN_KW_TYPECLASS identifier [generic_declaration]
  * TOKEN_SM_OCBRACE functions_declarations TOKEN_SM_CCBRACE

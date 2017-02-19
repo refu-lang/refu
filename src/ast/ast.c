@@ -11,6 +11,7 @@
 #include <ast/matchexpr.h>
 #include <ast/forexpr.h>
 #include <ast/module.h>
+#include <ast/typeclass.h>
 
 static const struct RFstring ast_type_strings[] = {
     [AST_ROOT] = RF_STRING_STATIC_INIT("root"),
@@ -304,6 +305,10 @@ struct symbol_table *ast_node_symbol_table_get(struct ast_node *n)
         return ast_module_symbol_table_get(n);
     case AST_FOR_EXPRESSION:
         return ast_forexpr_symbol_table_get(n);
+    case AST_TYPECLASS_DECLARATION:
+        return ast_typeclass_symbol_table_get(n);
+    case AST_TYPECLASS_INSTANCE:
+        return ast_typeinstance_symbol_table_get(n);
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return NULL,

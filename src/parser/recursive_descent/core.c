@@ -18,6 +18,7 @@
 #include "vardecl.h"
 #include "module.h"
 #include "expression.h"
+#include "typeclass.h"
 
 static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p);
 
@@ -96,7 +97,12 @@ static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p)
         stmt = ast_parser_acc_fnimpl(p);
     } else if (TOKEN_IS_IMPORT(tok)) {
         stmt = ast_parser_acc_import(p);
+    } else if (TOKEN_IS_TYPECLASS_START(tok)) {
+        stmt = ast_parser_acc_typeclass(p);
+    } else if (TOKEN_IS_TYPEINSTANCE_START(tok)) {
+        stmt = ast_parser_acc_typeinstance(p);
     }
+    
 
     return stmt;
 }

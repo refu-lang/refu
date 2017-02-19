@@ -7,4 +7,23 @@ fn print(a:i64 | b:u64 | s:string)
     b:u64    => rf_stdlib_print_uint64(b)
     s:string => rf_stdlib_print_string(s)
 
+// TODO: Uncomment when done
+// TODO: Use Generics here when we have them
+// class collection_i32 {
+//     fn push(new_member:i32)
+//     fn size() -> u64
+// }
+//
+// instance collection_i32 i32[] {
+//     fn push(new_member:i32) {
+//         // TODO figure out how this should be written.
+//         // inline assembly? Cal to external c function?
+//     }
+//
+//     fn size() -> u64 {
+//         // TODO figure out how this should be written.
+//         // inline assembly? Cal to external c function?
+//     }
+// }
+//
 }

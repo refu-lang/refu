@@ -447,9 +447,9 @@ static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
 
 struct type *type_create_from_fndecl(const struct ast_node *n)
 {
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     struct type *t;
     struct module *m = type_creation_ctx_mod();
-    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
 
     t = type_alloc(m);
     if (!t) {
@@ -467,15 +467,18 @@ struct type *type_create_from_fndecl(const struct ast_node *n)
     return t;
 }
 
-struct type *type_module_create(struct module *m, const struct RFstring *name)
+struct type *type_simple_create(
+    enum type_category category,
+    const struct RFstring *name)
 {
-    struct type *t;
-    t = type_alloc(m);
+    struct module *m = type_creation_ctx_mod();
+    struct type *t = type_alloc(m);
     if (!t) {
         RF_ERROR("Type allocation failed");
         return NULL;
     }
-    t->module.name = name;
+    t->category = category;
+    t->simple.name = name;
     return t;
 }
 

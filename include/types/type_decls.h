@@ -51,7 +51,9 @@ enum type_category {
     TYPE_CATEGORY_WILDCARD,             /* the type of '_' */
     TYPE_CATEGORY_GENERIC,              /* a generic type as declared by the user */
     TYPE_CATEGORY_MODULE,               /* type of a module */
-    TYPE_CATEGORY_ARRAY                 /* type of an array */
+    TYPE_CATEGORY_ARRAY,                /* type of an array */
+    TYPE_CATEGORY_TYPECLASS,            /* type of a typeclass */
+    TYPE_CATEGORY_TYPEINSTANCE,         /* type of a typeinstance */
 };
 
 struct type_elementary {
@@ -70,15 +72,12 @@ struct type_defined {
     struct type *type;
 };
 
-struct type_foreignfn {
-    const struct RFstring *name;
-};
-
-struct type_module {
+struct type_simple {
     const struct RFstring *name;
 };
 
 struct arr_int64 { darray(int64_t);};
+
 struct type_array {
     struct arr_int64 dimensions;
     const struct type *member_type;
@@ -91,8 +90,7 @@ struct type {
         struct type_defined defined;
         struct type_operator operator;
         struct type_elementary elementary;
-        struct type_foreignfn foreignfn;
-        struct type_module module;
+        struct type_simple simple;
         struct type_array array;
     };
 };

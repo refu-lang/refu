@@ -11,6 +11,7 @@
 #include <ast/type.h>
 #include <ast/module.h>
 #include <ast/function.h>
+#include <ast/typeclass.h>
 #include <types/type.h>
 #include <types/type_function.h>
 #include <analyzer/analyzer.h>
@@ -36,12 +37,34 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
                               const struct ast_node *node,
                               const struct RFstring *id)
 {
+    const struct RFstring *name = NULL;
+    enum type_category category;
+    switch (node->type) {
+    case AST_MODULE:
+        name = ast_module_name(node);
+        category = TYPE_CATEGORY_MODULE;
+        break;
+    case AST_TYPECLASS_DECLARATION:
+        name = ast_typeclass_name_str(node);
+        category = TYPE_CATEGORY_TYPECLASS;
+        break;
+    case AST_TYPECLASS_INSTANCE:
+        name = ast_typeclass_name_str(node);
+        category = TYPE_CATEGORY_TYPEINSTANCE;
+        break;
+    default:
+        break;
+    }
+
     RF_STRUCT_ZERO(rec);
     rec->node = node;
     rec->id = id;
     switch (node->type) {
     case AST_MODULE:
-        rec->data = type_module_create(mod, id);
+    case AST_TYPECLASS_DECLARATION:
+    case AST_TYPECLASS_INSTANCE:
+        type_creation_ctx_set_args(mod, st, NULL);
+        rec->data = type_simple_create(category, id);
         break;
     case AST_FUNCTION_DECLARATION:
         type_creation_ctx_set_args(mod, st, NULL);
@@ -65,7 +88,7 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
             "Attempting to create a symbol table record with an identifier "
             "whose type has not yet been determined."
         );
-        rec->data = (struct type*)ast_node_get_type(node);
+        rec->data = (struct type*) ast_node_get_type(node);
         break;
     default:
         RF_ASSERT_OR_CRITICAL(
@@ -104,13 +127,13 @@ static bool symbol_table_record_init_from_type(struct symbol_table_record *rec,
     return true;
 }
 
-struct symbol_table_record *symbol_table_record_create(struct symbol_table *st,
-                                                       struct module *mod,
-                                                       const struct ast_node *node,
-                                                       const struct RFstring *id)
+struct symbol_table_record *symbol_table_record_create(
+    struct symbol_table *st,
+    struct module *mod,
+    const struct ast_node *node,
+    const struct RFstring *id)
 {
-    struct symbol_table_record *ret;
-    ret = symbol_table_record_alloc(st);
+    struct symbol_table_record *ret = symbol_table_record_alloc(st);
     if (!ret) {
         RF_ERROR("Failed to allocate a symbol table record");
         return NULL;
@@ -186,8 +209,10 @@ bool root_symbol_table_init(struct symbol_table *t)
     RF_STRUCT_ZERO(t);
     htable_init(&t->table, rehash_fn, NULL);
     t->mod = NULL;
-    t->pool = rf_fixed_memorypool_create(sizeof(struct symbol_table_record),
-                                         RECORDS_TABLE_POOL_CHUNK_SIZE);
+    t->pool = rf_fixed_memorypool_create(
+        sizeof(struct symbol_table_record),
+        RECORDS_TABLE_POOL_CHUNK_SIZE
+    );
     return t->pool;
 }
 
@@ -202,10 +227,11 @@ void symbol_table_deinit(struct symbol_table *t)
     }
 }
 
-bool symbol_table_add_node(struct symbol_table *t,
-                           struct module *mod,
-                           const struct RFstring *id,
-                           struct ast_node *n)
+bool symbol_table_add_node(
+    struct symbol_table *t,
+    struct module *mod,
+    const struct RFstring *id,
+    struct ast_node *n)
 {
     struct symbol_table_record *rec;
     bool at_first;

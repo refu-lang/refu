@@ -54,7 +54,7 @@ static bool front_ctx_init(
     if (codepath == RIRPOS_PARSE) {
         parser = rir_parser_create(ctx, ctx->file, ctx->lexer, ctx->info);
     } else {
-         parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
+        parser = ast_parser_create(ctx->file, ctx->lexer, ctx->info, ctx);
     }
     if (!parser) {
         goto free_lexer;

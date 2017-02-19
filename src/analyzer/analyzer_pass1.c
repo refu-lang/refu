@@ -12,6 +12,7 @@
 #include <ast/forexpr.h>
 #include <ast/string_literal.h>
 #include <ast/module.h>
+#include <ast/typeclass.h>
 #include <ast/ast_utils.h>
 
 #include <analyzer/typecheck_forexpr.h>
@@ -29,11 +30,11 @@ static inline void analyzer_traversal_ctx_push_parent(struct analyzer_traversal_
     darray_append(ctx->parent_nodes, n);
 }
 
-static bool analyzer_first_pass_do(struct ast_node *n,
-                                   void *user_arg);
+static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg);
 
-static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ctx *ctx,
-                                                    struct ast_node *n)
+static bool analyzer_populate_symbol_table_typedecl(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
 {
     const struct ast_node *search_node;
     bool symbol_found_at_first_st;
@@ -41,9 +42,11 @@ static bool analyzer_populate_symbol_table_typedecl(struct analyzer_traversal_ct
     AST_NODE_ASSERT_TYPE(n, AST_TYPE_DECLARATION);
 
     type_name = ast_typedecl_name_str(n);
-    search_node = symbol_table_lookup_node(ctx->current_st,
-                                           type_name,
-                                           &symbol_found_at_first_st);
+    search_node = symbol_table_lookup_node(
+        ctx->current_st,
+        type_name,
+        &symbol_found_at_first_st
+    );
 
     if (search_node && symbol_found_at_first_st) {
         analyzer_err(ctx->m, ast_node_startmark(n),
@@ -152,8 +155,9 @@ static bool analyzer_populate_symbol_table_vardecl(struct analyzer_traversal_ctx
 }
 
 // populate for generic non-top level type element
-static bool analyzer_populate_symbol_table_typeelement(struct analyzer_traversal_ctx *ctx,
-                                                       struct ast_node *n)
+static bool analyzer_populate_symbol_table_typeelement(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
 {
     switch (n->type) {
     case AST_TYPE_LEAF:
@@ -173,14 +177,16 @@ static bool analyzer_populate_symbol_table_typeelement(struct analyzer_traversal
     }
 }
 // populate for top level type description
-static inline bool analyzer_populate_symbol_table_typedesc(struct analyzer_traversal_ctx *ctx,
-                                                           struct ast_node *n)
+static inline bool analyzer_populate_symbol_table_typedesc(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
 {
     return analyzer_populate_symbol_table_typeelement(ctx, ast_typedesc_desc_get(n));
 }
 
-static bool analyzer_symbol_table_add_fndecl(struct analyzer_traversal_ctx *ctx,
-                                             struct ast_node *n)
+static bool analyzer_symbol_table_add_fndecl(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
 {
     struct symbol_table_record *rec;
     const struct RFstring *fn_name;
@@ -208,8 +214,9 @@ static bool analyzer_symbol_table_add_fndecl(struct analyzer_traversal_ctx *ctx,
     return true;
 }
 
-static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *ctx,
-                                                struct ast_node *n)
+static bool analyzer_init_and_process_fndecl_symbol_table(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     if (!ast_fndecl_symbol_table_init(n, ctx->m)) {
@@ -218,6 +225,42 @@ static bool analyzer_create_symbol_table_fndecl(struct analyzer_traversal_ctx *c
     }
     // add function to the symbol table
     return analyzer_symbol_table_add_fndecl(ctx, n);
+}
+
+static bool analyzer_init_and_process_typeclass_symbol_table(
+    struct analyzer_traversal_ctx *ctx,
+    struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_DECLARATION);
+    if (!symbol_table_init(&n->typeclass.st, ctx->m)) {
+        RF_ERROR("Could not initialize symbol table for typeclass declaration node");
+        return false;
+    }
+    // add typeclass to the parent symbol table
+    struct symbol_table_record *rec;
+    const struct RFstring *typeclass_name = ast_typeclass_name_str(n);
+    rec = symbol_table_lookup_record(ctx->current_st, typeclass_name, NULL);
+
+    if (rec && rec->node && rec->node->type == AST_TYPECLASS_DECLARATION) {
+        analyzer_err(
+            ctx->m, ast_node_startmark(n),
+            ast_node_endmark(n),
+            "Typeclass \""RFS_PF"\" was already declared "
+            "at "INPLOCATION_FMT,
+            RFS_PA(typeclass_name),
+            INPLOCATION_ARG(
+                module_get_file(ctx->m),
+                ast_node_location(symbol_table_record_node(rec)))
+        );
+        return false;
+    }
+
+    if (!symbol_table_add_node(ctx->current_st, ctx->m, typeclass_name, n)) {
+        RF_ERROR("Could not add a typeclass node to a symbol table");
+        return false;
+    }
+
+    return true;
 }
 
 static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
@@ -248,7 +291,7 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
         symbol_table_swap_current(&ctx->current_st, ast_forexpr_symbol_table_get(n));
         break;
     case AST_FUNCTION_DECLARATION:
-        if (!analyzer_create_symbol_table_fndecl(ctx, n)) {
+        if (!analyzer_init_and_process_fndecl_symbol_table(ctx, n)) {
             return false;
         }
         symbol_table_swap_current(&ctx->current_st, ast_fndecl_symbol_table_get(n));
@@ -279,6 +322,22 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
         if (!analyzer_populate_symbol_table_typedecl(ctx, n)) {
             return false;
         }
+        break;
+    case AST_TYPECLASS_DECLARATION:
+        // initialize the type class's symbol table
+        if (!analyzer_init_and_process_typeclass_symbol_table(ctx, n)) {
+            RF_ERROR("Could not initialize symbol table for top level type description node");
+            return false;
+        }
+        symbol_table_swap_current(&ctx->current_st, ast_typeclass_symbol_table_get(n));
+        break;
+    case AST_TYPECLASS_INSTANCE:
+        // initialize the type class's symbol table
+        if (!symbol_table_init(&n->typeclass.st, ctx->m)) {
+            RF_ERROR("Could not initialize symbol table for top level type description node");
+            return false;
+        }
+        symbol_table_swap_current(&ctx->current_st, ast_typeinstance_symbol_table_get(n));
         break;
 
     // nodes that only contribute records to symbol tables
@@ -317,8 +376,9 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
     return true;
 }
 
-bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
-                                            struct analyzer_traversal_ctx *ctx)
+bool analyzer_handle_symbol_table_ascending(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx)
 {
     switch(n->type) {
         // nodes that change the current symbol table
@@ -355,7 +415,9 @@ bool analyzer_handle_symbol_table_ascending(struct ast_node *n,
     }
     break;
     case AST_FOR_EXPRESSION:
-        ctx->current_st = ast_forexpr_symbol_table_get(n)->parent;
+    case AST_TYPECLASS_DECLARATION:
+    case AST_TYPECLASS_INSTANCE:
+        ctx->current_st = ast_node_symbol_table_get(n)->parent;
         break;
     default:
         // do nothing
@@ -393,6 +455,12 @@ bool analyzer_handle_traversal_descending(
         break;
     case AST_TYPE_DESCRIPTION:
         ctx->current_st = ast_typedesc_symbol_table_get(n);
+        break;
+    case AST_TYPECLASS_DECLARATION:
+        ctx->current_st = ast_typeclass_symbol_table_get(n);
+        break;
+    case AST_TYPECLASS_INSTANCE:
+        ctx->current_st = ast_typeinstance_symbol_table_get(n);
         break;
     case AST_MATCH_EXPRESSION:
         return pattern_matching_ctx_init(&ctx->matching_ctx, ctx->current_st, n);
