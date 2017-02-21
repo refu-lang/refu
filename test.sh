@@ -24,28 +24,42 @@ REQUESTED_ARG=""
 exists () {
     local __result=$2
     if type "$1" >/dev/null 2>/dev/null; then
-	local myresult=1
+        local myresult=1
     else
-	local myresult=0
+        local myresult=0
     fi
     eval $__result="'$myresult'"
 }
 
-exists "llvm-config" LLVM_CONFIG_EXISTS
+llvm_exists () {
+    local __result=$1
+    exists "llc" LLVM_EXISTS
+    exists "llc-3.9" LLVM39_EXISTS
+    exists "llc-3.8" LLVM38_EXISTS
+    exists "llc-3.7" LLVM37_EXISTS
+
+    local myresult=0
+    if [ $LLVM_EXISTS -eq 1 -o $LLVM39_EXISTS -eq 1 -o $LLVM38_EXISTS -eq 1 -o $LLVM37_EXISTS -eq 1 ]; then
+        local myresult=1
+    fi
+    eval $__result="'$myresult'"
+}
+
+llvm_exists LLVM_EXISTS
 # Assert that llvm binaries are accessible in the path
-if [[ $LLVM_CONFIG_EXISTS -eq 0 ]]; then
+if [[ $LLVM_EXISTS -eq 0 ]]; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
-	export PATH="$PATH:/usr/local/opt/llvm/bin/"
-	exists "llvm-config" LLVM_CONFIG_EXISTS
-	if [[ $LLVM_CONFIG_EXISTS -eq 0 ]]; then
-	    echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
-	    echo "                 If you have, then have you added the proper directory in the path?"
-	    exit 1
-	fi
+        export PATH="$PATH:/usr/local/opt/llvm/bin/"
+        exists "llvm-config" LLVM_EXISTS
+        if [[ $LLVM_EXISTS -eq 0 ]]; then
+            echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
+            echo "                 If you have, then have you added the proper directory in the path?"
+            exit 1
+        fi
     else
-	echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
-	echo "                 If you have, then have you added the proper directory in the path?"
-	exit 1
+        echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
+        echo "                 If you have, then have you added the proper directory in the path?"
+        exit 1
     fi
 fi
 
