@@ -21,6 +21,34 @@ IN_TRAVIS=0
 TRAVIS_JOB_ID=0
 REQUESTED_ARG=""
 
+exists () {
+    local __result=$2
+    if type "$1" >/dev/null 2>/dev/null; then
+	local myresult=1
+    else
+	local myresult=0
+    fi
+    eval $__result="'$myresult'"
+}
+
+exists "llvm-config" LLVM_CONFIG_EXISTS
+# Assert that llvm binaries are accessible in the path
+if [[ $LLVM_CONFIG_EXISTS -eq 0 ]]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	export PATH="$PATH:/usr/local/opt/llvm/bin/"
+	exists "llvm-config" LLVM_CONFIG_EXISTS
+	if [[ $LLVM_CONFIG_EXISTS -eq 0 ]]; then
+	    echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
+	    echo "                 If you have, then have you added the proper directory in the path?"
+	    exit 1
+	fi
+    else
+	echo "test.sh - ERROR: llvm-config not found in the path. Have you installed llvm?"
+	echo "                 If you have, then have you added the proper directory in the path?"
+	exit 1
+    fi
+fi
+
 function print_help {
     echo "Usage: test.sh [extra-options]"
     echo "Arguments:"

@@ -194,11 +194,20 @@ static bool bllvm_ir_to_asm(struct compiler_args *args)
 static bool backend_asm_to_exec(struct compiler_args *args)
 {
     static const struct RFstring compiler_exec = RF_STRING_STATIC_INIT("gcc");
+
+    return transformation_step_do(
+        args,
+	&compiler_exec,
+	"s",
+	"exe",
+	"-L"RF_LANG_CORE_ROOT"/build/rfbase/ -lrfbase"
 #ifdef COVERAGE
-    return transformation_step_do(args, &compiler_exec, "s", "exe", "-L"RF_LANG_CORE_ROOT"/build/rfbase/ -lrfbase -lgcov -static");
-#else
-    return transformation_step_do(args, &compiler_exec, "s", "exe", "-L"RF_LANG_CORE_ROOT"/build/rfbase/ -lrfbase -static");
+	" -lgcov"
 #endif
+#ifndef __APPLE__
+	" -static"
+#endif
+    );
 }
 
 bool bllvm_generate(struct modules_arr *modules, struct compiler_args *args)

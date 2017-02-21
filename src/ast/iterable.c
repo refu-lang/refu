@@ -138,8 +138,8 @@ int64_t ast_iterable_range_number_of_loops(const struct ast_node *n)
         return -1;
     }
 
-    int64_t breadth = abs(end - start);
-    int64_t abs_step = abs(step);
+    int64_t breadth = llabs(end - start);
+    int64_t abs_step = llabs(step);
     return abs_step == 0 ? breadth : breadth / abs_step;
 }
 
