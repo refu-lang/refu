@@ -5,7 +5,7 @@
 [![Coveralls](https://coveralls.io/repos/github/refu-lang/refu/badge.svg?branch=master)](https://coveralls.io/github/refu-lang/refu?branch=master)
 [![Join chat in gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/refu-lang/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
-This is the code repository for [refu](http://refu.co/spec.html), a strongly typed, lazily evaluated programming language.
+This is the code repository for [refu](http://refu.co/spec.html), a hybrid language with a strong type system based on algebraic data types.
 
 
 
