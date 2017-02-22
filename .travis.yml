@@ -11,25 +11,20 @@
 # And rust changed to using docker due to the LLVM Apt server being brought offline
 # https://github.com/rust-lang/rust/commit/b1651fb4d2c0349ccca108b8d24210d688507936
 
+language: c
 sudo: required
 dist: trusty
 services:
   - docker
 compiler:
   - gcc
+os:
+  - linux
+  - osx
 
 
 before_install:
-  - sudo apt-get update -y -qq
-
-  # Use docker to get LLVM without requiring LLVM's APT server to be online
-  - docker build -t refu -f test/Dockerfile test/
+  - ./.travis/install.sh
 
 script:
-  - docker run -v `pwd`:/build refu
-    sh -c "
-      mkdir build && cd build &&
-      cmake -DCOVERAGE=1 -DTEST=1 ..  &&
-      make -j4 && cd .. &&
-      ./test.sh --rfbase --coverage --in-travis --travis-job-id ${TRAVIS_JOB_ID}
-    "
+  - ./.travis/run_tests.sh

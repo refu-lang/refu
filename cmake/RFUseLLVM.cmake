@@ -3,7 +3,13 @@
 # TARGET -- The target for which to configure LLVM
 
 function(rf_use_llvm TARGET)
-  find_package(LLVM REQUIRED CONFIG)
+  if (APPLE)
+    set(PATHS_TO_SEARCH "/usr/local/opt/llvm")
+  endif()
+  find_package(
+      LLVM REQUIRED CONFIG
+      PATHS ${PATHS_TO_SEARCH}
+  )
   message("LLVM INCLUDES: ${LLVM_INCLUDE_DIRS}")
   target_include_directories(${TARGET} PUBLIC ${LLVM_INCLUDE_DIRS})
   message("LLVM DEFS: ${LLVM_DEFINITIONS}")

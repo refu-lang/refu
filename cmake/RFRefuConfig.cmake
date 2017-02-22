@@ -56,11 +56,9 @@ buffer used by the compiler to store all messages"
   rf_use_gperf(${TARGET})
 
   # Deal with LLVM
-  find_package(LLVM REQUIRED CONFIG)
+  rf_use_llvm(${TARGET})
   message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
   message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-  rf_use_llvm(${TARGET})
-
 
   # link with rfbase
   target_link_libraries(${TARGET} PUBLIC rfbase)

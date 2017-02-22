@@ -29,7 +29,10 @@ function(rf_use_gperf TARGET)
     GPERF_VERSION_STRING
     ${GPERF_VERSION_OUTPUT}
   )
-  if(NOT CMAKE_MATCH_1 OR NOT CMAKE_MATCH_2)
+
+  # Assert that both major and minor version are parsed.
+  if((NOT CMAKE_MATCH_1 AND NOT CMAKE_MATCH_1 STREQUAL "0")
+      OR (NOT CMAKE_MATCH_2 AND NOT CMAKE_MATCH_2 STREQUAL "0"))
     message(AUTHOR_WARNING "Error during check for gperf version.")
   endif()
 
