@@ -8,10 +8,8 @@
 This is the code repository for [refu](http://refu.co/spec.html), a strongly typed, lazily evaluated programming language.
 
 
-## Building
-Building from source is the only way to obtain refu at the moment.
 
-### Dependencies
+## Dependencies
 
  The required dependencies are:
  - For building we need [cmake](https://cmake.org/)
@@ -23,9 +21,31 @@ The optional dependencies are:
  - For generating dependency graphs, we can use [graphviz](http://www.graphviz.org/)
  - For extra memory checks during unit testing, we can use [valgrind](http://valgrind.org/)
  - For generating a json file of the AST, we can use [json-c](https://github.com/json-c/json-c)
- - For regular expressions (not yet used anywhere), we can use [pcre2](http://www.regular-expressions.info/pcre2.html)
+ - For regular expressions (not yet used anywhere yet), we can use [pcre2](http://www.regular-expressions.info/pcre2.html)
+ - For generating code coverage reports we can use [lcov](https://linux.die.net/man/1/lcov)
 
-### How to build
+
+### Dependencies in Linux
+
+Use your distribution's package manager
+
+### Dependencies in Macosx
+
+```sh
+brew install cmake
+brew install pkg-config
+brew install check
+brew install llvm
+brew install lcov
+```
+
+Installing llvm does not place it into the `PATH` and as such you will also need to put its path
+there manually. In recent versions this means adding the following to `.profile`.
+```sh
+export PATH="$PATH:/usr/local/opt/llvm/bin/"
+```
+
+## Building
 
 ```sh
 git clone --recursive https://github.com/refu-lang/refu
