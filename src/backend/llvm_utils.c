@@ -35,6 +35,14 @@ void bllvm_mod_debug(LLVMModuleRef m, const char *mod_name)
     LLVMDisposeMessage(str);
 }
 
+void bllvm_mod_llvm_ir(LLVMModuleRef m)
+{
+    char *str = LLVMPrintModuleToString(m);
+    printf("%s", str);
+    fflush(stdout);
+    LLVMDisposeMessage(str);
+}
+
 void bllvm_error_dispose(char **llvmerr)
 {
     if (*llvmerr) {

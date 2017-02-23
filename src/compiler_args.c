@@ -33,6 +33,7 @@ static const char* version_message = ""
         (_ca)->output_name,                     \
         (_ca)->input_rir,                       \
         (_ca)->rir_print,                       \
+        (_ca)->llvm_ir_print,                   \
         (_ca)->positional_file,                 \
         (_ca)->end                              \
     }                                           \
@@ -83,6 +84,11 @@ bool compiler_args_init(struct compiler_args *a)
         "r",
         "print-rir",
         "If given will output the intermediate representation in a file"
+    );
+    a->llvm_ir_print = arg_lit0(
+        NULL,
+        "llvm-ir",
+        "If given will output the LLVM IR in a file"
     );
     a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 100, "input files");
     a->end = arg_end(20);
@@ -230,6 +236,11 @@ bool compiler_args_help_is_requested(const struct compiler_args *args)
 bool compiler_args_print_backend_debug(const struct compiler_args *args)
 {
     return args->backend_debug->count > 0;
+}
+
+bool compiler_args_print_llvm_ir(const struct compiler_args *args)
+{
+    return args->llvm_ir_print->count > 0;
 }
 
 bool compiler_args_print_rir(const struct compiler_args *args)
