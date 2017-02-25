@@ -18,6 +18,7 @@ void bllvm_type_debug(struct LLVMOpaqueType *t,
                       const char *type_name,
                       struct llvm_traversal_ctx *ctx);
 void bllvm_mod_debug(struct LLVMOpaqueModule *m, const char *mod_name);
+void bllvm_mod_llvm_ir(struct LLVMOpaqueModule *m);
 
 void bllvm_assign_to_string(struct LLVMOpaqueValue *string_alloca,
                             struct LLVMOpaqueValue *length,

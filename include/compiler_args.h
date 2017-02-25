@@ -33,6 +33,7 @@ struct compiler_args {
     struct arg_str *output_name;
     struct arg_lit *input_rir;
     struct arg_lit *rir_print;
+    struct arg_lit *llvm_ir_print;
     struct arg_file *positional_file;
     struct arg_end *end;
 };
@@ -64,6 +65,8 @@ bool compiler_args_help_is_requested(const struct compiler_args *args);
  * Should we print backend llvm debug information?
  */
 bool compiler_args_print_backend_debug(const struct compiler_args *args);
+
+bool compiler_args_print_llvm_ir(const struct compiler_args *args);
 
 bool compiler_args_print_rir(const struct compiler_args *args);
 bool compiler_arg_input_is_rir(const struct compiler_args *args);

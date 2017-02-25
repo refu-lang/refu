@@ -432,6 +432,10 @@ struct LLVMOpaqueModule *blvm_create_module(
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
     }
 
+    if (compiler_args_print_llvm_ir(ctx->args) && (strlen(mod_name) == 4) && !strncmp(mod_name, "main", 4)) {
+        bllvm_mod_llvm_ir(ctx->llvm_mod);
+    }
+
     RFS_POP();
     return ctx->llvm_mod;
 
