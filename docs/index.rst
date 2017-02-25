@@ -21,12 +21,10 @@ Useful Links
 Language Documentation
 =======================
 
-In the following pages of the documentation we will see an introductory
-tutorial on Refu, presenting all the features of the language in order
-and how to use them effectively.
+In the following pages of the documentation we will see an introductory tutorial on Refu, presenting all the features of the language in order and how to use them effectively.
 
 Furthermore if you want to dive into it is the official specification of
-the language.
+the language check out the :doc:`Language Reference <reference>`.
 
 
 Introduction to Refulang
@@ -37,9 +35,9 @@ Introduction to Refulang
    getting_started.rst
 
 
-Specification
-=============
+Language Reference
+==================
 .. toctree::
    :maxdepth: 2
 
-   spec.rst
+   reference.rst
