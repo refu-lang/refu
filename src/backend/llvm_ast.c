@@ -379,7 +379,6 @@ struct LLVMOpaqueModule *blvm_create_module(
         return NULL;
     }
     ctx->llvm_mod = LLVMModuleCreateWithNameInContext(mod_name, ctx->llvm_context);
-    RFS_POP();
     ctx->target_data = LLVMCreateTargetData(LLVMGetDataLayout(ctx->llvm_mod));
 
     if (!bllvm_create_global_functions(ctx)) {
@@ -432,9 +431,12 @@ struct LLVMOpaqueModule *blvm_create_module(
     if (compiler_args_print_backend_debug(ctx->args)) {
         bllvm_mod_debug(ctx->llvm_mod, mod_name);
     }
+
+    RFS_POP();
     return ctx->llvm_mod;
 
 fail:
     LLVMDisposeModule(ctx->llvm_mod);
+    RFS_POP();
     return NULL;
 }
