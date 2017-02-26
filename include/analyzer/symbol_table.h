@@ -98,28 +98,36 @@ void symbol_table_deinit(struct symbol_table *t);
 /**
  * Add a node to the symbol table and also set its type
  */
-bool symbol_table_add_node(struct symbol_table *t,
-                           struct module *m,
-                           const struct RFstring *id,
-                           struct ast_node *n);
+bool symbol_table_add_node(
+    struct symbol_table *t,
+    struct module *m,
+    const struct RFstring *id,
+    struct ast_node *n
+);
 
-bool symbol_table_add_type(struct symbol_table *st,
-                           struct module *mod,
-                           const struct RFstring *id,
-                           struct type *t,
-                           const struct ast_node *node_desc);
+bool symbol_table_add_type(
+    struct symbol_table *st,
+    struct module *mod,
+    const struct RFstring *id,
+    struct type *t,
+    const struct ast_node *node_desc
+);
 
-bool symbol_table_add_record(struct symbol_table *t,
-                             struct symbol_table_record *rec);
+bool symbol_table_add_record(
+    struct symbol_table *t,
+    struct symbol_table_record *rec
+);
+
 /**
  * Lookup an ast_node in a symbol table
  * Arguments are just like @rec symbol_table_lookup_record()
  * @return  The found ast_node or NULL for failure
  */
 const struct ast_node *symbol_table_lookup_node(
-    struct symbol_table *t,
+    const struct symbol_table *t,
     const struct RFstring *id,
-    bool *at_first_symbol_table);
+    bool *at_first_symbol_table
+);
 /**
  * Lookup a record in a symbol table
  *
@@ -237,6 +245,35 @@ i_INLINE_DECL struct type *symbol_table_lookup_type(
     }
     return rec->data;
 }
+
+/**
+ * Check if the symbol table has a typeclass declaration/instance symbol table
+ * as a parent and if it does return it.
+ *
+ * @param st       The symbol table from which to start the search
+ * @return         The typeclass/typeclass_instance node if found and NULL otherwise
+ */
+struct ast_node *symbol_table_has_typeclass_parent(const struct symbol_table *st);
+
+/**
+ * Checks if the `self` special identifier makes sense in this symbol table and
+ * if it does returns its type
+ *
+ * @param st        The symbol table from which to search
+ * @return          The type of `self` in this context or NULL if self can't
+ *                  be used in this context.
+ */
+const struct type *symbol_table_check_and_get_selftype(const struct symbol_table *st);
+
+/**
+ * Checks if the `self` special identifier makes sense in this symbol table and
+ * if it does returns the ast node declaring the type it instantiates
+ *
+ * @param st        The symbol table from which to search
+ * @return          The ast node declaration for type of `self` in this context
+ *                  or NULL if self can't be used in this context.
+ */
+const struct ast_node *symbol_table_check_and_get_selftypedecl(const struct symbol_table *st);
 
 #ifdef RF_OPTION_DEBUG
 /**

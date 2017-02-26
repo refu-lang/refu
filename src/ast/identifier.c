@@ -6,6 +6,7 @@
 #include <ast/ast.h>
 #include <module.h>
 #include <types/type.h>
+#include <utils/common_strings.h>
 
 struct ast_node *ast_identifier_create(struct inplocation *loc, unsigned skip_start)
 {
@@ -65,12 +66,19 @@ bool ast_identifier_hash_create(struct ast_node *n, struct module *m)
 
 bool string_is_wildcard(const struct RFstring *s)
 {
-    return rf_string_equal(s, &g_wildcard_s);
+    return rf_string_equal(s, &g_str_wildcard);
 }
+
 bool ast_identifier_is_wildcard(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
     return string_is_wildcard(&n->identifier.string);
+}
+
+bool ast_identifier_is_self(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
+    return rf_string_equal(&n->identifier.string, &g_str_self);
 }
 
 /* -- xidentifier functions -- */

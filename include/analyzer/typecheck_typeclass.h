@@ -5,6 +5,11 @@
 struct ast_node;
 struct analyzer_traversal_ctx;
 
+enum traversal_cb_res typecheck_typeclass(
+    struct ast_node *n,
+    struct analyzer_traversal_ctx *ctx
+);
+
 enum traversal_cb_res typecheck_typeinstance(
     struct ast_node *n,
     struct analyzer_traversal_ctx *ctx

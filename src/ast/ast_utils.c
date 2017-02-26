@@ -51,8 +51,13 @@ bool ast_traverse_tree(struct ast_node *n,
 
     struct ast_node **child;
     darray_foreach(child, n->children) {
-        if (!ast_traverse_tree(*child, pre_cb, pre_user_arg,
-                               post_cb, post_user_arg)) {
+        if (!ast_traverse_tree(
+                *child,
+                pre_cb,
+                pre_user_arg,
+                post_cb,
+                post_user_arg))
+        {
             return false;
         }
     }

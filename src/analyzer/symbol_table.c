@@ -14,6 +14,7 @@
 #include <ast/typeclass.h>
 #include <types/type.h>
 #include <types/type_function.h>
+#include <utils/common_strings.h>
 #include <analyzer/analyzer.h>
 #include <ir/rir_object.h>
 
@@ -334,9 +335,10 @@ void symbol_table_record_print(const struct symbol_table_record *rec)
     RFS_POP();
 }
 
-struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table *t,
-                                                       const struct RFstring *id,
-                                                       bool *at_first_symbol_table)
+struct symbol_table_record *symbol_table_lookup_record(
+    const struct symbol_table *t,
+    const struct RFstring *id,
+    bool *at_first_symbol_table)
 {
     struct symbol_table_record *rec;
     const struct symbol_table *lp_table = t;
@@ -344,6 +346,13 @@ struct symbol_table_record *symbol_table_lookup_record(const struct symbol_table
     if (at_first_symbol_table) {
         *at_first_symbol_table = false;
     }
+
+    // some sanity checks. They pick up if a symbol table has not been initialized
+    RF_ASSERT(
+        t->pool != NULL &&
+        t->table.table != NULL,
+        "Symbol table does not contain expected data. Not initialized properly?"
+    );
 
     // search this symbol table
     rec = htable_get(&t->table, rf_hash_str_stable(id, 0), cmp_fn, id);
@@ -452,18 +461,74 @@ struct type *symbol_table_lookup_defined_type(const struct symbol_table *t,
         ? rec->data : NULL;
 }
 
-const struct ast_node *symbol_table_lookup_node(struct symbol_table *t,
-                                                const struct RFstring *id,
-                                                bool *at_first_symbol_table)
+const struct ast_node *symbol_table_lookup_node(
+    const struct symbol_table *st,
+    const struct RFstring *id,
+    bool *at_first_symbol_table)
 {
+    if (rf_string_equal(id, &g_str_self)) {
+        return symbol_table_check_and_get_selftypedecl(st);
+    }
     struct symbol_table_record *rec;
-    rec = symbol_table_lookup_record(t, id, at_first_symbol_table);
+    rec = symbol_table_lookup_record(st, id, at_first_symbol_table);
     return rec ? rec->node : NULL;
 }
 
 void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 {
     htable_iterate_records(&t->table, cb, user);
+}
+
+struct ast_node *symbol_table_has_typeclass_parent(const struct symbol_table *t)
+{
+    struct symbol_table *st = t->parent;
+    if (!st) {
+        return NULL;
+    }
+
+    if (st->fndecl->type == AST_TYPECLASS_INSTANCE ||
+        st->fndecl->type == AST_TYPECLASS_DECLARATION) {
+        return st->fndecl;
+    }
+
+    st = st->parent;
+    if (!st) {
+        return NULL;
+    }
+
+    if (st->fndecl->type == AST_TYPECLASS_INSTANCE ||
+        st->fndecl->type == AST_TYPECLASS_DECLARATION) {
+        return st->fndecl;
+    }
+
+    return NULL;
+}
+
+const struct type *symbol_table_check_and_get_selftype(const struct symbol_table *t)
+{
+    struct ast_node *n = symbol_table_has_typeclass_parent(t);
+    if (!n) {
+        return NULL;
+    }
+
+    // TODO:
+    // could also by a typeclass declaration but for now ignore that case
+    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
+    return ast_typeinstance_instantiated_type_get(n);
+}
+
+const struct ast_node *symbol_table_check_and_get_selftypedecl(const struct symbol_table *st)
+{
+    struct ast_node *n = symbol_table_has_typeclass_parent(st);
+    if (!n) {
+        return NULL;
+    }
+
+    // TODO:
+    // could also by a typeclass declaration but for now ignore that case
+    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
+    const struct ast_node *selftypedecl = symbol_table_lookup_node(st, ast_identifier_str(n->typeinstance.type_name), NULL);
+    return selftypedecl;
 }
 
 #ifdef RF_OPTION_DEBUG

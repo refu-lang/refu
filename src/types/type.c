@@ -15,13 +15,13 @@
 #include <ast/function.h>
 #include <ast/identifier.h>
 
+#include <utils/common_strings.h>
+
 #include <types/type_operators.h>
 #include <types/type_elementary.h>
 #include <types/type_function.h>
 #include <types/type_comparisons.h>
 #include <types/type_arr.h>
-
-const struct RFstring g_wildcard_s = RF_STRING_STATIC_INIT("_");
 
 static struct RFstring *type_str_do(const struct type *t, int options)
 {
@@ -50,7 +50,7 @@ static struct RFstring *type_str_do(const struct type *t, int options)
         ret = RFS(RFS_PF, RFS_PA(t->defined.name));
         break;
     case TYPE_CATEGORY_WILDCARD:
-        ret = RFS(RFS_PF, RFS_PA(&g_wildcard_s));
+        ret = RFS(RFS_PF, RFS_PA(&g_str_wildcard));
         break;
     case TYPE_CATEGORY_ARRAY:
         ret = type_str_add_array(

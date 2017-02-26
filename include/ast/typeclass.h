@@ -2,6 +2,7 @@
 #define LFR_AST_TYPECLASS_H
 
 struct inplocation_mark;
+struct type;
 
 #include <ast/ast.h>
 #include <rfbase/utils/sanity.h>
@@ -50,5 +51,10 @@ i_INLINE_DECL struct symbol_table *ast_typeinstance_symbol_table_get(struct ast_
     AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
     return &n->typeinstance.st;
 }
+
+/**
+ * Gets the type which instantiates the typeclass
+ */
+const struct type *ast_typeinstance_instantiated_type_get(struct ast_node* n);
 
 #endif

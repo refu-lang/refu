@@ -19,6 +19,7 @@
 #include <ast/returnstmt.h>
 #include <ast/type.h>
 #include <ast/module.h>
+#include <ast/typeclass.h>
 
 #include <types/type.h>
 #include <types/type_arr.h>
@@ -291,8 +292,14 @@ static enum traversal_cb_res typecheck_member_access(
     // get ast type description of the left member
     const struct ast_node *desc = symbol_table_lookup_node(
         ctx->current_st,
-        ast_identifier_str(left), NULL
+        ast_identifier_str(left),
+        NULL
     );
+    if (!desc) {
+        // should not happen
+        RF_ERROR("Could not retrieve ast description from the symbol table");
+        return TRAVERSAL_CB_ERROR;
+    }
     if (desc->type == AST_TYPE_LEAF) {
         // if it's a typeleaf we need the type description of it's right member
         desc = ast_typeleaf_right(desc);
@@ -300,11 +307,6 @@ static enum traversal_cb_res typecheck_member_access(
             // if it's an identifier we need to look it up again
             desc = symbol_table_lookup_node(ctx->current_st, ast_identifier_str(desc), NULL);
         }
-    }
-    if (!desc) {
-        // should not happen
-        RF_ERROR("Could not retrieve ast description from the symbol table");
-        return TRAVERSAL_CB_ERROR;
     }
     typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
     ast_type_foreach_leaf_arg(
@@ -356,13 +358,30 @@ static enum traversal_cb_res typecheck_identifier(
                 NULL
             )) {
 
-            analyzer_err(ctx->m, ast_node_startmark(n),
-                         ast_node_endmark(n),
-                         "Reserved wildcard identifier '_' used outside of "
-                         " a match expression");
+            analyzer_err(
+                ctx->m,
+                ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Reserved wildcard identifier '_' used outside of "
+                " a match expression"
+            );
             return TRAVERSAL_CB_ERROR;
         }
         traversal_node_set_type(n, type_get_wildcard(), ctx);
+        return TRAVERSAL_CB_OK;
+    } else if (ast_identifier_is_self(n)) {
+        const struct type *typeinstance_type = symbol_table_check_and_get_selftype(ctx->current_st);
+        if (!typeinstance_type) {
+            analyzer_err(
+                ctx->m,
+                ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Reserved identifier 'self' used outside of a typeclass"
+            );
+            return TRAVERSAL_CB_ERROR;
+        }
+
+        traversal_node_set_type(n, typeinstance_type, ctx);
         return TRAVERSAL_CB_OK;
     }
 
@@ -847,6 +866,9 @@ static enum traversal_cb_res typecheck_do(struct ast_node *n,
         break;
     case AST_IMPORT:
         ret = typecheck_import(n, ctx);
+        break;
+    case AST_TYPECLASS_DECLARATION:
+        ret = typecheck_typeclass(n, ctx);
         break;
     case AST_TYPECLASS_INSTANCE:
         ret = typecheck_typeinstance(n, ctx);

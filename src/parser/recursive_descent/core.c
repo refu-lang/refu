@@ -102,7 +102,6 @@ static struct ast_node *ast_parser_acc_stmt(struct ast_parser *p)
     } else if (TOKEN_IS_TYPEINSTANCE_START(tok)) {
         stmt = ast_parser_acc_typeinstance(p);
     }
-    
 
     return stmt;
 }

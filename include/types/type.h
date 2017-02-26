@@ -14,8 +14,6 @@ struct symbol_table;
 struct RFbuffer;
 struct rf_fixed_memorypool;
 
-extern const struct RFstring g_wildcard_s;
-
 void type_creation_ctx_init();
 void type_creation_ctx_deinit();
 /**

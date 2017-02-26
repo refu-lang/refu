@@ -77,9 +77,11 @@ static bool analyzer_populate_symbol_module(struct analyzer_traversal_ctx *ctx,
     bool symbol_found_at_first_st;
     const struct RFstring *name = ast_module_name(n);
 
-    search_node = symbol_table_lookup_node(ctx->current_st,
-                                           name,
-                                           &symbol_found_at_first_st);
+    search_node = symbol_table_lookup_node(
+        ctx->current_st,
+        name,
+        &symbol_found_at_first_st
+    );
 
     if (search_node && symbol_found_at_first_st) {
         analyzer_err(ctx->m, ast_node_startmark(n),
@@ -333,11 +335,12 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
         break;
     case AST_TYPECLASS_INSTANCE:
         // initialize the type class's symbol table
-        if (!symbol_table_init(&n->typeclass.st, ctx->m)) {
+        if (!symbol_table_init(&n->typeinstance.st, ctx->m)) {
             RF_ERROR("Could not initialize symbol table for top level type description node");
             return false;
         }
         symbol_table_swap_current(&ctx->current_st, ast_typeinstance_symbol_table_get(n));
+        symbol_table_set_fndecl(ctx->current_st, n);
         break;
 
     // nodes that only contribute records to symbol tables
