@@ -8,7 +8,9 @@ int main(int argc, char **argv)
     struct compiler *compiler = compiler_create_with_args(
         LOG_TARGET_STDOUT, // rflog print to stdout
         true,              // use stdlib
-        argc, argv);
+        argc,
+        argv
+    );
     if (!compiler) {
         return 1;
     }
