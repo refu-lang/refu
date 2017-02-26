@@ -100,8 +100,10 @@ static bool compiler_init_with_args(struct compiler *c, int rf_logtype, bool wit
 
 struct compiler *compiler_create_with_args(int rf_logtype, bool with_stdlib, int argc, char **argv)
 {
-    RF_ASSERT_OR_EXIT(!g_compiler_instance, 
-                      "compiler_create() was called a second time");
+    RF_ASSERT_OR_EXIT(
+        !g_compiler_instance,
+        "compiler_create() was called a second time"
+    );
     struct compiler *ret = compiler_alloc();
     if (!compiler_init_with_args(ret, rf_logtype, with_stdlib, argc, argv)) {
         free(ret);
@@ -198,6 +200,11 @@ bool compiler_pass_args(int argc, char **argv)
 
     // do not proceed any further if we got request for help
     if (compiler_args_help_is_requested(c->args)) {
+        return true;
+    }
+
+    if (!compiler_args_have_input(c->args)) {
+        ERROR("No input files were given");
         return true;
     }
 

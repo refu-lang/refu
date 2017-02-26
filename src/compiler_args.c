@@ -15,7 +15,7 @@
 #define i_eval(_def) #_def
 #define i_str(_def) i_eval(_def)
 static const char* version_message = ""
-    "Refu language compiler ver"i_str(RF_LANG_MAJOR_VERSION)"."
+    "Refu language compiler v"i_str(RF_LANG_MAJOR_VERSION)"."
     i_str(RF_LANG_MINOR_VERSION) "." i_str(RF_LANG_PATCH_VERSION) "\n";
 #undef i_str
 #undef i_eval
@@ -90,7 +90,14 @@ bool compiler_args_init(struct compiler_args *a)
         "llvm-ir",
         "If given will output the LLVM IR in a file"
     );
-    a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 100, "input files");
+    a->positional_file = arg_filen(
+        NULL,
+        NULL,
+        "<file>",
+        0,
+        100,
+        "input files. Can also be '-' which signifies input from stdin"
+    );
     a->end = arg_end(20);
 
     // set default values
@@ -134,16 +141,16 @@ void compiler_args_destroy(struct compiler_args *args)
     free(args);
 }
 
+bool compiler_args_have_input(const struct compiler_args *args)
+{
+    return args->positional_file->count > 0;
+}
+
 static bool compiler_args_read_input(struct compiler_args *args)
 {
-    int i = -1;
-    // if no input files are given use stdin
-    if (args->positional_file->count == 0) {
-        RF_MALLOC(args->input_files, sizeof(struct RFstring), return false);
-        if (!rf_string_init(&args->input_files[i], "stdin")) {
-             ERROR("Internal error while setting stdin as input source");
-             goto fail;
-         }
+    int i;
+    // if no input files are given, quit
+    if (!compiler_args_have_input(args)) {
         return true;
     }
 
@@ -153,25 +160,32 @@ static bool compiler_args_read_input(struct compiler_args *args)
         sizeof(struct RFstring) * args->positional_file->count,
         return false
     );
-    for (i = 0; i < args->positional_file->count; ++i) {
-         if (!rf_string_init(&args->input_files[i], args->positional_file->filename[i])) {
-             ERROR("Internal error while consuming an input file argument");
-             i --; // don't free this since it's not initialized yet;
-             goto fail;
-         }
 
-         if (strcmp(args->positional_file->filename[i], "stdin") != 0 &&
-             !rf_system_file_exists(&args->input_files[i])) {
-             ERROR(
-                 "File \""RFS_PF"\" does not exist",
-                 RFS_PA(&args->input_files[i])
-             );
-             goto fail;
-         }
+    args->input_files_num = args->positional_file->count;
+    for (i = 0; i < args->positional_file->count; ++i) {
+        if (strncmp(args->positional_file->filename[i], "-", 1) == 0) {
+            if (!rf_string_init(&args->input_files[i], "stdin")) {
+                goto fail_in_loop;
+            }
+        } else if (!rf_string_init(&args->input_files[i], args->positional_file->filename[i])) {
+            goto fail_in_loop;
+        }
+
+        if (strncmp(args->positional_file->filename[i], "-", 1) != 0 &&
+            !rf_system_file_exists(&args->input_files[i])) {
+            ERROR(
+                "File \""RFS_PF"\" does not exist",
+                RFS_PA(&args->input_files[i])
+            );
+            goto fail;
+        }
     }
 
     return true;
 
+fail_in_loop:
+    ERROR("Internal error while consuming an input file argument");
+    i --; // don't free the last string since it's not yet initialized
 fail:
     for (; i >= 0; --i) {
         rf_string_deinit(&args->input_files[i]);
@@ -180,6 +194,15 @@ fail:
     return false;
 }
 
+static inline void compiler_args_handle_output_filename(struct compiler_args *args)
+{
+    if (args->output_name->count == 0) {
+        // assume same name as first input file (can be stdin)
+        args->output = &args->input_files[0];
+    } else {
+        args->output = rf_string_create(args->output_name->sval[0]);
+    }
+}
 
 bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
 {
@@ -196,20 +219,10 @@ bool compiler_args_parse(struct compiler_args *args, int argc, char** argv)
     if (!compiler_args_read_input(args)) {
         return false;
     }
-
     // handle output file name
-    if (args->output_name->count == 0) {
-        if (args->positional_file->count == 0) {
-            // if no filename is given and we read from stdin
-            args->output = rf_string_create("refu_out");
-        } else {
-            // assume same name as first input file
-            args->output = &args->input_files[0];
-        }
-    } else {
-        args->output = rf_string_create(args->output_name->sval[0]);
+    if (compiler_args_have_input(args)) {
+        compiler_args_handle_output_filename(args);
     }
-    
 
     return true;
 }
@@ -218,6 +231,9 @@ bool compiler_args_check_and_display_help(const struct compiler_args *args)
 {
     CREATE_LOCAL_ARGTABLE(args);
     if (args->help->count > 0) {
+        printf("%s\nUSAGE: refu ", version_message);
+        arg_print_syntaxv(stdout, argtable, "\n\n");
+        printf("OPTIONS:\n");
         arg_print_glossary(stdout, argtable, " %-55s %s\n");
         return true;
     }
@@ -272,23 +288,12 @@ bool compiler_args_output_ast(struct compiler_args *args,
 struct RFstring *compiler_args_get_executable_name(struct compiler_args *args)
 {
     if (!args->output) {
-        // handle output file name
-        if (args->output_name->count == 0) {
-            if (args->positional_file->count == 0) {
-                // if no filename is given and we read from stdin
-                args->output = rf_string_create("refu_out");
-            } else {
-                // assume same name as first input file
-                args->output = &args->input_files[0];
-            }
-        } else {
-            args->output = rf_string_create(args->output_name->sval[0]);
-        }
+        compiler_args_handle_output_filename(args);
     }
     return args->output;
 }
 
 unsigned compiler_args_get_input_num(const struct compiler_args *args)
 {
-    return args->positional_file->count;
+    return args->input_files_num;
 }

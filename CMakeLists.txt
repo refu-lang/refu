@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 # project name and version should be set after cmake_policy CMP0048
-project(refu VERSION "0.5")
+project(refu VERSION "0.5.0")
+
 add_executable(refu "")
 add_subdirectory(rfbase)
 if (${TEST})

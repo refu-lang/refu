@@ -19,6 +19,7 @@ struct arg_end;
 
 struct compiler_args {
     struct RFstring *input_files;
+    unsigned input_files_num;
     struct RFstring *output;
     struct RFstringx buff;
 
@@ -60,6 +61,11 @@ bool compiler_args_check_and_display_help(const struct compiler_args *args);
  * Returns true if any help argument was requested. Does not display anything
  */
 bool compiler_args_help_is_requested(const struct compiler_args *args);
+
+/**
+ * Returns true if we have any input files, including stdin, to the compiler
+ */
+bool compiler_args_have_input(const struct compiler_args *args);
 
 /**
  * Should we print backend llvm debug information?
