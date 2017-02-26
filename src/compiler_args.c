@@ -15,7 +15,7 @@
 #define i_eval(_def) #_def
 #define i_str(_def) i_eval(_def)
 static const char* version_message = ""
-    "Refu language compiler ver"i_str(RF_LANG_MAJOR_VERSION)"."
+    "Refu language compiler v"i_str(RF_LANG_MAJOR_VERSION)"."
     i_str(RF_LANG_MINOR_VERSION) "." i_str(RF_LANG_PATCH_VERSION) "\n";
 #undef i_str
 #undef i_eval
@@ -90,7 +90,14 @@ bool compiler_args_init(struct compiler_args *a)
         "llvm-ir",
         "If given will output the LLVM IR in a file"
     );
-    a->positional_file = arg_filen(NULL, NULL, "<file>", 0, 100, "input files");
+    a->positional_file = arg_filen(
+        NULL,
+        NULL,
+        "<file>",
+        0,
+        100,
+        "input files. Can also be '-' which signifies input from stdin"
+    );
     a->end = arg_end(20);
 
     // set default values
@@ -224,6 +231,9 @@ bool compiler_args_check_and_display_help(const struct compiler_args *args)
 {
     CREATE_LOCAL_ARGTABLE(args);
     if (args->help->count > 0) {
+        printf("%s\nUSAGE: refu ", version_message);
+        arg_print_syntaxv(stdout, argtable, "\n\n");
+        printf("OPTIONS:\n");
         arg_print_glossary(stdout, argtable, " %-55s %s\n");
         return true;
     }

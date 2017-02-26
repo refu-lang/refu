@@ -12,6 +12,10 @@ include (RFUseLLVM)
 include (FindGperf)
 
 function(refu_config TARGET)
+  # --- Configure version
+  rf_system_numerical_option(${TARGET} RF_LANG_MAJOR_VERSION "Major version" 0)
+  rf_system_numerical_option(${TARGET} RF_LANG_MINOR_VERSION "Minor version" 5)
+  rf_system_numerical_option(${TARGET} RF_LANG_PATCH_VERSION "Patch version" 0)
   # --- Add refu options
   rf_numerical_option(${TARGET} VERBOSE_LEVEL_DEFAULT
     "The default verbosity level. Should range between 1 and 4"
