@@ -6,6 +6,7 @@
 #include <ast/ast.h>
 #include <ast/function.h>
 #include <ast/constants.h>
+#include <ast/operators.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
 #include <types/type.h>
@@ -26,6 +27,23 @@ enum traversal_cb_res typecheck_function_call(
     // check for existence of function
     fn_name = ast_fncall_name(n);
     fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
+
+    // check if this is a function call from a member access
+    struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
+    if (ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) {
+        RF_ASSERT(
+            ast_binaryop_right(parent) == n,
+            "At the moment functions should only be on the right side of a "
+            "member access operator."
+        );
+        struct ast_node *left = ast_binaryop_left(parent);
+        struct type *left_type = ast_node_get_type(left);
+        const struct RFstring *type_name = type_defined_get_name(left_type);
+        //TODO:
+        // Now check which type classes are instantiated by the type
+        // and see if they contain a function with the given name
+
+    }
 
     if (!fn_type || !type_is_callable(fn_type)) {
         analyzer_err(ctx->m, ast_node_startmark(n),

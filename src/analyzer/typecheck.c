@@ -398,14 +398,21 @@ static enum traversal_cb_res typecheck_identifier(
     // for some identifiers, like for the right part of a member access it's
     // impossible to determine type at this stage, for the rest it's an error
     struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
-    if (ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS) ||
-        parent->type == AST_IMPORT) {
+    struct ast_node *parent_2 = analyzer_traversal_ctx_get_nth_parent(1, ctx);
+    bool parent_member_access = (
+        ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS) ||
+        (parent_2 && ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS))
+    );
+    if (parent_member_access ||  parent->type == AST_IMPORT) {
         return TRAVERSAL_CB_OK;
     }
-    analyzer_err(ctx->m, ast_node_startmark(n),
-                 ast_node_endmark(n),
-                 "Undeclared identifier \""RFS_PF"\"",
-                 RFS_PA(ast_identifier_str(n)));
+    analyzer_err(
+        ctx->m,
+        ast_node_startmark(n),
+        ast_node_endmark(n),
+        "Undeclared identifier \""RFS_PF"\"",
+        RFS_PA(ast_identifier_str(n))
+    );
     return TRAVERSAL_CB_ERROR;
 }
 
