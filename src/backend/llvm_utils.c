@@ -250,3 +250,6 @@ unsigned long long bllvm_type_storagesize(
         ? 0
         : LLVMStoreSizeOfType(tdata, type);
 }
+
+i_INLINE_INS unsigned bllvm_get_enumattr_kind_id_or_die(const char *name);
+i_INLINE_INS LLVMAttributeRef bllvm_create_enumattr_or_die(LLVMContextRef ctx, const char *name);

@@ -147,13 +147,6 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
         "llvm.memcpy.p0i8.p0i8.i64",
         LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), args, 5, false)
     );
-
-    // adding attributes to the arguments of memcpy as seen when generating llvm code via clang
-    //@llvm.memcpy(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
-    // TODO: Not sure if these attributes would always work correctly here.
-    LLVMAddAttribute(LLVMGetParam(fn, 0), LLVMNoCaptureAttribute);
-    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMNoCaptureAttribute);
-    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
 }
 
 static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
