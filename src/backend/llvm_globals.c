@@ -142,18 +142,11 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
         LLVMInt32TypeInContext(ctx->llvm_context),
         LLVMInt1TypeInContext(ctx->llvm_context)
     };
-    LLVMValueRef fn =  LLVMAddFunction(
+    LLVMAddFunction(
         ctx->llvm_mod,
         "llvm.memcpy.p0i8.p0i8.i64",
         LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), args, 5, false)
     );
-
-    // adding attributes to the arguments of memcpy as seen when generating llvm code via clang
-    //@llvm.memcpy(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
-    // TODO: Not sure if these attributes would always work correctly here.
-    LLVMAddAttribute(LLVMGetParam(fn, 0), LLVMNoCaptureAttribute);
-    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMNoCaptureAttribute);
-    LLVMAddAttribute(LLVMGetParam(fn, 1), LLVMReadOnlyAttribute);
 }
 
 static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
@@ -163,8 +156,13 @@ static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
         ctx->llvm_mod,
         "llvm.donothing",
         LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), NULL, 0, false));
+#if (RF_LLVM_VERSION_MAJOR == 3 && RF_LLVM_VERSION_MINOR > 7) || RF_LLVM_VERSION_MAJOR >= 4
+    LLVMAddAttributeAtIndex(fn, -1, bllvm_create_enumattr_or_die(ctx->llvm_context, "nounwind"));
+    LLVMAddAttributeAtIndex(fn, -1, bllvm_create_enumattr_or_die(ctx->llvm_context, "readnone"));
+#else
     LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
     LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
+#endif
 }
 
 bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)

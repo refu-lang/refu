@@ -2,6 +2,13 @@
 #define LFR_BACKEND_LLVM_UTILS_H
 
 #include <stdint.h>
+#include <string.h>
+#if RF_LLVM_VERSION_MAJOR >= 3 && RF_LLVM_VERSION_MINOR > 7
+#include <llvm-c/Types.h>
+#endif
+#include <llvm-c/Core.h>
+#include <rfbase/defs/inline.h>
+#include <rfbase/utils/sanity.h>
 
 struct LLVMOpaqueModule;
 struct LLVMOpaqueBasicBlock;
@@ -138,4 +145,20 @@ unsigned long long  bllvm_type_storagesize(
     struct LLVMOpaqueType *type,
     struct llvm_traversal_ctx *ctx
 );
+
+#if (RF_LLVM_VERSION_MAJOR == 3 && RF_LLVM_VERSION_MINOR > 7) || RF_LLVM_VERSION_MAJOR >= 4
+i_INLINE_DECL unsigned bllvm_get_enumattr_kind_id_or_die(const char *name)
+{
+    unsigned len = strlen(name);
+    unsigned id = LLVMGetEnumAttributeKindForName(name, len);
+    RF_ASSERT(id != 0, "Failed to find Enum Attribute for %.*s", len, name);
+    return id;
+}
+
+i_INLINE_DECL LLVMAttributeRef bllvm_create_enumattr_or_die(LLVMContextRef ctx, const char *name)
+{
+    return LLVMCreateEnumAttribute(ctx, bllvm_get_enumattr_kind_id_or_die(name), 0);
+}
+#endif
+
 #endif

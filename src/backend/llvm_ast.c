@@ -401,7 +401,7 @@ struct LLVMOpaqueModule *blvm_create_module(
         // LLVMLinkeModules2() destroys the source module so we need to clone
         LLVMModuleRef clone_of_link =  LLVMCloneModule(link_source);
         // if an error occurs LLVMLinkModules() returns true ...
-#if RF_LLVM_VERSION_MAJOR >= 3 && RF_LLVM_VERSION_MINOR >= 8
+#if (RF_LLVM_VERSION_MAJOR == 3 && RF_LLVM_VERSION_MINOR >= 8) || RF_LLVM_VERSION_MAJOR >= 4
         if (true == LLVMLinkModules2(ctx->llvm_mod, clone_of_link)) {
 #else
         if (true == LLVMLinkModules(ctx->llvm_mod, clone_of_link, LLVMLinkerDestroySource, 0)) {
