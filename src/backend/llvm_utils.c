@@ -251,5 +251,7 @@ unsigned long long bllvm_type_storagesize(
         : LLVMStoreSizeOfType(tdata, type);
 }
 
+#if (RF_LLVM_VERSION_MAJOR == 3 && RF_LLVM_VERSION_MINOR > 7) || RF_LLVM_VERSION_MAJOR >= 4
 i_INLINE_INS unsigned bllvm_get_enumattr_kind_id_or_die(const char *name);
 i_INLINE_INS LLVMAttributeRef bllvm_create_enumattr_or_die(LLVMContextRef ctx, const char *name);
+#endif

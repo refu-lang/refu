@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#if (RF_LLVM_VERSION_MAJOR >= 3 && RF_LLVM_VERSION_MINOR > 7)
+#if RF_LLVM_VERSION_MAJOR >= 3 && RF_LLVM_VERSION_MINOR > 7
 #include <llvm-c/Types.h>
 #endif
 #include <llvm-c/Core.h>
@@ -146,7 +146,7 @@ unsigned long long  bllvm_type_storagesize(
     struct llvm_traversal_ctx *ctx
 );
 
-
+#if (RF_LLVM_VERSION_MAJOR == 3 && RF_LLVM_VERSION_MINOR > 7) || RF_LLVM_VERSION_MAJOR >= 4
 i_INLINE_DECL unsigned bllvm_get_enumattr_kind_id_or_die(const char *name)
 {
     unsigned len = strlen(name);
@@ -159,4 +159,6 @@ i_INLINE_DECL LLVMAttributeRef bllvm_create_enumattr_or_die(LLVMContextRef ctx, 
 {
     return LLVMCreateEnumAttribute(ctx, bllvm_get_enumattr_kind_id_or_die(name), 0);
 }
+#endif
+
 #endif
