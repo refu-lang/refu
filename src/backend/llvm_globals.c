@@ -142,7 +142,7 @@ static void bllvm_create_global_memcpy_decl(struct llvm_traversal_ctx *ctx)
         LLVMInt32TypeInContext(ctx->llvm_context),
         LLVMInt1TypeInContext(ctx->llvm_context)
     };
-    LLVMValueRef fn =  LLVMAddFunction(
+    LLVMAddFunction(
         ctx->llvm_mod,
         "llvm.memcpy.p0i8.p0i8.i64",
         LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), args, 5, false)
@@ -156,8 +156,8 @@ static void bllvm_create_global_donothing_decl(struct llvm_traversal_ctx *ctx)
         ctx->llvm_mod,
         "llvm.donothing",
         LLVMFunctionType(LLVMVoidTypeInContext(ctx->llvm_context), NULL, 0, false));
-    LLVMAddFunctionAttr(fn, LLVMNoUnwindAttribute);
-    LLVMAddFunctionAttr(fn, LLVMReadNoneAttribute);
+    LLVMAddAttributeAtIndex(fn, -1, bllvm_create_enumattr_or_die(ctx->llvm_context, "nounwind"));
+    LLVMAddAttributeAtIndex(fn, -1, bllvm_create_enumattr_or_die(ctx->llvm_context, "readnone"));
 }
 
 bool bllvm_create_global_functions(struct llvm_traversal_ctx *ctx)
