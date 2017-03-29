@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include <string.h>
+#if (RF_LLVM_VERSION_MAJOR >= 3 && RF_LLVM_VERSION_MINOR > 7)
 #include <llvm-c/Types.h>
+#endif
 #include <llvm-c/Core.h>
 #include <rfbase/defs/inline.h>
 #include <rfbase/utils/sanity.h>
