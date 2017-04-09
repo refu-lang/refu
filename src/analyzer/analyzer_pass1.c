@@ -238,6 +238,11 @@ static bool analyzer_init_and_process_typeclass_symbol_table(
         RF_ERROR("Could not initialize symbol table for typeclass declaration node");
         return false;
     }
+    // also add any generics to the typeclass symbol table
+    struct ast_node *generics = ast_typeclass_generics(n);
+    if (generics) {
+        symbol_table_add_genrdecl(&n->typeclass.st, ctx->m, generics);
+    }
     // add typeclass to the parent symbol table
     struct symbol_table_record *rec;
     const struct RFstring *typeclass_name = ast_typeclass_name_str(n);

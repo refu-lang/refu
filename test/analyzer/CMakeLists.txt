@@ -8,4 +8,5 @@ target_sources(test_refu PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/test_typecheck_functions.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_typecheck_matchexpr.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_typecheck_operators.c"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_typecheck_typeclasses.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/testsupport_analyzer.c")

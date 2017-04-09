@@ -34,6 +34,7 @@ static bool module_init(
     m->front = front;
     darray_init(m->dependencies);
     darray_init(m->foreignfn_arr);
+    darray_init(m->instantiated_typeclasses);
     // add to the compiler's modules
     darray_append(compiler_instance_get()->modules, m);
 
@@ -91,6 +92,7 @@ static void module_deinit(struct module *m)
     }
 
     darray_free(m->foreignfn_arr);
+    darray_free(m->instantiated_typeclasses);
     darray_free(m->dependencies);
 }
 
@@ -102,13 +104,22 @@ void module_destroy(struct module* m)
 
 void module_add_foreign_import(struct module *m, struct ast_node *import)
 {
-    RF_ASSERT(ast_node_is_foreign_import(import), "Expected a foreign import node");
+    RF_ASSERT(
+        ast_node_is_foreign_import(import),
+        "Expected a foreign import node"
+    );
     struct ast_node **child;
     darray_foreach(child, import->children) {
         // for now foreign import should only import function decls
         AST_NODE_ASSERT_TYPE(*child, AST_FUNCTION_DECLARATION);
         darray_append(m->foreignfn_arr, *child);
     }
+}
+
+void module_add_type_instance(struct module *m, struct ast_node *typeinstance)
+{
+    AST_NODE_ASSERT_TYPE(typeinstance, AST_TYPECLASS_INSTANCE);
+    darray_append(m->instantiated_typeclasses, typeinstance);
 }
 
 bool module_add_import(struct module *m, struct ast_node *import)

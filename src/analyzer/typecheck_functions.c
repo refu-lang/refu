@@ -37,7 +37,7 @@ enum traversal_cb_res typecheck_function_call(
             "member access operator."
         );
         struct ast_node *left = ast_binaryop_left(parent);
-        struct type *left_type = ast_node_get_type(left);
+        const struct type *left_type = ast_node_get_type(left);
         const struct RFstring *type_name = type_defined_get_name(left_type);
         //TODO:
         // Now check which type classes are instantiated by the type

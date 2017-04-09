@@ -32,6 +32,12 @@ i_INLINE_DECL struct ast_node *ast_typeclass_name(const struct ast_node *n)
     return n->typeclass.name;
 }
 
+i_INLINE_DECL struct ast_node *ast_typeclass_generics(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_DECLARATION);
+    return n->typeclass.generics;
+}
+
 struct ast_node *ast_typeinstance_create(
     const struct inplocation_mark *start,
     const struct inplocation_mark *end,

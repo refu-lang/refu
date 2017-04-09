@@ -12,6 +12,7 @@
 #include <ast/module.h>
 #include <ast/function.h>
 #include <ast/typeclass.h>
+#include <ast/generics.h>
 #include <types/type.h>
 #include <types/type_function.h>
 #include <utils/common_strings.h>
@@ -32,11 +33,12 @@ static void symbol_table_record_free(struct symbol_table_record *rec,
     rf_fixed_memorypool_free_element(st->pool, rec);
 }
 
-bool symbol_table_record_init(struct symbol_table_record *rec,
-                              struct module *mod,
-                              struct symbol_table *st,
-                              const struct ast_node *node,
-                              const struct RFstring *id)
+bool symbol_table_record_init(
+    struct symbol_table_record *rec,
+    struct module *mod,
+    struct symbol_table *st,
+    const struct ast_node *node,
+    const struct RFstring *id)
 {
     const struct RFstring *name = NULL;
     enum type_category category;
@@ -61,6 +63,7 @@ bool symbol_table_record_init(struct symbol_table_record *rec,
     rec->node = node;
     rec->id = id;
     switch (node->type) {
+    case AST_GENERIC_TYPE:
     case AST_MODULE:
     case AST_TYPECLASS_DECLARATION:
     case AST_TYPECLASS_INSTANCE:
@@ -305,6 +308,32 @@ bool symbol_table_add_type(struct symbol_table *st,
         return false;
     }
 
+    return true;
+}
+
+bool symbol_table_add_genrdecl(struct symbol_table *t, struct module *mod, struct ast_node *gen)
+{
+    AST_NODE_ASSERT_TYPE(gen, AST_GENERIC_DECLARATION);
+    struct ast_node **child;
+    darray_foreach(child, gen->children) {
+        const struct RFstring *type_s = ast_genrtype_type_str(*child);
+        const struct RFstring *id_s = ast_genrtype_id_str(*child);
+
+        if (!rf_string_equal(type_s, &g_str_Type)) {
+            analyzer_err(mod, ast_node_startmark(gen),
+                         ast_node_endmark(gen),
+                         "Generics only support \"Type\" at the moment but found"
+                         "\""RFS_PF"\" at "INPLOCATION_FMT,
+                         RFS_PA(type_s),
+                         INPLOCATION_ARG(module_get_file(mod),
+                                         ast_node_location(gen)));
+            return false;
+        }
+
+        if (!symbol_table_add_node(t, mod, id_s, *child)) {
+            return false;
+        }
+    }
     return true;
 }
 

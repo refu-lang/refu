@@ -14,3 +14,4 @@ const struct RFstring g_str_composite = RF_STRING_STATIC_INIT("composite");
 const struct RFstring g_str_array = RF_STRING_STATIC_INIT("array");
 const struct RFstring g_str_wildcard = RF_STRING_STATIC_INIT("_");
 const struct RFstring g_str_self = RF_STRING_STATIC_INIT("self");
+const struct RFstring g_str_Type = RF_STRING_STATIC_INIT("Type");

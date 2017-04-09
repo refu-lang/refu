@@ -27,6 +27,8 @@ struct module {
     struct modules_arr dependencies;
     //! A dynamic array of foreign functions this module needs
     struct arr_ast_nodes foreignfn_arr;
+    //! Instantiated typeclasses for the module
+    struct arr_ast_nodes instantiated_typeclasses;
 
     /* -- Members used only for the analysis stage of the module -- */
     /* Memory pools */
@@ -63,8 +65,15 @@ void module_destroy(struct module* m);
  */
 void module_add_foreign_import(struct module *m, struct ast_node *import);
 bool module_add_import(struct module *m, struct ast_node *import);
+
 const struct RFstring *module_name(const struct module *m);
 struct symbol_table *module_symbol_table(const struct module *m);
+
+/**
+ * Add a type instantiation to the module
+ */
+void module_add_type_instance(struct module *m, struct ast_node *typeinstance);
+
 /**
  * Initializes the module symbol table iff there is a root node and that is
  * an ast module.

@@ -12,6 +12,12 @@ struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id)
 
 #include <ast/ast.h>
 
+i_INLINE_DECL const struct RFstring *ast_genrtype_type_str(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_GENERIC_TYPE);
+    return ast_identifier_str(n->genrtype.type);
+}
+
 i_INLINE_DECL const struct RFstring *ast_genrtype_id_str(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_GENERIC_TYPE);

@@ -25,6 +25,7 @@ struct ast_node *ast_typeclass_create(
 
 i_INLINE_INS struct symbol_table *ast_typeclass_symbol_table_get(struct ast_node *n);
 i_INLINE_INS const struct RFstring *ast_typeclass_name_str(const struct ast_node *n);
+i_INLINE_INS struct ast_node *ast_typeclass_generics(const struct ast_node *n);
 
 struct ast_node *ast_typeinstance_create(
     const struct inplocation_mark *start,

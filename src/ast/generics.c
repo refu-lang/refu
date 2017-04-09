@@ -24,6 +24,7 @@ struct ast_node *ast_genrtype_create(struct ast_node *type, struct ast_node *id)
     return ret;
 }
 
+i_INLINE_INS const struct RFstring *ast_genrtype_type_str(struct ast_node *n);
 i_INLINE_INS const struct RFstring *ast_genrtype_id_str(struct ast_node *n);
 
 struct ast_node *ast_genrdecl_create(const struct inplocation_mark *start,

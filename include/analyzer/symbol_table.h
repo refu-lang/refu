@@ -118,6 +118,12 @@ bool symbol_table_add_record(
     struct symbol_table_record *rec
 );
 
+bool symbol_table_add_genrdecl(
+    struct symbol_table *t,
+    struct module *mod,
+    struct ast_node *gen
+);
+
 /**
  * Lookup an ast_node in a symbol table
  * Arguments are just like @rec symbol_table_lookup_record()
