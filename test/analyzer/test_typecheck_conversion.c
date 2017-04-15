@@ -235,11 +235,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_empty) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
             "Invalid arguments for explicit conversion to \"u64\".",
-            2, 4, 2, 8),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            2, 4, 2, 8),
+            2, 4, 2, 8)
     };
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST
@@ -257,11 +253,7 @@ START_TEST (test_typecheck_invalid_explicit_conversion_int_to_string) {
         TESTSUPPORT_INFOMSG_INIT_BOTH(
             MESSAGE_SEMANTIC_ERROR,
             "Invalid explicit conversion. Unable to convert from \"u64\" to \"string\".",
-            3, 4, 3, 12),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            3, 4, 3, 12),
+            3, 4, 3, 12)
     };
     ck_assert_typecheck_with_messages(false, messages);
 } END_TEST

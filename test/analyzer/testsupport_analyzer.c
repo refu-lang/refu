@@ -273,10 +273,10 @@ bool ck_assert_analyzer_errors_impl(struct info_msg *exp_errors,
     }
 
     if (i != num) {
-            ck_analyzer_check_abort(
-                filename, line,
-                "Expected %u analyzer messages but found %u", num, i);
-            return false;
+        ck_analyzer_check_abort(
+            filename, line,
+            "Expected %u analyzer messages but found %u", num, i);
+        return false;
     }
 
     return true;

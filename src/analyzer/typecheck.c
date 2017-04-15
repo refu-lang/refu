@@ -63,9 +63,12 @@ static bool typecheck_binaryop_get_operands(
     }
     *tright = ast_node_get_type(right);
     if (!*tright) {
-        analyzer_err(ctx->m, ast_node_startmark(right), ast_node_endmark(right),
-                     "Type of right side of \""RFS_PF"\" can not be determined",
-                     RFS_PA(ast_binaryop_opstr(n)));
+        analyzer_err(
+            ctx->m,
+            ast_node_startmark(right), ast_node_endmark(right),
+            "Type of right side of \""RFS_PF"\" can not be determined",
+            RFS_PA(ast_binaryop_opstr(n))
+        );
         return false;
     }
     return true;

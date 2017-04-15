@@ -179,10 +179,6 @@ START_TEST(test_typecheck_invalid_function_call_with_nil_arg_and_ret) {
             MESSAGE_SEMANTIC_ERROR,
             "function do_something() is called with argument type of "
             "\"string,u32\" which does not match the expected type of \"nil\".",
-            6, 8, 6, 32),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
             6, 8, 6, 32)
     };
 

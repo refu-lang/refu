@@ -191,11 +191,7 @@ START_TEST(test_typecheck_invalid_custom_type_constructor) {
             MESSAGE_SEMANTIC_ERROR,
             "constructor person() is called with argument type of "
             "\"string\" which does not match the expected type of \"string,u32\".",
-            3, 11, 3, 26),
-        TESTSUPPORT_INFOMSG_INIT_BOTH(
-            MESSAGE_SEMANTIC_ERROR,
-            "Type of right side of \"=\" can not be determined",
-            3, 11, 3, 26),
+            3, 11, 3, 26)
     };
 
     ck_assert_typecheck_with_messages(false, messages);
