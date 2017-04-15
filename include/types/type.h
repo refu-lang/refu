@@ -45,7 +45,7 @@ struct type *type_create_from_node(const struct ast_node *n);
 // Arguments are set by @ref type_creation_ctx_set_args()
 struct type *type_create_from_typedecl(const struct ast_node *n);
 // Arguments are set by @ref type_creation_ctx_set_args()
-struct type *type_create_from_fndecl(const struct ast_node *n);
+struct type *type_create_from_fndecl(struct ast_node *n);
 // Arguments are set by @ref type_creation_ctx_set_args()
 struct type *type_create_from_typeelem(const struct ast_node *typedesc);
 // Arguments are set by @ref type_creation_ctx_set_args()
@@ -76,7 +76,7 @@ struct type *type_lookup_or_create(const struct ast_node *n);
  * Applies a type operator to 2 types and returns the result. If either of the 2
  * parameter types is the same type_op then the type is appended instead of 
  * creating a new one. Also adds the type to the type set of the module if
- * a new type is created an does not exist in the module's types already.
+ * a new type is created and does not exist in the module's types already.
  *
  * @param type          The type operator to apply to @c left and @c right
  * @param n             An ast node to add to the created symbol table entry
@@ -182,6 +182,11 @@ const struct RFstring *type_get_unique_type_str(const struct type *t);
  * @returns the wildcard type '_'
  */
 const struct type *type_get_wildcard();
+
+/**
+ * @returns a generic type
+ */
+const struct type *type_get_generic();
 
 i_INLINE_DECL bool type_is_defined(const struct type *t)
 {

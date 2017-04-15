@@ -10,6 +10,7 @@
 
 #include <front_ctx.h>
 #include <analyzer/typecheck_matchexpr.h>
+#include <analyzer/typecheck_typeclass.h>
 #include <analyzer/type_set.h>
 #include <ast/ast_utils.h>
 
@@ -36,10 +37,13 @@ struct analyzer_traversal_ctx {
     struct arr_ast_nodes parent_nodes;
     //! Pattern matching related data
     struct pattern_matching_ctx matching_ctx;
+    //! Typeclass instantiation related data
+    struct typeclass_ctx typeclass_ctx;
 };
 
-i_INLINE_DECL void analyzer_traversal_ctx_init(struct analyzer_traversal_ctx *ctx,
-                                               struct module *m)
+i_INLINE_DECL void analyzer_traversal_ctx_init(
+    struct analyzer_traversal_ctx *ctx,
+    struct module *m)
 {
     ctx->m = m;
     ctx->current_st = NULL;

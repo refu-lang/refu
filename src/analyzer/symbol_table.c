@@ -72,7 +72,7 @@ bool symbol_table_record_init(
         break;
     case AST_FUNCTION_DECLARATION:
         type_creation_ctx_set_args(mod, st, NULL);
-        rec->data = type_create_from_fndecl(node);
+        rec->data = type_create_from_fndecl((struct ast_node*)node);
         break;
     case AST_TYPE_DECLARATION:
         type_creation_ctx_set_args(mod, st, NULL);
@@ -540,9 +540,10 @@ const struct type *symbol_table_check_and_get_selftype(const struct symbol_table
         return NULL;
     }
 
-    // TODO:
-    // could also by a typeclass declaration but for now ignore that case
-    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
+    if (n->type == AST_TYPECLASS_DECLARATION) {
+        return type_get_generic();
+    }
+    // else should only be a type instance
     return ast_typeinstance_instantiated_type_get(n);
 }
 
@@ -554,7 +555,7 @@ const struct ast_node *symbol_table_check_and_get_selftypedecl(const struct symb
     }
 
     // TODO:
-    // could also by a typeclass declaration but for now ignore that case
+    // could also be a typeclass declaration but for now ignore that case
     AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
     const struct ast_node *selftypedecl = symbol_table_lookup_node(st, ast_identifier_str(n->typeinstance.type_name), NULL);
     return selftypedecl;

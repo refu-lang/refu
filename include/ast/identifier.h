@@ -56,6 +56,10 @@ bool ast_identifier_is_wildcard(const struct ast_node *n);
  * Returns if this is the special 'self' identifier
  */
 bool ast_identifier_is_self(const struct ast_node *n);
+/**
+ * Returns if this is the special 'Type' identifier for inside generics
+ */
+bool ast_identifier_is_Type(const struct ast_node *n);
 
 bool ast_identifier_hash_create(struct ast_node *n, struct module *m);
 

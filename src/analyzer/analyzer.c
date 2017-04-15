@@ -38,6 +38,9 @@ static void analyzer_finalize_fndecl(struct ast_node *n)
     // figure out the number of arguments
     struct ast_node *fn_args = ast_fndecl_args_get(n);
     if (fn_args) {
+        // TODO: with type_creation.c:type_function_init_cb() we create an
+        //       arguments array and as such we can simply cound the size there.
+        //       just move the counting there and drop this function?
         const struct type *t = ast_node_get_type(ast_fndecl_args_get(n));
         n->fndecl.args_num = (darray_size(t->operator.operands) == 0)
             ? 1

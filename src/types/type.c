@@ -125,6 +125,12 @@ const struct type *type_get_wildcard()
     return &g_wildcard_type;
 }
 
+static struct type g_generic_type = {.category = TYPE_CATEGORY_GENERIC};
+const struct type *type_get_generic()
+{
+    return &g_generic_type;
+}
+
 i_INLINE_INS bool type_is_defined(const struct type *t);
 i_INLINE_INS const struct RFstring *type_defined_get_name(const struct type *t);
 i_INLINE_INS struct type *type_defined_get_type(const struct type *t);

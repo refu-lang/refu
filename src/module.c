@@ -9,6 +9,7 @@
 #include <front_ctx.h>
 #include <ast/ast.h>
 #include <ast/module.h>
+#include <ast/typeclass.h>
 #include <ast/type.h>
 #include <ast/ast_utils.h>
 #include <types/type.h>
@@ -120,6 +121,20 @@ void module_add_type_instance(struct module *m, struct ast_node *typeinstance)
 {
     AST_NODE_ASSERT_TYPE(typeinstance, AST_TYPECLASS_INSTANCE);
     darray_append(m->instantiated_typeclasses, typeinstance);
+}
+
+struct ast_node *module_search_type_instance(const struct module *m, const struct type *t)
+{
+    struct ast_node **typeinstance;
+    darray_foreach(typeinstance, m->instantiated_typeclasses) {
+        const struct type *instance_type = ast_typeinstance_instantiated_type_get(*typeinstance);
+        if (type_is_defined(t) &&
+            type_is_defined(instance_type) &&
+            rf_string_equal(type_defined_get_name(t), type_defined_get_name(instance_type))) {
+            return *typeinstance;
+        }
+    }
+    return NULL;
 }
 
 bool module_add_import(struct module *m, struct ast_node *import)

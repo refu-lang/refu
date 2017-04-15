@@ -38,6 +38,8 @@ i_INLINE_DECL struct ast_node *ast_typeclass_generics(const struct ast_node *n)
     return n->typeclass.generics;
 }
 
+
+
 struct ast_node *ast_typeinstance_create(
     const struct inplocation_mark *start,
     const struct inplocation_mark *end,
@@ -46,10 +48,16 @@ struct ast_node *ast_typeinstance_create(
     struct ast_node *genr
 );
 
-i_INLINE_DECL const struct RFstring *ast_typeinstance_name_str(const struct ast_node *n)
+i_INLINE_DECL const struct RFstring *ast_typeinstance_classname_str(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
     return ast_identifier_str(n->typeinstance.class_name);
+}
+
+i_INLINE_DECL const struct RFstring *ast_typeinstance_typename_str(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
+    return ast_identifier_str(n->typeinstance.type_name);
 }
 
 i_INLINE_DECL struct symbol_table *ast_typeinstance_symbol_table_get(struct ast_node *n)
@@ -59,8 +67,13 @@ i_INLINE_DECL struct symbol_table *ast_typeinstance_symbol_table_get(struct ast_
 }
 
 /**
+ * Returns the function of a typeinstance by name
+ */
+struct ast_node* ast_typeinstance_getfn_byname(const struct ast_node *n, const struct RFstring* name);
+
+/**
  * Gets the type which instantiates the typeclass
  */
-const struct type *ast_typeinstance_instantiated_type_get(struct ast_node* n);
+struct type *ast_typeinstance_instantiated_type_get(const struct ast_node* n);
 
 #endif

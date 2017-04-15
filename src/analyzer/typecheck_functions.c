@@ -7,6 +7,7 @@
 #include <ast/function.h>
 #include <ast/constants.h>
 #include <ast/operators.h>
+#include <ast/typeclass.h>
 #include <analyzer/analyzer.h>
 #include <analyzer/typecheck.h>
 #include <types/type.h>
@@ -18,15 +19,13 @@ enum traversal_cb_res typecheck_function_call(
     struct ast_node *n,
     struct analyzer_traversal_ctx *ctx)
 {
-    const struct RFstring *fn_name;
     const struct type *fn_type;
     const struct type *fn_declared_args_type;
     const struct type *fn_found_args_type;
     struct ast_node *fn_call_args = ast_fncall_args(n);
-
-    // check for existence of function
-    fn_name = ast_fncall_name(n);
-    fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
+    const struct RFstring *fn_name = ast_fncall_name(n);
+    struct type *self_type = NULL;
+    struct ast_node *typeinstance_fnimpl = NULL;
 
     // check if this is a function call from a member access
     struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
@@ -38,37 +37,74 @@ enum traversal_cb_res typecheck_function_call(
         );
         struct ast_node *left = ast_binaryop_left(parent);
         const struct type *left_type = ast_node_get_type(left);
-        const struct RFstring *type_name = type_defined_get_name(left_type);
-        //TODO:
         // Now check which type classes are instantiated by the type
         // and see if they contain a function with the given name
+        struct ast_node *typeinstance = module_search_type_instance(
+            ctx->m,
+            left_type
+        );
+        if (!typeinstance) {
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "No typeclass instantiation for left type \""RFS_PF"\" found."
+                "Can't call a method on a type without it.",
+                RFS_PA(type_str_or_die(left_type, TSTR_DEFAULT))
+            );
+        }
+        self_type = ast_typeinstance_instantiated_type_get(typeinstance);
 
-    }
+        typeinstance_fnimpl = ast_typeinstance_getfn_byname(
+            typeinstance,
+            fn_name
+        );
+        if (!typeinstance_fnimpl) {
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Function \""RFS_PF"()\" was not defined in typeclass \""
+                RFS_PF"\" instantiation for type \""RFS_PF"\".",
+                RFS_PA(fn_name),
+                ast_typeinstance_classname_str(typeinstance),
+                ast_typeinstance_typename_str(typeinstance)
+            );
+        }
+        fn_type = ast_node_get_type_or_die(ast_fnimpl_fndecl_get(typeinstance_fnimpl));
+    } else {
+        // non-member access function call,
+        // check for presence of function declaration in context
+        fn_type = type_lookup_identifier_string(fn_name, ctx->current_st);
 
-    if (!fn_type || !type_is_callable(fn_type)) {
-        analyzer_err(ctx->m, ast_node_startmark(n),
-                     ast_node_endmark(n),
-                     "Undefined function call \""RFS_PF"\" detected",
-                     RFS_PA(fn_name));
-        goto fail;
+        if (!fn_type || !type_is_callable(fn_type)) {
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Undefined function call \""RFS_PF"\" detected",
+                RFS_PA(fn_name)
+            );
+            goto fail;
+        }
+
+        // also check the ast node of the function declaration to get more
+        // information if it's not a conversion
+        if (!type_is_explicitly_convertable_elementary(fn_type)) {
+            const struct ast_node *fndecl = symbol_table_lookup_node(
+                ctx->current_st,
+                fn_name,
+                NULL
+            );
+            RF_ASSERT(
+                fndecl,
+                "Since fn_type was found so should fndecl be found here"
+            );
+            if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
+                n->fncall.type = AST_FNCALL_FOREIGN;
+            }
+        }
     }
 
     // create the arguments ast node array
     ast_fncall_arguments(n);
-
-    // also check the ast node of the function declaration to get more
-    // information if it's not a conversion
-    if (!type_is_explicitly_convertable_elementary(fn_type)) {
-        const struct ast_node *fndecl = symbol_table_lookup_node(
-            ctx->current_st,
-            fn_name,
-            NULL
-        );
-        RF_ASSERT(fndecl, "Since fn_type was found so should fndecl be found here");
-        if (fndecl->fndecl.position == FNDECL_PARTOF_FOREIGN_IMPORT) {
-            n->fncall.type = AST_FNCALL_FOREIGN;
-        }
-    }
 
     fn_found_args_type = (fn_call_args)
         ? ast_node_get_type(fn_call_args)
@@ -76,6 +112,28 @@ enum traversal_cb_res typecheck_function_call(
 
     if (!fn_found_args_type) { // argument typechecking failed
         goto fail;
+    }
+    // if we are in a function call of an instantiated typeclass
+    if (typeinstance_fnimpl) {
+        if (!ast_fnimpl_firstarg_is_self(typeinstance_fnimpl)) {
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Typeclass instantiation for function call \""RFS_PF"\" does "
+                "not have 'self' as the first argument.",
+                RFS_PA(fn_name)
+            );
+            goto fail;
+        }
+
+        // prepend the self type to the called arguments
+        fn_found_args_type = type_create_from_operation(
+            TYPEOP_PRODUCT,
+            ast_fndecl_args_get(ast_fnimpl_fndecl_get(typeinstance_fnimpl)),
+            self_type,
+            (struct type*)fn_found_args_type,
+            ctx->m
+        );
     }
 
     if (type_is_explicitly_convertable_elementary(fn_type)) {
@@ -142,7 +200,10 @@ enum traversal_cb_res typecheck_function_call(
 
 fail:
     traversal_node_set_type(n, NULL, ctx);
-    return TRAVERSAL_CB_ERROR;
+    // TODO: At the moment of writting this comment if we put a non fatal error
+    //       then we get assertion errors elsewhere in the code. Try to revert
+    //       back to non-fatal error later and see if these are fixed.
+    return TRAVERSAL_CB_FATAL_ERROR;
 }
 
 enum traversal_cb_res typecheck_fndecl(

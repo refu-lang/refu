@@ -3,6 +3,7 @@
 
 #include <analyzer/symbol_table.h>
 #include <ast/ast_utils.h>
+#include <ast/argument.h>
 
 struct ast_node;
 struct inplocation_mark;
@@ -30,6 +31,7 @@ struct ast_fndecl {
     enum fndecl_position position;
     //! Number of function arguments TODO : remove when rir_function is used instead
     unsigned args_num;
+    struct arr_arguments arguments;
 
     //! Symbol table of the function's arguments and return values.
     //! Only initialized in analyzer phase.

@@ -9,15 +9,21 @@
 #include <types/type_decls.h>
 #include <analyzer/symbol_table.h>
 
+struct ast_argument;
+
 /* -- function declaration functions -- */
 
-struct ast_node *ast_fndecl_create(const struct inplocation_mark *start,
-                                   const struct inplocation_mark *end,
-                                   enum fndecl_position pos,
-                                   struct ast_node *name,
-                                   struct ast_node *genr,
-                                   struct ast_node *args,
-                                   struct ast_node *ret);
+struct ast_node *ast_fndecl_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    enum fndecl_position pos,
+    struct ast_node *name,
+    struct ast_node *genr,
+    struct ast_node *args,
+    struct ast_node *ret
+);
+
+void ast_fndecl_deinit(struct ast_node *n);
 
 
 i_INLINE_DECL const struct RFstring *ast_fndecl_name_str(const struct ast_node *n)
@@ -70,7 +76,20 @@ i_INLINE_DECL unsigned ast_fndecl_argsnum_get(const struct ast_node *n)
     return n->fndecl.args_num;
 }
 
-struct RFstring *ast_fndecl_ret_str(struct ast_node *n);
+/**
+ * Returns a specific argument from the function or NULL if out of bounds.
+ *
+ * @param n        The function declaration for which to search
+ * @param idx      The index of the argument
+ * @return         The argument at idx if found, or NULL otherwise.
+ */
+struct ast_argument *ast_fndecl_argument_get(const struct ast_node *n, unsigned idx);
+
+/**
+ * Returns if the first argument of the function is `self`
+ */
+bool ast_fndecl_firstarg_is_self(const struct ast_node *n);
+
 
 /* -- function implementation functions -- */
 
@@ -102,6 +121,21 @@ i_INLINE_DECL struct symbol_table *ast_fnimpl_symbol_table_get(const struct ast_
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
     return n->fnimpl.st;
+}
+
+i_INLINE_DECL const struct RFstring *ast_fnimpl_namestr_get(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    return ast_fndecl_name_str(n->fnimpl.decl);
+}
+
+/**
+ * Returns if the first argument of the function is `self`
+ */
+i_INLINE_DECL bool ast_fnimpl_firstarg_is_self(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_IMPLEMENTATION);
+    return ast_fndecl_firstarg_is_self(n->fnimpl.decl);
 }
 
 /* -- function call functions -- */

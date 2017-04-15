@@ -1,6 +1,9 @@
 #include <ast/typeclass.h>
 
+#include <rfbase/string/core.h>
+
 #include <ast/ast.h>
+#include <ast/function.h>
 
 struct ast_node *ast_typeclass_create(
     const struct inplocation_mark *start,
@@ -51,11 +54,25 @@ struct ast_node *ast_typeinstance_create(
     return ret;
 }
 
-const struct type *ast_typeinstance_instantiated_type_get(struct ast_node *n)
+struct type *ast_typeinstance_instantiated_type_get(const struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_TYPECLASS_INSTANCE);
-    return ast_node_get_type(n->typeinstance.type_name);
+    return (struct type*)ast_node_get_type(n->typeinstance.type_name);
+}
+
+struct ast_node* ast_typeinstance_getfn_byname(const struct ast_node *n, const struct RFstring* name)
+{
+    struct ast_node **child;
+    darray_foreach(child, n->children) {
+        if (ast_node_type(*child) == AST_FUNCTION_IMPLEMENTATION) {
+            if (rf_string_equal(name, ast_fnimpl_namestr_get(*child))) {
+                return *child;
+            }
+        }
+    }
+    return NULL;
 }
 
 i_INLINE_INS struct symbol_table *ast_typeinstance_symbol_table_get(struct ast_node *n);
-i_INLINE_INS const struct RFstring *ast_typeinstance_name_str(const struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_typeinstance_classname_str(const struct ast_node *n);
+i_INLINE_INS const struct RFstring *ast_typeinstance_typename_str(const struct ast_node *n);

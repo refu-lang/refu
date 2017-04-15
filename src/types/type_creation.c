@@ -6,6 +6,7 @@
 
 #include <rfbase/utils/fixed_memory_pool.h>
 
+#include <ast/argument.h>
 #include <ast/ast.h>
 #include <ast/vardecl.h>
 #include <ast/type.h>
@@ -139,6 +140,7 @@ struct function_args_ctx {
     struct symbol_table *function_st;
     struct symbol_table *parent_st;
     struct module *module;
+    struct ast_node *fndecl;
     bool success;
 };
 
@@ -146,6 +148,7 @@ static inline void function_args_ctx_init(
     struct function_args_ctx *ctx,
     struct symbol_table *function_st,
     struct symbol_table *parent_st,
+    struct ast_node *fndecl,
     struct module *m
 )
 {
@@ -153,11 +156,13 @@ static inline void function_args_ctx_init(
     ctx->parent_st = parent_st;
     ctx->module = m;
     ctx->success = true;
+    ctx->fndecl = fndecl;
 }
 
 // Add all arguments to the symbol table. Leafs are added with key as their
 // ID and anonymous types are added with a unique value as their key
-static bool type_function_add_args_to_st(
+// also populate the functions argument array
+static bool type_function_init_cb(
     const struct RFstring *name,
     const struct ast_node *ast_desc,
     struct type *t,
@@ -191,6 +196,15 @@ static bool type_function_add_args_to_st(
     ctx->success = symbol_table_add_type(
         ctx->function_st, ctx->module, name, t, ast_desc
     );
+    // at this point we can add the type to the function call
+    struct ast_argument *arg = ast_argument_create((struct RFstring*)name, t);
+    if (!arg) {
+        RF_ERROR("Failed to allocate an ast argument");
+        ctx->success = false;
+        return false;
+    }
+    darray_append(ctx->fndecl->fndecl.arguments, arg);
+
     return ctx->success;
 }
 
@@ -362,7 +376,7 @@ struct type *type_create_from_node(const struct ast_node *node)
     case AST_TYPE_LEAF:
         return type_create_from_typeelem(node);
     case AST_FUNCTION_DECLARATION:
-        return type_create_from_fndecl(node);
+        return type_create_from_fndecl((struct ast_node*)node);
     default:
         RF_ASSERT_OR_CRITICAL(
             false, return false,
@@ -397,7 +411,7 @@ struct type *type_create_from_typedecl(const struct ast_node *n)
     return t;
 }
 
-static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
+static bool type_init_from_fndecl(struct type *t, struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     struct ast_node *args = ast_fndecl_args_get(n);
@@ -419,13 +433,15 @@ static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
                 &ctx,
                 ast_fndecl_symbol_table_get((struct ast_node*)n),
                 type_creation_ctx_st(),
+                n,
                 type_creation_ctx_mod()
             );
-            ast_type_foreach_leaf_arg(args, arg_type, (ast_type_cb)type_function_add_args_to_st, &ctx);
+            ast_type_foreach_leaf_arg(args, arg_type, (ast_type_cb)type_function_init_cb, &ctx);
             if (!ctx.success) {
                 RF_ERROR("Failed to add a function's arguments to its symbol table");
                 return false;
             }
+
         }
     } else {
         arg_type = (struct type*)type_elementary_get_type(ELEMENTARY_TYPE_NIL);
@@ -445,7 +461,7 @@ static bool type_init_from_fndecl(struct type *t, const struct ast_node *n)
     return true;
 }
 
-struct type *type_create_from_fndecl(const struct ast_node *n)
+struct type *type_create_from_fndecl(struct ast_node *n)
 {
     AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
     struct type *t;

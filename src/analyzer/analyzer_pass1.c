@@ -337,6 +337,7 @@ static bool analyzer_first_pass_do(struct ast_node *n, void *user_arg)
             return false;
         }
         symbol_table_swap_current(&ctx->current_st, ast_typeclass_symbol_table_get(n));
+        symbol_table_set_fndecl(ctx->current_st, n);
         break;
     case AST_TYPECLASS_INSTANCE:
         // initialize the type class's symbol table

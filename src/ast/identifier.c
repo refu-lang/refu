@@ -81,6 +81,12 @@ bool ast_identifier_is_self(const struct ast_node *n)
     return rf_string_equal(&n->identifier.string, &g_str_self);
 }
 
+bool ast_identifier_is_Type(const struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_IDENTIFIER);
+    return rf_string_equal(&n->identifier.string, &g_str_Type);
+}
+
 /* -- xidentifier functions -- */
 
 struct ast_node *ast_xidentifier_create(

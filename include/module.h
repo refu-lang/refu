@@ -73,6 +73,12 @@ struct symbol_table *module_symbol_table(const struct module *m);
  * Add a type instantiation to the module
  */
 void module_add_type_instance(struct module *m, struct ast_node *typeinstance);
+/**
+ * Check if there is a type instance for the provided type
+ *
+ * TODO: Check for multiple type instances
+ */
+struct ast_node *module_search_type_instance(const struct module *m, const struct type *t);
 
 /**
  * Initializes the module symbol table iff there is a root node and that is

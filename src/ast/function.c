@@ -1,16 +1,21 @@
 #include <ast/function.h>
 
+#include <rfbase/string/core.h>
+
+#include <utils/common_strings.h>
+#include <ast/argument.h>
 #include <ast/operators.h>
 
 /* -- function declaration functions -- */
 
-struct ast_node *ast_fndecl_create(const struct inplocation_mark *start,
-                                   const struct inplocation_mark *end,
-                                   enum fndecl_position pos,
-                                   struct ast_node *name,
-                                   struct ast_node *genr,
-                                   struct ast_node *args,
-                                   struct ast_node *ret_type)
+struct ast_node *ast_fndecl_create(
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end,
+    enum fndecl_position pos,
+    struct ast_node *name,
+    struct ast_node *genr,
+    struct ast_node *args,
+    struct ast_node *ret_type)
 {
     struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(name, AST_IDENTIFIER);
@@ -26,8 +31,40 @@ struct ast_node *ast_fndecl_create(const struct inplocation_mark *start,
     ast_node_register_child(ret, genr, fndecl.genr);
     ast_node_register_child(ret, args, fndecl.args);
     ast_node_register_child(ret, ret_type, fndecl.ret);
+    darray_init(ret->fndecl.arguments);
 
     return ret;
+}
+
+void ast_fndecl_deinit(struct ast_node *n)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    struct ast_argument **arg;
+    darray_foreach(arg, n->fndecl.arguments) {
+        ast_argument_destroy(*arg);
+    }
+    darray_free(n->fndecl.arguments);
+}
+
+struct ast_argument *ast_fndecl_argument_get(const struct ast_node *n, unsigned idx)
+{
+    AST_NODE_ASSERT_TYPE(n, AST_FUNCTION_DECLARATION);
+    int args_size = darray_size(n->fndecl.arguments);
+    if (idx > args_size - 1) {
+        // out of bounds
+        return NULL;
+    }
+    return darray_item(n->fndecl.arguments, idx);
+}
+
+bool ast_fndecl_firstarg_is_self(const struct ast_node *n)
+{
+    struct ast_argument *arg = ast_fndecl_argument_get(n, 0);
+    if (!arg) {
+        return false;
+    }
+
+    return rf_string_equal(arg->name, &g_str_self);
 }
 
 i_INLINE_INS const struct RFstring *ast_fndecl_name_str(const struct ast_node *n);
@@ -70,7 +107,8 @@ i_INLINE_INS struct ast_node *ast_fnimpl_body_get(const struct ast_node *n);
 i_INLINE_INS void ast_fnimpl_symbol_table_set(struct ast_node *n,
                                               struct symbol_table *st);
 i_INLINE_INS struct symbol_table *ast_fnimpl_symbol_table_get(const struct ast_node *n);
-
+i_INLINE_INS const struct RFstring *ast_fnimpl_namestr_get(const struct ast_node *n);
+i_INLINE_INS bool ast_fnimpl_firstarg_is_self(const struct ast_node *n);
 /* -- function call functions -- */
 
 struct ast_node *ast_fncall_create(const struct inplocation_mark *start,

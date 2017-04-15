@@ -279,16 +279,6 @@ static enum traversal_cb_res typecheck_member_access(
         return TRAVERSAL_CB_ERROR;
     }
 
-    // right type of member access should be an identifier (at least for now)
-    if (right->type != AST_IDENTIFIER) {
-        analyzer_err(ctx->m, ast_node_startmark(right),
-                     ast_node_endmark(right),
-                     "Right part of member access operator is not an identifier"
-                     " but is \""RFS_PF"\"",
-                     RFS_PA(ast_node_str(right)));
-        return TRAVERSAL_CB_ERROR;
-    }
-
     // get ast type description of the left member
     const struct ast_node *desc = symbol_table_lookup_node(
         ctx->current_st,
@@ -308,27 +298,63 @@ static enum traversal_cb_res typecheck_member_access(
             desc = symbol_table_lookup_node(ctx->current_st, ast_identifier_str(desc), NULL);
         }
     }
-    typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
-    ast_type_foreach_leaf_arg(
-        desc,
-        tleft->defined.type,
-        (ast_type_cb)typecheck_member_access_iter_cb,
-        &member_access_iter_ctx
-    );
-    if (!member_access_iter_ctx.member_type) {
-        RFS_PUSH();
-        analyzer_err(
-            ctx->m, ast_node_startmark(n),
-            ast_node_endmark(n),
-            "Could not find member \""RFS_PF"\" in type \""RFS_PF"\"",
-            RFS_PA(ast_identifier_str(right)),
-            RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT))
+
+    struct type *returning_type;
+    switch(right->type) {
+    case AST_FUNCTION_CALL:
+    {
+        struct ast_node *typeinstance = module_search_type_instance(ctx->m, tleft);
+        if (!typeinstance) {
+            RFS_PUSH();
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Trying to invoke function \""RFS_PF"()\" but could not find a "
+                "typeclass instance for type \""RFS_PF"\".",
+                RFS_PA(ast_identifier_str(right)),
+                RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT))
+            );
+            RFS_POP();
+        }
+        returning_type = type_callable_get_rettype(
+            ast_node_get_type_or_die(right)
         );
-        RFS_POP();
+    }
+        break;
+    case AST_IDENTIFIER:
+        typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
+        ast_type_foreach_leaf_arg(
+            desc,
+            tleft->defined.type,
+            (ast_type_cb)typecheck_member_access_iter_cb,
+            &member_access_iter_ctx
+        );
+        if (!member_access_iter_ctx.member_type) {
+            RFS_PUSH();
+            analyzer_err(
+                ctx->m, ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Could not find member \""RFS_PF"\" in type \""RFS_PF"\"",
+                RFS_PA(ast_identifier_str(right)),
+                RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT))
+            );
+            RFS_POP();
+            return TRAVERSAL_CB_ERROR;
+        }
+        returning_type = member_access_iter_ctx.member_type;
+        break;
+    default:
+        analyzer_err(
+            ctx->m, ast_node_startmark(right),
+            ast_node_endmark(right),
+            "Right part of member access operator is not an identifier or"
+            " function call but is \""RFS_PF"\"",
+            RFS_PA(ast_node_str(right))
+        );
         return TRAVERSAL_CB_ERROR;
     }
 
-    traversal_node_set_type(n, member_access_iter_ctx.member_type, ctx);
+    traversal_node_set_type(n, returning_type, ctx);
     return TRAVERSAL_CB_OK;
 }
 
@@ -369,8 +395,23 @@ static enum traversal_cb_res typecheck_identifier(
         }
         traversal_node_set_type(n, type_get_wildcard(), ctx);
         return TRAVERSAL_CB_OK;
+    } else if (ast_identifier_is_Type(n)) {
+        // Just do nothing for `Type` identifier for now, unless it's used out of context
+        struct ast_node *parent = analyzer_traversal_ctx_get_nth_parent_or_die(0, ctx);
+        if (parent->type != AST_GENERIC_TYPE) {
+            analyzer_err(
+                ctx->m,
+                ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Reserved identifier 'Type' used outside of a generic declaration"
+            );
+            return TRAVERSAL_CB_ERROR;
+        }
+        traversal_node_set_type(n, NULL, ctx);
+        return TRAVERSAL_CB_OK;
     } else if (ast_identifier_is_self(n)) {
         const struct type *typeinstance_type = symbol_table_check_and_get_selftype(ctx->current_st);
+
         if (!typeinstance_type) {
             analyzer_err(
                 ctx->m,
@@ -401,7 +442,8 @@ static enum traversal_cb_res typecheck_identifier(
     struct ast_node *parent_2 = analyzer_traversal_ctx_get_nth_parent(1, ctx);
     bool parent_member_access = (
         ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS) ||
-        (parent_2 && ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS))
+        (parent_2 && ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) ||
+        (parent_2 && ast_node_is_specific_binaryop(parent_2, BINARYOP_MEMBER_ACCESS))
     );
     if (parent_member_access ||  parent->type == AST_IMPORT) {
         return TRAVERSAL_CB_OK;
