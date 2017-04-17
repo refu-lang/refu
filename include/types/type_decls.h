@@ -45,6 +45,7 @@ enum typeop_type {
 };
 
 enum type_category {
+    TYPE_CATEGORY_INVALID = -1,
     TYPE_CATEGORY_OPERATOR = 0,         /* a type combination of other types */
     TYPE_CATEGORY_ELEMENTARY,           /* an elementary/builtin type */
     TYPE_CATEGORY_DEFINED,              /* a user defined type */

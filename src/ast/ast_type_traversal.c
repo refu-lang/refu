@@ -1,10 +1,13 @@
 #include <ast/type.h>
+
+#include <rfbase/string/core.h>
+
 #include <ast/ast.h>
 #include <types/type.h>
 #include <types/type_operators.h>
 
 // temporary debugging macro
-// #define VISUALISE_DEBUG
+/* #define VISUALISE_DEBUG */
 
 struct ast_type_traversal_ctx {
     //! Current type operation while iterating the rir type to type comparison

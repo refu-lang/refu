@@ -37,10 +37,12 @@ static bool uid_cmp_fn(struct type *t, size_t *uid)
 
 struct type *type_objset_has_uid(const struct rf_objset_type *set, size_t uid)
 {
-    return htable_get(&set->raw.ht,
-                      uid,
-                      (bool (*)(const void *, void *))uid_cmp_fn,
-                      &uid);
+    return htable_get(
+        &set->raw.ht,
+        uid,
+        (bool (*)(const void *, void *))uid_cmp_fn,
+        &uid
+    );
 }
 
 struct type *type_objset_has_string(const struct rf_objset_type *set, const struct RFstring *desc)
@@ -48,8 +50,9 @@ struct type *type_objset_has_string(const struct rf_objset_type *set, const stru
     return type_objset_has_uid(set, rf_hash_str_stable(desc, 0));
 }
 
-void type_objset_destroy(struct rf_objset_type *set,
-                         struct rf_fixed_memorypool *types_pool)
+void type_objset_destroy(
+    struct rf_objset_type *set,
+    struct rf_fixed_memorypool *types_pool)
 {
     struct type *t;
     struct rf_objset_iter it;

@@ -278,8 +278,10 @@ struct type *type_create_from_typeelem(const struct ast_node *typedesc)
 {
     struct type *ret;
     struct module *m = type_creation_ctx_mod();
-    RF_ASSERT(typedesc->type != AST_TYPE_LEAF && typedesc->type != AST_XIDENTIFIER,
-              "Typeleaf or identifier should never get here");
+    RF_ASSERT(
+        typedesc->type != AST_TYPE_LEAF && typedesc->type != AST_XIDENTIFIER,
+        "Typeleaf or identifier should never get here"
+    );
 
     ret = type_alloc(m);
     if (!ret) {
@@ -334,7 +336,7 @@ struct type *type_create_from_operation(
     struct type *right,
     struct module *m)
 {
-    struct type *t;
+    struct type *t = NULL;
     if (left->category == TYPE_CATEGORY_OPERATOR && left->operator.type == typeop) {
         darray_append(left->operator.operands, right);
         t = left;
@@ -359,6 +361,8 @@ struct type *type_create_from_operation(
             return NULL;
         }
     }
+    // else do nothing since `t` already exists in the type set
+    RF_ASSERT(t, "Should never have a NULL type here");
     return t;
 }
 
@@ -516,7 +520,6 @@ static bool type_operator_init_from_node(struct type *t, const struct ast_node *
     if (!right) {
         goto end;
     }
-
     // success
     ret = true;
 end:
@@ -631,7 +634,6 @@ struct type *module_get_or_create_type(const struct ast_node *desc)
     if (!(t = type_create_from_node(desc))) {
         return NULL;
     }
-
     // TODO: Should it not have been added already by the proper creation function?
     // add it to the list
     module_types_set_add(mod, t, desc);

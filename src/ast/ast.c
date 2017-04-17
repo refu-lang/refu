@@ -128,14 +128,17 @@ void ast_node_destroy(struct ast_node *n)
         case AST_BLOCK:
             symbol_table_deinit(ast_block_symbol_table_get(n));
             break;
-        case AST_FUNCTION_IMPLEMENTATION:
-            symbol_table_deinit(ast_fnimpl_symbol_table_get(n));
-            break;
         case AST_FUNCTION_DECLARATION:
             ast_fndecl_deinit(n);
             break;
         case AST_TYPE_DESCRIPTION:
             symbol_table_deinit(ast_typedesc_symbol_table_get(n));
+            break;
+        case AST_TYPECLASS_DECLARATION:
+            symbol_table_deinit(ast_typeclass_symbol_table_get(n));
+            break;
+        case AST_TYPECLASS_INSTANCE:
+            symbol_table_deinit(ast_typeinstance_symbol_table_get(n));
             break;
         case AST_MODULE:
             symbol_table_deinit(ast_module_symbol_table_get(n));

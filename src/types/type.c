@@ -52,6 +52,12 @@ static struct RFstring *type_str_do(const struct type *t, int options)
     case TYPE_CATEGORY_WILDCARD:
         ret = RFS(RFS_PF, RFS_PA(&g_str_wildcard));
         break;
+    case TYPE_CATEGORY_GENERIC:
+        ret = RFS(RFS_PF, RFS_PA(&g_str_generictype));
+        break;
+    case TYPE_CATEGORY_MODULE:
+        ret = RFS(RFS_PF, RFS_PA(&g_str_moduletype));
+        break;
     case TYPE_CATEGORY_ARRAY:
         ret = type_str_add_array(
             type_str_or_die(t->array.member_type, TSTR_DEFAULT),
@@ -88,9 +94,10 @@ struct RFstring *type_str(const struct type *t, int options)
 }
 i_INLINE_INS struct RFstring *type_str_or_die(const struct type *t, int options);
 
-struct RFstring *type_op_create_str(const struct type *t1,
-                                    const struct type *t2,
-                                    enum typeop_type optype)
+struct RFstring *type_op_create_str(
+    const struct type *t1,
+    const struct type *t2,
+    enum typeop_type optype)
 {
     return RFS(
         RFS_PF RFS_PF RFS_PF,

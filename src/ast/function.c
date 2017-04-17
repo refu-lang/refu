@@ -44,6 +44,7 @@ void ast_fndecl_deinit(struct ast_node *n)
         ast_argument_destroy(*arg);
     }
     darray_free(n->fndecl.arguments);
+    symbol_table_deinit(&n->fndecl.st);
 }
 
 struct ast_argument *ast_fndecl_argument_get(const struct ast_node *n, unsigned idx)

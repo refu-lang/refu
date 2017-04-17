@@ -40,19 +40,18 @@ bool symbol_table_record_init(
     const struct ast_node *node,
     const struct RFstring *id)
 {
-    const struct RFstring *name = NULL;
-    enum type_category category;
+    enum type_category category = TYPE_CATEGORY_INVALID;
     switch (node->type) {
+    case AST_GENERIC_TYPE:
+        category = TYPE_CATEGORY_GENERIC;
+        break;
     case AST_MODULE:
-        name = ast_module_name(node);
         category = TYPE_CATEGORY_MODULE;
         break;
     case AST_TYPECLASS_DECLARATION:
-        name = ast_typeclass_name_str(node);
         category = TYPE_CATEGORY_TYPECLASS;
         break;
     case AST_TYPECLASS_INSTANCE:
-        name = ast_typeclass_name_str(node);
         category = TYPE_CATEGORY_TYPEINSTANCE;
         break;
     default:
@@ -67,6 +66,7 @@ bool symbol_table_record_init(
     case AST_MODULE:
     case AST_TYPECLASS_DECLARATION:
     case AST_TYPECLASS_INSTANCE:
+        RF_ASSERT(category != TYPE_CATEGORY_INVALID, "Category should have been initialized here");
         type_creation_ctx_set_args(mod, st, NULL);
         rec->data = type_simple_create(category, id);
         break;
@@ -274,11 +274,12 @@ bool symbol_table_add_record(struct symbol_table *t,
     return true;
 }
 
-bool symbol_table_add_type(struct symbol_table *st,
-                           struct module *mod,
-                           const struct RFstring *id,
-                           struct type *t,
-                           const struct ast_node *node_desc)
+bool symbol_table_add_type(
+    struct symbol_table *st,
+    struct module *mod,
+    const struct RFstring *id,
+    struct type *t,
+    const struct ast_node *node_desc)
 {
     struct symbol_table_record *rec;
     bool symbol_found_at_first_st;
@@ -286,13 +287,16 @@ bool symbol_table_add_type(struct symbol_table *st,
     rec = symbol_table_lookup_record(st, id, &symbol_found_at_first_st);
 
     if (rec && symbol_found_at_first_st) {
-        analyzer_err(mod, ast_node_startmark(rec->node),
-                     ast_node_endmark(rec->node),
-                     "Identifier \""RFS_PF"\" was already declared in scope "
-                     "at "INPLOCATION_FMT,
-                     RFS_PA(id),
-                     INPLOCATION_ARG(module_get_file(mod),
-                                     ast_node_location(rec->node)));
+        analyzer_err(
+            mod,
+            ast_node_startmark(rec->node),
+            ast_node_endmark(rec->node),
+            "Identifier \""RFS_PF"\" was already declared in scope "
+            "at "INPLOCATION_FMT,
+            RFS_PA(id),
+            INPLOCATION_ARG(module_get_file(mod),
+                            ast_node_location(rec->node))
+        );
         return false;
     }
 
@@ -320,13 +324,15 @@ bool symbol_table_add_genrdecl(struct symbol_table *t, struct module *mod, struc
         const struct RFstring *id_s = ast_genrtype_id_str(*child);
 
         if (!rf_string_equal(type_s, &g_str_Type)) {
-            analyzer_err(mod, ast_node_startmark(gen),
-                         ast_node_endmark(gen),
-                         "Generics only support \"Type\" at the moment but found"
-                         "\""RFS_PF"\" at "INPLOCATION_FMT,
-                         RFS_PA(type_s),
-                         INPLOCATION_ARG(module_get_file(mod),
-                                         ast_node_location(gen)));
+            analyzer_err(
+                mod, ast_node_startmark(gen),
+                ast_node_endmark(gen),
+                "Generics only support \"Type\" at the moment but found"
+                "\""RFS_PF"\" at "INPLOCATION_FMT,
+                RFS_PA(type_s),
+                INPLOCATION_ARG(module_get_file(mod),
+                                ast_node_location(gen))
+            );
             return false;
         }
 

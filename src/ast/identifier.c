@@ -33,8 +33,10 @@ void ast_identifier_print(struct ast_node *n, int depth)
 
 const struct RFstring *ast_identifier_str(const struct ast_node *n)
 {
-    RF_ASSERT(n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
-              "Unexpected ast node type");
+    RF_ASSERT(
+        n->type == AST_IDENTIFIER || n->type == AST_XIDENTIFIER,
+        "Unexpected ast node type"
+    );
     if (n->type == AST_IDENTIFIER) {
         return &n->identifier.string;
     }
