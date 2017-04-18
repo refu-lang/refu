@@ -13,6 +13,7 @@ struct ast_typeclass {
 struct ast_typeinstance {
     struct ast_node *class_name;
     struct ast_node *type_name;
+    struct ast_node *instance_name;
     struct ast_node *generics;
 
     //! The symbol table for the typeinstance

@@ -273,7 +273,7 @@ START_TEST(test_acc_typeclass_err6) {
 START_TEST(test_acc_typeinstance_1) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "instance op_ampersand string {\n"
+        "instance op_ampersand for string {\n"
         "fn dosth(a:i32) -> i32\n"
         "{\n"
         "92821 + a\n"
@@ -282,10 +282,10 @@ START_TEST(test_acc_typeinstance_1) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *class_name = testsupport_parser_identifier_create(0, 9, 0, 20);
-    struct ast_node *type_name = testsupport_parser_identifier_create(0, 22, 0, 27);
+    struct ast_node *type_name = testsupport_parser_identifier_create(0, 26, 0, 31);
 
     testsupport_parser_node_create(tinst, typeinstance, 0, 0, 5, 0,
-                                   class_name, type_name, NULL);
+                                   class_name, NULL, type_name, NULL);
 
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(1, 3, 1, 7);
@@ -325,7 +325,7 @@ START_TEST(test_acc_typeinstance_1) {
 START_TEST(test_acc_typeinstance_2) {
     struct ast_node *n;
     static const struct RFstring s = RF_STRING_STATIC_INIT(
-        "instance op_ampersand string <Type T>{\n"
+        "instance op_ampersand for string <Type T>{\n"
         "fn dosth<Type T>(a:i32) -> i32\n"
         "{\n"
         "92821 + a\n"
@@ -339,16 +339,16 @@ START_TEST(test_acc_typeinstance_2) {
     front_testdriver_new_ast_main_source(&s);
 
     struct ast_node *class_name = testsupport_parser_identifier_create(0, 9, 0, 20);
-    struct ast_node *type_name = testsupport_parser_identifier_create(0, 22, 0, 27);
+    struct ast_node *type_name = testsupport_parser_identifier_create(0, 26, 0, 31);
 
-    struct ast_node *gid1 = testsupport_parser_identifier_create(0, 30, 0, 33);
-    struct ast_node *gid2 = testsupport_parser_identifier_create(0, 35, 0, 35);
+    struct ast_node *gid1 = testsupport_parser_identifier_create(0, 34, 0, 37);
+    struct ast_node *gid2 = testsupport_parser_identifier_create(0, 39, 0, 39);
     struct ast_node *gtype1 = ast_genrtype_create(gid1, gid2);
-    testsupport_parser_node_create(genr1, genrdecl, 0, 29, 0, 36);
+    testsupport_parser_node_create(genr1, genrdecl, 0, 33, 0, 40);
     ast_node_add_child(genr1, gtype1);
 
     testsupport_parser_node_create(tinst, typeinstance, 0, 0, 10, 0,
-                                   class_name, type_name, genr1);
+                                   class_name, NULL, type_name, genr1);
 
 
     struct ast_node *fn_name = testsupport_parser_identifier_create(1, 3, 1, 7);
@@ -409,6 +409,186 @@ START_TEST(test_acc_typeinstance_2) {
     ast_node_destroy(tinst);
 }END_TEST
 
+START_TEST(test_acc_typeinstance_3) {
+    struct ast_node *n;
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance op_ampersand nameofinstance for string {\n"
+        "fn dosth(a:i32) -> i32\n"
+        "{\n"
+        "92821 + a\n"
+        "}\n"
+        "}");
+    front_testdriver_new_ast_main_source(&s);
+
+    struct ast_node *class_name = testsupport_parser_identifier_create(0, 9, 0, 20);
+    struct ast_node *instance_name = testsupport_parser_identifier_create(0, 22, 0, 35);
+    struct ast_node *type_name = testsupport_parser_identifier_create(0, 41, 0, 46);
+
+    testsupport_parser_node_create(tinst, typeinstance, 0, 0, 5, 0,
+                                   class_name, instance_name, type_name, NULL);
+
+
+    struct ast_node *fn_name = testsupport_parser_identifier_create(1, 3, 1, 7);
+    struct ast_node *id1 = testsupport_parser_identifier_create(1, 9, 1, 9);
+    testsupport_parser_xidentifier_create_simple(id2, 1, 11, 1, 13);
+    testsupport_parser_node_create(t1, typeleaf, 1, 9, 1, 13, id1, id2);
+    testsupport_parser_xidentifier_create_simple(id3, 1, 19, 1, 21);
+    testsupport_parser_node_create(fnd, fndecl, 1, 0, 1, 21,
+                                   FNDECL_PARTOF_IMPL,
+                                   fn_name,
+                                   NULL,
+                                   t1,
+                                   id3
+    );
+
+    testsupport_parser_block_create(bnode, 2, 0, 4, 0);
+    testsupport_parser_constant_create(cnum1, 3, 0, 3, 4, integer, 92821);
+    struct ast_node *id4 = testsupport_parser_identifier_create(3, 8, 3, 8);
+    testsupport_parser_node_create(bop1, binaryop, 3, 0, 3, 8,
+                                   BINARYOP_ADD, cnum1, id4);
+    ast_node_add_child(bnode, bop1);
+
+
+
+    testsupport_parser_node_create(fim, fnimpl, 1, 0, 4, 0, fnd, bnode);
+
+
+
+    ast_node_add_child(tinst, fim);
+
+    ck_test_parse_as(n, typeinstance, "typeclass instance", tinst);
+
+    ast_node_destroy(n);
+    ast_node_destroy(tinst);
+}END_TEST
+
+START_TEST(test_acc_typeinstance_err1) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance {}");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an identifier for the typeclass instance class name "
+            "after 'instance'",
+            0, 9)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err2) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition && {}");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected either an identifier or 'for' after the typeinstance "
+            "class name",
+            0, 18)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err3) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition my_addition * {}");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a 'for' in the typeclass instance declaration before "
+            "the name of the instantiated type",
+            0, 30)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err4) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition my_addition for {}");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected an identifier for the name of the type that 'addition' "
+            "typeclass is instantiated with.",
+            0, 34)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err5) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition my_addition for vector }");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected '{' at type instance of 'addition' after 'vector'.",
+            0, 39)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err6) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition my_addition for vector {}");
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected at least one function implementation inside the body of "
+            "type instance of 'addition' for 'vector' after '{'.",
+            0, 41)
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
+START_TEST(test_acc_typeinstance_err7) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "instance addition my_addition for vector {\n"
+        "    fn add self:vector, other:vector) -> u32 {\n"
+        "        return 42\n"
+        "    }\n"
+        "}\n"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_test_fail_parse_as(typeinstance);
+    struct info_msg errors[] = {
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected '(' at function declaration",
+            1, 15),
+        TESTSUPPORT_INFOMSG_INIT_START(
+            MESSAGE_SYNTAX_ERROR,
+            "Expected a proper function implementation inside the body of "
+            "type instance of 'addition' for 'vector' after '{'.",
+            1, 5),
+    };
+    ck_assert_parser_errors(errors);
+} END_TEST
+
 Suite *parser_typeclass_suite_create(void)
 {
     Suite *s = suite_create("parser_typeclass");
@@ -432,9 +612,22 @@ Suite *parser_typeclass_suite_create(void)
     tcase_add_checked_fixture(tinst, setup_front_tests, teardown_front_tests);
     tcase_add_test(tinst, test_acc_typeinstance_1);
     tcase_add_test(tinst, test_acc_typeinstance_2);
+    tcase_add_test(tinst, test_acc_typeinstance_3);
+
+    TCase *tinserr = tcase_create("parser_typeclass_instance_errors");
+    tcase_add_checked_fixture(tinserr, setup_front_tests, teardown_front_tests);
+    tcase_add_test(tinserr, test_acc_typeinstance_err1);
+    tcase_add_test(tinserr, test_acc_typeinstance_err2);
+    tcase_add_test(tinserr, test_acc_typeinstance_err3);
+    tcase_add_test(tinserr, test_acc_typeinstance_err4);
+    tcase_add_test(tinserr, test_acc_typeinstance_err5);
+    tcase_add_test(tinserr, test_acc_typeinstance_err6);
+    tcase_add_test(tinserr, test_acc_typeinstance_err7);
+
 
     suite_add_tcase(s, tpdecl);
     suite_add_tcase(s, tcerr);
     suite_add_tcase(s, tinst);
+    suite_add_tcase(s, tinserr);
     return s;
 }

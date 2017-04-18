@@ -17,19 +17,102 @@ START_TEST(test_simple_typeclass) {
 
     static const struct RFstring s = RF_STRING_STATIC_INIT(
         "type vector {\n"
-        "    x:int, y:int, z:int"
+        "    x:int, y:int, z:int\n"
         "}\n"
         "class addition <Type T> {\n"
         "    fn add(self:T, other:T) -> T"
         "}\n"
         "\n"
-        "instance addition vector {\n"
+        "instance addition for vector {\n"
         "    fn add(self:vector, other:vector) -> vector\n"
         "    {\n"
         "        ret:vector\n"
         "        ret.x = self.x + other.x\n"
         "        ret.y = self.y + other.y\n"
         "        ret.z = self.z + other.z\n"
+        "        return ret\n"
+        "    }\n"
+        "}\n"
+        "fn some_function() {\n"
+        "    a:vector = vector(1, 2, 3)\n"
+        "    b:vector = vector(3, 2, 1)\n"
+        "    c:vector = a.add(b)\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_assert_typecheck_ok();
+} END_TEST
+
+START_TEST(test_typeclass_2_instances_diff_types) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type vector {\n"
+        "    x:int, y:int, z:int\n"
+        "}\n"
+        "type person {\n"
+        "    name:string, age:int\n"
+        "}\n"
+        "class addition <Type T> {\n"
+        "    fn add(self:T, other:T) -> T"
+        "}\n"
+        "\n"
+        "instance addition for vector {\n"
+        "    fn add(self:vector, other:vector) -> vector\n"
+        "    {\n"
+        "        ret:vector\n"
+        "        ret.x = self.x + other.x\n"
+        "        ret.y = self.y + other.y\n"
+        "        ret.z = self.z + other.z\n"
+        "        return ret\n"
+        "    }\n"
+        "}\n"
+        "instance addition for person {\n"
+        "    fn add(self:person, other:person) ->person\n"
+        "    {\n"
+        "        ret:person\n"
+        "        ret.age = self.age + other.age\n"
+        "        return ret\n"
+        "    }\n"
+        "}\n"
+        "fn some_function() {\n"
+        "    a:vector = vector(1, 2, 3)\n"
+        "    b:vector = vector(3, 2, 1)\n"
+        "    c:vector = a.add(b)\n"
+        "}"
+    );
+    front_testdriver_new_ast_main_source(&s);
+
+    ck_assert_typecheck_ok();
+} END_TEST
+
+START_TEST(test_typeclass_2_instances_same_type) {
+
+    static const struct RFstring s = RF_STRING_STATIC_INIT(
+        "type vector {\n"
+        "    x:int, y:int, z:int\n"
+        "}\n"
+        "class addition <Type T> {\n"
+        "    fn add(self:T, other:T) -> T"
+        "}\n"
+        "\n"
+        "instance addition normal for vector {\n"
+        "    fn add(self:vector, other:vector) -> vector\n"
+        "    {\n"
+        "        ret:vector\n"
+        "        ret.x = self.x + other.x\n"
+        "        ret.y = self.y + other.y\n"
+        "        ret.z = self.z + other.z\n"
+        "        return ret\n"
+        "    }\n"
+        "}\n"
+        "instance addition double for vector {\n"
+        "    fn add(self:vector, other:vector) ->vector\n"
+        "    {\n"
+        "        ret:vector\n"
+        "        ret.x = (self.x + other.x) * 2\n"
+        "        ret.y = (self.y + other.y) * 2\n"
+        "        ret.z = (self.z + other.z) * 2\n"
         "        return ret\n"
         "    }\n"
         "}\n"
@@ -54,7 +137,7 @@ START_TEST(test_typeclass_errors1) {
         "    fn add(self:T, other:T) -> T\n"
         "}\n"
         "\n"
-        "instance addition vector {\n"
+        "instance addition for vector {\n"
         "    fn add(self:vector, other:vector) -> vector\n"
         "    {\n"
         "        ret:vector\n"
@@ -94,7 +177,7 @@ START_TEST(test_typeclass_errors2) {
         "    fn add(self:T, other:T) -> T\n"
         "}\n"
         "\n"
-        "instance addition vector {\n"
+        "instance addition for vector {\n"
         "    fn add(self:vector, other:vector) -> vector\n"
         "    {\n"
         "        ret:vector\n"
@@ -158,7 +241,7 @@ START_TEST(test_typeclass_errors4) {
         "    fn add(a:T, other:T) -> T\n"
         "}\n"
         "\n"
-        "instance addition vector {\n"
+        "instance addition for vector {\n"
         "    fn add(a:vector, other:vector) -> vector\n"
         "    {\n"
         "        ret:vector\n"
@@ -231,6 +314,8 @@ Suite *analyzer_typecheck_typeclasses_suite_create(void)
         teardown_analyzer_tests
     );
     tcase_add_test(t_typeclasses_simple, test_simple_typeclass);
+    tcase_add_test(t_typeclasses_simple, test_typeclass_2_instances_diff_types);
+    tcase_add_test(t_typeclasses_simple, test_typeclass_2_instances_same_type);
 
     TCase *t_typeclasses_errors = tcase_create("typecheck_typeclasses_errors");
     tcase_add_checked_fixture(

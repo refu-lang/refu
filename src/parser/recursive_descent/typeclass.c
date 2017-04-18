@@ -119,37 +119,68 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
     struct ast_node *n = NULL;
     struct token *tok;
     struct ast_node *class_name;
+    struct ast_node *instance_name = NULL;
     struct ast_node *type_name;
     struct ast_node *genr = NULL;
     const struct inplocation_mark *start;
     enum parser_fnimpl_list_err err;
 
     tok = lexer_lookahead(parser_lexer(p), 1);
-
     if (!tok || tok->type != TOKEN_KW_TYPEINSTANCE) {
         return NULL;
     }
     start = token_get_start(tok);
 
-    //consumer typeclass isntance keyword
+    //consume typeclass instance keyword
     lexer_curr_token_advance(parser_lexer(p));
 
     class_name = ast_parser_acc_identifier(p);
     if (!class_name) {
         parser_synerr(
-            p, lexer_last_token_start(parser_lexer(p)), NULL,
+            p,
+            lexer_last_token_start(parser_lexer(p)),
+            NULL,
             "Expected an identifier for the typeclass instance "
-            "name after 'instance'"
+            "class name after 'instance'"
         );
         goto err;
     }
 
+    tok = lexer_lookahead(parser_lexer(p), 1);
+    if (!tok || (tok->type != TOKEN_IDENTIFIER && tok->type != TOKEN_KW_FOR)) {
+        parser_synerr(
+            p,
+            lexer_last_token_start(parser_lexer(p)),
+            NULL,
+            "Expected either an identifier or 'for' after the typeinstance "
+            "class name"
+        );
+        goto err;
+    }
+
+    instance_name = ast_parser_acc_identifier(p);
+    tok = lexer_lookahead(parser_lexer(p), 1);
+    if (!tok || tok->type != TOKEN_KW_FOR) {
+        parser_synerr(
+            p,
+            lexer_last_token_start(parser_lexer(p)),
+            NULL,
+            "Expected a 'for' in the typeclass instance declaration before "
+            "the name of the instantiated type"
+        );
+        goto err;
+    }
+    //consume for keyword
+    lexer_curr_token_advance(parser_lexer(p));
+
     type_name = ast_parser_acc_identifier(p);
     if (!type_name) {
         parser_synerr(
-            p, lexer_last_token_start(parser_lexer(p)), NULL,
-            "Expected an identifier for the name of \""RFS_PF"\" "
-            "typeclass instance",
+            p,
+            lexer_last_token_start(parser_lexer(p)),
+            NULL,
+            "Expected an identifier for the name of the type that '"RFS_PF"' "
+            "typeclass is instantiated with.",
             RFS_PA(ast_identifier_str(class_name))
         );
         goto err;
@@ -171,13 +202,20 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
         parser_synerr(
             p, ast_node_endmark(type_name), NULL,
-            "Expected '{' at type instance \""RFS_PF"\" after \""RFS_PF"\"",
+            "Expected '{' at type instance of '"RFS_PF"' after '"RFS_PF"'.",
             RFS_PA(ast_identifier_str(class_name)),
             RFS_PA(ast_identifier_str(type_name))
         );
         goto err_free_genr;
     }
-    n = ast_typeinstance_create(start, NULL, class_name, type_name, genr);
+    n = ast_typeinstance_create(
+        start,
+        NULL,
+        class_name,
+        instance_name,
+        type_name,
+        genr
+    );
     if (!n) {
         RF_ERRNOMEM();
         goto err_free_genr;
@@ -189,7 +227,7 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
         parser_synerr(
             p, token_get_end(tok), NULL,
             "Expected at least one function implementation inside "
-            "the body of typeinstace \""RFS_PF"\" for \""RFS_PF"\" after'{'",
+            "the body of type instance of '"RFS_PF"' for '"RFS_PF"' after '{'.",
             RFS_PA(ast_identifier_str(class_name)),
             RFS_PA(ast_identifier_str(type_name))
         );
@@ -199,7 +237,7 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
         parser_synerr(
             p, lexer_last_token_end(parser_lexer(p)), NULL,
             "Expected a proper function implementation inside "
-            "the body of typeinstace \""RFS_PF"\" for \""RFS_PF"\" after'{'",
+            "the body of type instance of '"RFS_PF"' for '"RFS_PF"' after '{'.",
             RFS_PA(ast_identifier_str(class_name)),
             RFS_PA(ast_identifier_str(type_name))
         );
