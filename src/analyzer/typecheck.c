@@ -305,24 +305,9 @@ static enum traversal_cb_res typecheck_member_access(
     struct type *returning_type;
     switch(right->type) {
     case AST_FUNCTION_CALL:
-    {
-        struct ast_node *typeinstance = module_search_type_instance(ctx->m, tleft);
-        if (!typeinstance) {
-            RFS_PUSH();
-            analyzer_err(
-                ctx->m, ast_node_startmark(n),
-                ast_node_endmark(n),
-                "Trying to invoke function \""RFS_PF"()\" but could not find a "
-                "typeclass instance for type \""RFS_PF"\".",
-                RFS_PA(ast_identifier_str(right)),
-                RFS_PA(type_str_or_die(tleft, TSTR_DEFAULT))
-            );
-            RFS_POP();
-        }
         returning_type = type_callable_get_rettype(
             ast_node_get_type_or_die(right)
         );
-    }
         break;
     case AST_IDENTIFIER:
         typecheck_member_access_iter_ctx_init(&member_access_iter_ctx, right);
@@ -420,9 +405,9 @@ static enum traversal_cb_res typecheck_identifier(
                 ctx->m,
                 ast_node_startmark(n),
                 ast_node_endmark(n),
-                "Reserved identifier 'self' used outside of a typeclass"
+                "Reserved identifier 'self' used outside of a typeclass."
             );
-            return TRAVERSAL_CB_ERROR;
+            return TRAVERSAL_CB_FATAL_ERROR;
         }
 
         traversal_node_set_type(n, typeinstance_type, ctx);

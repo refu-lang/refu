@@ -44,13 +44,16 @@ enum traversal_cb_res typecheck_function_call(
             left_type
         );
         if (!typeinstance) {
+            RFS_PUSH();
             analyzer_err(
                 ctx->m, ast_node_startmark(n),
                 ast_node_endmark(n),
                 "No typeclass instantiation for left type \""RFS_PF"\" found."
-                "Can't call a method on a type without it.",
+                " Can not call a method on a type without it.",
                 RFS_PA(type_str_or_die(left_type, TSTR_DEFAULT))
             );
+            RFS_POP();
+            goto fail;
         }
         self_type = ast_typeinstance_instantiated_type_get(typeinstance);
 
@@ -65,9 +68,10 @@ enum traversal_cb_res typecheck_function_call(
                 "Function \""RFS_PF"()\" was not defined in typeclass \""
                 RFS_PF"\" instantiation for type \""RFS_PF"\".",
                 RFS_PA(fn_name),
-                ast_typeinstance_classname_str(typeinstance),
-                ast_typeinstance_typename_str(typeinstance)
+                RFS_PA(ast_typeinstance_classname_str(typeinstance)),
+                RFS_PA(ast_typeinstance_typename_str(typeinstance))
             );
+            goto fail;
         }
         fn_type = ast_node_get_type_or_die(ast_fnimpl_fndecl_get(typeinstance_fnimpl));
     } else {
@@ -115,17 +119,6 @@ enum traversal_cb_res typecheck_function_call(
     }
     // if we are in a function call of an instantiated typeclass
     if (typeinstance_fnimpl) {
-        if (!ast_fnimpl_firstarg_is_self(typeinstance_fnimpl)) {
-            analyzer_err(
-                ctx->m, ast_node_startmark(n),
-                ast_node_endmark(n),
-                "Typeclass instantiation for function call \""RFS_PF"\" does "
-                "not have 'self' as the first argument.",
-                RFS_PA(fn_name)
-            );
-            goto fail;
-        }
-
         // prepend the self type to the called arguments
         fn_found_args_type = type_create_from_operation(
             TYPEOP_PRODUCT,
@@ -152,9 +145,13 @@ enum traversal_cb_res typecheck_function_call(
 
         // check if the explicit conversion is valid
         if (!type_compare(fn_found_args_type, fn_type, TYPECMP_EXPLICIT_CONVERSION)) {
-            analyzer_err(ctx->m, ast_node_startmark(n), ast_node_endmark(n),
-                         "Invalid explicit conversion. "RFS_PF".",
-                         RFS_PA(typecmp_ctx_get_error()));
+            analyzer_err(
+                ctx->m,
+                ast_node_startmark(n),
+                ast_node_endmark(n),
+                "Invalid explicit conversion. "RFS_PF".",
+                RFS_PA(typecmp_ctx_get_error())
+            );
             goto fail;
         }
         n->fncall.type = AST_FNCALL_EXPLICIT_CONVERSION;
@@ -217,8 +214,24 @@ enum traversal_cb_res typecheck_fndecl(
             "Function declaration name not found in the symbol table at "
             "impossible point"
         );
-        return TRAVERSAL_CB_ERROR;
+        goto fail;
     }
     traversal_node_set_type(n, t, ctx);
+
+    if (n->fndecl.position == FNDECL_PARTOF_TYPECLASS
+        && !ast_fndecl_firstarg_is_self(n)) {
+
+        analyzer_err(
+            ctx->m, ast_node_startmark(n),
+            ast_node_endmark(n),
+            "Typeclass instantiation for function call \""RFS_PF"\" does "
+            "not have 'self' as the first argument.",
+            RFS_PA(ast_fndecl_name_str(n))
+        );
+        goto fail;
+    }
     return TRAVERSAL_CB_OK;
+
+fail:
+    return TRAVERSAL_CB_ERROR;
 }

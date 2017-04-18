@@ -517,7 +517,7 @@ void symbol_table_iterate(struct symbol_table *t, htable_iter_cb cb, void *user)
 struct ast_node *symbol_table_has_typeclass_parent(const struct symbol_table *t)
 {
     struct symbol_table *st = t->parent;
-    if (!st) {
+    if (!st || !st->fndecl) {
         return NULL;
     }
 
@@ -527,7 +527,7 @@ struct ast_node *symbol_table_has_typeclass_parent(const struct symbol_table *t)
     }
 
     st = st->parent;
-    if (!st) {
+    if (!st || !st->fndecl) {
         return NULL;
     }
 
