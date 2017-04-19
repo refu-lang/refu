@@ -17,3 +17,4 @@ const struct RFstring g_str_self = RF_STRING_STATIC_INIT("self");
 const struct RFstring g_str_Type = RF_STRING_STATIC_INIT("Type");
 const struct RFstring g_str_generictype = RF_STRING_STATIC_INIT("generic type");
 const struct RFstring g_str_moduletype = RF_STRING_STATIC_INIT("module type");
+const struct RFstring g_str_isdefault = RF_STRING_STATIC_INIT("isdefault");

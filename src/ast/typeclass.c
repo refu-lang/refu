@@ -36,7 +36,7 @@ struct ast_node *ast_typeinstance_create(
     struct ast_node *class_name,
     struct ast_node *instance_name,
     struct ast_node *type_name,
-    struct ast_node *genr)
+    bool is_default)
 {
     struct ast_node *ret;
     AST_NODE_ASSERT_TYPE(class_name, AST_IDENTIFIER);
@@ -51,7 +51,7 @@ struct ast_node *ast_typeinstance_create(
     ast_node_register_child(ret, class_name, typeinstance.class_name);
     ast_node_register_child(ret, instance_name, typeinstance.instance_name);
     ast_node_register_child(ret, type_name, typeinstance.type_name);
-    ast_node_register_child(ret, genr, typeinstance.generics);
+    ret->typeinstance.is_default = is_default;
 
     return ret;
 }

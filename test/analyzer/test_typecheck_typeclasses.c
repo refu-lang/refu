@@ -96,7 +96,7 @@ START_TEST(test_typeclass_2_instances_same_type) {
         "    fn add(self:T, other:T) -> T"
         "}\n"
         "\n"
-        "instance addition normal for vector {\n"
+        "instance addition normal for vector isdefault {\n"
         "    fn add(self:vector, other:vector) -> vector\n"
         "    {\n"
         "        ret:vector\n"

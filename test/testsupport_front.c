@@ -594,6 +594,17 @@ static bool check_nodes(
             }
         }
         break;
+    case AST_TYPECLASS_INSTANCE:
+        if (got->typeinstance.is_default != expect->typeinstance.is_default) {
+                ck_astcheck_abort(
+                    filename, line,
+                    "Type instance 'isdefault' mismatch: "
+                    "Got \"%s\" but expected \"%s\"",
+                    got->typeinstance.is_default ? "true" : "false",
+                    expect->typeinstance.is_default ? "true" : "false"
+                );
+        }
+        break;
     case AST_CONSTANT:
         ctype = ast_constant_get_type(&got->constant);
         if (ctype != ast_constant_get_type(&expect->constant)) {

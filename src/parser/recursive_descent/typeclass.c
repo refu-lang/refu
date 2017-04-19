@@ -2,6 +2,7 @@
 
 #include <ast/typeclass.h>
 
+#include <utils/common_strings.h>
 #include <parser/parser.h>
 #include "common.h"
 #include "identifier.h"
@@ -121,7 +122,6 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
     struct ast_node *class_name;
     struct ast_node *instance_name = NULL;
     struct ast_node *type_name;
-    struct ast_node *genr = NULL;
     const struct inplocation_mark *start;
     enum parser_fnimpl_list_err err;
 
@@ -187,27 +187,22 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
         goto err;
     }
 
-    genr = ast_parser_acc_genrdecl(p);
-    if (!genr && ast_parser_has_syntax_error_reset(p)) {
-        parser_synerr(
-            p, ast_node_endmark(type_name), NULL,
-            "Expected a generic declaration for type instance \""
-            RFS_PF"\" after type name \""RFS_PF"\"",
-            RFS_PA(ast_identifier_str(class_name)),
-            RFS_PA(ast_identifier_str(type_name))
-        );
-        goto err;
-    }
+    struct ast_node *default_identifier = ast_parser_peek_identifer(p);
+    bool is_default = (
+        default_identifier &&
+        rf_string_equal(ast_identifier_str(default_identifier), &g_str_isdefault)
+    );
 
     tok = lexer_curr_token_advance(parser_lexer(p));
     if (!tok || tok->type != TOKEN_SM_OCBRACE) {
         parser_synerr(
             p, ast_node_endmark(type_name), NULL,
-            "Expected '{' at type instance of '"RFS_PF"' after '"RFS_PF"'.",
+            "Expected '{' %sat type instance of '"RFS_PF"' after '"RFS_PF"'.",
+            is_default ? "" : "or 'isdefault' ",
             RFS_PA(ast_identifier_str(class_name)),
             RFS_PA(ast_identifier_str(type_name))
         );
-        goto err_free_genr;
+        goto err;
     }
     n = ast_typeinstance_create(
         start,
@@ -215,11 +210,11 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
         class_name,
         instance_name,
         type_name,
-        genr
+        is_default
     );
     if (!n) {
         RF_ERRNOMEM();
-        goto err_free_genr;
+        goto err;
     }
 
     err = ast_parser_acc_fnimpl_list(p, n);
@@ -263,10 +258,6 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
 
     return n;
 
-err_free_genr:
-    if (genr) {
-        ast_node_destroy(genr);
-    }
 err_free_typeinstance:
     if (n) {
         ast_node_destroy(n);

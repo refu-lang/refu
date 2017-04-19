@@ -19,5 +19,6 @@ extern const struct RFstring g_str_self;
 extern const struct RFstring g_str_Type;
 extern const struct RFstring g_str_generictype;
 extern const struct RFstring g_str_moduletype;
+extern const struct RFstring g_str_isdefault;
 
 #endif

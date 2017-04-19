@@ -46,7 +46,7 @@ struct ast_node *ast_typeinstance_create(
     struct ast_node *class_name,
     struct ast_node *instance_name,
     struct ast_node *type_name,
-    struct ast_node *genr
+    bool is_default
 );
 
 i_INLINE_DECL const struct RFstring *ast_typeinstance_classname_str(const struct ast_node *n)

@@ -8,7 +8,9 @@
 
 #include "common.h"
 
+i_INLINE_INS struct ast_node *ast_parser_peek_identifer(struct ast_parser* p);
 i_INLINE_INS struct ast_node *ast_parser_acc_identifier(struct ast_parser *p);
+
 struct ast_node *ast_parser_acc_xidentifier(struct ast_parser *p, bool expect_it)
 {
     struct ast_node *id;
