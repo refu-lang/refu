@@ -92,10 +92,12 @@ static inline bool token_init(struct token *t,
     return true;
 }
 
-static inline bool token_init_identifier(struct token *t,
-                                         struct inpfile *f,
-                                         int identifier_token_type,
-                                         char *sp, char *ep)
+static inline bool token_init_identifier(
+    struct token *t,
+    struct inpfile *f,
+    int identifier_token_type,
+    char *sp,
+    char *ep)
 {
     if (!token_init(t, identifier_token_type, f, sp, ep)) {
         return false;

@@ -130,6 +130,7 @@ struct ast_node *ast_parser_acc_typeinstance(struct ast_parser *p)
         return NULL;
     }
     start = token_get_start(tok);
+    lexer_push(parser_lexer(p));
 
     //consume typeclass instance keyword
     lexer_curr_token_advance(parser_lexer(p));
@@ -271,5 +272,6 @@ err_free_typeinstance:
         ast_node_destroy(n);
     }
 err:
+    lexer_rollback(parser_lexer(p));
     return NULL;
 }

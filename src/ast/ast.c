@@ -75,8 +75,9 @@ struct ast_node *ast_node_create(enum ast_type type)
    return ret;
 }
 
-struct ast_node *ast_node_create_loc(enum ast_type type,
-                                     const struct inplocation *loc)
+struct ast_node *ast_node_create_loc(
+    enum ast_type type,
+    const struct inplocation *loc)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
@@ -87,9 +88,10 @@ struct ast_node *ast_node_create_loc(enum ast_type type,
     return ret;
 }
 
-struct ast_node *ast_node_create_marks(enum ast_type type,
-                                       const struct inplocation_mark *start,
-                                       const struct inplocation_mark *end)
+struct ast_node *ast_node_create_marks(
+    enum ast_type type,
+    const struct inplocation_mark *start,
+    const struct inplocation_mark *end)
 {
 
     struct ast_node *ret;
@@ -101,9 +103,11 @@ struct ast_node *ast_node_create_marks(enum ast_type type,
     return ret;
 }
 
-struct ast_node *ast_node_create_ptrs(enum ast_type type,
-                                      struct inpfile *f,
-                                      char *sp, char *ep)
+struct ast_node *ast_node_create_ptrs(
+    enum ast_type type,
+    struct inpfile *f,
+    char *sp,
+    char *ep)
 {
     struct ast_node *ret;
     RF_MALLOC(ret, sizeof(struct ast_node), return NULL);
