@@ -433,7 +433,12 @@ static enum traversal_cb_res typecheck_identifier(
         (parent_2 && ast_node_is_specific_binaryop(parent, BINARYOP_MEMBER_ACCESS)) ||
         (parent_2 && ast_node_is_specific_binaryop(parent_2, BINARYOP_MEMBER_ACCESS))
     );
-    if (parent_member_access ||  parent->type == AST_IMPORT) {
+    bool is_a_typeinstance_name = (
+        parent->type == AST_TYPECLASS_INSTANCE &&
+        parent->typeinstance.instance_name == n
+    );
+
+    if (parent_member_access ||  parent->type == AST_IMPORT || is_a_typeinstance_name) {
         return TRAVERSAL_CB_OK;
     }
     analyzer_err(
