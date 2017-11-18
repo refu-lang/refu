@@ -9,6 +9,8 @@
 #include "llvm_utils.h"
 #include "llvm_values.h"
 
+#define DEFAULT_PTR_ADDRESS_SPACE 0
+
 LLVMValueRef bllvm_compile_fixedarr(
     const struct rir_expression *expr,
     struct llvm_traversal_ctx *ctx)
@@ -47,7 +49,8 @@ struct LLVMOpaqueValue *bllvm_compile_objidx(
         ctx
     );
     LLVMValueRef indices[] = {
-        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), 0, 0),
+        LLVMConstInt(LLVMInt32TypeInContext(ctx->llvm_context), DEFAULT_PTR_ADDRESS_SPACE, 
+                     DEFAULT_PTR_ADDRESS_SPACE), 
         llvm_idxval
     };
     LLVMValueRef gep = LLVMBuildGEP(
